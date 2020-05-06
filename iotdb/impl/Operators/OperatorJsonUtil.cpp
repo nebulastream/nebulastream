@@ -1,86 +1,84 @@
-#include <Operators/OperatorJsonUtil.hpp>
 #include <Operators/Operator.hpp>
+#include <Operators/OperatorJsonUtil.hpp>
 
 namespace NES {
 
-OperatorJsonUtil::OperatorJsonUtil() {};
+OperatorJsonUtil::OperatorJsonUtil(){};
 
-OperatorJsonUtil::~OperatorJsonUtil() {};
+OperatorJsonUtil::~OperatorJsonUtil(){};
 
 json::value OperatorJsonUtil::getBasePlan(InputQueryPtr inputQuery) {
 
-  json::value result{};
-  std::vector<json::value> nodes{};
-  std::vector<json::value> edges{};
-  const OperatorPtr &root = inputQuery->getRoot();
+    json::value result{};
+    std::vector<json::value> nodes{};
+    std::vector<json::value> edges{};
+    const OperatorPtr& root = inputQuery->getRoot();
 
-  if (!root) {
-    auto node = json::value::object();
-    node["id"] = json::value::string("NONE");
-    node["title"] = json::value::string("NONE");
-    nodes.push_back(node);
-  } else {
-
-    auto node = json::value::object();
-    node["id"] = json::value::string(
-        operatorTypeToString[root->getOperatorType()] + "(OP-" + std::to_string(root->getOperatorId()) + ")");
-    node["title"] =
-        json::value::string(
-            operatorTypeToString[root->getOperatorType()] + +"(OP-" + std::to_string(root->getOperatorId()) + ")");
-    if (root->getOperatorType() == OperatorType::SOURCE_OP ||
-        root->getOperatorType() == OperatorType::SINK_OP) {
-      node["nodeType"] = json::value::string("Source");
+    if (!root) {
+        auto node = json::value::object();
+        node["id"] = json::value::string("NONE");
+        node["title"] = json::value::string("NONE");
+        nodes.push_back(node);
     } else {
-      node["nodeType"] = json::value::string("Processor");
-    }
-    nodes.push_back(node);
-    getChildren(root, nodes, edges);
-  }
 
-  result["nodes"] = json::value::array(nodes);
-  result["edges"] = json::value::array(edges);
-
-  return result;
-}
-
-void OperatorJsonUtil::getChildren(const OperatorPtr &root, std::vector<json::value> &nodes,
-                                   std::vector<json::value> &edges) {
-
-  std::vector<json::value> childrenNode;
-
-  std::vector<OperatorPtr> children = root->getChildren();
-  if (children.empty()) {
-    return;
-  }
-
-  for (OperatorPtr child : children) {
-    auto node = json::value::object();
-    node["id"] =
-        json::value::string(
-            operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->getOperatorId()) + ")");
-    node["title"] =
-        json::value::string(
-            operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->getOperatorId()) + ")");
-
-    if (child->getOperatorType() == OperatorType::SOURCE_OP ||
-        child->getOperatorType() == OperatorType::SINK_OP) {
-      node["nodeType"] = json::value::string("Source");
-    } else {
-      node["nodeType"] = json::value::string("Processor");
-    }
-
-    nodes.push_back(node);
-
-    auto edge = json::value::object();
-    edge["source"] =
-        json::value::string(
-            operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->getOperatorId()) + ")");
-    edge["target"] =
-        json::value::string(
+        auto node = json::value::object();
+        node["id"] = json::value::string(
             operatorTypeToString[root->getOperatorType()] + "(OP-" + std::to_string(root->getOperatorId()) + ")");
+        node["title"] =
+            json::value::string(
+                operatorTypeToString[root->getOperatorType()] + +"(OP-" + std::to_string(root->getOperatorId()) + ")");
+        if (root->getOperatorType() == OperatorType::SOURCE_OP || root->getOperatorType() == OperatorType::SINK_OP) {
+            node["nodeType"] = json::value::string("Source");
+        } else {
+            node["nodeType"] = json::value::string("Processor");
+        }
+        nodes.push_back(node);
+        getChildren(root, nodes, edges);
+    }
 
-    edges.push_back(edge);
-    getChildren(child, nodes, edges);
-  }
+    result["nodes"] = json::value::array(nodes);
+    result["edges"] = json::value::array(edges);
+
+    return result;
 }
+
+void OperatorJsonUtil::getChildren(const OperatorPtr& root, std::vector<json::value>& nodes,
+                                   std::vector<json::value>& edges) {
+
+    std::vector<json::value> childrenNode;
+
+    std::vector<OperatorPtr> children = root->getChildren();
+    if (children.empty()) {
+        return;
+    }
+
+    for (OperatorPtr child : children) {
+        auto node = json::value::object();
+        node["id"] =
+            json::value::string(
+                operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->getOperatorId()) + ")");
+        node["title"] =
+            json::value::string(
+                operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->getOperatorId()) + ")");
+
+        if (child->getOperatorType() == OperatorType::SOURCE_OP || child->getOperatorType() == OperatorType::SINK_OP) {
+            node["nodeType"] = json::value::string("Source");
+        } else {
+            node["nodeType"] = json::value::string("Processor");
+        }
+
+        nodes.push_back(node);
+
+        auto edge = json::value::object();
+        edge["source"] =
+            json::value::string(
+                operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->getOperatorId()) + ")");
+        edge["target"] =
+            json::value::string(
+                operatorTypeToString[root->getOperatorType()] + "(OP-" + std::to_string(root->getOperatorId()) + ")");
+
+        edges.push_back(edge);
+        getChildren(child, nodes, edges);
+    }
 }
+}// namespace NES

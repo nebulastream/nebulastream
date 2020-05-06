@@ -4,8 +4,7 @@
 
 namespace NES {
 
-AggregationSpec& AggregationSpec::operator=(const AggregationSpec& other)
-{
+AggregationSpec& AggregationSpec::operator=(const AggregationSpec& other) {
     if (this != &other) {
         this->aggr_spec = other.aggr_spec;
         // this->grouping_fields=std::move(other.grouping_fields);
@@ -15,14 +14,12 @@ AggregationSpec& AggregationSpec::operator=(const AggregationSpec& other)
 
 Sort::Sort(SortAttr field1) : param() { param.push_back(field1); }
 
-Sort::Sort(SortAttr field1, SortAttr field2) : param()
-{
+Sort::Sort(SortAttr field1, SortAttr field2) : param() {
     param.push_back(field1);
     param.push_back(field2);
 }
 
-Sort::Sort(SortAttr field1, SortAttr field2, SortAttr field3) : param()
-{
+Sort::Sort(SortAttr field1, SortAttr field2, SortAttr field3) : param() {
     param.push_back(field1);
     param.push_back(field2);
     param.push_back(field3);
@@ -59,4 +56,4 @@ const std::string toString(const MapperPtr param) { return "***"; }
 const std::string toString(const AggregationSpec& param) { return "***"; }
 const std::string toString(const JoinPredicatePtr param) { return "***"; }
 
-} // namespace NES
+}// namespace NES

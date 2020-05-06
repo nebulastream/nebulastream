@@ -1,10 +1,10 @@
 #ifndef INCLUDE_CATALOGS_QUERYCATALOG_HPP_
 #define INCLUDE_CATALOGS_QUERYCATALOG_HPP_
-#include <string>
+#include <Topology/NESTopologyEntry.hpp>
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
-#include <Topology/NESTopologyEntry.hpp>
 
 using namespace std;
 
@@ -24,7 +24,11 @@ typedef std::shared_ptr<InputQuery> InputQueryPtr;
  * Failed: Query failed because of some reason
  *
  */
-enum QueryStatus { Registered, Scheduling, Running, Stopped, Failed };
+enum QueryStatus { Registered,
+                   Scheduling,
+                   Running,
+                   Stopped,
+                   Failed };
 
 static std::map<std::string, QueryStatus> StringToQueryStatus{
     {"REGISTERED", Registered},
@@ -47,12 +51,11 @@ class QueryCatalogEntry {
   public:
     QueryCatalogEntry(string queryId, string queryString, InputQueryPtr inputQueryPtr,
                       NESExecutionPlanPtr nesPlanPtr, QueryStatus queryStatus)
-        :
-        queryId(queryId),
-        queryString(queryString),
-        inputQueryPtr(inputQueryPtr),
-        nesPlanPtr(nesPlanPtr),
-        queryStatus(queryStatus) {
+        : queryId(queryId),
+          queryString(queryString),
+          inputQueryPtr(inputQueryPtr),
+          nesPlanPtr(nesPlanPtr),
+          queryStatus(queryStatus) {
     }
 
     const string& getQueryId() const {
@@ -142,7 +145,6 @@ class QueryCatalog {
    */
     std::vector<NESTopologyEntryPtr> getExecutionNodesToQuery(string queryId);
 
-
     /**
      * @brief method to test if a query is started
      * @param id of the query to stop
@@ -190,11 +192,9 @@ class QueryCatalog {
     std::string printQueries();
 
   private:
-
     map<string, QueryCatalogEntryPtr> queries;
     map<string, std::vector<NESTopologyEntryPtr>> queriesToExecNodeMap;
 };
-}
+}// namespace NES
 
 #endif /* INCLUDE_CATALOGS_QUERYCATALOG_HPP_ */
-

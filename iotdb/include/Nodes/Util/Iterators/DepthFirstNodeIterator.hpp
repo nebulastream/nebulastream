@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_NODES_UTIL_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_
 #define NES_INCLUDE_NODES_UTIL_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_
-#include <stack>
 #include <memory>
+#include <stack>
 namespace NES {
 
 class Node;
@@ -18,6 +18,7 @@ class DepthFirstNodeIterator {
 
     class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&> {
         friend class DepthFirstNodeIterator;
+
       public:
         /**
          * @brief Moves the iterator to the next node.
@@ -36,6 +37,7 @@ class DepthFirstNodeIterator {
          * @return
          */
         NodePtr operator*();
+
       private:
         explicit iterator(NodePtr current);
         explicit iterator();
@@ -52,9 +54,10 @@ class DepthFirstNodeIterator {
      * @return iterator.
      */
     iterator end();
+
   private:
     NodePtr start;
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_UTIL_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_
+#endif//NES_INCLUDE_NODES_UTIL_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_

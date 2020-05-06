@@ -1,6 +1,6 @@
-#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <API/Types/AttributeField.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 
 namespace NES {
 
@@ -18,7 +18,7 @@ bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 };
 
-bool MapLogicalOperatorNode::inferSchema()  {
+bool MapLogicalOperatorNode::inferSchema() {
     // infer the default input and output schema
     OperatorNode::inferSchema();
     // use the default input schema to calculate the out schema of this operator.
@@ -42,7 +42,7 @@ bool MapLogicalOperatorNode::inferSchema()  {
 
 const std::string MapLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "MAP("<<outputSchema->toString()<<")";
+    ss << "MAP(" << outputSchema->toString() << ")";
     return ss.str();
 }
 
@@ -53,4 +53,4 @@ FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() {
 LogicalOperatorNodePtr createMapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression) {
     return std::make_shared<MapLogicalOperatorNode>(mapExpression);
 }
-}
+}// namespace NES

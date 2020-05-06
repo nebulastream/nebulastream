@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_NODES_UTIL_CONSOLE_DUMP_HANDLER_HPP_
 #define NES_INCLUDE_NODES_UTIL_CONSOLE_DUMP_HANDLER_HPP_
 
-#include <memory>
 #include <Nodes/Util/DumpHandler.hpp>
+#include <memory>
 namespace NES {
 
 class Node;
@@ -25,6 +25,6 @@ class ConsoleDumpHandler : public DumpHandler {
     void dumpHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out) const;
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_UTIL_CONSOLE_DUMP_HANDLER_HPP_
+#endif//NES_INCLUDE_NODES_UTIL_CONSOLE_DUMP_HANDLER_HPP_

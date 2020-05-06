@@ -14,7 +14,6 @@ typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
 class CompiledCode;
 typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
 
-
 /**
  * @brief The Compiler compiles a source code fragment to a dynamic library.
  */
@@ -27,6 +26,7 @@ class Compiler {
      * @return CompiledCode
      */
     CompiledCodePtr compile(const std::string& source);
+
   private:
     void init();
     void initCompilerArgs();
@@ -59,6 +59,6 @@ class Compiler {
 void exportSourceToFile(const std::string& filename, const std::string& source);
 void pretty_print_code(const std::string& source);
 
-} // namespace NES
+}// namespace NES
 
-#endif // INCLUDE_CODE_COMPILER_HPP_
+#endif// INCLUDE_CODE_COMPILER_HPP_

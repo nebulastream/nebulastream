@@ -1,6 +1,6 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 namespace NES {
-AddExpressionNode::AddExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(stamp) {};
+AddExpressionNode::AddExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(stamp){};
 ExpressionNodePtr AddExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto addNode = std::make_shared<AddExpressionNode>(left->getStamp());
     addNode->setChildren(left, right);
@@ -10,8 +10,7 @@ ExpressionNodePtr AddExpressionNode::create(const ExpressionNodePtr left, const 
 bool AddExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<AddExpressionNode>()) {
         auto otherAddNode = rhs->as<AddExpressionNode>();
-        return getLeft()->equal(otherAddNode->getLeft()) &&
-            getRight()->equal(otherAddNode->getRight());
+        return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
     }
     return false;
 }
@@ -19,4 +18,4 @@ const std::string AddExpressionNode::toString() const {
     return "AddNode(" + stamp->toString() + ")";
 }
 
-}
+}// namespace NES

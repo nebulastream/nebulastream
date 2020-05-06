@@ -1,8 +1,8 @@
 #ifndef NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SINKS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_
 #define NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SINKS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_
 
-#include <SourceSink/DataSource.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <SourceSink/DataSource.hpp>
 
 namespace NES {
 
@@ -15,7 +15,6 @@ class ConvertLogicalToPhysicalSource {
     ConvertLogicalToPhysicalSource() = default;
 };
 
-}
+}// namespace NES
 
-
-#endif //NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SINKS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_
+#endif//NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SINKS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_

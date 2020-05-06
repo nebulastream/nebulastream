@@ -55,8 +55,7 @@ class BufferManager {
 
         void markFree();
 
-        friend bool operator<(const UnpooledBufferHolder& lhs, const UnpooledBufferHolder& rhs)
-        {
+        friend bool operator<(const UnpooledBufferHolder& lhs, const UnpooledBufferHolder& rhs) {
             return lhs.size < rhs.size;
         }
     };
@@ -152,5 +151,5 @@ class BufferManager {
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-} // namespace NES
+}// namespace NES
 #endif

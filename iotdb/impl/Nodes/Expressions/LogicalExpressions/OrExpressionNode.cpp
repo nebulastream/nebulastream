@@ -1,7 +1,7 @@
 
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 namespace NES {
-OrExpressionNode::OrExpressionNode() : LogicalBinaryExpressionNode() {};
+OrExpressionNode::OrExpressionNode() : LogicalBinaryExpressionNode(){};
 ExpressionNodePtr OrExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto orNode = std::make_shared<OrExpressionNode>();
     orNode->setChildren(left, right);
@@ -11,13 +11,12 @@ ExpressionNodePtr OrExpressionNode::create(const ExpressionNodePtr left, const E
 bool OrExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<OrExpressionNode>()) {
         auto otherAndNode = rhs->as<OrExpressionNode>();
-        return getLeft()->equal(otherAndNode->getLeft()) &&
-            getRight()->equal(otherAndNode->getRight());
+        return getLeft()->equal(otherAndNode->getLeft()) && getRight()->equal(otherAndNode->getRight());
     }
     return false;
 }
 const std::string OrExpressionNode::toString() const {
-    return "OrNode("+stamp->toString()+")";
+    return "OrNode(" + stamp->toString() + ")";
 }
 
 void OrExpressionNode::inferStamp(SchemaPtr schema) {
@@ -27,9 +26,9 @@ void OrExpressionNode::inferStamp(SchemaPtr schema) {
     if (!getLeft()->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("OR Expression Node: the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
     }
-    if(!getRight()->isPredicate()){
+    if (!getRight()->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("OR Expression Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
     }
 }
 
-}
+}// namespace NES

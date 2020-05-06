@@ -53,6 +53,7 @@ class PipelineStage {
     bool stop();
 
     ~PipelineStage();
+
   private:
     uint32_t pipelineStageId;
     QueryExecutionPlanPtr queryExecutionPlan;
@@ -74,6 +75,6 @@ PipelineStagePtr createPipelineStage(uint32_t pipelineStageId,
                                      const QueryExecutionPlanPtr& queryExecutionPlanPtr,
                                      const ExecutablePipelinePtr& compiled_code);
 
-} // namespace NES
+}// namespace NES
 
 #endif /* INCLUDE_PIPELINESTAGE_H_ */

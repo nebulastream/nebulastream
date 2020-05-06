@@ -14,9 +14,10 @@ class WindowLogicalOperatorNode : public LogicalOperatorNode {
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
     const WindowDefinitionPtr& getWindowDefinition() const;
+
   private:
     WindowDefinitionPtr windowDefinition;
 };
 
-} // namespace NES
-#endif // WINDOW_LOGICAL_OPERATOR_NODE_HPP
+}// namespace NES
+#endif// WINDOW_LOGICAL_OPERATOR_NODE_HPP

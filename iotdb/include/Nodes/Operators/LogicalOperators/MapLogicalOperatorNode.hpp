@@ -1,8 +1,8 @@
 #ifndef MAP_LOGICAL_OPERATOR_NODE_HPP
 #define MAP_LOGICAL_OPERATOR_NODE_HPP
 
-#include <memory>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <memory>
 
 namespace NES {
 
@@ -32,13 +32,12 @@ class MapLogicalOperatorNode : public LogicalOperatorNode {
 
     const std::string toString() const override;
 
-
   private:
     FieldAssignmentExpressionNodePtr mapExpression;
 };
 
 typedef std::shared_ptr<MapLogicalOperatorNode> MapLogicalOperatorNodePtr;
 
-}
+}// namespace NES
 
-#endif  // MAP_LOGICAL_OPERATOR_NODE_HPP
+#endif// MAP_LOGICAL_OPERATOR_NODE_HPP

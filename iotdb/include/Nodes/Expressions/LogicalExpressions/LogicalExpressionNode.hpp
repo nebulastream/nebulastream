@@ -7,8 +7,8 @@ namespace NES {
  */
 class LogicalExpressionNode {
   protected:
-    LogicalExpressionNode() {};
+    LogicalExpressionNode(){};
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_UNARYEXPRESSIONS_LOGICALEXPRESSIONNODE_HPP_
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_UNARYEXPRESSIONS_LOGICALEXPRESSIONNODE_HPP_

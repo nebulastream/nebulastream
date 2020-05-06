@@ -76,7 +76,7 @@ class LogicalOperatorNodeTest : public testing::Test {
     }
 
     void TearDown() {
-        NES_DEBUG("Tear down LogicalOperatorNode Test.")
+        NES_DEBUG("Tear down LogicalOperatorNode Test.");
     }
 
   protected:

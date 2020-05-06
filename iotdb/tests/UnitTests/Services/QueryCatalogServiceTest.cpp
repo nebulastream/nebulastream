@@ -47,7 +47,7 @@ class QueryCatalogServiceTest : public testing::Test {
                                                        receive_port, 2, "",
                                                        streamConf, NESNodeType::Sensor);
     }
-    NES_DEBUG("FINISHED ADDING 5 Nodes to topology")
+    NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
     std::cout << "Setup QueryCatalogService test case." << std::endl;
   }
 

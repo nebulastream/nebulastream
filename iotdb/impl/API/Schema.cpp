@@ -1,12 +1,12 @@
 #include <iostream>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
+#include <API/Schema.hpp>
+#include <Util/Logger.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-#include <API/Schema.hpp>
-#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -65,7 +65,7 @@ SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
 
 void Schema::replaceField(const std::string& name, DataTypePtr type) {
     for (auto i = 0; i < fields.size(); i++) {
-        if(fields[i]->name == name) {
+        if (fields[i]->name == name) {
             fields[i] = createField(name, type);
             return;
         }
@@ -87,7 +87,7 @@ AttributeFieldPtr Schema::get(const std::string& fieldName) {
             return field;
         }
     }
-    NES_FATAL_ERROR("Schema: No field in the schema with the identifier " << fieldName)
+    NES_FATAL_ERROR("Schema: No field in the schema with the identifier " << fieldName);
     throw std::invalid_argument("field " + fieldName + " does not exist");
 }
 
@@ -95,7 +95,7 @@ AttributeFieldPtr Schema::get(uint32_t index) {
     if (index < (uint32_t) fields.size()) {
         return fields[index];
     }
-    NES_FATAL_ERROR("Schema: No field in the schema with the id " << index)
+    NES_FATAL_ERROR("Schema: No field in the schema with the id " << index);
     throw std::invalid_argument("field id " + std::to_string(index) + " does not exist");
 }
 
@@ -127,5 +127,4 @@ const std::string Schema::toString() const {
     }
     return ss.str();
 }
-}
-
+}// namespace NES

@@ -1,6 +1,6 @@
-#include <QueryCompiler/PipelineContext.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 #include <memory>
 #include <utility>
 
@@ -39,4 +39,4 @@ void PipelineContext::setNextPipeline(PipelineContextPtr nextPipeline) {
 SchemaPtr PipelineContext::getInputSchema() const { return inputSchema; }
 
 SchemaPtr PipelineContext::getResultSchema() const { return resultSchema; }
-}
+}// namespace NES

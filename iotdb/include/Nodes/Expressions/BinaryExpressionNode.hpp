@@ -27,5 +27,5 @@ class BinaryExpressionNode : public ExpressionNode {
     ExpressionNodePtr getRight() const;
 };
 
-}
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSION_HPP_
+}// namespace NES
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSION_HPP_

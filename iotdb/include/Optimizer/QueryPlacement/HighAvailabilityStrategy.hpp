@@ -18,12 +18,11 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
     ~HighAvailabilityStrategy() = default;
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-    static std::unique_ptr<HighAvailabilityStrategy> create(){
+    static std::unique_ptr<HighAvailabilityStrategy> create() {
         return std::make_unique<HighAvailabilityStrategy>(HighAvailabilityStrategy());
     }
 
   private:
-
     HighAvailabilityStrategy() = default;
 
     /**
@@ -55,5 +54,5 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
                                                                          const NESTopologyEntryPtr rootNode) const;
 };
 
-}
-#endif //NES_IMPL_OPTIMIZER_IMPL_HIGHAVAILABILITY_HPP_
+}// namespace NES
+#endif//NES_IMPL_OPTIMIZER_IMPL_HIGHAVAILABILITY_HPP_

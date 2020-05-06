@@ -10,7 +10,7 @@ namespace NES {
 Statement::~Statement() {}
 
 const StatementPtr ExpressionStatment::createCopy() const {
-  return this->copy();
+    return this->copy();
 }
 
 ExpressionStatment::~ExpressionStatment() {}
@@ -27,12 +27,12 @@ AnonymUserDefinedDataType::~AnonymUserDefinedDataType() {}
 
 FunctionCallStatement::~FunctionCallStatement() {}
 
-const DataTypePtr createUserDefinedType(const StructDeclaration &decl) {
-  return std::make_shared<UserDefinedDataType>(decl);
+const DataTypePtr createUserDefinedType(const StructDeclaration& decl) {
+    return std::make_shared<UserDefinedDataType>(decl);
 }
 
 const DataTypePtr createAnonymUserDefinedType(const std::string name) {
-  return std::make_shared<AnonymUserDefinedDataType>(name);
+    return std::make_shared<AnonymUserDefinedDataType>(name);
 }
 
-} // namespace NES
+}// namespace NES

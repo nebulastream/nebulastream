@@ -6,4 +6,4 @@ StateManager& StateManager::instance() {
     static StateManager singleton;
     return singleton;
 }
-}
+}// namespace NES

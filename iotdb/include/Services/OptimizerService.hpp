@@ -1,10 +1,10 @@
 #ifndef IMPL_SERVICES_OPTIMIZERSERVICE_H_
 #define IMPL_SERVICES_OPTIMIZERSERVICE_H_
 
-#include <string>
-#include <cpprest/json.h>
 #include <API/InputQuery.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
+#include <cpprest/json.h>
+#include <string>
 
 namespace NES {
 
@@ -13,7 +13,6 @@ typedef std::shared_ptr<OptimizerService> OptimizerServicePtr;
 
 class OptimizerService {
   public:
-
     static OptimizerServicePtr getInstance() {
         static OptimizerServicePtr instance{new OptimizerService};
         return instance;
@@ -39,9 +38,8 @@ class OptimizerService {
     ~OptimizerService() = default;
 
   private:
-
     OptimizerService() = default;
 };
-}
+}// namespace NES
 
-#endif //IMPL_SERVICES_OPTIMIZERSERVICE_H_
+#endif//IMPL_SERVICES_OPTIMIZERSERVICE_H_

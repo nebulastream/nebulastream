@@ -1,13 +1,13 @@
-#include <QueryCompiler/QueryCompiler.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 namespace NES {
 
-QueryCompiler::QueryCompiler() {};
+QueryCompiler::QueryCompiler(){};
 
-QueryCompiler::QueryCompiler(QueryCompiler* queryCompiler) {};
+QueryCompiler::QueryCompiler(QueryCompiler* queryCompiler){};
 
 QueryCompilerPtr QueryCompiler::create() {
     return std::make_shared<QueryCompiler>(new QueryCompiler());
@@ -16,8 +16,7 @@ QueryCompilerPtr QueryCompiler::create() {
 void QueryCompiler::setQueryManager(QueryManagerPtr queryManager) {
     this->queryManager = queryManager;
 }
-void QueryCompiler::setBufferManager(BufferManagerPtr bufferManager)
-{
+void QueryCompiler::setBufferManager(BufferManagerPtr bufferManager) {
     this->bufferManager = bufferManager;
 }
 
@@ -52,7 +51,6 @@ void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPl
                                                                      queryExecutionPlan,
                                                                      executablePipeline));
     }
-
 }
 
 QueryCompilerPtr createDefaultQueryCompiler(QueryManagerPtr queryManager) {
@@ -61,4 +59,4 @@ QueryCompilerPtr createDefaultQueryCompiler(QueryManagerPtr queryManager) {
     return q;
 }
 
-}
+}// namespace NES

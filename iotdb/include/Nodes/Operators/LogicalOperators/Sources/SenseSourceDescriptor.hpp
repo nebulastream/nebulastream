@@ -13,7 +13,6 @@ class SenseSourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string udfs);
 
-
     SourceDescriptorType getType() override;
 
     /**
@@ -29,6 +28,6 @@ class SenseSourceDescriptor : public SourceDescriptor {
 
 typedef std::shared_ptr<SenseSourceDescriptor> SenseSourceDescriptorPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SENSESOURCEDESCRIPTOR_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SENSESOURCEDESCRIPTOR_HPP_

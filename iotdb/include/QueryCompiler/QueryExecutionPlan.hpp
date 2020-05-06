@@ -1,13 +1,12 @@
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
-#include <map>
 #include <QueryCompiler/PipelineStage.hpp>
-#include <Windows/WindowHandler.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/DataSource.hpp>
+#include <Windows/WindowHandler.hpp>
+#include <map>
 
 //#include <NodeEngine/QueryManager.hpp>
-
 
 namespace NES {
 class QueryManager;
@@ -96,6 +95,7 @@ class QueryExecutionPlan {
 
     void setQueryId(std::string queryId);
     std::string getQueryId();
+
   protected:
     QueryExecutionPlan(std::string queryId,
                        std::vector<DataSourcePtr> sources,
@@ -113,6 +113,6 @@ class QueryExecutionPlan {
     std::string queryId;
 };
 
-}  // namespace NES
+}// namespace NES
 
 #endif /* INCLUDE_QUERYEXECUTIONPLAN_H_ */

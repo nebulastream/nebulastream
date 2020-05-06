@@ -12,8 +12,7 @@ SortOperator::SortOperator(const Sort& sort_spec) : Operator(), sort_spec_(NES::
 
 SortOperator::SortOperator(const SortOperator& other) : sort_spec_(NES::copy(other.sort_spec_)) {}
 
-SortOperator& SortOperator::operator=(const SortOperator& other)
-{
+SortOperator& SortOperator::operator=(const SortOperator& other) {
     if (this != &other) {
         sort_spec_ = NES::copy(other.sort_spec_);
     }
@@ -29,8 +28,7 @@ const OperatorPtr SortOperator::copy() const {
     return copy;
 }
 
-const std::string SortOperator::toString() const
-{
+const std::string SortOperator::toString() const {
     std::stringstream ss;
     ss << "SORT(" << NES::toString(sort_spec_) << ")";
     return ss.str();
@@ -42,4 +40,4 @@ SortOperator::~SortOperator() {}
 
 const OperatorPtr createSortOperator(const Sort& sort_spec) { return std::make_shared<SortOperator>(sort_spec); }
 
-} // namespace NES
+}// namespace NES

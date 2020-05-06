@@ -3,28 +3,26 @@
 #include <Nodes/Node.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <Nodes/Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Operators/Operator.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 
 namespace NES {
 
@@ -73,19 +71,20 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         return createSinkOperator(dataSink);
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
-    NES_NOT_IMPLEMENTED;
+    NES_NOT_IMPLEMENTED();
+    ;
 }
 /**
  * Translade operator node and all its children to the legacy representation.
  */
 OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode) {
-    NES_DEBUG("TranslateToLegacyPhase: translate " << operatorNode)
+    NES_DEBUG("TranslateToLegacyPhase: translate " << operatorNode);
     auto legacyOperator = transformIndividualOperator(operatorNode);
-    for (const NodePtr& child: operatorNode->getChildren()) {
+    for (const NodePtr& child : operatorNode->getChildren()) {
         auto legacyChildOperator = transform(child->as<OperatorNode>());
         legacyOperator->addChild(legacyChildOperator);
     }
-    NES_DEBUG("TranslateToLegacyPhase: got " << legacyOperator)
+    NES_DEBUG("TranslateToLegacyPhase: got " << legacyOperator);
     return legacyOperator;
 }
 
@@ -114,7 +113,8 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformExpression(ExpressionN
     }
     NES_FATAL_ERROR(
         "TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());
-    NES_NOT_IMPLEMENTED;
+    NES_NOT_IMPLEMENTED();
+    ;
 }
 
 UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformArithmeticalExpressions(ExpressionNodePtr expression) {
@@ -145,8 +145,9 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformArithmeticalExpression
     }
     NES_FATAL_ERROR(
         "TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
-            << expression->toString());
-    NES_NOT_IMPLEMENTED;
+        << expression->toString());
+    NES_NOT_IMPLEMENTED();
+    ;
 }
 
 UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformLogicalExpressions(ExpressionNodePtr expression) {
@@ -195,8 +196,9 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformLogicalExpressions(Exp
     }
     NES_FATAL_ERROR(
         "TranslateToLegacyPhase: No transformation implemented for this logical expression node: "
-            << expression->toString());
-    NES_NOT_IMPLEMENTED;
+        << expression->toString());
+    NES_NOT_IMPLEMENTED();
+    ;
 }
 
-}
+}// namespace NES

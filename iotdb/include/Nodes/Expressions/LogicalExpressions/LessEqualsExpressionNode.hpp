@@ -17,6 +17,6 @@ class LessEqualsExpressionNode : public LogicalBinaryExpressionNode {
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
 };
-}
+}// namespace NES
 
-#endif // NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LESSEQUALSEXPRESSIONNODE_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LESSEQUALSEXPRESSIONNODE_HPP_

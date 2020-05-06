@@ -1,10 +1,10 @@
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <utility>
 
 namespace NES {
 
-DepthFirstNodeIterator::DepthFirstNodeIterator(NodePtr start) : start(std::move(start)) {};
+DepthFirstNodeIterator::DepthFirstNodeIterator(NodePtr start) : start(std::move(start)){};
 
 DepthFirstNodeIterator::iterator DepthFirstNodeIterator::begin() { return iterator(start); }
 
@@ -38,5 +38,4 @@ DepthFirstNodeIterator::iterator& DepthFirstNodeIterator::iterator::operator++()
     }
     return *this;
 }
-}
-
+}// namespace NES

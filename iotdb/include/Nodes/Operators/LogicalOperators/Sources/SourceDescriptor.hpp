@@ -1,25 +1,30 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 
-#include <iostream>
-#include <memory>
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
+#include <iostream>
+#include <memory>
 
 namespace NES {
 
 enum SourceDescriptorType {
-    ZmqSource, SenseSource, KafkaSource, CsvSource,  BinarySource, DefaultSource, LogicalStreamSource
+    ZmqSource,
+    SenseSource,
+    KafkaSource,
+    CsvSource,
+    BinarySource,
+    DefaultSource,
+    LogicalStreamSource
 };
 
 class SourceDescriptor;
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
 
-class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>{
+class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
 
   public:
-
-    SourceDescriptor(SchemaPtr schema) : schema(schema) {};
+    SourceDescriptor(SchemaPtr schema) : schema(schema){};
 
     /**
      * @brief Returns the source descriptor type of this source descriptor.
@@ -67,6 +72,6 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>{
     SchemaPtr schema;
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_

@@ -10,7 +10,7 @@ namespace Network {
 
 void OutputChannel::init(const std::string& socketAddr) {
     int linger = -1;
-    uint64_t identity[] = {queryId, operatorId, partitionId, subpartitionId}; // 32 bytes
+    uint64_t identity[] = {queryId, operatorId, partitionId, subpartitionId};// 32 bytes
     try {
         zmqSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
         zmqSocket.setsockopt(ZMQ_IDENTITY, &identity, sizeof(identity));
@@ -35,18 +35,15 @@ void OutputChannel::init(const std::string& socketAddr) {
                 auto serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
                 // check if server responds with a ServerReadyMessage
                 // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
-                if (!(serverReadyMsg->getQueryId() == queryId &&
-                    serverReadyMsg->getOperatorId() == operatorId &&
-                    serverReadyMsg->getPartitionId() == partitionId &&
-                    serverReadyMsg->getSubpartitionId() == subpartitionId)) {
+                if (!(serverReadyMsg->getQueryId() == queryId && serverReadyMsg->getOperatorId() == operatorId && serverReadyMsg->getPartitionId() == partitionId && serverReadyMsg->getSubpartitionId() == subpartitionId)) {
                     NES_ERROR("[OutputChannel] Connection failed with server "
-                                  << socketAddr << " for queryId=" << queryId << " operatorId=" << operatorId
-                                  << " partitionId=" << partitionId << " subpartitionId=" << subpartitionId);
+                              << socketAddr << " for queryId=" << queryId << " operatorId=" << operatorId
+                              << " partitionId=" << partitionId << " subpartitionId=" << subpartitionId);
                     throw std::runtime_error("[OutputChannel] Wrong server ready message");
                 }
                 NES_INFO("[OutputChannel] Connection established with server "
-                             << socketAddr << " for queryId=" << queryId << " operatorId=" << operatorId
-                             << " partitionId=" << partitionId << " subpartitionId=" << subpartitionId);
+                         << socketAddr << " for queryId=" << queryId << " operatorId=" << operatorId
+                         << " partitionId=" << partitionId << " subpartitionId=" << subpartitionId);
                 break;
             }
             default: {
@@ -78,9 +75,9 @@ void OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
 
     // send all messages in one shot
     NES_DEBUG("[OutputChannel] Sending buffer for queryId="
-                  << queryId << " operatorId=" << operatorId << " partitionId=" << partitionId << " subpartitionId="
-                  << subpartitionId << " with " << inputBuffer.getNumberOfTuples() << "/"
-                  << inputBuffer.getBufferSize());
+              << queryId << " operatorId=" << operatorId << " partitionId=" << partitionId << " subpartitionId="
+              << subpartitionId << " with " << inputBuffer.getNumberOfTuples() << "/"
+              << inputBuffer.getBufferSize());
 
     zmqSocket.send(sendHeader, kSendMore);
     zmqSocket.send(sendBufferHeader, kSendMore);
@@ -100,5 +97,5 @@ void OutputChannel::close() {
     isClosed = true;
 }
 
-} // namespace Network
-} // namespace NES
+}// namespace Network
+}// namespace NES

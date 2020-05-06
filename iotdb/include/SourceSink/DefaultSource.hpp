@@ -18,9 +18,9 @@ class DefaultSource : public GeneratorSource {
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
-        ar & boost::serialization::base_object<GeneratorSource>(*this);
+        ar& boost::serialization::base_object<GeneratorSource>(*this);
     }
 };
 
-}
+}// namespace NES
 #endif /* INCLUDE_SOURCESINK_DEFAULTSOURCE_HPP_ */

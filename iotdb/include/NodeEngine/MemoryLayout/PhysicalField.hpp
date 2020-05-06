@@ -1,9 +1,9 @@
 #ifndef INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
 #define INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
 
-#include <memory>
 #include <API/Types/DataTypes.hpp>
 #include <Util/Logger.hpp>
+#include <memory>
 namespace NES {
 class TupleBuffer;
 class PhysicalField;
@@ -31,7 +31,7 @@ class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
      */
     template<class ValueType>
     std::shared_ptr<BasicPhysicalField<ValueType>> asValueField() {
-        if(!isFieldOfValueType<ValueType>()){
+        if (!isFieldOfValueType<ValueType>()) {
             NES_FATAL_ERROR("This field is not of that type");
             throw IllegalArgumentException("This field is not of that type");
         }
@@ -51,12 +51,13 @@ class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
      * @return
      */
     template<class ValueType>
-    bool isFieldOfValueType(){
-        if(std::dynamic_pointer_cast<BasicPhysicalField<ValueType>>(this->shared_from_this())){
+    bool isFieldOfValueType() {
+        if (std::dynamic_pointer_cast<BasicPhysicalField<ValueType>>(this->shared_from_this())) {
             return true;
         };
         return false;
     }
+
   protected:
     /**
      * @brief Field offset in the underling memory buffer.
@@ -64,8 +65,7 @@ class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
     uint64_t bufferOffset;
 };
 
-
 PhysicalFieldPtr createArrayPhysicalField(DataTypePtr componentField, uint64_t bufferOffset);
 
-}
-#endif //INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
+}// namespace NES
+#endif//INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_

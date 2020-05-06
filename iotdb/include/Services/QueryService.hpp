@@ -22,10 +22,9 @@ class QueryService {
     QueryService() = default;
 
   public:
-
     ~QueryService() = default;
 
-    static QueryServicePtr getInstance(){
+    static QueryServicePtr getInstance() {
         static QueryServicePtr instance{new QueryService};
         return instance;
     }
@@ -45,9 +44,8 @@ class QueryService {
      * @return a json object representing the query plan
      */
     InputQueryPtr getInputQueryFromQueryString(std::string userQuery);
-
 };
 
-};
+};// namespace NES
 
-#endif //QUERYSERVICE_HPP
+#endif//QUERYSERVICE_HPP

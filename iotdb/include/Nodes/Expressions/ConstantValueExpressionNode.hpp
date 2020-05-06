@@ -37,12 +37,13 @@ class ConstantValueExpressionNode : public ExpressionNode {
      * @return true if they are equal
      */
     bool equal(const NodePtr otherNode) const override;
+
   private:
     explicit ConstantValueExpressionNode(const ValueTypePtr constantValue);
     // Value of this expression
     ValueTypePtr constantValue;
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_CONSTANTVALUEEXPRESSIONNODE_HPP_
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_CONSTANTVALUEEXPRESSIONNODE_HPP_

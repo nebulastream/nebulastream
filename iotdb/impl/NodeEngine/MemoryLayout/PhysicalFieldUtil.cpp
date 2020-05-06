@@ -1,7 +1,7 @@
-#include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
-#include <NodeEngine/MemoryLayout/PhysicalField.hpp>
-#include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
 #include <API/Types/DataTypes.hpp>
+#include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
+#include <NodeEngine/MemoryLayout/PhysicalField.hpp>
+#include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <Util/Logger.hpp>
 
@@ -40,7 +40,8 @@ std::shared_ptr<PhysicalField> PhysicalFieldUtil::createPhysicalField(const Data
         return createArrayPhysicalField(arrayType->getComponentDataType(), bufferOffset);
     } else {
         NES_FATAL_ERROR("No physical field mapping for " << dataType->toString() << " available");
-        NES_NOT_IMPLEMENTED;
+        NES_NOT_IMPLEMENTED();
+        ;
     }
 }
-}
+}// namespace NES

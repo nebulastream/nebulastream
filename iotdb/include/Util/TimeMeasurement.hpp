@@ -9,6 +9,6 @@ typedef uint64_t Timestamp;
 
 Timestamp getTimestamp();
 
-} // namespace NES
+}// namespace NES
 
-#endif //#ifndef TIME_MEASUREMENT_HPP
+#endif//#ifndef TIME_MEASUREMENT_HPP

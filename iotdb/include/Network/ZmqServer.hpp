@@ -18,6 +18,7 @@ namespace Network {
 class ZmqServer : public boost::noncopyable {
   private:
     static constexpr const char* dispatcherPipe = "inproc://dispatcher";
+
   public:
     /**
      * Create a ZMQ server on hostname:port with numNetworkThreads i/o threads and a set of callbacks in
@@ -67,7 +68,6 @@ class ZmqServer : public boost::noncopyable {
     void handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int index);
 
   private:
-
     const std::string hostname;
     const uint16_t port;
     const uint16_t numNetworkThreads;
@@ -86,6 +86,6 @@ class ZmqServer : public boost::noncopyable {
     std::promise<bool> errorPromise;
 };
 
-} // namespace Network
-} // namespace NES
-#endif //NES_ZMQSERVER_HPP
+}// namespace Network
+}// namespace NES
+#endif//NES_ZMQSERVER_HPP

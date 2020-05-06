@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_
 #define NES_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_
 #include <memory>
-namespace NES{
+namespace NES {
 
 class ExpressionNode;
 
@@ -48,5 +48,5 @@ ExpressionNodePtr operator--(ExpressionItem exp);
 ExpressionNodePtr operator++(ExpressionItem exp, int);
 ExpressionNodePtr operator--(ExpressionItem exp, int);
 
-}
-#endif // NES_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_
+}// namespace NES
+#endif// NES_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_

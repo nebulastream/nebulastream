@@ -1,8 +1,7 @@
-#include <boost/algorithm/string.hpp>
-#include <Util/Logger.hpp>
-#include <Services/QueryCatalogService.hpp>
 #include <Catalogs/QueryCatalog.hpp>
-
+#include <Services/QueryCatalogService.hpp>
+#include <Util/Logger.hpp>
+#include <boost/algorithm/string.hpp>
 
 namespace NES {
 
@@ -20,7 +19,7 @@ std::map<string, string> QueryCatalogService::getQueriesWithStatus(std::string s
     map<string, QueryCatalogEntryPtr> queries = QueryCatalog::instance().getQueries(queryStatus);
 
     map<string, string> result;
-    for (auto[key, value] : queries) {
+    for (auto [key, value] : queries) {
         result[key] = value->getQueryString();
     }
 
@@ -35,7 +34,7 @@ std::map<std::string, std::string> QueryCatalogService::getAllRegisteredQueries(
     map<string, QueryCatalogEntryPtr> registeredQueries = QueryCatalog::instance().getRegisteredQueries();
 
     map<string, string> result;
-    for (auto[key, value] : registeredQueries) {
+    for (auto [key, value] : registeredQueries) {
         result[key] = value->getQueryString();
     }
 
@@ -43,4 +42,4 @@ std::map<std::string, std::string> QueryCatalogService::getAllRegisteredQueries(
     return result;
 }
 
-}
+}// namespace NES

@@ -1,8 +1,8 @@
 #ifndef INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
 #define INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
+#include <API/Types/DataTypes.hpp>
 #include <memory>
 #include <vector>
-#include <API/Types/DataTypes.hpp>
 namespace NES {
 
 class Schema;
@@ -47,7 +47,6 @@ class PhysicalSchema {
      */
     PhysicalFieldPtr createPhysicalField(uint64_t fieldIndex, uint64_t bufferOffset);
 
-
   private:
     SchemaPtr schema;
     /**
@@ -58,6 +57,6 @@ class PhysicalSchema {
     bool validFieldIndex(uint64_t fieldIndex);
 };
 
-}
+}// namespace NES
 
-#endif //INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
+#endif//INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_

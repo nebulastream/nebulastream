@@ -4,10 +4,10 @@
 #include <Util/Logger.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-#include <unordered_map>
-#include <thread>
-#include <mutex>
 #include <deque>
+#include <mutex>
+#include <thread>
+#include <unordered_map>
 #endif
 
 namespace NES {
@@ -19,7 +19,6 @@ class MemorySegment;
 
 std::string printTupleBuffer(TupleBuffer& buffer, SchemaPtr schema);
 void revertEndianness(TupleBuffer& buffer, SchemaPtr schema);
-
 
 /**
  * @brief This class provides a convenient way to track the reference counter as well metadata for its owning
@@ -102,9 +101,11 @@ class BufferControlBlock {
   private:
     class ThreadOwnershipInfo {
         friend class BufferControlBlock;
+
       private:
         std::string threadName;
         std::string callstack;
+
       public:
         ThreadOwnershipInfo();
 
@@ -171,8 +172,7 @@ class MemorySegment {
     uint32_t size;
     detail::BufferControlBlock controlBlock;
 };
-}
-}
+}// namespace detail
+}// namespace NES
 
-
-#endif //NES_INCLUDE_NODEENGINE_DETAIL_TUPLEBUFFERIMPL_HPP_
+#endif//NES_INCLUDE_NODEENGINE_DETAIL_TUPLEBUFFERIMPL_HPP_

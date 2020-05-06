@@ -26,4 +26,4 @@ class SortOperator : public Operator {
     Sort sort_spec_;
 };
 
-} // namespace NES
+}// namespace NES

@@ -1,16 +1,16 @@
 #include <NodeEngine/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
 #include <bitset>
-#include <exception>
-#include <boost/endian/buffers.hpp>  // see Synopsis below
+#include <boost/endian/buffers.hpp>// see Synopsis below
 #include <cstring>
+#include <exception>
 #include <iostream>
 #include <sstream>
-#include <Util/Logger.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-#include <thread>
-#include <mutex>
 #include <NodeEngine/internal/backtrace.hpp>
+#include <mutex>
+#include <thread>
 #endif
 
 namespace NES {
@@ -22,7 +22,7 @@ namespace detail {
 // -----------------------------------------------------------------------------
 
 MemorySegment::MemorySegment(const MemorySegment& other) : ptr(other.ptr), size(other.size),
-                                            controlBlock(other.controlBlock) {}
+                                                           controlBlock(other.controlBlock) {}
 
 MemorySegment& MemorySegment::operator=(const MemorySegment& other) {
     ptr = other.ptr;
@@ -31,10 +31,11 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) {
     return *this;
 }
 
-MemorySegment::MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr, [](MemorySegment*) {}) {}
+MemorySegment::MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr, [](MemorySegment*) {
+                                 }) {}
 
 MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)>&& recycleFunction)
-: ptr(ptr), size(size), controlBlock(this, std::move(recycleFunction)) {
+    : ptr(ptr), size(size), controlBlock(this, std::move(recycleFunction)) {
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
     }
@@ -55,9 +56,8 @@ MemorySegment::~MemorySegment() {
     }
 }
 
-BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback) :
-referenceCounter(0), tupleSizeInBytes(0), numberOfTuples(0), owner(owner),
-recycleCallback(recycleCallback) {
+BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback) : referenceCounter(0), tupleSizeInBytes(0), numberOfTuples(0), owner(owner),
+                                                                                                                      recycleCallback(recycleCallback) {
 }
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
@@ -136,7 +136,7 @@ void BufferControlBlock::dumpOwningThreadInfo() {
     for (auto& item : owningThreads) {
         for (auto& v : item.second) {
             NES_ERROR("Thread " << v.threadName << " has buffer " << getOwner()
-                    << " requested on callstack: " << v.callstack);
+                                << " requested on callstack: " << v.callstack);
         }
     }
 }
@@ -216,7 +216,7 @@ std::string printTupleBuffer(TupleBuffer& tbuffer, SchemaPtr schema) {
             size_t fieldSize = field->getFieldSize();
             DataTypePtr ptr = field->getDataType();
             std::string str = ptr->convertRawToString(
-                buffer + offset + i*schema->getSchemaSizeInBytes());
+                buffer + offset + i * schema->getSchemaSizeInBytes());
             ss << str.c_str();
             if (j < schema->getSize() - 1) {
                 ss << ",";
@@ -252,49 +252,49 @@ void revertEndianness(TupleBuffer& tbuffer, SchemaPtr schema) {
             size_t fieldSize = field->getFieldSize();
             //TODO: add enum with switch for performance reasons
             if (field->getDataType()->toString() == "UINT8") {
-                u_int8_t* orgVal = (u_int8_t*) buffer + offset + i*tupleSize;
-                memcpy((char*) buffer + offset + i*tupleSize, orgVal, fieldSize);
+                u_int8_t* orgVal = (u_int8_t*) buffer + offset + i * tupleSize;
+                memcpy((char*) buffer + offset + i * tupleSize, orgVal, fieldSize);
             } else if (field->getDataType()->toString() == "UINT16") {
                 u_int16_t* orgVal = (u_int16_t*) ((char*) buffer + offset
-                    + i*tupleSize);
+                                                  + i * tupleSize);
                 u_int16_t val = boost::endian::endian_reverse(*orgVal);
-                memcpy((char*) buffer + offset + i*tupleSize, &val, fieldSize);
+                memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (field->getDataType()->toString() == "UINT32") {
-                uint32_t* orgVal = (uint32_t*) ((char*) buffer + offset + i*tupleSize);
+                uint32_t* orgVal = (uint32_t*) ((char*) buffer + offset + i * tupleSize);
                 uint32_t val = boost::endian::endian_reverse(*orgVal);
-                memcpy((char*) buffer + offset + i*tupleSize, &val, fieldSize);
+                memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (field->getDataType()->toString() == "UINT64") {
-                uint64_t* orgVal = (uint64_t*) ((char*) buffer + offset + i*tupleSize);
+                uint64_t* orgVal = (uint64_t*) ((char*) buffer + offset + i * tupleSize);
                 uint64_t val = boost::endian::endian_reverse(*orgVal);
-                memcpy((char*) buffer + offset + i*tupleSize, &val, fieldSize);
+                memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (field->getDataType()->toString() == "INT8") {
-                int8_t* orgVal = (int8_t*) buffer + offset + i*tupleSize;
+                int8_t* orgVal = (int8_t*) buffer + offset + i * tupleSize;
                 int8_t val = boost::endian::endian_reverse(*orgVal);
-                memcpy((char*) buffer + offset + i*tupleSize, &val, fieldSize);
+                memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (field->getDataType()->toString() == "INT16") {
-                int16_t* orgVal = (int16_t*) ((char*) buffer + offset + i*tupleSize);
+                int16_t* orgVal = (int16_t*) ((char*) buffer + offset + i * tupleSize);
                 int16_t val = boost::endian::endian_reverse(*orgVal);
-                memcpy((char*) buffer + offset + i*tupleSize, &val, fieldSize);
+                memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (field->getDataType()->toString() == "INT32") {
-                int32_t* orgVal = (int32_t*) ((char*) buffer + offset + i*tupleSize);
+                int32_t* orgVal = (int32_t*) ((char*) buffer + offset + i * tupleSize);
                 int32_t val = boost::endian::endian_reverse(*orgVal);
-                memcpy((char*) buffer + offset + i*tupleSize, &val, fieldSize);
+                memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (field->getDataType()->toString() == "INT64") {
-                int64_t* orgVal = (int64_t*) ((char*) buffer + offset + i*tupleSize);
+                int64_t* orgVal = (int64_t*) ((char*) buffer + offset + i * tupleSize);
                 int64_t val = boost::endian::endian_reverse(*orgVal);
-                memcpy((char*) buffer + offset + i*tupleSize, &val, fieldSize);
+                memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (field->getDataType()->toString() == "FLOAT32") {
                 NES_WARNING(
-                    "TupleBuffer::revertEndianness: float conversation is not totally supported, please check results")
-                uint32_t* orgVal = (uint32_t*) ((char*) buffer + offset + i*tupleSize);
+                    "TupleBuffer::revertEndianness: float conversation is not totally supported, please check results");
+                uint32_t* orgVal = (uint32_t*) ((char*) buffer + offset + i * tupleSize);
                 uint32_t val = boost::endian::endian_reverse(*orgVal);
-                memcpy((char*) buffer + offset + i*tupleSize, &val, fieldSize);
+                memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (field->getDataType()->toString() == "FLOAT64") {
                 NES_WARNING(
-                    "TupleBuffer::revertEndianness: double conversation is not totally supported, please check results")
-                uint64_t* orgVal = (uint64_t*) ((char*) buffer + offset + i*tupleSize);
+                    "TupleBuffer::revertEndianness: double conversation is not totally supported, please check results");
+                uint64_t* orgVal = (uint64_t*) ((char*) buffer + offset + i * tupleSize);
                 uint64_t val = boost::endian::endian_reverse(*orgVal);
-                memcpy((char*) buffer + offset + i*tupleSize, &val, fieldSize);
+                memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (field->getDataType()->toString() == "CHAR") {
                 //TODO: I am not sure if we have to convert char at all because it is one byte only
                 throw new Exception(
@@ -302,13 +302,13 @@ void revertEndianness(TupleBuffer& tbuffer, SchemaPtr schema) {
             } else {
                 throw new Exception(
                     "Data type " + field->getDataType()->toString()
-                        + " is currently not supported for endian conversation");
+                    + " is currently not supported for endian conversation");
             }
             offset += fieldSize;
         }
     }
 }
 
-}
+}// namespace detail
 
-}
+}// namespace NES

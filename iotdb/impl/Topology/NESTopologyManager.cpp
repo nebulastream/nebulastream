@@ -43,7 +43,7 @@ bool NESTopologyManager::removeNESTopologyLink(NESTopologyLinkPtr linkPtr) {
 }
 
 void NESTopologyManager::printNESTopologyPlan() {
-    NES_DEBUG(getNESTopologyPlanString())
+    NES_DEBUG(getNESTopologyPlanString());
 }
 
 std::string NESTopologyManager::getNESTopologyPlanString() {
@@ -116,7 +116,7 @@ std::vector<json::value> NESTopologyManager::getChildrenNodes(
 
     const NESTopologyGraphPtr& nesGraphPtr = getNESTopologyPlan()->getNESTopologyGraph();
     const std::vector<NESTopologyLinkPtr>& edgesToNode = nesGraphPtr
-        ->getAllEdgesToNode(nesParentNode);
+                                                             ->getAllEdgesToNode(nesParentNode);
 
     std::vector<json::value> children = {};
 
@@ -147,5 +147,4 @@ void NESTopologyManager::resetNESTopologyPlan() {
     StreamCatalog::instance().reset();
 }
 
-}
-
+}// namespace NES

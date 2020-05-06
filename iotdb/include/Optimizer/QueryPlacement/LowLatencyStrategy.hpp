@@ -22,17 +22,16 @@ namespace NES {
 class LowLatencyStrategy : public BasePlacementStrategy {
 
   public:
-    ~LowLatencyStrategy() {};
+    ~LowLatencyStrategy(){};
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-    static std::unique_ptr<LowLatencyStrategy> create(){
+    static std::unique_ptr<LowLatencyStrategy> create() {
         return std::make_unique<LowLatencyStrategy>(LowLatencyStrategy());
     }
 
   private:
-
-    LowLatencyStrategy() {};
+    LowLatencyStrategy(){};
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
@@ -45,6 +44,6 @@ class LowLatencyStrategy : public BasePlacementStrategy {
     vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                          const NESTopologyEntryPtr rootNode) const;
 };
-}
+}// namespace NES
 
-#endif //NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_
+#endif//NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_

@@ -41,7 +41,7 @@ class CoordinatorServiceTest : public testing::Test {
                                                              receive_port, 2, /**nodeProperties**/
                                                              "", streamConf, NESNodeType::Sensor);
         }
-        NES_DEBUG("FINISHED ADDING 5 Nodes to topology")
+        NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
     }
 
     /* Will be called before a test is executed. */

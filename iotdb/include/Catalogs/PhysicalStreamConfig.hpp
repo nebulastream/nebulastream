@@ -16,22 +16,22 @@ namespace NES {
  */
 struct PhysicalStreamConfig {
 
-  PhysicalStreamConfig();
+    PhysicalStreamConfig();
 
-  PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
-                       size_t sourceFrequency, size_t numberOfBuffersToProduce,
-                       std::string physicalStreamName,
-                       std::string logicalStreamName);
+    PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
+                         size_t sourceFrequency, size_t numberOfBuffersToProduce,
+                         std::string physicalStreamName,
+                         std::string logicalStreamName);
 
-  std::string toString();
+    std::string toString();
 
-  std::string sourceType;
-  std::string sourceConfig;
-  size_t sourceFrequency;
-  size_t numberOfBuffersToProduce;
-  std::string physicalStreamName;
-  std::string logicalStreamName;
+    std::string sourceType;
+    std::string sourceConfig;
+    size_t sourceFrequency;
+    size_t numberOfBuffersToProduce;
+    std::string physicalStreamName;
+    std::string logicalStreamName;
 };
 
-}
+}// namespace NES
 #endif /* INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_ */

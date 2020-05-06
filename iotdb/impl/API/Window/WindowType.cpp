@@ -1,12 +1,11 @@
-#include <memory>
-#include <API/Window/WindowType.hpp>
 #include <API/Window/WindowMeasure.hpp>
+#include <API/Window/WindowType.hpp>
 #include <Util/Logger.hpp>
+#include <memory>
 
 namespace NES {
 
 WindowType::WindowType(TimeCharacteristic timeCharacteristic) : timeCharacteristic(timeCharacteristic) {
-
 }
 
 TimeCharacteristic WindowType::getTimeCharacteristic() const {
@@ -23,7 +22,7 @@ WindowTypePtr TumblingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeas
 void TumblingWindow::triggerWindows(WindowListPtr windows,
                                     uint64_t lastWatermark,
                                     uint64_t currentWatermark) const {
-    long lastStart = lastWatermark - ((lastWatermark + size.getTime())%size.getTime());
+    long lastStart = lastWatermark - ((lastWatermark + size.getTime()) % size.getTime());
     for (long windowStart = lastStart; windowStart + size.getTime() <= currentWatermark;
          windowStart += size.getTime()) {
         windows->emplace_back(windowStart, windowStart + size.getTime());
@@ -32,7 +31,7 @@ void TumblingWindow::triggerWindows(WindowListPtr windows,
 
 SlidingWindow::SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide)
     : size(size), slide(slide), WindowType(timeCharacteristic) {
-    NES_NOT_IMPLEMENTED
+    NES_NOT_IMPLEMENTED();
 }
 
 WindowTypePtr SlidingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
@@ -42,12 +41,12 @@ WindowTypePtr SlidingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasu
 void SlidingWindow::triggerWindows(WindowListPtr windows,
                                    uint64_t lastWatermark,
                                    uint64_t currentWatermark) const {
-    NES_NOT_IMPLEMENTED
+    NES_NOT_IMPLEMENTED();
 }
 
 SessionWindow::SessionWindow(TimeCharacteristic timeCharacteristic, TimeMeasure gap)
     : gap(gap), WindowType(timeCharacteristic) {
-    NES_NOT_IMPLEMENTED
+    NES_NOT_IMPLEMENTED();
 }
 
 WindowTypePtr SessionWindow::withGap(TimeCharacteristic timeCharacteristic, TimeMeasure gap) {
@@ -57,7 +56,7 @@ WindowTypePtr SessionWindow::withGap(TimeCharacteristic timeCharacteristic, Time
 void SessionWindow::triggerWindows(WindowListPtr windows,
                                    uint64_t lastWatermark,
                                    uint64_t currentWatermark) const {
-    NES_NOT_IMPLEMENTED
+    NES_NOT_IMPLEMENTED();
 }
 
 WindowState::WindowState(uint64_t start, uint64_t an_end) : start(start), end(an_end) {}
@@ -68,4 +67,4 @@ uint64_t WindowState::getStartTs() const {
 uint64_t WindowState::getEndTs() const {
     return end;
 }
-}
+}// namespace NES

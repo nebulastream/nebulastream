@@ -21,10 +21,10 @@ class NodeLocation {
     const NodeId nodeId;
     const std::string hostname;
     const uint16_t port;
+
   public:
     explicit NodeLocation(NodeId nodeId, const std::string& hostname, uint16_t port)
         : nodeId(nodeId), hostname(hostname), port(port) {
-
     }
 
     std::string createZmqURI() const {
@@ -43,7 +43,7 @@ class NodeLocation {
         return port;
     }
 };
-}
-}
+}// namespace Network
+}// namespace NES
 
-#endif //NES_NETWORKCOMMON_HPP
+#endif//NES_NETWORKCOMMON_HPP

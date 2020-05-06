@@ -3,20 +3,20 @@
 #include <list>
 
 #include <API/Schema.hpp>
+#include <API/Types/DataTypes.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <API/Types/DataTypes.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <Util/Logger.hpp>
-#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
 
@@ -119,8 +119,7 @@ std::string toString(TupleBuffer& buffer, SchemaPtr schema) {
     std::vector<DataTypePtr> types;
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
         offsets.push_back(schema->get(i)->getFieldSize());
-        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") +
-            std::to_string(schema->get(i)->getFieldSize()));
+        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") + std::to_string(schema->get(i)->getFieldSize()));
         types.push_back(schema->get(i)->getDataType());
     }
 
@@ -129,8 +128,7 @@ std::string toString(TupleBuffer& buffer, SchemaPtr schema) {
         uint32_t val = offsets[i];
         offsets[i] = prefix_sum;
         prefix_sum += val;
-        NES_DEBUG("CodeGenerator: " + std::string("Prefix Sum: ") + schema->get(i)->toString() + std::string(": ") +
-            std::to_string(offsets[i]));
+        NES_DEBUG("CodeGenerator: " + std::string("Prefix Sum: ") + schema->get(i)->toString() + std::string(": ") + std::to_string(offsets[i]));
     }
 
     str << "+----------------------------------------------------+" << std::endl;
@@ -142,7 +140,7 @@ std::string toString(TupleBuffer& buffer, SchemaPtr schema) {
     str << "+----------------------------------------------------+" << std::endl;
 
     auto buf = buffer.getBufferAs<char>();
-    for (uint32_t i = 0; i < buffer.getNumberOfTuples()*buffer.getTupleSizeInBytes();
+    for (uint32_t i = 0; i < buffer.getNumberOfTuples() * buffer.getTupleSizeInBytes();
          i += buffer.getTupleSizeInBytes()) {
         str << "|";
         for (uint32_t s = 0; s < offsets.size(); ++s) {
@@ -167,7 +165,6 @@ bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& co
     context->resultSchema = context->inputSchema;
     context->code->structDeclarationResultTuple = getStructDeclarationResultTuple(context->resultSchema);
     context->addTypeDeclaration(context->code->structDeclarationResultTuple);
-
 
     /* === declarations === */
     auto tupleBufferType = createAnonymUserDefinedType("NES::TupleBuffer");
@@ -204,7 +201,6 @@ bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& co
     context->code->variableDeclarations.push_back(varDeclarationInputTuples);
     context->code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
 
-
     /** init statements before for loop */
 
     /*  tuples = (InputTuple *)input_buffer.getBuffer()*/
@@ -220,8 +216,7 @@ bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& co
     auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
     context->code->forLoopStmt = std::make_shared<FOR>(
         context->code->varDeclarationRecordIndex,
-        (VarRef(context->code->varDeclarationRecordIndex) <
-            (numberOfRecords)).copy(),
+        (VarRef(context->code->varDeclarationRecordIndex) < (numberOfRecords)).copy(),
         (++VarRef(context->code->varDeclarationRecordIndex)).copy());
 
     context->code->currentCodeInsertionPoint = context->code->forLoopStmt->getCompoundStatement();
@@ -279,8 +274,8 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
 
     BinaryOperatorStatement
         callVar =
-        VarRef(varDeclarationResultTuples)[VarRef(context->code->varDeclarationNumberOfResultTuples)].accessRef(VarRef(
-            var_map_i));
+            VarRef(varDeclarationResultTuples)[VarRef(context->code->varDeclarationNumberOfResultTuples)].accessRef(VarRef(
+                var_map_i));
     ExpressionStatmentPtr expr = pred->generateCode(context->code);
     BinaryOperatorStatement assignedMap = (callVar).assign(*expr);
     context->code->currentCodeInsertionPoint->addStatement(assignedMap.copy());
@@ -314,10 +309,10 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
         auto variableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, context->resultSchema->get(i));
         if (!variableDeclaration) {
             NES_ERROR("CodeGenerator: Could not extract field " << context->resultSchema->get(i)->toString() << " from struct "
-                                                 << structDeclarationResultTuple.getTypeName());
+                                                                << structDeclarationResultTuple.getTypeName());
             NES_DEBUG("CodeGenerator: W>");
         }
-        auto varDeclarationInput =  getVariableDeclarationForField(context->code->structDeclarationResultTuple, context->resultSchema->get(i));
+        auto varDeclarationInput = getVariableDeclarationForField(context->code->structDeclarationResultTuple, context->resultSchema->get(i));
         if (varDeclarationInput) {
             bool override = false;
             for (size_t j = 0; j < context->code->override_fields.size(); j++) {
@@ -330,7 +325,7 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
             if (!override) {
                 VariableDeclarationPtr
                     varDeclarationField =
-                    getVariableDeclarationForField(structDeclarationResultTuple, context->resultSchema->get(i));
+                        getVariableDeclarationForField(structDeclarationResultTuple, context->resultSchema->get(i));
                 if (!varDeclarationField) {
                     NES_ERROR("Could not extract field " << context->resultSchema->get(i)->toString() << " from struct "
                                                          << structDeclarationResultTuple.getTypeName());
@@ -379,10 +374,11 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
 
     auto stateVariableDeclaration = VariableDeclaration::create(
         createPointerDataType(createAnonymUserDefinedType(
-            "NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>")), "state_variable");
+            "NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>")),
+        "state_variable");
 
     auto stateVarDeclarationStatement = VarDeclStatement(stateVariableDeclaration)
-        .assign(TypeCast(VarRef(context->code->varDeclarationState), stateVariableDeclaration.getDataType()));
+                                            .assign(TypeCast(VarRef(context->code->varDeclarationState), stateVariableDeclaration.getDataType()));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         stateVarDeclarationStatement));
 
@@ -390,9 +386,9 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     auto keyVariableDeclaration = VariableDeclaration::create(createDataType(BasicType::INT64), "key");
     auto keyVariableAttributeDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
     auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
-        .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-            VarRef(
-                keyVariableAttributeDeclaration)));
+                                             .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                                                 VarRef(
+                                                     keyVariableAttributeDeclaration)));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(keyVariableAttributeStatement));
 
     // get key handle for current key
@@ -401,10 +397,8 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     auto getKeyStateVariable = FunctionCallStatement("get");
     getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
     auto keyHandlerVariableStatement = VarDeclStatement(keyHandlerVariableDeclaration)
-        .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
+                                           .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(keyHandlerVariableStatement));
-
-
 
     // access window slice state from state variable via key
     auto windowStateVariableDeclaration = VariableDeclaration::create(
@@ -412,10 +406,9 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
     getValueFromKeyHandle.addParameter(ConstantExprStatement(INT64, "0"));
     auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
-        .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
+                                            .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         windowStateVariableStatement));
-
 
     // get current timestamp
     // TODO add support for event time
@@ -423,7 +416,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
         createAnonymUserDefinedType("auto"), "current_ts");
     auto getCurrentTs = FunctionCallStatement("NES::getTsFromClock");
     auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration)
-        .assign(getCurrentTs);
+                                     .assign(getCurrentTs);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         getCurrentTsStatement));
 
@@ -432,8 +425,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
     sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
     auto call =
-        std::make_shared<BinaryOperatorStatement>(VarRef(context->code->varDeclarationWindowManager).accessPtr(
-            sliceStream));
+        std::make_shared<BinaryOperatorStatement>(VarRef(context->code->varDeclarationWindowManager).accessPtr(sliceStream));
     context->code->currentCodeInsertionPoint->addStatement(call);
 
     // find the slices for a time stamp
@@ -444,7 +436,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
         createDataType(BasicType(UINT64)), "current_slice_index");
     auto current_slice_ref = VarRef(currentSliceIndexVariableDeclaration);
     auto currentSliceIndexVariableStatement = VarDeclStatement(currentSliceIndexVariableDeclaration)
-        .assign(getSliceIndexByTsCall);
+                                                  .assign(getSliceIndexByTsCall);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         currentSliceIndexVariableStatement));
 
@@ -454,7 +446,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     VariableDeclaration partialAggregatesVarDeclaration = VariableDeclaration::create(
         createAnonymUserDefinedType("std::vector<int64_t>&"), "partialAggregates");
     auto assignment = VarDeclStatement(partialAggregatesVarDeclaration)
-        .assign(getPartialAggregatesCall);
+                          .assign(getPartialAggregatesCall);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
 
     // update partial aggregate
@@ -463,8 +455,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
         context->code->currentCodeInsertionPoint,
         partialRef,
         context->code->structDeclaratonInputTuple,
-        VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]
-    );
+        VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
 
     return true;
 }
@@ -477,11 +468,11 @@ ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs&, const Generat
 
     // FunctionDeclaration main_function =
     FunctionBuilder functionBuilder = FunctionBuilder::create("compiled_query")
-        .returns(createDataType(BasicType(UINT32)))
-        .addParameter(code->varDeclarationInputBuffer)
-        .addParameter(code->varDeclarationState)
-        .addParameter(code->varDeclarationWindowManager)
-        .addParameter(code->varDeclarationResultBuffer);
+                                          .returns(createDataType(BasicType(UINT32)))
+                                          .addParameter(code->varDeclarationInputBuffer)
+                                          .addParameter(code->varDeclarationState)
+                                          .addParameter(code->varDeclarationWindowManager)
+                                          .addParameter(code->varDeclarationResultBuffer);
 
     for (auto& variableDeclaration : code->variableDeclarations) {
         functionBuilder.addVariableDeclaration(variableDeclaration);
@@ -519,4 +510,4 @@ CCodeGenerator::~CCodeGenerator() {}
 
 CodeGeneratorPtr createCodeGenerator() { return std::make_shared<CCodeGenerator>(CodeGenArgs()); }
 
-} // namespace NES
+}// namespace NES

@@ -1,16 +1,16 @@
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/MemoryLayout/PhysicalField.hpp>
+#include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <SourceSink/BinarySource.hpp>
 #include <SourceSink/CSVSource.hpp>
-#include <SourceSink/GeneratorSource.hpp>
-#include <SourceSink/ZmqSource.hpp>
 #include <SourceSink/DataSource.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
-#include <NodeEngine/MemoryLayout/PhysicalField.hpp>
-#include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/DefaultSource.hpp>
-#include <SourceSink/SenseSource.hpp>
+#include <SourceSink/GeneratorSource.hpp>
 #include <SourceSink/KafkaSource.hpp>
+#include <SourceSink/SenseSource.hpp>
+#include <SourceSink/SourceCreator.hpp>
+#include <SourceSink/ZmqSource.hpp>
 
 namespace NES {
 
@@ -59,5 +59,4 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
     return std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, groupId, autoCommit, kafkaConsumerTimeout);
 }
 
-}
-
+}// namespace NES

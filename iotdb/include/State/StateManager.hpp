@@ -14,7 +14,8 @@ namespace NES {
  */
 class StateManager {
     typedef detail::Destroyable* state_variable_base_type;
-private:
+
+  private:
     std::mutex mutex;
     std::unordered_map<std::string, state_variable_base_type> state_variables;
 
@@ -24,7 +25,8 @@ private:
             delete it.second;
         }
     }
-public:
+
+  public:
     /**
      * Register a new StateVariable object
      * @tparam Key
@@ -32,7 +34,7 @@ public:
      * @param variable_name an unique identifier for the state variable
      * @return the state variable as a reference
      */
-    template <typename Key, typename Value>
+    template<typename Key, typename Value>
     StateVariable<Key, Value>& registerState(const std::string& variable_name) {
         std::unique_lock<std::mutex> lock(mutex);
         auto state_var = new StateVariable<Key, Value>(variable_name);
@@ -40,11 +42,10 @@ public:
         return *state_var;
     }
 
-
     /**
      * Singleton accessor to the state manager. As of now, there is one per process.
      */
     static StateManager& instance();
 };
-}
-#endif //STATEMANAGER_HPP
+}// namespace NES
+#endif//STATEMANAGER_HPP

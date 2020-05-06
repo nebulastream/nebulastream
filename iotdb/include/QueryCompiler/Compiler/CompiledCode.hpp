@@ -1,7 +1,7 @@
 #ifndef INCLUDE_COMPILED_CODE_HPP_
 #define INCLUDE_COMPILED_CODE_HPP_
-#include <string>
 #include <memory>
+#include <string>
 namespace NES {
 
 class CompiledCode;
@@ -39,8 +39,7 @@ class CompiledCode {
      * @brief Gets a untyped function pointer by its mangled name and returns the typed function pointer.
      */
     virtual void* getFunctionPointerImpl(const std::string& name) = 0;
-
 };
-}
+}// namespace NES
 
-#endif //INCLUDE_COMPILED_CODE_HPP_
+#endif//INCLUDE_COMPILED_CODE_HPP_

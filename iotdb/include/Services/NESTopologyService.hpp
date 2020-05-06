@@ -17,11 +17,9 @@ typedef std::shared_ptr<NESTopologyService> NESTopologyServicePtr;
 class NESTopologyService {
 
   private:
-
     NESTopologyService() = default;
 
   public:
-
     ~NESTopologyService() = default;
 
     static NESTopologyServicePtr getInstance() {
@@ -36,6 +34,6 @@ class NESTopologyService {
      */
     web::json::value getNESTopologyAsJson();
 };
-}
+}// namespace NES
 
-#endif //NESTOPOLOGYSERVICE_HPP
+#endif//NESTOPOLOGYSERVICE_HPP

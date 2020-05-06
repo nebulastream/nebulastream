@@ -16,5 +16,4 @@ SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string 
     return std::make_shared<SenseSourceDescriptor>(SenseSourceDescriptor(schema, udfs));
 }
 
-}
-
+}// namespace NES

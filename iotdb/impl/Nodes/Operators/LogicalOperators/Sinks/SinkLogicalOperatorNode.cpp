@@ -28,4 +28,4 @@ const std::string SinkLogicalOperatorNode::toString() const {
 LogicalOperatorNodePtr createSinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor) {
     return std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor);
 }
-}
+}// namespace NES

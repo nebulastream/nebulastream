@@ -6,11 +6,13 @@
 namespace NES {
 
 enum FileOutputType {
-    BINARY_TYPE, CSV_TYPE
+    BINARY_TYPE,
+    CSV_TYPE
 };
 
 enum FileOutputMode {
-    FILE_OVERWRITE, FILE_APPEND
+    FILE_OVERWRITE,
+    FILE_APPEND
 };
 
 /**
@@ -19,7 +21,6 @@ enum FileOutputMode {
 class FileSinkDescriptor : public SinkDescriptor {
 
   public:
-
     /**
      * @brief Factory method to create a new file sink descriptor
      * @param schema output schema of this sink descriptor
@@ -56,6 +57,6 @@ class FileSinkDescriptor : public SinkDescriptor {
 };
 
 typedef std::shared_ptr<FileSinkDescriptor> FileSinkDescriptorPtr;
-}
+}// namespace NES
 
-#endif //NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_
+#endif//NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_

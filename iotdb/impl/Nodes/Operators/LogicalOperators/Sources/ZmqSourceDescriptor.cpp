@@ -21,6 +21,4 @@ uint16_t ZmqSourceDescriptor::getPort() const {
     return port;
 }
 
-}
-
-
+}// namespace NES

@@ -1,10 +1,10 @@
 #ifndef NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINK_SINKDESCRIPTOR_HPP_
 #define NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINK_SINKDESCRIPTOR_HPP_
 
-#include <iostream>
-#include <memory>
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
+#include <iostream>
+#include <memory>
 
 namespace NES {
 
@@ -12,7 +12,10 @@ namespace NES {
  * @brief Enum defining different Sink Descriptor types
  */
 enum SinkDescriptorType {
-    FileSinkDescriptorType, KafkaSinkDescriptorType, ZmqSinkDescriptorType, PrintSinkDescriptorType
+    FileSinkDescriptorType,
+    KafkaSinkDescriptorType,
+    ZmqSinkDescriptorType,
+    PrintSinkDescriptorType
 };
 
 class SinkDescriptor;
@@ -24,8 +27,7 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
-
-    SinkDescriptor(SchemaPtr schema) : schema(schema) {};
+    SinkDescriptor(SchemaPtr schema) : schema(schema){};
 
     /**
      * @brief Get the type of the descriptor
@@ -69,10 +71,10 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
         }
     }
 
-  private :
+  private:
     SchemaPtr schema;
 };
 
-}
+}// namespace NES
 
-#endif //NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINK_SINKDESCRIPTOR_HPP_
+#endif//NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINK_SINKDESCRIPTOR_HPP_

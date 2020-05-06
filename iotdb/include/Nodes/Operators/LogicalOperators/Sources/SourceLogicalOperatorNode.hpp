@@ -1,8 +1,8 @@
 #ifndef SOURCE_LOGICAL_OPERATOR_NODE_HPP
 #define SOURCE_LOGICAL_OPERATOR_NODE_HPP
 
-#include <memory>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <memory>
 
 namespace NES {
 
@@ -10,7 +10,7 @@ namespace NES {
  * @brief Node representing logical source operator
  */
 class SourceLogicalOperatorNode : public LogicalOperatorNode {
-public:
+  public:
     explicit SourceLogicalOperatorNode(SourceDescriptorPtr sourceDescriptor);
 
     /**
@@ -41,6 +41,6 @@ public:
 };
 
 typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
-} // namespace NES
+}// namespace NES
 
-#endif // SOURCE_LOGICAL_OPERATOR_NODE_HPP
+#endif// SOURCE_LOGICAL_OPERATOR_NODE_HPP

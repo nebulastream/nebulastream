@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_COMPILER_SYSTEMCOMPILERCOMPILEDCODE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_COMPILER_SYSTEMCOMPILERCOMPILEDCODE_HPP_
-#include <Util/TimeMeasurement.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
+#include <Util/TimeMeasurement.hpp>
 
 namespace NES {
 
@@ -28,6 +28,6 @@ class SystemCompilerCompiledCode : public CompiledCode {
 CompiledCodePtr createSystemCompilerCompiledCode(SharedLibraryPtr library,
                                                  const std::string& baseName);
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_QUERYCOMPILER_COMPILER_SYSTEMCOMPILERCOMPILEDCODE_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_COMPILER_SYSTEMCOMPILERCOMPILEDCODE_HPP_

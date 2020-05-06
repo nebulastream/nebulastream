@@ -12,8 +12,7 @@ KeyByOperator::KeyByOperator(const Attributes& keyby_spec) : Operator(), keyby_s
 
 KeyByOperator::KeyByOperator(const KeyByOperator& other) : keyby_spec_(NES::copy(other.keyby_spec_)) {}
 
-KeyByOperator& KeyByOperator::operator=(const KeyByOperator& other)
-{
+KeyByOperator& KeyByOperator::operator=(const KeyByOperator& other) {
     if (this != &other) {
         keyby_spec_ = NES::copy(other.keyby_spec_);
     }
@@ -29,8 +28,7 @@ const OperatorPtr KeyByOperator::copy() const {
     return copy;
 }
 
-const std::string KeyByOperator::toString() const
-{
+const std::string KeyByOperator::toString() const {
     std::stringstream ss;
     ss << "KEYBY(" << NES::toString(keyby_spec_) << ")";
     return ss.str();
@@ -40,9 +38,8 @@ OperatorType KeyByOperator::getOperatorType() const { return KEYBY_OP; }
 
 KeyByOperator::~KeyByOperator() {}
 
-const OperatorPtr createKeyByOperator(const Attributes& keyby_spec)
-{
+const OperatorPtr createKeyByOperator(const Attributes& keyby_spec) {
     return std::make_shared<KeyByOperator>(keyby_spec);
 }
 
-} // namespace NES
+}// namespace NES

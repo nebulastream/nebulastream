@@ -1,12 +1,12 @@
-#include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
+#include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
-#include <API/Schema.hpp>
+#include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(schemaPtr) {};
+PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(schemaPtr){};
 
 PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(SchemaPtr schema) {
     return std::make_shared<PhysicalSchema>(schema);
@@ -33,7 +33,7 @@ bool PhysicalSchema::validFieldIndex(uint64_t fieldIndex) {
     if (fieldIndex > fields.size()) {
         NES_FATAL_ERROR(
             "PhysicalSchema: field index " << fieldIndex << " is out of bound. Schema only contains " << fields.size()
-                                           << " fields.")
+                                           << " fields.");
         throw IllegalArgumentException("Field index out of bound");
     }
     return true;
@@ -42,4 +42,4 @@ bool PhysicalSchema::validFieldIndex(uint64_t fieldIndex) {
 uint64_t PhysicalSchema::getRecordSize() {
     return this->schema->getSchemaSizeInBytes();
 }
-}
+}// namespace NES

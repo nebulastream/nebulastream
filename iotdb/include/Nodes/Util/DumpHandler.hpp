@@ -21,11 +21,10 @@ class DumpHandler {
     * Dump the specific node and its children.
     */
     virtual void dump(const NodePtr node, std::ostream& out) = 0;
-
 };
 
 typedef std::shared_ptr<DumpHandler> DebugDumpHandlerPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
+#endif//NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_

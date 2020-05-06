@@ -1,18 +1,18 @@
+#include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
-#include <NodeEngine/QueryManager.hpp>
 namespace NES {
 
-GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan("") {   }
+GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan("") {}
 
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& queryId) : QueryExecutionPlan(queryId) {
 }
 
 bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, TupleBuffer& inputBuffer) {
     //TODO this should be changed such that we provide the outputbuffer too
-    NES_DEBUG("GeneratedQueryExecutionPlan::executeStage get buffer")
+    NES_DEBUG("GeneratedQueryExecutionPlan::executeStage get buffer");
     auto outputBuffer = bufferManager->getBufferBlocking();
-    NES_DEBUG("GeneratedQueryExecutionPlan::executeStage got buffer of size=" << outputBuffer.getBufferSize())
+    NES_DEBUG("GeneratedQueryExecutionPlan::executeStage got buffer of size=" << outputBuffer.getBufferSize());
     outputBuffer.setTupleSizeInBytes(inputBuffer.getTupleSizeInBytes());
     NES_DEBUG("inputBuffer->getTupleSizeInBytes()=" << inputBuffer.getTupleSizeInBytes());
 
@@ -24,7 +24,7 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, Tuple
             // todo schedule dispatching as a new task
             this->executeStage(pipeline_stage_id + 1, outputBuffer);
         } else {
-            for (const DataSinkPtr& s: this->getSinks()) {
+            for (const DataSinkPtr& s : this->getSinks()) {
                 NES_DEBUG("QueryExecutionPlan: end output buffer to sink");
                 s->writeData(outputBuffer);
             }
@@ -33,4 +33,4 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, Tuple
     return ret;
 }
 
-} // namespace NES
+}// namespace NES

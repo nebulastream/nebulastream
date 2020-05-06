@@ -39,6 +39,6 @@ class FieldAccessExpressionNode : public ExpressionNode {
 
 typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
 
-}
+}// namespace NES
 
-#endif // NES_INCLUDE_NODES_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_

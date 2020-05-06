@@ -13,7 +13,7 @@ bool NegateExpressionNode::equal(const NodePtr rhs) const {
 }
 
 const std::string NegateExpressionNode::toString() const {
-    return "NegateNode("+stamp->toString()+")";
+    return "NegateNode(" + stamp->toString() + ")";
 }
 
 ExpressionNodePtr NegateExpressionNode::create(const ExpressionNodePtr child) {
@@ -32,4 +32,4 @@ void NegateExpressionNode::inferStamp(SchemaPtr schema) {
     }
 }
 
-}
+}// namespace NES

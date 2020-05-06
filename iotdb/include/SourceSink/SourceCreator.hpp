@@ -2,9 +2,9 @@
 #define INCLUDE_SOURCESINK_SOURCECREATOR_HPP_
 
 #include <SourceSink/DataSource.hpp>
+#include <SourceSink/GeneratorSource.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <SourceSink/GeneratorSource.hpp>
 #include <cppkafka/configuration.h>
 
 namespace NES {
@@ -32,7 +32,6 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr sch
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
-
 
 /**
  * @brief function to create an empty zmq source
@@ -85,5 +84,5 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
                                       bool autoCommit,
                                       uint64_t kafkaConsumerTimeout);
 
-}
+}// namespace NES
 #endif /* INCLUDE_SOURCESINK_SOURCECREATOR_HPP_ */

@@ -1,26 +1,27 @@
 #ifndef KAFKASINK_HPP
 #define KAFKASINK_HPP
 
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <chrono>
 
-#include <cppkafka/cppkafka.h>
 #include <SourceSink/DataSink.hpp>
+#include <cppkafka/cppkafka.h>
 
 namespace NES {
 
 class KafkaSink : public DataSink {
- constexpr static size_t INVALID_PARTITION_NUMBER = -1;
- public:
-  KafkaSink();
-  KafkaSink(SchemaPtr schema,
-            const std::string& brokers,
-            const std::string& topic,
-            const size_t kafkaProducerTimeout=10*1000);
+    constexpr static size_t INVALID_PARTITION_NUMBER = -1;
 
-  ~KafkaSink() override;
+  public:
+    KafkaSink();
+    KafkaSink(SchemaPtr schema,
+              const std::string& brokers,
+              const std::string& topic,
+              const size_t kafkaProducerTimeout = 10 * 1000);
+
+    ~KafkaSink() override;
     SinkType getType() const override;
     bool writeData(TupleBuffer& input_buffer);
     void setup() override;
@@ -33,10 +34,10 @@ class KafkaSink : public DataSink {
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
-        ar & boost::serialization::base_object<DataSink>(*this);
-        ar & brokers;
-        ar & topic;
-        ar & partition;
+        ar& boost::serialization::base_object<DataSink>(*this);
+        ar& brokers;
+        ar& topic;
+        ar& partition;
     }
 
     std::string brokers;
@@ -50,6 +51,6 @@ class KafkaSink : public DataSink {
 
     std::chrono::milliseconds kafkaProducerTimeout;
 };
-} // namespace NES
+}// namespace NES
 
-#endif // KAFKASINK_HPP
+#endif// KAFKASINK_HPP

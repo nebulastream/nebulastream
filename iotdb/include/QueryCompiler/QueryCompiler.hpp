@@ -9,7 +9,6 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
@@ -63,6 +62,6 @@ class QueryCompiler {
 
 QueryCompilerPtr createDefaultQueryCompiler(QueryManagerPtr queryManager);
 
-}
+}// namespace NES
 
-#endif //INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
+#endif//INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_

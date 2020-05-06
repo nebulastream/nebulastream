@@ -1,18 +1,18 @@
 
+#include <NodeEngine/QueryManager.hpp>
+#include <State/StateManager.hpp>
+#include <Util/Logger.hpp>
+#include <Windows/WindowHandler.hpp>
 #include <atomic>
+#include <boost/serialization/export.hpp>
 #include <iostream>
 #include <memory>
-#include <Util/Logger.hpp>
-#include <boost/serialization/export.hpp>
-#include <State/StateManager.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <Windows/WindowHandler.hpp>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(NES::WindowHandler)
 namespace NES {
 
 WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)
-    : windowDefinition(windowDefinitionPtr),  queryManager(queryManager), bufferManager(bufferManager) {
+    : windowDefinition(windowDefinitionPtr), queryManager(queryManager), bufferManager(bufferManager) {
     this->thread.reset();
 }
 
@@ -64,7 +64,7 @@ bool WindowHandler::start() {
         return false;
     }
     running = true;
-    NES_DEBUG("WindowHandler " << this << ": Spawn thread")
+    NES_DEBUG("WindowHandler " << this << ": Spawn thread");
     thread = std::make_shared<std::thread>([this]() {
         trigger();
     });
@@ -98,4 +98,4 @@ const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition,
     return std::make_shared<WindowHandler>(windowDefinition, queryManager, bufferManager);
 }
 
-} // namespace NES
+}// namespace NES

@@ -70,10 +70,9 @@ class WindowHandler {
      * @param windowDefinition
      * @param tupleBuffer
      */
-    template <class FinalAggregateType, class PartialAggregateType>
+    template<class FinalAggregateType, class PartialAggregateType>
     void aggregateWindows(WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
-                          TupleBuffer& tupleBuffer)
-    {
+                          TupleBuffer& tupleBuffer) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -95,15 +94,13 @@ class WindowHandler {
             for (uint64_t windowId = 0; windowId < windows->size(); windowId++) {
                 auto window = (*windows)[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                if (window.getStartTs() <= slices[sliceId].getStartTs() &&
-                    window.getEndTs() >= slices[sliceId].getEndTs()) {
+                if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
                     // TODO Because of this condition we currently only support SUM aggregations
                     if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
                         if (partialFinalAggregates.size() <= windowId) {
                             // initial the partial aggregate
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
-                        }
-                        else {
+                        } else {
                             // update the partial aggregate
                             partialFinalAggregates[windowId] = sumAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
@@ -128,7 +125,8 @@ class WindowHandler {
     void* getWindowState();
     WindowManagerPtr getWindowManager() { return windowManager; };
 
-    template <class Archive> void serialize(Archive& ar, const unsigned int version) {}
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version) {}
 
   private:
     std::atomic_bool running{false};
@@ -148,5 +146,5 @@ const WindowHandlerPtr createTestWindow(size_t campainCnt, size_t windowSizeInSe
 const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager,
                                            BufferManagerPtr bufferManager);
 
-} // namespace NES
+}// namespace NES
 #endif /* INCLUDE_WINDOWS_WINDOW_HPP_ */

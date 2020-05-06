@@ -48,4 +48,4 @@ UnaryOperatorStatement operator!(const ExpressionStatment& ref);
 
 UnaryOperatorStatement sizeOf(const ExpressionStatment& ref);
 
-} // namespace NES
+}// namespace NES

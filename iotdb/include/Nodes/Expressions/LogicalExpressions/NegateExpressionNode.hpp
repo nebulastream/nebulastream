@@ -25,6 +25,6 @@ class NegateExpressionNode : public LogicalUnaryExpressionNode {
      */
     void inferStamp(SchemaPtr schema) override;
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_UNARYEXPRESSIONS_NEGATEEXPRESSINNODE_HPP_
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_UNARYEXPRESSIONS_NEGATEEXPRESSINNODE_HPP_

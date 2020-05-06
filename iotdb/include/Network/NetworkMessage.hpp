@@ -1,8 +1,8 @@
 #ifndef NES_NETWORKMESSAGE_HPP
 #define NES_NETWORKMESSAGE_HPP
 
-#include <cstdint>
 #include <Network/NetworkCommon.hpp>
+#include <cstdint>
 
 namespace NES {
 namespace Network {
@@ -11,7 +11,11 @@ namespace Messages {
 using nes_magic_number_t = uint64_t;
 static constexpr nes_magic_number_t NES_NETWORK_MAGIC_NUMBER = 0xBADC0FFEE;
 
-enum MessageType { ClientAnnouncement, ServerReady, DataBuffer, ErrorMessage, EndOfStream };
+enum MessageType { ClientAnnouncement,
+                   ServerReady,
+                   DataBuffer,
+                   ErrorMessage,
+                   EndOfStream };
 
 class MessageHeader {
   public:
@@ -148,7 +152,6 @@ class DataBufferMessage {
 
     explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords)
         : payloadSize(payloadSize), numOfRecords(numOfRecords) {
-
     }
 
     /**
@@ -170,7 +173,6 @@ class DataBufferMessage {
   private:
     const uint32_t payloadSize;
     const uint32_t numOfRecords;
-
 };
 
 class EndOfStreamMessage {
@@ -185,6 +187,7 @@ class EndOfStreamMessage {
           operatorId(operatorId),
           partitionId(partitionId),
           subpartitionId(subpartitionId) {}
+
   private:
     const QueryId queryId;
     const OperatorId operatorId;
@@ -195,11 +198,12 @@ class EndOfStreamMessage {
 class ErroMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = ErrorMessage;
+
   private:
 };
 
-}
-}
-}
+}// namespace Messages
+}// namespace Network
+}// namespace NES
 
-#endif //NES_NETWORKMESSAGE_HPP
+#endif//NES_NETWORKMESSAGE_HPP

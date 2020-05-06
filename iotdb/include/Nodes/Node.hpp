@@ -1,10 +1,10 @@
 #ifndef NODES_NODE_HPP
 #define NODES_NODE_HPP
 
-#include <iostream>
-#include <vector>
-#include <memory>
 #include <Util/Logger.hpp>
+#include <iostream>
+#include <memory>
+#include <vector>
 
 namespace NES {
 
@@ -241,6 +241,7 @@ class Node : public std::enable_shared_from_this<Node> {
      *        in this vector
      */
     std::vector<NodePtr> children{};
+
   private:
     /**
      * @brief check if an node is in given vector or not
@@ -264,7 +265,6 @@ class Node : public std::enable_shared_from_this<Node> {
      * @return return true if the given nodeToFind is found in the graph of root, otherwise false
      */
     NodePtr findRecursively(const NodePtr root, const NodePtr nodeToFind);
-
 
     /********************************************************************************
      *                   Helper functions                                           *
@@ -293,7 +293,7 @@ class Node : public std::enable_shared_from_this<Node> {
         if (this->instanceOf<NodeType>()) {
             foundNodes.push_back(this->as<NodeType>());
         }
-        for (auto& successor:this->children) {
+        for (auto& successor : this->children) {
             successor->getNodesByTypeHelper(foundNodes);
         }
     };
@@ -314,4 +314,4 @@ class Node : public std::enable_shared_from_this<Node> {
 };
 }// namespace NES
 
-#endif  // NODES_NODE_HPP
+#endif// NODES_NODE_HPP

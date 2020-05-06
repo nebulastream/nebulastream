@@ -112,13 +112,12 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
 
         NES_INFO(
             "Test: query result = Processed Block:" << inBuf.getNumberOfTuples() << " count: " << count << " psum: "
-                                                    << psum << " sum: " << sum)
+                                                    << psum << " sum: " << sum);
 
         auto sink = getSinks()[0];
-        NES_DEBUG("TEST: try to get buffer")
         TupleBuffer outputBuffer = inBuf;
 
-        NES_DEBUG("TEST: got buffer")
+        NES_DEBUG("TEST: got buffer");
         auto arr = outputBuffer.getBufferAs<uint32_t>();
         arr[0] = static_cast<uint32_t>(sum.load());
         outputBuffer.setNumberOfTuples(1);

@@ -1,14 +1,13 @@
-#include <boost/filesystem/operations.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <Util/SharedLibrary.hpp>
+#include <boost/filesystem/operations.hpp>
 
 namespace NES {
 
 SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library,
-                                                       const std::string& baseName) :
-    CompiledCode(),
-    library(library),
-    baseFileName(baseName) {};
+                                                       const std::string& baseName) : CompiledCode(),
+                                                                                      library(library),
+                                                                                      baseFileName(baseName){};
 SystemCompilerCompiledCode::~SystemCompilerCompiledCode() {
     cleanUp();
 }
@@ -39,4 +38,4 @@ CompiledCodePtr createSystemCompilerCompiledCode(SharedLibraryPtr library,
                                                  const std::string& baseName) {
     return std::make_shared<SystemCompilerCompiledCode>(library, baseName);
 }
-}
+}// namespace NES

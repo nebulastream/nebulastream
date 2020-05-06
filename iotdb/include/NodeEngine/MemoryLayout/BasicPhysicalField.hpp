@@ -10,9 +10,9 @@ namespace NES {
 template<class ValueType>
 class BasicPhysicalField : public PhysicalField {
   public:
-    BasicPhysicalField(uint64_t bufferOffset) : PhysicalField(bufferOffset) {};
-    BasicPhysicalField(BasicPhysicalField<ValueType>* physicalField) : PhysicalField(physicalField) {};
-    ~BasicPhysicalField() {};
+    BasicPhysicalField(uint64_t bufferOffset) : PhysicalField(bufferOffset){};
+    BasicPhysicalField(BasicPhysicalField<ValueType>* physicalField) : PhysicalField(physicalField){};
+    ~BasicPhysicalField(){};
     const PhysicalFieldPtr copy() const override {
         return std::make_shared<BasicPhysicalField>(*this);
     }
@@ -44,6 +44,6 @@ template<class ValueType>
 PhysicalFieldPtr createBasicPhysicalField(uint64_t bufferOffset) {
     return std::make_shared<BasicPhysicalField<ValueType>>(bufferOffset);
 }
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_BASICPHYSICALFIELD_HPP_
+#endif//NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_BASICPHYSICALFIELD_HPP_

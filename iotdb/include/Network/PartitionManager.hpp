@@ -6,13 +6,13 @@
 namespace NES {
 namespace Network {
 class PartitionManager {
-public:
+  public:
     void registerSubpartition();
     void unregisterSubpartition();
-private:
 
+  private:
 };
-}
-}
+}// namespace Network
+}// namespace NES
 
-#endif //NES_PARTITIONMANAGER_HPP
+#endif//NES_PARTITIONMANAGER_HPP

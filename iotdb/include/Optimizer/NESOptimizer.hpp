@@ -6,23 +6,21 @@
  *         information about the operators to be executed and the nodes where the execution is to be done.
  */
 
-
 #ifndef NESOPTIMIZER_HPP
 #define NESOPTIMIZER_HPP
 
-#include "NESExecutionPlan.hpp"
 #include "../Topology/NESTopologyPlan.hpp"
+#include "NESExecutionPlan.hpp"
 
 namespace NES {
 
 class NESOptimizer {
 
- public:
-
-  NESExecutionPlanPtr prepareExecutionGraph(std::string strategy,
-                                         InputQueryPtr inputQuery,
-                                         NESTopologyPlanPtr nesTopologyPlan);
+  public:
+    NESExecutionPlanPtr prepareExecutionGraph(std::string strategy,
+                                              InputQueryPtr inputQuery,
+                                              NESTopologyPlanPtr nesTopologyPlan);
 };
-}
+}// namespace NES
 
-#endif //NESOPTIMIZER_HPP
+#endif//NESOPTIMIZER_HPP

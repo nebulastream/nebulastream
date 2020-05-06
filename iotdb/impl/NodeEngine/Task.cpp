@@ -1,6 +1,6 @@
-#include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Task.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
 
 namespace NES {
 
@@ -18,9 +18,8 @@ size_t Task::getNumberOfTuples() {
     return buf.getNumberOfTuples();
 }
 
-QueryExecutionPlanPtr Task::getQep()
-{
+QueryExecutionPlanPtr Task::getQep() {
     return qep;
 }
 
-}  // namespace NES
+}// namespace NES

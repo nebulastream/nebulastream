@@ -26,7 +26,6 @@ class FilterPushDownRule : public BaseRewriteRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
 
   private:
-
     /**
      * @brief Push down given filter operator as close to the source operator as possible
      * @param filterOperator
@@ -49,6 +48,6 @@ class FilterPushDownRule : public BaseRewriteRule {
     bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator, const std::string fieldName) const;
 };
 
-}
+}// namespace NES
 
-#endif //NES_IMPL_OPTIMIZER_QUERYREWRITE_FILTERPUSHDOWN_HPP_
+#endif//NES_IMPL_OPTIMIZER_QUERYREWRITE_FILTERPUSHDOWN_HPP_

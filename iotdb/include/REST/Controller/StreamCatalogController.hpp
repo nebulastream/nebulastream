@@ -2,19 +2,18 @@
 #ifndef NES_INCLUDE_REST_CONTROLLER_STREAMCATALOGCONTROLLER_HPP_
 #define NES_INCLUDE_REST_CONTROLLER_STREAMCATALOGCONTROLLER_HPP_
 
+#include "BaseController.hpp"
 #include <Services/StreamCatalogService.hpp>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_msg.h>
 #include <cpprest/json.h>
-#include "BaseController.hpp"
 
 namespace NES {
 
 class StreamCatalogController : public BaseController {
 
   public:
-
-    StreamCatalogController(){
+    StreamCatalogController() {
         streamCatalogServicePtr = StreamCatalogService::getInstance();
     }
 
@@ -24,8 +23,7 @@ class StreamCatalogController : public BaseController {
 
   private:
     StreamCatalogServicePtr streamCatalogServicePtr;
-
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_REST_CONTROLLER_STREAMCATALOGCONTROLLER_HPP_
+#endif//NES_INCLUDE_REST_CONTROLLER_STREAMCATALOGCONTROLLER_HPP_

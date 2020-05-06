@@ -27,4 +27,4 @@ SinkDescriptorPtr KafkaSinkDescriptor::create(SchemaPtr schema,
     return std::make_shared<KafkaSinkDescriptor>(KafkaSinkDescriptor(schema, topic, brokers, timeout));
 }
 
-}
+}// namespace NES

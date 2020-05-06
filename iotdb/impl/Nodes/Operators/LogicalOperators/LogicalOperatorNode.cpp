@@ -4,4 +4,4 @@ namespace NES {
 
 LogicalOperatorNode::LogicalOperatorNode() : OperatorNode() {}
 
-}
+}// namespace NES

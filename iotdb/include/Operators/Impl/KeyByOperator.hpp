@@ -26,4 +26,4 @@ class KeyByOperator : public Operator {
     Attributes keyby_spec_;
 };
 
-} // namespace NES
+}// namespace NES

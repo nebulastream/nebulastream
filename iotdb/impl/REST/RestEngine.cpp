@@ -123,4 +123,4 @@ std::vector<utility::string_t> RestEngine::splitPath(const utility::string_t rel
     return web::uri::split_path(relativePath);
 }
 
-}
+}// namespace NES

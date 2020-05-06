@@ -9,8 +9,8 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include <SourceSink/DataSink.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <SourceSink/DataSink.hpp>
 
 namespace NES {
 
@@ -92,13 +92,13 @@ class FileOutputSink : public DataSink {
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
-        ar & filePath;
-        ar & outputType;
-        ar & outputMode;
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
+        ar& filePath;
+        ar& outputType;
+        ar& outputMode;
+        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
     }
 };
-}  // namespace NES
+}// namespace NES
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -106,4 +106,4 @@ class FileOutputSink : public DataSink {
 
 BOOST_CLASS_EXPORT_KEY(NES::FileOutputSink)
 
-#endif // FILEOUTPUTSINK_HPP
+#endif// FILEOUTPUTSINK_HPP

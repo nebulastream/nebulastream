@@ -27,6 +27,4 @@ SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema,
                                                                              frequency));
 }
 
-}
-
-
+}// namespace NES

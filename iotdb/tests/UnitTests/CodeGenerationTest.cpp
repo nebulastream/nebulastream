@@ -739,7 +739,7 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
 
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
     NES_INFO(
-        "Number of generated output tuples: " << resultBuffer.getNumberOfTuples())
+        "Number of generated output tuples: " << resultBuffer.getNumberOfTuples());
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);
 
     auto resultData = (SelectionDataGenSource::InputTuple*) resultBuffer.getBuffer();

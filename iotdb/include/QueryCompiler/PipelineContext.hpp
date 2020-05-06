@@ -20,30 +20,30 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
  * todo it requires a refactoring if we redesign the compiler.
  */
 class PipelineContext {
- public:
-  PipelineContext();
-  void addTypeDeclaration(const Declaration &);
-  void addVariableDeclaration(const Declaration &);
-  std::vector<DeclarationPtr> type_declarations;
-  std::vector<DeclarationPtr> variable_declarations;
+  public:
+    PipelineContext();
+    void addTypeDeclaration(const Declaration&);
+    void addVariableDeclaration(const Declaration&);
+    std::vector<DeclarationPtr> type_declarations;
+    std::vector<DeclarationPtr> variable_declarations;
 
-  SchemaPtr getInputSchema() const;
-  SchemaPtr getResultSchema() const;
-  WindowDefinitionPtr getWindow();
-  void setWindow(WindowDefinitionPtr window);
-  bool hasWindow() const;
+    SchemaPtr getInputSchema() const;
+    SchemaPtr getResultSchema() const;
+    WindowDefinitionPtr getWindow();
+    void setWindow(WindowDefinitionPtr window);
+    bool hasWindow() const;
 
-  SchemaPtr inputSchema;
-  SchemaPtr resultSchema;
-  GeneratedCodePtr code;
+    SchemaPtr inputSchema;
+    SchemaPtr resultSchema;
+    GeneratedCodePtr code;
 
-  PipelineContextPtr getNextPipeline() const;
-  void setNextPipeline(PipelineContextPtr nextPipeline);
-  bool hasNextPipeline() const;
+    PipelineContextPtr getNextPipeline() const;
+    void setNextPipeline(PipelineContextPtr nextPipeline);
+    bool hasNextPipeline() const;
 
- private:
-  PipelineContextPtr nextPipeline;
-  WindowDefinitionPtr windowDefinition;
+  private:
+    PipelineContextPtr nextPipeline;
+    WindowDefinitionPtr windowDefinition;
 };
-}
-#endif //NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
+}// namespace NES
+#endif//NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_

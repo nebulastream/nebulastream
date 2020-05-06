@@ -2,9 +2,8 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <QueryCompiler/DataTypes/ValueType.hpp>
 namespace NES {
-ConstantValueExpressionNode::ConstantValueExpressionNode(const ValueTypePtr constantValue) :
-    ExpressionNode(constantValue->getType()),
-    constantValue(constantValue) {};
+ConstantValueExpressionNode::ConstantValueExpressionNode(const ValueTypePtr constantValue) : ExpressionNode(constantValue->getType()),
+                                                                                             constantValue(constantValue){};
 
 bool ConstantValueExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<ConstantValueExpressionNode>()) {
@@ -31,4 +30,4 @@ void ConstantValueExpressionNode::inferStamp(SchemaPtr schema) {
     // thus ut is already assigned correctly when the expression node is created.
 }
 
-}
+}// namespace NES

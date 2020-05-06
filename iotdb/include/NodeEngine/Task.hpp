@@ -1,11 +1,10 @@
 #ifndef INCLUDE_TASK_H_
 #define INCLUDE_TASK_H_
+#include <NodeEngine/TupleBuffer.hpp>
 #include <memory>
-
 namespace NES {
 class DataSource;
 class QueryExecutionPlan;
-class TupleBuffer;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 /**
@@ -15,7 +14,6 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
  */
 class Task {
   public:
-
     /**
      * @brief Task constructor
      * @param pointer to query execution plan that should be applied on the incoming buffer
@@ -42,6 +40,7 @@ class Task {
      * @return
      */
     QueryExecutionPlanPtr getQep();
+
   private:
     QueryExecutionPlanPtr qep;
     uint32_t pipeline_stage_id;
@@ -49,6 +48,6 @@ class Task {
 };
 
 typedef std::shared_ptr<Task> TaskPtr;
-}  // namespace NES
+}// namespace NES
 
 #endif /* INCLUDE_TASK_H_ */

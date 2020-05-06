@@ -3,44 +3,44 @@
 namespace NES {
 
 size_t NESTopologyWorkerNode::getCpuCapacity() {
-  return cpuCapacity;
+    return cpuCapacity;
 }
 
 void NESTopologyWorkerNode::setCpuCapacity(CPUCapacity cpuCapacity) {
-  this->cpuCapacity = cpuCapacity.toInt();
-  this->remainingCPUCapacity = this->cpuCapacity;
+    this->cpuCapacity = cpuCapacity.toInt();
+    this->remainingCPUCapacity = this->cpuCapacity;
 }
 
 void NESTopologyWorkerNode::reduceCpuCapacity(size_t usedCapacity) {
-  assert(usedCapacity <= remainingCPUCapacity);
-  this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
+    assert(usedCapacity <= remainingCPUCapacity);
+    this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
 }
 
 void NESTopologyWorkerNode::increaseCpuCapacity(size_t freedCapacity) {
-  this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
+    this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
 }
 
 size_t NESTopologyWorkerNode::getRemainingCpuCapacity() {
-  return remainingCPUCapacity;
+    return remainingCPUCapacity;
 }
 
 bool NESTopologyWorkerNode::getIsASinkNode() {
-  return this->isASink;
+    return this->isASink;
 }
 
 NESNodeType NESTopologyWorkerNode::getEntryType() {
-  return Worker;
+    return Worker;
 }
 
 std::string NESTopologyWorkerNode::getEntryTypeString() {
-  if (isASink) {
-    return "sink";
-  }
-  return "Worker";
+    if (isASink) {
+        return "sink";
+    }
+    return "Worker";
 }
 
 void NESTopologyWorkerNode::setQuery(InputQueryPtr pQuery) {
-  this->query = pQuery;
+    this->query = pQuery;
 }
 
-}
+}// namespace NES

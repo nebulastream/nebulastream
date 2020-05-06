@@ -39,5 +39,5 @@ class ThreadBarrier {
     uint32_t count;
     std::condition_variable cvar;
 };
-}
-#endif //NES_THREADBARRIER_HPP
+}// namespace NES
+#endif//NES_THREADBARRIER_HPP

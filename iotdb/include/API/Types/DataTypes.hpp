@@ -74,16 +74,17 @@ class DataType {
     virtual const DataTypePtr copy() const = 0;
     virtual ~DataType();
     virtual bool operator==(const DataType& rhs) const = 0;
+
   protected:
     DataType() = default;
     DataType(const DataType&);
     DataType& operator=(const DataType&);
+
   private:
     friend class boost::serialization::access;
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
-
     }
 };
 
@@ -100,12 +101,11 @@ const DataTypePtr createPointerDataType(const BasicType& type);
 const DataTypePtr createReferenceDataType(const DataTypePtr& type);
 const DataTypePtr createReferenceDataType(const BasicType& type);
 
-
 const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string& value);
 const DataTypePtr createArrayDataType(const BasicType& type, uint32_t dimension);
 const ValueTypePtr createStringValueType(const std::string& value);
 const ValueTypePtr createStringValueType(const char* value, u_int16_t dimension = 0);
 const ValueTypePtr createArrayValueType(const BasicType& type, const std::vector<std::string>& value);
 
-} // namespace NES
+}// namespace NES
 #endif

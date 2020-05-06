@@ -1,9 +1,9 @@
 #ifndef NES_EXCHANGEPROTOCOL_HPP
 #define NES_EXCHANGEPROTOCOL_HPP
 
-#include <functional>
 #include <Network/NetworkMessage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <functional>
 
 namespace NES {
 namespace Network {
@@ -11,10 +11,9 @@ class ExchangeProtocol {
   public:
     explicit ExchangeProtocol(std::function<void(uint64_t*, TupleBuffer)>&& onDataBuffer,
                               std::function<void()>&& onEndOfStream,
-                              std::function<void(std::exception_ptr)>&& onException) :
-        onDataBufferCb(std::move(onDataBuffer)),
-        onEndOfStreamCb(std::move(onEndOfStream)),
-        onExceptionCb(std::move(onException)) {
+                              std::function<void(std::exception_ptr)>&& onException) : onDataBufferCb(std::move(onDataBuffer)),
+                                                                                       onEndOfStreamCb(std::move(onEndOfStream)),
+                                                                                       onExceptionCb(std::move(onException)) {
     }
 
     /**
@@ -60,7 +59,7 @@ class ExchangeProtocol {
     std::function<void(std::exception_ptr)> onExceptionCb;
 };
 
-}
-}
+}// namespace Network
+}// namespace NES
 
-#endif //NES_EXCHANGEPROTOCOL_HPP
+#endif//NES_EXCHANGEPROTOCOL_HPP

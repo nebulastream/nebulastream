@@ -1,11 +1,11 @@
 #ifndef NES_OUTPUTCHANNEL_HPP
 #define NES_OUTPUTCHANNEL_HPP
 
-#include <boost/core/noncopyable.hpp>
-#include <memory>
 #include <Network/NetworkMessage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <boost/core/noncopyable.hpp>
 #include <iostream>
+#include <memory>
 
 namespace NES {
 namespace Network {
@@ -57,9 +57,8 @@ class OutputChannel : public boost::noncopyable {
     const SubpartitionId subpartitionId;
 
     bool isClosed;
-
 };
-}
-}
+}// namespace Network
+}// namespace NES
 
-#endif //NES_OUTPUTCHANNEL_HPP
+#endif//NES_OUTPUTCHANNEL_HPP

@@ -15,7 +15,6 @@ typedef std::shared_ptr<QueryCatalogService> QueryCatalogServicePtr;
 class QueryCatalogService {
 
   public:
-
     static QueryCatalogServicePtr getInstance() {
         static QueryCatalogServicePtr instance{new QueryCatalogService};
         return instance;
@@ -38,10 +37,9 @@ class QueryCatalogService {
     ~QueryCatalogService() = default;
 
   private:
-
-    QueryCatalogService()= default;
+    QueryCatalogService() = default;
 };
 
-}
+}// namespace NES
 
-#endif //NES_IMPL_SERVICES_QUERYCATALOGSERVICE_HPP_
+#endif//NES_IMPL_SERVICES_QUERYCATALOGSERVICE_HPP_

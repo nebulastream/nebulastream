@@ -1,5 +1,5 @@
-#include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
 
 namespace NES {
 
@@ -27,4 +27,4 @@ FileOutputType FileSinkDescriptor::getFileOutputType() const {
     return fileOutputType;
 }
 
-}
+}// namespace NES

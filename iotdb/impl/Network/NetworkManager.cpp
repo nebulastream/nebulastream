@@ -15,28 +15,26 @@ NetworkManager::NetworkManager(const std::string& hostname, uint16_t port,
       server(std::make_shared<ZmqServer>(hostname, port, numServerThread, exchangeProtocol, bufferManager)) {
     bool success = server->start();
     if (success) {
-        NES_INFO("NetworkManager: Server started successfully")
-    }
-    else {
-        NES_FATAL_ERROR("NetworkManager: Server failed to start")
+        NES_INFO("NetworkManager: Server started successfully");
+    } else {
+        NES_FATAL_ERROR("NetworkManager: Server failed to start");
     }
 }
 
 void NetworkManager::registerSubpartitionConsumer(QueryId queryId, OperatorId operatorId, PartitionId partitionId,
                                                   SubpartitionId subpartitionId) {
     NES_INFO("[NetworkManager] SubpartitionConsumer registered: " << queryId << "::" << operatorId
-                                                                  << "::" << partitionId << "::" << subpartitionId)
-
+                                                                  << "::" << partitionId << "::" << subpartitionId);
 }
 
 OutputChannel NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation, QueryId queryId,
                                                            OperatorId operatorId, PartitionId partitionId,
                                                            SubpartitionId subpartitionId) {
     NES_INFO("[NetworkManager] SubpartitionProducer registered: " << queryId << "::" << operatorId
-                                                                  << "::" << partitionId << "::" << subpartitionId)
+                                                                  << "::" << partitionId << "::" << subpartitionId);
     return OutputChannel{server->getContext(), queryId, operatorId,
                          partitionId, subpartitionId, nodeLocation.createZmqURI()};
 }
 
-} // namespace Network
-} // namespace NES
+}// namespace Network
+}// namespace NES

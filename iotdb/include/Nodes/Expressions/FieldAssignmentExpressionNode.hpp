@@ -33,8 +33,7 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
     ExpressionNodePtr getAssignment() const;
 
     void inferStamp(SchemaPtr schema) override;
-
 };
-}
+}// namespace NES
 
-#endif // NES_INCLUDE_NODES_EXPRESSIONS_FIELDASSIGNMENTEXPRESSION_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_FIELDASSIGNMENTEXPRESSION_HPP_

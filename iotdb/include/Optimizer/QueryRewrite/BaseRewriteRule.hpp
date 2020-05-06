@@ -1,18 +1,17 @@
 #ifndef NES_IMPL_OPTIMIZER_QUERYREWRITE_BASERULE_HPP_
 #define NES_IMPL_OPTIMIZER_QUERYREWRITE_BASERULE_HPP_
 
-#include <memory>
 #include <Util/Logger.hpp>
+#include <memory>
 
 namespace NES {
 
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
-class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule>  {
+class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
 
   public:
-
     /**
      * @brief Apply the rule to the Query plan
      * @param queryPlanPtr : The original query plan
@@ -48,6 +47,6 @@ class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule>  {
         }
     }
 };
-}
+}// namespace NES
 
-#endif //NES_IMPL_OPTIMIZER_QUERYREWRITE_BASERULE_HPP_
+#endif//NES_IMPL_OPTIMIZER_QUERYREWRITE_BASERULE_HPP_

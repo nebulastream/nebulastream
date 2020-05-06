@@ -9,31 +9,31 @@
 namespace NES {
 
 class FilterOperator : public Operator {
- public:
-  FilterOperator() = default;
+  public:
+    FilterOperator() = default;
 
-  FilterOperator(const PredicatePtr &predicate);
-  FilterOperator(const FilterOperator &other);
-  FilterOperator &operator=(const FilterOperator &other);
-  void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) override;
-  void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) override;
-  const OperatorPtr copy() const override;
-  const std::string toString() const override;
-  OperatorType getOperatorType() const override;
-  virtual bool equals(const Operator &_rhs) override;
-  ~FilterOperator() override;
-  PredicatePtr getPredicate();
+    FilterOperator(const PredicatePtr& predicate);
+    FilterOperator(const FilterOperator& other);
+    FilterOperator& operator=(const FilterOperator& other);
+    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+    const OperatorPtr copy() const override;
+    const std::string toString() const override;
+    OperatorType getOperatorType() const override;
+    virtual bool equals(const Operator& _rhs) override;
+    ~FilterOperator() override;
+    PredicatePtr getPredicate();
 
- private:
-  PredicatePtr predicate;
+  private:
+    PredicatePtr predicate;
 
-  friend class boost::serialization::access;
+    friend class boost::serialization::access;
 
-  template<class Archive>
-  void serialize(Archive &ar, unsigned) {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
-        & BOOST_SERIALIZATION_NVP(predicate);
-  }
+    template<class Archive>
+    void serialize(Archive& ar, unsigned) {
+        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
+            & BOOST_SERIALIZATION_NVP(predicate);
+    }
 };
 
-} // namespace NES
+}// namespace NES

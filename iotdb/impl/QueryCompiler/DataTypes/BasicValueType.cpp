@@ -1,14 +1,14 @@
 
-#include <QueryCompiler/DataTypes/BasicValueType.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/DataTypes/BasicValueType.hpp>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 
 namespace NES {
 
-BasicValueType::BasicValueType(const BasicType& type, std::string value) : type_(type), value_(std::move(value)) {};
+BasicValueType::BasicValueType(const BasicType& type, std::string value) : type_(type), value_(std::move(value)){};
 
 const DataTypePtr BasicValueType::getType() const { return createDataType(type_); }
 
@@ -36,5 +36,5 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
     return std::make_shared<BasicValueType>(type, value);
 };
 
-}
+}// namespace NES
 BOOST_CLASS_EXPORT(NES::BasicValueType);

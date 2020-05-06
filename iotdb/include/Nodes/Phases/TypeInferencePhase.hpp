@@ -46,6 +46,6 @@ class TypeInferencePhase {
     SourceDescriptorPtr createSourceDescriptor(std::string streamName);
     TypeInferencePhase();
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_PHASES_TYPEINFERENCEPHASE_HPP_
+#endif//NES_INCLUDE_NODES_PHASES_TYPEINFERENCEPHASE_HPP_

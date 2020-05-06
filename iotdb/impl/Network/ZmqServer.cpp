@@ -22,11 +22,11 @@ ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNet
 
 bool ZmqServer::start() {
     std::promise<bool> start_promise;
-    uint16_t numZmqThreads = (numNetworkThreads - 1)/2;
-    uint16_t numHandlerThreads = numNetworkThreads/2;
+    uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
+    uint16_t numHandlerThreads = numNetworkThreads / 2;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
     frontendThread = std::make_unique<std::thread>([this, numHandlerThreads, &start_promise]() {
-      routerLoop(numHandlerThreads, start_promise);
+        routerLoop(numHandlerThreads, start_promise);
     });
     return start_promise.get_future().get();
 }
@@ -34,7 +34,7 @@ bool ZmqServer::start() {
 ZmqServer::~ZmqServer() {
     // Do not change the shutdown sequence!
     if (!zmqContext) {
-        return; // start() not called
+        return;// start() not called
     }
     keepRunning = false;
     zmqContext.reset();
@@ -65,11 +65,10 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
         NES_DEBUG("Created Zmq Server socket on " << hostname << ":" << port);
         for (int i = 0; i < numHandlerThreads; ++i) {
             handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
-              handlerEventLoop(barrier, i);
+                handlerEventLoop(barrier, i);
             }));
         }
-    }
-    catch (...) {
+    } catch (...) {
         startPromise.set_exception(std::current_exception());
     }
     isRunning = true;
@@ -93,7 +92,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
             // handle
             if (zmqError.num() == ETERM) {
                 shutdownComplete = true;
-                NES_INFO("ZmqServer: Shutdown completed!")
+                NES_INFO("ZmqServer: Shutdown completed!");
             } else {
                 NES_ERROR("ZmqServer: " << zmqError.what());
                 errorPromise.set_exception(eptr);
@@ -144,8 +143,8 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int ind
                     auto serverReadyMsg = exchangeProtocol.onClientAnnouncement(
                         clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>());
                     NES_INFO("ZmqServer: ClientAnnouncement received for "
-                                 << serverReadyMsg.getOperatorId() << "::" << serverReadyMsg.getPartitionId()
-                                 << "::" << serverReadyMsg.getSubpartitionId() << "::" << serverReadyMsg.getQueryId());
+                             << serverReadyMsg.getOperatorId() << "::" << serverReadyMsg.getPartitionId()
+                             << "::" << serverReadyMsg.getSubpartitionId() << "::" << serverReadyMsg.getQueryId());
 
                     // send response back to the client based on the identity
                     outIdentityEnvelope.copy(&identityEnvelope);
@@ -165,7 +164,6 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int ind
                     uint64_t* id;
                     id = (uint64_t*) identityEnvelope.data();
 
-
                     // receive buffer content
                     TupleBuffer buffer = bufferManager->getBufferBlocking();
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize(), 0);
@@ -175,9 +173,8 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int ind
                     // queryId::operatorId::partitionId::subpartitionId
                     NES_INFO(
                         "ZmqServer: DataBuffer received from "
-                            << std::to_string(id[0]) + "::" + std::to_string(id[1]) + "::" + std::to_string(id[2]) +
-                                "::" + std::to_string(id[3]) << " with " << bufferHeader->getNumOfRecords()
-                            << "/" << bufferHeader->getPayloadSize());
+                        << std::to_string(id[0]) + "::" + std::to_string(id[1]) + "::" + std::to_string(id[2]) + "::" + std::to_string(id[3]) << " with " << bufferHeader->getNumOfRecords()
+                        << "/" << bufferHeader->getPayloadSize());
                     exchangeProtocol.onBuffer(id, buffer);
                     break;
                 }
@@ -188,7 +185,7 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int ind
                 }
                 case Messages::EndOfStream: {
                     // if server receives a message that the stream did terminate
-                    NES_INFO("ZmqServer: EndOfStream message received")
+                    NES_INFO("ZmqServer: EndOfStream message received");
                     exchangeProtocol.onEndOfStream();
                     break;
                 }
@@ -208,5 +205,5 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int ind
     }
 }
 
-} // namespace Network
-} // namespace NES
+}// namespace Network
+}// namespace NES

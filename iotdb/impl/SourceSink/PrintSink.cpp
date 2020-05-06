@@ -1,8 +1,8 @@
+#include <NodeEngine/QueryManager.hpp>
 #include <SourceSink/PrintSink.hpp>
+#include <Util/Logger.hpp>
 #include <sstream>
 #include <string>
-#include <NodeEngine/QueryManager.hpp>
-#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -43,5 +43,5 @@ SinkType PrintSink::getType() const {
     return PRINT_SINK;
 }
 
-}  // namespace NES
+}// namespace NES
 BOOST_CLASS_EXPORT(NES::PrintSink);

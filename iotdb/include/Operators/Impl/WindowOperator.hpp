@@ -10,30 +10,30 @@
 
 namespace NES {
 
-    class WindowOperator : public Operator {
-    public:
-        WindowOperator(const WindowDefinitionPtr &window_definition);
+class WindowOperator : public Operator {
+  public:
+    WindowOperator(const WindowDefinitionPtr& window_definition);
 
-        WindowOperator(const WindowOperator &other);
+    WindowOperator(const WindowOperator& other);
 
-        WindowOperator &operator=(const WindowOperator &other);
+    WindowOperator& operator=(const WindowOperator& other);
 
-        void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) override;
+    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
 
-        void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) override;
+    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
 
-        const OperatorPtr copy() const override;
+    const OperatorPtr copy() const override;
 
-        const std::string toString() const override;
+    const std::string toString() const override;
 
-        OperatorType getOperatorType() const override;
+    OperatorType getOperatorType() const override;
 
-        ~WindowOperator() override;
+    ~WindowOperator() override;
 
-        const WindowDefinitionPtr &getWindowDefinition() const;
+    const WindowDefinitionPtr& getWindowDefinition() const;
 
-     private:
-      WindowDefinitionPtr window_definition;
-    };
+  private:
+    WindowDefinitionPtr window_definition;
+};
 
-} // namespace NES
+}// namespace NES

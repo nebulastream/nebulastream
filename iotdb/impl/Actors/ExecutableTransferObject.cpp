@@ -23,7 +23,7 @@ ExecutableTransferObject::ExecutableTransferObject(string queryId,
 }
 
 WindowDefinitionPtr assignWindowHandler(OperatorPtr operator_ptr) {
-    for (OperatorPtr c: operator_ptr->getChildren()) {
+    for (OperatorPtr c : operator_ptr->getChildren()) {
         if (auto* windowOpt = dynamic_cast<WindowOperator*>(operator_ptr.get())) {
             return windowOpt->getWindowDefinition();
         }
@@ -39,21 +39,21 @@ QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan(QueryCompil
 
         //TODO: currently only one input source is supported
         if (!this->sources.empty()) {
-            NES_DEBUG("ExecutableTransferObject::toQueryExecutionPlan: add source" << this->sources[0] << " type=" << this->sources[0]->toString())
+            NES_DEBUG("ExecutableTransferObject::toQueryExecutionPlan: add source" << this->sources[0] << " type=" << this->sources[0]->toString());
             qep->addDataSource(this->sources[0]);
         } else {
-            NES_ERROR("ExecutableTransferObject::toQueryExecutionPlan The query " << this->queryId << " has no input sources!")
+            NES_ERROR("ExecutableTransferObject::toQueryExecutionPlan The query " << this->queryId << " has no input sources!");
         }
 
         if (!this->destinations.empty()) {
             qep->addDataSink(this->destinations[0]);
         } else {
-            NES_ERROR("The query " << this->queryId << " has no destinations!")
+            NES_ERROR("The query " << this->queryId << " has no destinations!");
         }
 
         return qep;
     } else {
-        NES_ERROR(this->queryId + " has already been compiled and cannot be recreated!")
+        NES_ERROR(this->queryId + " has already been compiled and cannot be recreated!");
     }
 }
 
@@ -101,12 +101,16 @@ std::string ExecutableTransferObject::toString() const {
     std::vector<std::string> sourcesStringVec;
     if (!sources.empty()) {
         std::transform(std::begin(sources), std::end(sources), std::back_inserter(sourcesStringVec),
-                       [](DataSourcePtr d) { return d->toString(); });
+                       [](DataSourcePtr d) {
+                           return d->toString();
+                       });
     }
     std::vector<std::string> destinationsStringVec;
     if (!sources.empty()) {
         std::transform(std::begin(destinations), std::end(destinations), std::back_inserter(destinationsStringVec),
-                       [](DataSinkPtr d) { return d->toString(); });
+                       [](DataSinkPtr d) {
+                           return d->toString();
+                       });
     }
 
     return "ExecutableTransferObject(queryId=(" + queryId + "); schema=(" + schema->toString() + "); sources=("
@@ -115,4 +119,4 @@ std::string ExecutableTransferObject::toString() const {
         + "); compiled=" + std::to_string(compiled) + ")";
 }
 
-}
+}// namespace NES

@@ -1,17 +1,17 @@
 #include <boost/algorithm/string.hpp>
 
-#include <cstddef>
-#include <iostream>
 #include <API/InputQuery.hpp>
+#include <API/UserAPIExpression.hpp>
+#include <API/Window/WindowDefinition.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <API/Window/WindowDefinition.hpp>
 #include <Util/Logger.hpp>
+#include <cstddef>
+#include <iostream>
 
 namespace NES {
 
@@ -42,8 +42,8 @@ void addChild(const OperatorPtr opParent, const OperatorPtr opChild);
 
 static inline void ltrim(std::string& s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
-      return !std::isspace(ch);
-    }));
+                return !std::isspace(ch);
+            }));
 }
 
 std::string InputQuery::getUdsf() {
@@ -55,17 +55,15 @@ void InputQuery::setUdsf(std::string udsf) {
 }
 
 InputQuery::InputQuery(StreamPtr source_stream)
-        :
-        sourceStream(source_stream),
-        udfs(""),
-        root() {
+    : sourceStream(source_stream),
+      udfs(""),
+      root() {
 }
 
 /* TODO: perform deep copy of operator graph */
 InputQuery::InputQuery(const InputQuery& query)
-        :
-        sourceStream(query.sourceStream),
-        root(recursiveCopy(query.root)) {
+    : sourceStream(query.sourceStream),
+      root(recursiveCopy(query.root)) {
 }
 
 InputQuery& InputQuery::operator=(const InputQuery& query) {
@@ -84,7 +82,7 @@ InputQuery InputQuery::from(Stream& stream) {
 
     //TODO:here we assume that all sources are of the same type
     std::vector<StreamCatalogEntryPtr> catalogEntry = StreamCatalog::instance()
-            .getPhysicalStreams(stream.getName());
+                                                          .getPhysicalStreams(stream.getName());
 
     OperatorPtr op;
 
@@ -92,9 +90,9 @@ InputQuery InputQuery::from(Stream& stream) {
     QueryManagerPtr dPtr;
     if (catalogEntry.size() == 0) {
         NES_WARNING(
-                "InputQuery::from stream does not exists this should only be used by tests " << stream.getName())
+            "InputQuery::from stream does not exists this should only be used by tests " << stream.getName());
         op = createSourceOperator(
-                createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema(), bPtr, dPtr));
+            createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema(), bPtr, dPtr));
     } else {
 
         std::string name = catalogEntry[0]->getPhysicalName();
@@ -104,37 +102,37 @@ InputQuery InputQuery::from(Stream& stream) {
         size_t numBuffers = catalogEntry[0]->getNumberOfBuffersToProduce();
 
         NES_DEBUG(
-                "InputQuery::from logical stream name=" << stream.getName() << " pyhName=" << name << " srcType="
-                                                        << type << " srcConf=" << conf << " frequency=" << frequency
-                                                        << " numBuffers=" << numBuffers)
+            "InputQuery::from logical stream name=" << stream.getName() << " pyhName=" << name << " srcType="
+                                                    << type << " srcConf=" << conf << " frequency=" << frequency
+                                                    << " numBuffers=" << numBuffers);
 
         if (type == "DefaultSource") {
             if (numBuffers == 1) {
-                NES_DEBUG("InputQuery::from create default source for one buffer")
+                NES_DEBUG("InputQuery::from create default source for one buffer");
                 op = createSourceOperator(
-                        createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema(), bPtr, dPtr));
+                    createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema(), bPtr, dPtr));
             } else {
                 NES_DEBUG(
-                        "InputQuery::from create default source for " << numBuffers << " buffers")
+                    "InputQuery::from create default source for " << numBuffers << " buffers");
                 op = createSourceOperator(
-                        createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(),
-                            bPtr, dPtr,
-                                                                       numBuffers,
-                                                                       frequency));
+                    createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(),
+                                                                   bPtr, dPtr,
+                                                                   numBuffers,
+                                                                   frequency));
             }
         } else if (type == "CSVSource") {
-            NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
+            NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers");
             op = createSourceOperator(
-                    createCSVFileSource(stream.getSchema(), bPtr, dPtr,/**fileName*/conf, ",",
-                            /**numberOfBufferToProduce*/numBuffers,
-                                        frequency));
+                createCSVFileSource(stream.getSchema(), bPtr, dPtr, /**fileName*/ conf, ",",
+                                    /**numberOfBufferToProduce*/ numBuffers,
+                                    frequency));
         } else if (type == "SenseSource") {
-            NES_DEBUG("InputQuery::from create Sense source for udfs " << conf)
+            NES_DEBUG("InputQuery::from create Sense source for udfs " << conf);
             op = createSourceOperator(
-                    createSenseSource(stream.getSchema(), bPtr, dPtr, /**udfs*/conf));
+                createSenseSource(stream.getSchema(), bPtr, dPtr, /**udfs*/ conf));
         } else {
-            NES_DEBUG("InputQuery::from source type " << type << " not supported")
-            NES_FATAL_ERROR("type not supported")
+            NES_DEBUG("InputQuery::from source type " << type << " not supported");
+            NES_FATAL_ERROR("type not supported");
         }
     }
     int operatorId = q.getNextOperatorId();
@@ -148,11 +146,11 @@ InputQuery InputQuery::from(Stream& stream) {
  */
 
 InputQuery& InputQuery::select(const Field& field) {
-    NES_NOT_IMPLEMENTED
+    NES_NOT_IMPLEMENTED();
 }
 
 InputQuery& InputQuery::select(const Field& field1, const Field& field2) {
-    NES_NOT_IMPLEMENTED
+    NES_NOT_IMPLEMENTED();
 }
 
 InputQuery& InputQuery::sample(const std::string& udfs) {
@@ -189,7 +187,7 @@ InputQuery& InputQuery::map(const AttributeField& field,
 }
 
 InputQuery& InputQuery::combine(const NES::InputQuery& sub_query) {
-    NES_NOT_IMPLEMENTED
+    NES_NOT_IMPLEMENTED();
 }
 
 InputQuery& InputQuery::join(const InputQuery& sub_query,
@@ -243,8 +241,8 @@ InputQuery& InputQuery::window(const NES::WindowTypePtr windowType,
 // output operators
 InputQuery& InputQuery::writeToFile(const std::string& file_name) {
     OperatorPtr op = createSinkOperator(
-            createBinaryFileSinkWithSchema(this->sourceStream->getSchema(),
-                                           file_name));
+        createBinaryFileSinkWithSchema(this->sourceStream->getSchema(),
+                                       file_name));
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
     addChild(op, root);
@@ -256,15 +254,15 @@ InputQuery& InputQuery::writeToFile(const std::string& file_name) {
 InputQuery& InputQuery::writeToCSVFile(const std::string& file_name, const std::string& outputMode) {
     OperatorPtr op;
     if (outputMode == "append") {
-        NES_DEBUG("InputQuery::writeToCSVFile: with modus append")
+        NES_DEBUG("InputQuery::writeToCSVFile: with modus append");
         op = createSinkOperator(
-                createCSVFileSinkWithSchemaAppend(this->sourceStream->getSchema(), file_name));
+            createCSVFileSinkWithSchemaAppend(this->sourceStream->getSchema(), file_name));
     } else if (outputMode == "truncate") {
-        NES_DEBUG("InputQuery::writeToCSVFile: with modus truncate")
+        NES_DEBUG("InputQuery::writeToCSVFile: with modus truncate");
         op = createSinkOperator(
-                createCSVFileSinkWithSchemaOverwrite(this->sourceStream->getSchema(), file_name));
+            createCSVFileSinkWithSchemaOverwrite(this->sourceStream->getSchema(), file_name));
     } else {
-        NES_ERROR("writeToCSVFile mode not supported " << outputMode)
+        NES_ERROR("writeToCSVFile mode not supported " << outputMode);
     }
 
     int operatorId = this->getNextOperatorId();
@@ -278,7 +276,7 @@ InputQuery& InputQuery::writeToZmq(const std::string& logicalStreamName,
                                    const std::string& host,
                                    const uint16_t& port) {
     SchemaPtr ptr = StreamCatalog::instance().getSchemaForLogicalStream(
-            logicalStreamName);
+        logicalStreamName);
     OperatorPtr op = createSinkOperator(createZmqSink(ptr, host, port));
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
@@ -289,7 +287,7 @@ InputQuery& InputQuery::writeToZmq(const std::string& logicalStreamName,
 
 InputQuery& InputQuery::print(std::ostream& out) {
     OperatorPtr op = createSinkOperator(
-            createPrintSinkWithSchema(this->sourceStream->getSchema(), out));
+        createPrintSinkWithSchema(this->sourceStream->getSchema(), out));
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
     addChild(op, root);
@@ -301,8 +299,8 @@ InputQuery& InputQuery::writeToKafka(const std::string& brokers,
                                      const std::string& topic,
                                      const size_t kafkaProducerTimeout) {
     OperatorPtr op = createSinkOperator(
-            createKafkaSinkWithSchema(this->sourceStream->getSchema(), brokers, topic,
-                                      kafkaProducerTimeout));
+        createKafkaSinkWithSchema(this->sourceStream->getSchema(), brokers, topic,
+                                  kafkaProducerTimeout));
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
     addChild(op, root);
@@ -325,4 +323,4 @@ void addChild(const OperatorPtr opParent, const OperatorPtr opChild) {
     }
 }
 
-}  // namespace NES
+}// namespace NES

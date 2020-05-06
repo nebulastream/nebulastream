@@ -11,7 +11,6 @@ namespace NES {
 class BinarySourceDescriptor : public SourceDescriptor {
 
   public:
-
     static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath);
 
     SourceDescriptorType getType() override;
@@ -30,6 +29,6 @@ class BinarySourceDescriptor : public SourceDescriptor {
 
 typedef std::shared_ptr<BinarySourceDescriptor> BinarySourceDescriptorPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_BINARYSOURCEDESCRIPTOR_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_BINARYSOURCEDESCRIPTOR_HPP_
