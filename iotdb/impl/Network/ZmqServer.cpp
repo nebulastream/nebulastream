@@ -53,7 +53,7 @@ ZmqServer::~ZmqServer() {
 
 void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise) {
     // option of linger time until port is closed
-    int linger = 0;
+    int linger = -1;
     zmq::socket_t frontendSocket(*zmqContext, zmq::socket_type::router);
     zmq::socket_t dispatcherSocket(*zmqContext, zmq::socket_type::dealer);
     auto barrier = std::make_shared<ThreadBarrier>(1 + numHandlerThreads);
