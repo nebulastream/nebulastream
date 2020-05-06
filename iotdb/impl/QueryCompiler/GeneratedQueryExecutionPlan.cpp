@@ -9,40 +9,34 @@ GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan(
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& queryId) : QueryExecutionPlan(queryId) {
 }
 
-bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, TupleBuffer& inputBuffer) {
-    if (stages.size() <= pipeline_stage_id) {
-        for (const DataSinkPtr& s: this->getSinks()) {
-            NES_DEBUG("QueryExecutionPlan: end output buffer to sink");
+bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipelineStageId, TupleBuffer& inputBuffer) {
+    // check if we should pass this buffer to a sink or to a pipeline
+    if (stages.size() <= pipelineStageId) {
+        NES_DEBUG("QueryExecutionPlan: output buffer to sink");
+        for (const auto& s: this->getSinks()) {
             s->writeData(inputBuffer);
         }
-        return 0;
+        return true;
     }
-    std::function<void(TupleBuffer&)>
-        callback = [this, pipeline_stage_id](TupleBuffer& buffer) { executeStage(pipeline_stage_id + 1, buffer); };
-    auto queryExecutionContext = PipelineExecutionContext(bufferManager, callback);
-    bool ret = stages[pipeline_stage_id]->execute(inputBuffer, queryExecutionContext);
+    NES_DEBUG("QueryExecutionPlan: process buffer with pipeline - " << pipelineStageId);
 
-    //TODO this should be changed such that we provide the outputbuffer too
-    //NES_DEBUG("GeneratedQueryExecutionPlan::executeStage get buffer")
-    //auto outputBuffer = bufferManager->getBufferBlocking();
-    //NES_DEBUG("GeneratedQueryExecutionPlan::executeStage got buffer of size=" << outputBuffer.getBufferSize())
-    //outputBuffer.setTupleSizeInBytes(inputBuffer.getTupleSizeInBytes());
-    //NES_DEBUG("inputBuffer->getTupleSizeInBytes()=" << inputBuffer.getTupleSizeInBytes());
+    // create emit function handler
+    auto emitFunctionHandler = [this, pipelineStageId](TupleBuffer& buffer) {
+      NES_DEBUG("QueryExecutionPlan: received buffer from pipelinestage:" << pipelineStageId << " with "
+                                                                          << buffer.getNumberOfTuples() << " tuples.")
+      // ignore the buffer if it is empty
+      if (buffer.getNumberOfTuples() > 0) {
+          // send the buffer to the next pipeline stage
+          executeStage(pipelineStageId + 1, buffer);
+      }
+    };
+    // create execution context
+    auto queryExecutionContext = PipelineExecutionContext(bufferManager, emitFunctionHandler);
 
+    NES_DEBUG("QueryExecutionPlan: execute pipeline stage " << pipelineStageId);
+    stages[pipelineStageId]->execute(inputBuffer, queryExecutionContext);
 
-    /*// only write data to the sink if the pipeline produced some output
-    if (outputBuffer.getNumberOfTuples() > 0) {
-        if (stages.size() <= pipeline_stage_id) {
-            NES_DEBUG("QueryExecutionPlan: send output buffer to next pipeline");
-            // todo schedule dispatching as a new task
-            executeStage(pipeline_stage_id + 1, outputBuffer);
-        } else {
-
-        }
-    }*/
-
-
-    return 0;
+    return true;
 }
 
 }// namespace NES
