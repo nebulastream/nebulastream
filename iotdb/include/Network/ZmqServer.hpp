@@ -64,7 +64,7 @@ class ZmqServer : public boost::noncopyable {
      * @brief handler thread where threads are passed from the frontend loop
      * @param the threadBarrier to enable synchronization
      */
-    void handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier);
+    void handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int index);
 
   private:
 
