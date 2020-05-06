@@ -337,9 +337,12 @@ TEST_F(QueryDeploymentTest, test_deploy_and_undeploy_two_worker_file_output) {
     string queryId = crd->deployQuery(query, "BottomUp");
     ASSERT_NE(queryId, "");
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, 1));
+    cout << "check crd" << endl;
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 2));
+    cout << "check wrk1" << endl;
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
+    cout << "check wrk2" << endl;
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, 1));
 
     bool successUndeploy = crd->undeployQuery(queryId);
     ASSERT_TRUE(successUndeploy);

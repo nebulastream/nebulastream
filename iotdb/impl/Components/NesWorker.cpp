@@ -53,6 +53,11 @@ bool NesWorker::setWithParent(std::string parentId) {
     return true;
 }
 
+size_t NesWorker::getRandomPort(size_t base) {
+    //TODO will be removed once the new network stack is in place
+    return base - 12 + time(0)*321*rand()%10000;
+}
+
 bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::string serverIp) {
     NES_DEBUG("NesWorker: start with blocking " << blocking << " serverIp=" << serverIp << " port=" << port)
     workerCfg.load<io::middleman>();
@@ -63,8 +68,9 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
     actorSystem = new actor_system{workerCfg};
 
     size_t ts = time(0);
-    workerCfg.publish_port = workerCfg.publish_port + ts%10000;
-    workerCfg.receive_port = workerCfg.receive_port + ts%10000;
+    workerCfg.publish_port = getRandomPort(workerCfg.publish_port);
+    workerCfg.receive_port = getRandomPort(workerCfg.receive_port);
+
     workerHandle = actorSystem->spawn<NES::WorkerActor>(workerCfg.ip,
                                                         workerCfg.publish_port,
                                                         workerCfg.receive_port,
@@ -121,9 +127,7 @@ bool NesWorker::stop(bool force) {
         }
         NES_DEBUG("NesWorker::stop success=" << success)
         return success;
-    }
-    else
-    {
+    } else {
         NES_WARNING("NesWorker::stop: already stopped")
         return true;
     }

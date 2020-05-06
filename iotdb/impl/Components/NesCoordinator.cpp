@@ -34,18 +34,19 @@ void startRestServer(infer_handle_from_class_t<CoordinatorActor> handle,
 
 string NesCoordinator::deployQuery(const string& queryString, const string& strategy) {
     NES_DEBUG("NesCoordinator:registerAndDeployQuery queryString=" << queryString << " strategy=" << strategy)
+    //the default id of the coordinator is 0
     return crdPtr->registerAndDeployQuery(0, queryString, strategy);
 }
 
 bool NesCoordinator::undeployQuery(const string& queryId) {
     NES_DEBUG("NesCoordinator:unddeployQuery queryId=" << queryId)
+    //the default id of the coordinator is 0
     return crdPtr->deregisterAndUndeployQuery(0, queryId);
 }
 
 bool NesCoordinator::stopCoordinator(bool force) {
+    NES_DEBUG("NesCoordinator: stopCoordinator force=" << force)
     if (!stopped) {
-        NES_DEBUG("NesCoordinator: stop")
-
         NES_DEBUG("NesCoordinator: stopping worker actor")
         bool successStopWorkerActor = wrkPtr->shutdown(force);
         if (!successStopWorkerActor) {
@@ -72,13 +73,14 @@ bool NesCoordinator::stopCoordinator(bool force) {
         }
         NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest)
 
-        restThread.join();
+        if (restThread.joinable()) {
+            restThread.join();
+        }
+
         NES_DEBUG("NesCoordinator: thread joined")
         stopped = true;
         return true;
-    }
-    else
-    {
+    } else {
         NES_DEBUG("NesCoordinator: already stopped")
         return true;
     }
@@ -89,11 +91,11 @@ void NesCoordinator::startCoordinator(bool blocking, uint16_t port) {
     startCoordinator(blocking);
 }
 
-size_t NesCoordinator::getRandomPort(size_t base)
-{
+size_t NesCoordinator::getRandomPort(size_t base) {
     //TODO will be removed once the new network stack is in place
-    return base - 12 + time(0) *321 * rand() %10000;
+    return base - 12 + time(0)*321*rand()%10000;
 }
+
 uint16_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start")
 

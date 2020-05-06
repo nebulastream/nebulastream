@@ -8,7 +8,7 @@ namespace NES {
 using std::string;
 
 QueryManager::QueryManager()
-    : task_queue(), sourceIdToQueryMap(), bufferMutex(), queryMutex(), workMutex() {
+    : taskQueue(), sourceIdToQueryMap(), bufferMutex(), queryMutex(), workMutex() {
     NES_DEBUG("Init QueryManager::QueryManager()")
 }
 
@@ -33,8 +33,8 @@ bool QueryManager::stopThreadPool() {
 
 void QueryManager::resetQueryManager() {
     std::scoped_lock locks(queryMutex, workMutex);
-    NES_DEBUG("QueryManager: Destroy Task Queue " << task_queue.size());
-    task_queue.clear();
+    NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
+    taskQueue.clear();
     NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToQueryMap.size());
 
     sourceIdToQueryMap.clear();
@@ -188,7 +188,7 @@ TaskPtr QueryManager::getWork(std::atomic<bool>& threadPool_running) {
     std::unique_lock<std::mutex> lock(workMutex);
     NES_DEBUG("QueryManager:getWork wait got lock")
     // wait while queue is empty but thread pool is running
-    while (task_queue.empty() && threadPool_running) {
+    while (taskQueue.empty() && threadPool_running) {
         NES_DEBUG("QueryManager::getWork wait for work as queue is emtpy")
         cv.wait(lock);
         if (!threadPool_running) {
@@ -201,9 +201,9 @@ TaskPtr QueryManager::getWork(std::atomic<bool>& threadPool_running) {
     // there is a potential task in the queue and the thread pool is running
     TaskPtr task;
     if (threadPool_running) {
-        task = task_queue.front();
+        task = taskQueue.front();
         NES_DEBUG("QueryManager: provide task" << task.get() << " to thread (getWork())")
-        task_queue.pop_front();
+        taskQueue.pop_front();
     } else {
         NES_DEBUG("QueryManager: Thread pool was shut down while waiting");
         cleanupUnsafe();
@@ -215,9 +215,9 @@ TaskPtr QueryManager::getWork(std::atomic<bool>& threadPool_running) {
 
 void QueryManager::cleanupUnsafe() {
     // Call this only if you are holding workMutex
-    if (task_queue.size()) {
+    if (taskQueue.size()) {
         NES_DEBUG("QueryManager::cleanupUnsafe: Thread pool was shut down while waiting but data is queued.");
-        task_queue.clear();
+        taskQueue.clear();
     }
     NES_DEBUG("QueryManager::cleanupUnsafe: finished");
 }
@@ -236,7 +236,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, QueryExecutionPla
 
     // dispatch buffer as task
     TaskPtr task = std::make_shared<Task>(queryExecutionPlan, pipelineId + 1, buffer);
-    task_queue.push_back(task);
+    taskQueue.push_back(task);
     NES_DEBUG(
         "QueryManager: added Task " << task.get() << " for QEP " << queryExecutionPlan << " inputBuffer " << buffer)
 
@@ -249,7 +249,7 @@ void QueryManager::addWork(const string& sourceId, TupleBuffer& buf) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
         TaskPtr task = std::make_shared<Task>(qep, 0, buf);
-        task_queue.push_back(task);
+        taskQueue.push_back(task);
         NES_DEBUG("QueryManager: added Task " << task.get() << " for query " << sourceId << " for QEP " << qep
                                               << " inputBuffer " << buf)
     }
@@ -259,8 +259,7 @@ void QueryManager::addWork(const string& sourceId, TupleBuffer& buf) {
 void QueryManager::completedWork(TaskPtr task) {
     std::unique_lock<std::mutex> lock(workMutex); // TODO is necessary?
     NES_INFO("Complete Work for task" << task)
-    if(queryToStatisticsMap.count(task->getQep()) == 0)
-    {
+    if (queryToStatisticsMap.count(task->getQep()) == 0) {
         NES_THROW_RUNTIME_ERROR("QueryManager::completedWork tries to update statistics for a non existing query");
     }
     queryToStatisticsMap[task->getQep()]->incProcessedTasks();
@@ -270,18 +269,15 @@ void QueryManager::completedWork(TaskPtr task) {
     task.reset();
 }
 
-QueryStatisticsPtr QueryManager::getQueryStatistics(QueryExecutionPlanPtr qep)
-{
+QueryStatisticsPtr QueryManager::getQueryStatistics(QueryExecutionPlanPtr qep) {
     NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qep)
     return queryToStatisticsMap[qep];
 }
 
-
 std::string QueryManager::getQueryManagerStatistics() {
     std::stringstream ss;
     ss << "QueryManager Statistics:";
-    for (auto& qep : queryToStatisticsMap)
-    {
+    for (auto& qep : queryToStatisticsMap) {
         ss << "Query=" << qep.first;
         ss << "\t processedTasks =" << qep.second->getProcessedTasks();
         ss << "\t processedTuple =" << qep.second->getProcessedTuple();

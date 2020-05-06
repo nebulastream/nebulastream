@@ -321,8 +321,10 @@ bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
               throw new Exception("Error while register_query_atom deploy ");
             });
         bool success = prom.get_future().get();
-        NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: first phase success=" << success)
+        NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: first phase for handle " <<  to_string(handle) << " success=" << success)
     }
+    NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: all queries deployed")
+
 
     NES_DEBUG(
         "CoordinatorActor::deployQueryInNodeEngine second phase of start " << deployments.size() << " objects")
@@ -356,8 +358,10 @@ bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
               throw new Exception("Error while deployQueryInNodeEngine start");
             });
         bool success = prom.get_future().get();
-        NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: second phase success=" << success)
+        NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: second phase for handle " <<  to_string(handle) << " success=" << success)
     }
+    NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: all queries started")
+
 
     NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: mark query as read")
     QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Running);
