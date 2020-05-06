@@ -161,10 +161,10 @@ TEST_F(NetworkStackTest, DISABLED_registerChannelWithActors) {
     crd->deployQuery(query, "BottomUp");
     sleep(2);
 
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
