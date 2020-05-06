@@ -60,7 +60,7 @@ class QueryCatalogTest : public testing::Test {
 
 TEST_F(QueryCatalogTest, add_query) {
   std::string queryString =
-      "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
+      "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
   string queryId = QueryCatalog::instance().registerQuery(queryString,
                                                           "BottomUp");
@@ -77,7 +77,7 @@ TEST_F(QueryCatalogTest, add_query) {
 
 TEST_F(QueryCatalogTest, add_query_and_start_stop) {
   std::string queryString =
-      "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
+      "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
   string queryId = QueryCatalog::instance().registerQuery(queryString,
                                                           "BottomUp");
@@ -107,7 +107,7 @@ TEST_F(QueryCatalogTest, add_query_and_start_stop) {
 
 TEST_F(QueryCatalogTest, add_remove_query) {
   std::string queryString =
-      "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
+      "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
   string queryId = QueryCatalog::instance().registerQuery(queryString,
                                                           "BottomUp");
@@ -125,7 +125,7 @@ TEST_F(QueryCatalogTest, add_remove_query) {
 
 TEST_F(QueryCatalogTest, print_query) {
   std::string queryString =
-      "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
+      "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
   string queryId = QueryCatalog::instance().registerQuery(queryString,
                                                           "BottomUp");
