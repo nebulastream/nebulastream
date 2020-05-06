@@ -26,17 +26,17 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     static bool checkCompleteOrTimeout(NodeEnginePtr ptr, std::string queryId, size_t expectedResult) {
-        size_t timeoutInSec = std::chrono::seconds(5).count();
-        const auto p0 = std::chrono::time_point<std::chrono::system_clock>{};
-        size_t now = std::chrono::system_clock::to_time_t(p0);
-
-        while (now < now + timeoutInSec) {
+        auto timeoutInSec = std::chrono::seconds(5);
+        auto start_timestamp = std::chrono::system_clock::now();
+        auto now = start_timestamp;
+        while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr")
             if (ptr->getQueryStatistics(queryId)->getProcessedTuple() == expectedResult
                 && ptr->getQueryStatistics(queryId)->getProcessedTasks() == expectedResult) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct")
                 return true;
             }
+            NES_DEBUG("checkCompleteOrTimeout: sleep")
             sleep(1);
         }
         NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout")
@@ -50,17 +50,17 @@ class TestUtils {
          * @return bool indicating if the expected results are matched
          */
     static bool checkCompleteOrTimeout(NesWorkerPtr ptr, std::string queryId, size_t expectedResult) {
-        size_t timeoutInSec = std::chrono::seconds(5).count();
-        const auto p0 = std::chrono::time_point<std::chrono::system_clock>{};
-        size_t now = std::chrono::system_clock::to_time_t(p0);
-
-        while (now < now + timeoutInSec) {
+        auto timeoutInSec = std::chrono::seconds(5);
+        auto start_timestamp = std::chrono::system_clock::now();
+        auto now = start_timestamp;
+        while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr")
             if (ptr->getQueryStatistics(queryId)->getProcessedTuple() == expectedResult
                 && ptr->getQueryStatistics(queryId)->getProcessedTasks() == expectedResult) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct")
                 return true;
             }
+            NES_DEBUG("checkCompleteOrTimeout: sleep")
             sleep(1);
         }
         NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout")
@@ -75,17 +75,17 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     static bool checkCompleteOrTimeout(NesCoordinatorPtr ptr, std::string queryId, size_t expectedResult) {
-        size_t timeoutInSec = std::chrono::seconds(5).count();
-        const auto p0 = std::chrono::time_point<std::chrono::system_clock>{};
-        size_t now = std::chrono::system_clock::to_time_t(p0);
-
-        while (now < now + timeoutInSec) {
+        auto timeoutInSec = std::chrono::seconds(5);
+        auto start_timestamp = std::chrono::system_clock::now();
+        auto now = start_timestamp;
+        while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr")
             if (ptr->getQueryStatistics(queryId)->getProcessedTuple() == expectedResult
                 && ptr->getQueryStatistics(queryId)->getProcessedTasks() == expectedResult) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct")
                 return true;
             }
+            NES_DEBUG("checkCompleteOrTimeout: sleep")
             sleep(1);
         }
         NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout")

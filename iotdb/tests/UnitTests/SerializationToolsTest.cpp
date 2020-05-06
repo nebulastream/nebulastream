@@ -51,7 +51,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_schema)
 /* Test serialization for predicate  */
 TEST_F(SerializationToolsTest, serialize_deserialize_predicate)
 {
-    PredicatePtr pred = createPredicate(stream->getField("value") > 42);
+    PredicatePtr pred = createPredicate(stream->getField("value") < 42);
     string serPred = SerializationTools::ser_predicate(pred);
     PredicatePtr deserPred = SerializationTools::parse_predicate(serPred);
     EXPECT_TRUE(pred->equals(*deserPred.get()));
@@ -59,7 +59,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_predicate)
 
 TEST_F(SerializationToolsTest, serialize_deserialize_filter_op)
 {
-    PredicatePtr pred = createPredicate(stream->getField("value") > 42);
+    PredicatePtr pred = createPredicate(stream->getField("value") < 42);
     OperatorPtr op = createFilterOperator(pred);
     string serOp = SerializationTools::ser_operator(op);
     OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
@@ -89,7 +89,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_sink_op)
 TEST_F(SerializationToolsTest, serialize_deserialize_query_operators)
 {
     // TODO: implement equals method for all operators
-    InputQuery& query = InputQuery::from(*stream).filter(stream->getField("value") > 42).print(std::cout);
+    InputQuery& query = InputQuery::from(*stream).filter(stream->getField("value") < 42).print(std::cout);
 
     OperatorPtr queryOp = query.getRoot();
     string serOp = SerializationTools::ser_operator(queryOp);
@@ -148,7 +148,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_printSink)
 /* Test serialization for printSink  */
 TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject)
 {
-    InputQuery& query = InputQuery::from(*stream).filter(stream->getField("value") > 42).print(std::cout);
+    InputQuery& query = InputQuery::from(*stream).filter(stream->getField("value") < 42).print(std::cout);
     OperatorPtr op = query.getRoot();
 
     DataSourcePtr zmqSource = createZmqSource(schema, bPtr, dPtr, "test", 4711);
@@ -165,7 +165,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject)
 
 TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject_EXDRA_SCHEMA)
 {
-    InputQuery& query = InputQuery::from(*stream).filter(stream->getField("value") > 42).print(std::cout);
+    InputQuery& query = InputQuery::from(*stream).filter(stream->getField("value") < 42).print(std::cout);
     OperatorPtr op = query.getRoot();
 
     DataSourcePtr zmqSource = createZmqSource(schema, bPtr, dPtr, "test", 4711);

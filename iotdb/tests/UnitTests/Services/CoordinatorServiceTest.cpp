@@ -14,7 +14,7 @@ using namespace NES;
 class CoordinatorServiceTest : public testing::Test {
   public:
     std::string queryString =
-        "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
+        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -234,7 +234,7 @@ TEST_F(CoordinatorServiceTest, test_compile_deployment) {
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
 }
 
-TEST_F(CoordinatorServiceTest, test_code_gen) {
+TEST_F(CoordinatorServiceTest, DISABLED_test_code_gen) {
     NodeEnginePtr engine = std::make_shared<NodeEngine>();
     engine->start();
 
@@ -244,7 +244,7 @@ TEST_F(CoordinatorServiceTest, test_code_gen) {
 
     Stream def = Stream("default", schema);
 
-    InputQuery& query = InputQuery::from(def).filter(def["value"] > 42).print(
+    InputQuery& query = InputQuery::from(def).filter(def["value"] < 42).print(
         std::cout);
 
     auto queryCompiler = createDefaultQueryCompiler(engine->getQueryManager());

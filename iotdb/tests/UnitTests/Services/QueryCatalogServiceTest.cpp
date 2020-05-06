@@ -74,7 +74,7 @@ TEST_F(QueryCatalogServiceTest, get_all_registered_queries_without_query_registr
 TEST_F(QueryCatalogServiceTest, get_all_registered_queries_after_query_registration) {
 
   std::string queryString =
-      "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
+      "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
   const string queryId = QueryCatalog::instance().registerQuery(queryString,
                                                                 "BottomUp");
@@ -90,7 +90,7 @@ TEST_F(QueryCatalogServiceTest, get_all_registered_queries_after_query_registrat
 TEST_F(QueryCatalogServiceTest, get_all_running_queries) {
 
   std::string queryString =
-      "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
+      "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
   const string queryId = QueryCatalog::instance().registerQuery(queryString,
                                                                 "BottomUp");
