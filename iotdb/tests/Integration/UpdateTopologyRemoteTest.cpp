@@ -23,7 +23,7 @@ class UpdateTopologyRemoteTest : public testing::Test {
     }
 };
 
-TEST_F(UpdateTopologyRemoteTest, add_and_remove_path_with_own_id) {
+TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);
@@ -101,7 +101,7 @@ TEST_F(UpdateTopologyRemoteTest, add_and_remove_path_with_own_id) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(UpdateTopologyRemoteTest, add_and_remove_path_with_own_id_and_self) {
+TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);

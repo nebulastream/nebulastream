@@ -58,7 +58,7 @@ class QueryCatalogTest : public testing::Test {
   }
 };
 
-TEST_F(QueryCatalogTest, add_query) {
+TEST_F(QueryCatalogTest, testAddQuery) {
   std::string queryString =
       "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
@@ -75,7 +75,7 @@ TEST_F(QueryCatalogTest, add_query) {
   EXPECT_TRUE(QueryCatalog::instance().queryExists(queryId));
 }
 
-TEST_F(QueryCatalogTest, add_query_and_start_stop) {
+TEST_F(QueryCatalogTest, testAddQueryAndStartStop) {
   std::string queryString =
       "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
@@ -105,7 +105,7 @@ TEST_F(QueryCatalogTest, add_query_and_start_stop) {
   EXPECT_FALSE(QueryCatalog::instance().isQueryRunning(queryId));
 }
 
-TEST_F(QueryCatalogTest, add_remove_query) {
+TEST_F(QueryCatalogTest, testAddRemoveQuery) {
   std::string queryString =
       "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
@@ -123,7 +123,7 @@ TEST_F(QueryCatalogTest, add_remove_query) {
   EXPECT_FALSE(QueryCatalog::instance().queryExists(queryId));
 }
 
-TEST_F(QueryCatalogTest, print_query) {
+TEST_F(QueryCatalogTest, testPrintQuery) {
   std::string queryString =
       "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 

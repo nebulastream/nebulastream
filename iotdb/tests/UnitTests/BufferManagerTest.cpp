@@ -43,7 +43,7 @@ class BufferManagerTest : public testing::Test {
     }
 };
 
-TEST_F(BufferManagerTest, initialized_buffer_manager) {
+TEST_F(BufferManagerTest, initializedBufferManager) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
     size_t buffers_count = bufferManager->getNumOfPooledBuffers();
     size_t buffers_free = bufferManager->getAvailableBuffers();
@@ -51,13 +51,13 @@ TEST_F(BufferManagerTest, initialized_buffer_manager) {
     ASSERT_EQ(buffers_free, buffers_managed);
 }
 
-TEST_F(BufferManagerTest, test_buffer_manager_no_singleton) {
+TEST_F(BufferManagerTest, testBufferManagerNoSingleton) {
     auto manager = std::make_unique<BufferManager>();
     manager->configure(1024, 1024);
     manager.reset();
 }
 
-TEST_F(BufferManagerTest, single_threaded_buffer_recycling) {
+TEST_F(BufferManagerTest, singleThreadedBufferRecycling) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
@@ -74,7 +74,7 @@ TEST_F(BufferManagerTest, single_threaded_buffer_recycling) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed - 1);
 }
 
-TEST_F(BufferManagerTest, single_threaded_buffer_recycling_unpooled) {
+TEST_F(BufferManagerTest, singleThreadedBufferRecyclingUnpooled) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
     auto buffer0 = bufferManager->getUnpooledBuffer(16384);
@@ -86,7 +86,7 @@ TEST_F(BufferManagerTest, single_threaded_buffer_recycling_unpooled) {
     ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 2);
 }
 
-TEST_F(BufferManagerTest, single_threaded_many_buffer_recycling_unpooled) {
+TEST_F(BufferManagerTest, singleThreadedManyBufferRecyclingUnpooled) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(1024, 1);
     for (int i = 0; i < 500; i++) {
         auto buffer0 = bufferManager->getUnpooledBuffer(16384);
@@ -95,7 +95,7 @@ TEST_F(BufferManagerTest, single_threaded_many_buffer_recycling_unpooled) {
     ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1);
 }
 
-TEST_F(BufferManagerTest, getBuffer_afterRelease) {
+TEST_F(BufferManagerTest, getBufferAfterRelease) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
     std::vector<TupleBuffer> buffers;
@@ -126,7 +126,7 @@ TEST_F(BufferManagerTest, getBuffer_afterRelease) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
-    TEST_F(BufferManagerTest, buffer_manager_mt_access) {
+TEST_F(BufferManagerTest, bufferManagerMtAccess) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
@@ -148,7 +148,7 @@ TEST_F(BufferManagerTest, getBuffer_afterRelease) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
-TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer) {
+TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
@@ -218,7 +218,7 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
-TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_no_singleton) {
+TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoSingleton) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
@@ -296,8 +296,7 @@ TupleBuffer getBufferTimeout(std::shared_ptr<BufferManager> bufferManager, std::
     return *opt;
 }
 
-
-TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_timeout) {
+TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
     using namespace std::chrono_literals;
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
@@ -372,12 +371,12 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_timeout) {
 TupleBuffer getBufferNoBlocking(BufferManager& bufferManager) {
     std::optional<TupleBuffer> opt;
     while (!(opt = bufferManager.getBufferNoBlocking())) {
-        usleep(100 * 1000);
+        usleep(100*1000);
     }
     return *opt;
 }
 
-TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_noblocking) {
+TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
@@ -446,6 +445,5 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_noblocking) {
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
-
 
 } // namespace NES
