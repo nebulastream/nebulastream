@@ -1,6 +1,4 @@
-#include "Actors/WorkerActor.hpp"
 #include <Components/NesWorker.hpp>
-#include <Topology/NESTopologyEntry.hpp>
 #include <Util/Logger.hpp>
 
 #include <caf/actor_cast.hpp>
@@ -60,6 +58,17 @@ size_t NesWorker::getRandomPort(size_t base) {
 
 bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::string serverIp) {
     NES_DEBUG("NesWorker: start with blocking " << blocking << " serverIp=" << serverIp << " port=" << port);
+
+    NES_DEBUG("NesWorker::start: start NodeEngine");
+    nodeEngine = std::make_shared<NodeEngine>();
+    bool success = nodeEngine->start();
+    if (!success) {
+        NES_ERROR("NesWorker: node engine could not be started");
+        throw Exception("NesWorker error while starting node engine");
+    } else {
+        NES_DEBUG("NesWorker: Node engine started successfully");
+    }
+
     workerCfg.load<io::middleman>();
     workerCfg.host = serverIp;
     workerCfg.printCfg();
@@ -67,17 +76,17 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
     coordinatorPort = port;
     actorSystem = new actor_system{workerCfg};
 
-    size_t ts = time(0);
     workerCfg.publish_port = getRandomPort(workerCfg.publish_port);
     workerCfg.receive_port = getRandomPort(workerCfg.receive_port);
 
     workerHandle = actorSystem->spawn<NES::WorkerActor>(workerCfg.ip,
                                                         workerCfg.publish_port,
                                                         workerCfg.receive_port,
-                                                        type);
+                                                        type,
+                                                        nodeEngine);
 
     abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(workerHandle);
-    wrk = dynamic_cast<WorkerActor*>(abstractActor);
+    actorPtr = dynamic_cast<WorkerActor*>(abstractActor);
 
     auto expectedPort = io::publish(workerHandle, workerCfg.receive_port, nullptr,
                                     true);
@@ -120,13 +129,22 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
 bool NesWorker::stop(bool force) {
     NES_DEBUG("NesWorker: stop");
     if (!stopped) {
-
-        bool success = wrk->shutdown(force);
-        if (success) {
+        bool successShutdownActor = actorPtr->shutdown(force);
+        if (successShutdownActor) {
             anon_send(workerHandle, exit_reason::user_shutdown);
         }
+
+        bool successShutdownNodeEngine = nodeEngine->stop(force);
+        if (!successShutdownNodeEngine) {
+            NES_ERROR("NesWorker::stop node engine stop not successful");
+            throw Exception("NesWorker::stop  error while stopping node engine");
+        } else {
+            NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
+        }
+
+        bool success = successShutdownActor && successShutdownNodeEngine;
         NES_DEBUG("NesWorker::stop success=" << success);
-        return success;
+        return successShutdownActor && successShutdownNodeEngine;
     } else {
         NES_WARNING("NesWorker::stop: already stopped");
         return true;
@@ -134,55 +152,55 @@ bool NesWorker::stop(bool force) {
 }
 
 bool NesWorker::connect() {
-    bool success = wrk->connecting(workerCfg.host, coordinatorPort);
+    bool success = actorPtr->connecting(workerCfg.host, coordinatorPort);
     NES_DEBUG("NesWorker::connect success=" << success);
     return success;
 }
 
 bool NesWorker::disconnect() {
-    bool success = wrk->disconnecting();
+    bool success = actorPtr->disconnecting();
     NES_DEBUG("NesWorker::disconnect success=" << success);
     return success;
 }
 
 bool NesWorker::registerLogicalStream(std::string name, std::string path) {
-    bool success = wrk->registerLogicalStream(name, path);
+    bool success = actorPtr->registerLogicalStream(name, path);
     NES_DEBUG("NesWorker::disconnect success=" << success);
     return success;
 }
 
 bool NesWorker::deregisterLogicalStream(std::string logicalName) {
-    bool success = wrk->removeLogicalStream(logicalName);
+    bool success = actorPtr->removeLogicalStream(logicalName);
     NES_DEBUG("NesWorker::deregisterLogicalStream success=" << success);
     return success;
 }
 
 bool NesWorker::deregisterPhysicalStream(std::string logicalName, std::string physicalName) {
-    bool success = wrk->removePhysicalStream(logicalName, physicalName);
+    bool success = actorPtr->removePhysicalStream(logicalName, physicalName);
     NES_DEBUG("NesWorker::deregisterPhysicalStream success=" << success);
     return success;
 }
 
 bool NesWorker::registerPhysicalStream(PhysicalStreamConfig conf) {
-    bool success = wrk->registerPhysicalStream(conf);
+    bool success = actorPtr->registerPhysicalStream(conf);
     NES_DEBUG("NesWorker::registerPhysicalStream success=" << success);
     return success;
 }
 
 bool NesWorker::addParent(std::string parentId) {
-    bool success = wrk->addNewParentToSensorNode(parentId);
+    bool success = actorPtr->addNewParentToSensorNode(parentId);
     NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
     return success;
 }
 
 bool NesWorker::removeParent(std::string parentId) {
-    bool success = wrk->removeParentFromSensorNode(parentId);
+    bool success = actorPtr->removeParentFromSensorNode(parentId);
     NES_DEBUG("NesWorker::removeLink(parent only) success=" << success);
     return success;
 }
 
 QueryStatisticsPtr NesWorker::getQueryStatistics(std::string queryId) {
-    return wrk->getQueryStatistics(queryId);
+    return nodeEngine->getQueryStatistics(queryId);
 }
 
 }// namespace NES

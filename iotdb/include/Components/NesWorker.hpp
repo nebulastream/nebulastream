@@ -1,15 +1,20 @@
 #ifndef INCLUDE_COMPONENTS_NESWORKER_HPP_
 #define INCLUDE_COMPONENTS_NESWORKER_HPP_
-#include <Actors/AtomUtils.hpp>
+//#include <Actors/AtomUtils.hpp>
+
 #include <Actors/Configurations/WorkerActorConfig.hpp>
+#include <Topology/NESTopologyEntry.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <caf/actor_system.hpp>
 #include <Actors/WorkerActor.hpp>
-#include <Util/Logger.hpp>
-#include <caf/io/all.hpp>
+//#include <caf/io/all.hpp>
 
 using namespace std;
 
 namespace NES {
-
+class WorkerActor;
+typedef std::shared_ptr<WorkerActor> WorkerActorPtr;
 class NesWorker {
   public:
     /**
@@ -126,7 +131,9 @@ class NesWorker {
   private:
     size_t getRandomPort(size_t base);
 
-    WorkerActor* wrk;
+    WorkerActor* actorPtr;
+    NodeEnginePtr nodeEngine;
+
     bool connected;
     bool withRegisterStream;
     PhysicalStreamConfig conf;

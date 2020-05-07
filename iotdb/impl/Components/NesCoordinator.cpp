@@ -34,31 +34,43 @@ void startRestServer(infer_handle_from_class_t<CoordinatorActor> handle,
 
 string NesCoordinator::deployQuery(const string& queryString, const string& strategy) {
     NES_DEBUG("NesCoordinator:registerAndDeployQuery queryString=" << queryString << " strategy=" << strategy);
-    return crdPtr->registerAndDeployQuery(0, queryString, strategy);
+    return crdActorPtr->registerAndDeployQuery(0, queryString, strategy);
 }
 
 bool NesCoordinator::undeployQuery(const string& queryId) {
     NES_DEBUG("NesCoordinator:unddeployQuery queryId=" << queryId);
-    return crdPtr->deregisterAndUndeployQuery(0, queryId);
+    return crdActorPtr->deregisterAndUndeployQuery(0, queryId);
 }
 
 bool NesCoordinator::stopCoordinator(bool force) {
     NES_DEBUG("NesCoordinator: stopCoordinator force=" << force);
     if (!stopped) {
         NES_DEBUG("NesCoordinator: stopping worker actor");
-        bool successStopWorkerActor = wrkPtr->shutdown(force);
+        bool successStopWorkerActor = wrkActorPtr->shutdown(force);
         if (!successStopWorkerActor) {
             NES_ERROR("NesCoordinator::stopCoordinator: error while stopping worker actor");
-            throw new Exception("Error while stopping NesCoordinator");
+            throw Exception("Error while stopping NesCoordinator");
         }
-        anon_send(workerActorHandle, exit_reason::user_shutdown);
-        NES_DEBUG("NesCoordinator::stopCoordinator worker actor success=" << successStopWorkerActor);
+        else
+        {
+            anon_send(workerActorHandle, exit_reason::user_shutdown);
+        }
+        bool successShutdownNodeEngine = nodeEngine->stop(force);
+        if (!successShutdownNodeEngine) {
+            NES_ERROR("NesCoordinator::stop node engine stop not successful");
+            throw Exception("NesCoordinator::stop error while stopping node engine");
+        } else {
+            NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
+        }
+
+        bool successWorker = successStopWorkerActor && successShutdownNodeEngine;
+        NES_DEBUG("NesCoordinator::stopCoordinator worker  success=" << successWorker);
 
         NES_DEBUG("NesCoordinator: stopping coordinator actor");
-        bool successStopCoordinatorActor = crdPtr->shutdown();
+        bool successStopCoordinatorActor = crdActorPtr->shutdown();
         if (!successStopCoordinatorActor) {
             NES_ERROR("NesCoordinator::stopCoordinator: error while stopping coordinator actor");
-            throw new Exception("Error while stopping NesCoordinator");
+            throw Exception("Error while stopping NesCoordinator");
         }
         anon_send(coordinatorActorHandle, exit_reason::user_shutdown);
         NES_DEBUG("NesCoordinator::stopCoordinator coordinator actor success=" << successStopCoordinatorActor);
@@ -67,7 +79,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
         bool successStopRest = restServer->stop();
         if (!successStopRest) {
             NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
-            throw new Exception("Error while stopping NesCoordinator");
+            throw Exception("Error while stopping NesCoordinator");
         }
         NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
 
@@ -97,6 +109,17 @@ size_t NesCoordinator::getRandomPort(size_t base) {
 uint16_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");
 
+
+    NES_DEBUG("NesCoordinator::start: start NodeEngine");
+    nodeEngine = std::make_shared<NodeEngine>();
+    bool successNodeEngine = nodeEngine->start();
+    if (!successNodeEngine) {
+        NES_ERROR("NesCoordinator: node engine could not be started");
+        throw Exception("NesCoordinator error while starting node engine");
+    } else {
+        NES_DEBUG("NesCoordinator: Node engine started successfully");
+    }
+
     NES_DEBUG("NesCoordinator starting coordinator actor");
     coordinatorCfg.load<io::middleman>();
     if (serverIp != "localhost") {
@@ -108,7 +131,7 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     coordinatorActorHandle = actorSystemCoordinator->spawn<CoordinatorActor>(serverIp);
 
     abstract_actor* abstractActorCoordinator = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
-    crdPtr = dynamic_cast<CoordinatorActor*>(abstractActorCoordinator);
+    crdActorPtr = dynamic_cast<CoordinatorActor*>(abstractActorCoordinator);
     NES_DEBUG("NesCoordinator: coordinator actor created");
 
     io::unpublish(coordinatorActorHandle, actorPort);
@@ -116,7 +139,7 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
                                                true);
     if (!expectedPortCoordinator) {
         NES_ERROR("NesCoordinator: publish expectedPortCoordinator failed: " << expectedPortCoordinator);
-        throw new Exception("NesCoordinator start failed");
+        throw Exception("NesCoordinator start failed");
     }
     NES_DEBUG("NesCoordinator: coordinator handle with id"
               << coordinatorActorHandle->id() << " successfully published at port " << expectedPortCoordinator);
@@ -136,29 +159,30 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     workerActorHandle = actorSystemWorker->spawn<NES::WorkerActor>(workerCfg.ip,
                                                                    workerCfg.publish_port,
                                                                    workerCfg.receive_port,
-                                                                   NESNodeType::Worker);
+                                                                   NESNodeType::Worker,
+                                                                   nodeEngine);
 
     abstract_actor* abstractActorWorker = caf::actor_cast<abstract_actor*>(workerActorHandle);
-    wrkPtr = dynamic_cast<WorkerActor*>(abstractActorWorker);
+    wrkActorPtr = dynamic_cast<WorkerActor*>(abstractActorWorker);
 
     io::unpublish(workerActorHandle, workerCfg.receive_port);
     auto expectedPortWorker = io::publish(workerActorHandle, workerCfg.receive_port, nullptr,
                                           true);
     if (!expectedPortWorker) {
         NES_ERROR("NesCoordinator: publish expectedPortWorker failed: " << expectedPortWorker);
-        throw new Exception("NesCoordinator start failed");
+        throw Exception("NesCoordinator start failed");
     }
     NES_DEBUG("NesCoordinator: worker handle with id"
               << workerActorHandle->id() << " successfully published at port " << expectedPortWorker);
 
     //TODO connect
     NES_DEBUG("NesCoordinator: connection worker to coordinator");
-    bool success = wrkPtr->connecting(workerCfg.host, actorPort);
-    if (success) {
+    bool successNodeConnect = wrkActorPtr->connecting(workerCfg.host, actorPort);
+    if (successNodeConnect) {
         NES_DEBUG("NesCoordinator and NesWorker successfully connected");
     } else {
         NES_ERROR("NesCoordinator: failed to connect coordinator and worker");
-        throw new Exception("NesCoordinator and NesWorker connection failed");
+        throw Exception("NesCoordinator and NesWorker connection failed");
     }
 
     NES_DEBUG("NesCoordinator starting rest server");
@@ -187,7 +211,7 @@ void NesCoordinator::setServerIp(std::string serverIp) {
 }
 
 QueryStatisticsPtr NesCoordinator::getQueryStatistics(std::string queryId) {
-    return wrkPtr->getQueryStatistics(queryId);
+    return nodeEngine->getQueryStatistics(queryId);
 }
 
 }// namespace NES

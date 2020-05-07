@@ -12,6 +12,8 @@
 #include <unordered_set>
 #include <vector>
 #include <zmq.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
+#include <Util/SerializationTools.hpp>
 
 using namespace std;
 namespace NES {
@@ -25,16 +27,16 @@ using JSON = nlohmann::json;
  */
 class NodeEngine {
   public:
-    enum NodeEngineQueryStatus { started,
-                                 stopped,
-                                 registered };
+    enum NodeEngineQueryStatus {
+        started,
+        stopped,
+        registered
+    };
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
     NodeEngine();
-
-    NodeEngine(string ip, uint16_t publish_port, uint16_t receive_port);
 
     ~NodeEngine();
 
@@ -44,6 +46,14 @@ class NodeEngine {
      * @return true if succeeded, else false
      */
     bool deployQueryInNodeEngine(QueryExecutionPlanPtr qep);
+
+    /**
+    * @brief deploy registers and starts a query
+    * @param queryId
+    * @param new query plan as eto
+    * @return true if succeeded, else false
+    */
+    bool deployQueryInNodeEngine(std::string queryId, std::string executableTransferObject);
 
     /**
      * @brief undeploy stops and undeploy a query
@@ -58,6 +68,14 @@ class NodeEngine {
      * @return true if succeeded, else false
      */
     bool registerQueryInNodeEngine(QueryExecutionPlanPtr qep);
+
+    /**
+    * @brief gregisters a query
+    * @param queryId
+    * @param query plan to register as eto
+    * @return true if succeeded, else false
+    */
+    bool registerQueryInNodeEngine(std::string queryId, std::string executableTransferObject);
 
     /**
      * @brief ungregisters a query
@@ -143,27 +161,6 @@ class NodeEngine {
     bool stopQueryManager();
 
     /**
-     * @brief getter/setter for IP
-     * @return
-     */
-    std::string& getIp();
-    void setIp(const std::string& ip);
-
-    /**
-     * @brief getter/sett for publish port
-     * @return
-     */
-    uint16_t getPublishPort() const;
-    void setPublishPort(uint16_t publish_port);
-
-    /**
-     * @brief getter/setter for receive port
-     * @return
-     */
-    uint16_t getReceivePort() const;
-    void setReceivePort(uint16_t receive_port);
-
-    /**
     * @brief method to return the query statistics
     * @param id of the query
     * @return queryStatistics
@@ -179,9 +176,7 @@ class NodeEngine {
     BufferManagerPtr bufferManager;
     bool isRunning;
 
-    std::string ip;
-    uint16_t publishPort;
-    uint16_t receivePort;
+    QueryCompilerPtr queryCompiler;
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

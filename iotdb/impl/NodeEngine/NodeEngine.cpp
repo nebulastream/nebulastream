@@ -35,23 +35,25 @@ NodeEngine::NodeEngine() {
     NES_DEBUG("NodeEngine()");
     props = std::make_shared<NodeProperties>();
     isRunning = false;
-}
 
-NodeEngine::NodeEngine(string ip, uint16_t publish_port, uint16_t receive_port) {
-    NES_DEBUG("NodeEngine(): create NodeEngine with ip=" << this->ip << " publish_port=" << this->publishPort
-                                                         << " receive_port=" << this->receivePort);
-
-    this->ip = std::move(ip);
-    this->publishPort = publish_port;
-    this->receivePort = receive_port;
-
-    props = std::make_shared<NodeProperties>();
-    isRunning = false;
 }
 
 NodeEngine::~NodeEngine() {
     stop(true);
 }
+
+bool NodeEngine::deployQueryInNodeEngine(std::string queryId, std::string executableTransferObject)
+{
+    ExecutableTransferObject eto = SerializationTools::parse_eto(
+        executableTransferObject);
+    NES_DEBUG(
+        "WorkerActor::running() eto after parse=" << eto.toString());
+    QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(queryCompiler);
+    NES_DEBUG("WorkerActor::running()  add query to queries map");
+    qep->setQueryId(queryId);
+    deployQueryInNodeEngine(qep);
+}
+
 
 bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: deployQueryInNodeEngine query " << qep);
@@ -70,6 +72,16 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
         NES_DEBUG("NodeEngine::deployQueryInNodeEngine: successfully start query");
     }
     return true;
+}
+
+bool NodeEngine::registerQueryInNodeEngine(std::string queryId, std::string executableTransferObject) {
+    ExecutableTransferObject eto = SerializationTools::parse_eto(
+        executableTransferObject);
+    NES_DEBUG(
+        "WorkerActor::running() eto after parse=" << eto.toString());
+    QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(queryCompiler);
+    qep->setQueryId(queryId);
+    registerQueryInNodeEngine(qep);
 }
 
 bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr qep) {
@@ -299,6 +311,9 @@ bool NodeEngine::startQueryManager() {
             throw Exception("Error while start thread pool");
         } else {
             NES_DEBUG("QueryManager(): thread pool successfully started");
+
+            NES_DEBUG("NodeEngine::startQueryManager create compiler");
+            queryCompiler = createDefaultQueryCompiler(queryManager);
             return true;
         }
     } else {
@@ -321,27 +336,6 @@ bool NodeEngine::stopQueryManager() {
     }
 
     return true;
-}
-
-string& NodeEngine::getIp() {
-    return ip;
-}
-
-void NodeEngine::setIp(const string& ip) {
-    this->ip = ip;
-}
-
-uint16_t NodeEngine::getPublishPort() const {
-    return publishPort;
-}
-void NodeEngine::setPublishPort(uint16_t publish_port) {
-    publishPort = publish_port;
-}
-uint16_t NodeEngine::getReceivePort() const {
-    return receivePort;
-}
-void NodeEngine::setReceivePort(uint16_t receive_port) {
-    receivePort = receive_port;
 }
 
 QueryStatisticsPtr NodeEngine::getQueryStatistics(std::string queryId) {

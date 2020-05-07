@@ -3,7 +3,6 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <caf/all.hpp>
 #include <caf/blocking_actor.hpp>
@@ -20,7 +19,6 @@ namespace NES {
 // the client queues pending tasks
 struct WorkerState {
     strong_actor_ptr current_server;
-    std::shared_ptr<NodeEngine> nodeEngine;
 };
 
 /**
@@ -39,7 +37,7 @@ class WorkerActor : public stateful_actor<WorkerState> {
      * @param receive port of this worker
      */
     explicit WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
-                         uint16_t receive_port, NESNodeType type);
+                         uint16_t receive_port, NESNodeType type, NodeEnginePtr nodeEngine);
 
   private:
     friend class NesWorker;
@@ -128,22 +126,19 @@ class WorkerActor : public stateful_actor<WorkerState> {
      */
     bool shutdown(bool force);
 
-    /**
-    * @brief method to return the query statistics
-    * @param id of the query
-    * @return queryStatistics
-    */
-    QueryStatisticsPtr getQueryStatistics(std::string queryId);
-
   private:
     //states of the actor
     behavior init();
     behavior unconnected();
     behavior running();
 
+    string ip;
+    uint16_t publishPort;
+    uint16_t receivePort;
+
     NESNodeType type;
     size_t workerId;
-    QueryCompilerPtr queryCompiler;
+    NodeEnginePtr nodeEngine;
 };
 
 }// namespace NES
