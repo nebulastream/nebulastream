@@ -62,6 +62,10 @@ class QueryPlan {
     OperatorNodePtr getRootOperator() const;
 
   private:
+    /**
+     * @brief initialize query plan and set currentOperatorId to 1
+     * @param rootOperator
+     */
     QueryPlan(OperatorNodePtr rootOperator);
     OperatorNodePtr rootOperator;
     uint64_t currentOperatorId;
