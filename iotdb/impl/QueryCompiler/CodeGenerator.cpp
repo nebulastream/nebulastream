@@ -153,7 +153,7 @@ std::string toString(TupleBuffer& buffer, SchemaPtr schema) {
     str << "+----------------------------------------------------+" << std::endl;
 
     auto buf = buffer.getBufferAs<char>();
-    for (uint32_t i = 0; i < buffer.getNumberOfTuples()*schema->getSchemaSizeInBytes();
+    for (uint32_t i = 0; i < buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes();
          i += schema->getSchemaSizeInBytes()) {
         str << "|";
         for (uint32_t s = 0; s < offsets.size(); ++s) {
@@ -196,7 +196,6 @@ bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& co
     code->varDeclarationState = varDeclarationState;
     code->varDeclarationWindowManager = varDeclarationWindowManager;
 
-
     /* declaration of record index; */
     code->varDeclarationRecordIndex = std::dynamic_pointer_cast<VariableDeclaration>(
         VariableDeclaration::create(createDataType(BasicType(UINT64)), "recordIndex",
@@ -211,7 +210,8 @@ bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& co
     code->varDeclarationInputTuples = VariableDeclaration::create(
         createPointerDataType(
             createUserDefinedType(code->structDeclaratonInputTuple)),
-        "inputTuples");;
+        "inputTuples");
+    ;
 
     code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
 
@@ -229,8 +229,7 @@ bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& co
     auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
     code->forLoopStmt = std::make_shared<FOR>(
         code->varDeclarationRecordIndex,
-        (VarRef(code->varDeclarationRecordIndex) <
-            (numberOfRecords)).copy(),
+        (VarRef(code->varDeclarationRecordIndex) < (numberOfRecords)).copy(),
         (++VarRef(code->varDeclarationRecordIndex)).copy());
 
     code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
@@ -287,7 +286,7 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
     code->override_fields.push_back(declaredMapVar);
     auto varMapI = code->structDeclarationResultTuple.getVariableDeclaration(field->name);
     auto callVar = VarRef(varDeclarationResultTuples)[VarRef(code->varDeclarationNumberOfResultTuples)]
-        .accessRef(VarRef(varMapI));
+                       .accessRef(VarRef(varMapI));
     auto expr = pred->generateCode(code);
     auto assignedMap = (callVar).assign(*expr);
     code->currentCodeInsertionPoint->addStatement(assignedMap.copy());
@@ -296,7 +295,7 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
 }
 
 bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) {
-    NES_DEBUG("CCodeGenerator: Generate code for Sink.")
+    NES_DEBUG("CCodeGenerator: Generate code for Sink.");
     auto code = context->code;
     // set result schema to context
     // todo replace to result schema of last operator instead of sink
@@ -370,10 +369,12 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
     // Generate final logic to emit the last buffer to the runtime
     // 1. set the number of tuples to the buffer
     code->cleanupStmts.push_back(setNumberOfTuples(code->varDeclarationResultBuffer,
-                                                   code->varDeclarationNumberOfResultTuples).copy());
+                                                   code->varDeclarationNumberOfResultTuples)
+                                     .copy());
     // 2. emit the buffer to the runtime.
     code->cleanupStmts.push_back(emitTupleBuffer(code->varDeclarationExecutionContext,
-                                                 code->varDeclarationResultBuffer).copy());
+                                                 code->varDeclarationResultBuffer)
+                                     .copy());
 
     return true;
 }
@@ -381,7 +382,7 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
 void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
                                                    VariableDeclaration varDeclResultTuple,
                                                    StructDeclaration structDeclarationResultTuple) {
-    NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check.")
+    NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check.");
 
     auto code = context->code;
 
@@ -393,11 +394,10 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     auto maxTupleDeclaration = VariableDeclaration::create(createDataType(INT64), "maxTuple");
     // 3. create calculation statement
     auto calculateMaxTupleStatement =
-        getBufferSize(code->varDeclarationResultBuffer)/Constant(resultTupleSize);
+        getBufferSize(code->varDeclarationResultBuffer) / Constant(resultTupleSize);
     auto calculateMaxTupleAssignment = VarDeclStatement(maxTupleDeclaration).assign(calculateMaxTupleStatement);
     // 4. add statement
     code->currentCodeInsertionPoint->addStatement(calculateMaxTupleAssignment.copy());
-
 
     // Check if maxTuple is reached. -> maxTuple <= numberOfResultTuples
     auto ifStatement = IF((VarRef(code->varDeclarationNumberOfResultTuples)) >= VarRef(maxTupleDeclaration));
@@ -409,17 +409,18 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     // 1.1 set the number of tuples to the output buffer -> resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);
     thenStatement->addStatement(
         setNumberOfTuples(code->varDeclarationResultBuffer,
-                          code->varDeclarationNumberOfResultTuples).copy());
+                          code->varDeclarationNumberOfResultTuples)
+            .copy());
     // 1.2 emit the output buffers to the runtime -> pipelineExecutionContext.emitBuffer(resultTupleBuffer);
     thenStatement->addStatement(emitTupleBuffer(code->varDeclarationExecutionContext,
-                                                code->varDeclarationResultBuffer).copy());
+                                                code->varDeclarationResultBuffer)
+                                    .copy());
     // 2.1 reset the numberOfResultTuples to 0 -> numberOfResultTuples = 0;
     thenStatement->addStatement(VarRef(code->varDeclarationNumberOfResultTuples).assign(Constant(0)).copy());
     // 2.2 allocate a new buffer -> resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
     thenStatement->addStatement(VarRef(code->varDeclarationResultBuffer).assign(allocateTupleBuffer(code->varDeclarationExecutionContext)).copy());
     // 2.2 get typed result buffer from resultTupleBuffer -> resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();
-    thenStatement->addStatement(VarRef(varDeclResultTuple).assign(getTypedBuffer(code->varDeclarationResultBuffer,
-                                                                                 structDeclarationResultTuple)).copy());
+    thenStatement->addStatement(VarRef(varDeclResultTuple).assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple)).copy());
 }
 
 /**
@@ -450,9 +451,9 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     auto keyVariableAttributeDeclaration =
         context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
     auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
-        .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-            VarRef(
-                keyVariableAttributeDeclaration)));
+                                             .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                                                 VarRef(
+                                                     keyVariableAttributeDeclaration)));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         keyVariableAttributeStatement));
 
@@ -462,7 +463,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     auto getKeyStateVariable = FunctionCallStatement("get");
     getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
     auto keyHandlerVariableStatement = VarDeclStatement(keyHandlerVariableDeclaration)
-        .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
+                                           .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         keyHandlerVariableStatement));
 
@@ -521,11 +522,11 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
         context->code->currentCodeInsertionPoint,
         partialRef,
         context->code->structDeclaratonInputTuple,
-        VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]
-    );
+        VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
 
     context->code->cleanupStmts.push_back(emitTupleBuffer(context->code->varDeclarationExecutionContext,
-                                                          context->code->varDeclarationResultBuffer).copy());
+                                                          context->code->varDeclarationResultBuffer)
+                                              .copy());
     return true;
 }
 
@@ -537,11 +538,11 @@ ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs&, const Generat
 
     // FunctionDeclaration main_function =
     FunctionBuilder functionBuilder = FunctionBuilder::create("compiled_query")
-        .returns(createDataType(BasicType(UINT32)))
-        .addParameter(code->varDeclarationInputBuffer)
-        .addParameter(code->varDeclarationState)
-        .addParameter(code->varDeclarationWindowManager)
-        .addParameter(code->varDeclarationExecutionContext);
+                                          .returns(createDataType(BasicType(UINT32)))
+                                          .addParameter(code->varDeclarationInputBuffer)
+                                          .addParameter(code->varDeclarationState)
+                                          .addParameter(code->varDeclarationWindowManager)
+                                          .addParameter(code->varDeclarationExecutionContext);
     code->variableDeclarations.push_back(code->varDeclarationNumberOfResultTuples);
     for (auto& variableDeclaration : code->variableDeclarations) {
         functionBuilder.addVariableDeclaration(variableDeclaration);
@@ -593,14 +594,13 @@ BinaryOperatorStatement CCodeGenerator::setNumberOfTuples(VariableDeclaration tu
     return VarRef(tupleBufferVariable).accessRef(setNumberOfTupleFunctionCall);
 }
 
-CCodeGenerator::~CCodeGenerator() {};
+CCodeGenerator::~CCodeGenerator(){};
 
 BinaryOperatorStatement CCodeGenerator::emitTupleBuffer(VariableDeclaration pipelineContext,
                                                         VariableDeclaration tupleBufferVariable) {
     auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
     emitTupleBuffer.addParameter(VarRef(tupleBufferVariable));
     return VarRef(pipelineContext).accessRef(emitTupleBuffer);
-
 }
 BinaryOperatorStatement CCodeGenerator::getBuffer(VariableDeclaration tupleBufferVariable) {
     auto getBufferFunctionCall = FunctionCallStatement("getBuffer");
