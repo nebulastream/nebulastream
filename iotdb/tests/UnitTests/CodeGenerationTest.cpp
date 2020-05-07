@@ -896,8 +896,9 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
         ->addField("valueFloat", BasicType::FLOAT32)
         ->addField("valueDouble", BasicType::FLOAT64)
         ->addField(mappedValue)
-        ->addField("valueChar", BasicType::CHAR)->addField(
-            "text", createArrayDataType(BasicType::CHAR, 12));
+        ->addField("valueChar", BasicType::CHAR)
+        ->addField(
+          "text", createArrayDataType(BasicType::CHAR, 12));
 
     auto schemaSize = outputSchema->getSchemaSizeInBytes();
     /* generate code for writing result tuples to output buffer */
