@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
-#include <memory>
 #include <functional>
+#include <memory>
 namespace NES {
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
@@ -48,5 +48,5 @@ class PipelineExecutionContext {
 
 typedef std::unique_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
 
-}
-#endif //NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
+}// namespace NES
+#endif//NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
