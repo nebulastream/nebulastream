@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#undef U
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
