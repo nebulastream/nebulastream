@@ -6,8 +6,7 @@ namespace NES {
 
 static std::string mangledEntryPoint = "_Z14compiled_queryRN3NES11TupleBufferEPvPNS_13WindowManagerERNS_24PipelineExecutionContextE";
 
-CompiledExecutablePipeline::CompiledExecutablePipeline(CompiledCodePtr compiled_code) :
-    compiledCode(std::move(compiled_code)) {
+CompiledExecutablePipeline::CompiledExecutablePipeline(CompiledCodePtr compiled_code) : compiledCode(std::move(compiled_code)) {
 }
 
 CompiledExecutablePipeline::CompiledExecutablePipeline(const CompiledExecutablePipeline& other) {

@@ -1,6 +1,5 @@
 #include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-#include <Windows/WindowHandler.hpp>
 #include <Util/Logger.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <utility>
