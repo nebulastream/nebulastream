@@ -23,12 +23,6 @@ class ExecutablePipeline {
     virtual ~ExecutablePipeline() = default;
 
     /**
-     * @brief Creates a copy of the executable pipeline.
-     * @return ExecutablePipelinePtr
-     */
-    virtual ExecutablePipelinePtr copy() const = 0;
-
-    /**
      * @brief Executes the pipeline given the input
      * @return error code: 1 for valid execution, 0 for error
      */
