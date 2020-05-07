@@ -26,12 +26,11 @@ typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 class QueryPlan {
   public:
     /**
-     * @brief Creates a new query plan with a root operator and a specific stream.
+     * @brief Creates a new query plan with a root operator.
      * @param rootOperator The root operator usually a source operator.
-     * @param stream the source stream attached to this query.
      * @return a pointer to the query plan.
      */
-    static QueryPlanPtr create(OperatorNodePtr rootOperator, StreamPtr sourceStream);
+    static QueryPlanPtr create(OperatorNodePtr rootOperator);
 
     /**
      * @brief Get all source operators
@@ -52,12 +51,6 @@ class QueryPlan {
     void appendOperator(OperatorNodePtr op);
 
     /**
-     * @brief get source stream
-     * @return pointer to source stream
-     */
-    const StreamPtr getSourceStream() const;
-
-    /**
      * @brief Returns string representation of the query.
      */
     std::string toString();
@@ -69,10 +62,9 @@ class QueryPlan {
     OperatorNodePtr getRootOperator() const;
 
   private:
-    QueryPlan(OperatorNodePtr rootOperator, StreamPtr stream);
+    QueryPlan(OperatorNodePtr rootOperator);
     OperatorNodePtr rootOperator;
     uint64_t currentOperatorId;
-    StreamPtr sourceStream;
     /**
      * @brief Get next free operator id
      */
