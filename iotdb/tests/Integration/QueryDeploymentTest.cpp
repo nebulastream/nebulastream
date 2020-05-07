@@ -23,7 +23,7 @@ class QueryDeploymentTest : public testing::Test {
     }
 };
 
-TEST_F(QueryDeploymentTest, test_deploy_one_worker_print) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerPrint) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -53,7 +53,7 @@ TEST_F(QueryDeploymentTest, test_deploy_one_worker_print) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(QueryDeploymentTest, test_deploy_two_worker_print) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerPrint) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -94,7 +94,7 @@ TEST_F(QueryDeploymentTest, test_deploy_two_worker_print) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(QueryDeploymentTest, test_deploy_one_worker_file_output) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     remove("test.out");
 
     cout << "start coordinator" << endl;
@@ -155,7 +155,7 @@ TEST_F(QueryDeploymentTest, test_deploy_one_worker_file_output) {
 }
 
 
-TEST_F(QueryDeploymentTest, test_deploy_undeploy_one_worker_file_output) {
+TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     remove("test.out");
 
     cout << "start coordinator" << endl;
@@ -191,7 +191,7 @@ TEST_F(QueryDeploymentTest, test_deploy_undeploy_one_worker_file_output) {
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, test_deploy_two_worker_file_output_with_exceptions) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputWithExceptions) {
     remove("test.out");
 
     cout << "start coordinator" << endl;
@@ -309,7 +309,7 @@ TEST_F(QueryDeploymentTest, test_deploy_two_worker_file_output_with_exceptions) 
 }
 
 
-TEST_F(QueryDeploymentTest, test_deploy_and_undeploy_two_worker_file_output) {
+TEST_F(QueryDeploymentTest, testDeployAndUndeployTwoWorkerFileOutput) {
     remove("test.out");
 
     cout << "start coordinator" << endl;

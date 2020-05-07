@@ -46,7 +46,7 @@ class TestAggregation : public WindowAggregation {
                             StructDeclaration inputStruct, BinaryOperatorStatement inputRef){};
 };
 
-TEST_F(WindowManagerTest, sum_aggregation_test)
+TEST_F(WindowManagerTest, testSumAggregation)
 {
     auto field = createField("test", 4);
     const WindowAggregationPtr aggregation = Sum::on(Field(field));
@@ -59,7 +59,7 @@ TEST_F(WindowManagerTest, sum_aggregation_test)
     }
 }
 
-TEST_F(WindowManagerTest, check_slice)
+TEST_F(WindowManagerTest, testCheckSlice)
 {
     auto store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = std::make_shared<TestAggregation>(TestAggregation());
@@ -83,7 +83,7 @@ TEST_F(WindowManagerTest, check_slice)
     ASSERT_EQ(aggregates[sliceIndex], 2);
 }
 
-TEST_F(WindowManagerTest, window_trigger) {
+TEST_F(WindowManagerTest, testWindowTrigger) {
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
@@ -129,5 +129,4 @@ TEST_F(WindowManagerTest, window_trigger) {
     uint64_t* tuples = (uint64_t*)buf.getBuffer();
     ASSERT_EQ(tuples[0], 1);
 }
-
 } // namespace NES

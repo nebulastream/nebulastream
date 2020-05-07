@@ -22,7 +22,7 @@ class StreamCatalogRemoteTest : public testing::Test {
         std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl;
     }
 };
-TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);
@@ -59,7 +59,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);
@@ -109,7 +109,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);
@@ -153,7 +153,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StreamCatalogRemoteTest, test_add_remove_not_empty_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);
@@ -181,7 +181,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_not_empty_log_stream_remote_test
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);
@@ -220,7 +220,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);
@@ -270,7 +270,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) 
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StreamCatalogRemoteTest, remove_physical_from_new_logical_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);
@@ -301,7 +301,7 @@ TEST_F(StreamCatalogRemoteTest, remove_physical_from_new_logical_stream_remote_t
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StreamCatalogRemoteTest, remove_not_existing_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);

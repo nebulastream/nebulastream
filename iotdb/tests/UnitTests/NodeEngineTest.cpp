@@ -203,8 +203,6 @@ void testOutput(std::string path, std::string expectedOutput) {
     EXPECT_TRUE(response == 0);
 }
 
-
-
 CompiledTestQueryExecutionPlanPtr setupQEP(BufferManagerPtr bPtr, QueryManagerPtr dPtr, std::string queryId) {
     CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source =
@@ -224,13 +222,13 @@ CompiledTestQueryExecutionPlanPtr setupQEP(BufferManagerPtr bPtr, QueryManagerPt
  * Test methods
  *     cout << "Stats=" << ptr->getStatistics() << endl;
  */
-TEST_F(EngineTest, start_stop_engine_empty) { 
+TEST_F(EngineTest, testStartStopEngineEmpty) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->stop(false));
 }
 
-TEST_F(EngineTest, start_deploy_stop_test) {
+TEST_F(EngineTest, teststartDeployStop) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
     CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
@@ -242,7 +240,7 @@ TEST_F(EngineTest, start_deploy_stop_test) {
     testOutput();
 }
 
-TEST_F(EngineTest, start_deploy_undeploy_stop_test) {
+TEST_F(EngineTest, testStartDeployUndeployStop) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
     CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
@@ -255,7 +253,7 @@ TEST_F(EngineTest, start_deploy_undeploy_stop_test) {
     testOutput();
 }
 
-TEST_F(EngineTest, start_register_start_stop_deregister_stop_test) {
+TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
     CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
@@ -275,7 +273,7 @@ TEST_F(EngineTest, start_register_start_stop_deregister_stop_test) {
     testOutput();
 }
 
-TEST_F(EngineTest, parallel_different_source_test) {
+TEST_F(EngineTest, testParallelDifferentSource) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
     CompiledTestQueryExecutionPlanPtr qep1 = std::make_shared<CompiledTestQueryExecutionPlan>();
     DataSourcePtr source1 =
@@ -317,7 +315,7 @@ TEST_F(EngineTest, parallel_different_source_test) {
     testOutput("qep2.txt");
 }
 
-TEST_F(EngineTest, parallel_same_source_test) {
+TEST_F(EngineTest, testParallelSameSource) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
 
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
@@ -334,7 +332,6 @@ TEST_F(EngineTest, parallel_same_source_test) {
     qep2->addDataSource(source1);
     qep2->addDataSink(sink2);
     qep2->setQueryId("2");
-
 
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
@@ -366,7 +363,7 @@ TEST_F(EngineTest, parallel_same_source_test) {
     testOutput("qep2.txt");
 }
 
-TEST_F(EngineTest, parallel_same_sink_test) {
+TEST_F(EngineTest, testParallelSameSink) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 =
@@ -377,7 +374,6 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     qep1->addDataSink(sink1);
     qep1->setQueryId("1");
 
-
     CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source2 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(), ptr->getQueryManager());
@@ -385,7 +381,6 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     qep2->addDataSource(source2);
     qep2->addDataSink(sink1);
     qep2->setQueryId("2");
-
 
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
@@ -407,7 +402,7 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     testOutput("qep12.txt", joinedExpectedOutput);
 }
 
-TEST_F(EngineTest, parallel_same_source_and_sink_regstart_test) {
+TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 =
@@ -444,7 +439,7 @@ TEST_F(EngineTest, parallel_same_source_and_sink_regstart_test) {
     testOutput("qep3.txt", joinedExpectedOutput);
 }
 
-TEST_F(EngineTest, start_stop_start_stop_test) {
+TEST_F(EngineTest, testStartStopStartStop) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
     CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());

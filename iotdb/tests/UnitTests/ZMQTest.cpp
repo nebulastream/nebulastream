@@ -65,7 +65,7 @@ public:
 };
 
 /* - ZeroMQ Data Source ---------------------------------------------------- */
-TEST_F(ZMQTest, ZmqSourceReceiveData) {
+TEST_F(ZMQTest, testZmqSourceReceiveData) {
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
@@ -91,7 +91,6 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
         size_t expected = 400;
         EXPECT_EQ(sum, expected);
 
-        // bufferManager->releaseFixedSizeBuffer(tuple_buffer);
         receiving_finished = true;
     });
     size_t tupCnt = 8;
@@ -116,7 +115,7 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
 }
 
 /* - ZeroMQ Data Sink ------------------------------------------------------ */
-TEST_F(ZMQTest, ZmqSinkSendData) {
+TEST_F(ZMQTest, testZmqSinkSendData) {
 
     return;
     //FIXME: this test makes no sense, redo it
@@ -176,7 +175,7 @@ TEST_F(ZMQTest, ZmqSinkSendData) {
 }
 
 /* - ZeroMQ Data Sink to ZeroMQ Data Source  ------------------------------- */
-TEST_F(ZMQTest, ZmqSinkToSource) {
+TEST_F(ZMQTest, testZmqSinkToSource) {
 
 /**
   //FIXME: this test makes no sense, redo it

@@ -41,7 +41,7 @@ class StreamCatalogTest : public testing::Test {
   }
 };
 
-TEST_F(StreamCatalogTest, add_get_log_stream_test) {
+TEST_F(StreamCatalogTest, testAddGetLogStream) {
   StreamCatalog::instance().addLogicalStream(
       "test_stream", Schema::create());
   SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
@@ -60,7 +60,7 @@ TEST_F(StreamCatalogTest, add_get_log_stream_test) {
   EXPECT_EQ(exp, defaultSchema->toString());
 }
 
-TEST_F(StreamCatalogTest, add_remove_log_stream_test) {
+TEST_F(StreamCatalogTest, testAddRemoveLogStream) {
   StreamCatalog::instance().addLogicalStream(
       "test_stream", Schema::create());
 
@@ -77,21 +77,16 @@ TEST_F(StreamCatalogTest, add_remove_log_stream_test) {
       .getAllLogicalStream();
 
   EXPECT_NE(1, allLogicalStream.size());
-
   EXPECT_FALSE(StreamCatalog::instance().removeLogicalStream("test_stream22"));
-
-//  cout << "log streams=" << StreamCatalog::instance().getLogicalStreamAndSchemaAsString() << endl;
-
 }
 
-TEST_F(StreamCatalogTest, get_not_existing_key_test) {
+TEST_F(StreamCatalogTest, testGetNotExistingKey) {
   SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
       "test_stream22");
   EXPECT_EQ(sPtr, nullptr);
 }
 
-TEST_F(StreamCatalogTest, add_get_physical_stream_test) {
-//  NESTopologyManager::getInstance().resetNESTopologyPlan();
+TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
   StreamCatalog::instance().addLogicalStream(
       "test_stream", Schema::create());
 
@@ -121,7 +116,7 @@ TEST_F(StreamCatalogTest, add_get_physical_stream_test) {
 
 //TODO: add test for a second physical stream add
 
-TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
+TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
   StreamCatalog::instance().addLogicalStream(
       "test_stream", Schema::create());
@@ -147,7 +142,7 @@ TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
        << endl;
 }
 
-TEST_F(StreamCatalogTest, add_physical_for_not_existing_logical_stream_test) {
+TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
   NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
       .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);

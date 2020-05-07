@@ -22,7 +22,7 @@ class MultiWorkerTest : public testing::Test {
     }
 };
 
-TEST_F(MultiWorkerTest, start_stop_worker_coordinator_single) {
+TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -45,7 +45,7 @@ TEST_F(MultiWorkerTest, start_stop_worker_coordinator_single) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, start_stop_worker_coordinator) {
+TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -79,7 +79,7 @@ TEST_F(MultiWorkerTest, start_stop_worker_coordinator) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, start_stop_coordinator_worker) {
+TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -113,7 +113,7 @@ TEST_F(MultiWorkerTest, start_stop_coordinator_worker) {
     EXPECT_TRUE(retStopWrk2);
 }
 
-TEST_F(MultiWorkerTest, start_connect_stop_worker_coordinator) {
+TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -152,7 +152,7 @@ TEST_F(MultiWorkerTest, start_connect_stop_worker_coordinator) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, start_with_connect_stop_worker_coordinator) {
+TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -183,7 +183,7 @@ TEST_F(MultiWorkerTest, start_with_connect_stop_worker_coordinator) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, start_connect_stop_without_disconnect_worker_coordinator) {
+TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -222,7 +222,7 @@ TEST_F(MultiWorkerTest, start_connect_stop_without_disconnect_worker_coordinator
     EXPECT_TRUE(retStopWrk2);
 }
 
-TEST_F(MultiWorkerTest, multi_worker_test) {
+TEST_F(MultiWorkerTest, multiWorkerTest) {
     size_t numWorkers = 3;
 
     cout << "start coordinator" << endl;
