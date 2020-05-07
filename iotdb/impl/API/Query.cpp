@@ -12,9 +12,8 @@ Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
 Query Query::from(const std::string& sourceStreamName) {
     NES_DEBUG("Query: create query for input stream " << sourceStreamName);
     auto sourceOperator = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create(sourceStreamName));
-    QueryPlanPtr queryPlan = QueryPlan::create(sourceOperator);
-    Query query(queryPlan);
-    return query;
+    auto queryPlan = QueryPlan::create(sourceOperator);
+    return Query(queryPlan);
 }
 
 Query& Query::filter(const ExpressionNodePtr filterExpression) {

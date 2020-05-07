@@ -62,12 +62,10 @@ TEST_F(QueryTest, testQueryFilter) {
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
 
-    Stream def = Stream("default_logical", schema);
-
     auto lessExpression = Attribute("field_1") <= 10;
 
     auto printSinkDescriptor = PrintSinkDescriptor::create(schema);
-    Query query = Query::from(def).filter(lessExpression).sink(printSinkDescriptor);
+    Query query = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = plan->getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 1);
