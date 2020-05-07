@@ -46,7 +46,5 @@ class PipelineExecutionContext {
     std::function<void(TupleBuffer&)> emitFunctionHandler;
 };
 
-typedef std::unique_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
-
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
