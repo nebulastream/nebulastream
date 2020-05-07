@@ -9,15 +9,6 @@ static std::string mangledEntryPoint = "_Z14compiled_queryRN3NES11TupleBufferEPv
 CompiledExecutablePipeline::CompiledExecutablePipeline(CompiledCodePtr compiled_code) : compiledCode(std::move(compiled_code)) {
 }
 
-CompiledExecutablePipeline::CompiledExecutablePipeline(const CompiledExecutablePipeline& other) {
-    /* TODO consider deep copying this! */
-    this->compiledCode = other.compiledCode;
-}
-
-ExecutablePipelinePtr CompiledExecutablePipeline::copy() const {
-    return ExecutablePipelinePtr(new CompiledExecutablePipeline(*this));
-}
-
 typedef uint32_t (*PipelineFunctionPtr)(TupleBuffer&, void*, WindowManager*, const PipelineExecutionContext&);
 
 uint32_t CompiledExecutablePipeline::execute(TupleBuffer& inputBuffer,
@@ -28,7 +19,7 @@ uint32_t CompiledExecutablePipeline::execute(TupleBuffer& inputBuffer,
     return (*fn)(inputBuffer, state, window_manager.get(), context);
 }
 
-ExecutablePipelinePtr createCompiledExecutablePipeline(const CompiledCodePtr& compiledCode) {
+ExecutablePipelinePtr CompiledExecutablePipeline::create(const CompiledCodePtr compiledCode) {
     return std::make_shared<CompiledExecutablePipeline>(compiledCode);
 }
 

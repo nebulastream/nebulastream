@@ -6,6 +6,10 @@ namespace NES {
 
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan("") {}
 
+GeneratedQueryExecutionPlanPtr GeneratedQueryExecutionPlan::create() {
+    return std::make_shared<GeneratedQueryExecutionPlan>();
+}
+
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& queryId) : QueryExecutionPlan(queryId) {
 }
 

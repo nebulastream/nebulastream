@@ -7,10 +7,14 @@
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 
 namespace NES {
+class GeneratedQueryExecutionPlan;
+typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlanPtr;
 
 class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
   public:
     GeneratedQueryExecutionPlan();
+
+    static GeneratedQueryExecutionPlanPtr create();
 
     GeneratedQueryExecutionPlan(const std::string& queryId);
 
@@ -22,8 +26,6 @@ class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
  */
     bool executeStage(uint32_t pipelineStageId, TupleBuffer& inputBuffer) override;
 };
-
-typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlanPtr;
 
 }// namespace NES
 #endif /* INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_ */

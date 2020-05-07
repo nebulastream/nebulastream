@@ -25,7 +25,7 @@ QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
     queryPlan->produce(codeGenerator, context, std::cout);
-    QueryExecutionPlanPtr qep = std::make_shared<GeneratedQueryExecutionPlan>();
+    QueryExecutionPlanPtr qep = GeneratedQueryExecutionPlan::create();
     qep->setQueryManager(queryManager);
     qep->setBufferManager(bufferManager);
     compilePipelineStages(qep, codeGenerator, context);

@@ -573,7 +573,7 @@ ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs&, const Generat
     CodeFile file = fileBuilder.addDeclaration(functionBuilder.build()).build();
     Compiler compiler;
     CompiledCodePtr compiledCode = compiler.compile(file.code);
-    return createCompiledExecutablePipeline(compiledCode);
+    return CompiledExecutablePipeline::create(compiledCode);
 }
 
 BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(VariableDeclaration pipelineContext) {
