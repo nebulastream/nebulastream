@@ -23,7 +23,7 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipelineStageId, TupleBu
     // create emit function handler
     auto emitFunctionHandler = [this, pipelineStageId](TupleBuffer& buffer) {
         NES_DEBUG("QueryExecutionPlan: received buffer from pipelinestage:" << pipelineStageId << " with "
-                                                                            << buffer.getNumberOfTuples() << " tuples.")
+                                                                            << buffer.getNumberOfTuples() << " tuples.");
         // ignore the buffer if it is empty
         if (buffer.getNumberOfTuples() > 0) {
             // send the buffer to the next pipeline stage
