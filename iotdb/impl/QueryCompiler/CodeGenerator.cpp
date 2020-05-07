@@ -361,11 +361,11 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
         }
     }
 
-    // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the runtime.
-    generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple);
-
     // increment number of tuples in buffer -> ++numberOfResultTuples;
     code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
+
+    // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the runtime.
+    generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple);
 
     // Generate final logic to emit the last buffer to the runtime
     // 1. set the number of tuples to the buffer
@@ -393,14 +393,14 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     auto maxTupleDeclaration = VariableDeclaration::create(createDataType(INT64), "maxTuple");
     // 3. create calculation statement
     auto calculateMaxTupleStatement =
-        getBufferSize(code->varDeclarationResultBuffer)/Constant(resultTupleSize) - Constant(1);
+        getBufferSize(code->varDeclarationResultBuffer)/Constant(resultTupleSize);
     auto calculateMaxTupleAssignment = VarDeclStatement(maxTupleDeclaration).assign(calculateMaxTupleStatement);
     // 4. add statement
     code->currentCodeInsertionPoint->addStatement(calculateMaxTupleAssignment.copy());
 
 
     // Check if maxTuple is reached. -> maxTuple <= numberOfResultTuples
-    auto ifStatement = IF((VarRef(maxTupleDeclaration)) <= (VarRef(code->varDeclarationNumberOfResultTuples)));
+    auto ifStatement = IF((VarRef(code->varDeclarationNumberOfResultTuples)) >= VarRef(maxTupleDeclaration));
     // add if statement to current code block
     code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
     // add tuple emit logic to then statement, which is executed if the condition is met.

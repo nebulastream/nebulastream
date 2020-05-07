@@ -11,7 +11,7 @@ GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& quer
 
 bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipelineStageId, TupleBuffer& inputBuffer) {
     // check if we should pass this buffer to a sink or to a pipeline
-    if (stages.size() <= pipelineStageId) {
+    if (pipelineStageId >= numberOfPipelineStages()) {
         NES_DEBUG("QueryExecutionPlan: output buffer to sink");
         for (const auto& s: this->getSinks()) {
             s->writeData(inputBuffer);
