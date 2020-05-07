@@ -1,7 +1,9 @@
 #ifndef INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
 #define INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
 
+#undef U
 #include <Util/Logger.hpp>
+#include <Actors/AtomUtils.hpp>
 
 namespace NES {
 /**

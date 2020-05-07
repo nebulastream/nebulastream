@@ -1,27 +1,19 @@
 #include <Actors/AtomUtils.hpp>
-#include <Actors/ExecutableTransferObject.hpp>
 #include <Actors/WorkerActor.hpp>
 #include <Util/Logger.hpp>
-#include <Util/SerializationTools.hpp>
 #include <boost/filesystem.hpp>
 #include <sstream>
 
 namespace NES {
-WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
-                         uint16_t receive_port, NESNodeType type)
+WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publishPort,
+                         uint16_t receivePort, NESNodeType type, NodeEnginePtr nodeEngine)
     : stateful_actor(cfg),
-      workerId(0) {
-    NES_DEBUG("WorkerActor(): ip" << ip << " pubPort=" << publish_port << " recPort=" << receive_port << " type=" << type);
-    this->state.nodeEngine = std::make_unique<NodeEngine>(ip, publish_port, receive_port);
-    bool success = this->state.nodeEngine->start();
-    if (!success) {
-        NES_ERROR("WorkerActor: node engine could not be started");
-        throw Exception("WorkerActor error while starting node engine");
-    } else {
-        NES_DEBUG("WorkerActor: Node engine started successfully");
-    }
-
-    this->queryCompiler = createDefaultQueryCompiler(this->state.nodeEngine->getQueryManager());
+      workerId(0),
+      ip(ip),
+      publishPort(publishPort),
+      receivePort(receivePort),
+      nodeEngine(nodeEngine){
+    NES_DEBUG("WorkerActor(): ip" << ip << " pubPort=" << publishPort << " recPort=" << receivePort << " type=" << type);
     this->type = type;
 }
 
@@ -240,7 +232,7 @@ bool WorkerActor::addNewParentToSensorNode(std::string parentId) {
                   std::to_string(workerId), parentId)
         .await(
             [=, &prom](bool ret) {
-                if (ret == true) {
+                if (ret) {
                     NES_DEBUG("WorkerActor: parent successfully added");
                 } else {
                     NES_DEBUG("WorkerActor: parent not added");
@@ -273,7 +265,7 @@ bool WorkerActor::removeParentFromSensorNode(std::string parentId) {
                   std::to_string(workerId), parentId)
         .await(
             [=, &prom](bool ret) {
-                if (ret == true) {
+                if (ret) {
                     NES_DEBUG("WorkerActor: parent successfully removed");
                 } else {
                     NES_DEBUG("WorkerActor: parent not removed");
@@ -331,11 +323,11 @@ bool WorkerActor::registerNode(NESNodeType type) {
     std::promise<size_t> prom;
     auto coordinator = actor_cast<actor>(this->state.current_server);
     this->request(coordinator, task_timeout, register_node_atom::value,
-                  this->state.nodeEngine->getIp(),
-                  this->state.nodeEngine->getPublishPort(),
-                  this->state.nodeEngine->getReceivePort(),
+                  ip,
+                  publishPort,
+                  receivePort,
                   2,
-                  this->state.nodeEngine->getNodePropertiesAsString(),
+                  nodeEngine->getNodePropertiesAsString(),
                   (int) type)
         .await(
             [=, &prom](const size_t& id) mutable {
@@ -348,7 +340,7 @@ bool WorkerActor::registerNode(NESNodeType type) {
                     "WorkerActor::registerNode:node registered not successfully created "
                     << "\n"
                     << error_msg);
-                throw new Exception("Error while registerNode");
+                throw Exception("Error while registerNode");
             });
     ;
 
@@ -375,13 +367,13 @@ bool WorkerActor::connecting(const std::string& host, uint16_t port) {
         // remote actor not ready (not published) --> retry at some point
         NES_ERROR("WorkerActor::connecting handle error for host=" << host << " port=" << port << " error="
                                                                    << caf::to_string(exp_remote_actor.error()));
-        throw new Exception("Error while casting coordinator handle");
+        throw Exception("Error while casting coordinator handle");
     }
 
     NES_DEBUG("WorkerActor::connecting: register node of type=" << type);
     bool success = registerNode(type);
     if (!success) {
-        throw new Exception("Error while register sensor");
+        throw Exception("Error while register sensor");
     } else {
         NES_DEBUG("WorkerActor::connecting: register successful");
     }
@@ -398,13 +390,7 @@ bool WorkerActor::connecting(const std::string& host, uint16_t port) {
 
 bool WorkerActor::WorkerActor::shutdown(bool force) {
     NES_DEBUG("WorkerActor: shutdown with force=" << force);
-    bool success = this->state.nodeEngine->stop(force);
-    if (!success) {
-        NES_ERROR("WorkerActor:shutdown node engine stop not successful");
-        throw Exception("WorkerActor error while stopping node engine");
-    } else {
-        NES_DEBUG("WorkerActor: Node engine stopped successfully");
-    }
+    //TODO: do we have to do something here?
     return true;
 }
 
@@ -419,57 +405,38 @@ behavior WorkerActor::running() {
         [=](deploy_query_atom, const string& queryId, string& executableTransferObject) {
             NES_DEBUG("WorkerActor: got request for deploy_query_atom queryId=" << queryId << " eto="
                                                                                 << executableTransferObject);
-            ExecutableTransferObject eto = SerializationTools::parse_eto(
-                executableTransferObject);
-            NES_DEBUG(
-                "WorkerActor::running() eto after parse=" << eto.toString());
-            QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(this->queryCompiler);
-            NES_DEBUG("WorkerActor::running()  add query to queries map");
-
-            bool success = state.nodeEngine->deployQueryInNodeEngine(qep);
+            bool success = nodeEngine->deployQueryInNodeEngine(queryId, executableTransferObject);
             NES_DEBUG("WorkerActor::running() deploy query success=" << success);
             return success;
         },
         // internal rpc to undeploy a query, undeploy combines unregister and stop
         [=](undeploy_query_atom, const string& queryId) {
             NES_DEBUG("WorkerActor: got request for undeploy_query_atom queryId=" << queryId);
-            return this->state.nodeEngine->undeployQuery(queryId);
+            return this->nodeEngine->undeployQuery(queryId);
         },
         // internal rpc to register a query on a worker
         [=](register_query_atom, const string& queryId, string& executableTransferObject) {
             NES_DEBUG("WorkerActor: got request for register_query_atom queryId=" << queryId);
-
-            ExecutableTransferObject eto = SerializationTools::parse_eto(
-                executableTransferObject);
-            NES_DEBUG(
-                "WorkerActor::running() eto after parse=" << eto.toString());
-            QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(this->queryCompiler);
-            qep->setQueryId(queryId);
-            NES_DEBUG("WorkerActor::running() add query to queries map");
-
-            bool success = state.nodeEngine->registerQueryInNodeEngine(qep);
+            bool success = nodeEngine->registerQueryInNodeEngine(queryId, executableTransferObject);
             NES_DEBUG("WorkerActor::running() deploy query success=" << success);
             return success;
         },
         // internal rpc to unregister a query on a worker
         [=](unregister_query_atom, const string& queryId) {
             NES_DEBUG("WorkerActor: got request for unregister_query_atom queryId=" << queryId);
-            return this->state.nodeEngine->unregisterQuery(queryId);
+            return nodeEngine->unregisterQuery(queryId);
         },
         // internal rpc to start a query on a worker
         [=](start_query_atom, const string& queryId) {
             NES_DEBUG("WorkerActor: got request for start_query_atom queryId=" << queryId);
-            return this->state.nodeEngine->startQuery(queryId);
+            return nodeEngine->startQuery(queryId);
         },
         // internal rpc to stop a query on a worker
         [=](stop_query_atom, const string& queryId) {
             NES_DEBUG("WorkerActor: got request for stop_query_atom queryId=" << queryId);
-            return this->state.nodeEngine->stopQuery(queryId);
+            return nodeEngine->stopQuery(queryId);
         }};
     NES_DEBUG("WorkerActor::running end running");
 }
 
-QueryStatisticsPtr WorkerActor::getQueryStatistics(std::string queryId) {
-    return this->state.nodeEngine->getQueryStatistics(queryId);
-}
 }// namespace NES
