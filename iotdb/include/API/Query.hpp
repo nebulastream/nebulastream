@@ -31,103 +31,47 @@ class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 /**
- * Interface to create new query.
+ * User interface to create stream processing queries.
+ * The current api exposes method to create queries using all currently supported operators.
  */
 class Query {
   public:
     ~Query() = default;
 
     /**
-     * @brief: Creates a query from a particualr stream.
-     * @param sourceStream name of the stream to query.
-     * @param schema @deprecated will be removed when we have the catalog.
-     * @return the input query
+     * @brief: Creates a query from a particular source stream. The source stream is identified by its name.
+     * During query processing the underlying source descriptor is retrieved from the stream catalog.
+     * @param sourceStreamName name of the stream to query. This name has to be registered in the query catalog.
+     * @return the query
      */
-    static Query from(Stream& stream);
+    static Query from(const std::string& sourceStreamName);
 
     /**
      * @brief: Filter records according to the predicate.
-     * @param predicate
-     * @return query
+     * filter(Attribute("f1" < 10))
+     * @param predicate as expression node
+     * @return the query
      */
     Query& filter(const ExpressionNodePtr filterExpression);
 
     /**
-     * @brief: Map records to the resultField by the predicate.
-     * @param resultField
-     * @param predicate
+     * @brief: Map records according to a map expression.
+     * map(Attribute("f2") = Attribute("f1") * 42 )
+     * @param map expression
      * @return query
-     *
-     * @Caution : The method is not implemented yet.
      */
     Query& map(const FieldAssignmentExpressionNodePtr mapExpression);
 
     /**
-     * @brief: Unify two queries.
-     * All records are contained in the result stream
-     * @return query
-     *
-     * @Caution : The method is not implemented yet.
-     */
-    Query& combine(const Query& subQuery);
-
-    /**
-     * @brief: Joins two streams according to the join predicate.
-     * @param subQuery right query.
-     * @param joinPred join predicate.
-     * @return query.
-     *
-     * @Caution : The method is not implemented yet.
-     */
-    Query& join(const Query& subQuery,
-                const JoinPredicatePtr joinPred);
-
-    /**
-     * @brief: Creates a window by a key.
-     *
-     * @Caution : The method is not implemented yet.
-     */
-    Query& windowByKey();
-
-    /**
-     * @brief: Creates a window aggregation.
-     *
-     * @Caution : The method is not implemented yet.
-     */
-    Query& window();
-
-    /**
-     * @brief: Registers the query as a source in the catalog.
-     * @param name the name for the result stream.
-     *
-     * @Caution : The method is not implemented yet.
-     */
-    Query& to(const std::string& name);
-
-    /**
-     * @brief Add sink operator for the query
-     * @param sinkDescriptor : pointer to the descriptor of the sink
-     *
+     * @brief Add sink operator for the query.
+     * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
+     * @param sinkDescriptor
      */
     Query& sink(const SinkDescriptorPtr sinkDescriptor);
 
     /**
-     * @brief get source stream
-     * @return pointer to source stream
-     */
-    const StreamPtr getSourceStream() const;
-
-    // Copy constructors
-    Query(const Query&);
-
-    /**
-     * @brief Returns string representation of the query.
-     */
-    std::string toString();
-
-    /**
-     * @brief Gets the query plan from the input query.
-     * @return QueryPlanPtr
+     * @brief Gets the query plan from the current query.
+     * @return QueryPlan
      */
     QueryPlanPtr getQueryPlan();
 
