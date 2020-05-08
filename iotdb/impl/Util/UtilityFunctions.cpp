@@ -92,6 +92,18 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
             "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet);
         throw "Failed to create the query from input code string";
     }
+    /* call loaded function to create query object */
+    InputQuery query((*func)());
+    return std::make_shared<InputQuery>(query);
+  } catch (std::exception& exc) {
+      NES_ERROR(
+              "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet << exc.what());
+      throw;
+  } catch (...) {
+    NES_ERROR(
+        "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet);
+    throw "Failed to create the query from input code string";
+  }
 }
 
 SchemaPtr UtilityFunctions::createSchemaFromCode(
@@ -129,11 +141,15 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
         Schema query((*func)());
         return std::make_shared<Schema>(query);
 
-    } catch (...) {
-        NES_ERROR(
-            "Failed to create the query from input code string: " << query_code_snippet);
-        throw "Failed to create the query from input code string";
-    }
+  } catch (std::exception& exc) {
+      NES_ERROR(
+              "Failed to create the query from input code string: " << query_code_snippet);
+      throw;
+  } catch (...) {
+    NES_ERROR(
+        "Failed to create the query from input code string: " << query_code_snippet);
+    throw "Failed to create the query from input code string";
+  }
 }
 
 std::string UtilityFunctions::generateUuid() {

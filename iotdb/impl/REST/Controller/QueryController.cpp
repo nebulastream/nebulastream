@@ -47,7 +47,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     return;
                 } catch (const std::exception& exc) {
                     NES_ERROR(" QueryController: handleGet -execution-plan: Exception occurred while building the query plan for user request:" << exc.what());
-                    internalServerErrorImpl(message);
+                    handleException(message, exc);
                     return;
                 } catch (...) {
                     RuntimeUtils::printStackTrace();
@@ -56,36 +56,35 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
             })
             .wait();
     } else if (path[1] == "query-plan") {
-
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
-                try {
-                    //Prepare Input query from user string
-                    string userRequest(body.begin(), body.end());
+                    try {
+                        //Prepare Input query from user string
+                        string userRequest(body.begin(), body.end());
 
-                    json::value req = json::value::parse(userRequest);
+                        json::value req = json::value::parse(userRequest);
 
-                    string userQuery = req.at("userQuery").as_string();
+                        string userQuery = req.at("userQuery").as_string();
 
-                    //Call the service
-                    const auto& basePlan = queryServicePtr->generateBaseQueryPlanFromQueryString(
-                        userQuery);
+                        //Call the service
+                        const auto& basePlan = queryServicePtr->generateBaseQueryPlanFromQueryString(
+                            userQuery);
 
-                    //Prepare the response
-                    successMessageImpl(message, basePlan);
-                    return;
-                } catch (const std::exception& exc) {
-                    NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user request:"
-                              << exc.what());
-                    internalServerErrorImpl(message);
-                    return;
-                } catch (...) {
-                    RuntimeUtils::printStackTrace();
-                    internalServerErrorImpl(message);
-                }
-            })
+                        //Prepare the response
+                        successMessageImpl(message, basePlan);
+                        return;
+                    } catch (const std::exception &exc) {
+                        NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user request:"
+                                  << exc.what());
+                        handleException(message, exc);
+                        return;
+                    } catch (...) {
+                        RuntimeUtils::printStackTrace();
+                        internalServerErrorImpl(message);
+                    }
+                  })
             .wait();
-    }
+        }
     resourceNotFoundImpl(message);
 }
 
@@ -127,11 +126,12 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                         successMessageImpl(message, restResponse);
                         return;
 
-                    } catch (const std::exception& exc) {
-                        NES_ERROR("QueryController: handlePost -execute-query: Exception occurred while building the query plan for user request:" << exc.what());
-                        internalServerErrorImpl(message);
-                        return;
-                    } catch (...) {
+                        } catch (const std::exception &exc) {
+                            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred while building the query plan for user request:" << exc.what());
+                            handleException(message, exc);
+                            return;
+                        }
+                        catch (...) {
                         RuntimeUtils::printStackTrace();
                         internalServerErrorImpl(message);
                     }
