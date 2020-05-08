@@ -30,8 +30,13 @@ std::map<std::string, std::string> StreamCatalogService::getAllLogicalStreamAsSt
 
 bool StreamCatalogService::updatedLogicalStream(std::string& streamName, std::string& streamSchema) {
     SchemaPtr schema = UtilityFunctions::createSchemaFromCode(streamSchema);
-    removeLogicalStream(streamName);
-    return StreamCatalog::instance().addLogicalStream(streamName, schema);
+    bool removed = removeLogicalStream(streamName);
+
+    if (removed) {
+        return StreamCatalog::instance().addLogicalStream(streamName, schema);
+    } else {
+        return false;
+    }
 }
 
 vector<StreamCatalogEntryPtr> StreamCatalogService::getAllPhysicalStream(const std::string logicalStreamName) {

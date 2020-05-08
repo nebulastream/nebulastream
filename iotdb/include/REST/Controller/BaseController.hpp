@@ -79,6 +79,10 @@ class BaseController {
     void internalServerErrorImpl(web::http::http_request message) const;
     void successMessageImpl(const web::http::http_request& message, const web::json::value& result) const;
     void resourceNotFoundImpl(const web::http::http_request& message) const;
+    void noContentImpl(const web::http::http_request& message) const;
+    void badRequestImpl(const web::http::http_request& message, const web::json::value& detail) const;
+
+    void handleException(const web::http::http_request& message,const std::exception& exc);
     utility::string_t getPath(http_request& message);
 };
-}// namespace NES
+}

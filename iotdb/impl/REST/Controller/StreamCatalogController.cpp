@@ -14,15 +14,16 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
 
         json::value result{};
         if (allLogicalStreamAsString.empty()) {
-            result = json::value::string("No Logical Stream Found.");
+            NES_DEBUG("No Logical Stream Found")
+            resourceNotFoundImpl(message);
+            return;
         } else {
             for (auto const& [key, val] : allLogicalStreamAsString) {
                 result[key] = json::value::string(val);
             }
+            successMessageImpl(message, result);
+            return;
         }
-        successMessageImpl(message, result);
-        return;
-
     } else if (path[1] == "allPhysicalStream") {
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
@@ -36,16 +37,29 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
 
                     const vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalogServicePtr->getAllPhysicalStream(logicalStreamName);
 
-                    //Prepare the response
-                    json::value result{};
-                    if (allPhysicalStream.empty()) {
-                        result = json::value::string("No Physical Stream Found.");
-                    } else {
-                        vector<json::value> allStream = {};
-                        for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
-                            allStream.push_back(json::value::string(physicalStream->toString()));
+                        //Prepare the response
+                        json::value result{};
+                        if (allPhysicalStream.empty()) {
+                            NES_DEBUG("No Physical Stream Found")
+                            resourceNotFoundImpl(message);
+                            return;
+                        } else {
+                            vector<json::value> allStream = {};
+                            for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
+                                allStream.push_back(json::value::string(physicalStream->toString()));
+                            }
+                            result["Physical Streams"] = json::value::array(allStream);
+                            successMessageImpl(message, result);
+                            return;
                         }
-                        result["Physical Streams"] = json::value::array(allStream);
+                    } catch (const std::exception &exc) {
+                        NES_ERROR("StreamCatalogController: handleGet -allPhysicalStream: Exception occurred while building the query plan for user request:" << exc.what());
+                        handleException(message, exc);
+                        return;
+                    } catch (...) {
+                        RuntimeUtils::printStackTrace();
+                        internalServerErrorImpl(message);
+                        return;
                     }
                     successMessageImpl(message, result);
                     return;
@@ -91,9 +105,9 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                         result["Success"] = json::value::boolean(added);
                         successMessageImpl(message, result);
                         return;
-                    } catch (const std::exception& exc) {
-                        NES_ERROR("StreamCatalogController: handlePost -addLogicalStream: Exception occurred while trying to add new logical stream" << exc.what());
-                        internalServerErrorImpl(message);
+                    } catch (const std::exception &exc) {
+                        NES_ERROR( "StreamCatalogController: handlePost -addLogicalStream: Exception occurred while trying to add new logical stream" << exc.what())
+                        handleException(message, exc);
                         return;
                     } catch (...) {
                         RuntimeUtils::printStackTrace();
@@ -116,17 +130,21 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                         string streamName = req.at("streamName").as_string();
                         string schema = req.at("schema").as_string();
 
-                        bool added = streamCatalogServicePtr->updatedLogicalStream(streamName, schema);
+                        bool updated = streamCatalogServicePtr->updatedLogicalStream(streamName, schema);
 
-                        //Prepare the response
-                        json::value result{};
-                        result["Success"] = json::value::boolean(added);
-                        successMessageImpl(message, result);
-
+                        if (updated){
+                            //Prepare the response
+                            json::value result{};
+                            result["Success"] = json::value::boolean(updated);
+                            successMessageImpl(message, result);
+                        } else {
+                            NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: unable to find stream " + streamName)
+                            throw std::invalid_argument("Unable to update logical stream " + streamName);
+                        }
                         return;
                     } catch (const std::exception& exc) {
                         NES_ERROR("StreamCatalogController: handlePost -updateLogicalStream: Exception occurred while updating Logical Stream." << exc.what());
-                        internalServerErrorImpl(message);
+                        handleException(message, exc);
                         return;
                     } catch (...) {
                         RuntimeUtils::printStackTrace();
@@ -136,8 +154,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                 })
                 .wait();
         }
-
-        resourceNotFoundImpl(message);
+    resourceNotFoundImpl(message);
     } catch (const std::exception& ex) {
         NES_ERROR("StreamCatalogController: handlePost: Exception occurred during post request." << ex.what());
         internalServerErrorImpl(message);
@@ -162,22 +179,28 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
 
                     bool added = streamCatalogServicePtr->removeLogicalStream(streamName);
 
-                    //Prepare the response
-                    json::value result{};
-                    result["Success"] = json::value::boolean(added);
-                    successMessageImpl(message, result);
+                        //Prepare the response
+                        json::value result{};
+                        if (added) {
+                            result["Success"] = json::value::boolean(added);
+                            successMessageImpl(message, result);
+                        } else {
+                            throw std::invalid_argument("Could not remove logical stream " + streamName);
+                        }
 
-                    return;
-                } catch (const std::exception& exc) {
-                    NES_ERROR("StreamCatalogController: handleDelete -deleteLogicalStream: Exception occurred while building the query plan for user request." << exc.what());
-                    internalServerErrorImpl(message);
-                    return;
-                } catch (...) {
-                    RuntimeUtils::printStackTrace();
-                    internalServerErrorImpl(message);
-                    return;
-                }
-            })
+
+                        return;
+                    } catch (const std::exception &exc) {
+                        NES_ERROR("StreamCatalogController: handleDelete -deleteLogicalStream: Exception occurred while building the query plan for user request." << exc.what());
+                        handleException(message, exc);
+                        return;
+                    }
+                    catch (...) {
+                        RuntimeUtils::printStackTrace();
+                        internalServerErrorImpl(message);
+                        return;
+                    }
+                  })
             .wait();
     }
     resourceNotFoundImpl(message);
