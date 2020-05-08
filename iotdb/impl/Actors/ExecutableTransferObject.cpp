@@ -36,7 +36,7 @@ QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan(QueryCompil
         this->compiled = true;
         NES_INFO("*** Creating QueryExecutionPlan for " << this->queryId);
         QueryExecutionPlanPtr qep = queryCompiler->compile(this->operatorTree);
-
+        qep->setQueryId(queryId);
         //TODO: currently only one input source is supported
         if (!this->sources.empty()) {
             NES_DEBUG("ExecutableTransferObject::toQueryExecutionPlan: add source" << this->sources[0] << " type=" << this->sources[0]->toString());

@@ -11,6 +11,7 @@
 
 using namespace caf;
 using std::string;
+
 using std::tuple;
 using std::vector;
 
@@ -35,6 +36,7 @@ class WorkerActor : public stateful_actor<WorkerState> {
      * @param ip of this worker
      * @param publish port of this worker
      * @param receive port of this worker
+     * @param pointer to node engine
      */
     explicit WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
                          uint16_t receive_port, NESNodeType type, NodeEnginePtr nodeEngine);

@@ -1,6 +1,5 @@
 #ifndef INCLUDE_COMPONENTS_NESWORKER_HPP_
 #define INCLUDE_COMPONENTS_NESWORKER_HPP_
-//#include <Actors/AtomUtils.hpp>
 
 #include <Actors/Configurations/WorkerActorConfig.hpp>
 #include <Topology/NESTopologyEntry.hpp>
@@ -8,7 +7,6 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <caf/actor_system.hpp>
 #include <Actors/WorkerActor.hpp>
-//#include <caf/io/all.hpp>
 
 using namespace std;
 
@@ -131,7 +129,7 @@ class NesWorker {
   private:
     size_t getRandomPort(size_t base);
 
-    WorkerActor* actorPtr;
+    WorkerActor* workerActor;
     NodeEnginePtr nodeEngine;
 
     bool connected;
