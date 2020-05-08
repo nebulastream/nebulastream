@@ -150,8 +150,8 @@ void Compiler::callSystemCompiler(const std::vector<std::string>& args) {
     auto ret = system(compiler_call.str().c_str());
 
     if (ret != 0) {
-        NES_ERROR("Compiler: compilation failed!");
-        throw "Compilation failed!";
+        NES_ERROR("Compiler: compilation failed");
+        throw "Compilation failed";
     }
 }
 
