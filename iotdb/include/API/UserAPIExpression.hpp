@@ -79,6 +79,8 @@ class Predicate : public UserAPIExpression {
     virtual UserAPIExpressionPtr copy() const override;
     bool equals(const UserAPIExpression& rhs) const override;
     BinaryOperatorType getOperatorType() const;
+    const UserAPIExpressionPtr& getLeft() const;
+    const UserAPIExpressionPtr& getRight() const;
   private:
     Predicate() = default;
     BinaryOperatorType _op;
@@ -130,6 +132,7 @@ class PredicateItem : public UserAPIExpression {
     AttributeFieldPtr getAttributeField() {
         return this->_attribute;
     };
+    const ValueTypePtr& getValue() const;
   private:
     PredicateItem() = default;
     PredicateItemMutation _mutation;
@@ -147,12 +150,16 @@ class PredicateItem : public UserAPIExpression {
     }
 };
 
+typedef std::shared_ptr<PredicateItem> PredicateItemPtr;
+
 class Field : public PredicateItem {
   public:
     Field(AttributeFieldPtr name);
   private:
     std::string _name;
 };
+
+typedef std::shared_ptr<Field> FieldPtr;
 
 const PredicatePtr createPredicate(const UserAPIExpression& expression);
 

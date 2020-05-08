@@ -17,6 +17,9 @@ typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 class UserAPIExpression;
 typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 
+class Predicate;
+typedef std::shared_ptr<Predicate> PredicatePtr;
+
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
@@ -49,21 +52,21 @@ class TranslateFromLegacyPlanPhase {
      * @param expression node
      * @return UserAPIExpressionPtr
      */
-     ExpressionNodePtr transformExpression(UserAPIExpressionPtr node);
+     ExpressionNodePtr transformToExpression(UserAPIExpressionPtr expressionPtr);
 
     /**
      * @brief Translates logical expessions to a legacy user api expression.
      * @param expression node
      * @return UserAPIExpressionPtr
      */
-    ExpressionNodePtr transformLogicalExpressions(UserAPIExpressionPtr node);
+    ExpressionNodePtr transformLogicalExpressions(UserAPIExpressionPtr expressionPtr);
 
     /**
      * @brief Translates arithmetical expessions to a legacy user api expression.
      * @param expression node
      * @return UserAPIExpressionPtr
      */
-    ExpressionNodePtr transformArithmeticalExpressions(UserAPIExpressionPtr node);
+    ExpressionNodePtr transformArithmeticalExpressions(UserAPIExpressionPtr expressionPtr);
 };
 
 }

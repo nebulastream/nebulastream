@@ -108,8 +108,17 @@ BinaryOperatorType Predicate::getOperatorType() const {
     return _op;
 }
 
-PredicateItem::PredicateItem(ValueTypePtr value) : _mutation(PredicateItemMutation::VALUE),
-                                                   _value(value) {}
+const UserAPIExpressionPtr& Predicate::getLeft() const {
+    return _left;
+}
+
+const UserAPIExpressionPtr& Predicate::getRight() const {
+    return _right;
+}
+
+PredicateItem::PredicateItem(ValueTypePtr value) :
+    _mutation(PredicateItemMutation::VALUE),
+    _value(value) {}
 
 PredicateItem::PredicateItem(int8_t val) : _mutation(PredicateItemMutation::VALUE),
                                            _value(createBasicTypeValue(BasicType::INT8, std::to_string(val))) {}
@@ -172,6 +181,10 @@ bool PredicateItem::equals(const UserAPIExpression& _rhs) const {
     } catch (const std::bad_cast& e) {
         return false;
     }
+}
+
+const ValueTypePtr& PredicateItem::getValue() const {
+    return _value;
 }
 
 Field::Field(AttributeFieldPtr field) : PredicateItem(field), _name(field->name) {}
