@@ -53,7 +53,7 @@ class NodeEngine {
     * @param new query plan as eto
     * @return true if succeeded, else false
     */
-    bool deployQueryInNodeEngine(std::string queryId, std::string executableTransferObject);
+    bool deployQueryInNodeEngine(std::string executableTransferObject);
 
     /**
      * @brief undeploy stops and undeploy a query
@@ -75,7 +75,7 @@ class NodeEngine {
     * @param query plan to register as eto
     * @return true if succeeded, else false
     */
-    bool registerQueryInNodeEngine(std::string queryId, std::string executableTransferObject);
+    bool registerQueryInNodeEngine(std::string executableTransferObject);
 
     /**
      * @brief ungregisters a query

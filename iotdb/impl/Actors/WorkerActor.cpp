@@ -402,10 +402,9 @@ behavior WorkerActor::running() {
     //Note this methods are send from the coordinator to this worker
     return {
         // internal rpc to deploy a query, deploy combines register and start
-        [=](deploy_query_atom, const string& queryId, string& executableTransferObject) {
-            NES_DEBUG("WorkerActor: got request for deploy_query_atom queryId=" << queryId << " eto="
-                                                                                << executableTransferObject);
-            bool success = nodeEngine->deployQueryInNodeEngine(queryId, executableTransferObject);
+        [=](deploy_query_atom, string& executableTransferObject) {
+            NES_DEBUG("WorkerActor: got request for deploy_query_atom eto=" << executableTransferObject);
+            bool success = nodeEngine->deployQueryInNodeEngine(executableTransferObject);
             NES_DEBUG("WorkerActor::running() deploy query success=" << success);
             return success;
         },
@@ -415,9 +414,9 @@ behavior WorkerActor::running() {
             return this->nodeEngine->undeployQuery(queryId);
         },
         // internal rpc to register a query on a worker
-        [=](register_query_atom, const string& queryId, string& executableTransferObject) {
-            NES_DEBUG("WorkerActor: got request for register_query_atom queryId=" << queryId);
-            bool success = nodeEngine->registerQueryInNodeEngine(queryId, executableTransferObject);
+        [=](register_query_atom, string& executableTransferObject) {
+            NES_DEBUG("WorkerActor: got request for register_query_atom eto=" << executableTransferObject);
+            bool success = nodeEngine->registerQueryInNodeEngine(executableTransferObject);
             NES_DEBUG("WorkerActor::running() deploy query success=" << success);
             return success;
         },

@@ -86,12 +86,12 @@ class NesCoordinator {
   private:
     size_t getRandomPort(size_t base);
 
-    CoordinatorActor* crdActorPtr;
+    CoordinatorActor* crdActor;
     CoordinatorActorConfig coordinatorCfg;
     infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
     actor_system* actorSystemCoordinator;
 
-    WorkerActor* wrkActorPtr;
+    WorkerActor* wrkActor;
     NodeEnginePtr nodeEngine;
     WorkerActorConfig workerCfg;
     infer_handle_from_class_t<NES::WorkerActor> workerActorHandle;

@@ -42,7 +42,7 @@ NodeEngine::~NodeEngine() {
     stop(true);
 }
 
-bool NodeEngine::deployQueryInNodeEngine(std::string queryId, std::string executableTransferObject)
+bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject)
 {
     ExecutableTransferObject eto = SerializationTools::parse_eto(
         executableTransferObject);
@@ -50,7 +50,6 @@ bool NodeEngine::deployQueryInNodeEngine(std::string queryId, std::string execut
         "WorkerActor::running() eto after parse=" << eto.toString());
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(queryCompiler);
     NES_DEBUG("WorkerActor::running()  add query to queries map");
-    qep->setQueryId(queryId);
     deployQueryInNodeEngine(qep);
 }
 
@@ -74,13 +73,12 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool NodeEngine::registerQueryInNodeEngine(std::string queryId, std::string executableTransferObject) {
+bool NodeEngine::registerQueryInNodeEngine(std::string executableTransferObject) {
     ExecutableTransferObject eto = SerializationTools::parse_eto(
         executableTransferObject);
     NES_DEBUG(
         "WorkerActor::running() eto after parse=" << eto.toString());
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(queryCompiler);
-    qep->setQueryId(queryId);
     registerQueryInNodeEngine(qep);
 }
 
