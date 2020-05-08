@@ -24,7 +24,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                         }
 
                         if (queries.size()==0){
-                            NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query with status " + queryStatus + " was found.")
+                            NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query with status " + queryStatus + " was found.");
                             noContentImpl(message);
                         } else {
                             successMessageImpl(message, result);
@@ -38,17 +38,6 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                         RuntimeUtils::printStackTrace();
                         internalServerErrorImpl(message);
                     }
-
-                    successMessageImpl(message, result);
-                    return;
-                } catch (const std::exception& exc) {
-                    NES_ERROR("QueryCatalogController: handleGet -queries: Exception occurred while building the query plan for user request:" << exc.what());
-                    internalServerErrorImpl(message);
-                    return;
-                } catch (...) {
-                    RuntimeUtils::printStackTrace();
-                    internalServerErrorImpl(message);
-                }
             })
             .wait();
 
@@ -66,7 +55,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                         }
 
                         if (queries.size()==0){
-                            NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query was found.")
+                            NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query was found.");
                             noContentImpl(message);
                         } else {
                             successMessageImpl(message, result);
@@ -80,17 +69,6 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                         RuntimeUtils::printStackTrace();
                         internalServerErrorImpl(message);
                     }
-
-                    successMessageImpl(message, result);
-                    return;
-                } catch (const std::exception& exc) {
-                    NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the query plan for user request:" << exc.what());
-                    internalServerErrorImpl(message);
-                    return;
-                } catch (...) {
-                    RuntimeUtils::printStackTrace();
-                    internalServerErrorImpl(message);
-                }
             })
             .wait();
     }

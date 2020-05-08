@@ -14,7 +14,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
 
         json::value result{};
         if (allLogicalStreamAsString.empty()) {
-            NES_DEBUG("No Logical Stream Found")
+            NES_DEBUG("No Logical Stream Found");
             resourceNotFoundImpl(message);
             return;
         } else {
@@ -40,7 +40,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                         //Prepare the response
                         json::value result{};
                         if (allPhysicalStream.empty()) {
-                            NES_DEBUG("No Physical Stream Found")
+                            NES_DEBUG("No Physical Stream Found");
                             resourceNotFoundImpl(message);
                             return;
                         } else {
@@ -61,17 +61,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                         internalServerErrorImpl(message);
                         return;
                     }
-                    successMessageImpl(message, result);
                     return;
-                } catch (const std::exception& exc) {
-                    NES_ERROR("StreamCatalogController: handleGet -allPhysicalStream: Exception occurred while building the query plan for user request:" << exc.what());
-                    internalServerErrorImpl(message);
-                    return;
-                } catch (...) {
-                    RuntimeUtils::printStackTrace();
-                    internalServerErrorImpl(message);
-                    return;
-                }
             })
             .wait();
     }
@@ -106,7 +96,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                         successMessageImpl(message, result);
                         return;
                     } catch (const std::exception &exc) {
-                        NES_ERROR( "StreamCatalogController: handlePost -addLogicalStream: Exception occurred while trying to add new logical stream" << exc.what())
+                        NES_ERROR( "StreamCatalogController: handlePost -addLogicalStream: Exception occurred while trying to add new logical stream" << exc.what());
                         handleException(message, exc);
                         return;
                     } catch (...) {
@@ -138,7 +128,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                             result["Success"] = json::value::boolean(updated);
                             successMessageImpl(message, result);
                         } else {
-                            NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: unable to find stream " + streamName)
+                            NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: unable to find stream " + streamName);
                             throw std::invalid_argument("Unable to update logical stream " + streamName);
                         }
                         return;
