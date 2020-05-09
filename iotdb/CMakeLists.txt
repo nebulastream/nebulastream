@@ -38,14 +38,83 @@ message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 
 # lcryto is required for asio to communicate
-set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
+set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl grpc++)
+#grpc++ -lgrpc++_reflection  --no-as-needed -lgrpc++_reflection
 
 # LLVM
 find_package(LLVM 3 REQUIRED)
 find_package(clang REQUIRED)
 
-
 message("-- LLVM version ${LLVM_VERSION_STRING}")
+
+include(FetchContent)
+FetchContent_Declare(
+        gRPC
+        GIT_REPOSITORY https://github.com/grpc/grpc
+        GIT_TAG        v1.28.0
+)
+set(FETCHCONTENT_QUIET OFF)
+FetchContent_MakeAvailable(gRPC)
+
+set(_PROTOBUF_LIBPROTOBUF libprotobuf)
+set(_REFLECTION grpc++_reflection)
+set(_PROTOBUF_PROTOC $<TARGET_FILE:protoc>)
+set(_GRPC_GRPCPP grpc++)
+if(CMAKE_CROSSCOMPILING)
+    find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
+else()
+    set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
+endif()
+
+FetchContent_Declare(
+        protobuf
+        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf
+        GIT_TAG        v3.10.0
+)
+FetchContent_MakeAvailable(protobuf)
+
+#set(_GRPC_GRPCPP_UNSECURE gRPC::grpc++_unsecure)
+
+#FetchContent_GetProperties(protobuf)
+#if(NOT protobufPOPULATED)
+#    message("PROTOBUF NOT POPULATED")
+#    FetchContent_Populate(protobuf)
+#    add_subdirectory(${protobuf_SOURCE_DIR} ${protobuf_BINARY_DIR})
+#endif()
+
+#FetchContent_Declare(protobuf
+#        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf
+#        GIT_SHALLOW TRUE GIT_TAG ${_protobuf_git_tag}
+#        SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf
+#        SOURCE_SUBDIR cmake
+#        UPDATE_DISCONNECTED ${THIRD_PARTY_UPDATE_DISCONNECTED}
+#        )
+#FetchContent_MakeAvailable(protobuf)
+#FetchContent_MakeAvailable(protobuf)
+
+#add_subdirectory(${protobuf_SOURCE_DIR}/cmake ${protobuf_BINARY_DIR})
+#set(PROTOBUF_INCLUDE_DIR ${protobuf_SOURCE_DIR}/src CACHE PATH "" FORCE)
+#FetchContent_Populate(
+#        protobuf
+#        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf
+#        GIT_TAG        v3.10.0
+#)
+#FetchContent_MakeAvailable(protobuf)
+
+
+message("protobuf found: ${PROTOBUF_FOUND}")
+message("protoc: ${PROTOBUF_PROTOC_LIBRARIES}")
+message("lite library: ${PROTOBUF_LITE_LIBRARIES}")
+message("protobuf libraries: ${PROTOBUF_LIBRARIES}")
+message("inclclude dirs: ${PROTOBUF_INCLUDE_DIRS}")
+
+message("protoc: ${PROTOBUF_PROTOC_LIBRARY}")
+message("lite library: ${PROTOBUF_INCLUDE_DIR}")
+message("protobuf libraries: ${PROTOBUF_LIBRARY}")
+message("inclclude dirs: ${PROTOBUF_INCLUDE_DIR}")
+message("protc executable: ${PROTOBUF_PROTOC_EXECUTABLE}")
+
+message(STATUS "Using protobuf ${Protobuf_VERSION}")
 
 # ZMQ
 find_package(ZMQ REQUIRED)
@@ -162,9 +231,9 @@ add_subdirectory(impl)
 # Add Library
 get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
-add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} include/NodeEngine/QueryStatistics.hpp)
+add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES})
 target_include_directories(iotdb PUBLIC "include")
-target_link_libraries(iotdb ${LIBRARIES})
+target_link_libraries(iotdb ${LIBRARIES} grpc++_reflection)
 
 # Documentation
 add_subdirectory(docs)
@@ -172,11 +241,11 @@ add_subdirectory(docs)
 #file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
 
 add_executable(nesCoordinator nesCoordinatorStarter.cpp)
-target_link_libraries(nesCoordinator ${LIBRARIES} iotdb)
+target_link_libraries(nesCoordinator ${LIBRARIES}  iotdb)
 target_include_directories(nesCoordinator PUBLIC "include")
 
 add_executable(nesWorker nesWorkerStarter.cpp)
-target_link_libraries(nesWorker ${LIBRARIES} iotdb)
+target_link_libraries(nesWorker ${LIBRARIES}  iotdb)
 target_include_directories(nesWorker PUBLIC "include")
 
 # Add tests with command
