@@ -4,6 +4,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <SourceSink/ZmqSource.hpp>
@@ -17,11 +18,8 @@
 
 namespace NES {
 
-LogicalOperatorNodePtr ConvertPhysicalToLogicalSource::createDataSource(DataSourcePtr dataSource) {
-
+SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataSourcePtr dataSource) {
     SourceType srcType = dataSource->getType();
-    BufferManagerPtr bufferManager;
-    QueryManagerPtr queryManager;
     switch (srcType) {
 
         case ZMQ_SOURCE: {
@@ -30,7 +28,7 @@ LogicalOperatorNodePtr ConvertPhysicalToLogicalSource::createDataSource(DataSour
             const ZmqSourcePtr zmqSourcePtr = std::dynamic_pointer_cast<ZmqSource>(dataSource);
             SourceDescriptorPtr zmqSourceDescriptor =
                 ZmqSourceDescriptor::create(dataSource->getSchema(), zmqSourcePtr->getHost(), zmqSourcePtr->getPort());
-            return createSourceLogicalOperatorNode(zmqSourceDescriptor);
+            return zmqSourceDescriptor;
         }
         case DEFAULT_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Default source");
@@ -39,14 +37,14 @@ LogicalOperatorNodePtr ConvertPhysicalToLogicalSource::createDataSource(DataSour
                 DefaultSourceDescriptor::create(defaultSourcePtr->getSchema(),
                                                 defaultSourcePtr->getNumBuffersToProcess(),
                                                 defaultSourcePtr->getGatheringInterval());
-            return createSourceLogicalOperatorNode(defaultSourceDescriptor);
+            return defaultSourceDescriptor;
         }
         case BINARY_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Binary File source");
             const BinarySourcePtr binarySourcePtr = std::dynamic_pointer_cast<BinarySource>(dataSource);
             const SourceDescriptorPtr binarySourceDescriptor =
                 BinarySourceDescriptor::create(binarySourcePtr->getSchema(), binarySourcePtr->getFilePath());
-            return createSourceLogicalOperatorNode(binarySourceDescriptor);
+            return binarySourceDescriptor;
         }
         case CSV_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating CSV File source");
@@ -57,7 +55,7 @@ LogicalOperatorNodePtr ConvertPhysicalToLogicalSource::createDataSource(DataSour
                                             csvSourcePtr->getDelimiter(),
                                             csvSourcePtr->getNumBuffersToProcess(),
                                             csvSourcePtr->getGatheringInterval());
-            return createSourceLogicalOperatorNode(csvSourceDescriptor);
+            return csvSourceDescriptor;
         }
         case KAFKA_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Kafka source");
@@ -69,14 +67,14 @@ LogicalOperatorNodePtr ConvertPhysicalToLogicalSource::createDataSource(DataSour
                                               kafkaSourcePtr->getGroupId(),
                                               kafkaSourcePtr->isAutoCommit(),
                                               kafkaSourcePtr->getKafkaConsumerTimeout().count());
-            return createSourceLogicalOperatorNode(kafkaSourceDescriptor);
+            return kafkaSourceDescriptor;
         }
         case SENSE_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating sense source");
             const SenseSourcePtr senseSourcePtr = std::dynamic_pointer_cast<SenseSource>(dataSource);
             const SourceDescriptorPtr senseSourceDescriptor =
                 SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdsf());
-            return createSourceLogicalOperatorNode(senseSourceDescriptor);
+            return senseSourceDescriptor;
         }
         default: {
             NES_ERROR("ConvertPhysicalToLogicalSource: Unknown Data Source Type " + srcType);
