@@ -147,6 +147,9 @@ int ZmqSink::getPort() {
 SinkType ZmqSink::getType() const {
     return ZMQ_SINK;
 }
+const std::string& ZmqSink::getHost() const {
+    return host;
+}
 
 }// namespace NES
 BOOST_CLASS_EXPORT(NES::ZmqSink);

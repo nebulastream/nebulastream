@@ -6,6 +6,9 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <SourceSink/DataSink.hpp>
+#include <SourceSink/FileOutputSink.hpp>
+#include <SourceSink/KafkaSink.hpp>
+#include <SourceSink/ZmqSink.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -21,47 +24,26 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
             const SchemaPtr schema = dataSink->getSchema();
             return PrintSinkDescriptor::create(schema);
         }
-        case ZmqSinkDescriptorType: {
+        case ZMQ_SINK: {
             NES_INFO("ConvertPhysicalToLogicalSink: Creating ZMQ sink");
-            const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
-            return createZmqSink(zmqSinkDescriptor->getSchema(),
-                                 zmqSinkDescriptor->getHost(),
-                                 zmqSinkDescriptor->getPort());
+            ZmqSinkPtr zmqSink = std::dynamic_pointer_cast<ZmqSink>(dataSink);
+            return ZmqSinkDescriptor::create(zmqSink->getSchema(), zmqSink->getHost(), zmqSink->getPort());
         }
-        case KafkaSinkDescriptorType: {
+        case KAFKA_SINK: {
             NES_INFO("ConvertPhysicalToLogicalSink: Creating Kafka sink");
-            const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
-            return createKafkaSinkWithSchema(kafkaSinkDescriptor->getSchema(),
-                                             kafkaSinkDescriptor->getBrokers(),
-                                             kafkaSinkDescriptor->getTopic(),
-                                             kafkaSinkDescriptor->getTimeout());
+            KafkaSinkPtr kafkaSink = std::dynamic_pointer_cast<KafkaSink>(dataSink);
+            return KafkaSinkDescriptor::create(kafkaSink->getSchema(),
+                                               kafkaSink->getTopic(),
+                                               kafkaSink->getBrokers(),
+                                               kafkaSink->getKafkaProducerTimeout());
         }
-        case FileSinkDescriptorType: {
+        case FILE_SINK: {
             NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink");
-            const FileSinkDescriptorPtr fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-            FileOutputType fileOutPutType = fileSinkDescriptor->getFileOutputType();
-            switch (fileOutPutType) {
-                case BINARY_TYPE: {
-                    NES_INFO("ConvertPhysicalToLogicalSink: Creating Binary file sink");
-                    return createBinaryFileSinkWithSchema(fileSinkDescriptor->getSchema(),
-                                                          fileSinkDescriptor->getFileName());
-                }
-                case CSV_TYPE: {
-                    NES_INFO("ConvertPhysicalToLogicalSink: Creating CSV File sink");
-                    if (fileSinkDescriptor->getFileOutputMode() == FILE_APPEND) {
-                        NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in append mode");
-                        return createCSVFileSinkWithSchemaAppend(fileSinkDescriptor->getSchema(),
-                                                                 fileSinkDescriptor->getFileName());
-                    } else if (fileSinkDescriptor->getFileOutputMode() == FILE_OVERWRITE) {
-                        NES_INFO("ConvertPhysicalToLogicalSink: Creating CSV File sink in Overwrite mode");
-                        return createCSVFileSinkWithSchemaOverwrite(fileSinkDescriptor->getSchema(),
-                                                                    fileSinkDescriptor->getFileName());
-                    } else {
-                        NES_ERROR("ConvertPhysicalToLogicalSink: Unknown File Mode");
-                        throw std::invalid_argument("Unknown File Mode");
-                    }
-                }
-            }
+            FileOutputSinkPtr fileOutputSink = std::dynamic_pointer_cast<FileOutputSink>(dataSink);
+            return FileSinkDescriptor::create(fileOutputSink->getSchema(),
+                                              fileOutputSink->getFilePath(),
+                                              fileOutputSink->getOutputMode(),
+                                              fileOutputSink->getOutputType());
         }
         default: {
             NES_ERROR("ConvertPhysicalToLogicalSink: Unknown Data Sink Type");

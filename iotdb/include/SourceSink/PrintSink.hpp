@@ -72,6 +72,7 @@ class PrintSink : public DataSink {
         ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
     }
 };
+typedef std::shared_ptr<PrintSink> PrintSinkPtr;
 }// namespace NES
 
 #endif// PRINTSINK_HPP

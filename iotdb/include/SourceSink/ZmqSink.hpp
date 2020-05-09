@@ -21,6 +21,7 @@ class ZmqSink : public DataSink {
     void shutdown() override{};
     const std::string toString() const override;
     int getPort();
+    const std::string& getHost() const;
     SinkType getType() const override;
 
   private:
@@ -45,6 +46,7 @@ class ZmqSink : public DataSink {
     bool connect();
     bool disconnect();
 };
+typedef std::shared_ptr<ZmqSink> ZmqSinkPtr;
 }// namespace NES
 
 #endif// ZMQSINK_HPP

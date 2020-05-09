@@ -83,6 +83,15 @@ void KafkaSink::_connect() {
 SinkType KafkaSink::getType() const {
     return KAFKA_SINK;
 }
+const std::string& KafkaSink::getBrokers() const {
+    return brokers;
+}
+const std::string& KafkaSink::getTopic() const {
+    return topic;
+}
+const uint64_t KafkaSink::getKafkaProducerTimeout() const {
+    return kafkaProducerTimeout.count();
+}
 
 }// namespace NES
 

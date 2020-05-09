@@ -80,5 +80,14 @@ void FileOutputSink::shutdown() {
 SinkType FileOutputSink::getType() const {
     return FILE_SINK;
 }
+const std::string& FileOutputSink::getFilePath() const {
+    return filePath;
+}
+FileOutputType FileOutputSink::getOutputType() const {
+    return outputType;
+}
+FileOutputMode FileOutputSink::getOutputMode() const {
+    return outputMode;
+}
 
 }// namespace NES
