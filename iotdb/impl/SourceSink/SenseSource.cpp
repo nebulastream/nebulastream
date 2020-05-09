@@ -13,10 +13,6 @@ using namespace std;
 
 namespace NES {
 
-void SenseSource::setUdsf(std::string udsf) {
-    this->udsf = udsf;
-}
-
 SenseSource::SenseSource()
     : udsf("") {
 }

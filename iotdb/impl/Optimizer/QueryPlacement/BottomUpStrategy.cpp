@@ -5,6 +5,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
@@ -26,7 +27,8 @@ NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPtr inputQuer
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string streamName = queryPlan->getSourceStream()->getName();
+    auto logicalSourceDescriptor = sourceOperator->getSourceDescriptor()->as<LogicalStreamSourceDescriptor>();
+    const string streamName = logicalSourceDescriptor->getStreamName();
 
     if (!sourceOperator) {
         NES_ERROR("BottomUp: Unable to find the source operator.");
@@ -59,7 +61,7 @@ NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPtr inputQuer
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    SchemaPtr schema = queryPlan->getSourceStream()->getSchema();
+    SchemaPtr schema = logicalSourceDescriptor->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;
@@ -83,10 +85,10 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     PathFinder pathFinder;
 
-    NES_DEBUG("BottomUp: Place the operator chain from each source node")
+    NES_DEBUG("BottomUp: Place the operator chain from each source node");
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
 
-        NES_INFO("BottomUp: Find the path between source and sink node")
+        NES_INFO("BottomUp: Find the path between source and sink node");
         const vector<NESTopologyEntryPtr> path = pathFinder.findPathBetween(sourceNode, sinkNode);
 
         LogicalOperatorNodePtr operatorToPlace = sourceOperator;
@@ -96,16 +98,16 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
         while (operatorToPlace == nullptr) {
 
             if (operatorToPlace->instanceOf<SinkLogicalOperatorNode>()) {
-                NES_DEBUG("BottomUp: Placing sink node on the sink node")
+                NES_DEBUG("BottomUp: Placing sink node on the sink node");
                 nesNodeToPlaceOperator = sinkNode;
             } else if (nesNodeToPlaceOperator->getRemainingCpuCapacity() == 0) {
-                NES_DEBUG("BottomUp: Find the next NES node in the path where operator can be placed")
+                NES_DEBUG("BottomUp: Find the next NES node in the path where operator can be placed");
                 while (pathItr != path.end()) {
                     ++pathItr;
                     if ((*pathItr)->getRemainingCpuCapacity() > 0) {
                         nesNodeToPlaceOperator = (*pathItr);
                         NES_DEBUG("BottomUp: Found NES node for placing the operators with id : "
-                                      + nesNodeToPlaceOperator->getId())
+                                      + nesNodeToPlaceOperator->getId());
                         break;
                     }
                 }
@@ -115,13 +117,13 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
                 NES_THROW_RUNTIME_ERROR("BottomUp: No resource available for further placement of operators");
             }
 
-            NES_DEBUG("BottomUp: Transforming New Operator into legacy operator")
+            NES_DEBUG("BottomUp: Transforming New Operator into legacy operator");
             OperatorPtr legacyOperator = translator->transform(operatorToPlace);
 
             if (executionPlanPtr->hasVertex(nesNodeToPlaceOperator->getId())) {
 
                 NES_DEBUG(
-                    "BottomUp: node " << nesNodeToPlaceOperator->toString() << " was already used by other deployment")
+                    "BottomUp: node " << nesNodeToPlaceOperator->toString() << " was already used by other deployment");
 
                 const ExecutionNodePtr
                     existingExecutionNode = executionPlanPtr->getExecutionNode(nesNodeToPlaceOperator->getId());
@@ -132,11 +134,11 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
                 const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
 
                 if (exists != residentOperatorIds.end()) {
-                    NES_DEBUG("BottomUp: skip adding rest of the operator chains as they already exists.")
+                    NES_DEBUG("BottomUp: skip adding rest of the operator chains as they already exists.");
                     break;
                 } else {
 
-                    NES_DEBUG("BottomUp: Adding the operator the existing execution node")
+                    NES_DEBUG("BottomUp: Adding the operator the existing execution node");
                     stringstream operatorName;
                     operatorName << existingExecutionNode->getOperatorName() << "=>"
                                  << operatorToPlace->toString()
@@ -147,7 +149,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
                 }
             } else {
 
-                NES_DEBUG("BottomUp: create new execution node with id: " << nesNodeToPlaceOperator->getId())
+                NES_DEBUG("BottomUp: create new execution node with id: " << nesNodeToPlaceOperator->getId());
                 stringstream operatorName;
                 operatorName << operatorToPlace->toString()
                              << "(OP-" << std::to_string(operatorToPlace->getId()) << ")";
@@ -159,13 +161,13 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
                 newExecutionNode->addOperatorId(operatorToPlace->getId());
             }
 
-            NES_DEBUG("BottomUp: Reducing the node remaining CPU capacity by 1")
+            NES_DEBUG("BottomUp: Reducing the node remaining CPU capacity by 1");
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
             nesNodeToPlaceOperator->reduceCpuCapacity(1);
             operatorToPlace = nullptr;
             if (!operatorToPlace->getParents().empty()) {
-                NES_DEBUG("BottomUp: Finding next operator for placement")
+                NES_DEBUG("BottomUp: Finding next operator for placement");
                 operatorToPlace = operatorToPlace->getParents()[0]->as<LogicalOperatorNode>();
             }
         }

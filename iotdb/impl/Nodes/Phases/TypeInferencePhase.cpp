@@ -26,7 +26,7 @@ QueryPlanPtr TypeInferencePhase::transform(QueryPlanPtr queryPlan) {
         auto sourceDescriptor = source->getSourceDescriptor();
         // if the source descriptor is only a logical stream source we have to replace it with the correct
         // source descriptor form the catalog.
-        if (sourceDescriptor->getType() == LogicalStreamSource) {
+        if (sourceDescriptor->getType() == LogicalStreamSrc) {
             auto streamDescriptor = sourceDescriptor->as<LogicalStreamSourceDescriptor>();
             auto streamName = streamDescriptor->getStreamName();
             auto newSourceDescriptor = createSourceDescriptor(streamName);

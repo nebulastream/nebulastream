@@ -14,7 +14,7 @@ CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
       frequency(frequency) {}
 
 SourceDescriptorType CsvSourceDescriptor::getType() {
-    return CsvSource;
+    return CsvSrc;
 }
 
 const std::string& CsvSourceDescriptor::getFilePath() const {

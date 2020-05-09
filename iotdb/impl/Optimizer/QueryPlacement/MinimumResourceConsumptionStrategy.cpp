@@ -2,6 +2,7 @@
 #include <API/Query.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
@@ -22,7 +23,8 @@ NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string& streamName = queryPlan->getSourceStream()->getName();
+    auto logicalSourceDescriptor = sourceOperator->getSourceDescriptor()->as<LogicalStreamSourceDescriptor>();
+    const string streamName = logicalSourceDescriptor->getStreamName();
 
     if (!sourceOperator) {
         NES_THROW_RUNTIME_ERROR("MinimumResourceConsumption: Unable to find the source operator.");
@@ -53,7 +55,7 @@ NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    SchemaPtr schema = queryPlan->getSourceStream()->getSchema();
+    SchemaPtr schema = logicalSourceDescriptor->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;
@@ -122,12 +124,12 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
         }
     }
 
-    NES_DEBUG("MinimumResourceConsumption: Transforming New Operator into legacy operator")
+    NES_DEBUG("MinimumResourceConsumption: Transforming New Operator into legacy operator");
     OperatorPtr legacySourceOperator = translator->transform(sourceOperator);
 
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
 
-        NES_DEBUG("MinimumResourceConsumption: Create new execution node for source operator.")
+        NES_DEBUG("MinimumResourceConsumption: Create new execution node for source operator.");
         stringstream operatorName;
         operatorName << sourceOperator->toString() << "(OP-"
         << std::to_string(sourceOperator->getId()) << ")";
@@ -159,9 +161,9 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
         }
 
         NES_DEBUG("MinimumResourceConsumption: suitable placement for operator " << targetOperator->toString() << " is "
-                                                                                 << node->toString())
+                                                                                 << node->toString());
 
-        NES_DEBUG("MinimumResourceConsumption: Transforming New Operator into legacy operator")
+        NES_DEBUG("MinimumResourceConsumption: Transforming New Operator into legacy operator");
         OperatorPtr legacyOperator = translator->transform(targetOperator);
 
         // If the selected nes node was already used by another operator for placement then do not create a
@@ -169,7 +171,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
         if (executionPlanPtr->hasVertex(node->getId())) {
 
             NES_DEBUG(
-                "MinimumResourceConsumption: node " << node->toString() << " was already used by other deployment")
+                "MinimumResourceConsumption: node " << node->toString() << " was already used by other deployment");
 
             const ExecutionNodePtr existingExecutionNode = executionPlanPtr
                 ->getExecutionNode(node->getId());
@@ -183,7 +185,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
             existingExecutionNode->addOperatorId(targetOperator->getId());
         } else {
 
-            NES_DEBUG("MinimumResourceConsumption: create new execution node " << node->toString())
+            NES_DEBUG("MinimumResourceConsumption: create new execution node " << node->toString());
 
             stringstream operatorName;
             operatorName << targetOperator->toString() << "(OP-"
@@ -207,12 +209,12 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
     }
 
     if (sinkNode->getRemainingCpuCapacity() > 0) {
-        NES_DEBUG("MinimumResourceConsumption: Transforming New Operator into legacy operator")
+        NES_DEBUG("MinimumResourceConsumption: Transforming New Operator into legacy operator");
         OperatorPtr legacyOperator = translator->transform(targetOperator);
         if (executionPlanPtr->hasVertex(sinkNode->getId())) {
 
             NES_DEBUG(
-                "MinimumResourceConsumption: node " << sinkNode->toString() << " was already used by other deployment")
+                "MinimumResourceConsumption: node " << sinkNode->toString() << " was already used by other deployment");
 
             const ExecutionNodePtr existingExecutionNode = executionPlanPtr
                 ->getExecutionNode(sinkNode->getId());
@@ -228,7 +230,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
 
             NES_DEBUG(
                 "MinimumResourceConsumption: create new execution node " << sinkNode->toString()
-                                                                         << " with sink operator")
+                                                                         << " with sink operator");
 
             stringstream operatorName;
             operatorName << targetOperator->toString() << "(OP-"

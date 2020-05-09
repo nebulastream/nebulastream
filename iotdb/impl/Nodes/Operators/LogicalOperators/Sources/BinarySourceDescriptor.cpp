@@ -9,7 +9,7 @@ SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string
 }
 
 SourceDescriptorType BinarySourceDescriptor::getType() {
-    return BinarySource;
+    return BinarySrc;
 }
 
 const std::string& BinarySourceDescriptor::getFilePath() const {

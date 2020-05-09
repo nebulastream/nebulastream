@@ -6,6 +6,7 @@
 #include <Operators/Operator.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Topology/NESTopologyGraph.hpp>
@@ -23,7 +24,8 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQu
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const std::string streamName = queryPlan->getSourceStream()->getName();
+    auto logicalSourceDescriptor = sourceOperator->getSourceDescriptor()->as<LogicalStreamSourceDescriptor>();
+    const string streamName = logicalSourceDescriptor->getStreamName();
 
     if (!sourceOperator) {
         NES_THROW_RUNTIME_ERROR(    "LowLatency: Unable to find the source operator.");
@@ -55,7 +57,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQu
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    SchemaPtr schema = queryPlan->getSourceStream()->getSchema();
+    SchemaPtr schema = logicalSourceDescriptor->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;
@@ -91,7 +93,7 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
         for (NESTopologyEntryPtr node : targetPath) {
             while (node->getRemainingCpuCapacity() > 0 && targetOperator) {
 
-                NES_DEBUG("TopDown: Transforming New Operator into legacy operator")
+                NES_DEBUG("TopDown: Transforming New Operator into legacy operator");
                 OperatorPtr legacyOperator = translator->transform(targetOperator);
 
                 if (targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
@@ -99,7 +101,7 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
                 }
 
                 if (!executionPlanPtr->hasVertex(node->getId())) {
-                    NES_DEBUG("LowLatency: Create new execution node.")
+                    NES_DEBUG("LowLatency: Create new execution node.");
                     stringstream operatorName;
                     operatorName << targetOperator->toString() << "(OP-"
                                  << std::to_string(targetOperator->getId()) << ")";

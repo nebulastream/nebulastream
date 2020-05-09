@@ -20,7 +20,7 @@ ExecutionNodePtr NESExecutionPlan::createExecutionNode(std::string operatorName,
 
     NES_DEBUG(
         "NESExecutionPlan::createExecutionNode operatorName=" << operatorName << " nodeName=" << nodeName << " nesNode="
-                                                              << nesNode << " executableOperaor=" << executableOperator)
+                                                              << nesNode << " executableOperaor=" << executableOperator);
     auto ptr = std::make_shared<ExecutionNode>(operatorName, nodeName, nesNode, executableOperator);
     exeGraphPtr->addVertex(ptr);
     return ptr;
@@ -131,7 +131,7 @@ ExecutionNodeLinkPtr NESExecutionPlan::createExecutionNodeLink(
                                                                      << " destinationNodeId="
                                                                      << destinationNode->getId() << " linkcapacity="
                                                                      << linkCapacity
-                                                                     << " linkLatency=" << linkLatency)
+                                                                     << " linkLatency=" << linkLatency);
     // check if link already exists
     if (exeGraphPtr->hasLink(sourceNode, destinationNode)) {
         // return already existing link
@@ -156,13 +156,13 @@ void NESExecutionPlan::freeResources() {
             // TODO: change that when proper placement is fixed
             NES_INFO(
                 "NESEXECUTIONPLAN: Capacity before-" << v.ptr->getNESNode()->getId() << "->"
-                                                     << v.ptr->getNESNode()->getRemainingCpuCapacity())
+                                                     << v.ptr->getNESNode()->getRemainingCpuCapacity());
             int usedCapacity = v.ptr->getNESNode()->getCpuCapacity()
                 - v.ptr->getNESNode()->getRemainingCpuCapacity();
             v.ptr->getNESNode()->increaseCpuCapacity(usedCapacity);
             NES_INFO(
                 "NESEXECUTIONPLAN: Capacity after-" << v.ptr->getNESNode()->getId() << "->"
-                                                    << v.ptr->getNESNode()->getRemainingCpuCapacity())
+                                                    << v.ptr->getNESNode()->getRemainingCpuCapacity());
         }
     }
 }

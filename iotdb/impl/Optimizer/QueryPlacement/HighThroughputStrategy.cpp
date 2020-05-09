@@ -2,6 +2,7 @@
 #include "Optimizer/QueryPlacement/HighThroughputStrategy.hpp"
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
@@ -22,7 +23,8 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inp
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string streamName = queryPlan->getSourceStream()->getName();
+    auto logicalSourceDescriptor = sourceOperator->getSourceDescriptor()->as<LogicalStreamSourceDescriptor>();
+    const string streamName = logicalSourceDescriptor->getStreamName();
 
     if (!sourceOperator) {
         NES_ERROR("HighThroughput: Unable to find the source operator.");
@@ -55,7 +57,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inp
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    SchemaPtr schema = queryPlan->getSourceStream()->getSchema();
+    SchemaPtr schema = logicalSourceDescriptor->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;
@@ -96,7 +98,7 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
                     node = sinkNode;
                 }
 
-                NES_DEBUG("TopDown: Transforming New Operator into legacy operator")
+                NES_DEBUG("TopDown: Transforming New Operator into legacy operator");
                 OperatorPtr legacyOperator = translator->transform(targetOperator);
 
                 if (!executionPlanPtr->hasVertex(node->getId())) {
