@@ -53,6 +53,8 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/grpc/grpc
         GIT_TAG        v1.28.0
 )
+
+
 set(FETCHCONTENT_QUIET OFF)
 FetchContent_MakeAvailable(gRPC)
 
@@ -231,7 +233,7 @@ add_subdirectory(impl)
 # Add Library
 get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
-add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES})
+add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} include/GRPC/CoordinatorRPCServer.hpp impl/GRPC/CoordinatorRPCServerImpl.cpp impl/GRPC/CoordinatorRPCServer.cpp impl/GRPC/CoordinatorRPCClient.cpp include/GRPC/CoordinatorRPCClientImpl.hpp impl/GRPC/CoordinatorRPCClientImpl.cpp)
 target_include_directories(iotdb PUBLIC "include")
 target_link_libraries(iotdb ${LIBRARIES} grpc++_reflection)
 

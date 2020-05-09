@@ -1,4 +1,8 @@
 add_source_iotdb(
-        helloworld.grpc.pb.cc
-        helloworld.pb.cc
+        Coordinator.grpc.pb.cc
+        Coordinator.pb.cc
+        CoordinatorRPCServerImpl.cpp
+        CoordinatorRPCServer.cpp
+        CoordinatorRPCClient.cpp
+        CoordinatorRPCClientImpl.cpp
 )

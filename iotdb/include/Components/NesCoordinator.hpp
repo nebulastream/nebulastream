@@ -65,7 +65,7 @@ class NesCoordinator {
      * @brief method to overwrite the default config for the rest server
      * @param host as string
      * @param port as uint
-     */
+ */
     void setRestConfiguration(std::string host, uint16_t port);
 
     /**

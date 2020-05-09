@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+// The greeting service definition.
+service CoordinatorService {
+  // Sends a greeting
+  rpc RegisterNode (RegisterNodeRequest) returns (RegisterNodeReply) {}
+
+  rpc UnregisterNode (UnregisterNodeRequest) returns (UnregisterNodeReply) {}
+
+  rpc RegisterPhysicalStream (RegisterPhysicalStreamRequest) returns (RegisterPhysicalStreamReply) {}
+
+  rpc UnregisterPhysicalStream (UnregisterPhysicalStreamRequest) returns (UnregisterPhysicalStreamReply) {}
+
+  rpc RegisterLogicalStream (RegisterLogicalStreamRequest) returns (RegisterLogicalStreamReply) {}
+
+  rpc UnregisterLogicalStream (UnregisterLogicalStreamRequest) returns (UnregisterLogicalStreamReply) {}
+
+  rpc AddParent (AddParentRequest) returns (AddParentReply) {}
+
+  rpc RemoveParent (RemoveParentRequest) returns (RemoveParentReply) {}
+
+}
+
+message RegisterNodeRequest {
+  string ip = 1;
+  int32 rpcPort = 2;
+  int32 zmqPort = 3;
+  int32 numberOfCpus = 4;
+  string nodeProperties = 5;
+  int32 type = 6;
+}
+
+message RegisterNodeReply {
+  int64 id = 1;
+}
+
+message UnregisterNodeRequest {
+  int64 id = 1;
+}
+
+message UnregisterNodeReply {
+  bool success = 1;
+}
+
+message RegisterPhysicalStreamRequest {
+  int64 id = 1;
+  string sourceType = 2;
+  string sourceConf = 3;
+  int64 sourceFrequency = 4;
+  int64 numberOfBuffersToProduce = 5;
+  string physicalStreamName = 6;
+  string logicalStreamName = 7;
+}
+
+message RegisterPhysicalStreamReply {
+  bool success = 1;
+}
+
+message UnregisterPhysicalStreamRequest {
+  int64 id = 1;
+  string physicalStreamName = 2;
+  string logicalStreamName = 3;
+}
+
+message UnregisterPhysicalStreamReply {
+  bool success = 1;
+}
+
+message RegisterLogicalStreamRequest {
+  int64 id = 1;
+  string streamName = 2;
+  string streamSchema = 3;
+}
+
+message RegisterLogicalStreamReply {
+  bool success = 1;
+}
+
+message UnregisterLogicalStreamRequest {
+  int64 id = 1;
+  string streamName = 2;
+}
+
+message UnregisterLogicalStreamReply {
+  bool success = 1;
+}
+
+message AddParentRequest {
+  string childId = 1;
+  string parentId = 2;
+}
+
+message AddParentReply {
+  bool success = 1;
+}
+
+message RemoveParentRequest {
+  string childId = 1;
+  string parentId = 2;
+}
+
+message RemoveParentReply {
+  bool success = 1;
+}
