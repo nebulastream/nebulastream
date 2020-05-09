@@ -133,10 +133,10 @@ void BasePlacementStrategy::convertFwdOptr(SchemaPtr schema, ExecutionNodePtr ex
 void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr,
                                                                       NESTopologyPlanPtr nesTopologyPtr) {
 
-    NES_DEBUG("BasePlacementStrategy: Filling the execution graph with topology information.")
+    NES_DEBUG("BasePlacementStrategy: Filling the execution graph with topology information.");
     const vector<NESTopologyLinkPtr>& allEdges = nesTopologyPtr->getNESTopologyGraph()->getAllEdges();
     NES_DEBUG("BasePlacementStrategy: Get all edges in the Topology and iterate over all edges to identify the nodes"
-              " that are not part of the execution graph.")
+              " that are not part of the execution graph.");
 
     for (NESTopologyLinkPtr nesLink : allEdges) {
 
@@ -149,7 +149,7 @@ void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecuti
         ExecutionNodePtr srcExecutionNode, destExecutionNode;
 
         NES_DEBUG("BasePlacementStrategy: If sourceNode present in the execution graph then use it, else create "
-                  "an empty execution node with no operator.")
+                  "an empty execution node with no operator.");
         if (nesExecutionPlanPtr->hasVertex(srcId)) {
             srcExecutionNode = nesExecutionPlanPtr->getExecutionNode(srcId);
         } else {
@@ -158,7 +158,7 @@ void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecuti
         }
 
         NES_DEBUG("BasePlacementStrategy: If destinationNode present in the execution graph then use it, else create "
-                  "an empty execution node with no operator.")
+                  "an empty execution node with no operator.");
         if (nesExecutionPlanPtr->hasVertex(destId)) {
             destExecutionNode = nesExecutionPlanPtr->getExecutionNode(destId);
         } else {
@@ -166,7 +166,7 @@ void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecuti
                                                                          nesLink->getDestNode(), nullptr);
         }
 
-        NES_DEBUG("BasePlacementStrategy: create the execution node link.")
+        NES_DEBUG("BasePlacementStrategy: create the execution node link.");
         nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode, linkCapacity,
                                                      linkLatency);
     }

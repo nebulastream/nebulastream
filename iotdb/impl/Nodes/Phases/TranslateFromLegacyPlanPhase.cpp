@@ -4,11 +4,6 @@
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
@@ -44,7 +39,6 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transform(OperatorPtr operatorPtr)
     auto operatorNode = transformIndividualOperator(operatorPtr);
     for (const OperatorPtr child: operatorPtr->getChildren()) {
         auto legacyChildOperator = transform(child);
-        legacyChildOperator->addParent(operatorNode);
         operatorNode->addChild(legacyChildOperator);
     }
     NES_DEBUG("TranslateFromLegacyPlanPhase: got " << operatorNode);
@@ -94,7 +88,7 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         auto sourceOperator = std::dynamic_pointer_cast<SourceOperator>(operatorPtr);
         const DataSourcePtr dataSource = sourceOperator->getDataSourcePtr();
         const SourceDescriptorPtr sourceDescriptor = ConvertPhysicalToLogicalSource::createSourceDescriptor(dataSource);
-        return  createSourceLogicalOperatorNode(sourceDescriptor);
+        return createSourceLogicalOperatorNode(sourceDescriptor);
     } else if (operatorPtr->getOperatorType() == FILTER_OP) {
         // Translate filter operator node.
         auto filterOperator = std::dynamic_pointer_cast<FilterOperator>(operatorPtr);
@@ -125,7 +119,8 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         const SinkDescriptorPtr sinkDescriptor = ConvertPhysicalToLogicalSink::createSinkDescriptor(dataSink);
         return createSinkLogicalOperatorNode(sinkDescriptor);
     }
-    NES_FATAL_ERROR("TranslateFromLegacyPhase: No transformation implemented for this operator: " << operatorPtr->toString());
+    NES_FATAL_ERROR(
+        "TranslateFromLegacyPhase: No transformation implemented for this operator: " << operatorPtr->toString());
     NES_NOT_IMPLEMENTED();
 }
 

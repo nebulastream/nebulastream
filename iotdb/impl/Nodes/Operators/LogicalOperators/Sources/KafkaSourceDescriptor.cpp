@@ -30,7 +30,7 @@ SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
 }
 
 SourceDescriptorType KafkaSourceDescriptor::getType() {
-    return KafkaSource;
+    return KafkaSrc;
 }
 
 const std::string& KafkaSourceDescriptor::getBrokers() const {

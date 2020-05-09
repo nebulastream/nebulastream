@@ -8,7 +8,7 @@ DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema,
     : SourceDescriptor(schema), numbersOfBufferToProduce(numbersOfBufferToProduce), frequency(frequency) {}
 
 SourceDescriptorType DefaultSourceDescriptor::getType() {
-    return DefaultSource;
+    return DefaultSrc;
 }
 
 const uint64_t DefaultSourceDescriptor::getNumbersOfBufferToProduce() const {

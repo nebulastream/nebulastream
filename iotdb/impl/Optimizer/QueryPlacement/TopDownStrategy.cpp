@@ -4,6 +4,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
@@ -22,7 +23,9 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr inputQuery
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     //find the source Node
-    string streamName = queryPlan->getSourceStream()->getName();
+    auto logicalSourceDescriptor = sourceOperator->getSourceDescriptor()->as<LogicalStreamSourceDescriptor>();
+    const string streamName = logicalSourceDescriptor->getStreamName();
+
     const vector<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
@@ -50,7 +53,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr inputQuery
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    SchemaPtr schema = queryPlan->getSourceStream()->getSchema();
+    SchemaPtr schema = logicalSourceDescriptor->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;
@@ -111,7 +114,7 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                             exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
 
                         if (exists != residentOperatorIds.end()) {
-                            NES_DEBUG("TopDown: Add child operators for next placement")
+                            NES_DEBUG("TopDown: Add child operators for next placement");
                             vector<NodePtr> nextOperatorsToProcess = targetOperator->getChildren();
                             for (NodePtr nodePtr: nextOperatorsToProcess) {
                                 operatorsToProcess.emplace_back(nodePtr->as<LogicalOperatorNode>());
@@ -122,7 +125,7 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
 
                     if (node.operator*()->getRemainingCpuCapacity() > 0) {
 
-                        NES_DEBUG("TopDown: Transforming New Operator into legacy operator")
+                        NES_DEBUG("TopDown: Transforming New Operator into legacy operator");
                         OperatorPtr legacyOperator = translator->transform(targetOperator);
 
                         if (executionPlanPtr->hasVertex(node.operator*()->getId())) {
@@ -134,7 +137,7 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                             createNewExecutionNode(executionPlanPtr, legacyOperator, node.operator*());
                         }
 
-                        NES_DEBUG("TopDown: Add child operators for next placement")
+                        NES_DEBUG("TopDown: Add child operators for next placement");
                         vector<NodePtr> nextOperatorsToProcess = targetOperator->getChildren();
                         for (NodePtr nodePtr: nextOperatorsToProcess) {
                             operatorsToProcess.emplace_back(nodePtr->as<LogicalOperatorNode>());
@@ -153,7 +156,7 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                     throw std::runtime_error("Unable to schedule source operator" + targetOperator->toString());
                 }
 
-                NES_DEBUG("TopDown: Transforming New Operator into legacy operator")
+                NES_DEBUG("TopDown: Transforming New Operator into legacy operator");
                 OperatorPtr legacyOperator = translator->transform(targetOperator);
 
                 if (executionPlanPtr->hasVertex(nesSourceNode->getId())) {

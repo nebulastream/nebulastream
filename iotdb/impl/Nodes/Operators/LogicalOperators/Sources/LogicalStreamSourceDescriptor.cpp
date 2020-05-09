@@ -10,7 +10,7 @@ const std::string& LogicalStreamSourceDescriptor::getStreamName() const {
     return streamName;
 }
 SourceDescriptorType LogicalStreamSourceDescriptor::getType() {
-    return LogicalStreamSource;
+    return LogicalStreamSrc;
 }
 SourceDescriptorPtr LogicalStreamSourceDescriptor::create(std::string streamName) {
     return std::make_shared<LogicalStreamSourceDescriptor>(LogicalStreamSourceDescriptor(streamName));

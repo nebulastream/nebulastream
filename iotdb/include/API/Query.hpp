@@ -1,5 +1,5 @@
-#ifndef API_INPUT_QUERY_H
-#define API_INPUT_QUERY_H
+#ifndef API_QUERY_H
+#define API_QUERY_H
 
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>

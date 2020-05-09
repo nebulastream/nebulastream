@@ -27,6 +27,7 @@
 #include <Topology/NESTopologyManager.hpp>
 #include <cstdint>
 #include <string>
+#include <Optimizer/ExecutionGraph.hpp>
 
 using std::string;
 

@@ -10,7 +10,7 @@ const std::string& SenseSourceDescriptor::getUdfs() const {
 }
 
 SourceDescriptorType SenseSourceDescriptor::getType() {
-    return SenseSource;
+    return SenseSrc;
 }
 SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string udfs) {
     return std::make_shared<SenseSourceDescriptor>(SenseSourceDescriptor(schema, udfs));
