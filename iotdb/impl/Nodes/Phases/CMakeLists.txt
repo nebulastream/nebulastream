@@ -4,5 +4,6 @@ add_source_iotdb(
         ConvertLogicalToPhysicalSource.cpp
         ConvertLogicalToPhysicalSink.cpp
         ConvertPhysicalToLogicalSource.cpp
+        ConvertPhysicalToLogicalSink.cpp
         TypeInferencePhase.cpp
 )

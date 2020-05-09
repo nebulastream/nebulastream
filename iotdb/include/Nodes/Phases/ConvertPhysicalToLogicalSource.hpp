@@ -3,8 +3,8 @@
 
 namespace NES {
 
-class LogicalOperatorNode;
-typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
+class SourceDescriptor;
+typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
 
 class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
@@ -12,7 +12,7 @@ typedef std::shared_ptr<DataSource> DataSourcePtr;
 class ConvertPhysicalToLogicalSource {
 
   public:
-    static LogicalOperatorNodePtr createDataSource(DataSourcePtr dataSource);
+    static SourceDescriptorPtr createSourceDescriptor(DataSourcePtr dataSource);
 
   private:
     ConvertPhysicalToLogicalSource() = default;

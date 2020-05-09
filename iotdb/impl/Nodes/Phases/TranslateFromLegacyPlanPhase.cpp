@@ -11,6 +11,7 @@
 #include <Nodes/Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
+#include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <Operators/Operator.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -20,7 +21,6 @@
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
@@ -40,13 +40,14 @@ TranslateFromLegacyPlanPhasePtr TranslateFromLegacyPlanPhase::create() {
  * Translade operator node and all its children to the legacy representation.
  */
 OperatorNodePtr TranslateFromLegacyPlanPhase::transform(OperatorPtr operatorPtr) {
-    NES_DEBUG("TranslateFromLegacyPlanPhase: translate " << operatorPtr)
+    NES_DEBUG("TranslateFromLegacyPlanPhase: translate " << operatorPtr);
     auto operatorNode = transformIndividualOperator(operatorPtr);
     for (const OperatorPtr child: operatorPtr->getChildren()) {
         auto legacyChildOperator = transform(child);
+        legacyChildOperator->addParent(operatorNode);
         operatorNode->addChild(legacyChildOperator);
     }
-    NES_DEBUG("TranslateFromLegacyPlanPhase: got " << operatorNode)
+    NES_DEBUG("TranslateFromLegacyPlanPhase: got " << operatorNode);
     return operatorNode;
 }
 
@@ -92,7 +93,8 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         // Translate Source operator node.
         auto sourceOperator = std::dynamic_pointer_cast<SourceOperator>(operatorPtr);
         const DataSourcePtr dataSource = sourceOperator->getDataSourcePtr();
-        return ConvertPhysicalToLogicalSource::createDataSource(dataSource);
+        const SourceDescriptorPtr sourceDescriptor = ConvertPhysicalToLogicalSource::createSourceDescriptor(dataSource);
+        return  createSourceLogicalOperatorNode(sourceDescriptor);
     } else if (operatorPtr->getOperatorType() == FILTER_OP) {
         // Translate filter operator node.
         auto filterOperator = std::dynamic_pointer_cast<FilterOperator>(operatorPtr);
@@ -106,7 +108,7 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         // Translate map operator node.
         auto mapOperator = std::dynamic_pointer_cast<MapOperator>(operatorPtr);
         PredicatePtr predicate = mapOperator->getPredicate();
-        ExpressionNodePtr expression = transformLogicalExpressions(predicate);
+        ExpressionNodePtr expression = transformToExpression(predicate);
         if (expression == nullptr) {
             NES_FATAL_ERROR("TranslateFromLegacyPhase: Error during translating map expression");
         }
@@ -119,41 +121,35 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         return createMapLogicalOperatorNode(fieldAssignmentExpression);
     } else if (operatorPtr->getOperatorType() == SINK_OP) {
         // Translate sink operator node.
-        SinkDescriptorPtr sinkOperator = std::dynamic_pointer_cast<SinkDescriptor>(operatorPtr);
-        auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
-        const SinkDescriptorPtr sinkDescriptor = sinkNodeOperator->getSinkDescriptor();
-        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
-        return createSinkOperator(dataSink);
+        DataSinkPtr dataSink = std::dynamic_pointer_cast<DataSink>(operatorPtr);
+        const SinkDescriptorPtr sinkDescriptor = ConvertPhysicalToLogicalSink::createSinkDescriptor(dataSink);
+        return createSinkLogicalOperatorNode(sinkDescriptor);
     }
-    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
+    NES_FATAL_ERROR("TranslateFromLegacyPhase: No transformation implemented for this operator: " << operatorPtr->toString());
     NES_NOT_IMPLEMENTED();
 }
 
 ExpressionNodePtr TranslateFromLegacyPlanPhase::transformArithmeticalExpressions(PredicatePtr predicate) {
     if (predicate->getOperatorType() == PLUS_OP) {
         // Translate add expression node.
-        auto addExpressionNode = expression->as<AddExpressionNode>();
-        auto legacyLeft = transformToExpression(addExpressionNode->getLeft());
-        auto legacyRight = transformToExpression(addExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::PLUS_OP, legacyLeft, legacyRight).copy();
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return AddExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == MINUS_OP) {
         // Translate sub expression node.
-        auto subExpressionNode = expression->as<SubExpressionNode>();
-        auto legacyLeft = transformToExpression(subExpressionNode->getLeft());
-        auto legacyRight = transformToExpression(subExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::MINUS_OP, legacyLeft, legacyRight).copy();
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return SubExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == MULTIPLY_OP) {
         // Translate mul expression node.
-        auto mulExpressionNode = expression->as<MulExpressionNode>();
-        auto legacyLeft = transformToExpression(mulExpressionNode->getLeft());
-        auto legacyRight = transformToExpression(mulExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::MULTIPLY_OP, legacyLeft, legacyRight).copy();
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return MulExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == DIVISION_OP) {
         // Translate div expression node.
-        auto divExpressionNode = expression->as<DivExpressionNode>();
-        auto legacyLeft = transformToExpression(divExpressionNode->getLeft());
-        auto legacyRight = transformToExpression(divExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::DIVISION_OP, legacyLeft, legacyRight).copy();
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return DivExpressionNode::create(left, right);
     }
     NES_FATAL_ERROR(
         "TranslateFromLegacyPlanPhase: No transformation implemented for this arithmetical predicate: "
@@ -164,49 +160,42 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformArithmeticalExpressions
 ExpressionNodePtr TranslateFromLegacyPlanPhase::transformLogicalExpressions(PredicatePtr predicate) {
     if (predicate->getOperatorType() == LOGICAL_AND_OP) {
         // Translate and expression node.
-        auto andExpressionNode = expression->as<AndExpressionNode>();
-        auto expressionLeft = transformToExpression(predicate->getLeft());
-        auto expressionRight = transformToExpression(predicate->getRight());
-        return AndExpressionNode::create(expressionLeft, expressionRight);
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return AndExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == LOGICAL_OR_OP) {
         // Translate or expression node.
-        auto orExpressionNode = expression->as<OrExpressionNode>();
-        auto legacyLeft = transformToExpression(orExpressionNode->getLeft());
-        auto legacyRight = transformToExpression(orExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::LOGICAL_OR_OP, legacyLeft, legacyRight).copy();
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return OrExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == LESS_THEN_OP) {
         // Translate less expression node.
-        auto lessExpressionNode = expression->as<LessExpressionNode>();
-        auto legacyLeft = transformToExpression(lessExpressionNode->getLeft());
-        auto legacyRight = transformToExpression(lessExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::LESS_THEN_OP, legacyLeft, legacyRight).copy();
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return LessExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == LESS_THEN_EQUAL_OP) {
         // Translate less equals expression node.
-        auto andExpressionNode = expression->as<LessEqualsExpressionNode>();
-        auto legacyLeft = transformToExpression(andExpressionNode->getLeft());
-        auto legacyRight = transformToExpression(andExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::LESS_THEN_EQUAL_OP, legacyLeft, legacyRight).copy();
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return LessEqualsExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == GREATER_THEN_OP) {
         // Translate greater expression node.
-        auto greaterExpressionNode = expression->as<GreaterExpressionNode>();
-        auto legacyLeft = transformToExpression(greaterExpressionNode->getLeft());
-        auto legacyRight = transformToExpression(greaterExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::GREATER_THEN_OP, legacyLeft, legacyRight).copy();
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return GreaterExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == GREATER_THEN_EQUAL_OP) {
         // Translate greater equals expression node.
-        auto greaterEqualsExpressionNode = expression->as<GreaterEqualsExpressionNode>();
-        auto legacyLeft = transformToExpression(greaterEqualsExpressionNode->getLeft());
-        auto legacyRight = transformToExpression(greaterEqualsExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::GREATER_THEN_EQUAL_OP, legacyLeft, legacyRight).copy();
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return GreaterEqualsExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == EQUAL_OP) {
         // Translate equals expression node.
-        auto equalsExpressionNode = expression->as<EqualsExpressionNode>();
-        auto legacyLeft = transformToExpression(equalsExpressionNode->getLeft());
-        auto legacyRight = transformToExpression(equalsExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::EQUAL_OP, legacyLeft, legacyRight).copy();
+        auto right = transformToExpression(predicate->getRight());
+        auto left = transformToExpression(predicate->getLeft());
+        return EqualsExpressionNode::create(left, right);
     }
     NES_FATAL_ERROR(
-        "TranslateFromLegacyPhase: No transformation implemented for this physical expression node: "
+        "TranslateFromLegacyPlanPhase: No transformation implemented for this Physical expression node: "
             << predicate->toString());
     NES_NOT_IMPLEMENTED();
 }
