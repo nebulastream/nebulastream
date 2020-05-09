@@ -59,14 +59,14 @@ class TranslateFromLegacyPlanPhase {
      * @param expression node
      * @return UserAPIExpressionPtr
      */
-    ExpressionNodePtr transformLogicalExpressions(UserAPIExpressionPtr expressionPtr);
+    ExpressionNodePtr transformLogicalExpressions(PredicatePtr expressionPtr);
 
     /**
      * @brief Translates arithmetical expessions to a legacy user api expression.
      * @param expression node
      * @return UserAPIExpressionPtr
      */
-    ExpressionNodePtr transformArithmeticalExpressions(UserAPIExpressionPtr expressionPtr);
+    ExpressionNodePtr transformArithmeticalExpressions(PredicatePtr expressionPtr);
 };
 
 }

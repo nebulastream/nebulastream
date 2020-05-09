@@ -22,7 +22,8 @@ class MapOperator : public Operator {
     const std::string toString() const override;
     OperatorType getOperatorType() const override;
     ~MapOperator() override;
-
+    const PredicatePtr& getPredicate() const;
+    const AttributeFieldPtr& getField() const;
   private:
     PredicatePtr predicate_;
     AttributeFieldPtr field_;

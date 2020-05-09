@@ -48,6 +48,14 @@ OperatorType MapOperator::getOperatorType() const {
 
 MapOperator::~MapOperator() {}
 
+const PredicatePtr& MapOperator::getPredicate() const {
+    return predicate_;
+}
+
+const AttributeFieldPtr& MapOperator::getField() const {
+    return field_;
+}
+
 const OperatorPtr createMapOperator(AttributeFieldPtr field, PredicatePtr ptr) {
     return std::make_shared<MapOperator>(field, ptr);
 }

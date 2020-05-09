@@ -18,33 +18,33 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
     QueryManagerPtr queryManager;
     switch (sourceDescriptorType) {
 
-        case ZmqSource: {
+        case ZmqSrc: {
             NES_INFO("ConvertLogicalToPhysicalSource: Creating ZMQ source");
             const ZmqSourceDescriptorPtr zmqSourceDescriptor = sourceDescriptor->as<ZmqSourceDescriptor>();
             return createZmqSource(zmqSourceDescriptor->getSchema(), bufferManager, queryManager,
                                    zmqSourceDescriptor->getHost(), zmqSourceDescriptor->getPort());
         }
-        case DefaultSource: {
+        case DefaultSrc: {
             NES_INFO("ConvertLogicalToPhysicalSource: Creating Default source");
             const DefaultSourceDescriptorPtr defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
             return createDefaultDataSourceWithSchemaForVarBuffers(
                 defaultSourceDescriptor->getSchema(), bufferManager, queryManager,
                 defaultSourceDescriptor->getNumbersOfBufferToProduce(), defaultSourceDescriptor->getFrequency());
         }
-        case BinarySource: {
+        case BinarySrc: {
             NES_INFO("ConvertLogicalToPhysicalSource: Creating Binary File source");
             const BinarySourceDescriptorPtr binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
             return createBinaryFileSource(binarySourceDescriptor->getSchema(), bufferManager, queryManager,
                                           binarySourceDescriptor->getFilePath());
         }
-        case CsvSource: {
+        case CsvSrc: {
             NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
             const CsvSourceDescriptorPtr csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
             return createCSVFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
                                        csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
                                        csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency());
         }
-        case KafkaSource: {
+        case KafkaSrc: {
             NES_INFO("ConvertLogicalToPhysicalSource: Creating Kafka source");
             const KafkaSourceDescriptorPtr kafkaSourceDescriptor = sourceDescriptor->as<KafkaSourceDescriptor>();
             return createKafkaSource(kafkaSourceDescriptor->getSchema(), bufferManager, queryManager,
@@ -52,7 +52,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
                                      kafkaSourceDescriptor->getGroupId(), kafkaSourceDescriptor->isAutoCommit(),
                                      kafkaSourceDescriptor->getKafkaConnectTimeout());
         }
-        case SenseSource: {
+        case SenseSrc: {
             NES_INFO("ConvertLogicalToPhysicalSource: Creating sense source");
             const SenseSourceDescriptorPtr senseSourceDescriptor = sourceDescriptor->as<SenseSourceDescriptor>();
             return createSenseSource(senseSourceDescriptor->getSchema(), bufferManager, queryManager,
