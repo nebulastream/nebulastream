@@ -79,7 +79,9 @@ class FileOutputSink : public DataSink {
      * @return returns string describing the file output sink
      */
     const std::string toString() const override;
-
+    const std::string& getFilePath() const;
+    FileOutputType getOutputType() const;
+    FileOutputMode getOutputMode() const;
     SinkType getType() const override;
 
   private:
@@ -98,6 +100,7 @@ class FileOutputSink : public DataSink {
         ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
     }
 };
+typedef std::shared_ptr<FileOutputSink> FileOutputSinkPtr;
 }// namespace NES
 
 #include <boost/archive/text_iarchive.hpp>

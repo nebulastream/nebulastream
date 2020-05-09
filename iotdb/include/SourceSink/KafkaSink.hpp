@@ -26,7 +26,9 @@ class KafkaSink : public DataSink {
     bool writeData(TupleBuffer& input_buffer);
     void setup() override;
     void shutdown() override;
-
+    const std::string& getBrokers() const;
+    const std::string& getTopic() const;
+    const uint64_t getKafkaProducerTimeout() const;
     const std::string toString() const override;
 
   private:
@@ -51,6 +53,7 @@ class KafkaSink : public DataSink {
 
     std::chrono::milliseconds kafkaProducerTimeout;
 };
+typedef std::shared_ptr<KafkaSink> KafkaSinkPtr;
 }// namespace NES
 
 #endif// KAFKASINK_HPP
