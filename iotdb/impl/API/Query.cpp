@@ -16,6 +16,10 @@ Query Query::from(const std::string& sourceStreamName) {
     return Query(queryPlan);
 }
 
+Query Query::createFromQueryPlan(QueryPlanPtr queryPlan) {
+    return Query(queryPlan);
+}
+
 Query& Query::filter(const ExpressionNodePtr filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
     OperatorNodePtr op = createFilterLogicalOperatorNode(filterExpression);

@@ -21,6 +21,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
+#include <Operators/Impl/SinkOperator.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 #include <Operators/Impl/MapOperator.hpp>
 #include <API/UserAPIExpression.hpp>
@@ -115,8 +116,8 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         return createMapLogicalOperatorNode(fieldAssignmentExpression);
     } else if (operatorPtr->getOperatorType() == SINK_OP) {
         // Translate sink operator node.
-        DataSinkPtr dataSink = std::dynamic_pointer_cast<DataSink>(operatorPtr);
-        const SinkDescriptorPtr sinkDescriptor = ConvertPhysicalToLogicalSink::createSinkDescriptor(dataSink);
+        SinkOperatorPtr sinkOperator = std::dynamic_pointer_cast<SinkOperator>(operatorPtr);
+        const SinkDescriptorPtr sinkDescriptor = ConvertPhysicalToLogicalSink::createSinkDescriptor(sinkOperator->getDataSinkPtr());
         return createSinkLogicalOperatorNode(sinkDescriptor);
     }
     NES_FATAL_ERROR(
