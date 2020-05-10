@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 #define NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
-#include <GRPC/Coordinator.grpc.pb.h>
-#include <GRPC/Coordinator.pb.h>
+#include <GRPC/CoordinatorRPCService.grpc.pb.h>
+#include <GRPC/CoordinatorRPCService.pb.h>
 
 #include <grpcpp/grpcpp.h>
 #include <Catalogs/PhysicalStreamConfig.hpp>
@@ -94,7 +94,7 @@ class CoordinatorRPCClient {
     bool shutdown(bool force);
 
   private:
-    std::unique_ptr<RPC::CoordinatorService::Stub> coordinatorStub;
+    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub;
     std::shared_ptr<::grpc::Channel> chan;
 
     size_t workerId;

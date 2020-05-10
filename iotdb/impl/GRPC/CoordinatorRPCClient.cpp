@@ -232,7 +232,7 @@ bool CoordinatorRPCClient::connect() {
     chan = grpc::CreateChannel(address,
                                grpc::InsecureChannelCredentials());
 
-    coordinatorStub = RPC::CoordinatorService::NewStub(chan);
+    coordinatorStub = CoordinatorRPCService::NewStub(chan);
 
     if (chan) {
         NES_DEBUG("CoordinatorRPCClient::connecting: channel successfully created");

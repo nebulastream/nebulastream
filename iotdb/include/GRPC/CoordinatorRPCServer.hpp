@@ -2,16 +2,15 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include <GRPC/Coordinator.grpc.pb.h>
+#include <GRPC/CoordinatorRPCService.grpc.pb.h>
 #include <Services/CoordinatorService.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
-using namespace RPC;
 
-class CoordinatorRPCServer final : public CoordinatorService::Service {
+class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
 
     CoordinatorRPCServer();

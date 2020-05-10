@@ -5,8 +5,6 @@
 #include <caf/io/all.hpp>
 #include <thread>
 
-
-
 //GRPC Includes
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <grpcpp/health_check_service_interface.h>
@@ -31,9 +29,6 @@ NesCoordinator::~NesCoordinator() {
     stopCoordinator(true);
 }
 
-infer_handle_from_class_t<CoordinatorActor> NesCoordinator::getActorHandle() {
-    return coordinatorActorHandle;
-}
 
 void startRestServer(RestServer* restServer,
                      std::string restHost, uint16_t restPort, uint16_t* port) {
@@ -111,74 +106,6 @@ size_t NesCoordinator::getRandomPort(size_t base) {
 uint16_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");
 
-//    NES_DEBUG("NesCoordinator::start: start NodeEngine");
-//    nodeEngine = std::make_shared<NodeEngine>();
-//    bool successNodeEngine = nodeEngine->start();
-//    if (!successNodeEngine) {
-//        NES_ERROR("NesCoordinator: node engine could not be started");
-//        throw Exception("NesCoordinator error while starting node engine");
-//    } else {
-//        NES_DEBUG("NesCoordinator: Node engine started successfully");
-//    }
-//
-//    NES_DEBUG("NesCoordinator starting coordinator actor");
-//    coordinatorCfg.load<io::middleman>();
-//    if (serverIp != "localhost") {
-//        NES_DEBUG("NesCoordinator: set server ip=" << serverIp);
-//        coordinatorCfg.ip = serverIp;
-//    }
-//    coordinatorCfg.printCfg();
-//    actorSystemCoordinator = new actor_system{coordinatorCfg};
-//    coordinatorActorHandle = actorSystemCoordinator->spawn<CoordinatorActor>(serverIp);
-//
-//    abstract_actor* abstractActorCoordinator = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
-//    crdActor = dynamic_cast<CoordinatorActor*>(abstractActorCoordinator);
-//    NES_DEBUG("NesCoordinator: coordinator actor created");
-//
-//    io::unpublish(coordinatorActorHandle, actorPort);
-//    auto expectedPortCoordinator = io::publish(coordinatorActorHandle, actorPort, nullptr,
-//                                               true);
-//    if (!expectedPortCoordinator) {
-//        NES_ERROR("NesCoordinator: publish expectedPortCoordinator failed: " << expectedPortCoordinator);
-//        throw Exception("NesCoordinator start failed");
-//    }
-    //    NES_DEBUG("NesCoordinator: coordinator handle with id"
-    //                  << coordinatorActorHandle->id() << " successfully published at port " << expectedPortCoordinator);
-    //    actorPort = *expectedPortCoordinator;
-    //
-    //    NES_DEBUG("NesCoordinator starting worker actor");
-    //    workerCfg.load<io::middleman>();
-    //    workerCfg.host = "localhost";
-    //
-    //    workerCfg.publish_port = getRandomPort(workerCfg.publish_port);
-    //    workerCfg.receive_port = getRandomPort(workerCfg.receive_port);
-    //
-    //    workerCfg.printCfg();
-    //
-    //    actorSystemWorker = new actor_system{workerCfg};
-    //
-    //    workerActorHandle = actorSystemWorker->spawn<NES::WorkerActor>(workerCfg.ip,
-    //                                                                   workerCfg.publish_port,
-    //                                                                   workerCfg.receive_port,
-    //                                                                   NESNodeType::Worker,
-    //                                                                   nodeEngine);
-    //
-    //    abstract_actor* abstractActorWorker = caf::actor_cast<abstract_actor*>(workerActorHandle);
-    //    wrkActor = dynamic_cast<WorkerActor*>(abstractActorWorker);
-    //
-    //    io::unpublish(workerActorHandle, workerCfg.receive_port);
-    //    auto expectedPortWorker = io::publish(workerActorHandle, workerCfg.receive_port, nullptr,
-    //                                          true);
-    //    if (!expectedPortWorker) {
-    //        NES_ERROR("NesCoordinator: publish expectedPortWorker failed: " << expectedPortWorker);
-    //        throw Exception("NesCoordinator start failed");
-    //    }
-    //    NES_DEBUG("NesCoordinator: worker handle with id"
-    //                  << workerActorHandle->id() << " successfully published at port " << expectedPortWorker);
-
-//    std::thread threadthRPC([&rpcServer]() {startCoordinatorRPCServer, workerCfg.ip,
-//        ::to_string(workerCfg.receive_port), std::move(rpcServer)});
-
     std::string address = workerCfg.ip + ":" + ::to_string(workerCfg.receive_port);
     NES_DEBUG("startCoordinatorRPCServer for address=" << address);
     CoordinatorRPCServer service;
@@ -210,14 +137,6 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
         NES_DEBUG("NesCoordinator started, join now and waiting for work");
         restThread.join();
         NES_DEBUG("NesCoordinator Required stopping");
-//
-//        NES_DEBUG("NesCoordinator shut down RPC server");
-//        rpcServer->Shutdown();
-//        NES_DEBUG("NesCoordinator RPC server closed, now join");
-//        rpcThread.join();
-//
-//        NES_DEBUG("NesCoordinator stop worker");
-//        wrk->stop(true);
     } else {
         NES_DEBUG(
             "NesCoordinator started, return without blocking on port " << actorPort);

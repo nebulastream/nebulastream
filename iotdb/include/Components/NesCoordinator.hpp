@@ -71,12 +71,11 @@ class NesCoordinator {
  */
     void setRestConfiguration(std::string host, uint16_t port);
 
-    /**
-     * @brief method to get handle
-     * @return handle to actor
-     */
-    infer_handle_from_class_t<CoordinatorActor> getActorHandle();
 
+    /**
+     * @brief method to overwrite server ip
+     * @param serverIp
+     */
     void setServerIp(std::string serverIp);
 
     /**
