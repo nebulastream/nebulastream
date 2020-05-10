@@ -2,11 +2,14 @@
 #define NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
 #include <GRPC/Coordinator.grpc.pb.h>
+#include <GRPC/Coordinator.pb.h>
+
 #include <grpcpp/grpcpp.h>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Topology/NESTopologyEntry.hpp>
+#include <string>
 
-
+using namespace std;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -15,7 +18,8 @@ namespace NES {
 class CoordinatorRPCClient {
   public:
 
-    CoordinatorRPCClient(std::shared_ptr<Channel> channel);
+    CoordinatorRPCClient(string ip, uint16_t rpcPort,
+    uint16_t zmqPort, size_t numberOfCpus, NESNodeType type, string nodeProperties);
 
     bool connect();
 
@@ -66,24 +70,15 @@ class CoordinatorRPCClient {
 
     /**
      * @brief method to register a node after the connection is established
-     * @param type of the node
      * @return bool indicating success
      */
-    bool registerNode(NESNodeType type);
+    bool registerNode();
 
     /**
      * @brief method to get own id form server
      * @return own id as listed in the graph
      */
     size_t getId();
-
-    /**
-     * @brief method to connect to the coordinator
-     * @param host as address of coordinator
-     * @param port as the open port on the coordinaotor
-     * @return bool indicating success
-     */
-    bool connecting(const std::string& host, uint16_t port);
 
     /**
      * @brief this method disconnect the worker from the coordinator
@@ -99,7 +94,7 @@ class CoordinatorRPCClient {
     bool shutdown(bool force);
 
   private:
-    std::unique_ptr<CoordinatorService::Stub> stub_;
+    std::unique_ptr<RPC::CoordinatorService::Stub> coordinatorStub;
     size_t workerId;
     std::string ip;
     size_t rpcPort;
@@ -107,8 +102,9 @@ class CoordinatorRPCClient {
     size_t numberOfCpus;
     std::string nodeProperties;
     size_t type;
-
 };
+typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
+
 }
 #endif //
 

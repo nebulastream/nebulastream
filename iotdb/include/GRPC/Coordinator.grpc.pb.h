@@ -26,1714 +26,2565 @@
 #include <grpcpp/impl/codegen/stub_options.h>
 #include <grpcpp/impl/codegen/sync_stream.h>
 
+namespace RPC {
 // The greeting service definition.
 class CoordinatorService final {
- public:
-  static constexpr char const* service_full_name() {
-    return "CoordinatorService";
-  }
-  class StubInterface {
-   public:
-    virtual ~StubInterface() {}
-    // Sends a greeting
-    virtual ::grpc::Status RegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest& request, ::RegisterNodeReply* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterNodeReply>> AsyncRegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterNodeReply>>(AsyncRegisterNodeRaw(context, request, cq));
+  public:
+    static constexpr char const* service_full_name() {
+        return "CoordinatorService";
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterNodeReply>> PrepareAsyncRegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterNodeReply>>(PrepareAsyncRegisterNodeRaw(context, request, cq));
-    }
-    virtual ::grpc::Status UnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest& request, ::UnregisterNodeReply* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterNodeReply>> AsyncUnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterNodeReply>>(AsyncUnregisterNodeRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterNodeReply>> PrepareAsyncUnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterNodeReply>>(PrepareAsyncUnregisterNodeRaw(context, request, cq));
-    }
-    virtual ::grpc::Status RegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest& request, ::RegisterPhysicalStreamReply* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterPhysicalStreamReply>> AsyncRegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterPhysicalStreamReply>>(AsyncRegisterPhysicalStreamRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterPhysicalStreamReply>> PrepareAsyncRegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterPhysicalStreamReply>>(PrepareAsyncRegisterPhysicalStreamRaw(context, request, cq));
-    }
-    virtual ::grpc::Status UnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest& request, ::UnregisterPhysicalStreamReply* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterPhysicalStreamReply>> AsyncUnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterPhysicalStreamReply>>(AsyncUnregisterPhysicalStreamRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterPhysicalStreamReply>> PrepareAsyncUnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterPhysicalStreamReply>>(PrepareAsyncUnregisterPhysicalStreamRaw(context, request, cq));
-    }
-    virtual ::grpc::Status RegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest& request, ::RegisterLogicalStreamReply* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterLogicalStreamReply>> AsyncRegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterLogicalStreamReply>>(AsyncRegisterLogicalStreamRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterLogicalStreamReply>> PrepareAsyncRegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RegisterLogicalStreamReply>>(PrepareAsyncRegisterLogicalStreamRaw(context, request, cq));
-    }
-    virtual ::grpc::Status UnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest& request, ::UnregisterLogicalStreamReply* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterLogicalStreamReply>> AsyncUnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterLogicalStreamReply>>(AsyncUnregisterLogicalStreamRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterLogicalStreamReply>> PrepareAsyncUnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterLogicalStreamReply>>(PrepareAsyncUnregisterLogicalStreamRaw(context, request, cq));
-    }
-    virtual ::grpc::Status AddParent(::grpc::ClientContext* context, const ::AddParentRequest& request, ::AddParentReply* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::AddParentReply>> AsyncAddParent(::grpc::ClientContext* context, const ::AddParentRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::AddParentReply>>(AsyncAddParentRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::AddParentReply>> PrepareAsyncAddParent(::grpc::ClientContext* context, const ::AddParentRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::AddParentReply>>(PrepareAsyncAddParentRaw(context, request, cq));
-    }
-    virtual ::grpc::Status RemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest& request, ::RemoveParentReply* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RemoveParentReply>> AsyncRemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RemoveParentReply>>(AsyncRemoveParentRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RemoveParentReply>> PrepareAsyncRemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::RemoveParentReply>>(PrepareAsyncRemoveParentRaw(context, request, cq));
-    }
-    class experimental_async_interface {
-     public:
-      virtual ~experimental_async_interface() {}
-      // Sends a greeting
-      virtual void RegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest* request, ::RegisterNodeReply* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void RegisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterNodeReply* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void RegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest* request, ::RegisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void RegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest* request, ::RegisterNodeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void RegisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void RegisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterNodeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      virtual void UnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest* request, ::UnregisterNodeReply* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void UnregisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterNodeReply* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void UnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest* request, ::UnregisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void UnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest* request, ::UnregisterNodeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void UnregisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void UnregisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterNodeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      virtual void RegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest* request, ::RegisterPhysicalStreamReply* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void RegisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterPhysicalStreamReply* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void RegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest* request, ::RegisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void RegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest* request, ::RegisterPhysicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void RegisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void RegisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterPhysicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      virtual void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest* request, ::UnregisterPhysicalStreamReply* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterPhysicalStreamReply* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest* request, ::UnregisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest* request, ::UnregisterPhysicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterPhysicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      virtual void RegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest* request, ::RegisterLogicalStreamReply* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void RegisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterLogicalStreamReply* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void RegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest* request, ::RegisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void RegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest* request, ::RegisterLogicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void RegisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void RegisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterLogicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      virtual void UnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest* request, ::UnregisterLogicalStreamReply* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void UnregisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterLogicalStreamReply* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void UnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest* request, ::UnregisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void UnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest* request, ::UnregisterLogicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void UnregisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void UnregisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterLogicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      virtual void AddParent(::grpc::ClientContext* context, const ::AddParentRequest* request, ::AddParentReply* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void AddParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::AddParentReply* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void AddParent(::grpc::ClientContext* context, const ::AddParentRequest* request, ::AddParentReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void AddParent(::grpc::ClientContext* context, const ::AddParentRequest* request, ::AddParentReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void AddParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::AddParentReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void AddParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::AddParentReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      virtual void RemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest* request, ::RemoveParentReply* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void RemoveParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RemoveParentReply* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void RemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest* request, ::RemoveParentReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void RemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest* request, ::RemoveParentReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void RemoveParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RemoveParentReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void RemoveParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RemoveParentReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
+    class StubInterface {
+      public:
+        virtual ~StubInterface() {}
+        // Sends a greeting
+        virtual ::grpc::Status RegisterNode(::grpc::ClientContext* context,
+                                            const ::RegisterNodeRequest& request,
+                                            ::RegisterNodeReply* response) = 0;
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterNodeReply>> AsyncRegisterNode(::grpc::ClientContext* context,
+                                                                                                           const ::RegisterNodeRequest& request,
+                                                                                                           ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterNodeReply>>(AsyncRegisterNodeRaw(
+                context,
+                request,
+                cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterNodeReply>> PrepareAsyncRegisterNode(::grpc::ClientContext* context,
+                                                                                                                  const ::RegisterNodeRequest& request,
+                                                                                                                  ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterNodeReply>>(
+                PrepareAsyncRegisterNodeRaw(context, request, cq));
+        }
+        virtual ::grpc::Status UnregisterNode(::grpc::ClientContext* context,
+                                              const ::UnregisterNodeRequest& request,
+                                              ::UnregisterNodeReply* response) = 0;
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterNodeReply>> AsyncUnregisterNode(::grpc::ClientContext* context,
+                                                                                                               const ::UnregisterNodeRequest& request,
+                                                                                                               ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterNodeReply>>(
+                AsyncUnregisterNodeRaw(context, request, cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterNodeReply>> PrepareAsyncUnregisterNode(::grpc::ClientContext* context,
+                                                                                                                      const ::UnregisterNodeRequest& request,
+                                                                                                                      ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterNodeReply>>(
+                PrepareAsyncUnregisterNodeRaw(context, request, cq));
+        }
+        virtual ::grpc::Status RegisterPhysicalStream(::grpc::ClientContext* context,
+                                                      const ::RegisterPhysicalStreamRequest& request,
+                                                      ::RegisterPhysicalStreamReply* response) = 0;
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterPhysicalStreamReply>> AsyncRegisterPhysicalStream(
+            ::grpc::ClientContext* context,
+            const ::RegisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterPhysicalStreamReply>>(
+                AsyncRegisterPhysicalStreamRaw(context, request, cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterPhysicalStreamReply>> PrepareAsyncRegisterPhysicalStream(
+            ::grpc::ClientContext* context,
+            const ::RegisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterPhysicalStreamReply>>(
+                PrepareAsyncRegisterPhysicalStreamRaw(context, request, cq));
+        }
+        virtual ::grpc::Status UnregisterPhysicalStream(::grpc::ClientContext* context,
+                                                        const ::UnregisterPhysicalStreamRequest& request,
+                                                        ::UnregisterPhysicalStreamReply* response) = 0;
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterPhysicalStreamReply>> AsyncUnregisterPhysicalStream(
+            ::grpc::ClientContext* context,
+            const ::UnregisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterPhysicalStreamReply>>(
+                AsyncUnregisterPhysicalStreamRaw(context, request, cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterPhysicalStreamReply>> PrepareAsyncUnregisterPhysicalStream(
+            ::grpc::ClientContext* context,
+            const ::UnregisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterPhysicalStreamReply>>(
+                PrepareAsyncUnregisterPhysicalStreamRaw(context, request, cq));
+        }
+        virtual ::grpc::Status RegisterLogicalStream(::grpc::ClientContext* context,
+                                                     const ::RegisterLogicalStreamRequest& request,
+                                                     ::RegisterLogicalStreamReply* response) = 0;
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterLogicalStreamReply>> AsyncRegisterLogicalStream(
+            ::grpc::ClientContext* context,
+            const ::RegisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterLogicalStreamReply>>(
+                AsyncRegisterLogicalStreamRaw(context, request, cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterLogicalStreamReply>> PrepareAsyncRegisterLogicalStream(
+            ::grpc::ClientContext* context,
+            const ::RegisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RegisterLogicalStreamReply>>(
+                PrepareAsyncRegisterLogicalStreamRaw(context, request, cq));
+        }
+        virtual ::grpc::Status UnregisterLogicalStream(::grpc::ClientContext* context,
+                                                       const ::UnregisterLogicalStreamRequest& request,
+                                                       ::UnregisterLogicalStreamReply* response) = 0;
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterLogicalStreamReply>> AsyncUnregisterLogicalStream(
+            ::grpc::ClientContext* context,
+            const ::UnregisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterLogicalStreamReply>>(
+                AsyncUnregisterLogicalStreamRaw(context, request, cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterLogicalStreamReply>> PrepareAsyncUnregisterLogicalStream(
+            ::grpc::ClientContext* context,
+            const ::UnregisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::UnregisterLogicalStreamReply>>(
+                PrepareAsyncUnregisterLogicalStreamRaw(context, request, cq));
+        }
+        virtual ::grpc::Status AddParent(::grpc::ClientContext* context,
+                                         const ::AddParentRequest& request,
+                                         ::AddParentReply* response) = 0;
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::AddParentReply>> AsyncAddParent(::grpc::ClientContext* context,
+                                                                                                     const ::AddParentRequest& request,
+                                                                                                     ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::AddParentReply>>(AsyncAddParentRaw(
+                context,
+                request,
+                cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::AddParentReply>> PrepareAsyncAddParent(::grpc::ClientContext* context,
+                                                                                                            const ::AddParentRequest& request,
+                                                                                                            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::AddParentReply>>(
+                PrepareAsyncAddParentRaw(context, request, cq));
+        }
+        virtual ::grpc::Status RemoveParent(::grpc::ClientContext* context,
+                                            const ::RemoveParentRequest& request,
+                                            ::RemoveParentReply* response) = 0;
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RemoveParentReply>> AsyncRemoveParent(::grpc::ClientContext* context,
+                                                                                                           const ::RemoveParentRequest& request,
+                                                                                                           ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RemoveParentReply>>(AsyncRemoveParentRaw(
+                context,
+                request,
+                cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RemoveParentReply>> PrepareAsyncRemoveParent(::grpc::ClientContext* context,
+                                                                                                                  const ::RemoveParentRequest& request,
+                                                                                                                  ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReaderInterface<::RemoveParentReply>>(
+                PrepareAsyncRemoveParentRaw(context, request, cq));
+        }
+        class experimental_async_interface {
+          public:
+            virtual ~experimental_async_interface() {}
+            // Sends a greeting
+            virtual void RegisterNode(::grpc::ClientContext* context,
+                                      const ::RegisterNodeRequest* request,
+                                      ::RegisterNodeReply* response,
+                                      std::function<void(::grpc::Status)>) = 0;
+            virtual void RegisterNode(::grpc::ClientContext* context,
+                                      const ::grpc::ByteBuffer* request,
+                                      ::RegisterNodeReply* response,
+                                      std::function<void(::grpc::Status)>) = 0;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void RegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest* request, ::RegisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void RegisterNode(::grpc::ClientContext* context,
+                                      const ::RegisterNodeRequest* request,
+                                      ::RegisterNodeReply* response,
+                                      ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void RegisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void RegisterNode(::grpc::ClientContext* context,
+                                      const ::grpc::ByteBuffer* request,
+                                      ::RegisterNodeReply* response,
+                                      ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+            virtual void UnregisterNode(::grpc::ClientContext* context,
+                                        const ::UnregisterNodeRequest* request,
+                                        ::UnregisterNodeReply* response,
+                                        std::function<void(::grpc::Status)>) = 0;
+            virtual void UnregisterNode(::grpc::ClientContext* context,
+                                        const ::grpc::ByteBuffer* request,
+                                        ::UnregisterNodeReply* response,
+                                        std::function<void(::grpc::Status)>) = 0;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void UnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest* request, ::UnregisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void UnregisterNode(::grpc::ClientContext* context,
+                                        const ::UnregisterNodeRequest* request,
+                                        ::UnregisterNodeReply* response,
+                                        ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void UnregisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void UnregisterNode(::grpc::ClientContext* context,
+                                        const ::grpc::ByteBuffer* request,
+                                        ::UnregisterNodeReply* response,
+                                        ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+            virtual void RegisterPhysicalStream(::grpc::ClientContext* context,
+                                                const ::RegisterPhysicalStreamRequest* request,
+                                                ::RegisterPhysicalStreamReply* response,
+                                                std::function<void(::grpc::Status)>) = 0;
+            virtual void RegisterPhysicalStream(::grpc::ClientContext* context,
+                                                const ::grpc::ByteBuffer* request,
+                                                ::RegisterPhysicalStreamReply* response,
+                                                std::function<void(::grpc::Status)>) = 0;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void RegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest* request, ::RegisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void RegisterPhysicalStream(::grpc::ClientContext* context,
+                                                const ::RegisterPhysicalStreamRequest* request,
+                                                ::RegisterPhysicalStreamReply* response,
+                                                ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void RegisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void RegisterPhysicalStream(::grpc::ClientContext* context,
+                                                const ::grpc::ByteBuffer* request,
+                                                ::RegisterPhysicalStreamReply* response,
+                                                ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+            virtual void UnregisterPhysicalStream(::grpc::ClientContext* context,
+                                                  const ::UnregisterPhysicalStreamRequest* request,
+                                                  ::UnregisterPhysicalStreamReply* response,
+                                                  std::function<void(::grpc::Status)>) = 0;
+            virtual void UnregisterPhysicalStream(::grpc::ClientContext* context,
+                                                  const ::grpc::ByteBuffer* request,
+                                                  ::UnregisterPhysicalStreamReply* response,
+                                                  std::function<void(::grpc::Status)>) = 0;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest* request, ::UnregisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void UnregisterPhysicalStream(::grpc::ClientContext* context,
+                                                  const ::UnregisterPhysicalStreamRequest* request,
+                                                  ::UnregisterPhysicalStreamReply* response,
+                                                  ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void UnregisterPhysicalStream(::grpc::ClientContext* context,
+                                                  const ::grpc::ByteBuffer* request,
+                                                  ::UnregisterPhysicalStreamReply* response,
+                                                  ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+            virtual void RegisterLogicalStream(::grpc::ClientContext* context,
+                                               const ::RegisterLogicalStreamRequest* request,
+                                               ::RegisterLogicalStreamReply* response,
+                                               std::function<void(::grpc::Status)>) = 0;
+            virtual void RegisterLogicalStream(::grpc::ClientContext* context,
+                                               const ::grpc::ByteBuffer* request,
+                                               ::RegisterLogicalStreamReply* response,
+                                               std::function<void(::grpc::Status)>) = 0;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void RegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest* request, ::RegisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void RegisterLogicalStream(::grpc::ClientContext* context,
+                                               const ::RegisterLogicalStreamRequest* request,
+                                               ::RegisterLogicalStreamReply* response,
+                                               ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void RegisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void RegisterLogicalStream(::grpc::ClientContext* context,
+                                               const ::grpc::ByteBuffer* request,
+                                               ::RegisterLogicalStreamReply* response,
+                                               ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+            virtual void UnregisterLogicalStream(::grpc::ClientContext* context,
+                                                 const ::UnregisterLogicalStreamRequest* request,
+                                                 ::UnregisterLogicalStreamReply* response,
+                                                 std::function<void(::grpc::Status)>) = 0;
+            virtual void UnregisterLogicalStream(::grpc::ClientContext* context,
+                                                 const ::grpc::ByteBuffer* request,
+                                                 ::UnregisterLogicalStreamReply* response,
+                                                 std::function<void(::grpc::Status)>) = 0;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void UnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest* request, ::UnregisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void UnregisterLogicalStream(::grpc::ClientContext* context,
+                                                 const ::UnregisterLogicalStreamRequest* request,
+                                                 ::UnregisterLogicalStreamReply* response,
+                                                 ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void UnregisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void UnregisterLogicalStream(::grpc::ClientContext* context,
+                                                 const ::grpc::ByteBuffer* request,
+                                                 ::UnregisterLogicalStreamReply* response,
+                                                 ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+            virtual void AddParent(::grpc::ClientContext* context,
+                                   const ::AddParentRequest* request,
+                                   ::AddParentReply* response,
+                                   std::function<void(::grpc::Status)>) = 0;
+            virtual void AddParent(::grpc::ClientContext* context,
+                                   const ::grpc::ByteBuffer* request,
+                                   ::AddParentReply* response,
+                                   std::function<void(::grpc::Status)>) = 0;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void AddParent(::grpc::ClientContext* context, const ::AddParentRequest* request, ::AddParentReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void AddParent(::grpc::ClientContext* context,
+                                   const ::AddParentRequest* request,
+                                   ::AddParentReply* response,
+                                   ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void AddParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::AddParentReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void AddParent(::grpc::ClientContext* context,
+                                   const ::grpc::ByteBuffer* request,
+                                   ::AddParentReply* response,
+                                   ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+            virtual void RemoveParent(::grpc::ClientContext* context,
+                                      const ::RemoveParentRequest* request,
+                                      ::RemoveParentReply* response,
+                                      std::function<void(::grpc::Status)>) = 0;
+            virtual void RemoveParent(::grpc::ClientContext* context,
+                                      const ::grpc::ByteBuffer* request,
+                                      ::RemoveParentReply* response,
+                                      std::function<void(::grpc::Status)>) = 0;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void RemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest* request, ::RemoveParentReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void RemoveParent(::grpc::ClientContext* context,
+                                      const ::RemoveParentRequest* request,
+                                      ::RemoveParentReply* response,
+                                      ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            virtual void RemoveParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RemoveParentReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+#else
+            virtual void RemoveParent(::grpc::ClientContext* context,
+                                      const ::grpc::ByteBuffer* request,
+                                      ::RemoveParentReply* response,
+                                      ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+#endif
+        };
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        typedef class experimental_async_interface async_interface;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        async_interface* async() { return experimental_async(); }
+#endif
+        virtual class experimental_async_interface* experimental_async() { return nullptr; }
+      private:
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::RegisterNodeReply>* AsyncRegisterNodeRaw(::grpc::ClientContext* context,
+                                                                                                      const ::RegisterNodeRequest& request,
+                                                                                                      ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::RegisterNodeReply>* PrepareAsyncRegisterNodeRaw(::grpc::ClientContext* context,
+                                                                                                             const ::RegisterNodeRequest& request,
+                                                                                                             ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::UnregisterNodeReply>* AsyncUnregisterNodeRaw(::grpc::ClientContext* context,
+                                                                                                          const ::UnregisterNodeRequest& request,
+                                                                                                          ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::UnregisterNodeReply>* PrepareAsyncUnregisterNodeRaw(::grpc::ClientContext* context,
+                                                                                                                 const ::UnregisterNodeRequest& request,
+                                                                                                                 ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::RegisterPhysicalStreamReply>* AsyncRegisterPhysicalStreamRaw(
+            ::grpc::ClientContext* context,
+            const ::RegisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::RegisterPhysicalStreamReply>* PrepareAsyncRegisterPhysicalStreamRaw(
+            ::grpc::ClientContext* context,
+            const ::RegisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::UnregisterPhysicalStreamReply>* AsyncUnregisterPhysicalStreamRaw(
+            ::grpc::ClientContext* context,
+            const ::UnregisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::UnregisterPhysicalStreamReply>* PrepareAsyncUnregisterPhysicalStreamRaw(
+            ::grpc::ClientContext* context,
+            const ::UnregisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::RegisterLogicalStreamReply>* AsyncRegisterLogicalStreamRaw(
+            ::grpc::ClientContext* context,
+            const ::RegisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::RegisterLogicalStreamReply>* PrepareAsyncRegisterLogicalStreamRaw(
+            ::grpc::ClientContext* context,
+            const ::RegisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::UnregisterLogicalStreamReply>* AsyncUnregisterLogicalStreamRaw(
+            ::grpc::ClientContext* context,
+            const ::UnregisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::UnregisterLogicalStreamReply>* PrepareAsyncUnregisterLogicalStreamRaw(
+            ::grpc::ClientContext* context,
+            const ::UnregisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::AddParentReply>* AsyncAddParentRaw(::grpc::ClientContext* context,
+                                                                                                const ::AddParentRequest& request,
+                                                                                                ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::AddParentReply>* PrepareAsyncAddParentRaw(::grpc::ClientContext* context,
+                                                                                                       const ::AddParentRequest& request,
+                                                                                                       ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::RemoveParentReply>* AsyncRemoveParentRaw(::grpc::ClientContext* context,
+                                                                                                      const ::RemoveParentRequest& request,
+                                                                                                      ::grpc::CompletionQueue* cq) = 0;
+        virtual ::grpc::ClientAsyncResponseReaderInterface<::RemoveParentReply>* PrepareAsyncRemoveParentRaw(::grpc::ClientContext* context,
+                                                                                                             const ::RemoveParentRequest& request,
+                                                                                                             ::grpc::CompletionQueue* cq) = 0;
     };
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    typedef class experimental_async_interface async_interface;
-    #endif
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    async_interface* async() { return experimental_async(); }
-    #endif
-    virtual class experimental_async_interface* experimental_async() { return nullptr; }
-  private:
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::RegisterNodeReply>* AsyncRegisterNodeRaw(::grpc::ClientContext* context, const ::RegisterNodeRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::RegisterNodeReply>* PrepareAsyncRegisterNodeRaw(::grpc::ClientContext* context, const ::RegisterNodeRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterNodeReply>* AsyncUnregisterNodeRaw(::grpc::ClientContext* context, const ::UnregisterNodeRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterNodeReply>* PrepareAsyncUnregisterNodeRaw(::grpc::ClientContext* context, const ::UnregisterNodeRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::RegisterPhysicalStreamReply>* AsyncRegisterPhysicalStreamRaw(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::RegisterPhysicalStreamReply>* PrepareAsyncRegisterPhysicalStreamRaw(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterPhysicalStreamReply>* AsyncUnregisterPhysicalStreamRaw(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterPhysicalStreamReply>* PrepareAsyncUnregisterPhysicalStreamRaw(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::RegisterLogicalStreamReply>* AsyncRegisterLogicalStreamRaw(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::RegisterLogicalStreamReply>* PrepareAsyncRegisterLogicalStreamRaw(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterLogicalStreamReply>* AsyncUnregisterLogicalStreamRaw(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::UnregisterLogicalStreamReply>* PrepareAsyncUnregisterLogicalStreamRaw(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::AddParentReply>* AsyncAddParentRaw(::grpc::ClientContext* context, const ::AddParentRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::AddParentReply>* PrepareAsyncAddParentRaw(::grpc::ClientContext* context, const ::AddParentRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::RemoveParentReply>* AsyncRemoveParentRaw(::grpc::ClientContext* context, const ::RemoveParentRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::RemoveParentReply>* PrepareAsyncRemoveParentRaw(::grpc::ClientContext* context, const ::RemoveParentRequest& request, ::grpc::CompletionQueue* cq) = 0;
-  };
-  class Stub final : public StubInterface {
-   public:
-    Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel);
-    ::grpc::Status RegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest& request, ::RegisterNodeReply* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterNodeReply>> AsyncRegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterNodeReply>>(AsyncRegisterNodeRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterNodeReply>> PrepareAsyncRegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterNodeReply>>(PrepareAsyncRegisterNodeRaw(context, request, cq));
-    }
-    ::grpc::Status UnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest& request, ::UnregisterNodeReply* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterNodeReply>> AsyncUnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterNodeReply>>(AsyncUnregisterNodeRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterNodeReply>> PrepareAsyncUnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterNodeReply>>(PrepareAsyncUnregisterNodeRaw(context, request, cq));
-    }
-    ::grpc::Status RegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest& request, ::RegisterPhysicalStreamReply* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterPhysicalStreamReply>> AsyncRegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterPhysicalStreamReply>>(AsyncRegisterPhysicalStreamRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterPhysicalStreamReply>> PrepareAsyncRegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterPhysicalStreamReply>>(PrepareAsyncRegisterPhysicalStreamRaw(context, request, cq));
-    }
-    ::grpc::Status UnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest& request, ::UnregisterPhysicalStreamReply* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterPhysicalStreamReply>> AsyncUnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterPhysicalStreamReply>>(AsyncUnregisterPhysicalStreamRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterPhysicalStreamReply>> PrepareAsyncUnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterPhysicalStreamReply>>(PrepareAsyncUnregisterPhysicalStreamRaw(context, request, cq));
-    }
-    ::grpc::Status RegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest& request, ::RegisterLogicalStreamReply* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterLogicalStreamReply>> AsyncRegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterLogicalStreamReply>>(AsyncRegisterLogicalStreamRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterLogicalStreamReply>> PrepareAsyncRegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RegisterLogicalStreamReply>>(PrepareAsyncRegisterLogicalStreamRaw(context, request, cq));
-    }
-    ::grpc::Status UnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest& request, ::UnregisterLogicalStreamReply* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterLogicalStreamReply>> AsyncUnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterLogicalStreamReply>>(AsyncUnregisterLogicalStreamRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterLogicalStreamReply>> PrepareAsyncUnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::UnregisterLogicalStreamReply>>(PrepareAsyncUnregisterLogicalStreamRaw(context, request, cq));
-    }
-    ::grpc::Status AddParent(::grpc::ClientContext* context, const ::AddParentRequest& request, ::AddParentReply* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::AddParentReply>> AsyncAddParent(::grpc::ClientContext* context, const ::AddParentRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::AddParentReply>>(AsyncAddParentRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::AddParentReply>> PrepareAsyncAddParent(::grpc::ClientContext* context, const ::AddParentRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::AddParentReply>>(PrepareAsyncAddParentRaw(context, request, cq));
-    }
-    ::grpc::Status RemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest& request, ::RemoveParentReply* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RemoveParentReply>> AsyncRemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RemoveParentReply>>(AsyncRemoveParentRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RemoveParentReply>> PrepareAsyncRemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::RemoveParentReply>>(PrepareAsyncRemoveParentRaw(context, request, cq));
-    }
-    class experimental_async final :
-      public StubInterface::experimental_async_interface {
-     public:
-      void RegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest* request, ::RegisterNodeReply* response, std::function<void(::grpc::Status)>) override;
-      void RegisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterNodeReply* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void RegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest* request, ::RegisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void RegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest* request, ::RegisterNodeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void RegisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void RegisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterNodeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      void UnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest* request, ::UnregisterNodeReply* response, std::function<void(::grpc::Status)>) override;
-      void UnregisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterNodeReply* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void UnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest* request, ::UnregisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void UnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest* request, ::UnregisterNodeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void UnregisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void UnregisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterNodeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      void RegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest* request, ::RegisterPhysicalStreamReply* response, std::function<void(::grpc::Status)>) override;
-      void RegisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterPhysicalStreamReply* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void RegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest* request, ::RegisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void RegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest* request, ::RegisterPhysicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void RegisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void RegisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterPhysicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest* request, ::UnregisterPhysicalStreamReply* response, std::function<void(::grpc::Status)>) override;
-      void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterPhysicalStreamReply* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest* request, ::UnregisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest* request, ::UnregisterPhysicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterPhysicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      void RegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest* request, ::RegisterLogicalStreamReply* response, std::function<void(::grpc::Status)>) override;
-      void RegisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterLogicalStreamReply* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void RegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest* request, ::RegisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void RegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest* request, ::RegisterLogicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void RegisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void RegisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterLogicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      void UnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest* request, ::UnregisterLogicalStreamReply* response, std::function<void(::grpc::Status)>) override;
-      void UnregisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterLogicalStreamReply* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void UnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest* request, ::UnregisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void UnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest* request, ::UnregisterLogicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void UnregisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void UnregisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterLogicalStreamReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      void AddParent(::grpc::ClientContext* context, const ::AddParentRequest* request, ::AddParentReply* response, std::function<void(::grpc::Status)>) override;
-      void AddParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::AddParentReply* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void AddParent(::grpc::ClientContext* context, const ::AddParentRequest* request, ::AddParentReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void AddParent(::grpc::ClientContext* context, const ::AddParentRequest* request, ::AddParentReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void AddParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::AddParentReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void AddParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::AddParentReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      void RemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest* request, ::RemoveParentReply* response, std::function<void(::grpc::Status)>) override;
-      void RemoveParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RemoveParentReply* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void RemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest* request, ::RemoveParentReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void RemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest* request, ::RemoveParentReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void RemoveParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RemoveParentReply* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void RemoveParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RemoveParentReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-     private:
-      friend class Stub;
-      explicit experimental_async(Stub* stub): stub_(stub) { }
-      Stub* stub() { return stub_; }
-      Stub* stub_;
+    class Stub final : public StubInterface {
+      public:
+        Stub(const std::shared_ptr<::grpc::ChannelInterface>& channel);
+        ::grpc::Status RegisterNode(::grpc::ClientContext* context,
+                                    const ::RegisterNodeRequest& request,
+                                    ::RegisterNodeReply* response) override;
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterNodeReply>> AsyncRegisterNode(::grpc::ClientContext* context,
+                                                                                                  const ::RegisterNodeRequest& request,
+                                                                                                  ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterNodeReply>>(AsyncRegisterNodeRaw(context,
+                                                                                                                request,
+                                                                                                                cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterNodeReply>> PrepareAsyncRegisterNode(::grpc::ClientContext* context,
+                                                                                                         const ::RegisterNodeRequest& request,
+                                                                                                         ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterNodeReply>>(PrepareAsyncRegisterNodeRaw(
+                context,
+                request,
+                cq));
+        }
+        ::grpc::Status UnregisterNode(::grpc::ClientContext* context,
+                                      const ::UnregisterNodeRequest& request,
+                                      ::UnregisterNodeReply* response) override;
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterNodeReply>> AsyncUnregisterNode(::grpc::ClientContext* context,
+                                                                                                      const ::UnregisterNodeRequest& request,
+                                                                                                      ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterNodeReply>>(AsyncUnregisterNodeRaw(
+                context,
+                request,
+                cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterNodeReply>> PrepareAsyncUnregisterNode(::grpc::ClientContext* context,
+                                                                                                             const ::UnregisterNodeRequest& request,
+                                                                                                             ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterNodeReply>>(
+                PrepareAsyncUnregisterNodeRaw(context, request, cq));
+        }
+        ::grpc::Status RegisterPhysicalStream(::grpc::ClientContext* context,
+                                              const ::RegisterPhysicalStreamRequest& request,
+                                              ::RegisterPhysicalStreamReply* response) override;
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterPhysicalStreamReply>> AsyncRegisterPhysicalStream(::grpc::ClientContext* context,
+                                                                                                                      const ::RegisterPhysicalStreamRequest& request,
+                                                                                                                      ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterPhysicalStreamReply>>(
+                AsyncRegisterPhysicalStreamRaw(context, request, cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterPhysicalStreamReply>> PrepareAsyncRegisterPhysicalStream(
+            ::grpc::ClientContext* context,
+            const ::RegisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterPhysicalStreamReply>>(
+                PrepareAsyncRegisterPhysicalStreamRaw(context, request, cq));
+        }
+        ::grpc::Status UnregisterPhysicalStream(::grpc::ClientContext* context,
+                                                const ::UnregisterPhysicalStreamRequest& request,
+                                                ::UnregisterPhysicalStreamReply* response) override;
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterPhysicalStreamReply>> AsyncUnregisterPhysicalStream(
+            ::grpc::ClientContext* context,
+            const ::UnregisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterPhysicalStreamReply>>(
+                AsyncUnregisterPhysicalStreamRaw(context, request, cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterPhysicalStreamReply>> PrepareAsyncUnregisterPhysicalStream(
+            ::grpc::ClientContext* context,
+            const ::UnregisterPhysicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterPhysicalStreamReply>>(
+                PrepareAsyncUnregisterPhysicalStreamRaw(context, request, cq));
+        }
+        ::grpc::Status RegisterLogicalStream(::grpc::ClientContext* context,
+                                             const ::RegisterLogicalStreamRequest& request,
+                                             ::RegisterLogicalStreamReply* response) override;
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterLogicalStreamReply>> AsyncRegisterLogicalStream(::grpc::ClientContext* context,
+                                                                                                                    const ::RegisterLogicalStreamRequest& request,
+                                                                                                                    ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterLogicalStreamReply>>(
+                AsyncRegisterLogicalStreamRaw(context, request, cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterLogicalStreamReply>> PrepareAsyncRegisterLogicalStream(
+            ::grpc::ClientContext* context,
+            const ::RegisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::RegisterLogicalStreamReply>>(
+                PrepareAsyncRegisterLogicalStreamRaw(context, request, cq));
+        }
+        ::grpc::Status UnregisterLogicalStream(::grpc::ClientContext* context,
+                                               const ::UnregisterLogicalStreamRequest& request,
+                                               ::UnregisterLogicalStreamReply* response) override;
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterLogicalStreamReply>> AsyncUnregisterLogicalStream(
+            ::grpc::ClientContext* context,
+            const ::UnregisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterLogicalStreamReply>>(
+                AsyncUnregisterLogicalStreamRaw(context, request, cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterLogicalStreamReply>> PrepareAsyncUnregisterLogicalStream(
+            ::grpc::ClientContext* context,
+            const ::UnregisterLogicalStreamRequest& request,
+            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::UnregisterLogicalStreamReply>>(
+                PrepareAsyncUnregisterLogicalStreamRaw(context, request, cq));
+        }
+        ::grpc::Status AddParent(::grpc::ClientContext* context,
+                                 const ::AddParentRequest& request,
+                                 ::AddParentReply* response) override;
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::AddParentReply>> AsyncAddParent(::grpc::ClientContext* context,
+                                                                                            const ::AddParentRequest& request,
+                                                                                            ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::AddParentReply>>(AsyncAddParentRaw(context,
+                                                                                                          request,
+                                                                                                          cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::AddParentReply>> PrepareAsyncAddParent(::grpc::ClientContext* context,
+                                                                                                   const ::AddParentRequest& request,
+                                                                                                   ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::AddParentReply>>(PrepareAsyncAddParentRaw(context,
+                                                                                                                 request,
+                                                                                                                 cq));
+        }
+        ::grpc::Status RemoveParent(::grpc::ClientContext* context,
+                                    const ::RemoveParentRequest& request,
+                                    ::RemoveParentReply* response) override;
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::RemoveParentReply>> AsyncRemoveParent(::grpc::ClientContext* context,
+                                                                                                  const ::RemoveParentRequest& request,
+                                                                                                  ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::RemoveParentReply>>(AsyncRemoveParentRaw(context,
+                                                                                                                request,
+                                                                                                                cq));
+        }
+        std::unique_ptr<::grpc::ClientAsyncResponseReader<::RemoveParentReply>> PrepareAsyncRemoveParent(::grpc::ClientContext* context,
+                                                                                                         const ::RemoveParentRequest& request,
+                                                                                                         ::grpc::CompletionQueue* cq) {
+            return std::unique_ptr<::grpc::ClientAsyncResponseReader<::RemoveParentReply>>(PrepareAsyncRemoveParentRaw(
+                context,
+                request,
+                cq));
+        }
+        class experimental_async final :
+            public StubInterface::experimental_async_interface {
+          public:
+            void RegisterNode(::grpc::ClientContext* context,
+                              const ::RegisterNodeRequest* request,
+                              ::RegisterNodeReply* response,
+                              std::function<void(::grpc::Status)>) override;
+            void RegisterNode(::grpc::ClientContext* context,
+                              const ::grpc::ByteBuffer* request,
+                              ::RegisterNodeReply* response,
+                              std::function<void(::grpc::Status)>) override;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void RegisterNode(::grpc::ClientContext* context, const ::RegisterNodeRequest* request, ::RegisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void RegisterNode(::grpc::ClientContext* context,
+                              const ::RegisterNodeRequest* request,
+                              ::RegisterNodeReply* response,
+                              ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void RegisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void RegisterNode(::grpc::ClientContext* context,
+                              const ::grpc::ByteBuffer* request,
+                              ::RegisterNodeReply* response,
+                              ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+            void UnregisterNode(::grpc::ClientContext* context,
+                                const ::UnregisterNodeRequest* request,
+                                ::UnregisterNodeReply* response,
+                                std::function<void(::grpc::Status)>) override;
+            void UnregisterNode(::grpc::ClientContext* context,
+                                const ::grpc::ByteBuffer* request,
+                                ::UnregisterNodeReply* response,
+                                std::function<void(::grpc::Status)>) override;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void UnregisterNode(::grpc::ClientContext* context, const ::UnregisterNodeRequest* request, ::UnregisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void UnregisterNode(::grpc::ClientContext* context,
+                                const ::UnregisterNodeRequest* request,
+                                ::UnregisterNodeReply* response,
+                                ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void UnregisterNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterNodeReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void UnregisterNode(::grpc::ClientContext* context,
+                                const ::grpc::ByteBuffer* request,
+                                ::UnregisterNodeReply* response,
+                                ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+            void RegisterPhysicalStream(::grpc::ClientContext* context,
+                                        const ::RegisterPhysicalStreamRequest* request,
+                                        ::RegisterPhysicalStreamReply* response,
+                                        std::function<void(::grpc::Status)>) override;
+            void RegisterPhysicalStream(::grpc::ClientContext* context,
+                                        const ::grpc::ByteBuffer* request,
+                                        ::RegisterPhysicalStreamReply* response,
+                                        std::function<void(::grpc::Status)>) override;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void RegisterPhysicalStream(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest* request, ::RegisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void RegisterPhysicalStream(::grpc::ClientContext* context,
+                                        const ::RegisterPhysicalStreamRequest* request,
+                                        ::RegisterPhysicalStreamReply* response,
+                                        ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void RegisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void RegisterPhysicalStream(::grpc::ClientContext* context,
+                                        const ::grpc::ByteBuffer* request,
+                                        ::RegisterPhysicalStreamReply* response,
+                                        ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+            void UnregisterPhysicalStream(::grpc::ClientContext* context,
+                                          const ::UnregisterPhysicalStreamRequest* request,
+                                          ::UnregisterPhysicalStreamReply* response,
+                                          std::function<void(::grpc::Status)>) override;
+            void UnregisterPhysicalStream(::grpc::ClientContext* context,
+                                          const ::grpc::ByteBuffer* request,
+                                          ::UnregisterPhysicalStreamReply* response,
+                                          std::function<void(::grpc::Status)>) override;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest* request, ::UnregisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void UnregisterPhysicalStream(::grpc::ClientContext* context,
+                                          const ::UnregisterPhysicalStreamRequest* request,
+                                          ::UnregisterPhysicalStreamReply* response,
+                                          ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void UnregisterPhysicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterPhysicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void UnregisterPhysicalStream(::grpc::ClientContext* context,
+                                          const ::grpc::ByteBuffer* request,
+                                          ::UnregisterPhysicalStreamReply* response,
+                                          ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+            void RegisterLogicalStream(::grpc::ClientContext* context,
+                                       const ::RegisterLogicalStreamRequest* request,
+                                       ::RegisterLogicalStreamReply* response,
+                                       std::function<void(::grpc::Status)>) override;
+            void RegisterLogicalStream(::grpc::ClientContext* context,
+                                       const ::grpc::ByteBuffer* request,
+                                       ::RegisterLogicalStreamReply* response,
+                                       std::function<void(::grpc::Status)>) override;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void RegisterLogicalStream(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest* request, ::RegisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void RegisterLogicalStream(::grpc::ClientContext* context,
+                                       const ::RegisterLogicalStreamRequest* request,
+                                       ::RegisterLogicalStreamReply* response,
+                                       ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void RegisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RegisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void RegisterLogicalStream(::grpc::ClientContext* context,
+                                       const ::grpc::ByteBuffer* request,
+                                       ::RegisterLogicalStreamReply* response,
+                                       ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+            void UnregisterLogicalStream(::grpc::ClientContext* context,
+                                         const ::UnregisterLogicalStreamRequest* request,
+                                         ::UnregisterLogicalStreamReply* response,
+                                         std::function<void(::grpc::Status)>) override;
+            void UnregisterLogicalStream(::grpc::ClientContext* context,
+                                         const ::grpc::ByteBuffer* request,
+                                         ::UnregisterLogicalStreamReply* response,
+                                         std::function<void(::grpc::Status)>) override;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void UnregisterLogicalStream(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest* request, ::UnregisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void UnregisterLogicalStream(::grpc::ClientContext* context,
+                                         const ::UnregisterLogicalStreamRequest* request,
+                                         ::UnregisterLogicalStreamReply* response,
+                                         ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void UnregisterLogicalStream(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::UnregisterLogicalStreamReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void UnregisterLogicalStream(::grpc::ClientContext* context,
+                                         const ::grpc::ByteBuffer* request,
+                                         ::UnregisterLogicalStreamReply* response,
+                                         ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+            void AddParent(::grpc::ClientContext* context,
+                           const ::AddParentRequest* request,
+                           ::AddParentReply* response,
+                           std::function<void(::grpc::Status)>) override;
+            void AddParent(::grpc::ClientContext* context,
+                           const ::grpc::ByteBuffer* request,
+                           ::AddParentReply* response,
+                           std::function<void(::grpc::Status)>) override;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void AddParent(::grpc::ClientContext* context, const ::AddParentRequest* request, ::AddParentReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void AddParent(::grpc::ClientContext* context,
+                           const ::AddParentRequest* request,
+                           ::AddParentReply* response,
+                           ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void AddParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::AddParentReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void AddParent(::grpc::ClientContext* context,
+                           const ::grpc::ByteBuffer* request,
+                           ::AddParentReply* response,
+                           ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+            void RemoveParent(::grpc::ClientContext* context,
+                              const ::RemoveParentRequest* request,
+                              ::RemoveParentReply* response,
+                              std::function<void(::grpc::Status)>) override;
+            void RemoveParent(::grpc::ClientContext* context,
+                              const ::grpc::ByteBuffer* request,
+                              ::RemoveParentReply* response,
+                              std::function<void(::grpc::Status)>) override;
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void RemoveParent(::grpc::ClientContext* context, const ::RemoveParentRequest* request, ::RemoveParentReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void RemoveParent(::grpc::ClientContext* context,
+                              const ::RemoveParentRequest* request,
+                              ::RemoveParentReply* response,
+                              ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            void RemoveParent(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::RemoveParentReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+#else
+            void RemoveParent(::grpc::ClientContext* context,
+                              const ::grpc::ByteBuffer* request,
+                              ::RemoveParentReply* response,
+                              ::grpc::experimental::ClientUnaryReactor* reactor) override;
+#endif
+          private:
+            friend class Stub;
+            explicit experimental_async(Stub* stub) : stub_(stub) {}
+            Stub* stub() { return stub_; }
+            Stub* stub_;
+        };
+        class experimental_async_interface* experimental_async() override { return &async_stub_; }
+
+      private:
+        std::shared_ptr<::grpc::ChannelInterface> channel_;
+        class experimental_async async_stub_{this};
+        ::grpc::ClientAsyncResponseReader<::RegisterNodeReply>* AsyncRegisterNodeRaw(::grpc::ClientContext* context,
+                                                                                     const ::RegisterNodeRequest& request,
+                                                                                     ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::RegisterNodeReply>* PrepareAsyncRegisterNodeRaw(::grpc::ClientContext* context,
+                                                                                            const ::RegisterNodeRequest& request,
+                                                                                            ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::UnregisterNodeReply>* AsyncUnregisterNodeRaw(::grpc::ClientContext* context,
+                                                                                         const ::UnregisterNodeRequest& request,
+                                                                                         ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::UnregisterNodeReply>* PrepareAsyncUnregisterNodeRaw(::grpc::ClientContext* context,
+                                                                                                const ::UnregisterNodeRequest& request,
+                                                                                                ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::RegisterPhysicalStreamReply>* AsyncRegisterPhysicalStreamRaw(::grpc::ClientContext* context,
+                                                                                                         const ::RegisterPhysicalStreamRequest& request,
+                                                                                                         ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::RegisterPhysicalStreamReply>* PrepareAsyncRegisterPhysicalStreamRaw(::grpc::ClientContext* context,
+                                                                                                                const ::RegisterPhysicalStreamRequest& request,
+                                                                                                                ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::UnregisterPhysicalStreamReply>* AsyncUnregisterPhysicalStreamRaw(::grpc::ClientContext* context,
+                                                                                                             const ::UnregisterPhysicalStreamRequest& request,
+                                                                                                             ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::UnregisterPhysicalStreamReply>* PrepareAsyncUnregisterPhysicalStreamRaw(::grpc::ClientContext* context,
+                                                                                                                    const ::UnregisterPhysicalStreamRequest& request,
+                                                                                                                    ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::RegisterLogicalStreamReply>* AsyncRegisterLogicalStreamRaw(::grpc::ClientContext* context,
+                                                                                                       const ::RegisterLogicalStreamRequest& request,
+                                                                                                       ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::RegisterLogicalStreamReply>* PrepareAsyncRegisterLogicalStreamRaw(::grpc::ClientContext* context,
+                                                                                                              const ::RegisterLogicalStreamRequest& request,
+                                                                                                              ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::UnregisterLogicalStreamReply>* AsyncUnregisterLogicalStreamRaw(::grpc::ClientContext* context,
+                                                                                                           const ::UnregisterLogicalStreamRequest& request,
+                                                                                                           ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::UnregisterLogicalStreamReply>* PrepareAsyncUnregisterLogicalStreamRaw(::grpc::ClientContext* context,
+                                                                                                                  const ::UnregisterLogicalStreamRequest& request,
+                                                                                                                  ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::AddParentReply>* AsyncAddParentRaw(::grpc::ClientContext* context,
+                                                                               const ::AddParentRequest& request,
+                                                                               ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::AddParentReply>* PrepareAsyncAddParentRaw(::grpc::ClientContext* context,
+                                                                                      const ::AddParentRequest& request,
+                                                                                      ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::RemoveParentReply>* AsyncRemoveParentRaw(::grpc::ClientContext* context,
+                                                                                     const ::RemoveParentRequest& request,
+                                                                                     ::grpc::CompletionQueue* cq) override;
+        ::grpc::ClientAsyncResponseReader<::RemoveParentReply>* PrepareAsyncRemoveParentRaw(::grpc::ClientContext* context,
+                                                                                            const ::RemoveParentRequest& request,
+                                                                                            ::grpc::CompletionQueue* cq) override;
+        const ::grpc::internal::RpcMethod rpcmethod_RegisterNode_;
+        const ::grpc::internal::RpcMethod rpcmethod_UnregisterNode_;
+        const ::grpc::internal::RpcMethod rpcmethod_RegisterPhysicalStream_;
+        const ::grpc::internal::RpcMethod rpcmethod_UnregisterPhysicalStream_;
+        const ::grpc::internal::RpcMethod rpcmethod_RegisterLogicalStream_;
+        const ::grpc::internal::RpcMethod rpcmethod_UnregisterLogicalStream_;
+        const ::grpc::internal::RpcMethod rpcmethod_AddParent_;
+        const ::grpc::internal::RpcMethod rpcmethod_RemoveParent_;
     };
-    class experimental_async_interface* experimental_async() override { return &async_stub_; }
+    static std::unique_ptr<Stub> NewStub(const std::shared_ptr<::grpc::ChannelInterface>& channel,
+                                         const ::grpc::StubOptions& options = ::grpc::StubOptions());
 
-   private:
-    std::shared_ptr< ::grpc::ChannelInterface> channel_;
-    class experimental_async async_stub_{this};
-    ::grpc::ClientAsyncResponseReader< ::RegisterNodeReply>* AsyncRegisterNodeRaw(::grpc::ClientContext* context, const ::RegisterNodeRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::RegisterNodeReply>* PrepareAsyncRegisterNodeRaw(::grpc::ClientContext* context, const ::RegisterNodeRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::UnregisterNodeReply>* AsyncUnregisterNodeRaw(::grpc::ClientContext* context, const ::UnregisterNodeRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::UnregisterNodeReply>* PrepareAsyncUnregisterNodeRaw(::grpc::ClientContext* context, const ::UnregisterNodeRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::RegisterPhysicalStreamReply>* AsyncRegisterPhysicalStreamRaw(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::RegisterPhysicalStreamReply>* PrepareAsyncRegisterPhysicalStreamRaw(::grpc::ClientContext* context, const ::RegisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::UnregisterPhysicalStreamReply>* AsyncUnregisterPhysicalStreamRaw(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::UnregisterPhysicalStreamReply>* PrepareAsyncUnregisterPhysicalStreamRaw(::grpc::ClientContext* context, const ::UnregisterPhysicalStreamRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::RegisterLogicalStreamReply>* AsyncRegisterLogicalStreamRaw(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::RegisterLogicalStreamReply>* PrepareAsyncRegisterLogicalStreamRaw(::grpc::ClientContext* context, const ::RegisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::UnregisterLogicalStreamReply>* AsyncUnregisterLogicalStreamRaw(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::UnregisterLogicalStreamReply>* PrepareAsyncUnregisterLogicalStreamRaw(::grpc::ClientContext* context, const ::UnregisterLogicalStreamRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::AddParentReply>* AsyncAddParentRaw(::grpc::ClientContext* context, const ::AddParentRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::AddParentReply>* PrepareAsyncAddParentRaw(::grpc::ClientContext* context, const ::AddParentRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::RemoveParentReply>* AsyncRemoveParentRaw(::grpc::ClientContext* context, const ::RemoveParentRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::RemoveParentReply>* PrepareAsyncRemoveParentRaw(::grpc::ClientContext* context, const ::RemoveParentRequest& request, ::grpc::CompletionQueue* cq) override;
-    const ::grpc::internal::RpcMethod rpcmethod_RegisterNode_;
-    const ::grpc::internal::RpcMethod rpcmethod_UnregisterNode_;
-    const ::grpc::internal::RpcMethod rpcmethod_RegisterPhysicalStream_;
-    const ::grpc::internal::RpcMethod rpcmethod_UnregisterPhysicalStream_;
-    const ::grpc::internal::RpcMethod rpcmethod_RegisterLogicalStream_;
-    const ::grpc::internal::RpcMethod rpcmethod_UnregisterLogicalStream_;
-    const ::grpc::internal::RpcMethod rpcmethod_AddParent_;
-    const ::grpc::internal::RpcMethod rpcmethod_RemoveParent_;
-  };
-  static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
+    class Service : public ::grpc::Service {
+      public:
+        Service();
+        virtual ~Service();
+        // Sends a greeting
+        virtual ::grpc::Status RegisterNode(::grpc::ServerContext* context,
+                                            const ::RegisterNodeRequest* request,
+                                            ::RegisterNodeReply* response);
+        virtual ::grpc::Status UnregisterNode(::grpc::ServerContext* context,
+                                              const ::UnregisterNodeRequest* request,
+                                              ::UnregisterNodeReply* response);
+        virtual ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* context,
+                                                      const ::RegisterPhysicalStreamRequest* request,
+                                                      ::RegisterPhysicalStreamReply* response);
+        virtual ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* context,
+                                                        const ::UnregisterPhysicalStreamRequest* request,
+                                                        ::UnregisterPhysicalStreamReply* response);
+        virtual ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* context,
+                                                     const ::RegisterLogicalStreamRequest* request,
+                                                     ::RegisterLogicalStreamReply* response);
+        virtual ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* context,
+                                                       const ::UnregisterLogicalStreamRequest* request,
+                                                       ::UnregisterLogicalStreamReply* response);
+        virtual ::grpc::Status AddParent(::grpc::ServerContext* context,
+                                         const ::AddParentRequest* request,
+                                         ::AddParentReply* response);
+        virtual ::grpc::Status RemoveParent(::grpc::ServerContext* context,
+                                            const ::RemoveParentRequest* request,
+                                            ::RemoveParentReply* response);
+    };
+    template<class BaseClass>
+    class WithAsyncMethod_RegisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithAsyncMethod_RegisterNode() {
+            ::grpc::Service::MarkMethodAsync(0);
+        }
+        ~WithAsyncMethod_RegisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/,
+                                    const ::RegisterNodeRequest* /*request*/,
+                                    ::RegisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestRegisterNode(::grpc::ServerContext* context,
+                                 ::RegisterNodeRequest* request,
+                                 ::grpc::ServerAsyncResponseWriter<::RegisterNodeReply>* response,
+                                 ::grpc::CompletionQueue* new_call_cq,
+                                 ::grpc::ServerCompletionQueue* notification_cq,
+                                 void* tag) {
+            ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithAsyncMethod_UnregisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithAsyncMethod_UnregisterNode() {
+            ::grpc::Service::MarkMethodAsync(1);
+        }
+        ~WithAsyncMethod_UnregisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/,
+                                      const ::UnregisterNodeRequest* /*request*/,
+                                      ::UnregisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestUnregisterNode(::grpc::ServerContext* context,
+                                   ::UnregisterNodeRequest* request,
+                                   ::grpc::ServerAsyncResponseWriter<::UnregisterNodeReply>* response,
+                                   ::grpc::CompletionQueue* new_call_cq,
+                                   ::grpc::ServerCompletionQueue* notification_cq,
+                                   void* tag) {
+            ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithAsyncMethod_RegisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithAsyncMethod_RegisterPhysicalStream() {
+            ::grpc::Service::MarkMethodAsync(2);
+        }
+        ~WithAsyncMethod_RegisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                              const ::RegisterPhysicalStreamRequest* /*request*/,
+                                              ::RegisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestRegisterPhysicalStream(::grpc::ServerContext* context,
+                                           ::RegisterPhysicalStreamRequest* request,
+                                           ::grpc::ServerAsyncResponseWriter<::RegisterPhysicalStreamReply>* response,
+                                           ::grpc::CompletionQueue* new_call_cq,
+                                           ::grpc::ServerCompletionQueue* notification_cq,
+                                           void* tag) {
+            ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithAsyncMethod_UnregisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithAsyncMethod_UnregisterPhysicalStream() {
+            ::grpc::Service::MarkMethodAsync(3);
+        }
+        ~WithAsyncMethod_UnregisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                                const ::UnregisterPhysicalStreamRequest* /*request*/,
+                                                ::UnregisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestUnregisterPhysicalStream(::grpc::ServerContext* context,
+                                             ::UnregisterPhysicalStreamRequest* request,
+                                             ::grpc::ServerAsyncResponseWriter<::UnregisterPhysicalStreamReply>* response,
+                                             ::grpc::CompletionQueue* new_call_cq,
+                                             ::grpc::ServerCompletionQueue* notification_cq,
+                                             void* tag) {
+            ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithAsyncMethod_RegisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithAsyncMethod_RegisterLogicalStream() {
+            ::grpc::Service::MarkMethodAsync(4);
+        }
+        ~WithAsyncMethod_RegisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                             const ::RegisterLogicalStreamRequest* /*request*/,
+                                             ::RegisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestRegisterLogicalStream(::grpc::ServerContext* context,
+                                          ::RegisterLogicalStreamRequest* request,
+                                          ::grpc::ServerAsyncResponseWriter<::RegisterLogicalStreamReply>* response,
+                                          ::grpc::CompletionQueue* new_call_cq,
+                                          ::grpc::ServerCompletionQueue* notification_cq,
+                                          void* tag) {
+            ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithAsyncMethod_UnregisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithAsyncMethod_UnregisterLogicalStream() {
+            ::grpc::Service::MarkMethodAsync(5);
+        }
+        ~WithAsyncMethod_UnregisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                               const ::UnregisterLogicalStreamRequest* /*request*/,
+                                               ::UnregisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestUnregisterLogicalStream(::grpc::ServerContext* context,
+                                            ::UnregisterLogicalStreamRequest* request,
+                                            ::grpc::ServerAsyncResponseWriter<::UnregisterLogicalStreamReply>* response,
+                                            ::grpc::CompletionQueue* new_call_cq,
+                                            ::grpc::ServerCompletionQueue* notification_cq,
+                                            void* tag) {
+            ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithAsyncMethod_AddParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithAsyncMethod_AddParent() {
+            ::grpc::Service::MarkMethodAsync(6);
+        }
+        ~WithAsyncMethod_AddParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status AddParent(::grpc::ServerContext* /*context*/,
+                                 const ::AddParentRequest* /*request*/,
+                                 ::AddParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestAddParent(::grpc::ServerContext* context,
+                              ::AddParentRequest* request,
+                              ::grpc::ServerAsyncResponseWriter<::AddParentReply>* response,
+                              ::grpc::CompletionQueue* new_call_cq,
+                              ::grpc::ServerCompletionQueue* notification_cq,
+                              void* tag) {
+            ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithAsyncMethod_RemoveParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithAsyncMethod_RemoveParent() {
+            ::grpc::Service::MarkMethodAsync(7);
+        }
+        ~WithAsyncMethod_RemoveParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/,
+                                    const ::RemoveParentRequest* /*request*/,
+                                    ::RemoveParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestRemoveParent(::grpc::ServerContext* context,
+                                 ::RemoveParentRequest* request,
+                                 ::grpc::ServerAsyncResponseWriter<::RemoveParentReply>* response,
+                                 ::grpc::CompletionQueue* new_call_cq,
+                                 ::grpc::ServerCompletionQueue* notification_cq,
+                                 void* tag) {
+            ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    typedef WithAsyncMethod_RegisterNode<WithAsyncMethod_UnregisterNode<WithAsyncMethod_RegisterPhysicalStream<
+        WithAsyncMethod_UnregisterPhysicalStream<WithAsyncMethod_RegisterLogicalStream<
+            WithAsyncMethod_UnregisterLogicalStream<WithAsyncMethod_AddParent<WithAsyncMethod_RemoveParent<Service> > > > > > > >
+        AsyncService;
+    template<class BaseClass>
+    class ExperimentalWithCallbackMethod_RegisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithCallbackMethod_RegisterNode() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodCallback(0,
+                                   new ::grpc_impl::internal::CallbackUnaryHandler<::RegisterNodeRequest,
+                                                                                   ::RegisterNodeReply>(
+                                       [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                           ::grpc::CallbackServerContext*
+#else
+                                           ::grpc::experimental::CallbackServerContext*
+#endif
+                                           context,
+                                           const ::RegisterNodeRequest* request,
+                                           ::RegisterNodeReply* response) {
+                                         return this->RegisterNode(context,
+                                                                   request,
+                                                                   response);
+                                       }));
+        }
+        void SetMessageAllocatorFor_RegisterNode(
+            ::grpc::experimental::MessageAllocator<::RegisterNodeRequest, ::RegisterNodeReply>* allocator) {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(0);
+#else
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(0);
+#endif
+            static_cast<::grpc_impl::internal::CallbackUnaryHandler<::RegisterNodeRequest,
+                                                                    ::RegisterNodeReply>*>(handler)
+                ->SetMessageAllocator(allocator);
+        }
+        ~ExperimentalWithCallbackMethod_RegisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/,
+                                    const ::RegisterNodeRequest* /*request*/,
+                                    ::RegisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* RegisterNode(
+          ::grpc::CallbackServerContext* /*context*/, const ::RegisterNodeRequest* /*request*/, ::RegisterNodeReply* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* RegisterNode(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::RegisterNodeRequest* /*request*/,
+            ::RegisterNodeReply* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithCallbackMethod_UnregisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithCallbackMethod_UnregisterNode() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodCallback(1,
+                                   new ::grpc_impl::internal::CallbackUnaryHandler<::UnregisterNodeRequest,
+                                                                                   ::UnregisterNodeReply>(
+                                       [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                           ::grpc::CallbackServerContext*
+#else
+                                           ::grpc::experimental::CallbackServerContext*
+#endif
+                                           context,
+                                           const ::UnregisterNodeRequest* request,
+                                           ::UnregisterNodeReply* response) {
+                                         return this->UnregisterNode(context,
+                                                                     request,
+                                                                     response);
+                                       }));
+        }
+        void SetMessageAllocatorFor_UnregisterNode(
+            ::grpc::experimental::MessageAllocator<::UnregisterNodeRequest, ::UnregisterNodeReply>* allocator) {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(1);
+#else
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(1);
+#endif
+            static_cast<::grpc_impl::internal::CallbackUnaryHandler<::UnregisterNodeRequest,
+                                                                    ::UnregisterNodeReply>*>(handler)
+                ->SetMessageAllocator(allocator);
+        }
+        ~ExperimentalWithCallbackMethod_UnregisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/,
+                                      const ::UnregisterNodeRequest* /*request*/,
+                                      ::UnregisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* UnregisterNode(
+          ::grpc::CallbackServerContext* /*context*/, const ::UnregisterNodeRequest* /*request*/, ::UnregisterNodeReply* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* UnregisterNode(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::UnregisterNodeRequest* /*request*/,
+            ::UnregisterNodeReply* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithCallbackMethod_RegisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithCallbackMethod_RegisterPhysicalStream() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodCallback(2,
+                                   new ::grpc_impl::internal::CallbackUnaryHandler<::RegisterPhysicalStreamRequest,
+                                                                                   ::RegisterPhysicalStreamReply>(
+                                       [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                           ::grpc::CallbackServerContext*
+#else
+                                           ::grpc::experimental::CallbackServerContext*
+#endif
+                                           context,
+                                           const ::RegisterPhysicalStreamRequest* request,
+                                           ::RegisterPhysicalStreamReply* response) {
+                                         return this->RegisterPhysicalStream(context,
+                                                                             request,
+                                                                             response);
+                                       }));
+        }
+        void SetMessageAllocatorFor_RegisterPhysicalStream(
+            ::grpc::experimental::MessageAllocator<::RegisterPhysicalStreamRequest,
+                                                   ::RegisterPhysicalStreamReply>* allocator) {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(2);
+#else
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(2);
+#endif
+            static_cast<::grpc_impl::internal::CallbackUnaryHandler<::RegisterPhysicalStreamRequest,
+                                                                    ::RegisterPhysicalStreamReply>*>(handler)
+                ->SetMessageAllocator(allocator);
+        }
+        ~ExperimentalWithCallbackMethod_RegisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                              const ::RegisterPhysicalStreamRequest* /*request*/,
+                                              ::RegisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* RegisterPhysicalStream(
+          ::grpc::CallbackServerContext* /*context*/, const ::RegisterPhysicalStreamRequest* /*request*/, ::RegisterPhysicalStreamReply* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* RegisterPhysicalStream(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::RegisterPhysicalStreamRequest* /*request*/,
+            ::RegisterPhysicalStreamReply* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithCallbackMethod_UnregisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithCallbackMethod_UnregisterPhysicalStream() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodCallback(3,
+                                   new ::grpc_impl::internal::CallbackUnaryHandler<::UnregisterPhysicalStreamRequest,
+                                                                                   ::UnregisterPhysicalStreamReply>(
+                                       [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                           ::grpc::CallbackServerContext*
+#else
+                                           ::grpc::experimental::CallbackServerContext*
+#endif
+                                           context,
+                                           const ::UnregisterPhysicalStreamRequest* request,
+                                           ::UnregisterPhysicalStreamReply* response) {
+                                         return this->UnregisterPhysicalStream(context,
+                                                                               request,
+                                                                               response);
+                                       }));
+        }
+        void SetMessageAllocatorFor_UnregisterPhysicalStream(
+            ::grpc::experimental::MessageAllocator<::UnregisterPhysicalStreamRequest,
+                                                   ::UnregisterPhysicalStreamReply>* allocator) {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(3);
+#else
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(3);
+#endif
+            static_cast<::grpc_impl::internal::CallbackUnaryHandler<::UnregisterPhysicalStreamRequest,
+                                                                    ::UnregisterPhysicalStreamReply>*>(handler)
+                ->SetMessageAllocator(allocator);
+        }
+        ~ExperimentalWithCallbackMethod_UnregisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                                const ::UnregisterPhysicalStreamRequest* /*request*/,
+                                                ::UnregisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* UnregisterPhysicalStream(
+          ::grpc::CallbackServerContext* /*context*/, const ::UnregisterPhysicalStreamRequest* /*request*/, ::UnregisterPhysicalStreamReply* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* UnregisterPhysicalStream(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::UnregisterPhysicalStreamRequest* /*request*/,
+            ::UnregisterPhysicalStreamReply* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithCallbackMethod_RegisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithCallbackMethod_RegisterLogicalStream() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodCallback(4,
+                                   new ::grpc_impl::internal::CallbackUnaryHandler<::RegisterLogicalStreamRequest,
+                                                                                   ::RegisterLogicalStreamReply>(
+                                       [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                           ::grpc::CallbackServerContext*
+#else
+                                           ::grpc::experimental::CallbackServerContext*
+#endif
+                                           context,
+                                           const ::RegisterLogicalStreamRequest* request,
+                                           ::RegisterLogicalStreamReply* response) {
+                                         return this->RegisterLogicalStream(context,
+                                                                            request,
+                                                                            response);
+                                       }));
+        }
+        void SetMessageAllocatorFor_RegisterLogicalStream(
+            ::grpc::experimental::MessageAllocator<::RegisterLogicalStreamRequest,
+                                                   ::RegisterLogicalStreamReply>* allocator) {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(4);
+#else
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(4);
+#endif
+            static_cast<::grpc_impl::internal::CallbackUnaryHandler<::RegisterLogicalStreamRequest,
+                                                                    ::RegisterLogicalStreamReply>*>(handler)
+                ->SetMessageAllocator(allocator);
+        }
+        ~ExperimentalWithCallbackMethod_RegisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                             const ::RegisterLogicalStreamRequest* /*request*/,
+                                             ::RegisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* RegisterLogicalStream(
+          ::grpc::CallbackServerContext* /*context*/, const ::RegisterLogicalStreamRequest* /*request*/, ::RegisterLogicalStreamReply* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* RegisterLogicalStream(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::RegisterLogicalStreamRequest* /*request*/,
+            ::RegisterLogicalStreamReply* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithCallbackMethod_UnregisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithCallbackMethod_UnregisterLogicalStream() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodCallback(5,
+                                   new ::grpc_impl::internal::CallbackUnaryHandler<::UnregisterLogicalStreamRequest,
+                                                                                   ::UnregisterLogicalStreamReply>(
+                                       [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                           ::grpc::CallbackServerContext*
+#else
+                                           ::grpc::experimental::CallbackServerContext*
+#endif
+                                           context,
+                                           const ::UnregisterLogicalStreamRequest* request,
+                                           ::UnregisterLogicalStreamReply* response) {
+                                         return this->UnregisterLogicalStream(context,
+                                                                              request,
+                                                                              response);
+                                       }));
+        }
+        void SetMessageAllocatorFor_UnregisterLogicalStream(
+            ::grpc::experimental::MessageAllocator<::UnregisterLogicalStreamRequest,
+                                                   ::UnregisterLogicalStreamReply>* allocator) {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(5);
+#else
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(5);
+#endif
+            static_cast<::grpc_impl::internal::CallbackUnaryHandler<::UnregisterLogicalStreamRequest,
+                                                                    ::UnregisterLogicalStreamReply>*>(handler)
+                ->SetMessageAllocator(allocator);
+        }
+        ~ExperimentalWithCallbackMethod_UnregisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                               const ::UnregisterLogicalStreamRequest* /*request*/,
+                                               ::UnregisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* UnregisterLogicalStream(
+          ::grpc::CallbackServerContext* /*context*/, const ::UnregisterLogicalStreamRequest* /*request*/, ::UnregisterLogicalStreamReply* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* UnregisterLogicalStream(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::UnregisterLogicalStreamRequest* /*request*/,
+            ::UnregisterLogicalStreamReply* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithCallbackMethod_AddParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithCallbackMethod_AddParent() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodCallback(6,
+                                   new ::grpc_impl::internal::CallbackUnaryHandler<::AddParentRequest,
+                                                                                   ::AddParentReply>(
+                                       [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                           ::grpc::CallbackServerContext*
+#else
+                                           ::grpc::experimental::CallbackServerContext*
+#endif
+                                           context,
+                                           const ::AddParentRequest* request,
+                                           ::AddParentReply* response) {
+                                         return this->AddParent(context,
+                                                                request,
+                                                                response);
+                                       }));
+        }
+        void SetMessageAllocatorFor_AddParent(
+            ::grpc::experimental::MessageAllocator<::AddParentRequest, ::AddParentReply>* allocator) {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(6);
+#else
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(6);
+#endif
+            static_cast<::grpc_impl::internal::CallbackUnaryHandler<::AddParentRequest, ::AddParentReply>*>(handler)
+                ->SetMessageAllocator(allocator);
+        }
+        ~ExperimentalWithCallbackMethod_AddParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status AddParent(::grpc::ServerContext* /*context*/,
+                                 const ::AddParentRequest* /*request*/,
+                                 ::AddParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* AddParent(
+          ::grpc::CallbackServerContext* /*context*/, const ::AddParentRequest* /*request*/, ::AddParentReply* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* AddParent(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::AddParentRequest* /*request*/,
+            ::AddParentReply* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithCallbackMethod_RemoveParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithCallbackMethod_RemoveParent() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodCallback(7,
+                                   new ::grpc_impl::internal::CallbackUnaryHandler<::RemoveParentRequest,
+                                                                                   ::RemoveParentReply>(
+                                       [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                           ::grpc::CallbackServerContext*
+#else
+                                           ::grpc::experimental::CallbackServerContext*
+#endif
+                                           context,
+                                           const ::RemoveParentRequest* request,
+                                           ::RemoveParentReply* response) {
+                                         return this->RemoveParent(context,
+                                                                   request,
+                                                                   response);
+                                       }));
+        }
+        void SetMessageAllocatorFor_RemoveParent(
+            ::grpc::experimental::MessageAllocator<::RemoveParentRequest, ::RemoveParentReply>* allocator) {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(7);
+#else
+            ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(7);
+#endif
+            static_cast<::grpc_impl::internal::CallbackUnaryHandler<::RemoveParentRequest,
+                                                                    ::RemoveParentReply>*>(handler)
+                ->SetMessageAllocator(allocator);
+        }
+        ~ExperimentalWithCallbackMethod_RemoveParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/,
+                                    const ::RemoveParentRequest* /*request*/,
+                                    ::RemoveParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* RemoveParent(
+          ::grpc::CallbackServerContext* /*context*/, const ::RemoveParentRequest* /*request*/, ::RemoveParentReply* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* RemoveParent(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::RemoveParentRequest* /*request*/,
+            ::RemoveParentReply* /*response*/)
+#endif
+        { return nullptr; }
+    };
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    typedef ExperimentalWithCallbackMethod_RegisterNode<ExperimentalWithCallbackMethod_UnregisterNode<ExperimentalWithCallbackMethod_RegisterPhysicalStream<ExperimentalWithCallbackMethod_UnregisterPhysicalStream<ExperimentalWithCallbackMethod_RegisterLogicalStream<ExperimentalWithCallbackMethod_UnregisterLogicalStream<ExperimentalWithCallbackMethod_AddParent<ExperimentalWithCallbackMethod_RemoveParent<Service > > > > > > > > CallbackService;
+#endif
 
-  class Service : public ::grpc::Service {
-   public:
-    Service();
-    virtual ~Service();
-    // Sends a greeting
-    virtual ::grpc::Status RegisterNode(::grpc::ServerContext* context, const ::RegisterNodeRequest* request, ::RegisterNodeReply* response);
-    virtual ::grpc::Status UnregisterNode(::grpc::ServerContext* context, const ::UnregisterNodeRequest* request, ::UnregisterNodeReply* response);
-    virtual ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* context, const ::RegisterPhysicalStreamRequest* request, ::RegisterPhysicalStreamReply* response);
-    virtual ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* context, const ::UnregisterPhysicalStreamRequest* request, ::UnregisterPhysicalStreamReply* response);
-    virtual ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* context, const ::RegisterLogicalStreamRequest* request, ::RegisterLogicalStreamReply* response);
-    virtual ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* context, const ::UnregisterLogicalStreamRequest* request, ::UnregisterLogicalStreamReply* response);
-    virtual ::grpc::Status AddParent(::grpc::ServerContext* context, const ::AddParentRequest* request, ::AddParentReply* response);
-    virtual ::grpc::Status RemoveParent(::grpc::ServerContext* context, const ::RemoveParentRequest* request, ::RemoveParentReply* response);
-  };
-  template <class BaseClass>
-  class WithAsyncMethod_RegisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithAsyncMethod_RegisterNode() {
-      ::grpc::Service::MarkMethodAsync(0);
-    }
-    ~WithAsyncMethod_RegisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/, const ::RegisterNodeRequest* /*request*/, ::RegisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestRegisterNode(::grpc::ServerContext* context, ::RegisterNodeRequest* request, ::grpc::ServerAsyncResponseWriter< ::RegisterNodeReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithAsyncMethod_UnregisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithAsyncMethod_UnregisterNode() {
-      ::grpc::Service::MarkMethodAsync(1);
-    }
-    ~WithAsyncMethod_UnregisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/, const ::UnregisterNodeRequest* /*request*/, ::UnregisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestUnregisterNode(::grpc::ServerContext* context, ::UnregisterNodeRequest* request, ::grpc::ServerAsyncResponseWriter< ::UnregisterNodeReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithAsyncMethod_RegisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithAsyncMethod_RegisterPhysicalStream() {
-      ::grpc::Service::MarkMethodAsync(2);
-    }
-    ~WithAsyncMethod_RegisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::RegisterPhysicalStreamRequest* /*request*/, ::RegisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestRegisterPhysicalStream(::grpc::ServerContext* context, ::RegisterPhysicalStreamRequest* request, ::grpc::ServerAsyncResponseWriter< ::RegisterPhysicalStreamReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithAsyncMethod_UnregisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithAsyncMethod_UnregisterPhysicalStream() {
-      ::grpc::Service::MarkMethodAsync(3);
-    }
-    ~WithAsyncMethod_UnregisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterPhysicalStreamRequest* /*request*/, ::UnregisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestUnregisterPhysicalStream(::grpc::ServerContext* context, ::UnregisterPhysicalStreamRequest* request, ::grpc::ServerAsyncResponseWriter< ::UnregisterPhysicalStreamReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithAsyncMethod_RegisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithAsyncMethod_RegisterLogicalStream() {
-      ::grpc::Service::MarkMethodAsync(4);
-    }
-    ~WithAsyncMethod_RegisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/, const ::RegisterLogicalStreamRequest* /*request*/, ::RegisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestRegisterLogicalStream(::grpc::ServerContext* context, ::RegisterLogicalStreamRequest* request, ::grpc::ServerAsyncResponseWriter< ::RegisterLogicalStreamReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithAsyncMethod_UnregisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithAsyncMethod_UnregisterLogicalStream() {
-      ::grpc::Service::MarkMethodAsync(5);
-    }
-    ~WithAsyncMethod_UnregisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterLogicalStreamRequest* /*request*/, ::UnregisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestUnregisterLogicalStream(::grpc::ServerContext* context, ::UnregisterLogicalStreamRequest* request, ::grpc::ServerAsyncResponseWriter< ::UnregisterLogicalStreamReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithAsyncMethod_AddParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithAsyncMethod_AddParent() {
-      ::grpc::Service::MarkMethodAsync(6);
-    }
-    ~WithAsyncMethod_AddParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status AddParent(::grpc::ServerContext* /*context*/, const ::AddParentRequest* /*request*/, ::AddParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestAddParent(::grpc::ServerContext* context, ::AddParentRequest* request, ::grpc::ServerAsyncResponseWriter< ::AddParentReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithAsyncMethod_RemoveParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithAsyncMethod_RemoveParent() {
-      ::grpc::Service::MarkMethodAsync(7);
-    }
-    ~WithAsyncMethod_RemoveParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/, const ::RemoveParentRequest* /*request*/, ::RemoveParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestRemoveParent(::grpc::ServerContext* context, ::RemoveParentRequest* request, ::grpc::ServerAsyncResponseWriter< ::RemoveParentReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  typedef WithAsyncMethod_RegisterNode<WithAsyncMethod_UnregisterNode<WithAsyncMethod_RegisterPhysicalStream<WithAsyncMethod_UnregisterPhysicalStream<WithAsyncMethod_RegisterLogicalStream<WithAsyncMethod_UnregisterLogicalStream<WithAsyncMethod_AddParent<WithAsyncMethod_RemoveParent<Service > > > > > > > > AsyncService;
-  template <class BaseClass>
-  class ExperimentalWithCallbackMethod_RegisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithCallbackMethod_RegisterNode() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(0,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::RegisterNodeRequest, ::RegisterNodeReply>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::RegisterNodeRequest* request, ::RegisterNodeReply* response) { return this->RegisterNode(context, request, response); }));}
-    void SetMessageAllocatorFor_RegisterNode(
-        ::grpc::experimental::MessageAllocator< ::RegisterNodeRequest, ::RegisterNodeReply>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(0);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(0);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::RegisterNodeRequest, ::RegisterNodeReply>*>(handler)
-              ->SetMessageAllocator(allocator);
-    }
-    ~ExperimentalWithCallbackMethod_RegisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/, const ::RegisterNodeRequest* /*request*/, ::RegisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* RegisterNode(
-      ::grpc::CallbackServerContext* /*context*/, const ::RegisterNodeRequest* /*request*/, ::RegisterNodeReply* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* RegisterNode(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::RegisterNodeRequest* /*request*/, ::RegisterNodeReply* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithCallbackMethod_UnregisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithCallbackMethod_UnregisterNode() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(1,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::UnregisterNodeRequest, ::UnregisterNodeReply>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::UnregisterNodeRequest* request, ::UnregisterNodeReply* response) { return this->UnregisterNode(context, request, response); }));}
-    void SetMessageAllocatorFor_UnregisterNode(
-        ::grpc::experimental::MessageAllocator< ::UnregisterNodeRequest, ::UnregisterNodeReply>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(1);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(1);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::UnregisterNodeRequest, ::UnregisterNodeReply>*>(handler)
-              ->SetMessageAllocator(allocator);
-    }
-    ~ExperimentalWithCallbackMethod_UnregisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/, const ::UnregisterNodeRequest* /*request*/, ::UnregisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* UnregisterNode(
-      ::grpc::CallbackServerContext* /*context*/, const ::UnregisterNodeRequest* /*request*/, ::UnregisterNodeReply* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* UnregisterNode(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::UnregisterNodeRequest* /*request*/, ::UnregisterNodeReply* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithCallbackMethod_RegisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithCallbackMethod_RegisterPhysicalStream() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(2,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::RegisterPhysicalStreamRequest, ::RegisterPhysicalStreamReply>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::RegisterPhysicalStreamRequest* request, ::RegisterPhysicalStreamReply* response) { return this->RegisterPhysicalStream(context, request, response); }));}
-    void SetMessageAllocatorFor_RegisterPhysicalStream(
-        ::grpc::experimental::MessageAllocator< ::RegisterPhysicalStreamRequest, ::RegisterPhysicalStreamReply>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(2);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(2);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::RegisterPhysicalStreamRequest, ::RegisterPhysicalStreamReply>*>(handler)
-              ->SetMessageAllocator(allocator);
-    }
-    ~ExperimentalWithCallbackMethod_RegisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::RegisterPhysicalStreamRequest* /*request*/, ::RegisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* RegisterPhysicalStream(
-      ::grpc::CallbackServerContext* /*context*/, const ::RegisterPhysicalStreamRequest* /*request*/, ::RegisterPhysicalStreamReply* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* RegisterPhysicalStream(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::RegisterPhysicalStreamRequest* /*request*/, ::RegisterPhysicalStreamReply* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithCallbackMethod_UnregisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithCallbackMethod_UnregisterPhysicalStream() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(3,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::UnregisterPhysicalStreamRequest, ::UnregisterPhysicalStreamReply>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::UnregisterPhysicalStreamRequest* request, ::UnregisterPhysicalStreamReply* response) { return this->UnregisterPhysicalStream(context, request, response); }));}
-    void SetMessageAllocatorFor_UnregisterPhysicalStream(
-        ::grpc::experimental::MessageAllocator< ::UnregisterPhysicalStreamRequest, ::UnregisterPhysicalStreamReply>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(3);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(3);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::UnregisterPhysicalStreamRequest, ::UnregisterPhysicalStreamReply>*>(handler)
-              ->SetMessageAllocator(allocator);
-    }
-    ~ExperimentalWithCallbackMethod_UnregisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterPhysicalStreamRequest* /*request*/, ::UnregisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* UnregisterPhysicalStream(
-      ::grpc::CallbackServerContext* /*context*/, const ::UnregisterPhysicalStreamRequest* /*request*/, ::UnregisterPhysicalStreamReply* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* UnregisterPhysicalStream(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::UnregisterPhysicalStreamRequest* /*request*/, ::UnregisterPhysicalStreamReply* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithCallbackMethod_RegisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithCallbackMethod_RegisterLogicalStream() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(4,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::RegisterLogicalStreamRequest, ::RegisterLogicalStreamReply>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::RegisterLogicalStreamRequest* request, ::RegisterLogicalStreamReply* response) { return this->RegisterLogicalStream(context, request, response); }));}
-    void SetMessageAllocatorFor_RegisterLogicalStream(
-        ::grpc::experimental::MessageAllocator< ::RegisterLogicalStreamRequest, ::RegisterLogicalStreamReply>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(4);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(4);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::RegisterLogicalStreamRequest, ::RegisterLogicalStreamReply>*>(handler)
-              ->SetMessageAllocator(allocator);
-    }
-    ~ExperimentalWithCallbackMethod_RegisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/, const ::RegisterLogicalStreamRequest* /*request*/, ::RegisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* RegisterLogicalStream(
-      ::grpc::CallbackServerContext* /*context*/, const ::RegisterLogicalStreamRequest* /*request*/, ::RegisterLogicalStreamReply* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* RegisterLogicalStream(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::RegisterLogicalStreamRequest* /*request*/, ::RegisterLogicalStreamReply* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithCallbackMethod_UnregisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithCallbackMethod_UnregisterLogicalStream() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(5,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::UnregisterLogicalStreamRequest, ::UnregisterLogicalStreamReply>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::UnregisterLogicalStreamRequest* request, ::UnregisterLogicalStreamReply* response) { return this->UnregisterLogicalStream(context, request, response); }));}
-    void SetMessageAllocatorFor_UnregisterLogicalStream(
-        ::grpc::experimental::MessageAllocator< ::UnregisterLogicalStreamRequest, ::UnregisterLogicalStreamReply>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(5);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(5);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::UnregisterLogicalStreamRequest, ::UnregisterLogicalStreamReply>*>(handler)
-              ->SetMessageAllocator(allocator);
-    }
-    ~ExperimentalWithCallbackMethod_UnregisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterLogicalStreamRequest* /*request*/, ::UnregisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* UnregisterLogicalStream(
-      ::grpc::CallbackServerContext* /*context*/, const ::UnregisterLogicalStreamRequest* /*request*/, ::UnregisterLogicalStreamReply* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* UnregisterLogicalStream(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::UnregisterLogicalStreamRequest* /*request*/, ::UnregisterLogicalStreamReply* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithCallbackMethod_AddParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithCallbackMethod_AddParent() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(6,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::AddParentRequest, ::AddParentReply>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::AddParentRequest* request, ::AddParentReply* response) { return this->AddParent(context, request, response); }));}
-    void SetMessageAllocatorFor_AddParent(
-        ::grpc::experimental::MessageAllocator< ::AddParentRequest, ::AddParentReply>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(6);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(6);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::AddParentRequest, ::AddParentReply>*>(handler)
-              ->SetMessageAllocator(allocator);
-    }
-    ~ExperimentalWithCallbackMethod_AddParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status AddParent(::grpc::ServerContext* /*context*/, const ::AddParentRequest* /*request*/, ::AddParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* AddParent(
-      ::grpc::CallbackServerContext* /*context*/, const ::AddParentRequest* /*request*/, ::AddParentReply* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* AddParent(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::AddParentRequest* /*request*/, ::AddParentReply* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithCallbackMethod_RemoveParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithCallbackMethod_RemoveParent() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(7,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::RemoveParentRequest, ::RemoveParentReply>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::RemoveParentRequest* request, ::RemoveParentReply* response) { return this->RemoveParent(context, request, response); }));}
-    void SetMessageAllocatorFor_RemoveParent(
-        ::grpc::experimental::MessageAllocator< ::RemoveParentRequest, ::RemoveParentReply>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(7);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(7);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::RemoveParentRequest, ::RemoveParentReply>*>(handler)
-              ->SetMessageAllocator(allocator);
-    }
-    ~ExperimentalWithCallbackMethod_RemoveParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/, const ::RemoveParentRequest* /*request*/, ::RemoveParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* RemoveParent(
-      ::grpc::CallbackServerContext* /*context*/, const ::RemoveParentRequest* /*request*/, ::RemoveParentReply* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* RemoveParent(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::RemoveParentRequest* /*request*/, ::RemoveParentReply* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-  typedef ExperimentalWithCallbackMethod_RegisterNode<ExperimentalWithCallbackMethod_UnregisterNode<ExperimentalWithCallbackMethod_RegisterPhysicalStream<ExperimentalWithCallbackMethod_UnregisterPhysicalStream<ExperimentalWithCallbackMethod_RegisterLogicalStream<ExperimentalWithCallbackMethod_UnregisterLogicalStream<ExperimentalWithCallbackMethod_AddParent<ExperimentalWithCallbackMethod_RemoveParent<Service > > > > > > > > CallbackService;
-  #endif
-
-  typedef ExperimentalWithCallbackMethod_RegisterNode<ExperimentalWithCallbackMethod_UnregisterNode<ExperimentalWithCallbackMethod_RegisterPhysicalStream<ExperimentalWithCallbackMethod_UnregisterPhysicalStream<ExperimentalWithCallbackMethod_RegisterLogicalStream<ExperimentalWithCallbackMethod_UnregisterLogicalStream<ExperimentalWithCallbackMethod_AddParent<ExperimentalWithCallbackMethod_RemoveParent<Service > > > > > > > > ExperimentalCallbackService;
-  template <class BaseClass>
-  class WithGenericMethod_RegisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithGenericMethod_RegisterNode() {
-      ::grpc::Service::MarkMethodGeneric(0);
-    }
-    ~WithGenericMethod_RegisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/, const ::RegisterNodeRequest* /*request*/, ::RegisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-  };
-  template <class BaseClass>
-  class WithGenericMethod_UnregisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithGenericMethod_UnregisterNode() {
-      ::grpc::Service::MarkMethodGeneric(1);
-    }
-    ~WithGenericMethod_UnregisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/, const ::UnregisterNodeRequest* /*request*/, ::UnregisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-  };
-  template <class BaseClass>
-  class WithGenericMethod_RegisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithGenericMethod_RegisterPhysicalStream() {
-      ::grpc::Service::MarkMethodGeneric(2);
-    }
-    ~WithGenericMethod_RegisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::RegisterPhysicalStreamRequest* /*request*/, ::RegisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-  };
-  template <class BaseClass>
-  class WithGenericMethod_UnregisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithGenericMethod_UnregisterPhysicalStream() {
-      ::grpc::Service::MarkMethodGeneric(3);
-    }
-    ~WithGenericMethod_UnregisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterPhysicalStreamRequest* /*request*/, ::UnregisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-  };
-  template <class BaseClass>
-  class WithGenericMethod_RegisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithGenericMethod_RegisterLogicalStream() {
-      ::grpc::Service::MarkMethodGeneric(4);
-    }
-    ~WithGenericMethod_RegisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/, const ::RegisterLogicalStreamRequest* /*request*/, ::RegisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-  };
-  template <class BaseClass>
-  class WithGenericMethod_UnregisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithGenericMethod_UnregisterLogicalStream() {
-      ::grpc::Service::MarkMethodGeneric(5);
-    }
-    ~WithGenericMethod_UnregisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterLogicalStreamRequest* /*request*/, ::UnregisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-  };
-  template <class BaseClass>
-  class WithGenericMethod_AddParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithGenericMethod_AddParent() {
-      ::grpc::Service::MarkMethodGeneric(6);
-    }
-    ~WithGenericMethod_AddParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status AddParent(::grpc::ServerContext* /*context*/, const ::AddParentRequest* /*request*/, ::AddParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-  };
-  template <class BaseClass>
-  class WithGenericMethod_RemoveParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithGenericMethod_RemoveParent() {
-      ::grpc::Service::MarkMethodGeneric(7);
-    }
-    ~WithGenericMethod_RemoveParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/, const ::RemoveParentRequest* /*request*/, ::RemoveParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-  };
-  template <class BaseClass>
-  class WithRawMethod_RegisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithRawMethod_RegisterNode() {
-      ::grpc::Service::MarkMethodRaw(0);
-    }
-    ~WithRawMethod_RegisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/, const ::RegisterNodeRequest* /*request*/, ::RegisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestRegisterNode(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithRawMethod_UnregisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithRawMethod_UnregisterNode() {
-      ::grpc::Service::MarkMethodRaw(1);
-    }
-    ~WithRawMethod_UnregisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/, const ::UnregisterNodeRequest* /*request*/, ::UnregisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestUnregisterNode(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithRawMethod_RegisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithRawMethod_RegisterPhysicalStream() {
-      ::grpc::Service::MarkMethodRaw(2);
-    }
-    ~WithRawMethod_RegisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::RegisterPhysicalStreamRequest* /*request*/, ::RegisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestRegisterPhysicalStream(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithRawMethod_UnregisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithRawMethod_UnregisterPhysicalStream() {
-      ::grpc::Service::MarkMethodRaw(3);
-    }
-    ~WithRawMethod_UnregisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterPhysicalStreamRequest* /*request*/, ::UnregisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestUnregisterPhysicalStream(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithRawMethod_RegisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithRawMethod_RegisterLogicalStream() {
-      ::grpc::Service::MarkMethodRaw(4);
-    }
-    ~WithRawMethod_RegisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/, const ::RegisterLogicalStreamRequest* /*request*/, ::RegisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestRegisterLogicalStream(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithRawMethod_UnregisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithRawMethod_UnregisterLogicalStream() {
-      ::grpc::Service::MarkMethodRaw(5);
-    }
-    ~WithRawMethod_UnregisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterLogicalStreamRequest* /*request*/, ::UnregisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestUnregisterLogicalStream(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithRawMethod_AddParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithRawMethod_AddParent() {
-      ::grpc::Service::MarkMethodRaw(6);
-    }
-    ~WithRawMethod_AddParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status AddParent(::grpc::ServerContext* /*context*/, const ::AddParentRequest* /*request*/, ::AddParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestAddParent(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class WithRawMethod_RemoveParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithRawMethod_RemoveParent() {
-      ::grpc::Service::MarkMethodRaw(7);
-    }
-    ~WithRawMethod_RemoveParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/, const ::RemoveParentRequest* /*request*/, ::RemoveParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestRemoveParent(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_RegisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithRawCallbackMethod_RegisterNode() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(0,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->RegisterNode(context, request, response); }));
-    }
-    ~ExperimentalWithRawCallbackMethod_RegisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/, const ::RegisterNodeRequest* /*request*/, ::RegisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* RegisterNode(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* RegisterNode(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_UnregisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithRawCallbackMethod_UnregisterNode() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(1,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->UnregisterNode(context, request, response); }));
-    }
-    ~ExperimentalWithRawCallbackMethod_UnregisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/, const ::UnregisterNodeRequest* /*request*/, ::UnregisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* UnregisterNode(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* UnregisterNode(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_RegisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithRawCallbackMethod_RegisterPhysicalStream() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(2,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->RegisterPhysicalStream(context, request, response); }));
-    }
-    ~ExperimentalWithRawCallbackMethod_RegisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::RegisterPhysicalStreamRequest* /*request*/, ::RegisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* RegisterPhysicalStream(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* RegisterPhysicalStream(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_UnregisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithRawCallbackMethod_UnregisterPhysicalStream() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(3,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->UnregisterPhysicalStream(context, request, response); }));
-    }
-    ~ExperimentalWithRawCallbackMethod_UnregisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterPhysicalStreamRequest* /*request*/, ::UnregisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* UnregisterPhysicalStream(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* UnregisterPhysicalStream(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_RegisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithRawCallbackMethod_RegisterLogicalStream() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(4,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->RegisterLogicalStream(context, request, response); }));
-    }
-    ~ExperimentalWithRawCallbackMethod_RegisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/, const ::RegisterLogicalStreamRequest* /*request*/, ::RegisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* RegisterLogicalStream(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* RegisterLogicalStream(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_UnregisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithRawCallbackMethod_UnregisterLogicalStream() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(5,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->UnregisterLogicalStream(context, request, response); }));
-    }
-    ~ExperimentalWithRawCallbackMethod_UnregisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterLogicalStreamRequest* /*request*/, ::UnregisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* UnregisterLogicalStream(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* UnregisterLogicalStream(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_AddParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithRawCallbackMethod_AddParent() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(6,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->AddParent(context, request, response); }));
-    }
-    ~ExperimentalWithRawCallbackMethod_AddParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status AddParent(::grpc::ServerContext* /*context*/, const ::AddParentRequest* /*request*/, ::AddParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* AddParent(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* AddParent(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class ExperimentalWithRawCallbackMethod_RemoveParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    ExperimentalWithRawCallbackMethod_RemoveParent() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(7,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->RemoveParent(context, request, response); }));
-    }
-    ~ExperimentalWithRawCallbackMethod_RemoveParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/, const ::RemoveParentRequest* /*request*/, ::RemoveParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* RemoveParent(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* RemoveParent(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
-  };
-  template <class BaseClass>
-  class WithStreamedUnaryMethod_RegisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithStreamedUnaryMethod_RegisterNode() {
-      ::grpc::Service::MarkMethodStreamed(0,
-        new ::grpc::internal::StreamedUnaryHandler< ::RegisterNodeRequest, ::RegisterNodeReply>(std::bind(&WithStreamedUnaryMethod_RegisterNode<BaseClass>::StreamedRegisterNode, this, std::placeholders::_1, std::placeholders::_2)));
-    }
-    ~WithStreamedUnaryMethod_RegisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable regular version of this method
-    ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/, const ::RegisterNodeRequest* /*request*/, ::RegisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedRegisterNode(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::RegisterNodeRequest,::RegisterNodeReply>* server_unary_streamer) = 0;
-  };
-  template <class BaseClass>
-  class WithStreamedUnaryMethod_UnregisterNode : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithStreamedUnaryMethod_UnregisterNode() {
-      ::grpc::Service::MarkMethodStreamed(1,
-        new ::grpc::internal::StreamedUnaryHandler< ::UnregisterNodeRequest, ::UnregisterNodeReply>(std::bind(&WithStreamedUnaryMethod_UnregisterNode<BaseClass>::StreamedUnregisterNode, this, std::placeholders::_1, std::placeholders::_2)));
-    }
-    ~WithStreamedUnaryMethod_UnregisterNode() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable regular version of this method
-    ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/, const ::UnregisterNodeRequest* /*request*/, ::UnregisterNodeReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedUnregisterNode(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::UnregisterNodeRequest,::UnregisterNodeReply>* server_unary_streamer) = 0;
-  };
-  template <class BaseClass>
-  class WithStreamedUnaryMethod_RegisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithStreamedUnaryMethod_RegisterPhysicalStream() {
-      ::grpc::Service::MarkMethodStreamed(2,
-        new ::grpc::internal::StreamedUnaryHandler< ::RegisterPhysicalStreamRequest, ::RegisterPhysicalStreamReply>(std::bind(&WithStreamedUnaryMethod_RegisterPhysicalStream<BaseClass>::StreamedRegisterPhysicalStream, this, std::placeholders::_1, std::placeholders::_2)));
-    }
-    ~WithStreamedUnaryMethod_RegisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable regular version of this method
-    ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::RegisterPhysicalStreamRequest* /*request*/, ::RegisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedRegisterPhysicalStream(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::RegisterPhysicalStreamRequest,::RegisterPhysicalStreamReply>* server_unary_streamer) = 0;
-  };
-  template <class BaseClass>
-  class WithStreamedUnaryMethod_UnregisterPhysicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithStreamedUnaryMethod_UnregisterPhysicalStream() {
-      ::grpc::Service::MarkMethodStreamed(3,
-        new ::grpc::internal::StreamedUnaryHandler< ::UnregisterPhysicalStreamRequest, ::UnregisterPhysicalStreamReply>(std::bind(&WithStreamedUnaryMethod_UnregisterPhysicalStream<BaseClass>::StreamedUnregisterPhysicalStream, this, std::placeholders::_1, std::placeholders::_2)));
-    }
-    ~WithStreamedUnaryMethod_UnregisterPhysicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable regular version of this method
-    ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterPhysicalStreamRequest* /*request*/, ::UnregisterPhysicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedUnregisterPhysicalStream(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::UnregisterPhysicalStreamRequest,::UnregisterPhysicalStreamReply>* server_unary_streamer) = 0;
-  };
-  template <class BaseClass>
-  class WithStreamedUnaryMethod_RegisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithStreamedUnaryMethod_RegisterLogicalStream() {
-      ::grpc::Service::MarkMethodStreamed(4,
-        new ::grpc::internal::StreamedUnaryHandler< ::RegisterLogicalStreamRequest, ::RegisterLogicalStreamReply>(std::bind(&WithStreamedUnaryMethod_RegisterLogicalStream<BaseClass>::StreamedRegisterLogicalStream, this, std::placeholders::_1, std::placeholders::_2)));
-    }
-    ~WithStreamedUnaryMethod_RegisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable regular version of this method
-    ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/, const ::RegisterLogicalStreamRequest* /*request*/, ::RegisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedRegisterLogicalStream(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::RegisterLogicalStreamRequest,::RegisterLogicalStreamReply>* server_unary_streamer) = 0;
-  };
-  template <class BaseClass>
-  class WithStreamedUnaryMethod_UnregisterLogicalStream : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithStreamedUnaryMethod_UnregisterLogicalStream() {
-      ::grpc::Service::MarkMethodStreamed(5,
-        new ::grpc::internal::StreamedUnaryHandler< ::UnregisterLogicalStreamRequest, ::UnregisterLogicalStreamReply>(std::bind(&WithStreamedUnaryMethod_UnregisterLogicalStream<BaseClass>::StreamedUnregisterLogicalStream, this, std::placeholders::_1, std::placeholders::_2)));
-    }
-    ~WithStreamedUnaryMethod_UnregisterLogicalStream() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable regular version of this method
-    ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/, const ::UnregisterLogicalStreamRequest* /*request*/, ::UnregisterLogicalStreamReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedUnregisterLogicalStream(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::UnregisterLogicalStreamRequest,::UnregisterLogicalStreamReply>* server_unary_streamer) = 0;
-  };
-  template <class BaseClass>
-  class WithStreamedUnaryMethod_AddParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithStreamedUnaryMethod_AddParent() {
-      ::grpc::Service::MarkMethodStreamed(6,
-        new ::grpc::internal::StreamedUnaryHandler< ::AddParentRequest, ::AddParentReply>(std::bind(&WithStreamedUnaryMethod_AddParent<BaseClass>::StreamedAddParent, this, std::placeholders::_1, std::placeholders::_2)));
-    }
-    ~WithStreamedUnaryMethod_AddParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable regular version of this method
-    ::grpc::Status AddParent(::grpc::ServerContext* /*context*/, const ::AddParentRequest* /*request*/, ::AddParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedAddParent(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::AddParentRequest,::AddParentReply>* server_unary_streamer) = 0;
-  };
-  template <class BaseClass>
-  class WithStreamedUnaryMethod_RemoveParent : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
-   public:
-    WithStreamedUnaryMethod_RemoveParent() {
-      ::grpc::Service::MarkMethodStreamed(7,
-        new ::grpc::internal::StreamedUnaryHandler< ::RemoveParentRequest, ::RemoveParentReply>(std::bind(&WithStreamedUnaryMethod_RemoveParent<BaseClass>::StreamedRemoveParent, this, std::placeholders::_1, std::placeholders::_2)));
-    }
-    ~WithStreamedUnaryMethod_RemoveParent() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable regular version of this method
-    ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/, const ::RemoveParentRequest* /*request*/, ::RemoveParentReply* /*response*/) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedRemoveParent(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::RemoveParentRequest,::RemoveParentReply>* server_unary_streamer) = 0;
-  };
-  typedef WithStreamedUnaryMethod_RegisterNode<WithStreamedUnaryMethod_UnregisterNode<WithStreamedUnaryMethod_RegisterPhysicalStream<WithStreamedUnaryMethod_UnregisterPhysicalStream<WithStreamedUnaryMethod_RegisterLogicalStream<WithStreamedUnaryMethod_UnregisterLogicalStream<WithStreamedUnaryMethod_AddParent<WithStreamedUnaryMethod_RemoveParent<Service > > > > > > > > StreamedUnaryService;
-  typedef Service SplitStreamedService;
-  typedef WithStreamedUnaryMethod_RegisterNode<WithStreamedUnaryMethod_UnregisterNode<WithStreamedUnaryMethod_RegisterPhysicalStream<WithStreamedUnaryMethod_UnregisterPhysicalStream<WithStreamedUnaryMethod_RegisterLogicalStream<WithStreamedUnaryMethod_UnregisterLogicalStream<WithStreamedUnaryMethod_AddParent<WithStreamedUnaryMethod_RemoveParent<Service > > > > > > > > StreamedService;
+    typedef ExperimentalWithCallbackMethod_RegisterNode<ExperimentalWithCallbackMethod_UnregisterNode<
+        ExperimentalWithCallbackMethod_RegisterPhysicalStream<ExperimentalWithCallbackMethod_UnregisterPhysicalStream<
+            ExperimentalWithCallbackMethod_RegisterLogicalStream<ExperimentalWithCallbackMethod_UnregisterLogicalStream<
+                ExperimentalWithCallbackMethod_AddParent<ExperimentalWithCallbackMethod_RemoveParent<Service> > > > > > > >
+        ExperimentalCallbackService;
+    template<class BaseClass>
+    class WithGenericMethod_RegisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithGenericMethod_RegisterNode() {
+            ::grpc::Service::MarkMethodGeneric(0);
+        }
+        ~WithGenericMethod_RegisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/,
+                                    const ::RegisterNodeRequest* /*request*/,
+                                    ::RegisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+    };
+    template<class BaseClass>
+    class WithGenericMethod_UnregisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithGenericMethod_UnregisterNode() {
+            ::grpc::Service::MarkMethodGeneric(1);
+        }
+        ~WithGenericMethod_UnregisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/,
+                                      const ::UnregisterNodeRequest* /*request*/,
+                                      ::UnregisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+    };
+    template<class BaseClass>
+    class WithGenericMethod_RegisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithGenericMethod_RegisterPhysicalStream() {
+            ::grpc::Service::MarkMethodGeneric(2);
+        }
+        ~WithGenericMethod_RegisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                              const ::RegisterPhysicalStreamRequest* /*request*/,
+                                              ::RegisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+    };
+    template<class BaseClass>
+    class WithGenericMethod_UnregisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithGenericMethod_UnregisterPhysicalStream() {
+            ::grpc::Service::MarkMethodGeneric(3);
+        }
+        ~WithGenericMethod_UnregisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                                const ::UnregisterPhysicalStreamRequest* /*request*/,
+                                                ::UnregisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+    };
+    template<class BaseClass>
+    class WithGenericMethod_RegisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithGenericMethod_RegisterLogicalStream() {
+            ::grpc::Service::MarkMethodGeneric(4);
+        }
+        ~WithGenericMethod_RegisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                             const ::RegisterLogicalStreamRequest* /*request*/,
+                                             ::RegisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+    };
+    template<class BaseClass>
+    class WithGenericMethod_UnregisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithGenericMethod_UnregisterLogicalStream() {
+            ::grpc::Service::MarkMethodGeneric(5);
+        }
+        ~WithGenericMethod_UnregisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                               const ::UnregisterLogicalStreamRequest* /*request*/,
+                                               ::UnregisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+    };
+    template<class BaseClass>
+    class WithGenericMethod_AddParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithGenericMethod_AddParent() {
+            ::grpc::Service::MarkMethodGeneric(6);
+        }
+        ~WithGenericMethod_AddParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status AddParent(::grpc::ServerContext* /*context*/,
+                                 const ::AddParentRequest* /*request*/,
+                                 ::AddParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+    };
+    template<class BaseClass>
+    class WithGenericMethod_RemoveParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithGenericMethod_RemoveParent() {
+            ::grpc::Service::MarkMethodGeneric(7);
+        }
+        ~WithGenericMethod_RemoveParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/,
+                                    const ::RemoveParentRequest* /*request*/,
+                                    ::RemoveParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+    };
+    template<class BaseClass>
+    class WithRawMethod_RegisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithRawMethod_RegisterNode() {
+            ::grpc::Service::MarkMethodRaw(0);
+        }
+        ~WithRawMethod_RegisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/,
+                                    const ::RegisterNodeRequest* /*request*/,
+                                    ::RegisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestRegisterNode(::grpc::ServerContext* context,
+                                 ::grpc::ByteBuffer* request,
+                                 ::grpc::ServerAsyncResponseWriter<::grpc::ByteBuffer>* response,
+                                 ::grpc::CompletionQueue* new_call_cq,
+                                 ::grpc::ServerCompletionQueue* notification_cq,
+                                 void* tag) {
+            ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithRawMethod_UnregisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithRawMethod_UnregisterNode() {
+            ::grpc::Service::MarkMethodRaw(1);
+        }
+        ~WithRawMethod_UnregisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/,
+                                      const ::UnregisterNodeRequest* /*request*/,
+                                      ::UnregisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestUnregisterNode(::grpc::ServerContext* context,
+                                   ::grpc::ByteBuffer* request,
+                                   ::grpc::ServerAsyncResponseWriter<::grpc::ByteBuffer>* response,
+                                   ::grpc::CompletionQueue* new_call_cq,
+                                   ::grpc::ServerCompletionQueue* notification_cq,
+                                   void* tag) {
+            ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithRawMethod_RegisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithRawMethod_RegisterPhysicalStream() {
+            ::grpc::Service::MarkMethodRaw(2);
+        }
+        ~WithRawMethod_RegisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                              const ::RegisterPhysicalStreamRequest* /*request*/,
+                                              ::RegisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestRegisterPhysicalStream(::grpc::ServerContext* context,
+                                           ::grpc::ByteBuffer* request,
+                                           ::grpc::ServerAsyncResponseWriter<::grpc::ByteBuffer>* response,
+                                           ::grpc::CompletionQueue* new_call_cq,
+                                           ::grpc::ServerCompletionQueue* notification_cq,
+                                           void* tag) {
+            ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithRawMethod_UnregisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithRawMethod_UnregisterPhysicalStream() {
+            ::grpc::Service::MarkMethodRaw(3);
+        }
+        ~WithRawMethod_UnregisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                                const ::UnregisterPhysicalStreamRequest* /*request*/,
+                                                ::UnregisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestUnregisterPhysicalStream(::grpc::ServerContext* context,
+                                             ::grpc::ByteBuffer* request,
+                                             ::grpc::ServerAsyncResponseWriter<::grpc::ByteBuffer>* response,
+                                             ::grpc::CompletionQueue* new_call_cq,
+                                             ::grpc::ServerCompletionQueue* notification_cq,
+                                             void* tag) {
+            ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithRawMethod_RegisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithRawMethod_RegisterLogicalStream() {
+            ::grpc::Service::MarkMethodRaw(4);
+        }
+        ~WithRawMethod_RegisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                             const ::RegisterLogicalStreamRequest* /*request*/,
+                                             ::RegisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestRegisterLogicalStream(::grpc::ServerContext* context,
+                                          ::grpc::ByteBuffer* request,
+                                          ::grpc::ServerAsyncResponseWriter<::grpc::ByteBuffer>* response,
+                                          ::grpc::CompletionQueue* new_call_cq,
+                                          ::grpc::ServerCompletionQueue* notification_cq,
+                                          void* tag) {
+            ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithRawMethod_UnregisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithRawMethod_UnregisterLogicalStream() {
+            ::grpc::Service::MarkMethodRaw(5);
+        }
+        ~WithRawMethod_UnregisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                               const ::UnregisterLogicalStreamRequest* /*request*/,
+                                               ::UnregisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestUnregisterLogicalStream(::grpc::ServerContext* context,
+                                            ::grpc::ByteBuffer* request,
+                                            ::grpc::ServerAsyncResponseWriter<::grpc::ByteBuffer>* response,
+                                            ::grpc::CompletionQueue* new_call_cq,
+                                            ::grpc::ServerCompletionQueue* notification_cq,
+                                            void* tag) {
+            ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithRawMethod_AddParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithRawMethod_AddParent() {
+            ::grpc::Service::MarkMethodRaw(6);
+        }
+        ~WithRawMethod_AddParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status AddParent(::grpc::ServerContext* /*context*/,
+                                 const ::AddParentRequest* /*request*/,
+                                 ::AddParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestAddParent(::grpc::ServerContext* context,
+                              ::grpc::ByteBuffer* request,
+                              ::grpc::ServerAsyncResponseWriter<::grpc::ByteBuffer>* response,
+                              ::grpc::CompletionQueue* new_call_cq,
+                              ::grpc::ServerCompletionQueue* notification_cq,
+                              void* tag) {
+            ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class WithRawMethod_RemoveParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithRawMethod_RemoveParent() {
+            ::grpc::Service::MarkMethodRaw(7);
+        }
+        ~WithRawMethod_RemoveParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/,
+                                    const ::RemoveParentRequest* /*request*/,
+                                    ::RemoveParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        void RequestRemoveParent(::grpc::ServerContext* context,
+                                 ::grpc::ByteBuffer* request,
+                                 ::grpc::ServerAsyncResponseWriter<::grpc::ByteBuffer>* response,
+                                 ::grpc::CompletionQueue* new_call_cq,
+                                 ::grpc::ServerCompletionQueue* notification_cq,
+                                 void* tag) {
+            ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
+        }
+    };
+    template<class BaseClass>
+    class ExperimentalWithRawCallbackMethod_RegisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithRawCallbackMethod_RegisterNode() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodRawCallback(0,
+                                      new ::grpc_impl::internal::CallbackUnaryHandler<::grpc::ByteBuffer,
+                                                                                      ::grpc::ByteBuffer>(
+                                          [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                              ::grpc::CallbackServerContext*
+#else
+                                              ::grpc::experimental::CallbackServerContext*
+#endif
+                                              context,
+                                              const ::grpc::ByteBuffer* request,
+                                              ::grpc::ByteBuffer* response) {
+                                            return this->RegisterNode(context,
+                                                                      request,
+                                                                      response);
+                                          }));
+        }
+        ~ExperimentalWithRawCallbackMethod_RegisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/,
+                                    const ::RegisterNodeRequest* /*request*/,
+                                    ::RegisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* RegisterNode(
+          ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* RegisterNode(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::grpc::ByteBuffer* /*request*/,
+            ::grpc::ByteBuffer* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithRawCallbackMethod_UnregisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithRawCallbackMethod_UnregisterNode() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodRawCallback(1,
+                                      new ::grpc_impl::internal::CallbackUnaryHandler<::grpc::ByteBuffer,
+                                                                                      ::grpc::ByteBuffer>(
+                                          [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                              ::grpc::CallbackServerContext*
+#else
+                                              ::grpc::experimental::CallbackServerContext*
+#endif
+                                              context,
+                                              const ::grpc::ByteBuffer* request,
+                                              ::grpc::ByteBuffer* response) {
+                                            return this->UnregisterNode(context,
+                                                                        request,
+                                                                        response);
+                                          }));
+        }
+        ~ExperimentalWithRawCallbackMethod_UnregisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/,
+                                      const ::UnregisterNodeRequest* /*request*/,
+                                      ::UnregisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* UnregisterNode(
+          ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* UnregisterNode(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::grpc::ByteBuffer* /*request*/,
+            ::grpc::ByteBuffer* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithRawCallbackMethod_RegisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithRawCallbackMethod_RegisterPhysicalStream() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodRawCallback(2,
+                                      new ::grpc_impl::internal::CallbackUnaryHandler<::grpc::ByteBuffer,
+                                                                                      ::grpc::ByteBuffer>(
+                                          [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                              ::grpc::CallbackServerContext*
+#else
+                                              ::grpc::experimental::CallbackServerContext*
+#endif
+                                              context,
+                                              const ::grpc::ByteBuffer* request,
+                                              ::grpc::ByteBuffer* response) {
+                                            return this->RegisterPhysicalStream(context,
+                                                                                request,
+                                                                                response);
+                                          }));
+        }
+        ~ExperimentalWithRawCallbackMethod_RegisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                              const ::RegisterPhysicalStreamRequest* /*request*/,
+                                              ::RegisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* RegisterPhysicalStream(
+          ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* RegisterPhysicalStream(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::grpc::ByteBuffer* /*request*/,
+            ::grpc::ByteBuffer* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithRawCallbackMethod_UnregisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithRawCallbackMethod_UnregisterPhysicalStream() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodRawCallback(3,
+                                      new ::grpc_impl::internal::CallbackUnaryHandler<::grpc::ByteBuffer,
+                                                                                      ::grpc::ByteBuffer>(
+                                          [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                              ::grpc::CallbackServerContext*
+#else
+                                              ::grpc::experimental::CallbackServerContext*
+#endif
+                                              context,
+                                              const ::grpc::ByteBuffer* request,
+                                              ::grpc::ByteBuffer* response) {
+                                            return this->UnregisterPhysicalStream(context,
+                                                                                  request,
+                                                                                  response);
+                                          }));
+        }
+        ~ExperimentalWithRawCallbackMethod_UnregisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                                const ::UnregisterPhysicalStreamRequest* /*request*/,
+                                                ::UnregisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* UnregisterPhysicalStream(
+          ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* UnregisterPhysicalStream(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::grpc::ByteBuffer* /*request*/,
+            ::grpc::ByteBuffer* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithRawCallbackMethod_RegisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithRawCallbackMethod_RegisterLogicalStream() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodRawCallback(4,
+                                      new ::grpc_impl::internal::CallbackUnaryHandler<::grpc::ByteBuffer,
+                                                                                      ::grpc::ByteBuffer>(
+                                          [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                              ::grpc::CallbackServerContext*
+#else
+                                              ::grpc::experimental::CallbackServerContext*
+#endif
+                                              context,
+                                              const ::grpc::ByteBuffer* request,
+                                              ::grpc::ByteBuffer* response) {
+                                            return this->RegisterLogicalStream(context,
+                                                                               request,
+                                                                               response);
+                                          }));
+        }
+        ~ExperimentalWithRawCallbackMethod_RegisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                             const ::RegisterLogicalStreamRequest* /*request*/,
+                                             ::RegisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* RegisterLogicalStream(
+          ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* RegisterLogicalStream(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::grpc::ByteBuffer* /*request*/,
+            ::grpc::ByteBuffer* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithRawCallbackMethod_UnregisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithRawCallbackMethod_UnregisterLogicalStream() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodRawCallback(5,
+                                      new ::grpc_impl::internal::CallbackUnaryHandler<::grpc::ByteBuffer,
+                                                                                      ::grpc::ByteBuffer>(
+                                          [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                              ::grpc::CallbackServerContext*
+#else
+                                              ::grpc::experimental::CallbackServerContext*
+#endif
+                                              context,
+                                              const ::grpc::ByteBuffer* request,
+                                              ::grpc::ByteBuffer* response) {
+                                            return this->UnregisterLogicalStream(context,
+                                                                                 request,
+                                                                                 response);
+                                          }));
+        }
+        ~ExperimentalWithRawCallbackMethod_UnregisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                               const ::UnregisterLogicalStreamRequest* /*request*/,
+                                               ::UnregisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* UnregisterLogicalStream(
+          ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* UnregisterLogicalStream(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::grpc::ByteBuffer* /*request*/,
+            ::grpc::ByteBuffer* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithRawCallbackMethod_AddParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithRawCallbackMethod_AddParent() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodRawCallback(6,
+                                      new ::grpc_impl::internal::CallbackUnaryHandler<::grpc::ByteBuffer,
+                                                                                      ::grpc::ByteBuffer>(
+                                          [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                              ::grpc::CallbackServerContext*
+#else
+                                              ::grpc::experimental::CallbackServerContext*
+#endif
+                                              context,
+                                              const ::grpc::ByteBuffer* request,
+                                              ::grpc::ByteBuffer* response) {
+                                            return this->AddParent(context,
+                                                                   request,
+                                                                   response);
+                                          }));
+        }
+        ~ExperimentalWithRawCallbackMethod_AddParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status AddParent(::grpc::ServerContext* /*context*/,
+                                 const ::AddParentRequest* /*request*/,
+                                 ::AddParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* AddParent(
+          ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* AddParent(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::grpc::ByteBuffer* /*request*/,
+            ::grpc::ByteBuffer* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class ExperimentalWithRawCallbackMethod_RemoveParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        ExperimentalWithRawCallbackMethod_RemoveParent() {
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+            ::grpc::Service::
+#else
+            ::grpc::Service::experimental().
+#endif
+                MarkMethodRawCallback(7,
+                                      new ::grpc_impl::internal::CallbackUnaryHandler<::grpc::ByteBuffer,
+                                                                                      ::grpc::ByteBuffer>(
+                                          [this](
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                                              ::grpc::CallbackServerContext*
+#else
+                                              ::grpc::experimental::CallbackServerContext*
+#endif
+                                              context,
+                                              const ::grpc::ByteBuffer* request,
+                                              ::grpc::ByteBuffer* response) {
+                                            return this->RemoveParent(context,
+                                                                      request,
+                                                                      response);
+                                          }));
+        }
+        ~ExperimentalWithRawCallbackMethod_RemoveParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable synchronous version of this method
+        ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/,
+                                    const ::RemoveParentRequest* /*request*/,
+                                    ::RemoveParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+#ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+        virtual ::grpc::ServerUnaryReactor* RemoveParent(
+          ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+#else
+        virtual ::grpc::experimental::ServerUnaryReactor* RemoveParent(
+            ::grpc::experimental::CallbackServerContext* /*context*/,
+            const ::grpc::ByteBuffer* /*request*/,
+            ::grpc::ByteBuffer* /*response*/)
+#endif
+        { return nullptr; }
+    };
+    template<class BaseClass>
+    class WithStreamedUnaryMethod_RegisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithStreamedUnaryMethod_RegisterNode() {
+            ::grpc::Service::MarkMethodStreamed(0,
+                                                new ::grpc::internal::StreamedUnaryHandler<::RegisterNodeRequest,
+                                                                                           ::RegisterNodeReply>(std::bind(
+                                                    &WithStreamedUnaryMethod_RegisterNode<BaseClass>::StreamedRegisterNode,
+                                                    this,
+                                                    std::placeholders::_1,
+                                                    std::placeholders::_2)));
+        }
+        ~WithStreamedUnaryMethod_RegisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable regular version of this method
+        ::grpc::Status RegisterNode(::grpc::ServerContext* /*context*/,
+                                    const ::RegisterNodeRequest* /*request*/,
+                                    ::RegisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        // replace default version of method with streamed unary
+        virtual ::grpc::Status StreamedRegisterNode(::grpc::ServerContext* context,
+                                                    ::grpc::ServerUnaryStreamer<::RegisterNodeRequest,
+                                                                                ::RegisterNodeReply>* server_unary_streamer) = 0;
+    };
+    template<class BaseClass>
+    class WithStreamedUnaryMethod_UnregisterNode : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithStreamedUnaryMethod_UnregisterNode() {
+            ::grpc::Service::MarkMethodStreamed(1,
+                                                new ::grpc::internal::StreamedUnaryHandler<::UnregisterNodeRequest,
+                                                                                           ::UnregisterNodeReply>(std::bind(
+                                                    &WithStreamedUnaryMethod_UnregisterNode<BaseClass>::StreamedUnregisterNode,
+                                                    this,
+                                                    std::placeholders::_1,
+                                                    std::placeholders::_2)));
+        }
+        ~WithStreamedUnaryMethod_UnregisterNode() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable regular version of this method
+        ::grpc::Status UnregisterNode(::grpc::ServerContext* /*context*/,
+                                      const ::UnregisterNodeRequest* /*request*/,
+                                      ::UnregisterNodeReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        // replace default version of method with streamed unary
+        virtual ::grpc::Status StreamedUnregisterNode(::grpc::ServerContext* context,
+                                                      ::grpc::ServerUnaryStreamer<::UnregisterNodeRequest,
+                                                                                  ::UnregisterNodeReply>* server_unary_streamer) = 0;
+    };
+    template<class BaseClass>
+    class WithStreamedUnaryMethod_RegisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithStreamedUnaryMethod_RegisterPhysicalStream() {
+            ::grpc::Service::MarkMethodStreamed(2,
+                                                new ::grpc::internal::StreamedUnaryHandler<::RegisterPhysicalStreamRequest,
+                                                                                           ::RegisterPhysicalStreamReply>(
+                                                    std::bind(&WithStreamedUnaryMethod_RegisterPhysicalStream<BaseClass>::StreamedRegisterPhysicalStream,
+                                                              this,
+                                                              std::placeholders::_1,
+                                                              std::placeholders::_2)));
+        }
+        ~WithStreamedUnaryMethod_RegisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable regular version of this method
+        ::grpc::Status RegisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                              const ::RegisterPhysicalStreamRequest* /*request*/,
+                                              ::RegisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        // replace default version of method with streamed unary
+        virtual ::grpc::Status StreamedRegisterPhysicalStream(::grpc::ServerContext* context,
+                                                              ::grpc::ServerUnaryStreamer<::RegisterPhysicalStreamRequest,
+                                                                                          ::RegisterPhysicalStreamReply>* server_unary_streamer) = 0;
+    };
+    template<class BaseClass>
+    class WithStreamedUnaryMethod_UnregisterPhysicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithStreamedUnaryMethod_UnregisterPhysicalStream() {
+            ::grpc::Service::MarkMethodStreamed(3,
+                                                new ::grpc::internal::StreamedUnaryHandler<::UnregisterPhysicalStreamRequest,
+                                                                                           ::UnregisterPhysicalStreamReply>(
+                                                    std::bind(&WithStreamedUnaryMethod_UnregisterPhysicalStream<
+                                                                  BaseClass>::StreamedUnregisterPhysicalStream,
+                                                              this,
+                                                              std::placeholders::_1,
+                                                              std::placeholders::_2)));
+        }
+        ~WithStreamedUnaryMethod_UnregisterPhysicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable regular version of this method
+        ::grpc::Status UnregisterPhysicalStream(::grpc::ServerContext* /*context*/,
+                                                const ::UnregisterPhysicalStreamRequest* /*request*/,
+                                                ::UnregisterPhysicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        // replace default version of method with streamed unary
+        virtual ::grpc::Status StreamedUnregisterPhysicalStream(::grpc::ServerContext* context,
+                                                                ::grpc::ServerUnaryStreamer<::UnregisterPhysicalStreamRequest,
+                                                                                            ::UnregisterPhysicalStreamReply>* server_unary_streamer) = 0;
+    };
+    template<class BaseClass>
+    class WithStreamedUnaryMethod_RegisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithStreamedUnaryMethod_RegisterLogicalStream() {
+            ::grpc::Service::MarkMethodStreamed(4,
+                                                new ::grpc::internal::StreamedUnaryHandler<::RegisterLogicalStreamRequest,
+                                                                                           ::RegisterLogicalStreamReply>(
+                                                    std::bind(&WithStreamedUnaryMethod_RegisterLogicalStream<BaseClass>::StreamedRegisterLogicalStream,
+                                                              this,
+                                                              std::placeholders::_1,
+                                                              std::placeholders::_2)));
+        }
+        ~WithStreamedUnaryMethod_RegisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable regular version of this method
+        ::grpc::Status RegisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                             const ::RegisterLogicalStreamRequest* /*request*/,
+                                             ::RegisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        // replace default version of method with streamed unary
+        virtual ::grpc::Status StreamedRegisterLogicalStream(::grpc::ServerContext* context,
+                                                             ::grpc::ServerUnaryStreamer<::RegisterLogicalStreamRequest,
+                                                                                         ::RegisterLogicalStreamReply>* server_unary_streamer) = 0;
+    };
+    template<class BaseClass>
+    class WithStreamedUnaryMethod_UnregisterLogicalStream : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithStreamedUnaryMethod_UnregisterLogicalStream() {
+            ::grpc::Service::MarkMethodStreamed(5,
+                                                new ::grpc::internal::StreamedUnaryHandler<::UnregisterLogicalStreamRequest,
+                                                                                           ::UnregisterLogicalStreamReply>(
+                                                    std::bind(&WithStreamedUnaryMethod_UnregisterLogicalStream<BaseClass>::StreamedUnregisterLogicalStream,
+                                                              this,
+                                                              std::placeholders::_1,
+                                                              std::placeholders::_2)));
+        }
+        ~WithStreamedUnaryMethod_UnregisterLogicalStream() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable regular version of this method
+        ::grpc::Status UnregisterLogicalStream(::grpc::ServerContext* /*context*/,
+                                               const ::UnregisterLogicalStreamRequest* /*request*/,
+                                               ::UnregisterLogicalStreamReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        // replace default version of method with streamed unary
+        virtual ::grpc::Status StreamedUnregisterLogicalStream(::grpc::ServerContext* context,
+                                                               ::grpc::ServerUnaryStreamer<::UnregisterLogicalStreamRequest,
+                                                                                           ::UnregisterLogicalStreamReply>* server_unary_streamer) = 0;
+    };
+    template<class BaseClass>
+    class WithStreamedUnaryMethod_AddParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithStreamedUnaryMethod_AddParent() {
+            ::grpc::Service::MarkMethodStreamed(6,
+                                                new ::grpc::internal::StreamedUnaryHandler<::AddParentRequest,
+                                                                                           ::AddParentReply>(std::bind(&WithStreamedUnaryMethod_AddParent<
+                                                                                                                           BaseClass>::StreamedAddParent,
+                                                                                                                       this,
+                                                                                                                       std::placeholders::_1,
+                                                                                                                       std::placeholders::_2)));
+        }
+        ~WithStreamedUnaryMethod_AddParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable regular version of this method
+        ::grpc::Status AddParent(::grpc::ServerContext* /*context*/,
+                                 const ::AddParentRequest* /*request*/,
+                                 ::AddParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        // replace default version of method with streamed unary
+        virtual ::grpc::Status StreamedAddParent(::grpc::ServerContext* context,
+                                                 ::grpc::ServerUnaryStreamer<::AddParentRequest,
+                                                                             ::AddParentReply>* server_unary_streamer) = 0;
+    };
+    template<class BaseClass>
+    class WithStreamedUnaryMethod_RemoveParent : public BaseClass {
+      private:
+        void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+      public:
+        WithStreamedUnaryMethod_RemoveParent() {
+            ::grpc::Service::MarkMethodStreamed(7,
+                                                new ::grpc::internal::StreamedUnaryHandler<::RemoveParentRequest,
+                                                                                           ::RemoveParentReply>(std::bind(
+                                                    &WithStreamedUnaryMethod_RemoveParent<BaseClass>::StreamedRemoveParent,
+                                                    this,
+                                                    std::placeholders::_1,
+                                                    std::placeholders::_2)));
+        }
+        ~WithStreamedUnaryMethod_RemoveParent() override {
+            BaseClassMustBeDerivedFromService(this);
+        }
+        // disable regular version of this method
+        ::grpc::Status RemoveParent(::grpc::ServerContext* /*context*/,
+                                    const ::RemoveParentRequest* /*request*/,
+                                    ::RemoveParentReply* /*response*/) override {
+            abort();
+            return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+        }
+        // replace default version of method with streamed unary
+        virtual ::grpc::Status StreamedRemoveParent(::grpc::ServerContext* context,
+                                                    ::grpc::ServerUnaryStreamer<::RemoveParentRequest,
+                                                                                ::RemoveParentReply>* server_unary_streamer) = 0;
+    };
+    typedef WithStreamedUnaryMethod_RegisterNode<WithStreamedUnaryMethod_UnregisterNode<
+        WithStreamedUnaryMethod_RegisterPhysicalStream<WithStreamedUnaryMethod_UnregisterPhysicalStream<
+            WithStreamedUnaryMethod_RegisterLogicalStream<WithStreamedUnaryMethod_UnregisterLogicalStream<
+                WithStreamedUnaryMethod_AddParent<WithStreamedUnaryMethod_RemoveParent<Service> > > > > > > >
+        StreamedUnaryService;
+    typedef Service SplitStreamedService;
+    typedef WithStreamedUnaryMethod_RegisterNode<WithStreamedUnaryMethod_UnregisterNode<
+        WithStreamedUnaryMethod_RegisterPhysicalStream<WithStreamedUnaryMethod_UnregisterPhysicalStream<
+            WithStreamedUnaryMethod_RegisterLogicalStream<WithStreamedUnaryMethod_UnregisterLogicalStream<
+                WithStreamedUnaryMethod_AddParent<WithStreamedUnaryMethod_RemoveParent<Service> > > > > > > >
+        StreamedService;
 };
 
-
+}
 #endif  // GRPC_Coordinator_2eproto__INCLUDED

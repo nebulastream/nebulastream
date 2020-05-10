@@ -9,6 +9,7 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
+using namespace RPC;
 
 class CoordinatorRPCServer final : public CoordinatorService::Service {
   public:

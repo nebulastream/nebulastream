@@ -3,9 +3,20 @@
 #include <boost/filesystem.hpp>
 #include <string>
 namespace NES {
-CoordinatorRPCClient::CoordinatorRPCClient(std::shared_ptr<Channel> channel)
-    : stub_(CoordinatorService::NewStub(channel)) {
-    //do something
+
+CoordinatorRPCClient::CoordinatorRPCClient(std::string ip,
+                                           uint16_t rpcPort,
+                                           uint16_t zmqPort,
+                                           size_t numberOfCpus,
+                                           NESNodeType type,
+                                           string nodeProperties)
+    : ip(ip),
+      rpcPort(rpcPort),
+      zmqPort(zmqPort),
+      numberOfCpus(numberOfCpus),
+      type(type),
+      nodeProperties(nodeProperties) {
+    NES_DEBUG("CoordinatorRPCClient::CoordinatorRPCClient");
 }
 
 bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
@@ -24,7 +35,7 @@ bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
 
     ClientContext context;
 
-    Status status = stub_->RegisterPhysicalStream(&context, request, &reply);
+    Status status = coordinatorStub->RegisterPhysicalStream(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: status ok return success=" << reply.success());
@@ -63,7 +74,7 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName,
 
     ClientContext context;
 
-    Status status = stub_->RegisterLogicalStream(&context, request, &reply);
+    Status status = coordinatorStub->RegisterLogicalStream(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::registerLogicalStream: status ok return success=" << reply.success());
@@ -90,7 +101,7 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamNam
 
     ClientContext context;
 
-    Status status = stub_->UnregisterPhysicalStream(&context, request, &reply);
+    Status status = coordinatorStub->UnregisterPhysicalStream(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::unregisterPhysicalStream: status ok return success=" << reply.success());
@@ -113,7 +124,7 @@ bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
 
     ClientContext context;
 
-    Status status = stub_->UnregisterLogicalStream(&context, request, &reply);
+    Status status = coordinatorStub->UnregisterLogicalStream(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::unregisterLogicalStream: status ok return success=" << reply.success());
@@ -136,7 +147,7 @@ bool CoordinatorRPCClient::addParent(size_t parentId) {
 
     ClientContext context;
 
-    Status status = stub_->AddParent(&context, request, &reply);
+    Status status = coordinatorStub->AddParent(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::addParent: status ok return success=" << reply.success());
@@ -163,7 +174,7 @@ bool CoordinatorRPCClient::removeParent(size_t parentId) {
 
     ClientContext context;
 
-    Status status = stub_->RemoveParent(&context, request, &reply);
+    Status status = coordinatorStub->RemoveParent(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::removeParent: status ok return success=" << reply.success());
@@ -175,7 +186,7 @@ bool CoordinatorRPCClient::removeParent(size_t parentId) {
     }
 }
 
-bool CoordinatorRPCClient::registerNode(NESNodeType type) {
+bool CoordinatorRPCClient::registerNode() {
     if (type == NESNodeType::Sensor) {
         NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor");
     } else if (type == NESNodeType::Worker) {
@@ -184,7 +195,6 @@ bool CoordinatorRPCClient::registerNode(NESNodeType type) {
         NES_ERROR("CoordinatorRPCClient::registerNode node type not supported " << type);
         throw new Exception("CoordinatorRPCClient::registerNode wrong node type");
     }
-    this->type = type;
 
     RegisterNodeRequest request;
     request.set_ip(ip);
@@ -198,7 +208,7 @@ bool CoordinatorRPCClient::registerNode(NESNodeType type) {
 
     ClientContext context;
 
-    Status status = stub_->RegisterNode(&context, request, &reply);
+    Status status = coordinatorStub->RegisterNode(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::removeParent: status ok id=" << reply.id());
@@ -211,25 +221,30 @@ bool CoordinatorRPCClient::registerNode(NESNodeType type) {
     }
 }
 
-bool CoordinatorRPCClient::connecting(const std::string& host, uint16_t port) {
+bool CoordinatorRPCClient::connect() {
     NES_DEBUG(
-        "CoordinatorRPCClient::connecting try to connect to host=" << host << " port=" << port);
+        "CoordinatorRPCClient::connect try to connect to host=" << ip << " port=" << rpcPort);
 
-    std::string address = ip + ":" + std::to_string(port);
+    std::string address = ip + ":" + std::to_string(rpcPort);
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address,
-    grpc::InsecureChannelCredentials());
+                                                                grpc::InsecureChannelCredentials());
 
-    if(chan)
-    {
+    coordinatorStub = RPC::CoordinatorService::NewStub(chan);
+
+    if (chan) {
         NES_DEBUG("CoordinatorRPCClient::connecting: channel successfully created");
         return true;
-    }
-    else
-    {
+    } else {
         NES_THROW_RUNTIME_ERROR("CoordinatorRPCClient::connecting error while creating channel");
     }
 }
+
+bool CoordinatorRPCClient::disconnecting()
+{
+
+}
+
 
 bool CoordinatorRPCClient::CoordinatorRPCClient::shutdown(bool force) {
     NES_DEBUG("CoordinatorRPCClient: shutdown with force=" << force);

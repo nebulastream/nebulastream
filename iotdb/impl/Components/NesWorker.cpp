@@ -152,6 +152,35 @@ bool NesWorker::stop(bool force) {
 }
 
 bool NesWorker::connect() {
+    coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(
+        workerCfg.host,
+        workerCfg.receive_port +123,
+        workerCfg.publish_port +123,
+        2,
+        this->type,
+        nodeEngine->getNodePropertiesAsString()
+        );
+
+    bool successPRCConnect = coordinatorRpcClient->connect();
+    if(successPRCConnect)
+    {
+        NES_DEBUG("NesWorker::connect rpc connect success");
+    } else
+    {
+        NES_DEBUG("NesWorker::connect rpc connect failed");
+        return false;
+    }
+
+    bool successPRCRegister = coordinatorRpcClient->registerNode();
+    if(successPRCRegister)
+    {
+        NES_DEBUG("NesWorker::connect rpc register success");
+    } else
+    {
+        NES_DEBUG("NesWorker::connect rpc register failed");
+        return false;
+    }
+
     bool success = workerActor->connecting(workerCfg.host, coordinatorPort);
     NES_DEBUG("NesWorker::connect success=" << success);
     return success;

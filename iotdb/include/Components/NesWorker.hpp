@@ -7,6 +7,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <caf/actor_system.hpp>
 #include <Actors/WorkerActor.hpp>
+#include <GRPC/CoordinatorRPCClient.hpp>
 
 using namespace std;
 
@@ -131,6 +132,7 @@ class NesWorker {
 
     WorkerActor* workerActor;
     NodeEnginePtr nodeEngine;
+    CoordinatorRPCClientPtr coordinatorRpcClient;
 
     bool connected;
     bool withRegisterStream;
