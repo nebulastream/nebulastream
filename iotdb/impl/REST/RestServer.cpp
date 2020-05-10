@@ -11,6 +11,7 @@ RestServer::RestServer(std::string host, u_int16_t port,
     this->host = host;
     this->port = port;
     this->coordinatorActorHandle = coordinatorActorHandle;
+    InterruptHandler::hookSIGINT();
 }
 
 bool RestServer::start() {
@@ -38,6 +39,7 @@ bool RestServer::start() {
 }
 
 bool RestServer::stop() {
+    NES_DEBUG("RestServer::stop");
     InterruptHandler::handleUserInterrupt(SIGINT);
     return true;
 }
