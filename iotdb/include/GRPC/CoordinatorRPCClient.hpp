@@ -95,6 +95,8 @@ class CoordinatorRPCClient {
 
   private:
     std::unique_ptr<RPC::CoordinatorService::Stub> coordinatorStub;
+    std::shared_ptr<::grpc::Channel> chan;
+
     size_t workerId;
     std::string ip;
     size_t rpcPort;

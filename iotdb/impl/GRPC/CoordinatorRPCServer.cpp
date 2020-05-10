@@ -22,6 +22,7 @@ size_t getIdFromIp(std::string ip) {
 Status CoordinatorRPCServer::RegisterNode(ServerContext* context, const RegisterNodeRequest* request,
                                           RegisterNodeReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterNode: request =" << request);
+    NESTopologyManager::getInstance().printNESTopologyPlan();
 
     NES_DEBUG("Coordinator RPC: Register Node ip=" << request->ip()
                                                    << " rpcport=" << request->rpcport() << " zmqport="
@@ -41,6 +42,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext* context, const Register
         reply->set_id(0);//TODO: check on the other side
         return Status::CANCELLED;
     }
+    NESTopologyManager::getInstance().printNESTopologyPlan();
     reply->set_id(id);
     //TODO: do the bookkeeping
     return Status::OK;
