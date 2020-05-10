@@ -60,7 +60,7 @@ const string logo = "/********************************************************\n
 //class GreeterClient {
 //  public:
 //    GreeterClient(std::shared_ptr<Channel> channel)
-//        : stub_(Greeter::NewStub(channel)) {}
+//        : coordinatorStub(Greeter::NewStub(channel)) {}
 //
 //    // Assembles the client's payload, sends it and presents the response back
 //    // from the server.
@@ -77,7 +77,7 @@ const string logo = "/********************************************************\n
 //        ClientContext context;
 //
 //        // The actual RPC.
-//        Status status = stub_->SayHello(&context, request, &reply);
+//        Status status = coordinatorStub->SayHello(&context, request, &reply);
 //
 //        // Act upon its status.
 //        if (status.ok()) {
@@ -90,7 +90,7 @@ const string logo = "/********************************************************\n
 //    }
 //
 //  private:
-//    std::unique_ptr<Greeter::Stub> stub_;
+//    std::unique_ptr<Greeter::Stub> coordinatorStub;
 //};
 
 int main(int argc, char** argv) {
