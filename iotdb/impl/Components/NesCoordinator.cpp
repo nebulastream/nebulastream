@@ -5,6 +5,15 @@
 #include <caf/io/all.hpp>
 #include <thread>
 
+//GRPC Includes
+#include <GRPC/CoordinatorRPCServer.hpp>
+#include <grpcpp/health_check_service_interface.h>
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
+using grpc::Server;
+using grpc::ServerBuilder;
+using grpc::ServerContext;
+using grpc::Status;
+
 namespace NES {
 
 NesCoordinator::NesCoordinator() {
@@ -30,6 +39,19 @@ void startRestServer(infer_handle_from_class_t<CoordinatorActor> handle,
     restServer = new RestServer(restHost, restPort, handle);
     restServer->start();//this call is blocking
     NES_DEBUG("NesCoordinator: startRestServer thread terminates");
+}
+
+void startCoordinatorRPCServer(std::string ip, std::string port, std::unique_ptr<Server>& rpcServer) {
+    std::string address = ip + ":" + port;
+    NES_DEBUG("startCoordinatorRPCServer for address=" << address);
+    CoordinatorRPCServer service;
+
+    ServerBuilder builder;
+    builder.AddListeningPort(address, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    rpcServer = builder.BuildAndStart();
+    std::cout << "startCoordinatorRPCServer: Server listening on " << address << std::endl;
+    rpcServer->Wait();
 }
 
 string NesCoordinator::deployQuery(const string& queryString, const string& strategy) {
@@ -172,7 +194,9 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator: worker handle with id"
                   << workerActorHandle->id() << " successfully published at port " << expectedPortWorker);
 
-    //TODO connect
+
+    startCoordinatorRPCServer(workerCfg.ip, ::to_string(workerCfg.receive_port + 123), rpcServer);
+
     NES_DEBUG("NesCoordinator: connection worker to coordinator");
     bool successNodeConnect = wrkActor->connecting(workerCfg.host, actorPort);
     if (successNodeConnect) {

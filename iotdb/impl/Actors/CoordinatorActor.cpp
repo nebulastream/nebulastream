@@ -240,7 +240,6 @@ size_t CoordinatorActor::registerNode(const string& ip, uint16_t publish_port,
     NES_DEBUG(
         "CoordinatorActor: connect attempt with id=" << curSender->id() << " handle=" << to_string(handle) << " hashID="
                                                      << hashId << " type=" << type);
-
     NESTopologyEntryPtr node = coordinatorServicePtr->registerNode(
         hashId, ip, publish_port, receive_port, cpu, nodeProperties, streamConf, type);
 

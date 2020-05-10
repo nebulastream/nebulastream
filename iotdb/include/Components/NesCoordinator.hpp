@@ -4,6 +4,7 @@
 #include <Actors/Configurations/WorkerActorConfig.hpp>
 #include <Actors/WorkerActor.hpp>
 #include <string>
+#include <grpcpp/grpcpp.h>
 
 namespace NES {
 
@@ -85,6 +86,8 @@ class NesCoordinator {
 
   private:
     size_t getRandomPort(size_t base);
+
+    std::unique_ptr<grpc::Server> rpcServer;
 
     CoordinatorActor* crdActor;
     CoordinatorActorConfig coordinatorCfg;
