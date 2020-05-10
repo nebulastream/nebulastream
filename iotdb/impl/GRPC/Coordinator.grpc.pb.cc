@@ -2,8 +2,8 @@
 // If you make any local change, they will be lost.
 // source: Coordinator.proto
 
-#include "GRPC/Coordinator.pb.h"
-#include "GRPC/Coordinator.grpc.pb.h"
+#include <GRPC/Coordinator.pb.h>
+#include <GRPC/Coordinator.grpc.pb.h>
 
 #include <functional>
 #include <grpcpp/impl/codegen/async_stream.h>

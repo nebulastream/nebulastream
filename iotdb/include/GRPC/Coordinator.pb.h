@@ -2021,36 +2021,22 @@ class AddParentRequest :
     kChildIdFieldNumber = 1,
     kParentIdFieldNumber = 2,
   };
-  // string childId = 1;
+  // int64 childId = 1;
   void clear_childid();
-  const std::string& childid() const;
-  void set_childid(const std::string& value);
-  void set_childid(std::string&& value);
-  void set_childid(const char* value);
-  void set_childid(const char* value, size_t size);
-  std::string* mutable_childid();
-  std::string* release_childid();
-  void set_allocated_childid(std::string* childid);
+  ::PROTOBUF_NAMESPACE_ID::int64 childid() const;
+  void set_childid(::PROTOBUF_NAMESPACE_ID::int64 value);
   private:
-  const std::string& _internal_childid() const;
-  void _internal_set_childid(const std::string& value);
-  std::string* _internal_mutable_childid();
+  ::PROTOBUF_NAMESPACE_ID::int64 _internal_childid() const;
+  void _internal_set_childid(::PROTOBUF_NAMESPACE_ID::int64 value);
   public:
 
-  // string parentId = 2;
+  // int64 parentId = 2;
   void clear_parentid();
-  const std::string& parentid() const;
-  void set_parentid(const std::string& value);
-  void set_parentid(std::string&& value);
-  void set_parentid(const char* value);
-  void set_parentid(const char* value, size_t size);
-  std::string* mutable_parentid();
-  std::string* release_parentid();
-  void set_allocated_parentid(std::string* parentid);
+  ::PROTOBUF_NAMESPACE_ID::int64 parentid() const;
+  void set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value);
   private:
-  const std::string& _internal_parentid() const;
-  void _internal_set_parentid(const std::string& value);
-  std::string* _internal_mutable_parentid();
+  ::PROTOBUF_NAMESPACE_ID::int64 _internal_parentid() const;
+  void _internal_set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:AddParentRequest)
@@ -2058,8 +2044,8 @@ class AddParentRequest :
   class _Internal;
 
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr childid_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr parentid_;
+  ::PROTOBUF_NAMESPACE_ID::int64 childid_;
+  ::PROTOBUF_NAMESPACE_ID::int64 parentid_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_Coordinator_2eproto;
 };
@@ -2302,36 +2288,22 @@ class RemoveParentRequest :
     kChildIdFieldNumber = 1,
     kParentIdFieldNumber = 2,
   };
-  // string childId = 1;
+  // int64 childId = 1;
   void clear_childid();
-  const std::string& childid() const;
-  void set_childid(const std::string& value);
-  void set_childid(std::string&& value);
-  void set_childid(const char* value);
-  void set_childid(const char* value, size_t size);
-  std::string* mutable_childid();
-  std::string* release_childid();
-  void set_allocated_childid(std::string* childid);
+  ::PROTOBUF_NAMESPACE_ID::int64 childid() const;
+  void set_childid(::PROTOBUF_NAMESPACE_ID::int64 value);
   private:
-  const std::string& _internal_childid() const;
-  void _internal_set_childid(const std::string& value);
-  std::string* _internal_mutable_childid();
+  ::PROTOBUF_NAMESPACE_ID::int64 _internal_childid() const;
+  void _internal_set_childid(::PROTOBUF_NAMESPACE_ID::int64 value);
   public:
 
-  // string parentId = 2;
+  // int64 parentId = 2;
   void clear_parentid();
-  const std::string& parentid() const;
-  void set_parentid(const std::string& value);
-  void set_parentid(std::string&& value);
-  void set_parentid(const char* value);
-  void set_parentid(const char* value, size_t size);
-  std::string* mutable_parentid();
-  std::string* release_parentid();
-  void set_allocated_parentid(std::string* parentid);
+  ::PROTOBUF_NAMESPACE_ID::int64 parentid() const;
+  void set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value);
   private:
-  const std::string& _internal_parentid() const;
-  void _internal_set_parentid(const std::string& value);
-  std::string* _internal_mutable_parentid();
+  ::PROTOBUF_NAMESPACE_ID::int64 _internal_parentid() const;
+  void _internal_set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:RemoveParentRequest)
@@ -2339,8 +2311,8 @@ class RemoveParentRequest :
   class _Internal;
 
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr childid_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr parentid_;
+  ::PROTOBUF_NAMESPACE_ID::int64 childid_;
+  ::PROTOBUF_NAMESPACE_ID::int64 parentid_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_Coordinator_2eproto;
 };
@@ -3531,124 +3503,44 @@ inline void UnregisterLogicalStreamReply::set_success(bool value) {
 
 // AddParentRequest
 
-// string childId = 1;
+// int64 childId = 1;
 inline void AddParentRequest::clear_childid() {
-  childid_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  childid_ = PROTOBUF_LONGLONG(0);
 }
-inline const std::string& AddParentRequest::childid() const {
+inline ::PROTOBUF_NAMESPACE_ID::int64 AddParentRequest::_internal_childid() const {
+  return childid_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int64 AddParentRequest::childid() const {
   // @@protoc_insertion_point(field_get:AddParentRequest.childId)
   return _internal_childid();
 }
-inline void AddParentRequest::set_childid(const std::string& value) {
+inline void AddParentRequest::_internal_set_childid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+  
+  childid_ = value;
+}
+inline void AddParentRequest::set_childid(::PROTOBUF_NAMESPACE_ID::int64 value) {
   _internal_set_childid(value);
   // @@protoc_insertion_point(field_set:AddParentRequest.childId)
 }
-inline std::string* AddParentRequest::mutable_childid() {
-  // @@protoc_insertion_point(field_mutable:AddParentRequest.childId)
-  return _internal_mutable_childid();
-}
-inline const std::string& AddParentRequest::_internal_childid() const {
-  return childid_.GetNoArena();
-}
-inline void AddParentRequest::_internal_set_childid(const std::string& value) {
-  
-  childid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value);
-}
-inline void AddParentRequest::set_childid(std::string&& value) {
-  
-  childid_.SetNoArena(
-    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:AddParentRequest.childId)
-}
-inline void AddParentRequest::set_childid(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  childid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:AddParentRequest.childId)
-}
-inline void AddParentRequest::set_childid(const char* value, size_t size) {
-  
-  childid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:AddParentRequest.childId)
-}
-inline std::string* AddParentRequest::_internal_mutable_childid() {
-  
-  return childid_.MutableNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-inline std::string* AddParentRequest::release_childid() {
-  // @@protoc_insertion_point(field_release:AddParentRequest.childId)
-  
-  return childid_.ReleaseNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-inline void AddParentRequest::set_allocated_childid(std::string* childid) {
-  if (childid != nullptr) {
-    
-  } else {
-    
-  }
-  childid_.SetAllocatedNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), childid);
-  // @@protoc_insertion_point(field_set_allocated:AddParentRequest.childId)
-}
 
-// string parentId = 2;
+// int64 parentId = 2;
 inline void AddParentRequest::clear_parentid() {
-  parentid_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  parentid_ = PROTOBUF_LONGLONG(0);
 }
-inline const std::string& AddParentRequest::parentid() const {
+inline ::PROTOBUF_NAMESPACE_ID::int64 AddParentRequest::_internal_parentid() const {
+  return parentid_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int64 AddParentRequest::parentid() const {
   // @@protoc_insertion_point(field_get:AddParentRequest.parentId)
   return _internal_parentid();
 }
-inline void AddParentRequest::set_parentid(const std::string& value) {
+inline void AddParentRequest::_internal_set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+  
+  parentid_ = value;
+}
+inline void AddParentRequest::set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value) {
   _internal_set_parentid(value);
   // @@protoc_insertion_point(field_set:AddParentRequest.parentId)
-}
-inline std::string* AddParentRequest::mutable_parentid() {
-  // @@protoc_insertion_point(field_mutable:AddParentRequest.parentId)
-  return _internal_mutable_parentid();
-}
-inline const std::string& AddParentRequest::_internal_parentid() const {
-  return parentid_.GetNoArena();
-}
-inline void AddParentRequest::_internal_set_parentid(const std::string& value) {
-  
-  parentid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value);
-}
-inline void AddParentRequest::set_parentid(std::string&& value) {
-  
-  parentid_.SetNoArena(
-    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:AddParentRequest.parentId)
-}
-inline void AddParentRequest::set_parentid(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  parentid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:AddParentRequest.parentId)
-}
-inline void AddParentRequest::set_parentid(const char* value, size_t size) {
-  
-  parentid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:AddParentRequest.parentId)
-}
-inline std::string* AddParentRequest::_internal_mutable_parentid() {
-  
-  return parentid_.MutableNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-inline std::string* AddParentRequest::release_parentid() {
-  // @@protoc_insertion_point(field_release:AddParentRequest.parentId)
-  
-  return parentid_.ReleaseNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-inline void AddParentRequest::set_allocated_parentid(std::string* parentid) {
-  if (parentid != nullptr) {
-    
-  } else {
-    
-  }
-  parentid_.SetAllocatedNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), parentid);
-  // @@protoc_insertion_point(field_set_allocated:AddParentRequest.parentId)
 }
 
 // -------------------------------------------------------------------
@@ -3679,124 +3571,44 @@ inline void AddParentReply::set_success(bool value) {
 
 // RemoveParentRequest
 
-// string childId = 1;
+// int64 childId = 1;
 inline void RemoveParentRequest::clear_childid() {
-  childid_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  childid_ = PROTOBUF_LONGLONG(0);
 }
-inline const std::string& RemoveParentRequest::childid() const {
+inline ::PROTOBUF_NAMESPACE_ID::int64 RemoveParentRequest::_internal_childid() const {
+  return childid_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int64 RemoveParentRequest::childid() const {
   // @@protoc_insertion_point(field_get:RemoveParentRequest.childId)
   return _internal_childid();
 }
-inline void RemoveParentRequest::set_childid(const std::string& value) {
+inline void RemoveParentRequest::_internal_set_childid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+  
+  childid_ = value;
+}
+inline void RemoveParentRequest::set_childid(::PROTOBUF_NAMESPACE_ID::int64 value) {
   _internal_set_childid(value);
   // @@protoc_insertion_point(field_set:RemoveParentRequest.childId)
 }
-inline std::string* RemoveParentRequest::mutable_childid() {
-  // @@protoc_insertion_point(field_mutable:RemoveParentRequest.childId)
-  return _internal_mutable_childid();
-}
-inline const std::string& RemoveParentRequest::_internal_childid() const {
-  return childid_.GetNoArena();
-}
-inline void RemoveParentRequest::_internal_set_childid(const std::string& value) {
-  
-  childid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value);
-}
-inline void RemoveParentRequest::set_childid(std::string&& value) {
-  
-  childid_.SetNoArena(
-    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:RemoveParentRequest.childId)
-}
-inline void RemoveParentRequest::set_childid(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  childid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:RemoveParentRequest.childId)
-}
-inline void RemoveParentRequest::set_childid(const char* value, size_t size) {
-  
-  childid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:RemoveParentRequest.childId)
-}
-inline std::string* RemoveParentRequest::_internal_mutable_childid() {
-  
-  return childid_.MutableNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-inline std::string* RemoveParentRequest::release_childid() {
-  // @@protoc_insertion_point(field_release:RemoveParentRequest.childId)
-  
-  return childid_.ReleaseNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-inline void RemoveParentRequest::set_allocated_childid(std::string* childid) {
-  if (childid != nullptr) {
-    
-  } else {
-    
-  }
-  childid_.SetAllocatedNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), childid);
-  // @@protoc_insertion_point(field_set_allocated:RemoveParentRequest.childId)
-}
 
-// string parentId = 2;
+// int64 parentId = 2;
 inline void RemoveParentRequest::clear_parentid() {
-  parentid_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  parentid_ = PROTOBUF_LONGLONG(0);
 }
-inline const std::string& RemoveParentRequest::parentid() const {
+inline ::PROTOBUF_NAMESPACE_ID::int64 RemoveParentRequest::_internal_parentid() const {
+  return parentid_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int64 RemoveParentRequest::parentid() const {
   // @@protoc_insertion_point(field_get:RemoveParentRequest.parentId)
   return _internal_parentid();
 }
-inline void RemoveParentRequest::set_parentid(const std::string& value) {
+inline void RemoveParentRequest::_internal_set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+  
+  parentid_ = value;
+}
+inline void RemoveParentRequest::set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value) {
   _internal_set_parentid(value);
   // @@protoc_insertion_point(field_set:RemoveParentRequest.parentId)
-}
-inline std::string* RemoveParentRequest::mutable_parentid() {
-  // @@protoc_insertion_point(field_mutable:RemoveParentRequest.parentId)
-  return _internal_mutable_parentid();
-}
-inline const std::string& RemoveParentRequest::_internal_parentid() const {
-  return parentid_.GetNoArena();
-}
-inline void RemoveParentRequest::_internal_set_parentid(const std::string& value) {
-  
-  parentid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value);
-}
-inline void RemoveParentRequest::set_parentid(std::string&& value) {
-  
-  parentid_.SetNoArena(
-    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:RemoveParentRequest.parentId)
-}
-inline void RemoveParentRequest::set_parentid(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  parentid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:RemoveParentRequest.parentId)
-}
-inline void RemoveParentRequest::set_parentid(const char* value, size_t size) {
-  
-  parentid_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:RemoveParentRequest.parentId)
-}
-inline std::string* RemoveParentRequest::_internal_mutable_parentid() {
-  
-  return parentid_.MutableNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-inline std::string* RemoveParentRequest::release_parentid() {
-  // @@protoc_insertion_point(field_release:RemoveParentRequest.parentId)
-  
-  return parentid_.ReleaseNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-inline void RemoveParentRequest::set_allocated_parentid(std::string* parentid) {
-  if (parentid != nullptr) {
-    
-  } else {
-    
-  }
-  parentid_.SetAllocatedNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), parentid);
-  // @@protoc_insertion_point(field_set_allocated:RemoveParentRequest.parentId)
 }
 
 // -------------------------------------------------------------------

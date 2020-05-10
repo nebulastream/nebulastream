@@ -4,5 +4,5 @@ add_source_iotdb(
         CoordinatorRPCServer.cpp
         CoordinatorRPCServer.cpp
         CoordinatorRPCClient.cpp
-        CoordinatorRPCClientImpl.cpp
+        CoordinatorRPCClient.cpp
 )
