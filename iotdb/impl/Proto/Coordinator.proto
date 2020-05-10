@@ -86,8 +86,8 @@ message UnregisterLogicalStreamReply {
 }
 
 message AddParentRequest {
-  string childId = 1;
-  string parentId = 2;
+  int64 childId = 1;
+  int64 parentId = 2;
 }
 
 message AddParentReply {
@@ -95,8 +95,8 @@ message AddParentReply {
 }
 
 message RemoveParentRequest {
-  string childId = 1;
-  string parentId = 2;
+  int64 childId = 1;
+  int64 parentId = 2;
 }
 
 message RemoveParentReply {

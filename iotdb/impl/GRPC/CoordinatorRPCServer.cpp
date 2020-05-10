@@ -235,16 +235,8 @@ Status CoordinatorRPCServer::AddParent(ServerContext* context, const AddParentRe
                                        AddParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalStream: request =" << request);
 
-    std::istringstream issChild(request->childid());
-    size_t childIdSizeT;
-    issChild >> childIdSizeT;
-
-    std::istringstream issParent(request->parentid());
-    size_t parentIdSizeT;
-    issParent >> parentIdSizeT;
-
-    bool success = coordinatorServicePtr->addNewParentToSensorNode(childIdSizeT,
-                                                                   parentIdSizeT);
+    bool success = coordinatorServicePtr->addNewParentToSensorNode(request->childid(),
+                                                                   request->parentid());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::AddParent success");
@@ -261,16 +253,9 @@ Status CoordinatorRPCServer::RemoveParent(ServerContext* context, const RemovePa
                                           RemoveParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RemoveParent: request =" << request);
 
-    std::istringstream issChild(request->childid());
-    size_t childIdSizeT;
-    issChild >> childIdSizeT;
 
-    std::istringstream issParent(request->parentid());
-    size_t parentIdSizeT;
-    issParent >> parentIdSizeT;
-
-    bool success = coordinatorServicePtr->removeParentFromSensorNode(childIdSizeT,
-                                                                     parentIdSizeT);
+    bool success = coordinatorServicePtr->removeParentFromSensorNode(request->childid(),
+                                                                     request->parentid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
         reply->set_success(true);

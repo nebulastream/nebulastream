@@ -233,7 +233,7 @@ add_subdirectory(impl)
 # Add Library
 get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
-add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} include/GRPC/CoordinatorRPCServer.hpp impl/GRPC/CoordinatorRPCServer.cpp impl/GRPC/CoordinatorRPCServer.cpp impl/GRPC/CoordinatorRPCClient.cpp include/GRPC/CoordinatorRPCClientImpl.hpp impl/GRPC/CoordinatorRPCClientImpl.cpp)
+add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} include/GRPC/CoordinatorRPCServer.hpp impl/GRPC/CoordinatorRPCServer.cpp impl/GRPC/CoordinatorRPCServer.cpp impl/GRPC/CoordinatorRPCClient.cpp include/GRPC/CoordinatorRPCClient.hpp impl/GRPC/CoordinatorRPCClient.cpp)
 target_include_directories(iotdb PUBLIC "include")
 target_link_libraries(iotdb ${LIBRARIES} grpc++_reflection)
 
