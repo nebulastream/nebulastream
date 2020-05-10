@@ -211,13 +211,15 @@ bool CoordinatorRPCClient::registerNode() {
     Status status = coordinatorStub->RegisterNode(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("CoordinatorRPCClient::removeParent: status ok id=" << reply.id());
+        NES_DEBUG("CoordinatorRPCClient::registerNode: status ok id=" << reply.id());
         this->workerId = reply.id();
         return reply.id();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::removeParent "
+        NES_ERROR(" CoordinatorRPCClient::registerNode "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
+        assert(0);
+
     }
 }
 
@@ -227,8 +229,8 @@ bool CoordinatorRPCClient::connect() {
 
     std::string address = ip + ":" + std::to_string(rpcPort);
 
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address,
-                                                                grpc::InsecureChannelCredentials());
+    chan = grpc::CreateChannel(address,
+                               grpc::InsecureChannelCredentials());
 
     coordinatorStub = RPC::CoordinatorService::NewStub(chan);
 
@@ -240,11 +242,9 @@ bool CoordinatorRPCClient::connect() {
     }
 }
 
-bool CoordinatorRPCClient::disconnecting()
-{
+bool CoordinatorRPCClient::disconnecting() {
 
 }
-
 
 bool CoordinatorRPCClient::CoordinatorRPCClient::shutdown(bool force) {
     NES_DEBUG("CoordinatorRPCClient: shutdown with force=" << force);

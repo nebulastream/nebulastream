@@ -68,29 +68,29 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
     } else {
         NES_DEBUG("NesWorker: Node engine started successfully serverIp=" << serverIp);
     }
-
-    workerCfg.load<io::middleman>();
-    workerCfg.host = serverIp;
-    workerCfg.printCfg();
-
-    coordinatorPort = port;
-    actorSystem = new actor_system{workerCfg};
-
-    workerCfg.publish_port = getRandomPort(workerCfg.publish_port);
-    workerCfg.receive_port = getRandomPort(workerCfg.receive_port);
-
-    workerHandle = actorSystem->spawn<NES::WorkerActor>(workerCfg.ip,
-                                                        workerCfg.publish_port,
-                                                        workerCfg.receive_port,
-                                                        type,
-                                                        nodeEngine);
-
-    abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(workerHandle);
-    workerActor = dynamic_cast<WorkerActor*>(abstractActor);
-
-    auto expectedPort = io::publish(workerHandle, workerCfg.receive_port, nullptr,
-                                    true);
-    NES_DEBUG("spawn handle with id=" << workerHandle.id() << " port=" << expectedPort);
+//
+//    workerCfg.load<io::middleman>();
+//    workerCfg.host = serverIp;
+//    workerCfg.printCfg();
+//
+//    coordinatorPort = port;
+//    actorSystem = new actor_system{workerCfg};
+//
+//    workerCfg.publish_port = getRandomPort(workerCfg.publish_port);
+//    workerCfg.receive_port = getRandomPort(workerCfg.receive_port);
+//
+//    workerHandle = actorSystem->spawn<NES::WorkerActor>(workerCfg.ip,
+//                                                        workerCfg.publish_port,
+//                                                        workerCfg.receive_port,
+//                                                        type,
+//                                                        nodeEngine);
+//
+//    abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(workerHandle);
+//    workerActor = dynamic_cast<WorkerActor*>(abstractActor);
+//
+//    auto expectedPort = io::publish(workerHandle, workerCfg.receive_port, nullptr,
+//                                    true);
+//    NES_DEBUG("spawn handle with id=" << workerHandle.id() << " port=" << expectedPort);
 
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
@@ -154,8 +154,8 @@ bool NesWorker::stop(bool force) {
 bool NesWorker::connect() {
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(
         workerCfg.host,
-        workerCfg.receive_port +123,
-        workerCfg.publish_port +123,
+        workerCfg.receive_port,
+        workerCfg.publish_port,
         2,
         this->type,
         nodeEngine->getNodePropertiesAsString()
@@ -174,16 +174,18 @@ bool NesWorker::connect() {
     bool successPRCRegister = coordinatorRpcClient->registerNode();
     if(successPRCRegister)
     {
-        NES_DEBUG("NesWorker::connect rpc register success");
+        NES_DEBUG("NesWorker::registerNode rpc register success");
+        return true;
     } else
     {
-        NES_DEBUG("NesWorker::connect rpc register failed");
+        NES_DEBUG("NesWorker::registerNode rpc register failed");
         return false;
     }
 
-    bool success = workerActor->connecting(workerCfg.host, coordinatorPort);
-    NES_DEBUG("NesWorker::connect success=" << success);
-    return success;
+//
+//    bool success = workerActor->connecting(workerCfg.host, coordinatorPort);
+//    NES_DEBUG("NesWorker::connect success=" << success);
+//    return success;
 }
 
 bool NesWorker::disconnect() {
