@@ -47,6 +47,13 @@ class Query {
     static Query from(const std::string& sourceStreamName);
 
     /**
+     * @brief Create Query using queryPlan
+     * @param queryPlan the input query plan
+     * @return Query instance
+     */
+    static Query createFromQueryPlan(QueryPlanPtr queryPlan);
+
+    /**
      * @brief: Filter records according to the predicate.
      * filter(Attribute("f1" < 10))
      * @param predicate as expression node
