@@ -127,6 +127,7 @@ class NesWorker {
     */
     QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
+    NodeEnginePtr getNodeEngine();
   private:
     size_t getRandomPort(size_t base);
 

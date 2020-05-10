@@ -2,7 +2,9 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #include "REST/RestServer.hpp"
 #include <Actors/Configurations/WorkerActorConfig.hpp>
-#include <Actors/WorkerActor.hpp>
+//#include <Actors/WorkerActor.hpp>
+#include <Components/NesWorker.hpp>
+
 #include <string>
 #include <grpcpp/grpcpp.h>
 
@@ -87,18 +89,20 @@ class NesCoordinator {
   private:
     size_t getRandomPort(size_t base);
 
-    std::unique_ptr<grpc::Server> rpcServer;
+    std::shared_ptr<grpc::Server> rpcServer;
+    std::thread rpcThread;
+    NesWorkerPtr wrk;
 
     CoordinatorActor* crdActor;
-    CoordinatorActorConfig coordinatorCfg;
+//    CoordinatorActorConfig coordinatorCfg;
     infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
-    actor_system* actorSystemCoordinator;
+//    actor_system* actorSystemCoordinator;
 
-    WorkerActor* wrkActor;
-    NodeEnginePtr nodeEngine;
+//    WorkerActor* wrkActor;
+//    NodeEnginePtr nodeEngine;
     WorkerActorConfig workerCfg;
-    infer_handle_from_class_t<NES::WorkerActor> workerActorHandle;
-    actor_system* actorSystemWorker;
+//    infer_handle_from_class_t<NES::WorkerActor> workerActorHandle;
+//    actor_system* actorSystemWorker;
 
     RestServer* restServer;
     std::string restHost;

@@ -158,7 +158,7 @@ int main(int argc, const char* argv[]) {
 
     cout << "start coordinator with port " << actorPort << endl;
     crd->startCoordinator(/**blocking**/true, actorPort);
-
     cout << "coordinator started" << endl;
+
 }
 

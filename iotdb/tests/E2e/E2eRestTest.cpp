@@ -1,20 +1,13 @@
 #include <gtest/gtest.h>
 #include <Util/Logger.hpp>
 #include <string>
-#include <thread>
 #include <unistd.h>
 #define GetCurrentDir getcwd
-#include <gtest/gtest.h>
 #include <cpprest/http_client.h>
 #include <cpprest/filestream.h>
 #include <boost/process.hpp>
-#include <err.h>
-#include <signal.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <sstream>
-#include <unistd.h>
 using namespace std;
 using namespace utility;
 // Common utilities like string conversions
@@ -42,17 +35,11 @@ class E2eRestTest : public testing::Test {
     }
 
     static void TearDownTestCase() {
-        std::cout << "Tear down ActorCoordinatorWorkerTest test class."
+        std::cout << "Tear d own ActorCoordinatorWorkerTest test class."
                   << std::endl;
     }
 };
 
-std::string GetCurrentWorkingDir(void) {
-    char buff[FILENAME_MAX];
-    GetCurrentDir(buff, FILENAME_MAX);
-    std::string current_working_dir(buff);
-    return current_working_dir;
-}
 
 TEST_F(E2eRestTest, _testExecutingValidUserQueryWithPrintOutput) {
     cout << " start coordinator" << endl;

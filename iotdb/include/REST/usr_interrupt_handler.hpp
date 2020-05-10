@@ -15,6 +15,7 @@ class InterruptHandler {
     }
 
     static void handleUserInterrupt(int signal) {
+        std::cout << "handleUserInterrupt" << '\n';
         if (signal == SIGINT) {
             std::cout << "SIGINT trapped ..." << '\n';
             _condition.notify_one();
@@ -22,9 +23,11 @@ class InterruptHandler {
     }
 
     static void waitForUserInterrupt() {
+        std::cout << "waitForUserInterrupt()" << '\n';
         std::unique_lock<std::mutex> lock{_mutex};
+        std::cout << "waitForUserInterrupt() got lock" << '\n';
         _condition.wait(lock);
-        std::cout << "user has signaled to interrup program..." << '\n';
+        std::cout << "user has signaled to interrupt program..." << '\n';
         lock.unlock();
     }
 };

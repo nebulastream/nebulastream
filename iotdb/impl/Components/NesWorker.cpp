@@ -2,11 +2,12 @@
 #include <Util/Logger.hpp>
 
 #include <caf/actor_cast.hpp>
-#include <signal.h>//  our new library
+#include <signal.h>
 
 volatile sig_atomic_t flag = 0;
 
 void termFunc(int sig) {
+    cout << "termfunc" << endl;
     flag = 1;
 }
 
@@ -20,10 +21,7 @@ NesWorker::NesWorker() {
     this->type = NESNodeType::Sensor;
     NES_DEBUG("NesWorker: constructed");
 
-    // Register signals
-    signal(SIGINT, termFunc);
 }
-
 NesWorker::NesWorker(NESNodeType type) {
     connected = false;
     withRegisterStream = false;
@@ -31,9 +29,6 @@ NesWorker::NesWorker(NESNodeType type) {
     coordinatorPort = 0;
     this->type = type;
     NES_DEBUG("NesWorker: constructed");
-
-    // Register signals
-    signal(SIGINT, termFunc);
 }
 NesWorker::~NesWorker() {
     NES_DEBUG("NesWorker::~NesWorker()");
@@ -108,6 +103,7 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
     stopped = false;
     if (blocking) {
         NES_DEBUG("NesWorker: started, join now and waiting for work");
+        signal(SIGINT, termFunc);
         while (true) {
             if (flag) {
                 NES_DEBUG("NesWorker: caught signal terminating worker");
@@ -124,6 +120,11 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
         NES_DEBUG("NesWorker: started, return without blocking");
         return true;
     }
+}
+
+NodeEnginePtr NesWorker::getNodeEngine()
+{
+    return nodeEngine;
 }
 
 bool NesWorker::stop(bool force) {
