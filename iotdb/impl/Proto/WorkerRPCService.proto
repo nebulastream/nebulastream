@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+service WorkerRPCService {
+  rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
+  rpc UndeployQuery (UndeployQueryRequest) returns (UndeployQueryReply) {}
+
+  rpc RegisterQuery (RegisterQueryRequest) returns (RegisterQueryReply) {}
+  rpc UnregisterQuery (UnregisterQueryRequest) returns (UnregisterQueryReply) {}
+
+  rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
+  rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
+}
+
+message DeployQueryRequest {
+  string eto = 1;
+}
+
+message DeployQueryReply {
+  bool success = 1;
+}
+
+message UndeployQueryRequest {
+  string queryId = 1;
+}
+
+message UndeployQueryReply {
+  bool success = 1;
+}
+
+message RegisterQueryRequest {
+  string eto = 1;
+}
+
+message RegisterQueryReply {
+  bool success = 1;
+}
+
+message UnregisterQueryRequest {
+  string queryId = 1;
+}
+
+message UnregisterQueryReply {
+  bool success = 1;
+}
+
+message StartQueryRequest {
+  string queryId = 1;
+}
+
+message StartQueryReply {
+  bool success = 1;
+}
+
+message StopQueryRequest {
+  string queryId = 1;
+}
+
+message StopQueryReply {
+  bool success = 1;
+}
