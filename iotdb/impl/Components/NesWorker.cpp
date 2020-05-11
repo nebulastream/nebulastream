@@ -4,6 +4,10 @@
 #include <caf/actor_cast.hpp>
 #include <signal.h>
 
+#include <GRPC/WorkerRPCServer.hpp>
+
+
+
 volatile sig_atomic_t flag = 0;
 
 void termFunc(int sig) {
@@ -51,6 +55,13 @@ size_t NesWorker::getRandomPort(size_t base) {
     return base - 12 + time(0) * 321 * rand() % 10000;
 }
 
+void startWorkerRPCServer(std::shared_ptr<Server>& rpcServer) {
+
+    NES_DEBUG("startWorkerRPCServer: Server listening");
+    rpcServer->Wait();
+    NES_DEBUG("startWorkerRPCServer: end listening");
+}
+
 bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::string serverIp) {
     NES_DEBUG("NesWorker: start with blocking " << blocking << " serverIp=" << serverIp << " port=" << port);
 
@@ -63,29 +74,25 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
     } else {
         NES_DEBUG("NesWorker: Node engine started successfully serverIp=" << serverIp);
     }
-//
-//    workerCfg.load<io::middleman>();
-//    workerCfg.host = serverIp;
-//    workerCfg.printCfg();
-//
-//    coordinatorPort = port;
-//    actorSystem = new actor_system{workerCfg};
-//
-//    workerCfg.publish_port = getRandomPort(workerCfg.publish_port);
-//    workerCfg.receive_port = getRandomPort(workerCfg.receive_port);
-//
-//    workerHandle = actorSystem->spawn<NES::WorkerActor>(workerCfg.ip,
-//                                                        workerCfg.publish_port,
-//                                                        workerCfg.receive_port,
-//                                                        type,
-//                                                        nodeEngine);
-//
-//    abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(workerHandle);
-//    workerActor = dynamic_cast<WorkerActor*>(abstractActor);
-//
-//    auto expectedPort = io::publish(workerHandle, workerCfg.receive_port, nullptr,
-//                                    true);
-//    NES_DEBUG("spawn handle with id=" << workerHandle.id() << " port=" << expectedPort);
+
+    std::string address = workerCfg.ip + ":" + ::to_string(workerCfg.receive_port+1);
+    NES_DEBUG("startWorkerRPCServer for address=" << address);
+    WorkerRPCServer service(nodeEngine);
+
+    ServerBuilder builder;
+    builder.AddListeningPort(address, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    rpcServer = std::move(server);
+
+    std::thread threadRPC([&]()
+                          {
+                            startWorkerRPCServer(rpcServer);
+                          });
+
+    rpcThread = std::move(threadRPC);
+    NES_DEBUG("NesWorker: rpcThread successfully started");
+
 
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
@@ -130,9 +137,11 @@ NodeEnginePtr NesWorker::getNodeEngine()
 bool NesWorker::stop(bool force) {
     NES_DEBUG("NesWorker: stop");
     if (!stopped) {
-        bool successShutdownActor = workerActor->shutdown(force);
-        if (successShutdownActor) {
-            anon_send(workerHandle, exit_reason::user_shutdown);
+        NES_DEBUG("NesWorker: stopping rpc server");
+        rpcServer->Shutdown();
+        if (rpcThread.joinable()) {
+            NES_DEBUG("NesWorker: join rpcThread");
+            rpcThread.join();
         }
 
         bool successShutdownNodeEngine = nodeEngine->stop(force);
@@ -142,10 +151,7 @@ bool NesWorker::stop(bool force) {
         } else {
             NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
         }
-
-        bool success = successShutdownActor && successShutdownNodeEngine;
-        NES_DEBUG("NesWorker::stop success=" << success);
-        return successShutdownActor && successShutdownNodeEngine;
+        return successShutdownNodeEngine;
     } else {
         NES_WARNING("NesWorker::stop: already stopped");
         return true;

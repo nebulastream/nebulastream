@@ -44,6 +44,8 @@ bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
         NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
+        throw Exception("Error while CoordinatorRPCClient::registerPhysicalStream");
+
     }
 }
 
@@ -83,6 +85,7 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName,
         NES_DEBUG(" CoordinatorRPCClient::registerLogicalStream "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
+        throw Exception("Error while CoordinatorRPCClient::registerLogicalStream");
     }
 }
 
@@ -110,6 +113,7 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamNam
         NES_DEBUG(" CoordinatorRPCClient::unregisterPhysicalStream "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
+        throw Exception("Error while CoordinatorRPCClient::unregisterPhysicalStream");
     }
 }
 
@@ -133,6 +137,7 @@ bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
         NES_DEBUG(" CoordinatorRPCClient::unregisterLogicalStream "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
+        throw Exception("Error while CoordinatorRPCClient::unregisterLogicalStream");
     }
 }
 
@@ -156,6 +161,7 @@ bool CoordinatorRPCClient::addParent(size_t parentId) {
         NES_DEBUG(" CoordinatorRPCClient::addParent "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
+        throw Exception("Error while  CoordinatorRPCClient::addParent");
     }
 }
 
@@ -183,6 +189,7 @@ bool CoordinatorRPCClient::removeParent(size_t parentId) {
         NES_DEBUG(" CoordinatorRPCClient::removeParent "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
+        throw Exception("Error while  CoordinatorRPCClient::removeParent");
     }
 }
 

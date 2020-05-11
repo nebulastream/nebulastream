@@ -131,6 +131,9 @@ class NesWorker {
   private:
     size_t getRandomPort(size_t base);
 
+    std::shared_ptr<grpc::Server> rpcServer;
+    std::thread rpcThread;
+
     WorkerActor* workerActor;
     NodeEnginePtr nodeEngine;
     CoordinatorRPCClientPtr coordinatorRpcClient;
