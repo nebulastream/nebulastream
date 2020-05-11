@@ -59,9 +59,7 @@ class CoordinatorService {
      * @return handle to the node
      */
     NESTopologyEntryPtr registerNode(size_t id,
-                                     const string& ip,
-                                     uint16_t publish_port,
-                                     uint16_t receive_port,
+                                     std::string address,
                                      int cpu,
                                      const string& nodeProperties,
                                      PhysicalStreamConfig streamConf,

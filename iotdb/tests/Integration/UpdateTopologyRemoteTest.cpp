@@ -30,13 +30,13 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>();
-    bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+2), NESNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;
 
@@ -63,7 +63,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     cout << "secondId=" << secondId << endl;
 
     cout << "ADD NEW PARENT" << endl;
-    bool successAddPar = wrk->addParent(secondId);
+    bool successAddPar = wrk->addParent(atoi(secondId.c_str()));
     EXPECT_TRUE(successAddPar);
 
     //NOTE: we cannot check full output as ids change each run
@@ -76,7 +76,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     ASSERT_TRUE(retString2.find("1--2 [label=\"2\"]") != std::string::npos);
 
     cout << "REMOVE NEW PARENT" << endl;
-    bool successRemoveParent = wrk->removeParent(secondId);
+    bool successRemoveParent = wrk->removeParent(atoi(secondId.c_str()));
     EXPECT_TRUE(successAddPar);
 
     //NOTE: we cannot check full output as ids change each run
@@ -108,13 +108,13 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>();
-    bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+2), NESNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;
 
@@ -141,7 +141,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     cout << "secondId=" << secondId << endl;
 
     cout << "REMOVE NEW PARENT" << endl;
-    bool successRemoveParent = wrk->removeParent(firstId);
+    bool successRemoveParent = wrk->removeParent(atoi(firstId.c_str()));
     EXPECT_TRUE(!successRemoveParent);
 
     //NOTE: we cannot check full output as ids change each run

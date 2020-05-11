@@ -4,15 +4,15 @@
 #include <string>
 namespace NES {
 
-CoordinatorRPCClient::CoordinatorRPCClient(std::string ip,
-                                           uint16_t rpcPort,
-                                           uint16_t zmqPort,
+CoordinatorRPCClient::CoordinatorRPCClient(string coordinatorIp, std::string  coordinatorPort,
+                                           std::string localWorkerIp, std::string localWorkerPort,
                                            size_t numberOfCpus,
                                            NESNodeType type,
                                            string nodeProperties)
-    : ip(ip),
-      rpcPort(rpcPort),
-      zmqPort(zmqPort),
+    : coordinatorIp(coordinatorIp),
+      coordinatorPort(coordinatorPort),
+      localWorkerIp(localWorkerIp),
+      localWorkerPort(localWorkerPort),
       numberOfCpus(numberOfCpus),
       type(type),
       nodeProperties(nodeProperties) {
@@ -203,10 +203,9 @@ bool CoordinatorRPCClient::registerNode() {
         throw new Exception("CoordinatorRPCClient::registerNode wrong node type");
     }
 
+    std::string address = localWorkerIp + ":" + localWorkerIp;
     RegisterNodeRequest request;
-    request.set_ip(ip);
-    request.set_rpcport(rpcPort);
-    request.set_zmqport(zmqPort);
+    request.set_address(address);
     request.set_numberofcpus(numberOfCpus);
     request.set_nodeproperties(nodeProperties);
     request.set_type(type);
@@ -232,9 +231,9 @@ bool CoordinatorRPCClient::registerNode() {
 
 bool CoordinatorRPCClient::connect() {
     NES_DEBUG(
-        "CoordinatorRPCClient::connect try to connect to host=" << ip << " port=" << rpcPort);
+        "CoordinatorRPCClient::connect try to connect to host=" << coordinatorIp << " port=" << coordinatorPort);
 
-    std::string address = ip + ":" + std::to_string(rpcPort);
+    std::string address = coordinatorIp + ":" + coordinatorPort;
 
     chan = grpc::CreateChannel(address,
                                grpc::InsecureChannelCredentials());

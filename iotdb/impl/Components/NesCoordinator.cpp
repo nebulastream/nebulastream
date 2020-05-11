@@ -124,8 +124,8 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     rpcThread = std::move(threadRPC);
 
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    wrk = std::make_shared<NesWorker>(NESNodeType::Worker);
-    wrk->start(/**blocking*/false, /**withConnect*/true, actorPort, serverIp);
+    wrk = std::make_shared<NesWorker>(workerCfg.ip, std::to_string(workerCfg.receive_port), workerCfg.ip, std::to_string(workerCfg.receive_port +1), NESNodeType::Worker);
+    wrk->start(/**blocking*/false, /**withConnect*/true);
 
     NES_DEBUG("NesCoordinator starting rest server");
     std::thread th0(startRestServer, restServer,

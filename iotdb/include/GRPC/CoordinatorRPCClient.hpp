@@ -18,8 +18,9 @@ namespace NES {
 class CoordinatorRPCClient {
   public:
 
-    CoordinatorRPCClient(string ip, uint16_t rpcPort,
-    uint16_t zmqPort, size_t numberOfCpus, NESNodeType type, string nodeProperties);
+    CoordinatorRPCClient(string coordinatorIp, std::string  coordinatorPort,
+                         std::string localWorkerIp, std::string localWorkerPort,
+        size_t numberOfCpus, NESNodeType type, string nodeProperties);
 
     bool connect();
 
@@ -98,9 +99,12 @@ class CoordinatorRPCClient {
     std::shared_ptr<::grpc::Channel> chan;
 
     size_t workerId;
-    std::string ip;
-    size_t rpcPort;
-    size_t zmqPort;
+
+    std::string coordinatorIp;
+    std::string coordinatorPort;
+    std::string localWorkerIp;
+    std::string localWorkerPort;
+
     size_t numberOfCpus;
     std::string nodeProperties;
     size_t type;

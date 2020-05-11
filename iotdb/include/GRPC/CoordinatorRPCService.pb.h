@@ -229,30 +229,28 @@ class RegisterNodeRequest :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kIpFieldNumber = 1,
-    kNodePropertiesFieldNumber = 5,
-    kRpcPortFieldNumber = 2,
-    kZmqPortFieldNumber = 3,
-    kNumberOfCpusFieldNumber = 4,
-    kTypeFieldNumber = 6,
+    kAddressFieldNumber = 1,
+    kNodePropertiesFieldNumber = 3,
+    kNumberOfCpusFieldNumber = 2,
+    kTypeFieldNumber = 4,
   };
-  // string ip = 1;
-  void clear_ip();
-  const std::string& ip() const;
-  void set_ip(const std::string& value);
-  void set_ip(std::string&& value);
-  void set_ip(const char* value);
-  void set_ip(const char* value, size_t size);
-  std::string* mutable_ip();
-  std::string* release_ip();
-  void set_allocated_ip(std::string* ip);
+  // string address = 1;
+  void clear_address();
+  const std::string& address() const;
+  void set_address(const std::string& value);
+  void set_address(std::string&& value);
+  void set_address(const char* value);
+  void set_address(const char* value, size_t size);
+  std::string* mutable_address();
+  std::string* release_address();
+  void set_allocated_address(std::string* address);
   private:
-  const std::string& _internal_ip() const;
-  void _internal_set_ip(const std::string& value);
-  std::string* _internal_mutable_ip();
+  const std::string& _internal_address() const;
+  void _internal_set_address(const std::string& value);
+  std::string* _internal_mutable_address();
   public:
 
-  // string nodeProperties = 5;
+  // string nodeProperties = 3;
   void clear_nodeproperties();
   const std::string& nodeproperties() const;
   void set_nodeproperties(const std::string& value);
@@ -268,25 +266,7 @@ class RegisterNodeRequest :
   std::string* _internal_mutable_nodeproperties();
   public:
 
-  // int32 rpcPort = 2;
-  void clear_rpcport();
-  ::PROTOBUF_NAMESPACE_ID::int32 rpcport() const;
-  void set_rpcport(::PROTOBUF_NAMESPACE_ID::int32 value);
-  private:
-  ::PROTOBUF_NAMESPACE_ID::int32 _internal_rpcport() const;
-  void _internal_set_rpcport(::PROTOBUF_NAMESPACE_ID::int32 value);
-  public:
-
-  // int32 zmqPort = 3;
-  void clear_zmqport();
-  ::PROTOBUF_NAMESPACE_ID::int32 zmqport() const;
-  void set_zmqport(::PROTOBUF_NAMESPACE_ID::int32 value);
-  private:
-  ::PROTOBUF_NAMESPACE_ID::int32 _internal_zmqport() const;
-  void _internal_set_zmqport(::PROTOBUF_NAMESPACE_ID::int32 value);
-  public:
-
-  // int32 numberOfCpus = 4;
+  // int32 numberOfCpus = 2;
   void clear_numberofcpus();
   ::PROTOBUF_NAMESPACE_ID::int32 numberofcpus() const;
   void set_numberofcpus(::PROTOBUF_NAMESPACE_ID::int32 value);
@@ -295,7 +275,7 @@ class RegisterNodeRequest :
   void _internal_set_numberofcpus(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
-  // int32 type = 6;
+  // int32 type = 4;
   void clear_type();
   ::PROTOBUF_NAMESPACE_ID::int32 type() const;
   void set_type(::PROTOBUF_NAMESPACE_ID::int32 value);
@@ -309,10 +289,8 @@ class RegisterNodeRequest :
   class _Internal;
 
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr ip_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr address_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr nodeproperties_;
-  ::PROTOBUF_NAMESPACE_ID::int32 rpcport_;
-  ::PROTOBUF_NAMESPACE_ID::int32 zmqport_;
   ::PROTOBUF_NAMESPACE_ID::int32 numberofcpus_;
   ::PROTOBUF_NAMESPACE_ID::int32 type_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -2455,107 +2433,67 @@ class RemoveParentReply :
 #endif  // __GNUC__
 // RegisterNodeRequest
 
-// string ip = 1;
-inline void RegisterNodeRequest::clear_ip() {
-  ip_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+// string address = 1;
+inline void RegisterNodeRequest::clear_address() {
+  address_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
-inline const std::string& RegisterNodeRequest::ip() const {
-  // @@protoc_insertion_point(field_get:RegisterNodeRequest.ip)
-  return _internal_ip();
+inline const std::string& RegisterNodeRequest::address() const {
+  // @@protoc_insertion_point(field_get:RegisterNodeRequest.address)
+  return _internal_address();
 }
-inline void RegisterNodeRequest::set_ip(const std::string& value) {
-  _internal_set_ip(value);
-  // @@protoc_insertion_point(field_set:RegisterNodeRequest.ip)
+inline void RegisterNodeRequest::set_address(const std::string& value) {
+  _internal_set_address(value);
+  // @@protoc_insertion_point(field_set:RegisterNodeRequest.address)
 }
-inline std::string* RegisterNodeRequest::mutable_ip() {
-  // @@protoc_insertion_point(field_mutable:RegisterNodeRequest.ip)
-  return _internal_mutable_ip();
+inline std::string* RegisterNodeRequest::mutable_address() {
+  // @@protoc_insertion_point(field_mutable:RegisterNodeRequest.address)
+  return _internal_mutable_address();
 }
-inline const std::string& RegisterNodeRequest::_internal_ip() const {
-  return ip_.GetNoArena();
+inline const std::string& RegisterNodeRequest::_internal_address() const {
+  return address_.GetNoArena();
 }
-inline void RegisterNodeRequest::_internal_set_ip(const std::string& value) {
+inline void RegisterNodeRequest::_internal_set_address(const std::string& value) {
   
-  ip_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value);
+  address_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value);
 }
-inline void RegisterNodeRequest::set_ip(std::string&& value) {
+inline void RegisterNodeRequest::set_address(std::string&& value) {
   
-  ip_.SetNoArena(
+  address_.SetNoArena(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:RegisterNodeRequest.ip)
+  // @@protoc_insertion_point(field_set_rvalue:RegisterNodeRequest.address)
 }
-inline void RegisterNodeRequest::set_ip(const char* value) {
+inline void RegisterNodeRequest::set_address(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
-  ip_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:RegisterNodeRequest.ip)
+  address_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:RegisterNodeRequest.address)
 }
-inline void RegisterNodeRequest::set_ip(const char* value, size_t size) {
+inline void RegisterNodeRequest::set_address(const char* value, size_t size) {
   
-  ip_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+  address_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:RegisterNodeRequest.ip)
+  // @@protoc_insertion_point(field_set_pointer:RegisterNodeRequest.address)
 }
-inline std::string* RegisterNodeRequest::_internal_mutable_ip() {
+inline std::string* RegisterNodeRequest::_internal_mutable_address() {
   
-  return ip_.MutableNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  return address_.MutableNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
-inline std::string* RegisterNodeRequest::release_ip() {
-  // @@protoc_insertion_point(field_release:RegisterNodeRequest.ip)
+inline std::string* RegisterNodeRequest::release_address() {
+  // @@protoc_insertion_point(field_release:RegisterNodeRequest.address)
   
-  return ip_.ReleaseNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  return address_.ReleaseNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
-inline void RegisterNodeRequest::set_allocated_ip(std::string* ip) {
-  if (ip != nullptr) {
+inline void RegisterNodeRequest::set_allocated_address(std::string* address) {
+  if (address != nullptr) {
     
   } else {
     
   }
-  ip_.SetAllocatedNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ip);
-  // @@protoc_insertion_point(field_set_allocated:RegisterNodeRequest.ip)
+  address_.SetAllocatedNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), address);
+  // @@protoc_insertion_point(field_set_allocated:RegisterNodeRequest.address)
 }
 
-// int32 rpcPort = 2;
-inline void RegisterNodeRequest::clear_rpcport() {
-  rpcport_ = 0;
-}
-inline ::PROTOBUF_NAMESPACE_ID::int32 RegisterNodeRequest::_internal_rpcport() const {
-  return rpcport_;
-}
-inline ::PROTOBUF_NAMESPACE_ID::int32 RegisterNodeRequest::rpcport() const {
-  // @@protoc_insertion_point(field_get:RegisterNodeRequest.rpcPort)
-  return _internal_rpcport();
-}
-inline void RegisterNodeRequest::_internal_set_rpcport(::PROTOBUF_NAMESPACE_ID::int32 value) {
-  
-  rpcport_ = value;
-}
-inline void RegisterNodeRequest::set_rpcport(::PROTOBUF_NAMESPACE_ID::int32 value) {
-  _internal_set_rpcport(value);
-  // @@protoc_insertion_point(field_set:RegisterNodeRequest.rpcPort)
-}
-
-// int32 zmqPort = 3;
-inline void RegisterNodeRequest::clear_zmqport() {
-  zmqport_ = 0;
-}
-inline ::PROTOBUF_NAMESPACE_ID::int32 RegisterNodeRequest::_internal_zmqport() const {
-  return zmqport_;
-}
-inline ::PROTOBUF_NAMESPACE_ID::int32 RegisterNodeRequest::zmqport() const {
-  // @@protoc_insertion_point(field_get:RegisterNodeRequest.zmqPort)
-  return _internal_zmqport();
-}
-inline void RegisterNodeRequest::_internal_set_zmqport(::PROTOBUF_NAMESPACE_ID::int32 value) {
-  
-  zmqport_ = value;
-}
-inline void RegisterNodeRequest::set_zmqport(::PROTOBUF_NAMESPACE_ID::int32 value) {
-  _internal_set_zmqport(value);
-  // @@protoc_insertion_point(field_set:RegisterNodeRequest.zmqPort)
-}
-
-// int32 numberOfCpus = 4;
+// int32 numberOfCpus = 2;
 inline void RegisterNodeRequest::clear_numberofcpus() {
   numberofcpus_ = 0;
 }
@@ -2575,7 +2513,7 @@ inline void RegisterNodeRequest::set_numberofcpus(::PROTOBUF_NAMESPACE_ID::int32
   // @@protoc_insertion_point(field_set:RegisterNodeRequest.numberOfCpus)
 }
 
-// string nodeProperties = 5;
+// string nodeProperties = 3;
 inline void RegisterNodeRequest::clear_nodeproperties() {
   nodeproperties_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
@@ -2635,7 +2573,7 @@ inline void RegisterNodeRequest::set_allocated_nodeproperties(std::string* nodep
   // @@protoc_insertion_point(field_set_allocated:RegisterNodeRequest.nodeProperties)
 }
 
-// int32 type = 6;
+// int32 type = 4;
 inline void RegisterNodeRequest::clear_type() {
   type_ = 0;
 }

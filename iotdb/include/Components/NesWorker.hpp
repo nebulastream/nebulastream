@@ -16,22 +16,21 @@ class WorkerActor;
 typedef std::shared_ptr<WorkerActor> WorkerActorPtr;
 class NesWorker {
   public:
+
     /**
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    NesWorker();
+    NesWorker(std::string coordinatorIp,
+        std::string coordinatorPort,
+        std::string localWorkerIp,
+        std::string localWorkerPort,
+        NESNodeType type);
 
     /**
      * @brief default dtor
      */
     ~NesWorker();
-
-    /**
-     * @brief default constructor with option for sensor or worker node
-     * @note this will create the worker actor using the default worker config
-     */
-    NesWorker(NESNodeType type);
 
     /**
      * @brief start the worker using the default worker config
@@ -41,8 +40,7 @@ class NesWorker {
      * @param ip of the server
      * @return bool indicating success
      */
-    bool start(bool blocking, bool withConnect, uint16_t port,
-               std::string serverIp);
+    bool start(bool blocking, bool withConnect);
 
     /**
      * @brief configure setup for register a new stream
@@ -90,7 +88,7 @@ class NesWorker {
      * @param name of the stream
      * @return bool indicating success
      */
-    bool deregisterLogicalStream(std::string logicalName);
+    bool unregisterLogicalStream(std::string logicalName);
 
     /**
      * @brief method to register physical stream with the coordinator
@@ -100,25 +98,25 @@ class NesWorker {
     bool registerPhysicalStream(PhysicalStreamConfig conf);
 
     /**
-    * @brief method to deregister physical stream with the coordinator
+    * @brief method to deregister physical stream with the coordinatorf
     * @param logical and physical of the stream
      * @return bool indicating success
     */
-    bool deregisterPhysicalStream(std::string logicalName, std::string physicalName);
+    bool unregisterPhysicalStream(std::string logicalName, std::string physicalName);
 
     /**
     * @brief method add new parent to this node
     * @param parentId
     * @return bool indicating success
     */
-    bool addParent(std::string parentId);
+    bool addParent(size_t parentId);
 
     /**
     * @brief method remove parent from this node
     * @param parentId
     * @return bool indicating success
     */
-    bool removeParent(std::string parentId);
+    bool removeParent(size_t parentId);
 
     /**
     * @brief method to return the query statistics
@@ -134,7 +132,7 @@ class NesWorker {
     std::shared_ptr<grpc::Server> rpcServer;
     std::thread rpcThread;
 
-    WorkerActor* workerActor;
+
     NodeEnginePtr nodeEngine;
     CoordinatorRPCClientPtr coordinatorRpcClient;
 
@@ -144,10 +142,15 @@ class NesWorker {
     bool withParent;
     std::string parentId;
 
-    infer_handle_from_class_t<NES::WorkerActor> workerHandle;
-    actor_system* actorSystem;
-    WorkerActorConfig workerCfg;
-    uint16_t coordinatorPort;
+    std::string coordinatorIp;
+    std::string coordinatorPort;
+    std::string localWorkerIp;
+    std::string localWorkerPort;
+
+//    WorkerActor* workerActor;
+//    infer_handle_from_class_t<NES::WorkerActor> workerHandle;
+//    actor_system* actorSystem;
+//    WorkerActorConfig workerCfg;
 
     NESNodeType type;
     bool stopped;
