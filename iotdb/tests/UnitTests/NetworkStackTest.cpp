@@ -160,7 +160,7 @@ TEST_F(NetworkStackTest, DISABLED_registerChannelWithActors) {
 
     string query = "InputQuery::from(default_logical).print(std::cout);";
 
-    crd->deployQuery(query, "BottomUp");
+    crd->addQuery(query, "BottomUp");
     sleep(2);
 
     bool retStopWrk1 = wrk1->stop(false);

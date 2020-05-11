@@ -19,6 +19,9 @@ using grpc::Status;
 namespace NES {
 class WorkerRPCClient {
 
+  public:
+    WorkerRPCClient();
+
     /**
     * @brief deploy registers and starts a query
     * @param queryId
@@ -65,10 +68,9 @@ class WorkerRPCClient {
     bool stopQuery(std::string address, std::string queryId);
 
   private:
-    CoordinatorServicePtr coordinatorServicePtr;
-    std::unique_ptr<WorkerRPCService::Stub> workerStub;
 
 };
+typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
 }
 

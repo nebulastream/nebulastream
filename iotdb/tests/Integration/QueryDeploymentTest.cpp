@@ -38,12 +38,12 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerPrint) {
 
     string query = "InputQuery::from(default_logical).print(std::cout);";
 
-    string queryId = crd->deployQuery(query, "BottomUp");
+    string queryId = crd->addQuery(query, "BottomUp");
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
 
-    crd->undeployQuery(queryId);
+    crd->removeQuery(queryId);
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
@@ -73,13 +73,13 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerPrint) {
 
     string query = "InputQuery::from(default_logical).print(std::cout);";
 
-    std::string queryId = crd->deployQuery(query, "BottomUp");
+    std::string queryId = crd->addQuery(query, "BottomUp");
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 2));
 
-    crd->undeployQuery(queryId);
+    crd->removeQuery(queryId);
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
@@ -108,7 +108,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 
     string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
 
-    std::string queryId = crd->deployQuery(query, "BottomUp");
+    std::string queryId = crd->addQuery(query, "BottomUp");
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
@@ -139,7 +139,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     cout << "expContent=" << expectedContent << endl;
     EXPECT_EQ(content, expectedContent);
 
-    crd->undeployQuery(queryId);
+    crd->removeQuery(queryId);
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
@@ -168,12 +168,12 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
 
     string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
 
-    string queryId = crd->deployQuery(query, "BottomUp");
+    string queryId = crd->addQuery(query, "BottomUp");
     ASSERT_NE(queryId, "");
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
-    bool successUndeploy = crd->undeployQuery(queryId);
+    bool successUndeploy = crd->removeQuery(queryId);
     ASSERT_TRUE(successUndeploy);
 
     bool retStopWrk1 = wrk1->stop(false);
@@ -208,7 +208,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputWithExceptions) {
     cout << "worker2 started successfully" << endl;
 
     string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
-    string queryId = crd->deployQuery(query, "BottomUp");
+    string queryId = crd->addQuery(query, "BottomUp");
     ASSERT_NE(queryId, "");
 
 
@@ -325,7 +325,7 @@ TEST_F(QueryDeploymentTest, testDeployAndUndeployTwoWorkerFileOutput) {
 
     string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
 
-    string queryId = crd->deployQuery(query, "BottomUp");
+    string queryId = crd->addQuery(query, "BottomUp");
     ASSERT_NE(queryId, "");
 
     cout << "check crd" << endl;
@@ -335,7 +335,7 @@ TEST_F(QueryDeploymentTest, testDeployAndUndeployTwoWorkerFileOutput) {
     cout << "check wrk2" << endl;
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, 1));
 
-    bool successUndeploy = crd->undeployQuery(queryId);
+    bool successUndeploy = crd->removeQuery(queryId);
     ASSERT_TRUE(successUndeploy);
 
     bool retStopWrk1 = wrk1->stop(false);
