@@ -5,4 +5,6 @@ add_source_iotdb(
         CoordinatorRPCService.pb.cc
         WorkerRPCService.grpc.pb.cc
         WorkerRPCService.pb.cc
+        WorkerRPCClient.cpp
+        WorkerRPCServer.cpp
 )
