@@ -20,6 +20,9 @@ class NesCoordinator {
      */
     NesCoordinator();
 
+
+    NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort);
+
     /**
      * @brief dtor
      * @return
@@ -28,18 +31,9 @@ class NesCoordinator {
 
     /**
      * @brief start actor: rest server, caf server, coordinator actor
-     * @note this will start the server at a random port
      * @param bool if the method should block
-     * @return port of where started
      */
-    uint16_t startCoordinator(bool blocking);
-
-    /**
-     * @brief start actor: rest server, caf server, coordinator actor
-     * @param bool if the method should block
-     * @param port where to start the serv er
-     */
-    void startCoordinator(bool blocking, uint16_t port);
+    size_t startCoordinator(bool blocking);
 
     /**
      * @brief method to stop coordinator
@@ -54,23 +48,43 @@ class NesCoordinator {
      * @param strategy : deployment strategy for the query operators
      * @return UUID of the submitted user query.
      */
-    string deployQuery(const string& queryString, const string& strategy);
+    string deployQuery(const string queryString, const string strategy);
 
     /**
      * @brief method to deregister, undeploy, and stop a query
-     * @param queryString : user query, in string form, to be executed
-     * @param strategy : deployment strategy for the query operators
-     * @return UUID of the submitted user query.
+     * @param queryID
+     * @return bool indicating success
      */
-    bool undeployQuery(const string& queryId);
+    bool undeployQuery(const string queryId);
 
     /**
-     * @brief method to overwrite the default config for the rest server
-     * @param host as string
-     * @param port as uint
- */
-    void setRestConfiguration(std::string host, uint16_t port);
+    * @brief method to register a query without start
+    * @param queryString : user query, in string form, to be executed
+    * @param strategy : deployment strategy for the query operators
+    * @return UUID of the submitted user query.
+    */
+    string registerQuery(const string queryString, const string strategy);
 
+    /**
+     * @brief ungregisters a query
+     * @param queryID
+     * @return bool indicating success
+     */
+    bool unregisterQuery(const string queryId);
+
+    /**
+     * @brief method to start a already deployed query
+     * @param queryId to start
+     * @return bool indicating success
+     */
+    bool startQuery(const std::string queryId);
+
+    /**
+     * @brief method to stop a query
+     * @param queryId to stop
+     * @return bool indicating success
+     */
+    bool stopQuery(const std::string queryId);
 
     /**
      * @brief method to overwrite server ip
@@ -89,25 +103,25 @@ class NesCoordinator {
     size_t getRandomPort(size_t base);
 
     std::shared_ptr<grpc::Server> rpcServer;
+    uint16_t rpcPort;
     std::thread rpcThread;
     NesWorkerPtr wrk;
 
-    CoordinatorActor* crdActor;
-//    CoordinatorActorConfig coordinatorCfg;
-    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
-//    actor_system* actorSystemCoordinator;
+    //    CoordinatorActor* crdActor;
+    //    CoordinatorActorConfig coordinatorCfg;
+    //    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
+    //    actor_system* actorSystemCoordinator;
 
-//    WorkerActor* wrkActor;
-//    NodeEnginePtr nodeEngine;
-    WorkerActorConfig workerCfg;
-//    infer_handle_from_class_t<NES::WorkerActor> workerActorHandle;
-//    actor_system* actorSystemWorker;
+    //    WorkerActor* wrkActor;
+    //    NodeEnginePtr nodeEngine;
+    //    WorkerActorConfig workerCfg;
+    //    infer_handle_from_class_t<NES::WorkerActor> workerActorHandle;
+    //    actor_system* actorSystemWorker;
 
     RestServer* restServer;
-    std::string restHost;
-    std::string serverIp;
     uint16_t restPort;
-    uint16_t actorPort;
+    std::string serverIp;
+
     std::thread restThread;
 
     std::atomic<bool> stopped;
