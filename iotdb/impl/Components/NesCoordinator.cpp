@@ -22,6 +22,11 @@ NesCoordinator::NesCoordinator() {
     serverIp = "localhost";
     rpcPort = 4000;
     stopped = false;
+
+    queryCatalogServicePtr = QueryCatalogService::getInstance();
+    streamCatalogServicePtr = StreamCatalogService::getInstance();
+    coordinatorServicePtr = CoordinatorService::getInstance();
+    workerRPCClient = std::make_shared<WorkerRPCClient>();
 }
 
 NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort)
@@ -30,6 +35,11 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
       rpcPort(rpcPort) {
     NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
     stopped = false;
+
+    queryCatalogServicePtr = QueryCatalogService::getInstance();
+    streamCatalogServicePtr = StreamCatalogService::getInstance();
+    coordinatorServicePtr = CoordinatorService::getInstance();
+
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -149,40 +159,172 @@ QueryStatisticsPtr NesCoordinator::getQueryStatistics(std::string queryId) {
     return wrk->getNodeEngine()->getQueryStatistics(queryId);
 }
 
-string NesCoordinator::deployQuery(const string queryString, const string strategy) {
-    NES_DEBUG("NesCoordinator:deployQuery queryString=" << queryString << " strategy=" << strategy);
-//    return crdActor->registerAndDeployQuery(0, queryString, strategy);
-    return "";
+string NesCoordinator::addQuery(const string queryString, const string strategy) {
+    NES_DEBUG("NesCoordinator:addQuery queryString=" << queryString << " strategy=" << strategy);
+
+    NES_DEBUG("NesCoordinator:addQuery: register query");
+    string queryId = registerQuery(queryString, strategy);
+    if (queryId != "") {
+        NES_DEBUG("NesCoordinator:addQuery: register query successful");
+    } else {
+        NES_ERROR("NesCoordinator:addQuery: register query failed");
+        return "";
+    }
+
+    NES_DEBUG("NesCoordinator:addQuery: create Deployment");
+    QueryDeployment deployments = coordinatorServicePtr->prepareExecutableTransferObject(queryId);
+    NES_DEBUG("CoordinatorActor::addQuery" << deployments.size() << " objects topology before"
+                                           << NESTopologyManager::getInstance().getNESTopologyPlanString());
+    stringstream ss;
+    for (auto element : deployments) {
+        ss << "nodeID=" << element.first->getId();
+        ss << " nodeIP=" << element.first->getIp();
+        ss << " eto=" << element.second.toString() << endl;
+    }
+    NES_DEBUG("NesCoordinator:addQuery: deployments =" << ss.str());
+    currentDeployments[queryId] = deployments;
+
+    NES_DEBUG("NesCoordinator:addQuery: deploy query");
+    bool successDeploy = deployQuery(queryId);
+    if (successDeploy) {
+        NES_DEBUG("NesCoordinator:addQuery: deploy query successful");
+    } else {
+        NES_ERROR("NesCoordinator:addQuery: deploy query failed");
+        return "";
+    }
+
+    NES_DEBUG("NesCoordinator:addQuery: start query");
+    bool successStart = startQuery(queryId);
+    if (successStart) {
+        NES_DEBUG("NesCoordinator:addQuery: start query successful");
+    } else {
+        NES_ERROR("NesCoordinator:addQuery: start query failed");
+        return "";
+    }
+
+    return queryId;
+
 }
 
-bool NesCoordinator::undeployQuery(const string queryId) {
-    NES_DEBUG("NesCoordinator:undeployQuery queryId=" << queryId);
-//    return crdActor->deregisterAndUndeployQuery(0, queryId);
+bool NesCoordinator::removeQuery(const string queryId) {
+    NES_DEBUG("NesCoordinator:removeQuery queryId=" << queryId);
+
+    NES_DEBUG("NesCoordinator:removeQuery: stop query");
+    bool successStop = stopQuery(queryId);
+    if (successStop) {
+        NES_DEBUG("NesCoordinator:removeQuery: stop query successful");
+    } else {
+        NES_ERROR("NesCoordinator:removeQuery: stop query failed");
+        return false;
+    }
+
+    NES_DEBUG("NesCoordinator:removeQuery: undeploy query");
+    bool successUndeploy = undeployQuery(queryId);
+    if (successUndeploy) {
+        NES_DEBUG("NesCoordinator:removeQuery: undeploy query successful");
+    } else {
+        NES_ERROR("NesCoordinator:removeQuery: undeploy query failed");
+        return false;
+    }
+
+    NES_DEBUG("NesCoordinator:removeQuery: unregister query");
+    bool successUnregister = unregisterQuery(queryId);
+    if (successUnregister) {
+        NES_DEBUG("NesCoordinator:removeQuery: unregister query successful");
+    } else {
+        NES_ERROR("NesCoordinator:removeQuery: unregister query failed");
+        return false;
+    }
+
     return true;
 }
 
 string NesCoordinator::registerQuery(const string queryString, const string strategy) {
     NES_DEBUG("NesCoordinator:registerQuery queryString=" << queryString << " strategy=" << strategy);
-//    return crdActor->registerAndDeployQuery(0, queryString, strategy);
-    return "";
+    return QueryCatalog::instance().registerQuery(queryString, strategy);
 }
 
 bool NesCoordinator::unregisterQuery(const string queryId) {
     NES_DEBUG("NesCoordinator:unregisterQuery queryId=" << queryId);
-//    return crdActor->deregisterAndUndeployQuery(0, queryId);
+    return QueryCatalog::instance().deleteQuery(queryId);
+}
+
+bool NesCoordinator::deployQuery(std::string queryId) {
+    NES_DEBUG("NesCoordinator:deployQuery queryId=" << queryId);
+
+    QueryDeployment& deployments = currentDeployments[queryId];
+    for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
+        NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine serialize " << x->first <<
+                                                                           " id=" << x->first->getId() << " eto="
+                                                                           << x->second.toString());
+        string serEto = SerializationTools::ser_eto(x->second);
+        NES_DEBUG(
+            "CoordinatorActor::deployQuery " << queryId << " to " << x->first->getIp());
+
+        bool success = workerRPCClient->deployQuery(x->first->getIp(), serEto);
+        if (success) {
+            NES_DEBUG("NesCoordinator:deployQuery: " << queryId << " to " << x->first->getIp() << " successful");
+        } else {
+            NES_ERROR("NesCoordinator:deployQuery: " << queryId << " to " << x->first->getIp() << "  failed");
+            return false;
+        }
+    }
+
     return true;
 }
 
-bool NesCoordinator::startQuery(const string queryId) {
+bool NesCoordinator::undeployQuery(std::string queryId) {
+    NES_DEBUG("NesCoordinator:undeployQuery queryId=" << queryId);
+    //    return crdActor->deregisterAndUndeployQuery(0, queryId);
+    return true;
+}
+
+bool NesCoordinator::startQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator:startQuery queryId=" << queryId);
-//    return crdActor->deregisterAndUndeployQuery(0, queryId);
+
+    QueryDeployment& deployments = currentDeployments[queryId];
+    for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
+        NES_DEBUG("CoordinatorActor::startQuery serialize " << x->first << " id=" << x->first->getId()
+                                                                           << " eto="
+                                                                           << x->second.toString());
+        string serEto = SerializationTools::ser_eto(x->second);
+        NES_DEBUG(
+            "CoordinatorActor::startQuery " << queryId << " to " << x->first->getIp());
+
+        bool success = workerRPCClient->stopQuery(x->first->getIp(), queryId);
+        if (success) {
+            NES_DEBUG("NesCoordinator:startQuery: " << queryId << " to " << x->first->getIp() << " successful");
+        } else {
+            NES_ERROR("NesCoordinator:startQuery: " << queryId << " to " << x->first->getIp() << "  failed");
+            return false;
+        }
+    }
+
     return true;
 }
 
-bool NesCoordinator::stopQuery(const string queryId) {
+bool NesCoordinator::stopQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator:stopQuery queryId=" << queryId);
+
+    QueryDeployment& deployments = currentDeployments[queryId];
+    for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
+        NES_DEBUG("CoordinatorActor::stopQuery serialize " << x->first << " id=" << x->first->getId()
+                                                                           << " eto="
+                                                                           << x->second.toString());
+        string serEto = SerializationTools::ser_eto(x->second);
+        NES_DEBUG(
+            "CoordinatorActor::stopQuery " << queryId << " to " << x->first->getIp());
+
+        bool success = workerRPCClient->stopQuery(x->first->getIp(), queryId);
+        if (success) {
+            NES_DEBUG("NesCoordinator:stopQuery: " << queryId << " to " << x->first->getIp() << " successful");
+        } else {
+            NES_ERROR("NesCoordinator:stopQuery: " << queryId << " to " << x->first->getIp() << "  failed");
+            return false;
+        }
+    }
+
     return true;
-//    return crdActor->stopQuery(0, queryId);
 }
 
 }// namespace NES

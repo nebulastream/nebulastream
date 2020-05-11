@@ -4,11 +4,15 @@
 #include <Actors/Configurations/WorkerActorConfig.hpp>
 //#include <Actors/WorkerActor.hpp>
 #include <Components/NesWorker.hpp>
-
+#include <Services/CoordinatorService.hpp>
+#include <Services/QueryCatalogService.hpp>
+#include <Services/StreamCatalogService.hpp>
 #include <string>
 #include <grpcpp/grpcpp.h>
+#include <GRPC/WorkerRPCClient.hpp>
 
 namespace NES {
+typedef map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployment;
 
 class NesCoordinator {
   public:
@@ -19,7 +23,6 @@ class NesCoordinator {
      *    - currently we start rest server always
      */
     NesCoordinator();
-
 
     NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort);
 
@@ -48,15 +51,29 @@ class NesCoordinator {
      * @param strategy : deployment strategy for the query operators
      * @return UUID of the submitted user query.
      */
-    string deployQuery(const string queryString, const string strategy);
+    string addQuery(const string queryString, const string strategy);
 
     /**
      * @brief method to deregister, undeploy, and stop a query
      * @param queryID
      * @return bool indicating success
      */
-    bool undeployQuery(const string queryId);
+    bool removeQuery(const string queryId);
 
+    /**
+    * @brief method to return the query statistics
+    * @param id of the query
+    * @return queryStatistics
+    */
+    QueryStatisticsPtr getQueryStatistics(std::string queryId);
+
+    /**
+     * @brief method to overwrite server ip
+     * @param serverIp
+     */
+    void setServerIp(std::string serverIp);
+
+  private:
     /**
     * @brief method to register a query without start
     * @param queryString : user query, in string form, to be executed
@@ -74,30 +91,33 @@ class NesCoordinator {
 
     /**
      * @brief method to start a already deployed query
-     * @param queryId to start
+     * @param queryDeployments
      * @return bool indicating success
      */
-    bool startQuery(const std::string queryId);
+    bool startQuery(std::string queryId);
 
     /**
      * @brief method to stop a query
-     * @param queryId to stop
+     * @param queryDeployments
      * @return bool indicating success
      */
-    bool stopQuery(const std::string queryId);
+    bool stopQuery(std::string queryId);
+
 
     /**
-     * @brief method to overwrite server ip
-     * @param serverIp
+     * @brief method send query to nodes
+     * @param queryDeployments
+     * @return bool indicating success
+    */
+    bool deployQuery(std::string queryId);
+
+    /**
+     * @brief method remove query from nodes
+     * @param queryDeployments
+     * @return bool indicating success
      */
-    void setServerIp(std::string serverIp);
+    bool undeployQuery(std::string queryId);
 
-    /**
-   * @brief method to return the query statistics
-   * @param id of the query
-   * @return queryStatistics
-   */
-    QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
   private:
     size_t getRandomPort(size_t base);
@@ -106,6 +126,8 @@ class NesCoordinator {
     uint16_t rpcPort;
     std::thread rpcThread;
     NesWorkerPtr wrk;
+
+    WorkerRPCClientPtr workerRPCClient;
 
     //    CoordinatorActor* crdActor;
     //    CoordinatorActorConfig coordinatorCfg;
@@ -125,8 +147,15 @@ class NesCoordinator {
     std::thread restThread;
 
     std::atomic<bool> stopped;
+
+    QueryCatalogServicePtr queryCatalogServicePtr;
+    StreamCatalogServicePtr streamCatalogServicePtr;
+    CoordinatorServicePtr coordinatorServicePtr;
+
+    std::map<std::string, QueryDeployment> currentDeployments;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
+
 
 }// namespace NES
 #endif /* INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_ */

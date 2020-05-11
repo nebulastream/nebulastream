@@ -4,6 +4,10 @@
 
 namespace NES {
 
+WorkerRPCClient::WorkerRPCClient()
+{
+
+}
 bool WorkerRPCClient::deployQuery(std::string address, std::string executableTransferObject)
 {
     NES_DEBUG(

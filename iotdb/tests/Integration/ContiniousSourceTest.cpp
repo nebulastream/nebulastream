@@ -57,12 +57,12 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     std::string queryString = "InputQuery::from(exdra).writeToCSVFile(\""
         + filePath + "\" , \"truncate\");";
 
-    std::string queryId = crd->deployQuery(queryString, "BottomUp");
+    std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
 
-    ASSERT_TRUE(crd->undeployQuery(queryId));
+    ASSERT_TRUE(crd->removeQuery(queryId));
 
     string expectedContent =
         "FeatureCollection,1262343600000,Wind Turbine Data Generated for Nebula Stream,b94c4bbf-6bab-47e3-b0f6-92acac066416,Features,736,0.363738,112464.007812,1262300400000,0,electricityGeneration,Point,8.221581,52.322945,982050ee-a8cb-4a7a-904c-a4c45e0c9f10\n"
@@ -129,12 +129,12 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     std::string queryString =
         "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] < 42).print(std::cout); ";
 
-    std::string queryId = crd->deployQuery(queryString, "BottomUp");
+    std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 3));
-
-    ASSERT_TRUE(crd->undeployQuery(queryId));
+    crd->addQuery(queryString, "BottomUp");
+    ASSERT_TRUE(crd->removeQuery(queryId));
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
@@ -183,12 +183,12 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
         "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] < 42).writeToFile(\""
             + outputFilePath + "\"); ";
 
-    std::string queryId = crd->deployQuery(queryString, "BottomUp");
+    std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 3));
 
-    ASSERT_TRUE(crd->undeployQuery(queryId));
+    ASSERT_TRUE(crd->removeQuery(queryId));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -300,12 +300,12 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     std::string queryString =
         "InputQuery::from(testStream).filter(testStream[\"val1\"] < 2).print(std::cout); ";
 
-    std::string queryId = crd->deployQuery(queryString, "BottomUp");
+    std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 3));
 
-    ASSERT_TRUE(crd->undeployQuery(queryId));
+    ASSERT_TRUE(crd->removeQuery(queryId));
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
@@ -365,12 +365,12 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
         "InputQuery::from(testStream).filter(testStream[\"val1\"] < 10).writeToFile(\""
             + outputFilePath + "\"); ";
 
-    std::string queryId = crd->deployQuery(queryString, "BottomUp");
+    std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 3));
 
-    ASSERT_TRUE(crd->undeployQuery(queryId));
+    ASSERT_TRUE(crd->removeQuery(queryId));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -947,14 +947,14 @@ TEST_F(ContiniousSourceTest, testExdraUseCaseWithOutput) {
         + outputFilePath + "\" , \"truncate\");";
 
     cout << "deploy query" << endl;
-    std::string queryId = crd->deployQuery(queryString, "BottomUp");
+    std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
     cout << "wait on result" << endl;
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 5));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 5));
 
     cout << "undeploy query" << endl;
-    ASSERT_TRUE(crd->undeployQuery(queryId));
+    ASSERT_TRUE(crd->removeQuery(queryId));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
