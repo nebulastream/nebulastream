@@ -8,6 +8,8 @@
 #include <cpprest/http_msg.h>
 
 namespace NES {
+class NesCoordinator;
+typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 
 class QueryController : public BaseController {
   public:
@@ -19,7 +21,7 @@ class QueryController : public BaseController {
 
     ~QueryController() {}
 
-    void setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
+    void setCoordinator(NesCoordinatorPtr coordinator);
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
 
@@ -27,7 +29,7 @@ class QueryController : public BaseController {
     QueryServicePtr queryServicePtr;
     NESTopologyServicePtr nesTopologyServicePtr;
     CoordinatorServicePtr coordinatorServicePtr;
-    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
+    NesCoordinatorPtr coordinator;
 };
 
 }// namespace NES

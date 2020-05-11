@@ -53,9 +53,8 @@ size_t NesCoordinator::getRandomPort(size_t base) {
 }
 
 void startRestServer(RestServer* restServer,
-                     std::string restHost, uint16_t restPort) {
-    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
-    restServer = new RestServer(restHost, restPort, coordinatorActorHandle);
+                     std::string restHost, uint16_t restPort, NesCoordinatorPtr coordinator) {
+    restServer = new RestServer(restHost, restPort, coordinator);
     restServer->start();//this call is blocking
     NES_DEBUG("NesCoordinator: startRestServer thread terminates");
 }
@@ -65,6 +64,53 @@ void startCoordinatorRPCServer(std::shared_ptr<Server>& rpcServer) {
     NES_DEBUG("startCoordinatorRPCServer: Server listening");
     rpcServer->Wait();
     NES_DEBUG("startCoordinatorRPCServer: end listening");
+}
+
+
+size_t NesCoordinator::startCoordinator(bool blocking) {
+    NES_DEBUG("NesCoordinator start");
+
+    std::string address = serverIp + ":" + ::to_string(rpcPort);
+    NES_DEBUG("startCoordinatorRPCServer for address=" << address);
+    CoordinatorRPCServer service;
+
+    ServerBuilder builder;
+    builder.AddListeningPort(address, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    rpcServer = std::move(server);
+
+    std::thread threadRPC([&]() {
+      startCoordinatorRPCServer(rpcServer);
+    });
+
+    rpcThread = std::move(threadRPC);
+
+    NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
+    wrk = std::make_shared<NesWorker>(serverIp,
+                                      std::to_string(rpcPort),
+                                      serverIp,
+                                      std::to_string(rpcPort + 1),
+                                      NESNodeType::Worker);
+    wrk->start(/**blocking*/false, /**withConnect*/true);
+
+    NES_DEBUG("NesCoordinator starting rest server");
+    std::thread th0(startRestServer, restServer,
+                    serverIp, restPort, this->shared_from_this());
+    restThread = std::move(th0);
+
+    stopped = false;
+    if (blocking) {
+        NES_DEBUG("NesCoordinator started, join now and waiting for work");
+        restThread.join();
+        NES_DEBUG("NesCoordinator Required stopping");
+    } else {
+        NES_DEBUG(
+            "NesCoordinator started, return without blocking on port " << rpcPort);
+        return rpcPort;
+    }
+
+    NES_DEBUG("NesCoordinator startCoordinator succeed");
 }
 
 bool NesCoordinator::stopCoordinator(bool force) {
@@ -105,51 +151,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
     }
 }
 
-size_t NesCoordinator::startCoordinator(bool blocking) {
-    NES_DEBUG("NesCoordinator start");
-
-    std::string address = serverIp + ":" + ::to_string(rpcPort);
-    NES_DEBUG("startCoordinatorRPCServer for address=" << address);
-    CoordinatorRPCServer service;
-
-    ServerBuilder builder;
-    builder.AddListeningPort(address, grpc::InsecureServerCredentials());
-    builder.RegisterService(&service);
-    std::unique_ptr<Server> server(builder.BuildAndStart());
-    rpcServer = std::move(server);
-
-    std::thread threadRPC([&]() {
-      startCoordinatorRPCServer(rpcServer);
-    });
-
-    rpcThread = std::move(threadRPC);
-
-    NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    wrk = std::make_shared<NesWorker>(serverIp,
-                                      std::to_string(rpcPort),
-                                      serverIp,
-                                      std::to_string(rpcPort + 1),
-                                      NESNodeType::Worker);
-    wrk->start(/**blocking*/false, /**withConnect*/true);
-
-    NES_DEBUG("NesCoordinator starting rest server");
-    std::thread th0(startRestServer, restServer,
-                    serverIp, restPort);
-    restThread = std::move(th0);
-
-    stopped = false;
-    if (blocking) {
-        NES_DEBUG("NesCoordinator started, join now and waiting for work");
-        restThread.join();
-        NES_DEBUG("NesCoordinator Required stopping");
-    } else {
-        NES_DEBUG(
-            "NesCoordinator started, return without blocking on port " << rpcPort);
-        return rpcPort;
-    }
-
-    NES_DEBUG("NesCoordinator startCoordinator succeed");
-}
 
 void NesCoordinator::setServerIp(std::string serverIp) {
     this->serverIp = serverIp;

@@ -4,6 +4,7 @@
 #include <REST/std_service.hpp>
 #include <Topology/TestTopology.hpp>
 #include <Util/Logger.hpp>
+#include <Components/NesCoordinator.hpp>
 
 using namespace web;
 using namespace http;
@@ -114,10 +115,9 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                         NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                     << optimizationStrategyName);
 
-                        abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
-                        CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
-                        string queryId = crd->registerAndDeployQuery(0, userQuery,
-                                                                     optimizationStrategyName);
+//                        abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
+//                        CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
+                        string queryId = coordinator->addQuery(userQuery, optimizationStrategyName);
 
                         json::value restResponse{};
                         restResponse["queryId"] = json::value::string(queryId);
@@ -150,8 +150,8 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
     }
 }
 
-void QueryController::setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
-    this->coordinatorActorHandle = coordinatorActorHandle;
+void QueryController::setCoordinator(NesCoordinatorPtr coordinator){
+    this->coordinator = coordinator;
 }
 
 }// namespace NES

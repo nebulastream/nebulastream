@@ -14,11 +14,15 @@
 #include <pplx/pplxtasks.h>
 #include <string>
 
+
 using namespace web;
 using namespace http;
 using namespace http::experimental::listener;
 
 namespace NES {
+class NesCoordinator;
+typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
+
 class RestEngine : public BaseController {
   protected:
     http_listener _listener;// main micro service network endpoint
@@ -41,7 +45,7 @@ class RestEngine : public BaseController {
     void handleTrace(http_request message);
     void handleMerge(http_request message);
 
-    void setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
+    void setCoordinator(NesCoordinatorPtr coordinator);
     void initRestOpHandlers();
     void setEndpoint(const std::string& value);
     std::string endpoint() const;

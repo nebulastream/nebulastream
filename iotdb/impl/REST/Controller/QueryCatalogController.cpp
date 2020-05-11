@@ -1,7 +1,7 @@
 #include "REST/Controller/QueryCatalogController.hpp"
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
-
+#include <Components/NesCoordinator.hpp>
 namespace NES {
 
 void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {
@@ -76,8 +76,8 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
     resourceNotFoundImpl(message);
 }
 
-void QueryCatalogController::setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
-    this->coordinatorActorHandle = coordinatorActorHandle;
+void QueryCatalogController::setCoordinator(NesCoordinatorPtr coordinator) {
+    this->coordinator = coordinator;
 }
 
 void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, web::http::http_request message) {
@@ -94,9 +94,9 @@ void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, w
 
                     //Perform async call for deleting the query using actor
                     //Note: This is an async call and would not know if the deletion has failed
-                    abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
-                    CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
-                    bool success = crd->deregisterAndUndeployQuery(/**id of the coordinator*/ 0, queryId);
+//                    abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
+//                    CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
+                    bool success = coordinator->removeQuery(queryId);
 
                         if (success){
                             //Prepare the response
