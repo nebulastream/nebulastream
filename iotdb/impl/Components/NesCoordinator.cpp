@@ -17,10 +17,18 @@ using grpc::Status;
 namespace NES {
 
 NesCoordinator::NesCoordinator() {
+    NES_DEBUG("NesCoordinator()");
     restPort = 8081;
-    restHost = "localhost";
-    actorPort = 0;
     serverIp = "localhost";
+    rpcPort = 4000;
+    stopped = false;
+}
+
+NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort)
+    : serverIp(serverIp),
+      restPort(restPort),
+      rpcPort(rpcPort) {
+    NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
     stopped = false;
 }
 
@@ -29,9 +37,13 @@ NesCoordinator::~NesCoordinator() {
     stopCoordinator(true);
 }
 
+size_t NesCoordinator::getRandomPort(size_t base) {
+    //TODO will be removed once the new network stack is in place
+    return base - 12 + time(0)*321*rand()%10000;
+}
 
 void startRestServer(RestServer* restServer,
-                     std::string restHost, uint16_t restPort, uint16_t* port) {
+                     std::string restHost, uint16_t restPort) {
     infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
     restServer = new RestServer(restHost, restPort, coordinatorActorHandle);
     restServer->start();//this call is blocking
@@ -43,16 +55,6 @@ void startCoordinatorRPCServer(std::shared_ptr<Server>& rpcServer) {
     NES_DEBUG("startCoordinatorRPCServer: Server listening");
     rpcServer->Wait();
     NES_DEBUG("startCoordinatorRPCServer: end listening");
-}
-
-string NesCoordinator::deployQuery(const string& queryString, const string& strategy) {
-    NES_DEBUG("NesCoordinator:registerAndDeployQuery queryString=" << queryString << " strategy=" << strategy);
-    return crdActor->registerAndDeployQuery(0, queryString, strategy);
-}
-
-bool NesCoordinator::undeployQuery(const string& queryId) {
-    NES_DEBUG("NesCoordinator:unddeployQuery queryId=" << queryId);
-    return crdActor->deregisterAndUndeployQuery(0, queryId);
 }
 
 bool NesCoordinator::stopCoordinator(bool force) {
@@ -93,20 +95,10 @@ bool NesCoordinator::stopCoordinator(bool force) {
     }
 }
 
-void NesCoordinator::startCoordinator(bool blocking, uint16_t port) {
-    actorPort = port;
-    startCoordinator(blocking);
-}
-
-size_t NesCoordinator::getRandomPort(size_t base) {
-    //TODO will be removed once the new network stack is in place
-    return base - 12 + time(0)*321*rand()%10000;
-}
-
-uint16_t NesCoordinator::startCoordinator(bool blocking) {
+size_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");
 
-    std::string address = workerCfg.ip + ":" + ::to_string(workerCfg.receive_port);
+    std::string address = serverIp + ":" + ::to_string(rpcPort);
     NES_DEBUG("startCoordinatorRPCServer for address=" << address);
     CoordinatorRPCServer service;
 
@@ -116,20 +108,23 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     std::unique_ptr<Server> server(builder.BuildAndStart());
     rpcServer = std::move(server);
 
-    std::thread threadRPC([&]()
-    {
-        startCoordinatorRPCServer(rpcServer);
+    std::thread threadRPC([&]() {
+      startCoordinatorRPCServer(rpcServer);
     });
 
     rpcThread = std::move(threadRPC);
 
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    wrk = std::make_shared<NesWorker>(workerCfg.ip, std::to_string(workerCfg.receive_port), workerCfg.ip, std::to_string(workerCfg.receive_port +1), NESNodeType::Worker);
+    wrk = std::make_shared<NesWorker>(serverIp,
+                                      std::to_string(rpcPort),
+                                      serverIp,
+                                      std::to_string(rpcPort + 1),
+                                      NESNodeType::Worker);
     wrk->start(/**blocking*/false, /**withConnect*/true);
 
     NES_DEBUG("NesCoordinator starting rest server");
     std::thread th0(startRestServer, restServer,
-                    restHost, restPort, &actorPort);
+                    serverIp, restPort);
     restThread = std::move(th0);
 
     stopped = false;
@@ -139,16 +134,11 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
         NES_DEBUG("NesCoordinator Required stopping");
     } else {
         NES_DEBUG(
-            "NesCoordinator started, return without blocking on port " << actorPort);
-        return actorPort;
+            "NesCoordinator started, return without blocking on port " << rpcPort);
+        return rpcPort;
     }
 
     NES_DEBUG("NesCoordinator startCoordinator succeed");
-}
-
-void NesCoordinator::setRestConfiguration(std::string host, uint16_t port) {
-    this->restHost = host;
-    this->restPort = port;
 }
 
 void NesCoordinator::setServerIp(std::string serverIp) {
@@ -157,6 +147,42 @@ void NesCoordinator::setServerIp(std::string serverIp) {
 
 QueryStatisticsPtr NesCoordinator::getQueryStatistics(std::string queryId) {
     return wrk->getNodeEngine()->getQueryStatistics(queryId);
+}
+
+string NesCoordinator::deployQuery(const string queryString, const string strategy) {
+    NES_DEBUG("NesCoordinator:deployQuery queryString=" << queryString << " strategy=" << strategy);
+//    return crdActor->registerAndDeployQuery(0, queryString, strategy);
+    return "";
+}
+
+bool NesCoordinator::undeployQuery(const string queryId) {
+    NES_DEBUG("NesCoordinator:undeployQuery queryId=" << queryId);
+//    return crdActor->deregisterAndUndeployQuery(0, queryId);
+    return true;
+}
+
+string NesCoordinator::registerQuery(const string queryString, const string strategy) {
+    NES_DEBUG("NesCoordinator:registerQuery queryString=" << queryString << " strategy=" << strategy);
+//    return crdActor->registerAndDeployQuery(0, queryString, strategy);
+    return "";
+}
+
+bool NesCoordinator::unregisterQuery(const string queryId) {
+    NES_DEBUG("NesCoordinator:unregisterQuery queryId=" << queryId);
+//    return crdActor->deregisterAndUndeployQuery(0, queryId);
+    return true;
+}
+
+bool NesCoordinator::startQuery(const string queryId) {
+    NES_DEBUG("NesCoordinator:startQuery queryId=" << queryId);
+//    return crdActor->deregisterAndUndeployQuery(0, queryId);
+    return true;
+}
+
+bool NesCoordinator::stopQuery(const string queryId) {
+    NES_DEBUG("NesCoordinator:stopQuery queryId=" << queryId);
+    return true;
+//    return crdActor->stopQuery(0, queryId);
 }
 
 }// namespace NES

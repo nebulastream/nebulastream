@@ -147,11 +147,6 @@ class NesWorker {
     std::string localWorkerIp;
     std::string localWorkerPort;
 
-//    WorkerActor* workerActor;
-//    infer_handle_from_class_t<NES::WorkerActor> workerHandle;
-//    actor_system* actorSystem;
-//    WorkerActorConfig workerCfg;
-
     NESNodeType type;
     bool stopped;
 };
