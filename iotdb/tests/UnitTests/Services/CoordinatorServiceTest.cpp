@@ -37,8 +37,8 @@ class CoordinatorServiceTest : public testing::Test {
         for (int i = 1; i <= 5; i++) {
             //FIXME: add node properties
             PhysicalStreamConfig streamConf;
-            auto entry = coordinatorServicePtr->registerNode(i, ip, publish_port,
-                                                             receive_port, 2, /**nodeProperties**/
+            std::string address = ip + ":" + std::to_string(publish_port);
+            auto entry = coordinatorServicePtr->registerNode(i, address, 2, /**nodeProperties**/
                                                              "", streamConf, NESNodeType::Sensor);
         }
         NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
@@ -87,8 +87,9 @@ TEST_F(CoordinatorServiceTest, test_node_properties) {
         "{\"cpus\":[{\"guest\":0,\"guest_nice\":0,\"idle\":1777049,\"iowait\":3074,\"irq\":0,\"name\":\"cpu\",\"nice\":186,\"softirq\":1276,\"steal\":0,\"system\":15308,\"user\":122112},{\"guest\":0,\"guest_nice\":0,\"idle\":226210,\"iowait\":284,\"irq\":0,\"name\":\"cpu0\",\"nice\":11,\"softirq\":392,\"steal\":0,\"system\":1588,\"user\":11438},{\"guest\":0,\"guest_nice\":0,\"idle\":220835,\"iowait\":307,\"irq\":0,\"name\":\"cpu1\",\"nice\":15,\"softirq\":255,\"steal\":0,\"system\":1902,\"user\":16182},{\"guest\":0,\"guest_nice\":0,\"idle\":220454,\"iowait\":324,\"irq\":0,\"name\":\"cpu2\",\"nice\":14,\"softirq\":126,\"steal\":0,\"system\":1974,\"user\":17030},{\"guest\":0,\"guest_nice\":0,\"idle\":221382,\"iowait\":332,\"irq\":0,\"name\":\"cpu3\",\"nice\":21,\"softirq\":130,\"steal\":0,\"system\":2240,\"user\":15955},{\"guest\":0,\"guest_nice\":0,\"idle\":218898,\"iowait\":564,\"irq\":0,\"name\":\"cpu4\",\"nice\":7,\"softirq\":88,\"steal\":0,\"system\":1957,\"user\":18461},{\"guest\":0,\"guest_nice\":0,\"idle\":222420,\"iowait\":442,\"irq\":0,\"name\":\"cpu5\",\"nice\":103,\"softirq\":90,\"steal\":0,\"system\":1931,\"user\":15007},{\"guest\":0,\"guest_nice\":0,\"idle\":223872,\"iowait\":402,\"irq\":0,\"name\":\"cpu6\",\"nice\":6,\"softirq\":84,\"steal\":0,\"system\":1811,\"user\":13855},{\"guest\":0,\"guest_nice\":0,\"idle\":222973,\"iowait\":415,\"irq\":0,\"name\":\"cpu7\",\"nice\":7,\"softirq\":108,\"steal\":0,\"system\":1901,\"user\":14182}],\"fs\":{\"f_bavail\":8782124,\"f_bfree\":12246175,\"f_blocks\":68080498,\"f_bsize\":4096,\"f_frsize\":4096},\"mem\":{\"bufferram\":457990144,\"freehigh\":0,\"freeram\":6954029056,\"freeswap\":16893603840,\"loads_15min\":46432,\"loads_1min\":87456,\"loads_5min\":69536,\"mem_unit\":1,\"procs\":1512,\"sharedram\":820908032,\"totalhigh\":0,\"totalram\":16534970368,\"totalswap\":16893603840},\"nets\":[{\"hostname\":\"\",\"port\":\"\"},{\"enp0s31f6\":{\"rx_bytes\":0,\"rx_dropped\":0,\"rx_packets\":0,\"tx_bytes\":0,\"tx_dropped\":0,\"tx_packets\":0},\"wlp3s0\":{\"host\":\"192.168.178.37\",\"host6\":\"fe80::52ca:ec35:fc8d:2954%wlp3s0\"}},{\"vmnet1\":{\"host\":\"172.16.158.1\",\"host6\":\"fe80::250:56ff:fec0:1%vmnet1\"},\"wlp3s0\":{\"rx_bytes\":28886252,\"rx_dropped\":0,\"rx_packets\":27532,\"tx_bytes\":3055394,\"tx_dropped\":0,\"tx_packets\":15798}},{\"vmnet1\":{\"rx_bytes\":0,\"rx_dropped\":0,\"rx_packets\":0,\"tx_bytes\":0,\"tx_dropped\":0,\"tx_packets\":95},\"vmnet8\":{\"host\":\"192.168.74.1\",\"host6\":\"fe80::250:56ff:fec0:8%vmnet8\"}},{\"virbr0\":{\"host\":\"192.168.122.1\"},\"vmnet8\":{\"rx_bytes\":0,\"rx_dropped\":0,\"rx_packets\":0,\"tx_bytes\":0,\"tx_dropped\":0,\"tx_packets\":95}},{\"docker0\":{\"host\":\"172.17.0.1\"},\"virbr0\":{\"rx_bytes\":0,\"rx_dropped\":0,\"rx_packets\":0,\"tx_bytes\":0,\"tx_dropped\":0,\"tx_packets\":0}},{\"docker0\":{\"rx_bytes\":0,\"rx_dropped\":0,\"rx_packets\":0,\"tx_bytes\":0,\"tx_dropped\":0,\"tx_packets\":0}}]}";
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "default_test_node_props";
-    auto entry = coordinatorServicePtr->registerNode(6, ip, publish_port,
-                                                     receive_port, 2,
+    std::string address = ip + ":" + std::to_string(publish_port);
+
+    auto entry = coordinatorServicePtr->registerNode(6, address, 2,
                                                      nodeProps, streamConf, NESNodeType::Sensor);
 
     string expectedProperties = coordinatorServicePtr->getNodePropertiesAsString(
@@ -105,8 +106,9 @@ TEST_F(CoordinatorServiceTest, test_deregistration_and_topology) {
 
     StreamCatalog::instance().addLogicalStream(
         "default_delete_me", Schema::create());
-    auto entry = coordinatorServicePtr->registerNode(6, ip, publish_port,
-                                                     receive_port, 2, "",
+    std::string address = ip + ":" + std::to_string(publish_port);
+
+    auto entry = coordinatorServicePtr->registerNode(6, address, 2, "",
                                                      streamConf, NESNodeType::Sensor);
 
     EXPECT_NE(entry, nullptr);

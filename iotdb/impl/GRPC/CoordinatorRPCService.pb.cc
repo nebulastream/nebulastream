@@ -312,9 +312,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_CoordinatorRPCService_2eproto:
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::RegisterNodeRequest, ip_),
-  PROTOBUF_FIELD_OFFSET(::RegisterNodeRequest, rpcport_),
-  PROTOBUF_FIELD_OFFSET(::RegisterNodeRequest, zmqport_),
+  PROTOBUF_FIELD_OFFSET(::RegisterNodeRequest, address_),
   PROTOBUF_FIELD_OFFSET(::RegisterNodeRequest, numberofcpus_),
   PROTOBUF_FIELD_OFFSET(::RegisterNodeRequest, nodeproperties_),
   PROTOBUF_FIELD_OFFSET(::RegisterNodeRequest, type_),
@@ -424,21 +422,21 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_CoordinatorRPCService_2eproto:
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::RegisterNodeRequest)},
-  { 11, -1, sizeof(::RegisterNodeReply)},
-  { 17, -1, sizeof(::UnregisterNodeRequest)},
-  { 23, -1, sizeof(::UnregisterNodeReply)},
-  { 29, -1, sizeof(::RegisterPhysicalStreamRequest)},
-  { 41, -1, sizeof(::RegisterPhysicalStreamReply)},
-  { 47, -1, sizeof(::UnregisterPhysicalStreamRequest)},
-  { 55, -1, sizeof(::UnregisterPhysicalStreamReply)},
-  { 61, -1, sizeof(::RegisterLogicalStreamRequest)},
-  { 69, -1, sizeof(::RegisterLogicalStreamReply)},
-  { 75, -1, sizeof(::UnregisterLogicalStreamRequest)},
-  { 82, -1, sizeof(::UnregisterLogicalStreamReply)},
-  { 88, -1, sizeof(::AddParentRequest)},
-  { 95, -1, sizeof(::AddParentReply)},
-  { 101, -1, sizeof(::RemoveParentRequest)},
-  { 108, -1, sizeof(::RemoveParentReply)},
+  { 9, -1, sizeof(::RegisterNodeReply)},
+  { 15, -1, sizeof(::UnregisterNodeRequest)},
+  { 21, -1, sizeof(::UnregisterNodeReply)},
+  { 27, -1, sizeof(::RegisterPhysicalStreamRequest)},
+  { 39, -1, sizeof(::RegisterPhysicalStreamReply)},
+  { 45, -1, sizeof(::UnregisterPhysicalStreamRequest)},
+  { 53, -1, sizeof(::UnregisterPhysicalStreamReply)},
+  { 59, -1, sizeof(::RegisterLogicalStreamRequest)},
+  { 67, -1, sizeof(::RegisterLogicalStreamReply)},
+  { 73, -1, sizeof(::UnregisterLogicalStreamRequest)},
+  { 80, -1, sizeof(::UnregisterLogicalStreamReply)},
+  { 86, -1, sizeof(::AddParentRequest)},
+  { 93, -1, sizeof(::AddParentReply)},
+  { 99, -1, sizeof(::RemoveParentRequest)},
+  { 106, -1, sizeof(::RemoveParentReply)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -461,50 +459,49 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 };
 
 const char descriptor_table_protodef_CoordinatorRPCService_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\033CoordinatorRPCService.proto\"\177\n\023Registe"
-  "rNodeRequest\022\n\n\002ip\030\001 \001(\t\022\017\n\007rpcPort\030\002 \001("
-  "\005\022\017\n\007zmqPort\030\003 \001(\005\022\024\n\014numberOfCpus\030\004 \001(\005"
-  "\022\026\n\016nodeProperties\030\005 \001(\t\022\014\n\004type\030\006 \001(\005\"\037"
-  "\n\021RegisterNodeReply\022\n\n\002id\030\001 \001(\003\"#\n\025Unreg"
-  "isterNodeRequest\022\n\n\002id\030\001 \001(\003\"&\n\023Unregist"
-  "erNodeReply\022\017\n\007success\030\001 \001(\010\"\305\001\n\035Registe"
-  "rPhysicalStreamRequest\022\n\n\002id\030\001 \001(\003\022\022\n\nso"
-  "urceType\030\002 \001(\t\022\022\n\nsourceConf\030\003 \001(\t\022\027\n\017so"
-  "urceFrequency\030\004 \001(\003\022 \n\030numberOfBuffersTo"
-  "Produce\030\005 \001(\003\022\032\n\022physicalStreamName\030\006 \001("
-  "\t\022\031\n\021logicalStreamName\030\007 \001(\t\".\n\033Register"
-  "PhysicalStreamReply\022\017\n\007success\030\001 \001(\010\"d\n\037"
-  "UnregisterPhysicalStreamRequest\022\n\n\002id\030\001 "
-  "\001(\003\022\032\n\022physicalStreamName\030\002 \001(\t\022\031\n\021logic"
-  "alStreamName\030\003 \001(\t\"0\n\035UnregisterPhysical"
-  "StreamReply\022\017\n\007success\030\001 \001(\010\"T\n\034Register"
-  "LogicalStreamRequest\022\n\n\002id\030\001 \001(\003\022\022\n\nstre"
-  "amName\030\002 \001(\t\022\024\n\014streamSchema\030\003 \001(\t\"-\n\032Re"
-  "gisterLogicalStreamReply\022\017\n\007success\030\001 \001("
-  "\010\"@\n\036UnregisterLogicalStreamRequest\022\n\n\002i"
-  "d\030\001 \001(\003\022\022\n\nstreamName\030\002 \001(\t\"/\n\034Unregiste"
-  "rLogicalStreamReply\022\017\n\007success\030\001 \001(\010\"5\n\020"
-  "AddParentRequest\022\017\n\007childId\030\001 \001(\003\022\020\n\010par"
-  "entId\030\002 \001(\003\"!\n\016AddParentReply\022\017\n\007success"
-  "\030\001 \001(\010\"8\n\023RemoveParentRequest\022\017\n\007childId"
-  "\030\001 \001(\003\022\020\n\010parentId\030\002 \001(\003\"$\n\021RemoveParent"
-  "Reply\022\017\n\007success\030\001 \001(\0102\362\004\n\025CoordinatorRP"
-  "CService\022:\n\014RegisterNode\022\024.RegisterNodeR"
-  "equest\032\022.RegisterNodeReply\"\000\022@\n\016Unregist"
-  "erNode\022\026.UnregisterNodeRequest\032\024.Unregis"
-  "terNodeReply\"\000\022X\n\026RegisterPhysicalStream"
-  "\022\036.RegisterPhysicalStreamRequest\032\034.Regis"
-  "terPhysicalStreamReply\"\000\022^\n\030UnregisterPh"
-  "ysicalStream\022 .UnregisterPhysicalStreamR"
-  "equest\032\036.UnregisterPhysicalStreamReply\"\000"
-  "\022U\n\025RegisterLogicalStream\022\035.RegisterLogi"
-  "calStreamRequest\032\033.RegisterLogicalStream"
-  "Reply\"\000\022[\n\027UnregisterLogicalStream\022\037.Unr"
-  "egisterLogicalStreamRequest\032\035.Unregister"
-  "LogicalStreamReply\"\000\0221\n\tAddParent\022\021.AddP"
-  "arentRequest\032\017.AddParentReply\"\000\022:\n\014Remov"
-  "eParent\022\024.RemoveParentRequest\032\022.RemovePa"
-  "rentReply\"\000b\006proto3"
+  "\n\033CoordinatorRPCService.proto\"b\n\023Registe"
+  "rNodeRequest\022\017\n\007address\030\001 \001(\t\022\024\n\014numberO"
+  "fCpus\030\002 \001(\005\022\026\n\016nodeProperties\030\003 \001(\t\022\014\n\004t"
+  "ype\030\004 \001(\005\"\037\n\021RegisterNodeReply\022\n\n\002id\030\001 \001"
+  "(\003\"#\n\025UnregisterNodeRequest\022\n\n\002id\030\001 \001(\003\""
+  "&\n\023UnregisterNodeReply\022\017\n\007success\030\001 \001(\010\""
+  "\305\001\n\035RegisterPhysicalStreamRequest\022\n\n\002id\030"
+  "\001 \001(\003\022\022\n\nsourceType\030\002 \001(\t\022\022\n\nsourceConf\030"
+  "\003 \001(\t\022\027\n\017sourceFrequency\030\004 \001(\003\022 \n\030number"
+  "OfBuffersToProduce\030\005 \001(\003\022\032\n\022physicalStre"
+  "amName\030\006 \001(\t\022\031\n\021logicalStreamName\030\007 \001(\t\""
+  ".\n\033RegisterPhysicalStreamReply\022\017\n\007succes"
+  "s\030\001 \001(\010\"d\n\037UnregisterPhysicalStreamReque"
+  "st\022\n\n\002id\030\001 \001(\003\022\032\n\022physicalStreamName\030\002 \001"
+  "(\t\022\031\n\021logicalStreamName\030\003 \001(\t\"0\n\035Unregis"
+  "terPhysicalStreamReply\022\017\n\007success\030\001 \001(\010\""
+  "T\n\034RegisterLogicalStreamRequest\022\n\n\002id\030\001 "
+  "\001(\003\022\022\n\nstreamName\030\002 \001(\t\022\024\n\014streamSchema\030"
+  "\003 \001(\t\"-\n\032RegisterLogicalStreamReply\022\017\n\007s"
+  "uccess\030\001 \001(\010\"@\n\036UnregisterLogicalStreamR"
+  "equest\022\n\n\002id\030\001 \001(\003\022\022\n\nstreamName\030\002 \001(\t\"/"
+  "\n\034UnregisterLogicalStreamReply\022\017\n\007succes"
+  "s\030\001 \001(\010\"5\n\020AddParentRequest\022\017\n\007childId\030\001"
+  " \001(\003\022\020\n\010parentId\030\002 \001(\003\"!\n\016AddParentReply"
+  "\022\017\n\007success\030\001 \001(\010\"8\n\023RemoveParentRequest"
+  "\022\017\n\007childId\030\001 \001(\003\022\020\n\010parentId\030\002 \001(\003\"$\n\021R"
+  "emoveParentReply\022\017\n\007success\030\001 \001(\0102\362\004\n\025Co"
+  "ordinatorRPCService\022:\n\014RegisterNode\022\024.Re"
+  "gisterNodeRequest\032\022.RegisterNodeReply\"\000\022"
+  "@\n\016UnregisterNode\022\026.UnregisterNodeReques"
+  "t\032\024.UnregisterNodeReply\"\000\022X\n\026RegisterPhy"
+  "sicalStream\022\036.RegisterPhysicalStreamRequ"
+  "est\032\034.RegisterPhysicalStreamReply\"\000\022^\n\030U"
+  "nregisterPhysicalStream\022 .UnregisterPhys"
+  "icalStreamRequest\032\036.UnregisterPhysicalSt"
+  "reamReply\"\000\022U\n\025RegisterLogicalStream\022\035.R"
+  "egisterLogicalStreamRequest\032\033.RegisterLo"
+  "gicalStreamReply\"\000\022[\n\027UnregisterLogicalS"
+  "tream\022\037.UnregisterLogicalStreamRequest\032\035"
+  ".UnregisterLogicalStreamReply\"\000\0221\n\tAddPa"
+  "rent\022\021.AddParentRequest\032\017.AddParentReply"
+  "\"\000\022:\n\014RemoveParent\022\024.RemoveParentRequest"
+  "\032\022.RemoveParentReply\"\000b\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_CoordinatorRPCService_2eproto_deps[1] = {
 };
@@ -529,7 +526,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_Coo
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_CoordinatorRPCService_2eproto_once;
 static bool descriptor_table_CoordinatorRPCService_2eproto_initialized = false;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_CoordinatorRPCService_2eproto = {
-  &descriptor_table_CoordinatorRPCService_2eproto_initialized, descriptor_table_protodef_CoordinatorRPCService_2eproto, "CoordinatorRPCService.proto", 1739,
+  &descriptor_table_CoordinatorRPCService_2eproto_initialized, descriptor_table_protodef_CoordinatorRPCService_2eproto, "CoordinatorRPCService.proto", 1710,
   &descriptor_table_CoordinatorRPCService_2eproto_once, descriptor_table_CoordinatorRPCService_2eproto_sccs, descriptor_table_CoordinatorRPCService_2eproto_deps, 16, 0,
   schemas, file_default_instances, TableStruct_CoordinatorRPCService_2eproto::offsets,
   file_level_metadata_CoordinatorRPCService_2eproto, 16, file_level_enum_descriptors_CoordinatorRPCService_2eproto, file_level_service_descriptors_CoordinatorRPCService_2eproto,
@@ -555,27 +552,27 @@ RegisterNodeRequest::RegisterNodeRequest(const RegisterNodeRequest& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ip_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  if (!from._internal_ip().empty()) {
-    ip_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.ip_);
+  address_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from._internal_address().empty()) {
+    address_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.address_);
   }
   nodeproperties_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_nodeproperties().empty()) {
     nodeproperties_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.nodeproperties_);
   }
-  ::memcpy(&rpcport_, &from.rpcport_,
+  ::memcpy(&numberofcpus_, &from.numberofcpus_,
     static_cast<size_t>(reinterpret_cast<char*>(&type_) -
-    reinterpret_cast<char*>(&rpcport_)) + sizeof(type_));
+    reinterpret_cast<char*>(&numberofcpus_)) + sizeof(type_));
   // @@protoc_insertion_point(copy_constructor:RegisterNodeRequest)
 }
 
 void RegisterNodeRequest::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_RegisterNodeRequest_CoordinatorRPCService_2eproto.base);
-  ip_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  address_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   nodeproperties_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(&rpcport_, 0, static_cast<size_t>(
+  ::memset(&numberofcpus_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&type_) -
-      reinterpret_cast<char*>(&rpcport_)) + sizeof(type_));
+      reinterpret_cast<char*>(&numberofcpus_)) + sizeof(type_));
 }
 
 RegisterNodeRequest::~RegisterNodeRequest() {
@@ -584,7 +581,7 @@ RegisterNodeRequest::~RegisterNodeRequest() {
 }
 
 void RegisterNodeRequest::SharedDtor() {
-  ip_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  address_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   nodeproperties_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
@@ -603,11 +600,11 @@ void RegisterNodeRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ip_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  address_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   nodeproperties_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(&rpcport_, 0, static_cast<size_t>(
+  ::memset(&numberofcpus_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&type_) -
-      reinterpret_cast<char*>(&rpcport_)) + sizeof(type_));
+      reinterpret_cast<char*>(&numberofcpus_)) + sizeof(type_));
   _internal_metadata_.Clear();
 }
 
@@ -618,48 +615,34 @@ const char* RegisterNodeRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAME
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // string ip = 1;
+      // string address = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
-          auto str = _internal_mutable_ip();
+          auto str = _internal_mutable_address();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
-          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "RegisterNodeRequest.ip"));
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "RegisterNodeRequest.address"));
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // int32 rpcPort = 2;
+      // int32 numberOfCpus = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
-          rpcport_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // int32 zmqPort = 3;
-      case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
-          zmqport_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // int32 numberOfCpus = 4;
-      case 4:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32)) {
           numberofcpus_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // string nodeProperties = 5;
-      case 5:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
+      // string nodeProperties = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
           auto str = _internal_mutable_nodeproperties();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "RegisterNodeRequest.nodeProperties"));
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // int32 type = 6;
-      case 6:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 48)) {
+      // int32 type = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32)) {
           type_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
@@ -690,48 +673,36 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string ip = 1;
-  if (this->ip().size() > 0) {
+  // string address = 1;
+  if (this->address().size() > 0) {
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->_internal_ip().data(), static_cast<int>(this->_internal_ip().length()),
+      this->_internal_address().data(), static_cast<int>(this->_internal_address().length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "RegisterNodeRequest.ip");
+      "RegisterNodeRequest.address");
     target = stream->WriteStringMaybeAliased(
-        1, this->_internal_ip(), target);
+        1, this->_internal_address(), target);
   }
 
-  // int32 rpcPort = 2;
-  if (this->rpcport() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(2, this->_internal_rpcport(), target);
-  }
-
-  // int32 zmqPort = 3;
-  if (this->zmqport() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(3, this->_internal_zmqport(), target);
-  }
-
-  // int32 numberOfCpus = 4;
+  // int32 numberOfCpus = 2;
   if (this->numberofcpus() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(4, this->_internal_numberofcpus(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(2, this->_internal_numberofcpus(), target);
   }
 
-  // string nodeProperties = 5;
+  // string nodeProperties = 3;
   if (this->nodeproperties().size() > 0) {
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
       this->_internal_nodeproperties().data(), static_cast<int>(this->_internal_nodeproperties().length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "RegisterNodeRequest.nodeProperties");
     target = stream->WriteStringMaybeAliased(
-        5, this->_internal_nodeproperties(), target);
+        3, this->_internal_nodeproperties(), target);
   }
 
-  // int32 type = 6;
+  // int32 type = 4;
   if (this->type() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(6, this->_internal_type(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(4, this->_internal_type(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -750,42 +721,28 @@ size_t RegisterNodeRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // string ip = 1;
-  if (this->ip().size() > 0) {
+  // string address = 1;
+  if (this->address().size() > 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->_internal_ip());
+        this->_internal_address());
   }
 
-  // string nodeProperties = 5;
+  // string nodeProperties = 3;
   if (this->nodeproperties().size() > 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
         this->_internal_nodeproperties());
   }
 
-  // int32 rpcPort = 2;
-  if (this->rpcport() != 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
-        this->_internal_rpcport());
-  }
-
-  // int32 zmqPort = 3;
-  if (this->zmqport() != 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
-        this->_internal_zmqport());
-  }
-
-  // int32 numberOfCpus = 4;
+  // int32 numberOfCpus = 2;
   if (this->numberofcpus() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
         this->_internal_numberofcpus());
   }
 
-  // int32 type = 6;
+  // int32 type = 4;
   if (this->type() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
@@ -823,19 +780,13 @@ void RegisterNodeRequest::MergeFrom(const RegisterNodeRequest& from) {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.ip().size() > 0) {
+  if (from.address().size() > 0) {
 
-    ip_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.ip_);
+    address_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.address_);
   }
   if (from.nodeproperties().size() > 0) {
 
     nodeproperties_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.nodeproperties_);
-  }
-  if (from.rpcport() != 0) {
-    _internal_set_rpcport(from._internal_rpcport());
-  }
-  if (from.zmqport() != 0) {
-    _internal_set_zmqport(from._internal_zmqport());
   }
   if (from.numberofcpus() != 0) {
     _internal_set_numberofcpus(from._internal_numberofcpus());
@@ -866,12 +817,10 @@ bool RegisterNodeRequest::IsInitialized() const {
 void RegisterNodeRequest::InternalSwap(RegisterNodeRequest* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  ip_.Swap(&other->ip_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+  address_.Swap(&other->address_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   nodeproperties_.Swap(&other->nodeproperties_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
-  swap(rpcport_, other->rpcport_);
-  swap(zmqport_, other->zmqport_);
   swap(numberofcpus_, other->numberofcpus_);
   swap(type_, other->type_);
 }

@@ -234,33 +234,35 @@ size_t CoordinatorActor::registerNode(const string& ip, uint16_t publish_port,
                                       PhysicalStreamConfig streamConf,
                                       NESNodeType type) {
 
-    auto curSender = current_sender();
-    auto handle = actor_cast<actor>(curSender);
-    size_t hashId = getIdFromHandle(curSender);
-    NES_DEBUG(
-        "CoordinatorActor: connect attempt with id=" << curSender->id() << " handle=" << to_string(handle) << " hashID="
-                                                     << hashId << " type=" << type);
-    NESTopologyEntryPtr node = coordinatorServicePtr->registerNode(
-        hashId, ip, publish_port, receive_port, cpu, nodeProperties, streamConf, type);
-
-    if (!node) {
-        NES_ERROR("CoordinatorActor::registerNode : node not not created");
-        return 0;
-    }
-
-    this->state.actorTopologyMap.insert(std::make_pair(curSender, node));
-    this->state.topologyActorMap.insert(std::make_pair(node, curSender));
-    this->state.idToActorMap.insert(std::make_pair(hashId, curSender));
-
-    this->monitor(handle);
-
-    NES_DEBUG(
-        "CoordinatorActor: Successfully registered sensor (CPU=" << cpu << ", PhysicalStream: "
-                                                                 << streamConf.physicalStreamName << ") "
-                                                                 << to_string(handle) << " type=" << type);
-
-    NESTopologyManager::getInstance().printNESTopologyPlan();
-    return hashId;
+    assert(0);
+    return 0;
+//    auto curSender = current_sender();
+//    auto handle = actor_cast<actor>(curSender);
+//    size_t hashId = getIdFromHandle(curSender);
+//    NES_DEBUG(
+//        "CoordinatorActor: connect attempt with id=" << curSender->id() << " handle=" << to_string(handle) << " hashID="
+//                                                     << hashId << " type=" << type);
+//    NESTopologyEntryPtr node = coordinatorServicePtr->registerNode(
+//        hashId, ip, publish_port, receive_port, cpu, nodeProperties, streamConf, type);
+//
+//    if (!node) {
+//        NES_ERROR("CoordinatorActor::registerNode : node not not created");
+//        return 0;
+//    }
+//
+//    this->state.actorTopologyMap.insert(std::make_pair(curSender, node));
+//    this->state.topologyActorMap.insert(std::make_pair(node, curSender));
+//    this->state.idToActorMap.insert(std::make_pair(hashId, curSender));
+//
+//    this->monitor(handle);
+//
+//    NES_DEBUG(
+//        "CoordinatorActor: Successfully registered sensor (CPU=" << cpu << ", PhysicalStream: "
+//                                                                 << streamConf.physicalStreamName << ") "
+//                                                                 << to_string(handle) << " type=" << type);
+//
+//    NESTopologyManager::getInstance().printNESTopologyPlan();
+//    return hashId;
 }
 
 bool CoordinatorActor::shutdown() {

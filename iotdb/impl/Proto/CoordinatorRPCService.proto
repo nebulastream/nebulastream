@@ -22,12 +22,10 @@ service CoordinatorRPCService {
 }
 
 message RegisterNodeRequest {
-  string ip = 1;
-  int32 rpcPort = 2;
-  int32 zmqPort = 3;
-  int32 numberOfCpus = 4;
-  string nodeProperties = 5;
-  int32 type = 6;
+  string address = 1;
+  int32 numberOfCpus = 2;
+  string nodeProperties = 3;
+  int32 type = 4;
 }
 
 message RegisterNodeReply {

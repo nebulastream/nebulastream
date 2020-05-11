@@ -17,23 +17,21 @@ void termFunc(int sig) {
 
 namespace NES {
 
-NesWorker::NesWorker() {
+NesWorker::NesWorker(std::string coordinatorIp, std::string coordinatorPort, std::string localIp, std::string localWorkerPort, NESNodeType type)
+: coordinatorIp(coordinatorIp),
+  coordinatorPort(coordinatorPort),
+  localWorkerIp(localIp),
+  localWorkerPort(localWorkerPort),
+  type(type)
+{
     connected = false;
     withRegisterStream = false;
     withParent = false;
-    coordinatorPort = 0;
-    this->type = NESNodeType::Sensor;
     NES_DEBUG("NesWorker: constructed");
 
 }
-NesWorker::NesWorker(NESNodeType type) {
-    connected = false;
-    withRegisterStream = false;
-    withParent = false;
-    coordinatorPort = 0;
-    this->type = type;
-    NES_DEBUG("NesWorker: constructed");
-}
+
+
 NesWorker::~NesWorker() {
     NES_DEBUG("NesWorker::~NesWorker()");
     stop(true);
@@ -62,8 +60,12 @@ void startWorkerRPCServer(std::shared_ptr<Server>& rpcServer) {
     NES_DEBUG("startWorkerRPCServer: end listening");
 }
 
-bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::string serverIp) {
-    NES_DEBUG("NesWorker: start with blocking " << blocking << " serverIp=" << serverIp << " port=" << port);
+bool NesWorker::start(bool blocking, bool withConnect) {
+    NES_DEBUG("NesWorker: start with blocking " << blocking <<
+    " coordinatorIp=" << coordinatorIp << " coordinatorPort=" << coordinatorPort <<
+    " localWorkerIp=" << coordinatorIp << " localWorkerPort=" << coordinatorPort
+    << " type=" << type
+    );
 
     NES_DEBUG("NesWorker::start: start NodeEngine");
     nodeEngine = std::make_shared<NodeEngine>();
@@ -72,11 +74,11 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
         NES_ERROR("NesWorker: node engine could not be started");
         throw Exception("NesWorker error while starting node engine");
     } else {
-        NES_DEBUG("NesWorker: Node engine started successfully serverIp=" << serverIp);
+        NES_DEBUG("NesWorker: Node engine started successfully");
     }
 
-    std::string address = workerCfg.ip + ":" + ::to_string(workerCfg.receive_port+1);
-    NES_DEBUG("startWorkerRPCServer for address=" << address);
+    std::string address = localWorkerIp + ":" + localWorkerPort;
+    NES_DEBUG("startWorkerRPCServer for accepting messages for address=" << address);
     WorkerRPCServer service(nodeEngine);
 
     ServerBuilder builder;
@@ -104,7 +106,7 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
     }
     if (withParent) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
-        addParent(parentId);
+        addParent(atoi(parentId.c_str()));
     }
 
     stopped = false;
@@ -160,9 +162,10 @@ bool NesWorker::stop(bool force) {
 
 bool NesWorker::connect() {
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(
-        workerCfg.host,
-        workerCfg.receive_port,
-        workerCfg.publish_port,
+        coordinatorIp,
+        coordinatorPort,
+        localWorkerIp,
+        localWorkerPort,
         2,
         this->type,
         nodeEngine->getNodePropertiesAsString()
@@ -189,50 +192,46 @@ bool NesWorker::connect() {
         return false;
     }
 
-//
-//    bool success = workerActor->connecting(workerCfg.host, coordinatorPort);
-//    NES_DEBUG("NesWorker::connect success=" << success);
-//    return success;
 }
 
 bool NesWorker::disconnect() {
-    bool success = workerActor->disconnecting();
+    bool success = coordinatorRpcClient->disconnecting();
     NES_DEBUG("NesWorker::disconnect success=" << success);
     return success;
 }
 
 bool NesWorker::registerLogicalStream(std::string name, std::string path) {
-    bool success = workerActor->registerLogicalStream(name, path);
+    bool success = coordinatorRpcClient->registerLogicalStream(name, path);
     NES_DEBUG("NesWorker::disconnect success=" << success);
     return success;
 }
 
-bool NesWorker::deregisterLogicalStream(std::string logicalName) {
-    bool success = workerActor->removeLogicalStream(logicalName);
-    NES_DEBUG("NesWorker::deregisterLogicalStream success=" << success);
+bool NesWorker::unregisterLogicalStream(std::string logicalName) {
+    bool success = coordinatorRpcClient->unregisterLogicalStream(logicalName);
+    NES_DEBUG("NesWorker::unregisterLogicalStream success=" << success);
     return success;
 }
 
-bool NesWorker::deregisterPhysicalStream(std::string logicalName, std::string physicalName) {
-    bool success = workerActor->removePhysicalStream(logicalName, physicalName);
-    NES_DEBUG("NesWorker::deregisterPhysicalStream success=" << success);
+bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string physicalName) {
+    bool success = coordinatorRpcClient->unregisterPhysicalStream(logicalName, physicalName);
+    NES_DEBUG("NesWorker::unregisterPhysicalStream success=" << success);
     return success;
 }
 
 bool NesWorker::registerPhysicalStream(PhysicalStreamConfig conf) {
-    bool success = workerActor->registerPhysicalStream(conf);
+    bool success = coordinatorRpcClient->registerPhysicalStream(conf);
     NES_DEBUG("NesWorker::registerPhysicalStream success=" << success);
     return success;
 }
 
-bool NesWorker::addParent(std::string parentId) {
-    bool success = workerActor->addNewParentToSensorNode(parentId);
+bool NesWorker::addParent(size_t parentId) {
+    bool success = coordinatorRpcClient->addParent(parentId);
     NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
     return success;
 }
 
-bool NesWorker::removeParent(std::string parentId) {
-    bool success = workerActor->removeParentFromSensorNode(parentId);
+bool NesWorker::removeParent(size_t parentId) {
+    bool success = coordinatorRpcClient->removeParent(parentId);
     NES_DEBUG("NesWorker::removeLink(parent only) success=" << success);
     return success;
 }

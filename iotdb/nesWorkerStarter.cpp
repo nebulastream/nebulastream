@@ -98,19 +98,19 @@ int main(int argc, char** argv) {
     cout << logo << endl;
 
 
-//    GreeterClient greeter(grpc::CreateChannel(
-//        "0.0.0.0:50051", grpc::InsecureChannelCredentials()));
-//    std::string user("world");
-//    std::string reply = greeter.SayHello(user);
-//    std::cout << "Greeter received: " << reply << std::endl;
-//
-//    cout << "READY" << endl;
+    //    GreeterClient greeter(grpc::CreateChannel(
+    //        "0.0.0.0:50051", grpc::InsecureChannelCredentials()));
+    //    std::string user("world");
+    //    std::string reply = greeter.SayHello(user);
+    //    std::cout << "Greeter received: " << reply << std::endl;
+    //
+    //    cout << "READY" << endl;
 
 
     namespace po = boost::program_options;
     po::options_description desc("Nes Worker Options");
-    uint16_t actorPort = 0;
-    std::string serverIp = "localhost";
+    std::string coordinatorPort = 0;
+    std::string coordinatorIp = "localhost";
 
     std::string sourceType = "";
     std::string sourceConfig = "";
@@ -120,9 +120,9 @@ int main(int argc, char** argv) {
     std::string logicalStreamName;
     std::string parentId = "-1";
 
-    desc.add_options()("actor_port", po::value<uint16_t>(&actorPort)->default_value(actorPort),
+    desc.add_options()("coordinatorPort", po::value<string>(&coordinatorPort)->default_value(coordinatorPort),
                        "Set NES actor server port (default: 0).")
-        ("server_ip", po::value<string>(&serverIp)->default_value(serverIp),
+        ("coordinatorIp", po::value<string>(&coordinatorIp)->default_value(coordinatorIp),
          "Set NES server ip (default: localhost).")
         (
             "sourceType", po::value<string>(&sourceType)->default_value(sourceType),
@@ -173,7 +173,13 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(
+        coordinatorIp,
+        coordinatorPort,
+        coordinatorIp,
+        coordinatorPort + "1",
+        NESNodeType::Sensor
+    );
 
     //register phy stream if nessesary
     if (sourceType != "") {
@@ -196,9 +202,7 @@ int main(int argc, char** argv) {
             setWithParent(parentId);
     }
 
-    cout << "start with port=" << actorPort <<
-         endl;
-    wrk->start(/**blocking*/true, /**withConnect*/true, actorPort, serverIp);
+    wrk->start(/**blocking*/true, /**withConnect*/true);
     cout << "worker started" <<
          endl;
 

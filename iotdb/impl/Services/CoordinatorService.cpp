@@ -111,14 +111,13 @@ bool CoordinatorService::removeParentFromSensorNode(size_t childId, size_t paren
     return true;
 }
 
-NESTopologyEntryPtr CoordinatorService::registerNode(size_t id, const string& ip, uint16_t publish_port,
-                                                     uint16_t receive_port, int cpu, const string& nodeProperties,
+NESTopologyEntryPtr CoordinatorService::registerNode(size_t id, std::string address, int cpu, const string& nodeProperties,
                                                      PhysicalStreamConfig streamConf, NESNodeType type) {
     NESTopologyManager& topologyManager = this->topologyManagerPtr->getInstance();
     NESTopologyEntryPtr nodePtr;
     if (type == NESNodeType::Sensor) {
         NES_DEBUG("CoordinatorService::registerNode: register sensor node");
-        nodePtr = topologyManager.createNESSensorNode(id, ip, CPUCapacity::Value(cpu));
+        nodePtr = topologyManager.createNESSensorNode(id, address, CPUCapacity::Value(cpu));
         NESTopologySensorNode* sensor = dynamic_cast<NESTopologySensorNode*>(nodePtr.get());
         sensor->setPhysicalStreamName(streamConf.physicalStreamName);
 
@@ -165,15 +164,15 @@ NESTopologyEntryPtr CoordinatorService::registerNode(size_t id, const string& ip
 
     } else if (type == NESNodeType::Worker) {
         NES_DEBUG("CoordinatorService::registerNode: register worker node");
-        nodePtr = topologyManager.createNESWorkerNode(id, ip, CPUCapacity::Value(cpu));
+        nodePtr = topologyManager.createNESWorkerNode(id, address, CPUCapacity::Value(cpu));
     } else {
         NES_ERROR("CoordinatorService::registerNode: type not supported " << type);
         assert(0);
     }
     assert(nodePtr);
 
-    nodePtr->setPublishPort(publish_port);
-    nodePtr->setReceivePort(receive_port);
+//    nodePtr->setPublishPort(publish_port);
+//    nodePtr->setReceivePort(receive_port);
     if (nodeProperties != "defaultProperties") {
         nodePtr->setNodeProperty(nodeProperties);
     }

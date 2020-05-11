@@ -24,17 +24,15 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext* context, const Register
     NES_DEBUG("CoordinatorRPCServer::RegisterNode: request =" << request);
     NESTopologyManager::getInstance().printNESTopologyPlan();
 
-    NES_DEBUG("Coordinator RPC: Register Node ip=" << request->ip()
-                                                   << " rpcport=" << request->rpcport() << " zmqport="
-                                                   << request->zmqport()
+    NES_DEBUG("Coordinator RPC: Register Node address=" << request->address()
                                                    << " numberOfCpus=" << request->numberofcpus()
                                                    << " nodeProperties=" << request->nodeproperties()
                                                    << " type=" << request->type());
 
-    size_t id = getIdFromIp(request->ip());
+    size_t id = getIdFromIp(request->address());
     PhysicalStreamConfig streamConf;
     NESTopologyEntryPtr node = coordinatorServicePtr->registerNode(
-        id, request->ip(), request->rpcport(), request->zmqport(), request->numberofcpus(),
+        id, request->address(), request->numberofcpus(),
         request->nodeproperties(), streamConf, (NESNodeType) request->type());
 
     if (!node) {

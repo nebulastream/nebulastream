@@ -29,8 +29,8 @@ TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
@@ -66,8 +66,8 @@ TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
@@ -116,8 +116,8 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
@@ -137,7 +137,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
         "testStream");
     EXPECT_NE(sPtr, nullptr);
 
-    bool success2 = wrk->deregisterLogicalStream("testStream");
+    bool success2 = wrk->unregisterLogicalStream("testStream");
     EXPECT_TRUE(success2);
 
     SchemaPtr sPtr2 = StreamCatalog::instance().getSchemaForLogicalStream(
@@ -160,12 +160,12 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    bool success = wrk->deregisterLogicalStream("default_logical");
+    bool success = wrk->unregisterLogicalStream("default_logical");
     EXPECT_TRUE(!success);
 
     SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
@@ -188,8 +188,8 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
@@ -227,8 +227,8 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
@@ -277,12 +277,12 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    bool success = wrk->deregisterPhysicalStream("default_logical", "default_physical");
+    bool success = wrk->unregisterPhysicalStream("default_logical", "default_physical");
     EXPECT_TRUE(success);
 
     cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
@@ -308,12 +308,12 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    bool success = wrk->deregisterPhysicalStream("default_logical2", "default_physical");
+    bool success = wrk->unregisterPhysicalStream("default_logical2", "default_physical");
     EXPECT_TRUE(!success);
 
     SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
