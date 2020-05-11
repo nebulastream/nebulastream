@@ -14,7 +14,7 @@
 namespace NES {
 typedef map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployment;
 
-class NesCoordinator {
+class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
     /**
      * @brief default constructor

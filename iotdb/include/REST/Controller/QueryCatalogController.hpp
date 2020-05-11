@@ -4,8 +4,9 @@
 #include "BaseController.hpp"
 #include <Actors/CoordinatorActor.hpp>
 #include <Services/QueryCatalogService.hpp>
-
 namespace NES {
+class NesCoordinator;
+typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 
 class QueryCatalogController : public BaseController {
 
@@ -14,12 +15,12 @@ class QueryCatalogController : public BaseController {
         queryCatalogServicePtr = QueryCatalogService::getInstance();
     }
 
-    void setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
+    void setCoordinator(NesCoordinatorPtr coordinator);
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
     void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
-    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
+    NesCoordinatorPtr coordinator;
     QueryCatalogServicePtr queryCatalogServicePtr;
 };
 

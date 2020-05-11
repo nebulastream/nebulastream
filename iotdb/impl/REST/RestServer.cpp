@@ -7,10 +7,10 @@
 namespace NES {
 
 RestServer::RestServer(std::string host, u_int16_t port,
-                       infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
+                       NesCoordinatorPtr coordinator) {
     this->host = host;
     this->port = port;
-    this->coordinatorActorHandle = coordinatorActorHandle;
+    this->coordinator = coordinator;
     InterruptHandler::hookSIGINT();
 }
 
@@ -18,7 +18,7 @@ bool RestServer::start() {
 
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
 
-    server.setCoordinatorActorHandle(coordinatorActorHandle);
+    server.setCoordinator(coordinator);
     server.setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
 
     try {

@@ -20,7 +20,7 @@ class RestServer {
    * */
     RestServer(
         std::string host, u_int16_t port,
-        infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
+        NesCoordinatorPtr coordinator);
 
     /**
    * @brief method to start the rest server
@@ -38,7 +38,7 @@ class RestServer {
     RestEngine server;
     std::string host;
     u_int16_t port;
-    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
+    NesCoordinatorPtr coordinator;
 };
 }// namespace NES
 

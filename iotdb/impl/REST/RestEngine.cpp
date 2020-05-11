@@ -29,9 +29,9 @@ void RestEngine::setEndpoint(const std::string& value) {
 }
 
 //NOTE: maybe someone can suggest a better way to do this.
-void RestEngine::setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
-    this->queryController.setCoordinatorActorHandle(coordinatorActorHandle);
-    this->queryCatalogController.setCoordinatorActorHandle(coordinatorActorHandle);
+void RestEngine::setCoordinator(NesCoordinatorPtr coordinator) {
+    this->queryController.setCoordinator(coordinator);
+    this->queryCatalogController.setCoordinator(coordinator);
 };
 
 void RestEngine::handleGet(http_request message) {
