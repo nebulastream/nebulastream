@@ -39,12 +39,12 @@ typedef std::shared_ptr<CoordinatorService> CoordinatorServicePtr;
 class CoordinatorService {
 
   public:
+    ~CoordinatorService() = default;
+
     static CoordinatorServicePtr getInstance() {
         static CoordinatorServicePtr instance{new CoordinatorService};
         return instance;
     }
-
-    ~CoordinatorService() = default;
 
     /**
      * @brief registers a CAF worker into the NES topology and creates a corresponding NESTopologyWorkerNode object
