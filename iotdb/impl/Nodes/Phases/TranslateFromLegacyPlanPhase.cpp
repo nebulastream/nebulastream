@@ -96,7 +96,9 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         auto sourceOperator = std::dynamic_pointer_cast<SourceOperator>(operatorPtr);
         const DataSourcePtr dataSource = sourceOperator->getDataSourcePtr();
         const SourceDescriptorPtr sourceDescriptor = ConvertPhysicalToLogicalSource::createSourceDescriptor(dataSource);
-        return createSourceLogicalOperatorNode(sourceDescriptor);
+        const LogicalOperatorNodePtr operatorNode = createSourceLogicalOperatorNode(sourceDescriptor);
+        operatorNode->setId(operatorPtr->getOperatorId());
+        return operatorNode;
     } else if (operatorPtr->getOperatorType() == FILTER_OP) {
         // Translate filter operator node.
         auto filterOperator = std::dynamic_pointer_cast<FilterOperator>(operatorPtr);
@@ -105,7 +107,9 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         if (predicateNode == nullptr) {
             NES_FATAL_ERROR("TranslateFromLegacyPlanPhase: Error during translating filter operator");
         }
-        return createFilterLogicalOperatorNode(predicateNode);
+        const LogicalOperatorNodePtr operatorNode = createFilterLogicalOperatorNode(predicateNode);
+        operatorNode->setId(operatorPtr->getOperatorId());
+        return operatorNode;
     } else if (operatorPtr->getOperatorType() == MAP_OP) {
         // Translate map operator node.
         auto mapOperator = std::dynamic_pointer_cast<MapOperator>(operatorPtr);
@@ -120,13 +124,17 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         FieldAssignmentExpressionNodePtr fieldAssignmentExpression =
             FieldAssignmentExpressionNode::create(fieldAccessExpressionNodePtr->as<FieldAccessExpressionNode>(),
                                                   expression);
-        return createMapLogicalOperatorNode(fieldAssignmentExpression);
+        const LogicalOperatorNodePtr operatorNode = createMapLogicalOperatorNode(fieldAssignmentExpression);
+        operatorNode->setId(operatorPtr->getOperatorId());
+        return operatorNode;
     } else if (operatorPtr->getOperatorType() == SINK_OP) {
         // Translate sink operator node.
         SinkOperatorPtr sinkOperator = std::dynamic_pointer_cast<SinkOperator>(operatorPtr);
         const SinkDescriptorPtr
             sinkDescriptor = ConvertPhysicalToLogicalSink::createSinkDescriptor(sinkOperator->getDataSinkPtr());
-        return createSinkLogicalOperatorNode(sinkDescriptor);
+        const LogicalOperatorNodePtr operatorNode = createSinkLogicalOperatorNode(sinkDescriptor);
+        operatorNode->setId(operatorPtr->getOperatorId());
+        return operatorNode;
     }
     NES_FATAL_ERROR(
         "TranslateFromLegacyPhase: No transformation implemented for this operator: " << operatorPtr->toString());

@@ -94,7 +94,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
         auto pathItr = path.begin();
         NESTopologyEntryPtr nesNodeToPlaceOperator = (*pathItr);
 
-        while (operatorToPlace == nullptr) {
+        while (operatorToPlace != nullptr) {
 
             if (operatorToPlace->instanceOf<SinkLogicalOperatorNode>()) {
                 NES_DEBUG("BottomUp: Placing sink node on the sink node");
@@ -140,7 +140,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
                     NES_DEBUG("BottomUp: Adding the operator the existing execution node");
                     stringstream operatorName;
                     operatorName << existingExecutionNode->getOperatorName() << "=>"
-                                 << operatorToPlace->toString()
+                                 << operatorTypeToString[legacyOperator->getOperatorType()]
                                  << "(OP-" << std::to_string(operatorToPlace->getId()) << ")";
                     existingExecutionNode->setOperatorName(operatorName.str());
                     existingExecutionNode->addOperator(legacyOperator->copy());
@@ -150,7 +150,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
 
                 NES_DEBUG("BottomUp: create new execution node with id: " << nesNodeToPlaceOperator->getId());
                 stringstream operatorName;
-                operatorName << operatorToPlace->toString()
+                operatorName << operatorTypeToString[legacyOperator->getOperatorType()]
                              << "(OP-" << std::to_string(operatorToPlace->getId()) << ")";
                 const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(operatorName.str(),
                                                                                                 to_string(
@@ -164,10 +164,12 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
             nesNodeToPlaceOperator->reduceCpuCapacity(1);
-            operatorToPlace = nullptr;
             if (!operatorToPlace->getParents().empty()) {
                 NES_DEBUG("BottomUp: Finding next operator for placement");
                 operatorToPlace = operatorToPlace->getParents()[0]->as<LogicalOperatorNode>();
+            } else {
+                NES_DEBUG("BottomUp: No operator found for placement");
+                operatorToPlace = nullptr;
             }
         }
     }
