@@ -63,9 +63,9 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformToExpression(UserAPIExp
             // Translate arithmetical expressions to the legacy representation
             return transformArithmeticalExpressions(predicate);
         }
-        NES_FATAL_ERROR(
+        NES_THROW_RUNTIME_ERROR(
             "TranslateFromLegacyPlanPhase: No transformation implemented for this predicate: "
-                << expression->toString());
+                + expression->toString());
         NES_NOT_IMPLEMENTED();
     } else if (FieldPtr field = std::dynamic_pointer_cast<Field>(expression)) {
 
@@ -83,9 +83,9 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformToExpression(UserAPIExp
         }
         NES_FATAL_ERROR("TranslateFromLegacyPlanPhase: No transformation possible for input PredicateItem");
     }
-    NES_FATAL_ERROR(
+    NES_THROW_RUNTIME_ERROR(
         "TranslateFromLegacyPlanPhase: No transformation implemented for this UserAPIExpression: "
-            << expression->toString());
+            + expression->toString());
     NES_NOT_IMPLEMENTED();
 }
 
@@ -105,7 +105,7 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         const PredicatePtr predicatePtr = filterOperator->getPredicate();
         auto predicateNode = transformToExpression(predicatePtr);
         if (predicateNode == nullptr) {
-            NES_FATAL_ERROR("TranslateFromLegacyPlanPhase: Error during translating filter operator");
+            NES_THROW_RUNTIME_ERROR("TranslateFromLegacyPlanPhase: Error during translating filter operator");
         }
         const LogicalOperatorNodePtr operatorNode = createFilterLogicalOperatorNode(predicateNode);
         operatorNode->setId(operatorPtr->getOperatorId());
@@ -116,7 +116,7 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         PredicatePtr predicate = mapOperator->getPredicate();
         ExpressionNodePtr expression = transformToExpression(predicate);
         if (expression == nullptr) {
-            NES_FATAL_ERROR("TranslateFromLegacyPhase: Error during translating map expression");
+            NES_THROW_RUNTIME_ERROR("TranslateFromLegacyPhase: Error during translating map expression");
         }
         AttributeFieldPtr field = mapOperator->getField();
         ExpressionNodePtr
@@ -136,8 +136,8 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         operatorNode->setId(operatorPtr->getOperatorId());
         return operatorNode;
     }
-    NES_FATAL_ERROR(
-        "TranslateFromLegacyPhase: No transformation implemented for this operator: " << operatorPtr->toString());
+    NES_THROW_RUNTIME_ERROR(
+        "TranslateFromLegacyPhase: No transformation implemented for this operator: " + operatorPtr->toString());
     NES_NOT_IMPLEMENTED();
 }
 
@@ -163,9 +163,9 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformArithmeticalExpressions
         auto left = transformToExpression(predicate->getLeft());
         return DivExpressionNode::create(left, right);
     }
-    NES_FATAL_ERROR(
+    NES_THROW_RUNTIME_ERROR(
         "TranslateFromLegacyPlanPhase: No transformation implemented for this arithmetical predicate: "
-            << predicate->toString());
+            + predicate->toString());
     NES_NOT_IMPLEMENTED();
 }
 
@@ -206,9 +206,9 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformLogicalExpressions(Pred
         auto left = transformToExpression(predicate->getLeft());
         return EqualsExpressionNode::create(left, right);
     }
-    NES_FATAL_ERROR(
+    NES_THROW_RUNTIME_ERROR(
         "TranslateFromLegacyPlanPhase: No transformation implemented for this Physical expression node: "
-            << predicate->toString());
+            + predicate->toString());
     NES_NOT_IMPLEMENTED();
 }
 

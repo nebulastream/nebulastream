@@ -16,6 +16,8 @@ Query Query::from(const std::string sourceStreamName) {
     return Query(sourceStreamName, queryPlan);
 }
 
+//FIXME: Temp method for porting code from operators to nes node implementation. We will remove the call once we have fixed
+// issue #512 and #511
 Query Query::createFromQueryPlan(std::string sourceStreamName,QueryPlanPtr queryPlan) {
     return Query(sourceStreamName, queryPlan);
 }

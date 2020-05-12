@@ -1,11 +1,3 @@
-
-/**\brief:
- *         This class is responsible for producing the execution graph for the queries on nes topology. We can have
- *         different type of optimizers that can be provided as input the query and nes topology information and based
- *         on that a query execution graph will be computed. The output will be a graph where the edges contain the
- *         information about the operators to be executed and the nodes where the execution is to be done.
- */
-
 #ifndef NESOPTIMIZER_HPP
 #define NESOPTIMIZER_HPP
 
@@ -23,8 +15,11 @@ class NESTopologyPlan;
 typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
 
 /**
- * @brief This class is responsible for creating the NES execution plan after performing query-rewrite, and
- * query-placement.
+ * @brief:
+ *         This class is responsible for producing the execution graph for the queries on nes topology. We can have
+ *         different type of placement strategies that can be provided as input along with the query and nes topology
+ *         information. Based on that a query execution graph will be computed. The output will be a graph where the
+ *         edges contain the information about the operators to be executed and the nodes where the execution is to be done.
  */
 class NESOptimizer {
 
