@@ -130,13 +130,13 @@ bool NesCoordinator::stopCoordinator(bool force) {
     NES_DEBUG("NesCoordinator: stopCoordinator force=" << force);
     if (!stopped) {
         NES_DEBUG("NesCoordinator: stopping rest server");
-//        bool successStopRest = restServer->stop();
-        InterruptHandler::handleUserInterrupt(SIGINT);
-//        if (!successStopRest) {
-//            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
-//            throw Exception("Error while stopping NesCoordinator");
-//        }
-//        NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
+        bool successStopRest = restServer->stop();
+//        InterruptHandler::handleUserInterrupt(SIGINT);
+        if (!successStopRest) {
+            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
+            throw Exception("Error while stopping NesCoordinator");
+        }
+        NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
         if (restThread.joinable()) {
             NES_DEBUG("NesCoordinator: join restThread");
             restThread.join();
