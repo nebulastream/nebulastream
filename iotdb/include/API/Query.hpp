@@ -44,14 +44,15 @@ class Query {
      * @param sourceStreamName name of the stream to query. This name has to be registered in the query catalog.
      * @return the query
      */
-    static Query from(const std::string& sourceStreamName);
+    static Query from(const std::string sourceStreamName);
 
     /**
      * @brief Create Query using queryPlan
+     * @param sourceStreamName source stream name
      * @param queryPlan the input query plan
      * @return Query instance
      */
-    static Query createFromQueryPlan(QueryPlanPtr queryPlan);
+    static Query createFromQueryPlan(std::string sourceStreamName, QueryPlanPtr queryPlan);
 
     /**
      * @brief: Filter records according to the predicate.
@@ -82,11 +83,18 @@ class Query {
      */
     QueryPlanPtr getQueryPlan();
 
+    /**
+     * @brief Get the source stream name
+     * @return sourceStreamName
+     */
+    const std::string& getSourceStreamName() const;
+
   private:
     // creates a new query object
-    Query(QueryPlanPtr queryPlan);
+    Query(std::string sourceStreamName, QueryPlanPtr queryPlan);
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
+    std::string sourceStreamName;
 };
 
 typedef std::shared_ptr<Query> QueryPtr;

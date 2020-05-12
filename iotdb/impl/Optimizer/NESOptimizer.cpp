@@ -22,7 +22,8 @@ NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, In
     NES_INFO("NESOptimizer: Creating QueryPlan");
     auto queryPlan = QueryPlan::create(rootNodeOperator);
     NES_INFO("NESOptimizer: Building Query");
-    Query query = Query::createFromQueryPlan(queryPlan);
+    const std::string sourceStreamName = inputQuery->getSourceStream()->getName();
+    Query query = Query::createFromQueryPlan(sourceStreamName, queryPlan);
     QueryPtr queryPtr = std::make_shared<Query>(query);
     NES_INFO("NESOptimizer: Building Execution plan for the input query");
     NESExecutionPlanPtr nesExecutionPlanPtr = placementStrategyPtr->initializeExecutionPlan(queryPtr, nesTopologyPlan);

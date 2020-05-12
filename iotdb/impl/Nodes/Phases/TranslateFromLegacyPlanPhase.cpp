@@ -74,7 +74,14 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformToExpression(UserAPIExp
         auto dataType = attributeField->data_type;
         return FieldAccessExpressionNode::create(dataType, name);
     } else if (PredicateItemPtr predicateItem = std::dynamic_pointer_cast<PredicateItem>(expression)) {
-        return ConstantValueExpressionNode::create(predicateItem->getValue());
+
+        if (predicateItem->getValue()) {
+            return ConstantValueExpressionNode::create(predicateItem->getValue());
+        } else if (predicateItem->getAttributeField()) {
+            const AttributeFieldPtr attributeField = predicateItem->getAttributeField();
+            return FieldAccessExpressionNode::create(attributeField->data_type, attributeField->name);
+        }
+        NES_FATAL_ERROR("TranslateFromLegacyPlanPhase: No transformation possible for input PredicateItem");
     }
     NES_FATAL_ERROR(
         "TranslateFromLegacyPlanPhase: No transformation implemented for this UserAPIExpression: "
@@ -117,7 +124,8 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
     } else if (operatorPtr->getOperatorType() == SINK_OP) {
         // Translate sink operator node.
         SinkOperatorPtr sinkOperator = std::dynamic_pointer_cast<SinkOperator>(operatorPtr);
-        const SinkDescriptorPtr sinkDescriptor = ConvertPhysicalToLogicalSink::createSinkDescriptor(sinkOperator->getDataSinkPtr());
+        const SinkDescriptorPtr
+            sinkDescriptor = ConvertPhysicalToLogicalSink::createSinkDescriptor(sinkOperator->getDataSinkPtr());
         return createSinkLogicalOperatorNode(sinkDescriptor);
     }
     NES_FATAL_ERROR(
