@@ -36,7 +36,9 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         auto sourceNodeOperator = operatorNode->as<SourceLogicalOperatorNode>();
         const SourceDescriptorPtr sourceDescriptor = sourceNodeOperator->getSourceDescriptor();
         const DataSourcePtr dataSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
-        return createSourceOperator(dataSource);
+        const OperatorPtr operatorPtr = createSourceOperator(dataSource);
+        operatorPtr->setOperatorId(operatorNode->getId());
+        return operatorPtr;
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         // Translate filter operator node.
         auto filterNodeOperator = operatorNode->as<FilterLogicalOperatorNode>();
@@ -46,7 +48,9 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         if (legacyPredicate == nullptr) {
             NES_FATAL_ERROR("TranslateToLegacyPhase: Error during translating filter expression");
         }
-        return createFilterOperator(legacyPredicate);
+        const OperatorPtr operatorPtr = createFilterOperator(legacyPredicate);
+        operatorPtr->setOperatorId(operatorNode->getId());
+        return operatorPtr;
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         // Translate map operator node.
         auto mapOperatorNode = operatorNode->as<MapLogicalOperatorNode>();
@@ -61,14 +65,18 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
             NES_FATAL_ERROR("TranslateToLegacyPhase: Error during translating map expression");
         }
         // Create legacy map operator
-        return createMapOperator(legacyField->getAttributeField(), legacyPredicate);
+        const OperatorPtr operatorPtr = createMapOperator(legacyField->getAttributeField(), legacyPredicate);
+        operatorPtr->setOperatorId(operatorNode->getId());
+        return operatorPtr;
 
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         // Translate sink operator node.
         auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
         const SinkDescriptorPtr sinkDescriptor = sinkNodeOperator->getSinkDescriptor();
         const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
-        return createSinkOperator(dataSink);
+        const OperatorPtr operatorPtr = createSinkOperator(dataSink);
+        operatorPtr->setOperatorId(operatorNode->getId());
+        return operatorPtr;
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED();
