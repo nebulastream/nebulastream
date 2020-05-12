@@ -3,6 +3,7 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 
@@ -19,8 +20,11 @@ NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, In
     NES_INFO("NESOptimizer: Transforming old operator graph into new OperatorNode graph");
     auto translateFromLegacyPlanPhase = TranslateFromLegacyPlanPhase::create();
     const OperatorNodePtr rootNodeOperator = translateFromLegacyPlanPhase->transform(rootOperator);
+    auto rootOperatorId = rootNodeOperator->getId();
     NES_INFO("NESOptimizer: Creating QueryPlan");
     auto queryPlan = QueryPlan::create(rootNodeOperator);
+    //FIXME: (TEMP) This is a temporary hack to reset the operator ID of root operator after building the QueryPlan
+    queryPlan->getRootOperator()->setId(rootOperatorId);
     NES_INFO("NESOptimizer: Building Query");
     const std::string sourceStreamName = inputQuery->getSourceStream()->getName();
     Query query = Query::createFromQueryPlan(sourceStreamName, queryPlan);
