@@ -39,11 +39,16 @@ NodeEngine::NodeEngine() {
 }
 
 NodeEngine::~NodeEngine() {
+    NES_DEBUG("~NodeEngine()");
     stop(true);
+    queryIdToQepMap.clear();
+    qepToStatusMap.clear();
 }
 
 bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject)
 {
+    NES_DEBUG("NodeEngine::deployQueryInNodeEngine eto " << executableTransferObject);
+
     ExecutableTransferObject eto = SerializationTools::parse_eto(
         executableTransferObject);
     NES_DEBUG(
@@ -55,7 +60,7 @@ bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject)
 
 
 bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine: deployQueryInNodeEngine query " << qep);
+    NES_DEBUG("NodeEngine: deployQueryInNodeEngine query using qep " << qep);
     bool successRegister = registerQueryInNodeEngine(qep);
     if (!successRegister) {
         NES_ERROR("NodeEngine::deployQueryInNodeEngine: failed to register query");
@@ -79,7 +84,7 @@ bool NodeEngine::registerQueryInNodeEngine(std::string executableTransferObject)
     NES_DEBUG(
         "WorkerActor::running() eto after parse=" << eto.toString());
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(queryCompiler);
-    registerQueryInNodeEngine(qep);
+    return registerQueryInNodeEngine(qep);
 }
 
 bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr qep) {

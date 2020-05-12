@@ -95,9 +95,6 @@ class CoordinatorRPCClient {
     bool shutdown(bool force);
 
   private:
-    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub;
-    std::shared_ptr<::grpc::Channel> chan;
-
     size_t workerId;
 
     std::string coordinatorIp;

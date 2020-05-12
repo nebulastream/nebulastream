@@ -29,7 +29,7 @@ TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -66,7 +66,7 @@ TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -116,7 +116,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -160,7 +160,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -188,7 +188,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -227,7 +227,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -277,7 +277,7 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -308,7 +308,7 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;

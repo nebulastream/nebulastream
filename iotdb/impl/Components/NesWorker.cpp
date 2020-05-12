@@ -53,9 +53,17 @@ size_t NesWorker::getRandomPort(size_t base) {
     return base - 12 + time(0) * 321 * rand() % 10000;
 }
 
-void startWorkerRPCServer(std::shared_ptr<Server>& rpcServer) {
+void startWorkerRPCServer(std::shared_ptr<Server>& rpcServer, std::string address, NodeEnginePtr nodeEngine, std::promise<bool>& prom) {
+    NES_DEBUG("startWorkerRPCServer");
 
-    NES_DEBUG("startWorkerRPCServer: Server listening");
+    WorkerRPCServer service(nodeEngine);
+    ServerBuilder builder;
+    builder.AddListeningPort(address, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    rpcServer = std::move(server);
+    prom.set_value(true);
+    NES_DEBUG("startWorkerRPCServer: Server listening on address " << address);
     rpcServer->Wait();
     NES_DEBUG("startWorkerRPCServer: end listening");
 }
@@ -63,7 +71,7 @@ void startWorkerRPCServer(std::shared_ptr<Server>& rpcServer) {
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking " << blocking <<
     " coordinatorIp=" << coordinatorIp << " coordinatorPort=" << coordinatorPort <<
-    " localWorkerIp=" << coordinatorIp << " localWorkerPort=" << coordinatorPort
+    " localWorkerIp=" << localWorkerIp << " localWorkerPort=" << localWorkerPort
     << " type=" << type
     );
 
@@ -79,19 +87,12 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     std::string address = localWorkerIp + ":" + localWorkerPort;
     NES_DEBUG("startWorkerRPCServer for accepting messages for address=" << address);
-    WorkerRPCServer service(nodeEngine);
-
-    ServerBuilder builder;
-    builder.AddListeningPort(address, grpc::InsecureServerCredentials());
-    builder.RegisterService(&service);
-    std::unique_ptr<Server> server(builder.BuildAndStart());
-    rpcServer = std::move(server);
-
+    std::promise<bool> promRPC;
     std::thread threadRPC([&]()
                           {
-                            startWorkerRPCServer(rpcServer);
+                            startWorkerRPCServer(rpcServer, address, nodeEngine, promRPC);
                           });
-
+    promRPC.get_future().get();
     rpcThread = std::move(threadRPC);
     NES_DEBUG("NesWorker: rpcThread successfully started");
 
@@ -153,6 +154,7 @@ bool NesWorker::stop(bool force) {
         } else {
             NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
         }
+        stopped = true;
         return successShutdownNodeEngine;
     } else {
         NES_WARNING("NesWorker::stop: already stopped");
@@ -171,15 +173,15 @@ bool NesWorker::connect() {
         nodeEngine->getNodePropertiesAsString()
         );
 
-    bool successPRCConnect = coordinatorRpcClient->connect();
-    if(successPRCConnect)
-    {
-        NES_DEBUG("NesWorker::connect rpc connect success");
-    } else
-    {
-        NES_DEBUG("NesWorker::connect rpc connect failed");
-        return false;
-    }
+//    bool successPRCConnect = coordinatorRpcClient->connect();
+//    if(successPRCConnect)
+//    {
+//        NES_DEBUG("NesWorker::connect rpc connect success");
+//    } else
+//    {
+//        NES_DEBUG("NesWorker::connect rpc connect failed");
+//        return false;
+//    }
 
     bool successPRCRegister = coordinatorRpcClient->registerNode();
     if(successPRCRegister)

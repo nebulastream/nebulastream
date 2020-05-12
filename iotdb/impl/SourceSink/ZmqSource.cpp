@@ -19,16 +19,26 @@ namespace NES {
 ZmqSource::ZmqSource()
     : host(""), port(0), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
     // This constructor is needed for Serialization
-    NES_DEBUG("ZMQSOURCE  " << this << ": Init DEFAULT for serializazionZMQ ZMQSOURCE to " << host << ":" << port << "/");
+    NES_DEBUG(
+        "ZMQSOURCE  " << this << ": Init DEFAULT for serializazionZMQ ZMQSOURCE to " << host << ":" << port << "/");
 }
 
-ZmqSource::ZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& host, const uint16_t port)
-    : DataSource(schema, bufferManager, queryManager), host(host), port(port), connected(false), context(zmq::context_t(1)),
+ZmqSource::ZmqSource(SchemaPtr schema,
+                     BufferManagerPtr bufferManager,
+                     QueryManagerPtr queryManager,
+                     const std::string& host,
+                     const uint16_t port)
+    : DataSource(schema, bufferManager, queryManager),
+      host(host.substr(0, host.find(":"))),
+      port(port),
+      connected(false),
+      context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PULL)) {
     NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
 }
 
 ZmqSource::~ZmqSource() {
+    NES_DEBUG("ZmqSource::~ZmqSource()");
     bool success = disconnect();
     if (success) {
         NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source");
@@ -123,12 +133,14 @@ bool ZmqSource::connect() {
 }
 
 bool ZmqSource::disconnect() {
+    NES_DEBUG("ZmqSource::disconnect() connected=" << connected);
     if (connected) {
         socket.close();
         connected = false;
     }
     if (!connected) {
         NES_DEBUG("ZMQSOURCE  " << this << ": disconnected");
+        socket.close();
     } else {
         NES_DEBUG("ZMQSOURCE  " << this << ": NOT disconnected");
     }

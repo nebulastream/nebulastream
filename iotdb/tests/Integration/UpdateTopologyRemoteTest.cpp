@@ -30,12 +30,12 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+2), NESNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+20), NESNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;
@@ -108,12 +108,12 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+1), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+2), NESNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+20), NESNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;

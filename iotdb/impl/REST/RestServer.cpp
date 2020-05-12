@@ -14,6 +14,11 @@ RestServer::RestServer(std::string host, u_int16_t port,
     InterruptHandler::hookSIGINT();
 }
 
+RestServer::~RestServer()
+{
+    NES_DEBUG("~RestServer");
+}
+
 bool RestServer::start() {
 
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
@@ -28,8 +33,8 @@ bool RestServer::start() {
         NES_DEBUG("RestServer: REST Server now listening for requests at: " << server.endpoint());
         InterruptHandler::waitForUserInterrupt();
         NES_DEBUG("RestServer: after waitForUserInterrupt");
-    } catch (std::exception& e) {
-        NES_ERROR("RestServer: Unable to start REST server");
+    } catch (const std::exception& e) {
+        NES_ERROR("RestServer: Unable to start REST server << " << e.what());
         return false;
     } catch (...) {
         RuntimeUtils::printStackTrace();
@@ -40,7 +45,8 @@ bool RestServer::start() {
 
 bool RestServer::stop() {
     NES_DEBUG("RestServer::stop");
-    InterruptHandler::handleUserInterrupt(SIGINT);
+//    InterruptHandler::handleUserInterrupt(SIGINT);
+//    server.shutdown().wait();
     return true;
 }
 

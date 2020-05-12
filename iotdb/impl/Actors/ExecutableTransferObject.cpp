@@ -21,6 +21,10 @@ ExecutableTransferObject::ExecutableTransferObject(string queryId,
     this->destinations = std::move(destinations);
     this->operatorTree = std::move(operatorTree);
 }
+ExecutableTransferObject::~ExecutableTransferObject()
+{
+    NES_DEBUG("~ExecutableTransferObject()");
+}
 
 WindowDefinitionPtr assignWindowHandler(OperatorPtr operator_ptr) {
     for (OperatorPtr c : operator_ptr->getChildren()) {
