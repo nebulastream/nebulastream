@@ -29,7 +29,7 @@ class ExecutableTransferObject {
                              vector<DataSourcePtr> sources,
                              vector<DataSinkPtr> destinations,
                              OperatorPtr operatorTree);
-    ~ExecutableTransferObject() = default;
+    ~ExecutableTransferObject();
 
   public:
     string& getQueryId();

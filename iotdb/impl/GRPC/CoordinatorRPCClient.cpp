@@ -30,11 +30,15 @@ bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
     request.set_numberofbufferstoproduce(conf.numberOfBuffersToProduce);
     request.set_physicalstreamname(conf.physicalStreamName);
     request.set_logicalstreamname(conf.logicalStreamName);
+    NES_DEBUG("RegisterPhysicalStreamRequest::RegisterLogicalStreamRequest request=" << request.DebugString());
 
     RegisterPhysicalStreamReply reply;
 
     ClientContext context;
 
+    std::string serverAddress = coordinatorIp + ":" + coordinatorPort;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(serverAddress, grpc::InsecureChannelCredentials());
+    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
     Status status = coordinatorStub->RegisterPhysicalStream(&context, request, &reply);
 
     if (status.ok()) {
@@ -71,11 +75,15 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName,
     request.set_id(workerId);
     request.set_streamname(streamName);
     request.set_streamschema(fileContent);
+    NES_DEBUG("CoordinatorRPCClient::RegisterLogicalStreamRequest request=" << request.DebugString());
 
     RegisterLogicalStreamReply reply;
 
     ClientContext context;
 
+    std::string serverAddress = coordinatorIp + ":" + coordinatorPort;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(serverAddress, grpc::InsecureChannelCredentials());
+    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
     Status status = coordinatorStub->RegisterLogicalStream(&context, request, &reply);
 
     if (status.ok()) {
@@ -99,11 +107,15 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamNam
     request.set_id(workerId);
     request.set_physicalstreamname(physicalStreamName);
     request.set_logicalstreamname(logicalStreamName);
+    NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalStreamRequest request=" << request.DebugString());
 
     UnregisterPhysicalStreamReply reply;
 
     ClientContext context;
 
+    std::string serverAddress = coordinatorIp + ":" + coordinatorPort;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(serverAddress, grpc::InsecureChannelCredentials());
+    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
     Status status = coordinatorStub->UnregisterPhysicalStream(&context, request, &reply);
 
     if (status.ok()) {
@@ -123,11 +135,15 @@ bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
     UnregisterLogicalStreamRequest request;
     request.set_id(workerId);
     request.set_streamname(streamName);
+    NES_DEBUG("CoordinatorRPCClient::UnregisterLogicalStreamRequest request=" << request.DebugString());
 
     UnregisterLogicalStreamReply reply;
 
     ClientContext context;
 
+    std::string serverAddress = coordinatorIp + ":" + coordinatorPort;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(serverAddress, grpc::InsecureChannelCredentials());
+    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
     Status status = coordinatorStub->UnregisterLogicalStream(&context, request, &reply);
 
     if (status.ok()) {
@@ -147,11 +163,15 @@ bool CoordinatorRPCClient::addParent(size_t parentId) {
     AddParentRequest request;
     request.set_parentid(parentId);
     request.set_childid(workerId);
+    NES_DEBUG("CoordinatorRPCClient::AddParentRequest request=" << request.DebugString());
 
     AddParentReply reply;
 
     ClientContext context;
 
+    std::string serverAddress = coordinatorIp + ":" + coordinatorPort;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(serverAddress, grpc::InsecureChannelCredentials());
+    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
     Status status = coordinatorStub->AddParent(&context, request, &reply);
 
     if (status.ok()) {
@@ -175,11 +195,15 @@ bool CoordinatorRPCClient::removeParent(size_t parentId) {
     RemoveParentRequest request;
     request.set_parentid(parentId);
     request.set_childid(workerId);
+    NES_DEBUG("CoordinatorRPCClient::RemoveParentRequest request=" << request.DebugString());
 
     RemoveParentReply reply;
 
     ClientContext context;
 
+    std::string serverAddress = coordinatorIp + ":" + coordinatorPort;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(serverAddress, grpc::InsecureChannelCredentials());
+    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
     Status status = coordinatorStub->RemoveParent(&context, request, &reply);
 
     if (status.ok()) {
@@ -203,17 +227,21 @@ bool CoordinatorRPCClient::registerNode() {
         throw new Exception("CoordinatorRPCClient::registerNode wrong node type");
     }
 
-    std::string address = localWorkerIp + ":" + localWorkerIp;
+    std::string address = localWorkerIp + ":" + localWorkerPort;
     RegisterNodeRequest request;
     request.set_address(address);
     request.set_numberofcpus(numberOfCpus);
-    request.set_nodeproperties(nodeProperties);
+//    request.set_nodeproperties(nodeProperties);
     request.set_type(type);
+    NES_DEBUG("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
 
     RegisterNodeReply reply;
 
     ClientContext context;
 
+    std::string serverAddress = coordinatorIp + ":" + coordinatorPort;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(serverAddress, grpc::InsecureChannelCredentials());
+    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
     Status status = coordinatorStub->RegisterNode(&context, request, &reply);
 
     if (status.ok()) {
@@ -233,12 +261,9 @@ bool CoordinatorRPCClient::connect() {
     NES_DEBUG(
         "CoordinatorRPCClient::connect try to connect to host=" << coordinatorIp << " port=" << coordinatorPort);
 
-    std::string address = coordinatorIp + ":" + coordinatorPort;
-
-    chan = grpc::CreateChannel(address,
-                               grpc::InsecureChannelCredentials());
-
-    coordinatorStub = CoordinatorRPCService::NewStub(chan);
+    std::string serverAddress = coordinatorIp + ":" + coordinatorPort;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(serverAddress, grpc::InsecureChannelCredentials());
+    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
 
     if (chan) {
         NES_DEBUG("CoordinatorRPCClient::connecting: channel successfully created");

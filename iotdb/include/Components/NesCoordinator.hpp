@@ -9,6 +9,7 @@
 #include <Services/StreamCatalogService.hpp>
 #include <string>
 #include <grpcpp/grpcpp.h>
+#include <grpcpp/server_builder.h>
 #include <GRPC/WorkerRPCClient.hpp>
 
 namespace NES {
@@ -127,20 +128,10 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     std::thread rpcThread;
     NesWorkerPtr wrk;
 
+
     WorkerRPCClientPtr workerRPCClient;
 
-    //    CoordinatorActor* crdActor;
-    //    CoordinatorActorConfig coordinatorCfg;
-    //    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
-    //    actor_system* actorSystemCoordinator;
-
-    //    WorkerActor* wrkActor;
-    //    NodeEnginePtr nodeEngine;
-    //    WorkerActorConfig workerCfg;
-    //    infer_handle_from_class_t<NES::WorkerActor> workerActorHandle;
-    //    actor_system* actorSystemWorker;
-
-    RestServer* restServer;
+//    std::shared_ptr<RestServer> restServer;
     uint16_t restPort;
     std::string serverIp;
 

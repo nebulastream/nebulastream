@@ -32,7 +32,7 @@ ZmqSink::ZmqSink()
 ZmqSink::ZmqSink(SchemaPtr schema, const std::string& host,
                  const uint16_t port)
     : DataSink(schema),
-      host(host),
+      host(host.substr(0, host.find(":"))),
       port(port),
       tupleCnt(0),
       connected(false),

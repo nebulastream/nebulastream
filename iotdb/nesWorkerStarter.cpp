@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
 
     namespace po = boost::program_options;
     po::options_description desc("Nes Worker Options");
-    std::string coordinatorPort = 0;
+    std::string coordinatorPort = "0";
     std::string coordinatorIp = "localhost";
 
     std::string sourceType = "";

@@ -9,6 +9,7 @@ WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
 
 Status WorkerRPCServer::DeployQuery(ServerContext* context, const DeployQueryRequest* request,
                                     DeployQueryReply* reply) {
+    assert(0);
     NES_DEBUG("WorkerRPCServer::DeployQuery: got request for " << request->eto());
     bool success = nodeEngine->deployQueryInNodeEngine(request->eto());
     if (success) {
@@ -24,6 +25,7 @@ Status WorkerRPCServer::DeployQuery(ServerContext* context, const DeployQueryReq
 
 Status WorkerRPCServer::UndeployQuery(ServerContext* context, const UndeployQueryRequest* request,
                                       UndeployQueryReply* reply) {
+    assert(0);
     NES_DEBUG("WorkerRPCServer::UndeployQuery: got request for " << request->queryid());
     bool success = nodeEngine->undeployQuery(request->queryid());
     if (success) {

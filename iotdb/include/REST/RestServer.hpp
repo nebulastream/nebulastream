@@ -22,6 +22,7 @@ class RestServer {
         std::string host, u_int16_t port,
         NesCoordinatorPtr coordinator);
 
+    ~RestServer();
     /**
    * @brief method to start the rest server
    * @return bool indicating success

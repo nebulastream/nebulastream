@@ -211,7 +211,6 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::prepareEx
         NES_INFO("CoordinatorService: prepareExecutableTransferObject for query " << queryId);
 
         NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
-
         SchemaPtr schema = QueryCatalog::instance().getQuery(queryId)->getInputQueryPtr()->getSourceStream()->getSchema();
 
         //iterate through all vertices in the topology
@@ -330,6 +329,7 @@ int CoordinatorService::assign_port(const string& queryId) {
         const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
                                                   .getRootNode();
         uint16_t kFreeZmqPort = kRootNode->getNextFreeReceivePort();
+        kFreeZmqPort = kFreeZmqPort - 12 + time(0) * 321 * rand() % 10000 + 1024;
         this->queryToPort.insert({queryId, kFreeZmqPort});
         NES_DEBUG("CoordinatorService::assign_port create a new port for query id=" << queryId << " port=" << kFreeZmqPort);
         return kFreeZmqPort;
