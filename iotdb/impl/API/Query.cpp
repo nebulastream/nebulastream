@@ -7,17 +7,17 @@
 
 namespace NES {
 
-Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
+Query::Query(std::string sourceStreamName, QueryPlanPtr queryPlan) : sourceStreamName(sourceStreamName), queryPlan(queryPlan) {}
 
-Query Query::from(const std::string& sourceStreamName) {
+Query Query::from(const std::string sourceStreamName) {
     NES_DEBUG("Query: create query for input stream " << sourceStreamName);
     auto sourceOperator = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceOperator);
-    return Query(queryPlan);
+    return Query(sourceStreamName, queryPlan);
 }
 
-Query Query::createFromQueryPlan(QueryPlanPtr queryPlan) {
-    return Query(queryPlan);
+Query Query::createFromQueryPlan(std::string sourceStreamName,QueryPlanPtr queryPlan) {
+    return Query(sourceStreamName, queryPlan);
 }
 
 Query& Query::filter(const ExpressionNodePtr filterExpression) {
@@ -43,6 +43,10 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
 
 QueryPlanPtr Query::getQueryPlan() {
     return queryPlan;
+}
+
+const std::string& Query::getSourceStreamName() const {
+    return sourceStreamName;
 }
 
 } // namespace NES
