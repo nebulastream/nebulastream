@@ -24,7 +24,7 @@ class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
 /**
- * @brief Translates a logical query plan to the legacy operator tree
+ * @brief Translates a legacy operator tree into a logical query plan
  */
 class TranslateFromLegacyPlanPhase {
   public:
@@ -33,7 +33,7 @@ class TranslateFromLegacyPlanPhase {
      */
     static TranslateFromLegacyPlanPhasePtr create();
     /**
-     * @brief Translates a operator node and all its children to the legacy representation.
+     * @brief Translates a legacy operator and all its children to the node operator  representation.
      * @param Legacy operator
      * @return Operator Node
      */
@@ -42,29 +42,29 @@ class TranslateFromLegacyPlanPhase {
 
     /**
      * @brief Translates an individual operator to its legacy representation.
-     * @param operatorNode
-     * @return Legacy Operator
+     * @param Legacy Operator
+     * @return operatorNode
      */
     OperatorNodePtr transformIndividualOperator(OperatorPtr operatorPtr);
 
     /**
-     * @brief Translates an expression to a legacy user api expression.
-     * @param expression node
-     * @return UserAPIExpressionPtr
+     * @brief Translates a legacy user api expression to an expression.
+     * @param UserAPIExpressionPtr
+     * @return expression node
      */
-     ExpressionNodePtr transformToExpression(UserAPIExpressionPtr expressionPtr);
+    ExpressionNodePtr transformToExpression(UserAPIExpressionPtr expressionPtr);
 
     /**
-     * @brief Translates logical expessions to a legacy user api expression.
-     * @param expression node
-     * @return UserAPIExpressionPtr
+     * @brief Translates legacy predicate into a logical expession.
+     * @param legacy predicate
+     * @return expression node
      */
     ExpressionNodePtr transformLogicalExpressions(PredicatePtr expressionPtr);
 
     /**
-     * @brief Translates arithmetical expessions to a legacy user api expression.
-     * @param expression node
-     * @return UserAPIExpressionPtr
+     * @brief Translates legacy arithmetical predicate into logical expession.
+     * @param legacy predicate
+     * @return expression node
      */
     ExpressionNodePtr transformArithmeticalExpressions(PredicatePtr expressionPtr);
 };

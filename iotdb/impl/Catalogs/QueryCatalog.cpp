@@ -26,8 +26,7 @@ string QueryCatalog::registerQuery(const string& queryString,
         throw Exception("Queries are not allowed to define schemas anymore");
     }
     try {
-        InputQueryPtr inputQueryPtr = UtilityFunctions::createQueryFromCodeString(
-            queryString);
+        InputQueryPtr inputQueryPtr = UtilityFunctions::createQueryFromCodeString(queryString);
         SchemaPtr schema = inputQueryPtr->getSourceStream()->getSchema();
 
         NESExecutionPlanPtr nesExecutionPtr = OptimizerService::getInstance()->getExecutionPlan(
