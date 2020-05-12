@@ -131,7 +131,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
 
     WorkerRPCClientPtr workerRPCClient;
 
-//    std::shared_ptr<RestServer> restServer;
+    std::shared_ptr<RestServer> restServer;
     uint16_t restPort;
     std::string serverIp;
 
