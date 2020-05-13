@@ -54,16 +54,22 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     std::string firstIdPart1 = retString.substr(pos1Beg + 9);
     size_t pos1End = firstIdPart1.find(" ");
     std::string firstId = firstIdPart1.substr(0, pos1End);
-    cout << "firstId=" << firstId << endl;
+    istringstream f1(firstId);
+    size_t firstIdInt;
+    f1 >> firstIdInt;
+    cout << "firstId=" << firstId  << " firstint" << firstIdInt << endl;
 
     size_t pos2Beg = retString.find("2[label");
     std::string secondPart1 = retString.substr(pos2Beg + 9);
     size_t secondEnd = secondPart1.find(" ");
     std::string secondId = secondPart1.substr(0, secondEnd);
-    cout << "secondId=" << secondId << endl;
+    istringstream f(secondId);
+    size_t secIdInt;
+    f >> secIdInt;
+    cout << "secondId=" << secondId << " secint" << secIdInt << endl;
 
     cout << "ADD NEW PARENT" << endl;
-    bool successAddPar = wrk->addParent(atoi(secondId.c_str()));
+    bool successAddPar = wrk->addParent(secIdInt);
     EXPECT_TRUE(successAddPar);
 
     //NOTE: we cannot check full output as ids change each run
@@ -76,7 +82,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     ASSERT_TRUE(retString2.find("1--2 [label=\"2\"]") != std::string::npos);
 
     cout << "REMOVE NEW PARENT" << endl;
-    bool successRemoveParent = wrk->removeParent(atoi(secondId.c_str()));
+    bool successRemoveParent = wrk->removeParent(secIdInt);
     EXPECT_TRUE(successAddPar);
 
     //NOTE: we cannot check full output as ids change each run
@@ -132,16 +138,22 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     std::string firstIdPart1 = retString.substr(pos1Beg + 9);
     size_t pos1End = firstIdPart1.find(" ");
     std::string firstId = firstIdPart1.substr(0, pos1End);
-    cout << "firstId=" << firstId << endl;
+    istringstream f1(firstId);
+    size_t firstIdInt;
+    f1 >> firstIdInt;
+    cout << "firstId=" << firstId  << " firstint" << firstIdInt << endl;
 
     size_t pos2Beg = retString.find("2[label");
     std::string secondPart1 = retString.substr(pos2Beg + 9);
     size_t secondEnd = secondPart1.find(" ");
     std::string secondId = secondPart1.substr(0, secondEnd);
-    cout << "secondId=" << secondId << endl;
+    istringstream f(secondId);
+    size_t secIdInt;
+    f >> secIdInt;
+    cout << "secondId=" << secondId << " secint" << secIdInt << endl;
 
     cout << "REMOVE NEW PARENT" << endl;
-    bool successRemoveParent = wrk->removeParent(atoi(firstId.c_str()));
+    bool successRemoveParent = wrk->removeParent(firstIdInt);
     EXPECT_TRUE(!successRemoveParent);
 
     //NOTE: we cannot check full output as ids change each run

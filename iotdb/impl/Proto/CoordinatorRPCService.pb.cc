@@ -463,28 +463,28 @@ const char descriptor_table_protodef_CoordinatorRPCService_2eproto[] PROTOBUF_SE
   "rNodeRequest\022\017\n\007address\030\001 \001(\t\022\024\n\014numberO"
   "fCpus\030\002 \001(\005\022\026\n\016nodeProperties\030\003 \001(\t\022\014\n\004t"
   "ype\030\004 \001(\005\"\037\n\021RegisterNodeReply\022\n\n\002id\030\001 \001"
-  "(\003\"#\n\025UnregisterNodeRequest\022\n\n\002id\030\001 \001(\003\""
+  "(\004\"#\n\025UnregisterNodeRequest\022\n\n\002id\030\001 \001(\004\""
   "&\n\023UnregisterNodeReply\022\017\n\007success\030\001 \001(\010\""
   "\305\001\n\035RegisterPhysicalStreamRequest\022\n\n\002id\030"
-  "\001 \001(\003\022\022\n\nsourceType\030\002 \001(\t\022\022\n\nsourceConf\030"
+  "\001 \001(\004\022\022\n\nsourceType\030\002 \001(\t\022\022\n\nsourceConf\030"
   "\003 \001(\t\022\027\n\017sourceFrequency\030\004 \001(\003\022 \n\030number"
   "OfBuffersToProduce\030\005 \001(\003\022\032\n\022physicalStre"
   "amName\030\006 \001(\t\022\031\n\021logicalStreamName\030\007 \001(\t\""
   ".\n\033RegisterPhysicalStreamReply\022\017\n\007succes"
   "s\030\001 \001(\010\"d\n\037UnregisterPhysicalStreamReque"
-  "st\022\n\n\002id\030\001 \001(\003\022\032\n\022physicalStreamName\030\002 \001"
+  "st\022\n\n\002id\030\001 \001(\004\022\032\n\022physicalStreamName\030\002 \001"
   "(\t\022\031\n\021logicalStreamName\030\003 \001(\t\"0\n\035Unregis"
   "terPhysicalStreamReply\022\017\n\007success\030\001 \001(\010\""
   "T\n\034RegisterLogicalStreamRequest\022\n\n\002id\030\001 "
-  "\001(\003\022\022\n\nstreamName\030\002 \001(\t\022\024\n\014streamSchema\030"
+  "\001(\004\022\022\n\nstreamName\030\002 \001(\t\022\024\n\014streamSchema\030"
   "\003 \001(\t\"-\n\032RegisterLogicalStreamReply\022\017\n\007s"
   "uccess\030\001 \001(\010\"@\n\036UnregisterLogicalStreamR"
-  "equest\022\n\n\002id\030\001 \001(\003\022\022\n\nstreamName\030\002 \001(\t\"/"
+  "equest\022\n\n\002id\030\001 \001(\004\022\022\n\nstreamName\030\002 \001(\t\"/"
   "\n\034UnregisterLogicalStreamReply\022\017\n\007succes"
   "s\030\001 \001(\010\"5\n\020AddParentRequest\022\017\n\007childId\030\001"
-  " \001(\003\022\020\n\010parentId\030\002 \001(\003\"!\n\016AddParentReply"
+  " \001(\004\022\020\n\010parentId\030\002 \001(\004\"!\n\016AddParentReply"
   "\022\017\n\007success\030\001 \001(\010\"8\n\023RemoveParentRequest"
-  "\022\017\n\007childId\030\001 \001(\003\022\020\n\010parentId\030\002 \001(\003\"$\n\021R"
+  "\022\017\n\007childId\030\001 \001(\004\022\020\n\010parentId\030\002 \001(\004\"$\n\021R"
   "emoveParentReply\022\017\n\007success\030\001 \001(\0102\362\004\n\025Co"
   "ordinatorRPCService\022:\n\014RegisterNode\022\024.Re"
   "gisterNodeRequest\032\022.RegisterNodeReply\"\000\022"
@@ -852,7 +852,7 @@ RegisterNodeReply::RegisterNodeReply(const RegisterNodeReply& from)
 }
 
 void RegisterNodeReply::SharedCtor() {
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
 
 RegisterNodeReply::~RegisterNodeReply() {
@@ -878,7 +878,7 @@ void RegisterNodeReply::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -889,7 +889,7 @@ const char* RegisterNodeReply::_InternalParse(const char* ptr, ::PROTOBUF_NAMESP
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // int64 id = 1;
+      // uint64 id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
           id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
@@ -922,10 +922,10 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(1, this->_internal_id(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_id(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -944,10 +944,10 @@ size_t RegisterNodeReply::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_id());
   }
 
@@ -1038,7 +1038,7 @@ UnregisterNodeRequest::UnregisterNodeRequest(const UnregisterNodeRequest& from)
 }
 
 void UnregisterNodeRequest::SharedCtor() {
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
 
 UnregisterNodeRequest::~UnregisterNodeRequest() {
@@ -1064,7 +1064,7 @@ void UnregisterNodeRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -1075,7 +1075,7 @@ const char* UnregisterNodeRequest::_InternalParse(const char* ptr, ::PROTOBUF_NA
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // int64 id = 1;
+      // uint64 id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
           id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
@@ -1108,10 +1108,10 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(1, this->_internal_id(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_id(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1130,10 +1130,10 @@ size_t UnregisterNodeRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_id());
   }
 
@@ -1480,7 +1480,7 @@ const char* RegisterPhysicalStreamRequest::_InternalParse(const char* ptr, ::PRO
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // int64 id = 1;
+      // uint64 id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
           id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
@@ -1563,10 +1563,10 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(1, this->_internal_id(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_id(), target);
   }
 
   // string sourceType = 2;
@@ -1665,10 +1665,10 @@ size_t RegisterPhysicalStreamRequest::ByteSizeLong() const {
         this->_internal_logicalstreamname());
   }
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_id());
   }
 
@@ -2000,7 +2000,7 @@ void UnregisterPhysicalStreamRequest::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_UnregisterPhysicalStreamRequest_CoordinatorRPCService_2eproto.base);
   physicalstreamname_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   logicalstreamname_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
 
 UnregisterPhysicalStreamRequest::~UnregisterPhysicalStreamRequest() {
@@ -2030,7 +2030,7 @@ void UnregisterPhysicalStreamRequest::Clear() {
 
   physicalstreamname_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   logicalstreamname_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -2041,7 +2041,7 @@ const char* UnregisterPhysicalStreamRequest::_InternalParse(const char* ptr, ::P
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // int64 id = 1;
+      // uint64 id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
           id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
@@ -2092,10 +2092,10 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(1, this->_internal_id(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_id(), target);
   }
 
   // string physicalStreamName = 2;
@@ -2148,10 +2148,10 @@ size_t UnregisterPhysicalStreamRequest::ByteSizeLong() const {
         this->_internal_logicalstreamname());
   }
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_id());
   }
 
@@ -2449,7 +2449,7 @@ void RegisterLogicalStreamRequest::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_RegisterLogicalStreamRequest_CoordinatorRPCService_2eproto.base);
   streamname_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   streamschema_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
 
 RegisterLogicalStreamRequest::~RegisterLogicalStreamRequest() {
@@ -2479,7 +2479,7 @@ void RegisterLogicalStreamRequest::Clear() {
 
   streamname_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   streamschema_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -2490,7 +2490,7 @@ const char* RegisterLogicalStreamRequest::_InternalParse(const char* ptr, ::PROT
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // int64 id = 1;
+      // uint64 id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
           id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
@@ -2541,10 +2541,10 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(1, this->_internal_id(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_id(), target);
   }
 
   // string streamName = 2;
@@ -2597,10 +2597,10 @@ size_t RegisterLogicalStreamRequest::ByteSizeLong() const {
         this->_internal_streamschema());
   }
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_id());
   }
 
@@ -2893,7 +2893,7 @@ UnregisterLogicalStreamRequest::UnregisterLogicalStreamRequest(const UnregisterL
 void UnregisterLogicalStreamRequest::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_UnregisterLogicalStreamRequest_CoordinatorRPCService_2eproto.base);
   streamname_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
 
 UnregisterLogicalStreamRequest::~UnregisterLogicalStreamRequest() {
@@ -2921,7 +2921,7 @@ void UnregisterLogicalStreamRequest::Clear() {
   (void) cached_has_bits;
 
   streamname_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -2932,7 +2932,7 @@ const char* UnregisterLogicalStreamRequest::_InternalParse(const char* ptr, ::PR
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // int64 id = 1;
+      // uint64 id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
           id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
@@ -2974,10 +2974,10 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(1, this->_internal_id(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_id(), target);
   }
 
   // string streamName = 2;
@@ -3013,10 +3013,10 @@ size_t UnregisterLogicalStreamRequest::ByteSizeLong() const {
         this->_internal_streamname());
   }
 
-  // int64 id = 1;
+  // uint64 id = 1;
   if (this->id() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_id());
   }
 
@@ -3340,14 +3340,14 @@ const char* AddParentRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPA
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // int64 childId = 1;
+      // uint64 childId = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
           childid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // int64 parentId = 2;
+      // uint64 parentId = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
           parentid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
@@ -3380,16 +3380,16 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int64 childId = 1;
+  // uint64 childId = 1;
   if (this->childid() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(1, this->_internal_childid(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_childid(), target);
   }
 
-  // int64 parentId = 2;
+  // uint64 parentId = 2;
   if (this->parentid() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(2, this->_internal_parentid(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(2, this->_internal_parentid(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -3408,17 +3408,17 @@ size_t AddParentRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // int64 childId = 1;
+  // uint64 childId = 1;
   if (this->childid() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_childid());
   }
 
-  // int64 parentId = 2;
+  // uint64 parentId = 2;
   if (this->parentid() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_parentid());
   }
 
@@ -3740,14 +3740,14 @@ const char* RemoveParentRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAME
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // int64 childId = 1;
+      // uint64 childId = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
           childid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // int64 parentId = 2;
+      // uint64 parentId = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
           parentid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
@@ -3780,16 +3780,16 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int64 childId = 1;
+  // uint64 childId = 1;
   if (this->childid() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(1, this->_internal_childid(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_childid(), target);
   }
 
-  // int64 parentId = 2;
+  // uint64 parentId = 2;
   if (this->parentid() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt64ToArray(2, this->_internal_parentid(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(2, this->_internal_parentid(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -3808,17 +3808,17 @@ size_t RemoveParentRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // int64 childId = 1;
+  // uint64 childId = 1;
   if (this->childid() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_childid());
   }
 
-  // int64 parentId = 2;
+  // uint64 parentId = 2;
   if (this->parentid() != 0) {
     total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
         this->_internal_parentid());
   }
 

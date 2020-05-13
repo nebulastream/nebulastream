@@ -10,6 +10,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
+#include <SourceSink/ZmqSource.hpp>
 
 #include <Util/ThreadBarrier.hpp>
 
@@ -74,9 +75,8 @@ bool DataSource::stop() {
                 // TODO this is only a workaround and will be replaced by the network stack upate
                 if (type == 0) {
                     NES_WARNING("DataSource::stop source hard cause of zmq_source");
-//                    return true;
-//                    thread.reset();
-                    return true;
+                    auto ptr = dynamic_cast<ZmqSource*>(this);
+                    ptr->disconnect();
                 }
 
                 thread->join();

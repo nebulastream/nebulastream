@@ -48,8 +48,7 @@ bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
         NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
-        throw Exception("Error while CoordinatorRPCClient::registerPhysicalStream");
-
+        return reply.success();
     }
 }
 
@@ -93,7 +92,7 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName,
         NES_DEBUG(" CoordinatorRPCClient::registerLogicalStream "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
-        throw Exception("Error while CoordinatorRPCClient::registerLogicalStream");
+        return reply.success();
     }
 }
 
@@ -125,7 +124,7 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamNam
         NES_DEBUG(" CoordinatorRPCClient::unregisterPhysicalStream "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
-        throw Exception("Error while CoordinatorRPCClient::unregisterPhysicalStream");
+        return reply.success();
     }
 }
 
@@ -153,7 +152,7 @@ bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
         NES_DEBUG(" CoordinatorRPCClient::unregisterLogicalStream "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
-        throw Exception("Error while CoordinatorRPCClient::unregisterLogicalStream");
+        return reply.success();
     }
 }
 
@@ -181,7 +180,7 @@ bool CoordinatorRPCClient::addParent(size_t parentId) {
         NES_DEBUG(" CoordinatorRPCClient::addParent "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
-        throw Exception("Error while  CoordinatorRPCClient::addParent");
+        return reply.success();
     }
 }
 
@@ -213,7 +212,7 @@ bool CoordinatorRPCClient::removeParent(size_t parentId) {
         NES_DEBUG(" CoordinatorRPCClient::removeParent "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
-        throw Exception("Error while  CoordinatorRPCClient::removeParent");
+        return reply.success();
     }
 }
 
@@ -247,13 +246,12 @@ bool CoordinatorRPCClient::registerNode() {
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::registerNode: status ok id=" << reply.id());
         this->workerId = reply.id();
-        return reply.id();
+        return true;
     } else {
         NES_ERROR(" CoordinatorRPCClient::registerNode "
                   "error=" << status.error_code() << ": "
                            << status.error_message());
-        assert(0);
-
+        return false;
     }
 }
 

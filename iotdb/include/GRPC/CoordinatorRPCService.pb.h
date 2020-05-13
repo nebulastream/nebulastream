@@ -406,13 +406,13 @@ class RegisterNodeReply :
   enum : int {
     kIdFieldNumber = 1,
   };
-  // int64 id = 1;
+  // uint64 id = 1;
   void clear_id();
-  ::PROTOBUF_NAMESPACE_ID::int64 id() const;
-  void set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 id() const;
+  void set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_id() const;
-  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_id() const;
+  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:RegisterNodeReply)
@@ -420,7 +420,7 @@ class RegisterNodeReply :
   class _Internal;
 
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
-  ::PROTOBUF_NAMESPACE_ID::int64 id_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_CoordinatorRPCService_2eproto;
 };
@@ -534,13 +534,13 @@ class UnregisterNodeRequest :
   enum : int {
     kIdFieldNumber = 1,
   };
-  // int64 id = 1;
+  // uint64 id = 1;
   void clear_id();
-  ::PROTOBUF_NAMESPACE_ID::int64 id() const;
-  void set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 id() const;
+  void set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_id() const;
-  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_id() const;
+  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:UnregisterNodeRequest)
@@ -548,7 +548,7 @@ class UnregisterNodeRequest :
   class _Internal;
 
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
-  ::PROTOBUF_NAMESPACE_ID::int64 id_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_CoordinatorRPCService_2eproto;
 };
@@ -860,13 +860,13 @@ class RegisterPhysicalStreamRequest :
   std::string* _internal_mutable_logicalstreamname();
   public:
 
-  // int64 id = 1;
+  // uint64 id = 1;
   void clear_id();
-  ::PROTOBUF_NAMESPACE_ID::int64 id() const;
-  void set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 id() const;
+  void set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_id() const;
-  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_id() const;
+  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
   // int64 sourceFrequency = 4;
@@ -896,7 +896,7 @@ class RegisterPhysicalStreamRequest :
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr sourceconf_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr physicalstreamname_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr logicalstreamname_;
-  ::PROTOBUF_NAMESPACE_ID::int64 id_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   ::PROTOBUF_NAMESPACE_ID::int64 sourcefrequency_;
   ::PROTOBUF_NAMESPACE_ID::int64 numberofbufferstoproduce_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -1174,13 +1174,13 @@ class UnregisterPhysicalStreamRequest :
   std::string* _internal_mutable_logicalstreamname();
   public:
 
-  // int64 id = 1;
+  // uint64 id = 1;
   void clear_id();
-  ::PROTOBUF_NAMESPACE_ID::int64 id() const;
-  void set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 id() const;
+  void set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_id() const;
-  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_id() const;
+  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:UnregisterPhysicalStreamRequest)
@@ -1190,7 +1190,7 @@ class UnregisterPhysicalStreamRequest :
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr physicalstreamname_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr logicalstreamname_;
-  ::PROTOBUF_NAMESPACE_ID::int64 id_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_CoordinatorRPCService_2eproto;
 };
@@ -1466,13 +1466,13 @@ class RegisterLogicalStreamRequest :
   std::string* _internal_mutable_streamschema();
   public:
 
-  // int64 id = 1;
+  // uint64 id = 1;
   void clear_id();
-  ::PROTOBUF_NAMESPACE_ID::int64 id() const;
-  void set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 id() const;
+  void set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_id() const;
-  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_id() const;
+  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:RegisterLogicalStreamRequest)
@@ -1482,7 +1482,7 @@ class RegisterLogicalStreamRequest :
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr streamname_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr streamschema_;
-  ::PROTOBUF_NAMESPACE_ID::int64 id_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_CoordinatorRPCService_2eproto;
 };
@@ -1741,13 +1741,13 @@ class UnregisterLogicalStreamRequest :
   std::string* _internal_mutable_streamname();
   public:
 
-  // int64 id = 1;
+  // uint64 id = 1;
   void clear_id();
-  ::PROTOBUF_NAMESPACE_ID::int64 id() const;
-  void set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 id() const;
+  void set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_id() const;
-  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_id() const;
+  void _internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:UnregisterLogicalStreamRequest)
@@ -1756,7 +1756,7 @@ class UnregisterLogicalStreamRequest :
 
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr streamname_;
-  ::PROTOBUF_NAMESPACE_ID::int64 id_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 id_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_CoordinatorRPCService_2eproto;
 };
@@ -1999,22 +1999,22 @@ class AddParentRequest :
     kChildIdFieldNumber = 1,
     kParentIdFieldNumber = 2,
   };
-  // int64 childId = 1;
+  // uint64 childId = 1;
   void clear_childid();
-  ::PROTOBUF_NAMESPACE_ID::int64 childid() const;
-  void set_childid(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 childid() const;
+  void set_childid(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_childid() const;
-  void _internal_set_childid(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_childid() const;
+  void _internal_set_childid(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
-  // int64 parentId = 2;
+  // uint64 parentId = 2;
   void clear_parentid();
-  ::PROTOBUF_NAMESPACE_ID::int64 parentid() const;
-  void set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 parentid() const;
+  void set_parentid(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_parentid() const;
-  void _internal_set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_parentid() const;
+  void _internal_set_parentid(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:AddParentRequest)
@@ -2022,8 +2022,8 @@ class AddParentRequest :
   class _Internal;
 
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
-  ::PROTOBUF_NAMESPACE_ID::int64 childid_;
-  ::PROTOBUF_NAMESPACE_ID::int64 parentid_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 childid_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 parentid_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_CoordinatorRPCService_2eproto;
 };
@@ -2266,22 +2266,22 @@ class RemoveParentRequest :
     kChildIdFieldNumber = 1,
     kParentIdFieldNumber = 2,
   };
-  // int64 childId = 1;
+  // uint64 childId = 1;
   void clear_childid();
-  ::PROTOBUF_NAMESPACE_ID::int64 childid() const;
-  void set_childid(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 childid() const;
+  void set_childid(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_childid() const;
-  void _internal_set_childid(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_childid() const;
+  void _internal_set_childid(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
-  // int64 parentId = 2;
+  // uint64 parentId = 2;
   void clear_parentid();
-  ::PROTOBUF_NAMESPACE_ID::int64 parentid() const;
-  void set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 parentid() const;
+  void set_parentid(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_parentid() const;
-  void _internal_set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_parentid() const;
+  void _internal_set_parentid(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:RemoveParentRequest)
@@ -2289,8 +2289,8 @@ class RemoveParentRequest :
   class _Internal;
 
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
-  ::PROTOBUF_NAMESPACE_ID::int64 childid_;
-  ::PROTOBUF_NAMESPACE_ID::int64 parentid_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 childid_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 parentid_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_CoordinatorRPCService_2eproto;
 };
@@ -2597,22 +2597,22 @@ inline void RegisterNodeRequest::set_type(::PROTOBUF_NAMESPACE_ID::int32 value) 
 
 // RegisterNodeReply
 
-// int64 id = 1;
+// uint64 id = 1;
 inline void RegisterNodeReply::clear_id() {
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 RegisterNodeReply::_internal_id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 RegisterNodeReply::_internal_id() const {
   return id_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 RegisterNodeReply::id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 RegisterNodeReply::id() const {
   // @@protoc_insertion_point(field_get:RegisterNodeReply.id)
   return _internal_id();
 }
-inline void RegisterNodeReply::_internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void RegisterNodeReply::_internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   id_ = value;
 }
-inline void RegisterNodeReply::set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void RegisterNodeReply::set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_id(value);
   // @@protoc_insertion_point(field_set:RegisterNodeReply.id)
 }
@@ -2621,22 +2621,22 @@ inline void RegisterNodeReply::set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
 
 // UnregisterNodeRequest
 
-// int64 id = 1;
+// uint64 id = 1;
 inline void UnregisterNodeRequest::clear_id() {
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 UnregisterNodeRequest::_internal_id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 UnregisterNodeRequest::_internal_id() const {
   return id_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 UnregisterNodeRequest::id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 UnregisterNodeRequest::id() const {
   // @@protoc_insertion_point(field_get:UnregisterNodeRequest.id)
   return _internal_id();
 }
-inline void UnregisterNodeRequest::_internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void UnregisterNodeRequest::_internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   id_ = value;
 }
-inline void UnregisterNodeRequest::set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void UnregisterNodeRequest::set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_id(value);
   // @@protoc_insertion_point(field_set:UnregisterNodeRequest.id)
 }
@@ -2669,22 +2669,22 @@ inline void UnregisterNodeReply::set_success(bool value) {
 
 // RegisterPhysicalStreamRequest
 
-// int64 id = 1;
+// uint64 id = 1;
 inline void RegisterPhysicalStreamRequest::clear_id() {
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 RegisterPhysicalStreamRequest::_internal_id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 RegisterPhysicalStreamRequest::_internal_id() const {
   return id_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 RegisterPhysicalStreamRequest::id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 RegisterPhysicalStreamRequest::id() const {
   // @@protoc_insertion_point(field_get:RegisterPhysicalStreamRequest.id)
   return _internal_id();
 }
-inline void RegisterPhysicalStreamRequest::_internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void RegisterPhysicalStreamRequest::_internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   id_ = value;
 }
-inline void RegisterPhysicalStreamRequest::set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void RegisterPhysicalStreamRequest::set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_id(value);
   // @@protoc_insertion_point(field_set:RegisterPhysicalStreamRequest.id)
 }
@@ -2997,22 +2997,22 @@ inline void RegisterPhysicalStreamReply::set_success(bool value) {
 
 // UnregisterPhysicalStreamRequest
 
-// int64 id = 1;
+// uint64 id = 1;
 inline void UnregisterPhysicalStreamRequest::clear_id() {
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 UnregisterPhysicalStreamRequest::_internal_id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 UnregisterPhysicalStreamRequest::_internal_id() const {
   return id_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 UnregisterPhysicalStreamRequest::id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 UnregisterPhysicalStreamRequest::id() const {
   // @@protoc_insertion_point(field_get:UnregisterPhysicalStreamRequest.id)
   return _internal_id();
 }
-inline void UnregisterPhysicalStreamRequest::_internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void UnregisterPhysicalStreamRequest::_internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   id_ = value;
 }
-inline void UnregisterPhysicalStreamRequest::set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void UnregisterPhysicalStreamRequest::set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_id(value);
   // @@protoc_insertion_point(field_set:UnregisterPhysicalStreamRequest.id)
 }
@@ -3165,22 +3165,22 @@ inline void UnregisterPhysicalStreamReply::set_success(bool value) {
 
 // RegisterLogicalStreamRequest
 
-// int64 id = 1;
+// uint64 id = 1;
 inline void RegisterLogicalStreamRequest::clear_id() {
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 RegisterLogicalStreamRequest::_internal_id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 RegisterLogicalStreamRequest::_internal_id() const {
   return id_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 RegisterLogicalStreamRequest::id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 RegisterLogicalStreamRequest::id() const {
   // @@protoc_insertion_point(field_get:RegisterLogicalStreamRequest.id)
   return _internal_id();
 }
-inline void RegisterLogicalStreamRequest::_internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void RegisterLogicalStreamRequest::_internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   id_ = value;
 }
-inline void RegisterLogicalStreamRequest::set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void RegisterLogicalStreamRequest::set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_id(value);
   // @@protoc_insertion_point(field_set:RegisterLogicalStreamRequest.id)
 }
@@ -3333,22 +3333,22 @@ inline void RegisterLogicalStreamReply::set_success(bool value) {
 
 // UnregisterLogicalStreamRequest
 
-// int64 id = 1;
+// uint64 id = 1;
 inline void UnregisterLogicalStreamRequest::clear_id() {
-  id_ = PROTOBUF_LONGLONG(0);
+  id_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 UnregisterLogicalStreamRequest::_internal_id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 UnregisterLogicalStreamRequest::_internal_id() const {
   return id_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 UnregisterLogicalStreamRequest::id() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 UnregisterLogicalStreamRequest::id() const {
   // @@protoc_insertion_point(field_get:UnregisterLogicalStreamRequest.id)
   return _internal_id();
 }
-inline void UnregisterLogicalStreamRequest::_internal_set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void UnregisterLogicalStreamRequest::_internal_set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   id_ = value;
 }
-inline void UnregisterLogicalStreamRequest::set_id(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void UnregisterLogicalStreamRequest::set_id(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_id(value);
   // @@protoc_insertion_point(field_set:UnregisterLogicalStreamRequest.id)
 }
@@ -3441,42 +3441,42 @@ inline void UnregisterLogicalStreamReply::set_success(bool value) {
 
 // AddParentRequest
 
-// int64 childId = 1;
+// uint64 childId = 1;
 inline void AddParentRequest::clear_childid() {
-  childid_ = PROTOBUF_LONGLONG(0);
+  childid_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 AddParentRequest::_internal_childid() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 AddParentRequest::_internal_childid() const {
   return childid_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 AddParentRequest::childid() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 AddParentRequest::childid() const {
   // @@protoc_insertion_point(field_get:AddParentRequest.childId)
   return _internal_childid();
 }
-inline void AddParentRequest::_internal_set_childid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void AddParentRequest::_internal_set_childid(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   childid_ = value;
 }
-inline void AddParentRequest::set_childid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void AddParentRequest::set_childid(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_childid(value);
   // @@protoc_insertion_point(field_set:AddParentRequest.childId)
 }
 
-// int64 parentId = 2;
+// uint64 parentId = 2;
 inline void AddParentRequest::clear_parentid() {
-  parentid_ = PROTOBUF_LONGLONG(0);
+  parentid_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 AddParentRequest::_internal_parentid() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 AddParentRequest::_internal_parentid() const {
   return parentid_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 AddParentRequest::parentid() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 AddParentRequest::parentid() const {
   // @@protoc_insertion_point(field_get:AddParentRequest.parentId)
   return _internal_parentid();
 }
-inline void AddParentRequest::_internal_set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void AddParentRequest::_internal_set_parentid(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   parentid_ = value;
 }
-inline void AddParentRequest::set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void AddParentRequest::set_parentid(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_parentid(value);
   // @@protoc_insertion_point(field_set:AddParentRequest.parentId)
 }
@@ -3509,42 +3509,42 @@ inline void AddParentReply::set_success(bool value) {
 
 // RemoveParentRequest
 
-// int64 childId = 1;
+// uint64 childId = 1;
 inline void RemoveParentRequest::clear_childid() {
-  childid_ = PROTOBUF_LONGLONG(0);
+  childid_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 RemoveParentRequest::_internal_childid() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 RemoveParentRequest::_internal_childid() const {
   return childid_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 RemoveParentRequest::childid() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 RemoveParentRequest::childid() const {
   // @@protoc_insertion_point(field_get:RemoveParentRequest.childId)
   return _internal_childid();
 }
-inline void RemoveParentRequest::_internal_set_childid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void RemoveParentRequest::_internal_set_childid(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   childid_ = value;
 }
-inline void RemoveParentRequest::set_childid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void RemoveParentRequest::set_childid(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_childid(value);
   // @@protoc_insertion_point(field_set:RemoveParentRequest.childId)
 }
 
-// int64 parentId = 2;
+// uint64 parentId = 2;
 inline void RemoveParentRequest::clear_parentid() {
-  parentid_ = PROTOBUF_LONGLONG(0);
+  parentid_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 RemoveParentRequest::_internal_parentid() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 RemoveParentRequest::_internal_parentid() const {
   return parentid_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 RemoveParentRequest::parentid() const {
+inline ::PROTOBUF_NAMESPACE_ID::uint64 RemoveParentRequest::parentid() const {
   // @@protoc_insertion_point(field_get:RemoveParentRequest.parentId)
   return _internal_parentid();
 }
-inline void RemoveParentRequest::_internal_set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void RemoveParentRequest::_internal_set_parentid(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   parentid_ = value;
 }
-inline void RemoveParentRequest::set_parentid(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void RemoveParentRequest::set_parentid(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   _internal_set_parentid(value);
   // @@protoc_insertion_point(field_set:RemoveParentRequest.parentId)
 }
