@@ -11,8 +11,6 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <Components/NesCoordinator.hpp>
-#include <caf/io/all.hpp>
-#include <Actors/AtomUtils.hpp>
 #include <Util/Logger.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 namespace po = boost::program_options;

@@ -1,16 +1,13 @@
 #include <Components/NesCoordinator.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Util/Logger.hpp>
-#include <caf/actor_cast.hpp>
-#include <caf/io/all.hpp>
 #include <thread>
-
 #include <REST/usr_interrupt_handler.hpp>
+#include <future>
 
 //GRPC Includes
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <grpcpp/health_check_service_interface.h>
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;

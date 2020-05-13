@@ -1,4 +1,4 @@
-#include <Actors/ExecutableTransferObject.hpp>
+#include <GRPC/ExecutableTransferObject.hpp>
 #include <Operators/Impl/WindowOperator.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/Logger.hpp>

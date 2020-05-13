@@ -8,9 +8,7 @@
 #include <Topology/NESTopologyManager.hpp>
 #include <API/Schema.hpp>
 
-//#include <Actors/CoordinatorActor.hpp>
 #include <Util/Logger.hpp>
-//#include <Actors/WorkerActor.hpp>
 
 using namespace NES;
 

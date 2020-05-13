@@ -19,7 +19,6 @@ using std::endl;
 using std::string;
 namespace po = boost::program_options;
 
-using namespace caf;
 using namespace NES;
 
 const string logo = "/********************************************************\n"
@@ -50,7 +49,7 @@ int main(int argc, char** argv) {
     std::string parentId = "-1";
 
     desc.add_options()("coordinatorPort", po::value<string>(&coordinatorPort)->default_value(coordinatorPort),
-                       "Set NES actor server port (default: 0).")
+                       "Set NES rpc server port (default: 0).")
         ("coordinatorIp", po::value<string>(&coordinatorIp)->default_value(coordinatorIp),
          "Set NES server ip (default: localhost).")
         (

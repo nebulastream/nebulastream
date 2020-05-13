@@ -3,8 +3,6 @@
 #if defined(__APPLE__) || defined(__MACH__)
 #include <xlocale.h>
 #endif
-#include "Actors/Configurations/CoordinatorActorConfig.hpp"
-#include "Actors/CoordinatorActor.hpp"
 #include "REST/Controller/BaseController.hpp"
 #include "REST/Controller/QueryController.hpp"
 #include "REST/Controller/StreamCatalogController.hpp"

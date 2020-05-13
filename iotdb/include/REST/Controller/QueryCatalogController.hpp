@@ -2,7 +2,6 @@
 #define NES_IMPL_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 
 #include "BaseController.hpp"
-#include <Actors/CoordinatorActor.hpp>
 #include <Services/QueryCatalogService.hpp>
 namespace NES {
 class NesCoordinator;

@@ -7,4 +7,5 @@ add_source_iotdb(
         WorkerRPCService.pb.cc
         WorkerRPCClient.cpp
         WorkerRPCServer.cpp
+        ExecutableTransferObject.cpp
 )
