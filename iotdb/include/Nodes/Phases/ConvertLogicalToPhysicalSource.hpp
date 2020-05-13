@@ -6,9 +6,17 @@
 
 namespace NES {
 
+/**
+ * @brief This class is responsible for creating logical source descriptor to physical source.
+ */
 class ConvertLogicalToPhysicalSource {
 
   public:
+    /**
+     * @brief This method produces corresponding physical source for an input logical source descriptor
+     * @param sourceDescriptor : the logical source desciptor
+     * @return Data source pointer for the physical source
+     */
     static DataSourcePtr createDataSource(SourceDescriptorPtr sourceDescriptor);
 
   private:

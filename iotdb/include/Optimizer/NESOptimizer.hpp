@@ -14,6 +14,8 @@ typedef std::shared_ptr<InputQuery> InputQueryPtr;
 class NESTopologyPlan;
 typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
 
+class TranslateFromLegacyPlanPhase;
+typedef std::shared_ptr<TranslateFromLegacyPlanPhase> TranslateFromLegacyPlanPhasePtr;
 /**
  * @brief:
  *         This class is responsible for producing the execution graph for the queries on nes topology. We can have
@@ -25,6 +27,8 @@ class NESOptimizer {
 
   public:
 
+    NESOptimizer();
+
     /**
      * @brief This method prepares the execution graph for the input user query
      * @param strategy : name of the placement strategy
@@ -35,6 +39,9 @@ class NESOptimizer {
     NESExecutionPlanPtr prepareExecutionGraph(std::string strategy,
                                               InputQueryPtr inputQuery,
                                               NESTopologyPlanPtr nesTopologyPlan);
+
+  private:
+    TranslateFromLegacyPlanPhasePtr translateFromLegacyPlanPhase;
 };
 }
 
