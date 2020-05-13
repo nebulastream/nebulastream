@@ -186,6 +186,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     TupleBuffer buffer = bufferManager->getBufferBlocking();
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize(), 0);
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
+                    buffer.setTupleSizeInBytes(bufferHeader->getPayloadSize() / bufferHeader->getNumOfRecords());
 
                     // check if identity is registered
                     if (partitionManager->isRegistered(nesPartition)) {

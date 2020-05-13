@@ -159,7 +159,7 @@ class MemorySegment {
     /**
      * @return true if the segment has a reference counter equals to zero
      */
-    bool isAvailable() { return controlBlock.getReferenceCount() == 0; }
+    bool isAvailable() { return controlBlock->getReferenceCount() == 0; }
 
     /**
      * @brief The size of the memory segment
@@ -170,8 +170,16 @@ class MemorySegment {
   private:
     uint8_t* ptr;
     uint32_t size;
-    detail::BufferControlBlock controlBlock;
+    detail::BufferControlBlock* controlBlock;
 };
+
+
+/**
+ * @brief This is the callback that is called when ZMQ is done with the sending of the buffer with payload in ptr.
+ * The hint parameter is the size of the whole buffer (casted as void*)
+ */
+void zmqBufferRecyclingCallback(void* ptr, void* hint);
+
 }// namespace detail
 }// namespace NES
 

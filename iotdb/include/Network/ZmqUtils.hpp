@@ -21,7 +21,7 @@ static constexpr int kSendMore = ZMQ_SNDMORE;
      * @param zmqSocket
      * @param args
      */
-template<typename MessageType, typename... Arguments>
+template<typename MessageType, int flags = 0, typename... Arguments>
 void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
     // create a header message for MessageType
     Messages::MessageHeader header(MessageType::MESSAGE_TYPE, sizeof(MessageType));
@@ -32,7 +32,7 @@ void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
     zmq::message_t sendMsg(&message, sizeof(MessageType));
     // send both messages in one shot
     zmqSocket.send(sendHeader, kSendMore);
-    zmqSocket.send(sendMsg);
+    zmqSocket.send(sendMsg, flags);
 }
 
 /**
