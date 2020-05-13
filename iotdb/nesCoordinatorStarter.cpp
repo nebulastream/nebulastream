@@ -49,7 +49,7 @@ int main(int argc, const char* argv[]) {
             "Set NES REST server port (default: 8081).")
 
         (
-            "rpcPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort),
+            "coordinatorPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort),
             "Set NES rpc server port (default: 4000).")
         ("help", "Display help message");
 
