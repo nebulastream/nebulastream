@@ -73,7 +73,7 @@ else ()
 endif ()
 
 # Proto file
-set(PROTO_PATH "${PROJECT_SOURCE_DIR}/impl/Proto")
+set(PROTO_PATH "${PROJECT_SOURCE_DIR}/grpc")
 set(PROTO_FILE_PATH "${PROTO_PATH}/*.proto")
 
 file(GLOB PROTO_FILES "${PROTO_FILE_PATH}")
