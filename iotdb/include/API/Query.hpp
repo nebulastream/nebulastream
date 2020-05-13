@@ -87,7 +87,7 @@ class Query {
      * @brief Get the source stream name
      * @return sourceStreamName
      */
-    const std::string& getSourceStreamName() const;
+    const std::string getSourceStreamName() const;
 
   private:
     // creates a new query object

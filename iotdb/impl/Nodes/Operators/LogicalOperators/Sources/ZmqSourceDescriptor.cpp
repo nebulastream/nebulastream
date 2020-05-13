@@ -9,10 +9,6 @@ SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string ho
 ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port)
     : SourceDescriptor(schema), host(host), port(port) {}
 
-SourceDescriptorType ZmqSourceDescriptor::getType() {
-    return ZmqSrc;
-}
-
 const std::string& ZmqSourceDescriptor::getHost() const {
     return host;
 }

@@ -31,8 +31,6 @@ class FileSinkDescriptor : public SinkDescriptor {
      */
     static SinkDescriptorPtr create(SchemaPtr schema, std::string filePath, FileOutputMode fileOutputMode, FileOutputType fileOutputType);
 
-    SinkDescriptorType getType() override;
-
     /**
      * @brief Get the file name where the data is to be written
      */

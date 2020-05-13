@@ -17,8 +17,6 @@ class CsvSourceDescriptor : public SourceDescriptor {
                                       size_t numBuffersToProcess,
                                       size_t frequency);
 
-    SourceDescriptorType getType() override;
-
     /**
      * @brief get file path for reading the csv file
      */

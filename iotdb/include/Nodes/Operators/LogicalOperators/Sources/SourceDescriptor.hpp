@@ -8,10 +8,6 @@
 
 namespace NES {
 
-enum SourceDescriptorType {
-    ZmqSrc, SenseSrc, KafkaSrc, CsvSrc,  BinarySrc, DefaultSrc, LogicalStreamSrc
-};
-
 class SourceDescriptor;
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
 
@@ -20,12 +16,6 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>{
   public:
 
     SourceDescriptor(SchemaPtr schema) : schema(schema) {};
-
-    /**
-     * @brief Returns the source descriptor type of this source descriptor.
-     * @return
-     */
-    virtual SourceDescriptorType getType() = 0;
 
     /**
      * @brief Returns the schema, which is produced by this source descriptor

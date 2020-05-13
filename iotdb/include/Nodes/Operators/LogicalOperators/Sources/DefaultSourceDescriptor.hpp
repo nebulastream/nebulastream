@@ -13,8 +13,6 @@ class DefaultSourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
 
-    SourceDescriptorType getType() override;
-
     /**
      * @brief Get number of buffers to be produced
      */

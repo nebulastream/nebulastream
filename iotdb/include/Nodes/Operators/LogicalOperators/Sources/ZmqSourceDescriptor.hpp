@@ -13,8 +13,6 @@ class ZmqSourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string host, uint16_t port);
 
-    SourceDescriptorType getType() override;
-
     /**
      * @brief Get zmq host name
      */

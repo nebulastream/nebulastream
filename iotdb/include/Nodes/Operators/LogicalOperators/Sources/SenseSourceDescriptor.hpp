@@ -13,8 +13,6 @@ class SenseSourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string udfs);
 
-    SourceDescriptorType getType() override;
-
     /**
      * @brief Get the udf for the sense node
      */

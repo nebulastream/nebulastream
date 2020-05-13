@@ -8,10 +8,6 @@ SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string
     return std::make_shared<BinarySourceDescriptor>(BinarySourceDescriptor(schema, filePath));
 }
 
-SourceDescriptorType BinarySourceDescriptor::getType() {
-    return BinarySrc;
-}
-
 const std::string& BinarySourceDescriptor::getFilePath() const {
     return filePath;
 }

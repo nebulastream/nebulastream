@@ -17,7 +17,6 @@ class PrintSinkDescriptor : public SinkDescriptor {
      * @return
      */
     static SinkDescriptorPtr create(SchemaPtr schema);
-    SinkDescriptorType getType() override;
 
   private:
     explicit PrintSinkDescriptor(SchemaPtr schema);

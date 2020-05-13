@@ -47,7 +47,7 @@ QueryPlanPtr Query::getQueryPlan() {
     return queryPlan;
 }
 
-const std::string& Query::getSourceStreamName() const {
+const std::string Query::getSourceStreamName() const {
     return sourceStreamName;
 }
 
