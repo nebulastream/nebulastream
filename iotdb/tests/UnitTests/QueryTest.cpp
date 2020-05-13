@@ -3,7 +3,6 @@
 #include <iostream>
 #include <Util/Logger.hpp>
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
-
 #include <API/Query.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <Catalogs/StreamCatalog.hpp>
@@ -25,6 +24,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Topology/NESTopologyManager.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
 
 namespace NES {
@@ -71,7 +71,7 @@ TEST_F(QueryTest, testQueryFilter) {
     EXPECT_EQ(sourceOperators.size(), 1);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
-    EXPECT_EQ(srcOptr->getSourceDescriptor()->getType(), LogicalStreamSrc);
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
 
     const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1);
