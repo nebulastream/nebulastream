@@ -32,7 +32,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     ~NesCoordinator();
 
     /**
-     * @brief start actor: rest server, caf server, coordinator actor
+     * @brief start rpc server: rest server, and one worker <
      * @param bool if the method should block
      */
     size_t startCoordinator(bool blocking);
@@ -137,7 +137,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
 
     std::shared_ptr<grpc::Server> rpcServer;
     uint16_t rpcPort;
-    std::thread rpcThread;
+    std::shared_ptr<std::thread> rpcThread;
     NesWorkerPtr wrk;
 
 
@@ -147,7 +147,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     uint16_t restPort;
     std::string serverIp;
 
-    std::thread restThread;
+    std::shared_ptr<std::thread> restThread;
 
     std::atomic<bool> stopped;
 

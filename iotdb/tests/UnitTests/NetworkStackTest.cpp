@@ -143,7 +143,7 @@ TEST_F(NetworkStackTest, testSendData) {
     ASSERT_EQ(true, true);
 }
 
-TEST_F(NetworkStackTest, DISABLED_registerChannelWithActors) {
+TEST_F(NetworkStackTest, registerChannelWithActors) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -151,9 +151,7 @@ TEST_F(NetworkStackTest, DISABLED_registerChannelWithActors) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
-//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>aa();
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;

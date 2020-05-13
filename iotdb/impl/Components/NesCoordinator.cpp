@@ -38,6 +38,7 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
     queryCatalogServicePtr = QueryCatalogService::getInstance();
     streamCatalogServicePtr = StreamCatalogService::getInstance();
     coordinatorServicePtr = CoordinatorService::getInstance();
+    workerRPCClient = std::make_shared<WorkerRPCClient>();
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -57,6 +58,9 @@ size_t NesCoordinator::getRandomPort(size_t base) {
     return base - 12 + time(0)*321*rand()%10000;
 }
 
+/**
+ * @brief this method starts the rest server and then blocks
+ */
 void startRestServer(std::shared_ptr<RestServer> restServer,
                      std::string restHost, uint16_t restPort, NesCoordinatorPtr coordinator, std::promise<bool>& prom) {
 
@@ -65,6 +69,10 @@ void startRestServer(std::shared_ptr<RestServer> restServer,
     NES_DEBUG("NesCoordinator: startRestServer thread terminates");
 }
 
+/**
+ * @brief this method will start the RPC Coordinator service which is responsible for reacting to calls from the
+ * CoordinatorRPCClient which will be send by the worker
+ */
 void startCoordinatorRPCServer(std::shared_ptr<Server>& rpcServer, std::string address, std::promise<bool>& prom) {
     NES_DEBUG("startCoordinatorRPCServer");
     grpc::ServerBuilder builder;
@@ -76,7 +84,7 @@ void startCoordinatorRPCServer(std::shared_ptr<Server>& rpcServer, std::string a
     rpcServer = std::move(server);
     prom.set_value(true);
     NES_DEBUG("startCoordinatorRPCServer: Server listening on address=" << address);
-    rpcServer->Wait();
+    rpcServer->Wait();//blocking call
     NES_DEBUG("startCoordinatorRPCServer: end listening");
 }
 
@@ -86,14 +94,15 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     std::string address = serverIp + ":" + ::to_string(rpcPort);
     NES_DEBUG("startCoordinatorRPCServer for address=" << address);
 
-    std::promise<bool> promRPC;
-    std::thread threadRPC([&]() {
+    //Start RPC server that listen to calls form the clients
+    std::promise<bool> promRPC;//promise to make sure we wait until the server is started
+    rpcThread = std::make_shared<std::thread>(([&]() {
       startCoordinatorRPCServer(rpcServer, address, promRPC);
-    });
+    }));
     promRPC.get_future().get();
     NES_DEBUG("WorkerActor::startCoordinatorRPCServer: ready");
-    rpcThread = std::move(threadRPC);
 
+    //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     wrk = std::make_shared<NesWorker>(serverIp,
                                       std::to_string(rpcPort),
@@ -102,23 +111,28 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
                                       NESNodeType::Worker);
     wrk->start(/**blocking*/false, /**withConnect*/true);
 
+    //Start rest that accepts quiers form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     std::promise<bool> promRest;
     std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this());
 
-    std::thread thRest([&]() {
+//    restThread = ([&]() {
+//      startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
+//    });
+
+    restThread = std::make_shared<std::thread>(([&]() {
       startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
-    });
-    promRest.get_future().get();
+    }));
+
+    promRest.get_future().get();//promise to make sure we wait until the server is started
     NES_DEBUG("WorkerActor::startCoordinatorRPCServer: ready");
-    restThread = std::move(thRest);
 
     stopped = false;
-    if (blocking) {
+    if (blocking) {//blocking is for the starter to wait here for user to send query
         NES_DEBUG("NesCoordinator started, join now and waiting for work");
-        restThread.join();
+        restThread->join();
         NES_DEBUG("NesCoordinator Required stopping");
-    } else {
+    } else {//non-blocking is used for tests to continue execution
         NES_DEBUG(
             "NesCoordinator started, return without blocking on port " << rpcPort);
         return rpcPort;
@@ -132,15 +146,14 @@ bool NesCoordinator::stopCoordinator(bool force) {
     if (!stopped) {
         NES_DEBUG("NesCoordinator: stopping rest server");
         bool successStopRest = restServer->stop();
-//        InterruptHandler::handleUserInterrupt(SIGINT);
         if (!successStopRest) {
             NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
             throw Exception("Error while stopping NesCoordinator");
         }
         NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
-        if (restThread.joinable()) {
+        if (restThread->joinable()) {
             NES_DEBUG("NesCoordinator: join restThread");
-            restThread.join();
+            restThread->join();
         }
         else
         {
@@ -149,9 +162,9 @@ bool NesCoordinator::stopCoordinator(bool force) {
 
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
-        if (rpcThread.joinable()) {
+        if (rpcThread->joinable()) {
             NES_DEBUG("NesCoordinator: join rpcThread");
-            rpcThread.join();
+            rpcThread->join();
         }
         else
         {
