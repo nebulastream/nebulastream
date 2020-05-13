@@ -53,7 +53,7 @@ FetchContent_Declare(
         GIT_TAG        v1.28.0
 )
 
-
+file(GLOB PROTOBUF_DEFINITION_FILES "*.proto")
 set(FETCHCONTENT_QUIET OFF)
 FetchContent_MakeAvailable(gRPC)
 
@@ -67,13 +67,92 @@ else()
     set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
 endif()
 
-FetchContent_Declare(
-        protobuf
-        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf
-        GIT_TAG        v3.10.0
-)
-FetchContent_MakeAvailable(protobuf)
-message(STATUS "Using protobuf ${Protobuf_VERSION}")
+find_program(Protobuf_PROTOC_EXECUTABLE
+        NAMES protoc
+        DOC "The Google Protocol Buffers Compiler"
+        PATHS
+        ${Protobuf_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Release
+        ${Protobuf_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Debug
+        )
+message("asd=" ${CMAKE_CURRENT_BINARY_DIR})
+
+
+# Proto file
+get_filename_component(hw_proto "${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.proto" ABSOLUTE)
+get_filename_component(hw_proto_path "${hw_proto}" PATH)
+
+
+# Generated sources
+set(hw_proto_srcs "${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.pb.cc")
+set(hw_proto_hdrs "${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.pb.h")
+set(hw_grpc_srcs "${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.pb.cc")
+set(hw_grpc_hdrs "${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.pb.h")
+add_custom_command(
+        OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
+        COMMAND ${_PROTOBUF_PROTOC}
+        ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
+        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
+        -I "${hw_proto_path}"
+        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+        "${hw_proto}"
+        DEPENDS "${hw_proto}")
+
+# Include generated *.pb.h files
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+#FetchContent_Declare(
+#        protobuf
+#        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf
+#        GIT_TAG        v3.10.0
+#)
+#FetchContent_MakeAvailable(protobuf)
+##find_package(Protobuf REQUIRED)
+
+file(GLOB PROTOBUF_DEFINITION_FILES "${PROTOBUF_INPUT_DIRECTORY}/*.proto")
+
+
+#foreach(file ${PROTOBUF_DEFINITION_FILES})
+#     message("file" ${file})
+#
+#    set(${example}_SRCS ${example}.cc)
+#    set(${example}_PROTOS addressbook.proto)
+#
+#    #Code Generation
+#    if(protobuf_MODULE_COMPATIBLE) #Legacy Support
+#        protobuf_generate_cpp(${example}_PROTO_SRCS ${example}_PROTO_HDRS ${${example}_PROTOS})
+#        list(APPEND ${example}_SRCS ${${example}_PROTO_SRCS} ${${example}_PROTO_HDRS})
+#    endif()
+#endforeach()
+#include_directories(${Protobuf_INCLUDE_DIRS})
+##include_directories(${CMAKE_CURRENT_BINARY_DIR})
+##protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.proto)
+##protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS EXPORT_MACRO DLL_EXPORT ${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.proto)
+#protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS DESCRIPTORS PROTO_DESCS ${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.proto)
+##
+#message(STATUS "Using protobuf ${Protobuf_VERSION}")
+#
+#message("_PROTOBUF_PROTOC=" << ${protobuf::protoc})
+#set(PROTOBUF_INPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/impl/Proto")
+#set(PROTOBUF_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/impl/Proto/")
+#file(GLOB PROTOBUF_DEFINITION_FILES "${PROTOBUF_INPUT_DIRECTORY}/*.proto")
+#message("PROTOBUF_DEFINITION_FILES=" "${PROTOBUF_DEFINITION_FILES}")
+#
+#foreach(file ${PROTOBUF_DEFINITION_FILES})
+#    set(PROTOBUF_ARGUMENTS "/usr/bin/protoc --proto_path=\"${PROTOBUF_INPUT_DIRECTORY}\" --cpp_out=\"${PROTOBUF_OUTPUT_DIRECTORY}\" \"${file}\"")
+#    message("PROTOBUF_ARGUMENTS" ${PROTOBUF_ARGUMENTS})
+##    add_custom_command(COMMAND ${PROTOBUF_ARGUMENTS})
+#    execute_process(COMMAND ${PROTOBUF_OUTPUT_DIRECTORY}
+#            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+#            RESULT_VARIABLE PROTOBUF_RESULT
+#            OUTPUT_VARIABLE PROTOBUF_OUTPUT_VARIABLE)
+#
+##
+##    execute_process(COMMAND ${PROTOBUF_OUTPUT_DIRECTORY}
+##            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+##            RESULT_VARIABLE PROTOBUF_RESULT
+##            OUTPUT_VARIABLE PROTOBUF_OUTPUT_VARIABLE)
+#endforeach()
+
+#file(GLOB PROTOBUF_MODELS_INCLUDES "Models/Proto/*.pb.cc" "Models/Proto/*.hpp")
 
 # ZMQ
 find_package(ZMQ REQUIRED)
@@ -199,7 +278,7 @@ add_subdirectory(docs)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
 
-add_executable(nesCoordinator nesCoordinatorStarter.cpp)
+add_executable(nesCoordinator nesCoordinatorStarter.cpp ${hw_proto_srcs} ${hw_grpc_srcs})
 target_link_libraries(nesCoordinator ${LIBRARIES}  iotdb)
 target_include_directories(nesCoordinator PUBLIC "include")
 
@@ -208,8 +287,8 @@ target_link_libraries(nesWorker ${LIBRARIES}  iotdb)
 target_include_directories(nesWorker PUBLIC "include")
 
 # Add tests with command
-enable_testing()
-add_subdirectory(tests)
+#enable_testing()
+#add_subdirectory(tests)
 
 configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR}/tests)
 configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR})
