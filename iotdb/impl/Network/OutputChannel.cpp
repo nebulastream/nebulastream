@@ -4,7 +4,6 @@
 #include <Network/ZmqUtils.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
-#include <utility>
 
 namespace NES {
 namespace Network {
@@ -107,34 +106,19 @@ bool OutputChannel::registerAtServer() {
     }
 }
 
-bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
-    try {
-        // create a header message for MessageType
-        Messages::MessageHeader header{Messages::DataBuffer, sizeof(Messages::DataBuffer)};
-        zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
-
-        // create the header for the buffer
-        Messages::DataBufferMessage bufferHeader{static_cast<unsigned int>(inputBuffer.getBufferSize()),
-                                                 static_cast<unsigned int>(inputBuffer.getNumberOfTuples())};
-        zmq::message_t sendBufferHeader(&bufferHeader, sizeof(Messages::DataBufferMessage));
-
-        // create the message with the buffer payload
-        // TODO: in future change that buffer is sent without copying
-        zmq::message_t sendBuffer(inputBuffer.getBuffer(), inputBuffer.getBufferSize());
-
-        // send all messages in one shot
-        NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
-                                                       << inputBuffer.getNumberOfTuples() << "/"
-                                                       << inputBuffer.getBufferSize());
-
-        zmqSocket.send(sendHeader, kSendMore);
-        zmqSocket.send(sendBufferHeader, kSendMore);
-        zmqSocket.send(sendBuffer);
-        return true;
-    }
-    catch (zmq::error_t& err) {
-        NES_ERROR("OutputChannel: Zmq error " << err.what());
-    }
+void OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
+    auto bufferSize = inputBuffer.getBufferSize();
+    auto tupleSize = inputBuffer.getTupleSizeInBytes();
+    auto numOfTuples = inputBuffer.getNumberOfTuples();
+    auto payloadSize = tupleSize * numOfTuples;
+    auto ptr = inputBuffer.getBuffer<uint8_t>();
+    auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize); // DON'T TRY THIS AT HOME :P
+    sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples);
+    inputBuffer.retain();
+    zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer));
+    NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
+                                                   << inputBuffer.getNumberOfTuples() << "/"
+                                                   << inputBuffer.getBufferSize());
 }
 
 void OutputChannel::onError(Messages::ErroMessage& errorMsg) {

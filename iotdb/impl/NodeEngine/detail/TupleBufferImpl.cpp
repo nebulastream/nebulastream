@@ -31,11 +31,11 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) {
     return *this;
 }
 
-MemorySegment::MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr, [](MemorySegment*) {
-                                 }) {}
+MemorySegment::MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr) {}
 
 MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)>&& recycleFunction)
-    : ptr(ptr), size(size), controlBlock(this, std::move(recycleFunction)) {
+    : ptr(ptr), size(size) {
+    controlBlock = new (ptr + size) BufferControlBlock(this, std::move(recycleFunction));
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
     }
@@ -46,7 +46,7 @@ MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(Mem
 
 MemorySegment::~MemorySegment() {
     if (ptr) {
-        auto refCnt = controlBlock.getReferenceCount();
+        auto refCnt = controlBlock->getReferenceCount();
         if (refCnt != 0) {
             NES_ERROR("Expected 0 as ref cnt but got " << refCnt);
             NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid reference counter on mem segment dtor");
@@ -307,6 +307,13 @@ void revertEndianness(TupleBuffer& tbuffer, SchemaPtr schema) {
             offset += fieldSize;
         }
     }
+}
+
+void zmqBufferRecyclingCallback(void* ptr, void* hint) {
+    auto bufferSize = reinterpret_cast<uintptr_t>(hint);
+    auto buffer = reinterpret_cast<uint8_t*>(ptr);
+    auto controlBlock = reinterpret_cast<BufferControlBlock*>(buffer + bufferSize);
+    controlBlock->release();
 }
 
 }// namespace detail

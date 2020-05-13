@@ -27,7 +27,7 @@ BufferManager::~BufferManager() {
     for (auto& buffer : allBuffers) {
         if (!buffer.isAvailable()) {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-            buffer.controlBlock.dumpOwningThreadInfo();
+            buffer.controlBlock->dumpOwningThreadInfo();
 #endif
             success = false;
         }
@@ -38,7 +38,7 @@ BufferManager::~BufferManager() {
     // RAII takes care of deallocating memory here
     allBuffers.clear();
     for (auto& holder : unpooledBuffers) {
-        if (!holder.segment || holder.segment->controlBlock.getReferenceCount() != 0) {
+        if (!holder.segment || holder.segment->controlBlock->getReferenceCount() != 0) {
             NES_THROW_RUNTIME_ERROR("Deletion of unpooled buffer invoked on used memory segment");
         }
     }
@@ -54,8 +54,9 @@ void BufferManager::configure(size_t bufferSize, size_t numOfBuffers) {
     this->bufferSize = bufferSize;
     this->numOfBuffers = numOfBuffers;
     allBuffers.reserve(numOfBuffers);
+    auto realSize = bufferSize + sizeof(detail::BufferControlBlock);
     for (size_t i = 0; i < numOfBuffers; ++i) {
-        auto ptr = static_cast<uint8_t*>(malloc(bufferSize));
+        auto ptr = static_cast<uint8_t*>(malloc(realSize));
         if (ptr == nullptr) {
             NES_THROW_RUNTIME_ERROR("[BufferManager] memory allocation failed");
         }
@@ -75,8 +76,8 @@ TupleBuffer BufferManager::getBufferBlocking() {
     }
     auto memSegment = availableBuffers.front();
     availableBuffers.pop_front();
-    if (memSegment->controlBlock.prepare()) {
-        return TupleBuffer(&memSegment->controlBlock, memSegment->ptr, memSegment->size);
+    if (memSegment->controlBlock->prepare()) {
+        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
     }
@@ -89,8 +90,8 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
     }
     auto memSegment = availableBuffers.front();
     availableBuffers.pop_front();
-    if (memSegment->controlBlock.prepare()) {
-        return TupleBuffer(&memSegment->controlBlock, memSegment->ptr, memSegment->size);
+    if (memSegment->controlBlock->prepare()) {
+        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
     }
@@ -106,8 +107,8 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
     }
     auto memSegment = availableBuffers.front();
     availableBuffers.pop_front();
-    if (memSegment->controlBlock.prepare()) {
-        return TupleBuffer(&memSegment->controlBlock, memSegment->ptr, memSegment->size);
+    if (memSegment->controlBlock->prepare()) {
+        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
     }
@@ -124,8 +125,8 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
                 if (it->free) {
                     auto memSegment = (*it).segment.get();
                     it->free = false;
-                    if (memSegment->controlBlock.prepare()) {
-                        return TupleBuffer(&memSegment->controlBlock, memSegment->ptr, memSegment->size);
+                    if (memSegment->controlBlock->prepare()) {
+                        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
                     } else {
                         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
                     }
@@ -136,7 +137,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
         }
     }
     // we could not find a buffer, allocate it
-    auto ptr = static_cast<uint8_t*>(malloc(bufferSize));
+    auto ptr = static_cast<uint8_t*>(malloc(bufferSize + sizeof(detail::BufferControlBlock)));
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
@@ -146,8 +147,8 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
         });
     auto leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), bufferSize);
-    if (leakedMemSegment->controlBlock.prepare()) {
-        return TupleBuffer(&(leakedMemSegment->controlBlock), leakedMemSegment->ptr, leakedMemSegment->size);
+    if (leakedMemSegment->controlBlock->prepare()) {
+        return TupleBuffer(leakedMemSegment->controlBlock, leakedMemSegment->ptr, leakedMemSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
     }

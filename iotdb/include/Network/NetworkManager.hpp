@@ -20,7 +20,7 @@ class ZmqServer;
 class OutputChannel;
 
 /**
- * @brief The NetworkManager manages creation and deletion of subpartition producer and consumer. This component is not ThreadSafe and should not be shared amonst threads.
+ * @brief The NetworkManager manages creation and deletion of subpartition producer and consumer.
  */
 class NetworkManager : public boost::noncopyable {
   public:
@@ -55,7 +55,6 @@ class NetworkManager : public boost::noncopyable {
                                                 u_int8_t waitTime, u_int8_t retryTimes);
 
   private:
-    // TODO decide whethere unique_ptr is better here
     std::shared_ptr<ZmqServer> server;
     ExchangeProtocol exchangeProtocol;
     PartitionManagerPtr partitionManager;
