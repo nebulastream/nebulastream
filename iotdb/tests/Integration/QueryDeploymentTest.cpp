@@ -318,7 +318,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputWithExceptions) {
 }
 
 
-TEST_F(QueryDeploymentTest, DISABLED_testDeployAndUndeployTwoWorkerFileOutput) {
+TEST_F(QueryDeploymentTest, testDeployAndUndeployTwoWorkerFileOutput) {
     remove("test.out");
 
     cout << "start coordinator" << endl;

@@ -39,7 +39,6 @@ message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 
 # lcryto is required for asio to communicate
 set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl grpc++)
-#grpc++ -lgrpc++_reflection  --no-as-needed -lgrpc++_reflection
 
 # LLVM
 find_package(LLVM 3 REQUIRED)
@@ -74,48 +73,6 @@ FetchContent_Declare(
         GIT_TAG        v3.10.0
 )
 FetchContent_MakeAvailable(protobuf)
-
-#set(_GRPC_GRPCPP_UNSECURE gRPC::grpc++_unsecure)
-
-#FetchContent_GetProperties(protobuf)
-#if(NOT protobufPOPULATED)
-#    message("PROTOBUF NOT POPULATED")
-#    FetchContent_Populate(protobuf)
-#    add_subdirectory(${protobuf_SOURCE_DIR} ${protobuf_BINARY_DIR})
-#endif()
-
-#FetchContent_Declare(protobuf
-#        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf
-#        GIT_SHALLOW TRUE GIT_TAG ${_protobuf_git_tag}
-#        SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf
-#        SOURCE_SUBDIR cmake
-#        UPDATE_DISCONNECTED ${THIRD_PARTY_UPDATE_DISCONNECTED}
-#        )
-#FetchContent_MakeAvailable(protobuf)
-#FetchContent_MakeAvailable(protobuf)
-
-#add_subdirectory(${protobuf_SOURCE_DIR}/cmake ${protobuf_BINARY_DIR})
-#set(PROTOBUF_INCLUDE_DIR ${protobuf_SOURCE_DIR}/src CACHE PATH "" FORCE)
-#FetchContent_Populate(
-#        protobuf
-#        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf
-#        GIT_TAG        v3.10.0
-#)
-#FetchContent_MakeAvailable(protobuf)
-
-
-message("protobuf found: ${PROTOBUF_FOUND}")
-message("protoc: ${PROTOBUF_PROTOC_LIBRARIES}")
-message("lite library: ${PROTOBUF_LITE_LIBRARIES}")
-message("protobuf libraries: ${PROTOBUF_LIBRARIES}")
-message("inclclude dirs: ${PROTOBUF_INCLUDE_DIRS}")
-
-message("protoc: ${PROTOBUF_PROTOC_LIBRARY}")
-message("lite library: ${PROTOBUF_INCLUDE_DIR}")
-message("protobuf libraries: ${PROTOBUF_LIBRARY}")
-message("inclclude dirs: ${PROTOBUF_INCLUDE_DIR}")
-message("protc executable: ${PROTOBUF_PROTOC_EXECUTABLE}")
-
 message(STATUS "Using protobuf ${Protobuf_VERSION}")
 
 # ZMQ
@@ -240,7 +197,7 @@ target_link_libraries(iotdb ${LIBRARIES} grpc++_reflection)
 # Documentation
 add_subdirectory(docs)
 
-#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
 
 add_executable(nesCoordinator nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator ${LIBRARIES}  iotdb)

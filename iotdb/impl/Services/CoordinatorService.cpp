@@ -170,8 +170,6 @@ NESTopologyEntryPtr CoordinatorService::registerNode(size_t id, std::string addr
     }
     assert(nodePtr);
 
-//    nodePtr->setPublishPort(publish_port);
-//    nodePtr->setReceivePort(receive_port);
     if (nodeProperties != "defaultProperties") {
         nodePtr->setNodeProperty(nodeProperties);
     }
