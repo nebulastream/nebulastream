@@ -1,10 +1,6 @@
 add_source_iotdb(
         CoordinatorRPCServer.cpp
         CoordinatorRPCClient.cpp
-        CoordinatorRPCService.grpc.pb.cc
-        CoordinatorRPCService.pb.cc
-        WorkerRPCService.grpc.pb.cc
-        WorkerRPCService.pb.cc
         WorkerRPCClient.cpp
         WorkerRPCServer.cpp
         ExecutableTransferObject.cpp

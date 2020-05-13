@@ -1,12 +1,12 @@
 #ifndef NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 #define NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
-#include <GRPC/CoordinatorRPCService.grpc.pb.h>
-#include <GRPC/CoordinatorRPCService.pb.h>
+#include <CoordinatorRPCService.grpc.pb.h>
+#include <CoordinatorRPCService.pb.h>
 
-#include <grpcpp/grpcpp.h>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Topology/NESTopologyEntry.hpp>
+#include <grpcpp/grpcpp.h>
 #include <string>
 
 using namespace std;
