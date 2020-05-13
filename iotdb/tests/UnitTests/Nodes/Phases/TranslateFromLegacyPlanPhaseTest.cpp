@@ -9,6 +9,8 @@
 #include <API/Query.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
@@ -62,46 +64,27 @@ class TranslateFromLegacyPlanPhaseTest : public testing::Test {
     }
 };
 
-TEST_F(TranslateFromLegacyPlanPhaseTest, testPushingOneFilterBelowMap) {
+TEST_F(TranslateFromLegacyPlanPhaseTest, testTranslationOfInputQueryToLogicalPlan) {
 
     // Prepare
     Stream def = Stream("default_logical", schema);
     InputQuery input = InputQuery::from(def).print();
 
+    //Execute
     auto translationPhase = TranslateFromLegacyPlanPhase::create();
     const OperatorNodePtr ptr = translationPhase->transform(input.getRoot());
 
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
-    Query query = Query::from("default_logical")
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45)
-        .sink(printSinkDescriptor);
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
-
+    //Assert
     DepthFirstNodeIterator queryPlanNodeIterator(ptr);
-//    auto itr = queryPlanNodeIterator.begin();
-//
-//    const NodePtr sinkOperator = (*itr);
-//    ++itr;
-//    const NodePtr filterOperator = (*itr);
-//    ++itr;
-//    const NodePtr mapOperator = (*itr);
-//    ++itr;
-//    const NodePtr srcOperator = (*itr);
-//
-//    // Execute
-//    FilterPushDownRule filterPushDownRule;
-//    const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
-//
-//    // Validate
-//    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
-//    itr = queryPlanNodeIterator.begin();
-//    EXPECT_TRUE(sinkOperator->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(mapOperator->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(filterOperator->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(srcOperator->equal((*itr)));
+    auto itr = queryPlanNodeIterator.begin();
+
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr sourceOperator = (*itr);
+
+    auto sinkLogicalOperator = sinkOperator->as<SinkLogicalOperatorNode>();
+    auto srcLogicalOperator = sourceOperator->as<SourceLogicalOperatorNode>();
+    EXPECT_TRUE(sinkLogicalOperator->getSinkDescriptor()->instanceOf<PrintSinkDescriptor>());
+    EXPECT_TRUE( srcLogicalOperator->getSourceDescriptor()->getSchema()->equals(schema));
 }
 

@@ -6,9 +6,18 @@
 
 namespace NES {
 
+/**
+ * @brief This class is responsible for creating the physical sink from Logical sink description
+ */
 class ConvertLogicalToPhysicalSink {
 
   public:
+
+    /**
+     * @brief This method is responsible for creating the physical sink from logical sink descriptor
+     * @param sinkDescriptor: logical sink descriptor
+     * @return Data sink pointer representing the physical sink
+     */
     static DataSinkPtr createDataSink(SinkDescriptorPtr sinkDescriptor);
 
   private:

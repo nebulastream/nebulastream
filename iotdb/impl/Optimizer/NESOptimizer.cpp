@@ -9,6 +9,10 @@
 
 using namespace NES;
 
+NESOptimizer::NESOptimizer() {
+    translateFromLegacyPlanPhase = TranslateFromLegacyPlanPhase::create();
+}
+
 NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, InputQueryPtr inputQuery,
                                                         NESTopologyPlanPtr nesTopologyPlan) {
 
@@ -18,7 +22,6 @@ NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, In
     NES_INFO("NESOptimizer: Converting Legacy InputQuery into new Query");
     const OperatorPtr rootOperator = inputQuery->getRoot();
     NES_INFO("NESOptimizer: Transforming old operator graph into new OperatorNode graph");
-    auto translateFromLegacyPlanPhase = TranslateFromLegacyPlanPhase::create();
     const OperatorNodePtr rootNodeOperator = translateFromLegacyPlanPhase->transform(rootOperator);
     auto rootOperatorId = rootNodeOperator->getId();
     NES_INFO("NESOptimizer: Creating QueryPlan");
