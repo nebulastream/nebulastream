@@ -13,8 +13,6 @@ class ZmqSinkDescriptor : public SinkDescriptor {
   public:
     static SinkDescriptorPtr create(SchemaPtr schema, std::string host, uint16_t port);
 
-    SinkDescriptorType getType() override;
-
     /**
      * @brief Get the zmq host where the data is to be written
      */

@@ -29,10 +29,6 @@ SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
                                                                          kafkaConnectTimeout));
 }
 
-SourceDescriptorType KafkaSourceDescriptor::getType() {
-    return KafkaSrc;
-}
-
 const std::string& KafkaSourceDescriptor::getBrokers() const {
     return brokers;
 }

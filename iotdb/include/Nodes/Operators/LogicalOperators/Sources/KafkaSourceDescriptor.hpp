@@ -19,8 +19,6 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       bool autoCommit,
                                       uint64_t kafkaConnectTimeout);
 
-    SourceDescriptorType getType() override;
-
     /**
      * @brief Get the list of kafka brokers
      */

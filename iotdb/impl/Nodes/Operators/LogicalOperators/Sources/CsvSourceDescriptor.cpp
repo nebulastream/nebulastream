@@ -13,10 +13,6 @@ CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
       numBuffersToProcess(numBuffersToProcess),
       frequency(frequency) {}
 
-SourceDescriptorType CsvSourceDescriptor::getType() {
-    return CsvSrc;
-}
-
 const std::string& CsvSourceDescriptor::getFilePath() const {
     return filePath;
 }

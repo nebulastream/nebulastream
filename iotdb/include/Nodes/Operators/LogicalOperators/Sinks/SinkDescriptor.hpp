@@ -8,16 +8,6 @@
 
 namespace NES {
 
-/**
- * @brief Enum defining different Sink Descriptor types
- */
-enum SinkDescriptorType {
-    FileSinkDescriptorType,
-    KafkaSinkDescriptorType,
-    ZmqSinkDescriptorType,
-    PrintSinkDescriptorType
-};
-
 class SinkDescriptor;
 typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
@@ -28,12 +18,6 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
     SinkDescriptor(SchemaPtr schema) : schema(schema){};
-
-    /**
-     * @brief Get the type of the descriptor
-     * @return Enum representing the type
-     */
-    virtual SinkDescriptorType getType() = 0;
 
     /**
      * @brief Returns the schema for the sink

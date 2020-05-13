@@ -79,26 +79,26 @@ class Predicate : public UserAPIExpression {
     virtual UserAPIExpressionPtr copy() const override;
     bool equals(const UserAPIExpression& rhs) const override;
     BinaryOperatorType getOperatorType() const;
-    const UserAPIExpressionPtr& getLeft() const;
-    const UserAPIExpressionPtr& getRight() const;
+    const UserAPIExpressionPtr getLeft() const;
+    const UserAPIExpressionPtr getRight() const;
   private:
     Predicate() = default;
-    BinaryOperatorType _op;
-    UserAPIExpressionPtr _left;
-    UserAPIExpressionPtr _right;
-    bool _bracket;
-    std::string _functionCallOverload;
+    BinaryOperatorType op;
+    UserAPIExpressionPtr left;
+    UserAPIExpressionPtr right;
+    bool bracket;
+    std::string functionCallOverload;
 
     friend class boost::serialization::access;
 
   template<class Archive>
   void serialize(Archive &ar, unsigned) {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(UserAPIExpression)
-        & BOOST_SERIALIZATION_NVP(_op)
-        & BOOST_SERIALIZATION_NVP(_left)
-        & BOOST_SERIALIZATION_NVP(_right)
-        & BOOST_SERIALIZATION_NVP(_bracket)
-        & BOOST_SERIALIZATION_NVP(_functionCallOverload);
+        & BOOST_SERIALIZATION_NVP(op)
+        & BOOST_SERIALIZATION_NVP(left)
+        & BOOST_SERIALIZATION_NVP(right)
+        & BOOST_SERIALIZATION_NVP(bracket)
+        & BOOST_SERIALIZATION_NVP(functionCallOverload);
   }
 };
 
@@ -130,23 +130,23 @@ class PredicateItem : public UserAPIExpression {
     const bool isStringType() const;
     const DataTypePtr getDataTypePtr() const;
     AttributeFieldPtr getAttributeField() {
-        return this->_attribute;
+        return this->attribute;
     };
     const ValueTypePtr& getValue() const;
   private:
     PredicateItem() = default;
-    PredicateItemMutation _mutation;
-    AttributeFieldPtr _attribute = nullptr;
-    ValueTypePtr _value = nullptr;
+    PredicateItemMutation mutation;
+    AttributeFieldPtr attribute = nullptr;
+    ValueTypePtr value = nullptr;
 
     friend class boost::serialization::access;
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
         ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(UserAPIExpression)
-            & BOOST_SERIALIZATION_NVP(_mutation)
-            & BOOST_SERIALIZATION_NVP(_attribute)
-            & BOOST_SERIALIZATION_NVP(_value);
+            & BOOST_SERIALIZATION_NVP(mutation)
+            & BOOST_SERIALIZATION_NVP(attribute)
+            & BOOST_SERIALIZATION_NVP(value);
     }
 };
 

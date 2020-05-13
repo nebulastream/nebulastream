@@ -13,10 +13,6 @@ FileSinkDescriptor::FileSinkDescriptor(SchemaPtr schema,
                                        FileOutputType fileOutputType)
     : SinkDescriptor(schema), fileName(fileName), fileOutputMode(fileOutputMode), fileOutputType(fileOutputType) {}
 
-SinkDescriptorType FileSinkDescriptor::getType() {
-    return FileSinkDescriptorType;
-}
-
 const std::string& FileSinkDescriptor::getFileName() const {
     return fileName;
 }

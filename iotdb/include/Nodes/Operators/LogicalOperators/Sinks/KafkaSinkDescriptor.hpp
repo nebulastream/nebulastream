@@ -22,8 +22,6 @@ class KafkaSinkDescriptor : public SinkDescriptor {
      */
     static SinkDescriptorPtr create(SchemaPtr schema, std::string topic, std::string brokers, uint64_t timeout);
 
-    SinkDescriptorType getType() override;
-
     /**
      * @brief Get Kafka topic where data is to be written
      */

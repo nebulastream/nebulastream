@@ -13,8 +13,6 @@ class BinarySourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath);
 
-    SourceDescriptorType getType() override;
-
     /**
      * @brief Get the path of binary file
      * @return
