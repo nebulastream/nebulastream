@@ -46,56 +46,60 @@ find_package(clang REQUIRED)
 
 message("-- LLVM version ${LLVM_VERSION_STRING}")
 
+# GRPC and protobuf
+
+## Fetch and build source for grpc and protobuf and all dependencies
 include(FetchContent)
 FetchContent_Declare(
         gRPC
         GIT_REPOSITORY https://github.com/grpc/grpc
-        GIT_TAG        v1.28.0
+        GIT_TAG v1.28.0
 )
 
-file(GLOB PROTOBUF_DEFINITION_FILES "*.proto")
 set(FETCHCONTENT_QUIET OFF)
 FetchContent_MakeAvailable(gRPC)
 
+# Since FetchContent uses add_subdirectory under the hood, we can use
+# the grpc targets directly from this build.
+set(DgRPC_BUILD_TESTS:BOOL OFF)
 set(_PROTOBUF_LIBPROTOBUF libprotobuf)
 set(_REFLECTION grpc++_reflection)
 set(_PROTOBUF_PROTOC $<TARGET_FILE:protoc>)
 set(_GRPC_GRPCPP grpc++)
-if(CMAKE_CROSSCOMPILING)
+if (CMAKE_CROSSCOMPILING)
     find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
-else()
+else ()
     set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
-endif()
-
-find_program(Protobuf_PROTOC_EXECUTABLE
-        NAMES protoc
-        DOC "The Google Protocol Buffers Compiler"
-        PATHS
-        ${Protobuf_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Release
-        ${Protobuf_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Debug
-        )
-message("asd=" ${CMAKE_CURRENT_BINARY_DIR})
-
+endif ()
 
 # Proto file
-get_filename_component(hw_proto "${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.proto" ABSOLUTE)
-get_filename_component(hw_proto_path "${hw_proto}" PATH)
+set(PROTO_PATH "${PROJECT_SOURCE_DIR}/impl/Proto")
+set(PROTO_FILE_PATH "${PROTO_PATH}/*.proto")
 
+file(GLOB PROTO_FILES "${PROTO_FILE_PATH}")
+foreach (PROTO_FILE ${PROTO_FILES})
+    get_filename_component(FILENAME ${PROTO_FILE} "NAME")
+    string(REGEX REPLACE "[.]proto$" ".pb.cc" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
+    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
+    string(REGEX REPLACE "[.]proto$" ".pb.h" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
+    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
+    string(REGEX REPLACE "[.]proto$" ".grpc.pb.cc" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
+    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
+    string(REGEX REPLACE "[.]proto$" ".grpc.pb.h" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
+    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
+endforeach ()
 
-# Generated sources
-set(hw_proto_srcs "${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.pb.cc")
-set(hw_proto_hdrs "${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.pb.h")
-set(hw_grpc_srcs "${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.pb.cc")
-set(hw_grpc_hdrs "${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.pb.h")
+message(STATUS "Found the following Proto files: " ${OUTPUT_SOURCES})
+
 add_custom_command(
-        OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
+        OUTPUT ${OUTPUT_SOURCES}
         COMMAND ${_PROTOBUF_PROTOC}
         ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
         --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
-        -I "${hw_proto_path}"
+        -I "${PROTO_PATH}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
-        "${hw_proto}"
-        DEPENDS "${hw_proto}")
+        "${PROTO_FILE_PATH}"
+        DEPENDS "${PROTO_FILE_PATH}")
 
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
@@ -107,7 +111,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 #FetchContent_MakeAvailable(protobuf)
 ##find_package(Protobuf REQUIRED)
 
-file(GLOB PROTOBUF_DEFINITION_FILES "${PROTOBUF_INPUT_DIRECTORY}/*.proto")
+#file(GLOB PROTOBUF_DEFINITION_FILES "${PROTOBUF_INPUT_DIRECTORY}/*.proto")
 
 
 #foreach(file ${PROTOBUF_DEFINITION_FILES})
@@ -269,29 +273,30 @@ add_subdirectory(impl)
 # Add Library
 get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
-add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES})
+add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
 target_include_directories(iotdb PUBLIC "include")
 target_link_libraries(iotdb ${LIBRARIES} grpc++_reflection)
+#target_link_libraries(iotdb ${LIBRARIES} ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
 # Documentation
 add_subdirectory(docs)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
 
-add_executable(nesCoordinator nesCoordinatorStarter.cpp ${hw_proto_srcs} ${hw_grpc_srcs})
-target_link_libraries(nesCoordinator ${LIBRARIES}  iotdb)
+add_executable(nesCoordinator nesCoordinatorStarter.cpp)
+target_link_libraries(nesCoordinator ${LIBRARIES} iotdb)
 target_include_directories(nesCoordinator PUBLIC "include")
 
 add_executable(nesWorker nesWorkerStarter.cpp)
-target_link_libraries(nesWorker ${LIBRARIES}  iotdb)
+target_link_libraries(nesWorker ${LIBRARIES} iotdb)
 target_include_directories(nesWorker PUBLIC "include")
 
 # Add tests with command
-#enable_testing()
-#add_subdirectory(tests)
+enable_testing()
+add_subdirectory(tests)
 
-configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR}/tests)
-configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(include/QueryLib/WindowManagerLib.hpp ${CMAKE_CURRENT_BINARY_DIR}/tests)
+configure_file(include/QueryLib/WindowManagerLib.hpp ${CMAKE_CURRENT_BINARY_DIR})
 
 install(TARGETS nesCoordinator nesWorker iotdb
         COMPONENT NebulaStream

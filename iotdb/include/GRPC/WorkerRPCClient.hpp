@@ -1,14 +1,14 @@
 #ifndef NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 #define NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
-#include <GRPC/WorkerRPCService.grpc.pb.h>
-#include <GRPC/WorkerRPCService.pb.h>
+#include <WorkerRPCService.grpc.pb.h>
+#include <WorkerRPCService.pb.h>
 
 #include <Services/CoordinatorService.hpp>
 
-#include <grpcpp/grpcpp.h>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Topology/NESTopologyEntry.hpp>
+#include <grpcpp/grpcpp.h>
 #include <string>
 
 using namespace std;

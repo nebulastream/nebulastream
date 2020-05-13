@@ -1,9 +1,9 @@
 #pragma once
+#include <CoordinatorRPCService.grpc.pb.h>
+#include <Services/CoordinatorService.hpp>
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include <GRPC/CoordinatorRPCService.grpc.pb.h>
-#include <Services/CoordinatorService.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;

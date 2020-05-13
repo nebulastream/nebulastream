@@ -1,10 +1,10 @@
 #pragma once
+#include <NodeEngine/NodeEngine.hpp>
+#include <Services/CoordinatorService.hpp>
+#include <WorkerRPCService.grpc.pb.h>
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include <GRPC/WorkerRPCService.grpc.pb.h>
-#include <Services/CoordinatorService.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
