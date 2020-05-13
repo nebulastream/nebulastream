@@ -1,6 +1,6 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Util/Logger.hpp>
-#include <Actors/ExecutableTransferObject.hpp>
+#include <GRPC/ExecutableTransferObject.hpp>
 
 namespace NES {
 

@@ -1,11 +1,8 @@
 #include <Components/NesWorker.hpp>
 #include <Util/Logger.hpp>
-
-#include <caf/actor_cast.hpp>
 #include <signal.h>
-
 #include <GRPC/WorkerRPCServer.hpp>
-
+#include <future>
 
 
 volatile sig_atomic_t flag = 0;

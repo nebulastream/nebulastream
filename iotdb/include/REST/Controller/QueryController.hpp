@@ -1,11 +1,10 @@
 #pragma once
 
 #include "BaseController.hpp"
-#include <Actors/Configurations/CoordinatorActorConfig.hpp>
-#include <Actors/CoordinatorActor.hpp>
 #include <Services/NESTopologyService.hpp>
 #include <Services/QueryService.hpp>
 #include <cpprest/http_msg.h>
+#include <Services/CoordinatorService.hpp>
 
 namespace NES {
 class NesCoordinator;

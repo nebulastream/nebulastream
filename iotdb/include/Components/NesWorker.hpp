@@ -1,12 +1,9 @@
 #ifndef INCLUDE_COMPONENTS_NESWORKER_HPP_
 #define INCLUDE_COMPONENTS_NESWORKER_HPP_
 
-#include <Actors/Configurations/WorkerActorConfig.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <caf/actor_system.hpp>
-#include <Actors/WorkerActor.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 
 using namespace std;

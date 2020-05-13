@@ -1,8 +1,6 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #include "REST/RestServer.hpp"
-#include <Actors/Configurations/WorkerActorConfig.hpp>
-//#include <Actors/WorkerActor.hpp>
 #include <Components/NesWorker.hpp>
 #include <Services/CoordinatorService.hpp>
 #include <Services/QueryCatalogService.hpp>
@@ -119,6 +117,20 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      */
     bool undeployQuery(std::string queryId);
 
+    QueryCatalogServicePtr getQueryCatalogServicePtr()
+    {
+        return queryCatalogServicePtr;
+    }
+
+    StreamCatalogServicePtr getStreamCatalogServicePtr()
+    {
+        return streamCatalogServicePtr;
+    }
+
+    CoordinatorServicePtr getCoordinatorServicePtr()
+    {
+        return coordinatorServicePtr;
+    }
 
   private:
     size_t getRandomPort(size_t base);
@@ -142,7 +154,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     QueryCatalogServicePtr queryCatalogServicePtr;
     StreamCatalogServicePtr streamCatalogServicePtr;
     CoordinatorServicePtr coordinatorServicePtr;
-
     std::map<std::string, QueryDeployment> currentDeployments;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;

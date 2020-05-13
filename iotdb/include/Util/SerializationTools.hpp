@@ -1,7 +1,7 @@
 #ifndef SERIALIZATIONTOOLS_HPP
 #define SERIALIZATIONTOOLS_HPP
 
-#include <Actors/ExecutableTransferObject.hpp>
+#include <GRPC/ExecutableTransferObject.hpp>
 #include <string>
 
 #include <boost/iostreams/device/array.hpp>
