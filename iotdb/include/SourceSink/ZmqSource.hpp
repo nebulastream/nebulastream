@@ -60,6 +60,9 @@ class ZmqSource : public DataSource {
      */
     uint16_t getPort() const;
 
+    /**
+     * @brief Get source type
+     */
     SourceType getType() const override;
 
   private:

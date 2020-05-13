@@ -43,8 +43,14 @@ class SenseSource : public DataSource {
      */
     const std::string toString() const;
 
+    /**
+     * @brief Get source type
+     */
     SourceType getType() const override;
 
+    /**
+     * @brief Get UDFs for sense
+     */
     const std::string& getUdsf() const;
   private:
     SenseSource();

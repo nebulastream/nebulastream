@@ -4,7 +4,6 @@
 #include <Util/Logger.hpp>
 #include <assert.h>
 #include <boost/algorithm/string.hpp>
-#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -115,11 +114,11 @@ SourceType CSVSource::getType() const {
     return CSV_SOURCE;
 }
 
-const std::string& CSVSource::getFilePath() const {
+const std::string CSVSource::getFilePath() const {
     return filePath;
 }
 
-const std::string& CSVSource::getDelimiter() const {
+const std::string CSVSource::getDelimiter() const {
     return delimiter;
 }
 }  // namespace NES

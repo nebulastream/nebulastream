@@ -22,12 +22,28 @@ class KafkaSink : public DataSink {
               const size_t kafkaProducerTimeout = 10 * 1000);
 
     ~KafkaSink() override;
+
+    /**
+     * @brief Get sink type
+     */
     SinkType getType() const override;
     bool writeData(TupleBuffer& input_buffer);
     void setup() override;
     void shutdown() override;
-    const std::string& getBrokers() const;
-    const std::string& getTopic() const;
+
+    /**
+     * @brief Get broker list
+     */
+    const std::string getBrokers() const;
+
+    /**
+     * @brief Get kafka topic name
+     */
+    const std::string getTopic() const;
+
+    /**
+     * @brief Get kafka producer timeout
+     */
     const uint64_t getKafkaProducerTimeout() const;
     const std::string toString() const override;
 

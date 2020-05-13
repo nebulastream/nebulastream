@@ -33,7 +33,7 @@ TranslateFromLegacyPlanPhasePtr TranslateFromLegacyPlanPhase::create() {
 }
 
 /**
- * Translade operator node and all its children to the legacy representation.
+ * Translate operator node and all its children to the legacy representation.
  */
 OperatorNodePtr TranslateFromLegacyPlanPhase::transform(OperatorPtr operatorPtr) {
     NES_DEBUG("TranslateFromLegacyPlanPhase: translate " << operatorPtr);
@@ -53,13 +53,15 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transform(OperatorPtr operatorPtr)
 ExpressionNodePtr TranslateFromLegacyPlanPhase::transformToExpression(UserAPIExpressionPtr expression) {
 
     if (PredicatePtr predicate = std::dynamic_pointer_cast<Predicate>(expression)) {
-        if (predicate->getOperatorType() == LESS_THEN_EQUAL_OP || predicate->getOperatorType() == LESS_THEN_OP ||
-            predicate->getOperatorType() == GREATER_THEN_EQUAL_OP || predicate->getOperatorType() == GREATER_THEN_OP ||
+        if (predicate->getOperatorType() == LESS_THAN_EQUAL_OP || predicate->getOperatorType() == LESS_THAN_OP ||
+            predicate->getOperatorType() == GREATER_THAN_EQUAL_OP || predicate->getOperatorType() == GREATER_THAN_OP ||
             predicate->getOperatorType() == EQUAL_OP) {
+            NES_DEBUG("TranslateFromLegacyPlanPhase: translate expression into logical logical expression");
             // Translate logical expressions to the legacy representation
             return transformLogicalExpressions(predicate);
         } else if (predicate->getOperatorType() == PLUS_OP || predicate->getOperatorType() == MINUS_OP ||
             predicate->getOperatorType() == DIVISION_OP || predicate->getOperatorType() == MULTIPLY_OP) {
+            NES_DEBUG("TranslateFromLegacyPlanPhase: translate expression into logical arithmetic expression");
             // Translate arithmetical expressions to the legacy representation
             return transformArithmeticalExpressions(predicate);
         }
@@ -68,13 +70,13 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformToExpression(UserAPIExp
                 + expression->toString());
         NES_NOT_IMPLEMENTED();
     } else if (FieldPtr field = std::dynamic_pointer_cast<Field>(expression)) {
-
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate expression into field access expression");
         const AttributeFieldPtr attributeField = field->getAttributeField();
         auto name = attributeField->name;
         auto dataType = attributeField->data_type;
         return FieldAccessExpressionNode::create(dataType, name);
     } else if (PredicateItemPtr predicateItem = std::dynamic_pointer_cast<PredicateItem>(expression)) {
-
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate expression into constant value expression or field access expression");
         if (predicateItem->getValue()) {
             return ConstantValueExpressionNode::create(predicateItem->getValue());
         } else if (predicateItem->getAttributeField()) {
@@ -92,7 +94,7 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformToExpression(UserAPIExp
 OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(OperatorPtr operatorPtr) {
 
     if (operatorPtr->getOperatorType() == SOURCE_OP) {
-        // Translate Source operator node.
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate operator into logical source operator");
         auto sourceOperator = std::dynamic_pointer_cast<SourceOperator>(operatorPtr);
         const DataSourcePtr dataSource = sourceOperator->getDataSourcePtr();
         const SourceDescriptorPtr sourceDescriptor = ConvertPhysicalToLogicalSource::createSourceDescriptor(dataSource);
@@ -100,7 +102,7 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         operatorNode->setId(operatorPtr->getOperatorId());
         return operatorNode;
     } else if (operatorPtr->getOperatorType() == FILTER_OP) {
-        // Translate filter operator node.
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate operator into logical filter operator");
         auto filterOperator = std::dynamic_pointer_cast<FilterOperator>(operatorPtr);
         const PredicatePtr predicatePtr = filterOperator->getPredicate();
         auto predicateNode = transformToExpression(predicatePtr);
@@ -111,7 +113,7 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         operatorNode->setId(operatorPtr->getOperatorId());
         return operatorNode;
     } else if (operatorPtr->getOperatorType() == MAP_OP) {
-        // Translate map operator node.
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate operator into logical map operator");
         auto mapOperator = std::dynamic_pointer_cast<MapOperator>(operatorPtr);
         PredicatePtr predicate = mapOperator->getPredicate();
         ExpressionNodePtr expression = transformToExpression(predicate);
@@ -128,7 +130,7 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         operatorNode->setId(operatorPtr->getOperatorId());
         return operatorNode;
     } else if (operatorPtr->getOperatorType() == SINK_OP) {
-        // Translate sink operator node.
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate operator into logical sink operator");
         SinkOperatorPtr sinkOperator = std::dynamic_pointer_cast<SinkOperator>(operatorPtr);
         const SinkDescriptorPtr
             sinkDescriptor = ConvertPhysicalToLogicalSink::createSinkDescriptor(sinkOperator->getDataSinkPtr());
@@ -143,21 +145,24 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
 
 ExpressionNodePtr TranslateFromLegacyPlanPhase::transformArithmeticalExpressions(PredicatePtr predicate) {
     if (predicate->getOperatorType() == PLUS_OP) {
-        // Translate add expression node.
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical add expression");
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
         return AddExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == MINUS_OP) {
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical subtraction expression");
         // Translate sub expression node.
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
         return SubExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == MULTIPLY_OP) {
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical multiply expression");
         // Translate mul expression node.
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
         return MulExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == DIVISION_OP) {
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical divide expression");
         // Translate div expression node.
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
@@ -171,36 +176,43 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformArithmeticalExpressions
 
 ExpressionNodePtr TranslateFromLegacyPlanPhase::transformLogicalExpressions(PredicatePtr predicate) {
     if (predicate->getOperatorType() == LOGICAL_AND_OP) {
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical and expression");
         // Translate and expression node.
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
         return AndExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == LOGICAL_OR_OP) {
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical or expression");
         // Translate or expression node.
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
         return OrExpressionNode::create(left, right);
-    } else if (predicate->getOperatorType() == LESS_THEN_OP) {
+    } else if (predicate->getOperatorType() == LESS_THAN_OP) {
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical less than expression");
         // Translate less expression node.
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
         return LessExpressionNode::create(left, right);
-    } else if (predicate->getOperatorType() == LESS_THEN_EQUAL_OP) {
+    } else if (predicate->getOperatorType() == LESS_THAN_EQUAL_OP) {
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical less than equal expression");
         // Translate less equals expression node.
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
         return LessEqualsExpressionNode::create(left, right);
-    } else if (predicate->getOperatorType() == GREATER_THEN_OP) {
+    } else if (predicate->getOperatorType() == GREATER_THAN_OP) {
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical greater than expression");
         // Translate greater expression node.
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
         return GreaterExpressionNode::create(left, right);
-    } else if (predicate->getOperatorType() == GREATER_THEN_EQUAL_OP) {
+    } else if (predicate->getOperatorType() == GREATER_THAN_EQUAL_OP) {
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical greater than equal expression");
         // Translate greater equals expression node.
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
         return GreaterEqualsExpressionNode::create(left, right);
     } else if (predicate->getOperatorType() == EQUAL_OP) {
+        NES_DEBUG("TranslateFromLegacyPlanPhase: translate predicate into logical equal expression");
         // Translate equals expression node.
         auto right = transformToExpression(predicate->getRight());
         auto left = transformToExpression(predicate->getLeft());
@@ -209,7 +221,6 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformLogicalExpressions(Pred
     NES_THROW_RUNTIME_ERROR(
         "TranslateFromLegacyPlanPhase: No transformation implemented for this Physical expression node: "
             + predicate->toString());
-    NES_NOT_IMPLEMENTED();
 }
 
 }

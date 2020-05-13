@@ -80,7 +80,7 @@ void FileOutputSink::shutdown() {
 SinkType FileOutputSink::getType() const {
     return FILE_SINK;
 }
-const std::string& FileOutputSink::getFilePath() const {
+const std::string FileOutputSink::getFilePath() const {
     return filePath;
 }
 FileOutputType FileOutputSink::getOutputType() const {

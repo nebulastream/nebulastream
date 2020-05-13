@@ -1,7 +1,6 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 
-#include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <memory>
@@ -11,11 +10,16 @@ namespace NES {
 class SourceDescriptor;
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
 
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
 class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>{
 
   public:
 
     SourceDescriptor(SchemaPtr schema) : schema(schema) {};
+
+    virtual ~SourceDescriptor()=default;
 
     /**
      * @brief Returns the schema, which is produced by this source descriptor

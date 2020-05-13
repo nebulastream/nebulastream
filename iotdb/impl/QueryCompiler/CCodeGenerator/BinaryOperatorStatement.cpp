@@ -134,16 +134,16 @@ BinaryOperatorStatement operator!=(const ExpressionStatment& lhs, const Expressi
     return BinaryOperatorStatement(lhs, UNEQUAL_OP, rhs);
 }
 BinaryOperatorStatement operator<(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
-    return BinaryOperatorStatement(lhs, LESS_THEN_OP, rhs);
+    return BinaryOperatorStatement(lhs, LESS_THAN_OP, rhs);
 }
 BinaryOperatorStatement operator<=(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
-    return BinaryOperatorStatement(lhs, LESS_THEN_EQUAL_OP, rhs);
+    return BinaryOperatorStatement(lhs, LESS_THAN_EQUAL_OP, rhs);
 }
 BinaryOperatorStatement operator>(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
-    return BinaryOperatorStatement(lhs, GREATER_THEN_OP, rhs);
+    return BinaryOperatorStatement(lhs, GREATER_THAN_OP, rhs);
 }
 BinaryOperatorStatement operator>=(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
-    return BinaryOperatorStatement(lhs, GREATER_THEN_EQUAL_OP, rhs);
+    return BinaryOperatorStatement(lhs, GREATER_THAN_EQUAL_OP, rhs);
 }
 BinaryOperatorStatement operator+(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
     return BinaryOperatorStatement(lhs, PLUS_OP, rhs);

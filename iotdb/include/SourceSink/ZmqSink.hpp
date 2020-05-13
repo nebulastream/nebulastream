@@ -20,8 +20,20 @@ class ZmqSink : public DataSink {
     void setup() override { connect(); };
     void shutdown() override{};
     const std::string toString() const override;
+
+    /**
+     * @brief Get zmq sink port
+     */
     int getPort();
-    const std::string& getHost() const;
+
+    /**
+     * @brief Get Zmq host name
+     */
+    const std::string getHost() const;
+
+    /**
+     * @brief Get Sink type
+     */
     SinkType getType() const override;
 
   private:

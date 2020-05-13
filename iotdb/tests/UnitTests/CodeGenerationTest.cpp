@@ -294,7 +294,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
             PLUS_OP, VarRefStatement(varDeclK)).addRight(MULTIPLY_OP,
                                                          VarRefStatement(varDeclI),
                                                          BRACKETS).addRight(
-            GREATER_THEN_OP, VarRefStatement(varDeclL)).getCode();
+                            GREATER_THAN_OP, VarRefStatement(varDeclL)).getCode();
 
         EXPECT_EQ(code->code_, "(i+j+k*i)>l");
 
@@ -345,7 +345,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(ifStatement.getCode()->code_, "if(i<j){\ni=i*k;\n\n}\n");
 
         auto ifStatementReturn = IfStatement(
-            BinaryOperatorStatement(VarRefStatement(varDeclI), GREATER_THEN_OP,
+            BinaryOperatorStatement(VarRefStatement(varDeclI), GREATER_THAN_OP,
                                     VarRefStatement(varDeclJ)),
             ReturnStatement(VarRefStatement(varDeclI)));
         EXPECT_EQ(ifStatementReturn.getCode()->code_,
@@ -360,7 +360,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto compareAssign = BinaryOperatorStatement(
             VarRefStatement(varDeclK),
             ASSIGNMENT_OP,
-            BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THEN_OP,
+            BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THAN_OP,
                                     VarRefStatement(varDeclI)));
         EXPECT_EQ(compareAssign.getCode()->code_, "k=j>i");
     }
@@ -424,7 +424,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
         ForLoopStatement loopStmt(
             varDeclQ.copy(),
-            BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THEN_OP,
+            BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THAN_OP,
                                     VarRefStatement(varDeclNumTuple)).copy(),
             UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP).copy());
 
@@ -440,7 +440,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
         auto forLoop = ForLoopStatement(
             varDeclQ.copy(),
-            BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THEN_OP,
+            BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THAN_OP,
                                     VarRefStatement(varDeclNumTuple)).copy(),
             UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP).copy()
         );
@@ -451,7 +451,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto compareAssignment = BinaryOperatorStatement(
             VarRefStatement(varDeclK),
             ASSIGNMENT_OP,
-            BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THEN_OP,
+            BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THAN_OP,
                                     ConstantExprStatement(INT32, "5")));
 
         EXPECT_EQ(compareAssignment.getCode()->code_, "k=j>5");

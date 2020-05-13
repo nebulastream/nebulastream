@@ -19,6 +19,8 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
   public:
     SinkDescriptor(SchemaPtr schema) : schema(schema){};
 
+    virtual ~SinkDescriptor()=default;
+
     /**
      * @brief Returns the schema for the sink
      * @return schema pointer

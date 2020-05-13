@@ -1,22 +1,20 @@
-#include <API/Query.hpp>
 #include "Optimizer/QueryPlacement/HighThroughputStrategy.hpp"
-#include <Nodes/Operators/QueryPlan.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Topology/NESTopologyPlan.hpp>
-#include <Optimizer/NESExecutionPlan.hpp>
-#include <Optimizer/ExecutionNode.hpp>
-#include <Optimizer/Utils/PathFinder.hpp>
-#include <Operators/Operator.hpp>
+#include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Operators/Operator.hpp>
+#include <Optimizer/ExecutionNode.hpp>
+#include <Optimizer/NESExecutionPlan.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
+#include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery,
-                                                                    NESTopologyPlanPtr nesTopologyPlan) {
+NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
 
     const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
@@ -30,8 +28,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inp
         throw std::runtime_error("No source operator found in the query plan");
     }
 
-    const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
-        .getSourceNodesForLogicalStream(streamName);
+    const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance().getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_ERROR("HighThroughput: Unable to find the target source: " << streamName);
@@ -62,12 +59,12 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inp
     return nesExecutionPlanPtr;
 }
 
-vector<NESTopologyEntryPtr> HighThroughputStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<
-    NESTopologyEntryPtr>& sourceNodes, const NES::NESTopologyEntryPtr rootNode) const {
+vector<NESTopologyEntryPtr> HighThroughputStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                                             const NES::NESTopologyEntryPtr rootNode) const {
 
     PathFinder pathFinder;
     vector<NESTopologyEntryPtr> candidateNodes;
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+    for (NESTopologyEntryPtr targetSource : sourceNodes) {
         //Find the list of nodes connecting the source and destination nodes
         std::vector<NESTopologyEntryPtr>
             nodesOnPath = pathFinder.findPathWithMaxBandwidth(targetSource, rootNode);
@@ -85,7 +82,7 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     PathFinder pathFinder;
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
-    for (NESTopologyEntryPtr sourceNode: sourceNodes) {
+    for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 
         LogicalOperatorNodePtr targetOperator = sourceOperator;
         const vector<NESTopologyEntryPtr> targetPath = pathFinder.findPathWithMaxBandwidth(sourceNode, sinkNode);
@@ -112,7 +109,7 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
                 } else {
 
                     const ExecutionNodePtr existingExecutionNode = executionPlanPtr
-                        ->getExecutionNode(node->getId());
+                                                                       ->getExecutionNode(node->getId());
                     size_t operatorId = targetOperator->getId();
                     vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
                     const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
@@ -134,7 +131,11 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
                     }
                 }
 
-                targetOperator = targetOperator->getParents()[0]->as<LogicalOperatorNode>();
+                if (targetOperator->getParents().empty()) {
+                    targetOperator = nullptr;
+                } else {
+                    targetOperator = targetOperator->getParents()[0]->as<LogicalOperatorNode>();
+                }
                 node->reduceCpuCapacity(1);
             }
 

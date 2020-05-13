@@ -22,6 +22,9 @@ class KafkaSource : public DataSource {
                 bool autoCommit,
                 uint64_t kafkaConsumerTimeout);
 
+    /**
+     * @brief Get source type
+     */
     SourceType getType() const override;
     ~KafkaSource() override;
     std::optional<TupleBuffer> receiveData() override;
@@ -32,11 +35,34 @@ class KafkaSource : public DataSource {
      */
     const std::string toString() const override;
 
-    const std::string& getBrokers() const;
-    const std::string& getTopic() const;
-    const std::string& getGroupId() const;
+    /**
+     * @brief Get kafka brokers
+     */
+    const std::string getBrokers() const;
+
+    /**
+     * @brief Get kafka topic
+     */
+    const std::string getTopic() const;
+
+    /**
+     * @brief Get kafka group id
+     */
+    const std::string getGroupId() const;
+
+    /**
+     * @brief If kafka offset is to be committed automatically
+     */
     bool isAutoCommit() const;
+
+    /**
+     * @brief Get kafka configuration
+     */
     const cppkafka::Configuration& getConfig() const;
+
+    /**
+     * @brief Get kafka connection timeout
+     */
     const std::chrono::milliseconds& getKafkaConsumerTimeout() const;
     const std::unique_ptr<cppkafka::Consumer>& getConsumer() const;
 

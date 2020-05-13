@@ -97,15 +97,15 @@ void KafkaSource::_connect() {
 
 SourceType KafkaSource::getType() const { return KAFKA_SOURCE; }
 
-const std::string& KafkaSource::getBrokers() const {
+const std::string KafkaSource::getBrokers() const {
     return brokers;
 }
 
-const std::string& KafkaSource::getTopic() const {
+const std::string KafkaSource::getTopic() const {
     return topic;
 }
 
-const std::string& KafkaSource::getGroupId() const {
+const std::string KafkaSource::getGroupId() const {
     return groupId;
 }
 
