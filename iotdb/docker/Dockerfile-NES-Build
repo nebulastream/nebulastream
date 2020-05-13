@@ -35,7 +35,7 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2
   cd cppkafka && mkdir -p build && cd build && \
   cmake -DCPPKAFKA_BUILD_SHARED=ON -DCPPKAFKA_DISABLE_TESTS=ON -DCPPKAFKA_DISABLE_EXAMPLES=ON -DCPPKAFKA_RDKAFKA_STATIC_LIB=OFF .. && \
   make -j -w && make install && cd ${HOME} && rm -rf actor-framework cppkafka* && \
-  apt-get purge -y git wget && apt autoremove -y
+  apt-get purge -y wget && apt autoremove -y
 
 ADD ./scripts/entrypoint-nes-build.sh /entrypoint.sh
 
