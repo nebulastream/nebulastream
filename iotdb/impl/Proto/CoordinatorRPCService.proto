@@ -29,11 +29,11 @@ message RegisterNodeRequest {
 }
 
 message RegisterNodeReply {
-  int64 id = 1;
+  uint64 id = 1;
 }
 
 message UnregisterNodeRequest {
-  int64 id = 1;
+  uint64 id = 1;
 }
 
 message UnregisterNodeReply {
@@ -41,7 +41,7 @@ message UnregisterNodeReply {
 }
 
 message RegisterPhysicalStreamRequest {
-  int64 id = 1;
+  uint64 id = 1;
   string sourceType = 2;
   string sourceConf = 3;
   int64 sourceFrequency = 4;
@@ -55,7 +55,7 @@ message RegisterPhysicalStreamReply {
 }
 
 message UnregisterPhysicalStreamRequest {
-  int64 id = 1;
+  uint64 id = 1;
   string physicalStreamName = 2;
   string logicalStreamName = 3;
 }
@@ -65,7 +65,7 @@ message UnregisterPhysicalStreamReply {
 }
 
 message RegisterLogicalStreamRequest {
-  int64 id = 1;
+  uint64 id = 1;
   string streamName = 2;
   string streamSchema = 3;
 }
@@ -75,7 +75,7 @@ message RegisterLogicalStreamReply {
 }
 
 message UnregisterLogicalStreamRequest {
-  int64 id = 1;
+  uint64 id = 1;
   string streamName = 2;
 }
 
@@ -84,8 +84,8 @@ message UnregisterLogicalStreamReply {
 }
 
 message AddParentRequest {
-  int64 childId = 1;
-  int64 parentId = 2;
+  uint64 childId = 1;
+  uint64 parentId = 2;
 }
 
 message AddParentReply {
@@ -93,8 +93,8 @@ message AddParentReply {
 }
 
 message RemoveParentRequest {
-  int64 childId = 1;
-  int64 parentId = 2;
+  uint64 childId = 1;
+  uint64  parentId = 2;
 }
 
 message RemoveParentReply {

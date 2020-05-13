@@ -101,7 +101,8 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port),
+        "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/true);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
@@ -133,7 +134,6 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     EXPECT_NE(queryId, "");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 3));
-    crd->addQuery(queryString, "BottomUp");
     ASSERT_TRUE(crd->removeQuery(queryId));
 
     bool retStopWrk = wrk1->stop(false);

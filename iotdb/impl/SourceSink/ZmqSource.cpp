@@ -135,12 +135,12 @@ bool ZmqSource::connect() {
 bool ZmqSource::disconnect() {
     NES_DEBUG("ZmqSource::disconnect() connected=" << connected);
     if (connected) {
-        socket.close();
+        context.shutdown();
         connected = false;
     }
     if (!connected) {
         NES_DEBUG("ZMQSOURCE  " << this << ": disconnected");
-        socket.close();
+//        context.close();
     } else {
         NES_DEBUG("ZMQSOURCE  " << this << ": NOT disconnected");
     }

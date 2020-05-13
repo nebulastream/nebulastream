@@ -49,6 +49,10 @@ NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator() clear map");
     currentDeployments.clear();
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
+    StreamCatalog::instance().reset();
+    QueryCatalog::instance().clearQueries();
+    CoordinatorService::getInstance()->clearQueryCatalogs();
+    CoordinatorService::getInstance()->shutdown();
 }
 
 size_t NesCoordinator::getRandomPort(size_t base) {
