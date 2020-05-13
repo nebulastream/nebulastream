@@ -203,16 +203,16 @@ Predicate operator!=(const UserAPIExpression& lhs, const UserAPIExpression& rhs)
     return Predicate(BinaryOperatorType::UNEQUAL_OP, lhs.copy(), rhs.copy());
 }
 Predicate operator>(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
-    return Predicate(BinaryOperatorType::GREATER_THEN_OP, lhs.copy(), rhs.copy());
+    return Predicate(BinaryOperatorType::GREATER_THAN_OP, lhs.copy(), rhs.copy());
 }
 Predicate operator<(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
-    return Predicate(BinaryOperatorType::LESS_THEN_OP, lhs.copy(), rhs.copy());
+    return Predicate(BinaryOperatorType::LESS_THAN_OP, lhs.copy(), rhs.copy());
 }
 Predicate operator>=(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
-    return Predicate(BinaryOperatorType::GREATER_THEN_OP, lhs.copy(), rhs.copy());
+    return Predicate(BinaryOperatorType::GREATER_THAN_OP, lhs.copy(), rhs.copy());
 }
 Predicate operator<=(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
-    return Predicate(BinaryOperatorType::LESS_THEN_EQUAL_OP, lhs.copy(), rhs.copy());
+    return Predicate(BinaryOperatorType::LESS_THAN_EQUAL_OP, lhs.copy(), rhs.copy());
 }
 Predicate operator+(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
     return Predicate(BinaryOperatorType::PLUS_OP, lhs.copy(), rhs.copy());

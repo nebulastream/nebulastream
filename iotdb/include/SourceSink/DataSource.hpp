@@ -143,12 +143,25 @@ class DataSource {
      * @param queryManager
      */
     void setQueryManager(QueryManagerPtr queryManager);
+
+    /**
+     * @brief Set buffer manager
+     * @param bufferManager: buffer manager pointer
+     */
     void setBufferManger(BufferManagerPtr bufferManager);
 
+    /**
+     * @brief Get number of buffers to be processed
+     */
     size_t getNumBuffersToProcess() const;
+
+    /**
+     * @brief Get frequency of gathering the data
+     */
     size_t getGatheringInterval() const;
 
   protected:
+
     /**
      * @brief Internal protected constructor without schema
      */

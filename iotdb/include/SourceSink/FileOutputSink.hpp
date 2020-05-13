@@ -79,9 +79,25 @@ class FileOutputSink : public DataSink {
      * @return returns string describing the file output sink
      */
     const std::string toString() const override;
-    const std::string& getFilePath() const;
+
+    /**
+     * @brief get file path
+     */
+    const std::string getFilePath() const;
+
+    /**
+     * @brief Get file output type
+     */
     FileOutputType getOutputType() const;
+
+    /**
+     * @brief Get file output mode
+     */
     FileOutputMode getOutputMode() const;
+
+    /**
+     * @brief Get sink type
+     */
     SinkType getType() const override;
 
   private:

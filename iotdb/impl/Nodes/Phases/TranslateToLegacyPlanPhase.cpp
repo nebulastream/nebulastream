@@ -176,25 +176,25 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformLogicalExpressions(Exp
         auto lessExpressionNode = expression->as<LessExpressionNode>();
         auto legacyLeft = transformExpression(lessExpressionNode->getLeft());
         auto legacyRight = transformExpression(lessExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::LESS_THEN_OP, legacyLeft, legacyRight).copy();
+        return Predicate(BinaryOperatorType::LESS_THAN_OP, legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<LessEqualsExpressionNode>()) {
         // Translate less equals expression node.
         auto andExpressionNode = expression->as<LessEqualsExpressionNode>();
         auto legacyLeft = transformExpression(andExpressionNode->getLeft());
         auto legacyRight = transformExpression(andExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::LESS_THEN_EQUAL_OP, legacyLeft, legacyRight).copy();
+        return Predicate(BinaryOperatorType::LESS_THAN_EQUAL_OP, legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<GreaterExpressionNode>()) {
         // Translate greater expression node.
         auto greaterExpressionNode = expression->as<GreaterExpressionNode>();
         auto legacyLeft = transformExpression(greaterExpressionNode->getLeft());
         auto legacyRight = transformExpression(greaterExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::GREATER_THEN_OP, legacyLeft, legacyRight).copy();
+        return Predicate(BinaryOperatorType::GREATER_THAN_OP, legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<GreaterEqualsExpressionNode>()) {
         // Translate greater equals expression node.
         auto greaterEqualsExpressionNode = expression->as<GreaterEqualsExpressionNode>();
         auto legacyLeft = transformExpression(greaterEqualsExpressionNode->getLeft());
         auto legacyRight = transformExpression(greaterEqualsExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::GREATER_THEN_EQUAL_OP, legacyLeft, legacyRight).copy();
+        return Predicate(BinaryOperatorType::GREATER_THAN_EQUAL_OP, legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<EqualsExpressionNode>()) {
         // Translate equals expression node.
         auto equalsExpressionNode = expression->as<EqualsExpressionNode>();

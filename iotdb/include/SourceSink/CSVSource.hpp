@@ -45,11 +45,21 @@ class CSVSource : public DataSource {
      */
     const std::string toString() const;
 
+    /**
+     * @brief Get source type
+     * @return source type
+     */
     SourceType getType() const override;
 
-    const std::string& getFilePath() const;
+    /**
+     * @brief Get file path for the csv file
+     */
+    const std::string getFilePath() const;
 
-    const std::string& getDelimiter() const;
+    /**
+     * @brief Get the csv file delimiter
+     */
+    const std::string getDelimiter() const;
 
   private:
     CSVSource();

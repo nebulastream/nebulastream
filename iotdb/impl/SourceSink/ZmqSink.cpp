@@ -147,7 +147,7 @@ int ZmqSink::getPort() {
 SinkType ZmqSink::getType() const {
     return ZMQ_SINK;
 }
-const std::string& ZmqSink::getHost() const {
+const std::string ZmqSink::getHost() const {
     return host;
 }
 

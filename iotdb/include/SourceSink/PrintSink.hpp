@@ -61,6 +61,9 @@ class PrintSink : public DataSink {
      */
     const std::string toString() const override;
 
+    /**
+     * @brief Get sink type
+     */
     SinkType getType() const override;
 
   private:

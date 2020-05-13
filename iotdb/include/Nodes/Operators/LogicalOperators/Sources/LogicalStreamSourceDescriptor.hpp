@@ -19,12 +19,6 @@ class LogicalStreamSourceDescriptor : public SourceDescriptor {
     static SourceDescriptorPtr create(std::string streamName);
 
     /**
-     * @brief Type of this descriptor
-     * @return SourceDescriptorType
-     */
-    SourceDescriptorType getType() override;
-
-    /**
      * @brief Name of the logical stream
      * @return name
      */
