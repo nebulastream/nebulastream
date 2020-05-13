@@ -43,13 +43,13 @@ class E2eRestTest : public testing::Test {
 
 TEST_F(E2eRestTest, _testExecutingValidUserQueryWithPrintOutput) {
     cout << " start coordinator" << endl;
-    string path = "./nesCoordinator --actor_port=12345";
+    string path = "./nesCoordinator --coordinatorPort=12345";
     bp::child coordinatorProc(path.c_str());
 
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
-    string path2 = "./nesWorker --actor_port=12345";
+    string path2 = "./nesWorker --coordinatorPort=12345";
     bp::child workerProc(path2.c_str());
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
@@ -101,13 +101,13 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
     std::string outputFilePath = "ValidUserQueryWithFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string path = "./nesCoordinator --actor_port=12346";
+    string path = "./nesCoordinator --coordinatorPort=12346";
     bp::child coordinatorProc(path.c_str());
 
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
-    string path2 = "./nesWorker --actor_port=12346";
+    string path2 = "./nesWorker --coordinatorPort=12346";
     bp::child workerProc(path2.c_str());
     cout << "started worker with pid = " << workerProc.id() << endl;
     size_t coordinatorPid = coordinatorProc.id();
@@ -191,13 +191,13 @@ TEST_F(E2eRestTest, _testExecutingValidUserQueryWithFileOutputWithFilter) {
     std::string outputFilePath = "UserQueryWithFileOutputWithFilterTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string path = "./nesCoordinator --actor_port=12267";
+    string path = "./nesCoordinator --coordinatorPort=12267";
     bp::child coordinatorProc(path.c_str());
 
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
-    string path2 = "./nesWorker --actor_port=12267";
+    string path2 = "./nesWorker --coordinatorPort=12267";
     bp::child workerProc(path2.c_str());
     cout << "started worker with pid = " << workerProc.id() << endl;
     size_t coordinatorPid = coordinatorProc.id();
@@ -251,19 +251,19 @@ TEST_F(E2eRestTest, _testExecutingValidUserQueryWithFileOutputWithFilter) {
     coordinatorProc.terminate();
 }
 
-TEST_F(E2eRestTest, _testExecutingValidUserQueryWithFileOutputTwoWorker) {
+TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
     cout << " start coordinator" << endl;
     std::string outputFilePath =
         "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string cmdCoord = "./nesCoordinator --actor_port=12348";
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
     bp::child coordinatorProc(cmdCoord.c_str());
 
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
-    string cmdWrk = "./nesWorker --actor_port=12348";
+    string cmdWrk = "./nesWorker --coordinatorPort=12348";
     bp::child workerProc1(cmdWrk.c_str());
     cout << "started worker 1 with pid = " << workerProc1.id() << endl;
 
@@ -301,7 +301,9 @@ TEST_F(E2eRestTest, _testExecutingValidUserQueryWithFileOutputTwoWorker) {
           std::cout << "error " << e.what() << std::endl;
       }
     }).wait();
-    sleep(3);
+    cout << "before sleep" << endl;
+    sleep(10);
+    cout << "after sleep" << endl;
     std::cout << "try to acc return" << std::endl;
 
     string queryId = json_return.at("queryId").as_string();
@@ -366,14 +368,14 @@ TEST_F(E2eRestTest, _testExecutingValidUserQueryWithFileOutputAndRegisterPhyStre
         "ValidUserQueryWithFileOutputAndRegisterPhyStreamTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string path = "./nesCoordinator --actor_port=12342";
+    string path = "./nesCoordinator --coordinatorPort=12342";
     bp::child coordinatorProc(path.c_str());
 
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
     string path2 =
-        "./nesWorker --actor_port=12342 --sourceType=DefaultSource --numberOfBuffersToProduce=2 --physicalStreamName=test_stream --logicalStreamName=default_logical";
+        "./nesWorker --coordinatorPort=12342 --sourceType=DefaultSource --numberOfBuffersToProduce=2 --physicalStreamName=test_stream --logicalStreamName=default_logical";
     bp::child workerProc(path2.c_str());
     cout << "started worker with pid = " << workerProc.id() << endl;
     size_t coordinatorPid = coordinatorProc.id();
@@ -458,13 +460,13 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
     std::string testFile = "exdra.csv";
     remove(testFile.c_str());
 
-    string path = "./nesCoordinator --actor_port=12346";
+    string path = "./nesCoordinator --coordinatorPort=12346";
     bp::child coordinatorProc(path.c_str());
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
     string path2 =
-        "./nesWorker --actor_port=12346 --sourceType=CSVSource --sourceConfig=tests/test_data/exdra.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra";
+        "./nesWorker --coordinatorPort=12346 --sourceType=CSVSource --sourceConfig=tests/test_data/exdra.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra";
 
     bp::child workerProc(path2.c_str());
     cout << "started worker with pid = " << workerProc.id() << endl;
@@ -540,13 +542,13 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoQueries) {
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
 
-    string cmdCoord = "./nesCoordinator --actor_port=12346";
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12346";
     bp::child coordinatorProc(cmdCoord.c_str());
 
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
-    string cmdWrk = "./nesWorker --actor_port=12346";
+    string cmdWrk = "./nesWorker --coordinatorPort=12346";
     bp::child workerProc(cmdWrk.c_str());
     cout << "started worker with pid = " << workerProc.id() << endl;
 
