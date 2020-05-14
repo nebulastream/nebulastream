@@ -332,4 +332,29 @@ std::string NESTopologyGraph::getGraphString() const {
     return ss.str();
 }
 
+std::string NESTopologyGraph::getNodesString() const {
+    std::stringstream ss;
+    boost::write_graphviz(
+        ss,
+        graph,
+        [&](auto& out, auto v) {
+          out << "[label=\"" << graph[v].id << " type="
+              << graph[v].ptr->getEntryTypeString() << "\"]";
+        });
+    ss << std::flush;
+    return ss.str();
+}
+
+
+std::string NESTopologyGraph::getEdgesString() const {
+    std::stringstream ss;
+    boost::write_graphviz(
+        ss,
+        graph,
+        [&](auto& out, auto e) {
+          out << "[label=\"" << graph[e].id << "\"]";
+        });
+    ss << std::flush;
+    return ss.str();
+}
 }// namespace NES

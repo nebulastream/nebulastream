@@ -151,9 +151,6 @@ TEST_F(NesTopologyManagerTest, createLink) {
     EXPECT_EQ(linkSensorNode->getDestNodeId(), workerNode3->getId());
     EXPECT_EQ(linkSensorNode->getLinkType(), SensorToNode);
     EXPECT_EQ(linkSensorNode->getLinkTypeString(), "SensorToNode");
-
-    EXPECT_EQ(link_node_node->getId() + 1, linkNodeSensor->getId());
-    EXPECT_EQ(linkNodeSensor->getId() + 1, linkSensorNode->getId());
 }
 
 /* Create link, where a link already exists. */
@@ -362,56 +359,58 @@ TEST_F(NesTopologyManagerTest, printGraph) {
                     sensors.at(i), workers.at((i - 2)/3), 1, 1));
         }
     }
-
     std::cout << " current plan from topo="
               << NESTopologyManager::getInstance().getNESTopologyPlanString()
               << std::endl;
-    std::string expected_result = "graph G {\n"
-                                  "0[label=\"0 type=Worker\"];\n"
-                                  "1[label=\"1 type=Worker\"];\n"
-                                  "2[label=\"2 type=Worker\"];\n"
-                                  "3[label=\"3 type=Worker\"];\n"
-                                  "4[label=\"4 type=Worker\"];\n"
-                                  "5[label=\"5 type=Worker\"];\n"
-                                  "6[label=\"6 type=Worker\"];\n"
-                                  "7[label=\"7 type=Sensor(default_physical)\"];\n"
-                                  "8[label=\"8 type=Sensor(default_physical)\"];\n"
-                                  "9[label=\"9 type=Sensor(default_physical)\"];\n"
-                                  "10[label=\"10 type=Sensor(default_physical)\"];\n"
-                                  "11[label=\"11 type=Sensor(default_physical)\"];\n"
-                                  "12[label=\"12 type=Sensor(default_physical)\"];\n"
-                                  "13[label=\"13 type=Sensor(default_physical)\"];\n"
-                                  "14[label=\"14 type=Sensor(default_physical)\"];\n"
-                                  "15[label=\"15 type=Sensor(default_physical)\"];\n"
-                                  "16[label=\"16 type=Sensor(default_physical)\"];\n"
-                                  "17[label=\"17 type=Sensor(default_physical)\"];\n"
-                                  "18[label=\"18 type=Sensor(default_physical)\"];\n"
-                                  "19[label=\"19 type=Sensor(default_physical)\"];\n"
-                                  "20[label=\"20 type=Sensor(default_physical)\"];\n"
-                                  "21[label=\"21 type=Sensor(default_physical)\"];\n"
-                                  "0--1 [label=\"0\"];\n"
-                                  "2--1 [label=\"1\"];\n"
-                                  "3--4 [label=\"2\"];\n"
-                                  "5--4 [label=\"3\"];\n"
-                                  "1--6 [label=\"4\"];\n"
-                                  "4--6 [label=\"5\"];\n"
-                                  "7--0 [label=\"6\"];\n"
-                                  "8--0 [label=\"7\"];\n"
-                                  "9--0 [label=\"8\"];\n"
-                                  "10--1 [label=\"9\"];\n"
-                                  "11--1 [label=\"10\"];\n"
-                                  "12--1 [label=\"11\"];\n"
-                                  "13--2 [label=\"12\"];\n"
-                                  "14--2 [label=\"13\"];\n"
-                                  "15--2 [label=\"14\"];\n"
-                                  "16--3 [label=\"15\"];\n"
-                                  "17--3 [label=\"16\"];\n"
-                                  "18--3 [label=\"17\"];\n"
-                                  "19--4 [label=\"18\"];\n"
-                                  "20--4 [label=\"19\"];\n"
-                                  "21--4 [label=\"20\"];\n"
-                                  "}\n";
+    stringstream ss;
+    ss << "graph G {\n"
+          "0[label=\"0 type=Worker\"];\n"
+          "1[label=\"1 type=Worker\"];\n"
+          "2[label=\"2 type=Worker\"];\n"
+          "3[label=\"3 type=Worker\"];\n"
+          "4[label=\"4 type=Worker\"];\n"
+          "5[label=\"5 type=Worker\"];\n"
+          "6[label=\"6 type=Worker\"];\n"
+          "7[label=\"7 type=Sensor(default_physical)\"];\n"
+          "8[label=\"8 type=Sensor(default_physical)\"];\n"
+          "9[label=\"9 type=Sensor(default_physical)\"];\n"
+          "10[label=\"10 type=Sensor(default_physical)\"];\n"
+          "11[label=\"11 type=Sensor(default_physical)\"];\n"
+          "12[label=\"12 type=Sensor(default_physical)\"];\n"
+          "13[label=\"13 type=Sensor(default_physical)\"];\n"
+          "14[label=\"14 type=Sensor(default_physical)\"];\n"
+          "15[label=\"15 type=Sensor(default_physical)\"];\n"
+          "16[label=\"16 type=Sensor(default_physical)\"];\n"
+          "17[label=\"17 type=Sensor(default_physical)\"];\n"
+          "18[label=\"18 type=Sensor(default_physical)\"];\n"
+          "19[label=\"19 type=Sensor(default_physical)\"];\n"
+          "20[label=\"20 type=Sensor(default_physical)\"];\n"
+          "21[label=\"21 type=Sensor(default_physical)\"];\n";
 
+    ss << "0--1 [label=\"" << links[0]->getId() << "\"];\n";
+    ss << "2--1 [label=\"" << links[1]->getId() << "\"];\n";
+    ss << "3--4 [label=\"" << links[2]->getId() << "\"];\n";
+    ss << "5--4 [label=\"" << links[3]->getId() << "\"];\n";
+    ss << "1--6 [label=\"" << links[4]->getId() << "\"];\n";
+    ss << "4--6 [label=\"" << links[5]->getId() << "\"];\n";
+    ss << "7--0 [label=\"" << links[6]->getId() << "\"];\n";
+    ss << "8--0 [label=\"" << links[7]->getId() << "\"];\n";
+    ss << "9--0 [label=\"" << links[8]->getId() << "\"];\n";
+    ss << "10--1 [label=\"" << links[9]->getId() << "\"];\n";
+    ss << "11--1 [label=\"" << links[10]->getId() << "\"];\n";
+    ss << "12--1 [label=\"" << links[11]->getId() << "\"];\n";
+    ss << "13--2 [label=\"" << links[12]->getId() << "\"];\n";
+    ss << "14--2 [label=\"" << links[13]->getId() << "\"];\n";
+    ss << "15--2 [label=\"" << links[14]->getId() << "\"];\n";
+    ss << "16--3 [label=\"" << links[15]->getId() << "\"];\n";
+    ss << "17--3 [label=\"" << links[16]->getId() << "\"];\n";
+    ss << "18--3 [label=\"" << links[17]->getId() << "\"];\n";
+    ss << "19--4 [label=\"" << links[18]->getId() << "\"];\n";
+    ss << "20--4 [label=\"" << links[19]->getId() << "\"];\n";
+    ss << "21--4 [label=\"" << links[20]->getId() << "\"];\n";
+    ss << "}\n";
+
+    string expected_result = ss.str();
     cout << "expected_result=" << expected_result << endl;
 
     EXPECT_EQ(NESTopologyManager::getInstance().getNESTopologyPlanString(),

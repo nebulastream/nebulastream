@@ -340,6 +340,11 @@ string CoordinatorService::getTopologyPlanString() {
     return this->topologyManagerPtr->getInstance().getNESTopologyPlanString();
 }
 
+NESTopologyPlanPtr CoordinatorService::getTopologyPlan() {
+    return this->topologyManagerPtr->getInstance().getNESTopologyPlan();
+}
+
+
 NESExecutionPlanPtr CoordinatorService::getRegisteredQuery(string queryId) {
     if (QueryCatalog::instance().queryExists(queryId)) {
         NES_DEBUG("CoordinatorService: return existing query " << queryId);
