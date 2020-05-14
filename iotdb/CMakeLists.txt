@@ -105,14 +105,28 @@ add_custom_command(
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # ZMQ
-find_package(ZMQ REQUIRED)
-if(ZMQ_FOUND)
-    message(STATUS "ZMQ found ${ZMQ_INCLUDE_DIRS}")
-else(ZMQ_FOUND)
-    message(ERROR "ZMQ not found")
-endif(ZMQ_FOUND)
-include_directories(${ZMQ_INCLUDE_DIRS})
-set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
+#find_package(ZMQ REQUIRED)
+#if(ZMQ_FOUND)
+#    message(STATUS "ZMQ found ${ZMQ_INCLUDE_DIRS}")
+#else(ZMQ_FOUND)
+#    message(ERROR "ZMQ not found")
+#endif(ZMQ_FOUND)
+#include_directories(${ZMQ_INCLUDE_DIRS})
+#set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
+
+FetchContent_Declare(zmq
+        URL https://github.com/zeromq/libzmq/releases/download/v4.3.2/zeromq-4.3.2.zip
+        URL_HASH SHA256=d01517983ded9ff1b6c40f8206fc2b44ac96157a5aea7b974e8b0079547edfda)
+FetchContent_GetProperties(zmq)
+if(NOT zmq_POPULATED)
+    FetchContent_Populate(zmq)
+    if(POLICY CMP0077)  # Avoid building shared library and tests on CMake 3.13+
+        cmake_policy(SET CMP0077 NEW)
+        set(BUILD_SHARED OFF CACHE BOOL "")
+        set(BUILD_TESTS OFF CACHE BOOL "")
+    endif()
+    add_subdirectory(${zmq_SOURCE_DIR} ${zmq_BINARY_DIR})
+endif()
 
 # Log4cc
 find_package(Log4cxx REQUIRED)
