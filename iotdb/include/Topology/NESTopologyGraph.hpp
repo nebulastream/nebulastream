@@ -156,6 +156,18 @@ class NESTopologyGraph {
     std::string getGraphString() const;
 
     /**
+  * @brief method to get the nodes in the graph as a string
+  * @return string containing the graph
+  */
+    std::string getNodesString() const;
+
+    /**
+  * @brief method to get the edges in the graph as a string
+  * @return string containing the graph
+  */
+    std::string getEdgesString() const;
+
+    /**
    * @brief method to get all nodes with this ip
    * @param ip as string
    * @return vector containing the nodes as NESTopologyEntryPtr

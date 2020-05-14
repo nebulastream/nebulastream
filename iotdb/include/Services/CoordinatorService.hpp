@@ -115,6 +115,12 @@ class CoordinatorService {
     string getTopologyPlanString();
 
     /**
+     * @brief creates a string representation of the topology nodes
+     * @return the topology as string representation
+     */
+    NESTopologyPlanPtr getTopologyPlan();
+
+    /**
      * @brief return the properties of a particular node
      * @param entry in the topology
      * @return string containing the properties

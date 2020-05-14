@@ -47,8 +47,8 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     cout << "returned=" << retString;
     ASSERT_TRUE(retString.find("type=Worker\"];") != std::string::npos);
     ASSERT_TRUE(retString.find("type=Sensor(default_physical)") != std::string::npos);
-    ASSERT_TRUE(retString.find("1--0 [label=\"0\"]") != std::string::npos);
-    ASSERT_TRUE(retString.find("2--0 [label=\"1\"]") != std::string::npos);
+    ASSERT_TRUE(retString.find("1--0 [label=") != std::string::npos);
+    ASSERT_TRUE(retString.find("2--0 [label=") != std::string::npos);
 
     size_t pos1Beg = retString.find("1[label");
     std::string firstIdPart1 = retString.substr(pos1Beg + 9);
@@ -77,9 +77,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     cout << "retString2=" << retString2;
     ASSERT_TRUE(retString2.find("type=Worker\"];") != std::string::npos);
     ASSERT_TRUE(retString2.find("type=Sensor(default_physical)") != std::string::npos);
-    ASSERT_TRUE(retString2.find("1--0 [label=\"0\"]") != std::string::npos);
-    ASSERT_TRUE(retString2.find("2--0 [label=\"1\"]") != std::string::npos);
-    ASSERT_TRUE(retString2.find("1--2 [label=\"2\"]") != std::string::npos);
+    ASSERT_TRUE(retString2.find("1--0 [label=") != std::string::npos);
+    ASSERT_TRUE(retString2.find("2--0 [label=") != std::string::npos);
+    ASSERT_TRUE(retString2.find("1--2 [label=") != std::string::npos);
 
     cout << "REMOVE NEW PARENT" << endl;
     bool successRemoveParent = wrk->removeParent(secIdInt);
@@ -90,9 +90,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     cout << "retString3=" << retString3;
     ASSERT_TRUE(retString3.find("type=Worker\"];") != std::string::npos);
     ASSERT_TRUE(retString3.find("type=Sensor(default_physical)") != std::string::npos);
-    ASSERT_TRUE(retString3.find("1--0 [label=\"0\"]") != std::string::npos);
-    ASSERT_TRUE(retString3.find("2--0 [label=\"1\"]") != std::string::npos);
-    ASSERT_TRUE(retString3.find("1--2 [label=\"2\"]") == std::string::npos);
+    ASSERT_TRUE(retString3.find("1--0 [label=") != std::string::npos);
+    ASSERT_TRUE(retString3.find("2--0 [label=") != std::string::npos);
+    ASSERT_TRUE(retString3.find("1--2 [label=") == std::string::npos);
 
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk->stop(false);
@@ -131,8 +131,8 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     cout << "returned=" << retString;
     ASSERT_TRUE(retString.find("type=Worker\"];") != std::string::npos);
     ASSERT_TRUE(retString.find("type=Sensor(default_physical)") != std::string::npos);
-    ASSERT_TRUE(retString.find("1--0 [label=\"0\"]") != std::string::npos);
-    ASSERT_TRUE(retString.find("2--0 [label=\"1\"]") != std::string::npos);
+    ASSERT_TRUE(retString.find("1--0 [label=") != std::string::npos);
+    ASSERT_TRUE(retString.find("2--0 [label=") != std::string::npos);
 
     size_t pos1Beg = retString.find("1[label");
     std::string firstIdPart1 = retString.substr(pos1Beg + 9);
@@ -161,9 +161,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     cout << "retString3=" << retString3;
     ASSERT_TRUE(retString3.find("type=Worker\"];") != std::string::npos);
     ASSERT_TRUE(retString3.find("type=Sensor(default_physical)") != std::string::npos);
-    ASSERT_TRUE(retString3.find("1--0 [label=\"0\"]") != std::string::npos);
-    ASSERT_TRUE(retString3.find("2--0 [label=\"1\"]") != std::string::npos);
-    ASSERT_TRUE(retString3.find("2--1 [label=\"2\"]") == std::string::npos);
+    ASSERT_TRUE(retString3.find("1--0 [label=") != std::string::npos);
+    ASSERT_TRUE(retString3.find("2--0 [label=") != std::string::npos);
+    ASSERT_TRUE(retString3.find("2--1 [label=") == std::string::npos);
 
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk->stop(false);
