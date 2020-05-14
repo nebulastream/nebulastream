@@ -76,18 +76,18 @@ std::optional<TupleBuffer> ZmqSource::receiveData() {
             if (buffer.getBufferSize() == new_data2.size()) {
                 NES_WARNING("ZMQSource  " << this << ": return buffer ");
             }
-
             return buffer;
         } catch (const zmq::error_t& ex) {
-            // recv() throws ETERM when the zmq context is destroyed,
-            //  as when AsyncZmqListener::Stop() is called
-            if (ex.num() != ETERM) {
-                NES_ERROR("ZMQSOURCE: " << ex.what());
-            }
+                NES_ERROR("ZMQSOURCE error: " << ex.what());
+                return std::nullopt;
+        }
+        catch (...) {
+            NES_ERROR("ZMQSOURCE general error");
+            return std::nullopt;
         }
     } else {
         NES_ERROR("ZMQSOURCE: Not connected!");
-        throw new std::runtime_error("ZMQSOURCE: Not connected!");
+        return std::nullopt;
     }
 }
 
