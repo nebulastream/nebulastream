@@ -77,12 +77,11 @@ void BaseController::badRequestImpl(const web::http::http_request& message, cons
     message.reply(response);
 }
 
-
 utility::string_t BaseController::getPath(http_request& message) {
     return web::uri::decode(message.relative_uri().path());
 }
 
-void BaseController::handleException(const web::http::http_request& message,const std::exception& exc) {
+void BaseController::handleException(const web::http::http_request& message, const std::exception& exc) {
     json::value errorResponse{};
     const char* exceptionMsg = exc.what();
     const auto paths = web::uri::split_path(web::uri::decode(message.relative_uri().path()));
@@ -113,7 +112,7 @@ void BaseController::handleException(const web::http::http_request& message,cons
         }
         this->badRequestImpl(message, errorResponse);
 
-    }  else if (std::string(exceptionMsg).find("Syntax error: Malformed object literal") != std::string::npos) {
+    } else if (std::string(exceptionMsg).find("Syntax error: Malformed object literal") != std::string::npos) {
         // handle error caused by syntax error in input body
         errorResponse["message"] = json::value::string("Syntax error");
         errorResponse["detail"] = json::value::string(exceptionMsg);
@@ -131,7 +130,7 @@ void BaseController::handleException(const web::http::http_request& message,cons
         // TODO: Add possible cause of failure (stream not exists, stream attached to physical streams, etc)
         this->badRequestImpl(message, errorResponse);
 
-    } else if (strcmp(exceptionMsg, "Compilation failed") == 0){
+    } else if (strcmp(exceptionMsg, "Compilation failed") == 0) {
         // handle error caused by invalid code (query or schema) submitted by the user
         errorResponse["message"] = json::value::string("Compilation failed");
 
@@ -168,7 +167,6 @@ void BaseController::handleException(const web::http::http_request& message,cons
     } else {
         this->internalServerErrorImpl(message);
     }
-
 }
 
-}
+}// namespace NES

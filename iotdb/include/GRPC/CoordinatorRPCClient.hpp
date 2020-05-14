@@ -17,10 +17,9 @@ using grpc::Status;
 namespace NES {
 class CoordinatorRPCClient {
   public:
-
-    CoordinatorRPCClient(string coordinatorIp, std::string  coordinatorPort,
+    CoordinatorRPCClient(string coordinatorIp, std::string coordinatorPort,
                          std::string localWorkerIp, std::string localWorkerPort,
-        size_t numberOfCpus, NESNodeType type, string nodeProperties);
+                         size_t numberOfCpus, NESNodeType type, string nodeProperties);
 
     bool connect();
 
@@ -53,7 +52,7 @@ class CoordinatorRPCClient {
      * @return bool indicating success of the removal
      */
     bool unregisterPhysicalStream(std::string logicalStreamName,
-                              std::string physicalStreamName);
+                                  std::string physicalStreamName);
 
     /**
      * @brief @brief method to add a new parent to an existing node
@@ -108,8 +107,5 @@ class CoordinatorRPCClient {
 };
 typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
 
-}
-#endif //
-
-
-
+}// namespace NES
+#endif//

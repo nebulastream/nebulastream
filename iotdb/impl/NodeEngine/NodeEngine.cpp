@@ -35,7 +35,6 @@ NodeEngine::NodeEngine() {
     NES_DEBUG("NodeEngine()");
     props = std::make_shared<NodeProperties>();
     isRunning = false;
-
 }
 
 NodeEngine::~NodeEngine() {
@@ -45,8 +44,7 @@ NodeEngine::~NodeEngine() {
     qepToStatusMap.clear();
 }
 
-bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject)
-{
+bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject) {
     NES_DEBUG("NodeEngine::deployQueryInNodeEngine eto " << executableTransferObject);
 
     ExecutableTransferObject eto = SerializationTools::parse_eto(
@@ -57,7 +55,6 @@ bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject)
     NES_DEBUG("WorkerActor::running()  add query to queries map");
     deployQueryInNodeEngine(qep);
 }
-
 
 bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: deployQueryInNodeEngine query using qep " << qep);

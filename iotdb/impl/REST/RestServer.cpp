@@ -14,8 +14,7 @@ RestServer::RestServer(std::string host, u_int16_t port,
     InterruptHandler::hookSIGINT();
 }
 
-RestServer::~RestServer()
-{
+RestServer::~RestServer() {
     NES_DEBUG("~RestServer");
 }
 
@@ -46,7 +45,7 @@ bool RestServer::start() {
 bool RestServer::stop() {
     NES_DEBUG("RestServer::stop");
     InterruptHandler::handleUserInterrupt(SIGINT);
-//    server.shutdown().wait();
+    //    server.shutdown().wait();
     return true;
 }
 

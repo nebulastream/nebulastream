@@ -68,10 +68,9 @@ class WorkerRPCClient {
     bool stopQuery(std::string address, std::string queryId);
 
   private:
-
 };
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
+#endif//NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_

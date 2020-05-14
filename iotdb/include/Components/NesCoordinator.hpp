@@ -2,13 +2,13 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #include "REST/RestServer.hpp"
 #include <Components/NesWorker.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Services/CoordinatorService.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/StreamCatalogService.hpp>
-#include <string>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
-#include <GRPC/WorkerRPCClient.hpp>
+#include <string>
 
 namespace NES {
 typedef map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployment;
@@ -102,7 +102,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      */
     bool stopQuery(std::string queryId);
 
-
     /**
      * @brief method send query to nodes
      * @param queryDeployments
@@ -117,18 +116,15 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      */
     bool undeployQuery(std::string queryId);
 
-    QueryCatalogServicePtr getQueryCatalogServicePtr()
-    {
+    QueryCatalogServicePtr getQueryCatalogServicePtr() {
         return queryCatalogServicePtr;
     }
 
-    StreamCatalogServicePtr getStreamCatalogServicePtr()
-    {
+    StreamCatalogServicePtr getStreamCatalogServicePtr() {
         return streamCatalogServicePtr;
     }
 
-    CoordinatorServicePtr getCoordinatorServicePtr()
-    {
+    CoordinatorServicePtr getCoordinatorServicePtr() {
         return coordinatorServicePtr;
     }
 
@@ -139,7 +135,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     uint16_t rpcPort;
     std::shared_ptr<std::thread> rpcThread;
     NesWorkerPtr wrk;
-
 
     WorkerRPCClientPtr workerRPCClient;
 
@@ -157,7 +152,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     std::map<std::string, QueryDeployment> currentDeployments;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
-
 
 }// namespace NES
 #endif /* INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_ */

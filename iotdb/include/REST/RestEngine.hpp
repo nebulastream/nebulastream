@@ -12,7 +12,6 @@
 #include <pplx/pplxtasks.h>
 #include <string>
 
-
 using namespace web;
 using namespace http;
 using namespace http::experimental::listener;
@@ -31,10 +30,10 @@ class RestEngine : public BaseController {
     QueryCatalogController queryCatalogController;
 
   public:
-    RestEngine(){
+    RestEngine() {
         NES_DEBUG("RestEngine");
     };
-    ~RestEngine(){
+    ~RestEngine() {
         NES_DEBUG("~RestEngine");
     };
 

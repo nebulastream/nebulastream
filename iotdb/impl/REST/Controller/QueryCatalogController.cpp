@@ -1,7 +1,7 @@
 #include "REST/Controller/QueryCatalogController.hpp"
+#include <Components/NesCoordinator.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
-#include <Components/NesCoordinator.hpp>
 namespace NES {
 
 void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {
@@ -19,25 +19,25 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     json::value result{};
                     map<string, string> queries = queryCatalogServicePtr->getQueriesWithStatus(queryStatus);
 
-                        for (auto[key, value] :  queries) {
-                            result[key] = json::value::string(value);
-                        }
-
-                        if (queries.size()==0){
-                            NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query with status " + queryStatus + " was found.");
-                            noContentImpl(message);
-                        } else {
-                            successMessageImpl(message, result);
-                        }
-                        return;
-                    } catch (const std::exception &exc) {
-                        NES_ERROR("QueryCatalogController: handleGet -queries: Exception occurred while building the query plan for user request:" << exc.what());
-                        handleException(message, exc);
-                        return;
-                    } catch (...) {
-                        RuntimeUtils::printStackTrace();
-                        internalServerErrorImpl(message);
+                    for (auto [key, value] : queries) {
+                        result[key] = json::value::string(value);
                     }
+
+                    if (queries.size() == 0) {
+                        NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query with status " + queryStatus + " was found.");
+                        noContentImpl(message);
+                    } else {
+                        successMessageImpl(message, result);
+                    }
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR("QueryCatalogController: handleGet -queries: Exception occurred while building the query plan for user request:" << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                }
             })
             .wait();
 
@@ -50,25 +50,25 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     json::value result{};
                     map<string, string> queries = queryCatalogServicePtr->getAllRegisteredQueries();
 
-                        for (auto[key, value] :  queries) {
-                            result[key] = json::value::string(value);
-                        }
-
-                        if (queries.size()==0){
-                            NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query was found.");
-                            noContentImpl(message);
-                        } else {
-                            successMessageImpl(message, result);
-                        }
-                        return;
-                    } catch (const std::exception &exc) {
-                        NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the query plan for user request:" << exc.what());
-                        handleException(message, exc);
-                        return;
-                    } catch (...) {
-                        RuntimeUtils::printStackTrace();
-                        internalServerErrorImpl(message);
+                    for (auto [key, value] : queries) {
+                        result[key] = json::value::string(value);
                     }
+
+                    if (queries.size() == 0) {
+                        NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query was found.");
+                        noContentImpl(message);
+                    } else {
+                        successMessageImpl(message, result);
+                    }
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the query plan for user request:" << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                }
             })
             .wait();
     }
@@ -94,29 +94,29 @@ void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, w
 
                     //Perform async call for deleting the query using actor
                     //Note: This is an async call and would not know if the deletion has failed
-//                    abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
-//                    CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
+                    //                    abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
+                    //                    CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
                     bool success = coordinator->removeQuery(queryId);
 
-                        if (success){
-                            //Prepare the response
-                            json::value result{};
-                            result["success"] = json::value::boolean(success);
-                            successMessageImpl(message, result);
-                        } else {
-                           throw std::invalid_argument("Could not delete query with id " + queryId + ".");
-                        }
-
-                        return;
-                    } catch (const std::exception &exc) {
-                        NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for user request:" << exc.what());
-                        handleException(message, exc);
-                        return;
-                    } catch (...) {
-                        RuntimeUtils::printStackTrace();
-                        internalServerErrorImpl(message);
+                    if (success) {
+                        //Prepare the response
+                        json::value result{};
+                        result["success"] = json::value::boolean(success);
+                        successMessageImpl(message, result);
+                    } else {
+                        throw std::invalid_argument("Could not delete query with id " + queryId + ".");
                     }
-                  })
+
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for user request:" << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                }
+            })
             .wait();
     }
 

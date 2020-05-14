@@ -1,15 +1,12 @@
+#include <GRPC/ExecutableTransferObject.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Util/Logger.hpp>
-#include <GRPC/ExecutableTransferObject.hpp>
 
 namespace NES {
 
-WorkerRPCClient::WorkerRPCClient()
-{
-
+WorkerRPCClient::WorkerRPCClient() {
 }
-bool WorkerRPCClient::deployQuery(std::string address, std::string executableTransferObject)
-{
+bool WorkerRPCClient::deployQuery(std::string address, std::string executableTransferObject) {
     NES_DEBUG(
         "WorkerRPCClient::deployQuery address=" << address << " eto=" << executableTransferObject);
 
@@ -31,14 +28,14 @@ bool WorkerRPCClient::deployQuery(std::string address, std::string executableTra
         return reply.success();
     } else {
         NES_DEBUG(" WorkerRPCClient::deployQuery "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         throw Exception("Error while WorkerRPCClient::deployQuery");
     }
 }
 
-bool WorkerRPCClient::undeployQuery(std::string address, std::string queryId)
-{
+bool WorkerRPCClient::undeployQuery(std::string address, std::string queryId) {
     NES_DEBUG(
         "WorkerRPCClient::undeployQuery address=" << address << " queryId=" << queryId);
 
@@ -60,15 +57,14 @@ bool WorkerRPCClient::undeployQuery(std::string address, std::string queryId)
         return reply.success();
     } else {
         NES_DEBUG(" WorkerRPCClient::undeployQuery "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         throw Exception("Error while WorkerRPCClient::undeployQuery");
     }
 }
 
-
-bool WorkerRPCClient::registerQuery(std::string address, std::string executableTransferObject)
-{
+bool WorkerRPCClient::registerQuery(std::string address, std::string executableTransferObject) {
     NES_DEBUG(
         "WorkerRPCClient::registerQuery address=" << address << " eto=" << executableTransferObject);
 
@@ -90,14 +86,14 @@ bool WorkerRPCClient::registerQuery(std::string address, std::string executableT
         return reply.success();
     } else {
         NES_DEBUG(" WorkerRPCClient::registerQuery "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         throw Exception("Error while WorkerRPCClient::registerQuery");
     }
 }
 
-bool WorkerRPCClient::unregisterQuery(std::string address, std::string queryId)
-{
+bool WorkerRPCClient::unregisterQuery(std::string address, std::string queryId) {
     NES_DEBUG(
         "WorkerRPCClient::unregisterQuery address=" << address << " queryId=" << queryId);
 
@@ -119,15 +115,14 @@ bool WorkerRPCClient::unregisterQuery(std::string address, std::string queryId)
         return reply.success();
     } else {
         NES_DEBUG(" WorkerRPCClient::unregisterQuery "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         throw Exception("Error while WorkerRPCClient::unregisterQuery");
     }
 }
 
-
-bool WorkerRPCClient::startQuery(std::string address, std::string queryId)
-{
+bool WorkerRPCClient::startQuery(std::string address, std::string queryId) {
     NES_DEBUG(
         "WorkerRPCClient::startQuery address=" << address << " queryId=" << queryId);
 
@@ -149,15 +144,14 @@ bool WorkerRPCClient::startQuery(std::string address, std::string queryId)
         return reply.success();
     } else {
         NES_DEBUG(" WorkerRPCClient::startQuery "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         throw Exception("Error while WorkerRPCClient::startQuery");
     }
 }
 
-
-bool WorkerRPCClient::stopQuery(std::string address, std::string queryId)
-{
+bool WorkerRPCClient::stopQuery(std::string address, std::string queryId) {
     NES_DEBUG(
         "WorkerRPCClient::stopQuery address=" << address << " queryId=" << queryId);
 
@@ -179,11 +173,11 @@ bool WorkerRPCClient::stopQuery(std::string address, std::string queryId)
         return reply.success();
     } else {
         NES_DEBUG(" WorkerRPCClient::stopQuery "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         throw Exception("Error while WorkerRPCClient::stopQuery");
     }
 }
 
-
-}
+}// namespace NES

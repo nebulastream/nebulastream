@@ -4,7 +4,7 @@
 #include <string>
 namespace NES {
 
-CoordinatorRPCClient::CoordinatorRPCClient(string coordinatorIp, std::string  coordinatorPort,
+CoordinatorRPCClient::CoordinatorRPCClient(string coordinatorIp, std::string coordinatorPort,
                                            std::string localWorkerIp, std::string localWorkerPort,
                                            size_t numberOfCpus,
                                            NESNodeType type,
@@ -46,8 +46,9 @@ bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
         return reply.success();
     } else {
         NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         return reply.success();
     }
 }
@@ -90,8 +91,9 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName,
         return reply.success();
     } else {
         NES_DEBUG(" CoordinatorRPCClient::registerLogicalStream "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         return reply.success();
     }
 }
@@ -100,7 +102,7 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamNam
                                                     std::string physicalStreamName) {
     NES_DEBUG(
         "CoordinatorRPCClient: unregisterPhysicalStream physical stream"
-            << physicalStreamName << " from logical stream ");
+        << physicalStreamName << " from logical stream ");
 
     UnregisterPhysicalStreamRequest request;
     request.set_id(workerId);
@@ -122,8 +124,9 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamNam
         return reply.success();
     } else {
         NES_DEBUG(" CoordinatorRPCClient::unregisterPhysicalStream "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         return reply.success();
     }
 }
@@ -150,8 +153,9 @@ bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
         return reply.success();
     } else {
         NES_DEBUG(" CoordinatorRPCClient::unregisterLogicalStream "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         return reply.success();
     }
 }
@@ -178,8 +182,9 @@ bool CoordinatorRPCClient::addParent(size_t parentId) {
         return reply.success();
     } else {
         NES_DEBUG(" CoordinatorRPCClient::addParent "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         return reply.success();
     }
 }
@@ -210,8 +215,9 @@ bool CoordinatorRPCClient::removeParent(size_t parentId) {
         return reply.success();
     } else {
         NES_DEBUG(" CoordinatorRPCClient::removeParent "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         return reply.success();
     }
 }
@@ -230,7 +236,7 @@ bool CoordinatorRPCClient::registerNode() {
     RegisterNodeRequest request;
     request.set_address(address);
     request.set_numberofcpus(numberOfCpus);
-//    request.set_nodeproperties(nodeProperties);
+    //    request.set_nodeproperties(nodeProperties);
     request.set_type(type);
     NES_DEBUG("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
 
@@ -249,8 +255,9 @@ bool CoordinatorRPCClient::registerNode() {
         return true;
     } else {
         NES_ERROR(" CoordinatorRPCClient::registerNode "
-                  "error=" << status.error_code() << ": "
-                           << status.error_message());
+                  "error="
+                  << status.error_code() << ": "
+                  << status.error_message());
         return false;
     }
 }
@@ -272,7 +279,7 @@ bool CoordinatorRPCClient::connect() {
 }
 
 bool CoordinatorRPCClient::disconnecting() {
-
+    NES_WARNING("CoordinatorRPCClient::disconnecting: nothing to do");
 }
 
 bool CoordinatorRPCClient::CoordinatorRPCClient::shutdown(bool force) {
@@ -281,4 +288,4 @@ bool CoordinatorRPCClient::CoordinatorRPCClient::shutdown(bool force) {
     return true;
 }
 
-}
+}// namespace NES
