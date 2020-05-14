@@ -140,7 +140,6 @@ bool ZmqSource::disconnect() {
     }
     if (!connected) {
         NES_DEBUG("ZMQSOURCE  " << this << ": disconnected");
-        //        context.close();
     } else {
         NES_DEBUG("ZMQSOURCE  " << this << ": NOT disconnected");
     }

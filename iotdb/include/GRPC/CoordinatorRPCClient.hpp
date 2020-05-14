@@ -17,11 +17,7 @@ using grpc::Status;
 namespace NES {
 class CoordinatorRPCClient {
   public:
-    CoordinatorRPCClient(string coordinatorIp, std::string coordinatorPort,
-                         std::string localWorkerIp, std::string localWorkerPort,
-                         size_t numberOfCpus, NESNodeType type, string nodeProperties);
-
-    bool connect();
+    CoordinatorRPCClient(string address);
 
     /**
      * @brief this methods registers a physical stream via the coordinator to a logical stream
@@ -70,40 +66,29 @@ class CoordinatorRPCClient {
 
     /**
      * @brief method to register a node after the connection is established
+     * @param localAddress where this node is listening
+     * @param numberOfCpus
+     * @param type of this node, e.g., sensor or worker
+     * @param nodeProperties
      * @return bool indicating success
      */
-    bool registerNode();
+    bool registerNode(std::string localAddress,
+                      size_t numberOfCpus,
+                      NESNodeType type,
+                      string nodeProperties);
 
     /**
      * @brief method to get own id form server
      * @return own id as listed in the graph
      */
     size_t getId();
-
-    /**
-     * @brief this method disconnect the worker from the coordinator
-     * @return bool indicating success
-     */
-    bool disconnecting();
-
-    /**
-     * @brief method to shutdown the worker actor
-     * @param if force == true all queries will be stopped, if not false will returned in that case
-     * @return bool indicating success
-     */
-    bool shutdown(bool force);
-
+    
   private:
     size_t workerId;
 
-    std::string coordinatorIp;
-    std::string coordinatorPort;
-    std::string localWorkerIp;
-    std::string localWorkerPort;
-
-    size_t numberOfCpus;
-    std::string nodeProperties;
-    size_t type;
+    std::string address;
+    std::shared_ptr<::grpc::Channel> rpcChannel;
+    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub;
 };
 typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
 

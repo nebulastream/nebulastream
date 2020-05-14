@@ -134,7 +134,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     std::shared_ptr<grpc::Server> rpcServer;
     uint16_t rpcPort;
     std::shared_ptr<std::thread> rpcThread;
-    NesWorkerPtr wrk;
+    NesWorkerPtr worker;
 
     WorkerRPCClientPtr workerRPCClient;
 

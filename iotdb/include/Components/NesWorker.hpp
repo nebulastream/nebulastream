@@ -121,11 +121,13 @@ class NesWorker {
     */
     QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
+    /**
+     * @brief method to get a ptr to the node engine
+     * @return pt to node engine
+     */
     NodeEnginePtr getNodeEngine();
 
   private:
-    size_t getRandomPort(size_t base);
-
     std::shared_ptr<grpc::Server> rpcServer;
     std::thread rpcThread;
 

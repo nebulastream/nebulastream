@@ -115,8 +115,6 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                         NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                     << optimizationStrategyName);
 
-                        //                        abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
-                        //                        CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
                         string queryId = coordinator->addQuery(userQuery, optimizationStrategyName);
 
                         json::value restResponse{};
