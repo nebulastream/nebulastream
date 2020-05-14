@@ -1,9 +1,9 @@
 #include <Components/NesCoordinator.hpp>
+#include <REST/usr_interrupt_handler.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Util/Logger.hpp>
-#include <thread>
-#include <REST/usr_interrupt_handler.hpp>
 #include <future>
+#include <thread>
 
 //GRPC Includes
 #include <GRPC/CoordinatorRPCServer.hpp>
@@ -55,7 +55,7 @@ NesCoordinator::~NesCoordinator() {
 
 size_t NesCoordinator::getRandomPort(size_t base) {
     //TODO will be removed once the new network stack is in place
-    return base - 12 + time(0)*321*rand()%10000;
+    return base - 12 + time(0) * 321 * rand() % 10000;
 }
 
 /**
@@ -97,7 +97,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //Start RPC server that listen to calls form the clients
     std::promise<bool> promRPC;//promise to make sure we wait until the server is started
     rpcThread = std::make_shared<std::thread>(([&]() {
-      startCoordinatorRPCServer(rpcServer, address, promRPC);
+        startCoordinatorRPCServer(rpcServer, address, promRPC);
     }));
     promRPC.get_future().get();
     NES_DEBUG("WorkerActor::startCoordinatorRPCServer: ready");
@@ -109,19 +109,19 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
                                       serverIp,
                                       std::to_string(rpcPort + 1),
                                       NESNodeType::Worker);
-    wrk->start(/**blocking*/false, /**withConnect*/true);
+    wrk->start(/**blocking*/ false, /**withConnect*/ true);
 
     //Start rest that accepts quiers form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     std::promise<bool> promRest;
     std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this());
 
-//    restThread = ([&]() {
-//      startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
-//    });
+    //    restThread = ([&]() {
+    //      startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
+    //    });
 
     restThread = std::make_shared<std::thread>(([&]() {
-      startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
+        startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
     }));
 
     promRest.get_future().get();//promise to make sure we wait until the server is started
@@ -154,9 +154,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
         if (restThread->joinable()) {
             NES_DEBUG("NesCoordinator: join restThread");
             restThread->join();
-        }
-        else
-        {
+        } else {
             NES_WARNING("NesCoordinator: rest thread not joinable");
         }
 
@@ -165,9 +163,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
         if (rpcThread->joinable()) {
             NES_DEBUG("NesCoordinator: join rpcThread");
             rpcThread->join();
-        }
-        else
-        {
+        } else {
             NES_WARNING("NesCoordinator: rpc thread not joinable");
         }
 
@@ -239,7 +235,6 @@ string NesCoordinator::addQuery(const string queryString, const string strategy)
     }
 
     return queryId;
-
 }
 
 bool NesCoordinator::removeQuery(const string queryId) {
@@ -290,8 +285,7 @@ bool NesCoordinator::deployQuery(std::string queryId) {
 
     QueryDeployment& deployments = currentDeployments[queryId];
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine serialize " << x->first <<
-                                                                           " id=" << x->first->getId() << " eto="
+        NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId() << " eto="
                                                                            << x->second.toString());
         string serEto = SerializationTools::ser_eto(x->second);
         NES_DEBUG(
@@ -314,9 +308,8 @@ bool NesCoordinator::undeployQuery(std::string queryId) {
 
     QueryDeployment& deployments = currentDeployments[queryId];
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("CoordinatorActor::undeployQuery serialize " << x->first <<
-                                                                           " id=" << x->first->getId() << " eto="
-                                                                           << x->second.toString());
+        NES_DEBUG("CoordinatorActor::undeployQuery serialize " << x->first << " id=" << x->first->getId() << " eto="
+                                                               << x->second.toString());
         NES_DEBUG(
             "CoordinatorActor::undeployQuery " << queryId << " to " << x->first->getIp());
 
@@ -327,7 +320,8 @@ bool NesCoordinator::undeployQuery(std::string queryId) {
             NES_ERROR("NesCoordinator:undeployQuery: " << queryId << " to " << x->first->getIp() << "  failed");
             return false;
         }
-    }    return true;
+    }
+    return true;
 }
 
 bool NesCoordinator::startQuery(std::string queryId) {

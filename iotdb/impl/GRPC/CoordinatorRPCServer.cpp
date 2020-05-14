@@ -25,9 +25,9 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext* context, const Register
     NESTopologyManager::getInstance().printNESTopologyPlan();
 
     NES_DEBUG("Coordinator RPC: Register Node address=" << request->address()
-                                                   << " numberOfCpus=" << request->numberofcpus()
-                                                   << " nodeProperties=" << request->nodeproperties()
-                                                   << " type=" << request->type());
+                                                        << " numberOfCpus=" << request->numberofcpus()
+                                                        << " nodeProperties=" << request->nodeproperties()
+                                                        << " type=" << request->type());
 
     size_t id = getIdFromIp(request->address());
     PhysicalStreamConfig streamConf;
@@ -114,8 +114,8 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext* context,
 
     NES_DEBUG(
         "CoordinatorRPCServer::RegisterPhysicalStream: try to register physical stream with conf= "
-            << streamConf.toString() << " for workerId="
-            << request->id());
+        << streamConf.toString() << " for workerId="
+        << request->id());
 
     std::vector<NESTopologyEntryPtr> sensorNodes =
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -156,8 +156,9 @@ Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext* context,
 
     NES_DEBUG(
         "CoordinatorRPCServer::UnregisterPhysicalStream: try to remove physical "
-        "stream with name " << request->physicalstreamname() << " logical name "
-                            << request->logicalstreamname() << " workerId=" << request->id());
+        "stream with name "
+        << request->physicalstreamname() << " logical name "
+        << request->logicalstreamname() << " workerId=" << request->id());
 
     std::vector<NESTopologyEntryPtr> sensorNodes =
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -252,7 +253,6 @@ Status CoordinatorRPCServer::AddParent(ServerContext* context, const AddParentRe
 Status CoordinatorRPCServer::RemoveParent(ServerContext* context, const RemoveParentRequest* request,
                                           RemoveParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RemoveParent: request =" << request);
-
 
     bool success = coordinatorServicePtr->removeParentFromSensorNode(request->childid(),
                                                                      request->parentid());

@@ -12,7 +12,6 @@ using grpc::Status;
 
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
-
     CoordinatorRPCServer();
 
     Status RegisterNode(ServerContext* context, const RegisterNodeRequest* request,
@@ -41,5 +40,4 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
   private:
     NES::CoordinatorServicePtr coordinatorServicePtr;
-
 };

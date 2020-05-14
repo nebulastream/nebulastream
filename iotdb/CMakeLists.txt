@@ -103,60 +103,6 @@ add_custom_command(
 
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-#FetchContent_Declare(
-#        protobuf
-#        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf
-#        GIT_TAG        v3.10.0
-#)
-#FetchContent_MakeAvailable(protobuf)
-##find_package(Protobuf REQUIRED)
-
-#file(GLOB PROTOBUF_DEFINITION_FILES "${PROTOBUF_INPUT_DIRECTORY}/*.proto")
-
-
-#foreach(file ${PROTOBUF_DEFINITION_FILES})
-#     message("file" ${file})
-#
-#    set(${example}_SRCS ${example}.cc)
-#    set(${example}_PROTOS addressbook.proto)
-#
-#    #Code Generation
-#    if(protobuf_MODULE_COMPATIBLE) #Legacy Support
-#        protobuf_generate_cpp(${example}_PROTO_SRCS ${example}_PROTO_HDRS ${${example}_PROTOS})
-#        list(APPEND ${example}_SRCS ${${example}_PROTO_SRCS} ${${example}_PROTO_HDRS})
-#    endif()
-#endforeach()
-#include_directories(${Protobuf_INCLUDE_DIRS})
-##include_directories(${CMAKE_CURRENT_BINARY_DIR})
-##protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.proto)
-##protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS EXPORT_MACRO DLL_EXPORT ${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.proto)
-#protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS DESCRIPTORS PROTO_DESCS ${PROJECT_SOURCE_DIR}/impl/Proto/CoordinatorRPCService.proto)
-##
-#message(STATUS "Using protobuf ${Protobuf_VERSION}")
-#
-#message("_PROTOBUF_PROTOC=" << ${protobuf::protoc})
-#set(PROTOBUF_INPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/impl/Proto")
-#set(PROTOBUF_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/impl/Proto/")
-#file(GLOB PROTOBUF_DEFINITION_FILES "${PROTOBUF_INPUT_DIRECTORY}/*.proto")
-#message("PROTOBUF_DEFINITION_FILES=" "${PROTOBUF_DEFINITION_FILES}")
-#
-#foreach(file ${PROTOBUF_DEFINITION_FILES})
-#    set(PROTOBUF_ARGUMENTS "/usr/bin/protoc --proto_path=\"${PROTOBUF_INPUT_DIRECTORY}\" --cpp_out=\"${PROTOBUF_OUTPUT_DIRECTORY}\" \"${file}\"")
-#    message("PROTOBUF_ARGUMENTS" ${PROTOBUF_ARGUMENTS})
-##    add_custom_command(COMMAND ${PROTOBUF_ARGUMENTS})
-#    execute_process(COMMAND ${PROTOBUF_OUTPUT_DIRECTORY}
-#            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-#            RESULT_VARIABLE PROTOBUF_RESULT
-#            OUTPUT_VARIABLE PROTOBUF_OUTPUT_VARIABLE)
-#
-##
-##    execute_process(COMMAND ${PROTOBUF_OUTPUT_DIRECTORY}
-##            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-##            RESULT_VARIABLE PROTOBUF_RESULT
-##            OUTPUT_VARIABLE PROTOBUF_OUTPUT_VARIABLE)
-#endforeach()
-
-#file(GLOB PROTOBUF_MODELS_INCLUDES "Models/Proto/*.pb.cc" "Models/Proto/*.hpp")
 
 # ZMQ
 find_package(ZMQ REQUIRED)
@@ -276,7 +222,6 @@ get_header_iotdb(iotdb_HEADER_FILES)
 add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
 target_include_directories(iotdb PUBLIC "include")
 target_link_libraries(iotdb ${LIBRARIES} grpc++_reflection)
-#target_link_libraries(iotdb ${LIBRARIES} ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
 # Documentation
 add_subdirectory(docs)

@@ -1,10 +1,10 @@
 #ifndef INCLUDE_COMPONENTS_NESWORKER_HPP_
 #define INCLUDE_COMPONENTS_NESWORKER_HPP_
 
-#include <Topology/NESTopologyEntry.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <Topology/NESTopologyEntry.hpp>
 
 using namespace std;
 
@@ -13,16 +13,15 @@ class WorkerActor;
 typedef std::shared_ptr<WorkerActor> WorkerActorPtr;
 class NesWorker {
   public:
-
     /**
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
     NesWorker(std::string coordinatorIp,
-        std::string coordinatorPort,
-        std::string localWorkerIp,
-        std::string localWorkerPort,
-        NESNodeType type);
+              std::string coordinatorPort,
+              std::string localWorkerIp,
+              std::string localWorkerPort,
+              NESNodeType type);
 
     /**
      * @brief default dtor
@@ -123,12 +122,12 @@ class NesWorker {
     QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
     NodeEnginePtr getNodeEngine();
+
   private:
     size_t getRandomPort(size_t base);
 
     std::shared_ptr<grpc::Server> rpcServer;
     std::thread rpcThread;
-
 
     NodeEnginePtr nodeEngine;
     CoordinatorRPCClientPtr coordinatorRpcClient;

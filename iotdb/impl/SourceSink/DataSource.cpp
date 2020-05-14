@@ -7,10 +7,10 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <SourceSink/ZmqSource.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-#include <SourceSink/ZmqSource.hpp>
 
 #include <Util/ThreadBarrier.hpp>
 

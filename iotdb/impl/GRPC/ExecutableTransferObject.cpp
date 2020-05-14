@@ -21,8 +21,7 @@ ExecutableTransferObject::ExecutableTransferObject(string queryId,
     this->destinations = std::move(destinations);
     this->operatorTree = std::move(operatorTree);
 }
-ExecutableTransferObject::~ExecutableTransferObject()
-{
+ExecutableTransferObject::~ExecutableTransferObject() {
     NES_DEBUG("~ExecutableTransferObject()");
 }
 

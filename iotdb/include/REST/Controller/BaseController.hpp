@@ -82,7 +82,7 @@ class BaseController {
     void noContentImpl(const web::http::http_request& message) const;
     void badRequestImpl(const web::http::http_request& message, const web::json::value& detail) const;
 
-    void handleException(const web::http::http_request& message,const std::exception& exc);
+    void handleException(const web::http::http_request& message, const std::exception& exc);
     utility::string_t getPath(http_request& message);
 };
-}
+}// namespace NES

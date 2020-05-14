@@ -4,7 +4,9 @@
 #include <API/Config.hpp>
 #include <NodeEngine/NodeProperties.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <Util/SerializationTools.hpp>
 #include <iostream>
 #include <pthread.h>
 #include <string>
@@ -12,8 +14,6 @@
 #include <unordered_set>
 #include <vector>
 #include <zmq.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
-#include <Util/SerializationTools.hpp>
 
 using namespace std;
 namespace NES {

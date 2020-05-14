@@ -14,7 +14,6 @@ using grpc::Status;
 namespace NES {
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
-
     WorkerRPCServer(NodeEnginePtr nodeEngine);
 
     Status DeployQuery(ServerContext* context, const DeployQueryRequest* request,
@@ -35,9 +34,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     Status StopQuery(ServerContext* context, const StopQueryRequest* request,
                      StopQueryReply* reply) override;
 
-
   private:
     NodeEnginePtr nodeEngine;
-
 };
-}
+}// namespace NES
