@@ -16,12 +16,11 @@
 #include <Topology/NESTopologyWorkerNode.hpp>
 #include <Util/CPUCapacity.hpp>
 #include <Util/Logger.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 namespace NES {
 
-std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeByIp(std::string ip) {
-    assert(0);
-    return fGraphPtr->getVertexByIp(ip);
-}
 
 std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeById(size_t id) {
     return fGraphPtr->getVertexById(id);
@@ -119,10 +118,9 @@ std::string NESTopologyPlan::getTopologyPlanString() const {
 }
 
 size_t NESTopologyPlan::getNextFreeLinkId() {
-    while (fGraphPtr->hasLink(currentLinkId)) {
-        currentLinkId++;
-    }
-    return currentLinkId;
+    boost::uuids::basic_random_generator<boost::mt19937> gen;
+    boost::uuids::uuid u = gen();
+    return boost::uuids::hash_value(u);
 }
 
 NESTopologyGraphPtr NESTopologyPlan::getNESTopologyGraph() const {

@@ -138,6 +138,7 @@ void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecuti
     NES_DEBUG("BasePlacementStrategy: Get all edges in the Topology and iterate over all edges to identify the nodes"
               " that are not part of the execution graph.");
 
+    NES_DEBUG("BasePlacementStrategy::fillExecutionGraphWithTopologyInformation=" << nesTopologyPtr->getTopologyPlanString());
     for (NESTopologyLinkPtr nesLink : allEdges) {
 
         size_t srcId = nesLink->getSourceNode()->getId();
