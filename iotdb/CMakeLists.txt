@@ -104,9 +104,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # LibZMQ
 # ------
-
 message(STATUS "Libzmq")
-
 set(BUILD_SHARED ON CACHE BOOL "enable libzmq shared build" FORCE)
 set(BUILD_STATIC ON CACHE BOOL "enable libzmq static build" FORCE)
 set(WITH_DOC OFF CACHE BOOL "do not generate libzmq documentation" FORCE)
@@ -130,8 +128,6 @@ if(NOT libzmq_POPULATED)
 endif()
 
 # CppZMQ
-# ------cppzmq
-
 message(STATUS "Fetching cppzmq")
 
 set(CPPZMQ_BUILD_TESTS OFF CACHE BOOL "Don't build cppzmq tests" FORCE)
