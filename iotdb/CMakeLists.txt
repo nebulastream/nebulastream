@@ -111,8 +111,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 #else(ZMQ_FOUND)
 #    message(ERROR "ZMQ not found")
 #endif(ZMQ_FOUND)
-#include_directories(${ZMQ_INCLUDE_DIRS})
-#set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
+
 
 FetchContent_Declare(zmq
         URL https://github.com/zeromq/libzmq/releases/download/v4.3.2/zeromq-4.3.2.zip
@@ -127,6 +126,8 @@ if(NOT zmq_POPULATED)
     endif()
     add_subdirectory(${zmq_SOURCE_DIR} ${zmq_BINARY_DIR})
 endif()
+include_directories(${ZMQ_INCLUDE_DIRS})
+set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
 
 # Log4cc
 find_package(Log4cxx REQUIRED)
