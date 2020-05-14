@@ -116,8 +116,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 FetchContent_Declare(zmq
         URL https://github.com/zeromq/libzmq/releases/download/v4.3.2/zeromq-4.3.2.zip
         URL_HASH SHA256=d01517983ded9ff1b6c40f8206fc2b44ac96157a5aea7b974e8b0079547edfda)
-
-#FetchContent_MakeAvailable(zmq)
+FetchContent_MakeAvailable(zmq)
 
 FetchContent_GetProperties(zmq)
 if(NOT zmq_POPULATED)
