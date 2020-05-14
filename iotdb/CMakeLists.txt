@@ -132,7 +132,7 @@ endif()
 include_directories(${ZMQ_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
 message("lib=" ${LIBRARIES})
-message("zlib=" ${ZMQ_LIBRARIES})
+message("zlib=" ${zmq_libraries})
 
 set(LIBRARIES ${LIBRARIES} libzmq-static)
 
