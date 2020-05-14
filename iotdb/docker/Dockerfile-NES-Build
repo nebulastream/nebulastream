@@ -7,11 +7,6 @@ RUN apt-get update && apt-get install -y \
   llvm-dev \
   binutils-dev \
   libdw-dev \
-  libzmq3-dev \
-  libzmq5 \
-  libczmq-dev \
-  libzmqpp-dev \
-  libzmqpp4 \
   libboost-all-dev \
   liblog4cxx-dev \
   libcpprest-dev \
@@ -40,3 +35,4 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2
 ADD ./scripts/entrypoint-nes-build.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
+
