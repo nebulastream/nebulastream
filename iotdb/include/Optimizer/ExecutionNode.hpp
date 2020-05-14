@@ -21,7 +21,7 @@ class ExecutionNode {
 
     ExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode, OperatorPtr rootOperator);
 
-    int getId() { return this->id; };
+    size_t getId() { return this->id; };
 
     std::string getOperatorName() {
         return this->operatorName;

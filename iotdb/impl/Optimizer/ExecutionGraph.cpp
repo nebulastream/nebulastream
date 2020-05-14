@@ -1,6 +1,6 @@
 #include <Optimizer/ExecutionGraph.hpp>
 #include <boost/graph/graphviz.hpp>
-
+#include <Util/Logger.hpp>
 using namespace NES;
 
 ExecutionNodePtr ExecutionGraph::getRoot() {
@@ -15,7 +15,7 @@ ExecutionNodePtr ExecutionGraph::getRoot() {
     return nullptr;
 };
 
-bool ExecutionGraph::hasVertex(int search_id) const {
+bool ExecutionGraph::hasVertex(size_t search_id) const {
     // build vertex iterator
     executionVertex_iterator vertex, vertex_end, next_vertex;
     boost::tie(vertex, vertex_end) = vertices(graph);
@@ -60,7 +60,7 @@ std::vector<ExecutionVertex> ExecutionGraph::getAllVertex() const {
     return result;
 }
 
-bool ExecutionGraph::removeVertex(int search_id) {
+bool ExecutionGraph::removeVertex(size_t search_id) {
     // does graph contain vertex?
     if (hasVertex(search_id)) {
         remove_vertex(getVertex(search_id), graph);
@@ -70,7 +70,7 @@ bool ExecutionGraph::removeVertex(int search_id) {
     return false;
 };
 
-const executionVertex_t ExecutionGraph::getVertex(int search_id) const {
+const executionVertex_t ExecutionGraph::getVertex(size_t search_id) const {
     assert(hasVertex(search_id));
 
     // build vertex iterator
@@ -91,7 +91,7 @@ const executionVertex_t ExecutionGraph::getVertex(int search_id) const {
     return executionVertex_t();
 };
 
-const ExecutionNodePtr ExecutionGraph::getNode(int search_id) const {
+const ExecutionNodePtr ExecutionGraph::getNode(size_t search_id) const {
     // build vertex iterator
     executionVertex_iterator vertex, vertex_end, next_vertex;
     boost::tie(vertex, vertex_end) = vertices(graph);
@@ -140,7 +140,7 @@ bool ExecutionGraph::hasLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destN
     return false;
 };
 
-const ExecutionEdge* ExecutionGraph::getEdge(int search_id) const {
+const ExecutionEdge* ExecutionGraph::getEdge(size_t search_id) const {
     // build edge iterator
     executionEdge_iterator edge, edge_end, next_edge;
     boost::tie(edge, edge_end) = edges(graph);
@@ -175,7 +175,7 @@ std::vector<ExecutionEdge> ExecutionGraph::getAllEdges() const {
     return result;
 }
 
-bool ExecutionGraph::hasEdge(int search_id) const {
+bool ExecutionGraph::hasEdge(size_t search_id) const {
     // edge found
     if (getEdge(search_id) != nullptr) {
         return true;
@@ -188,16 +188,19 @@ bool ExecutionGraph::hasEdge(int search_id) const {
 bool ExecutionGraph::addEdge(ExecutionNodeLinkPtr ptr) {
     // link id is already in graph
     if (hasEdge(ptr->getLinkId())) {
+        NES_ERROR("ExecutionGraph::addEdge: link id ");
         return false;
     }
 
     // there is already a link between those two vertices
     if (hasLink(ptr->getSource(), ptr->getDestination())) {
+        NES_ERROR("ExecutionGraph::addEdge: there is already a link between those two vertices");
         return false;
     }
 
     // check if vertices are in graph
     if (!hasVertex(ptr->getSource()->getId()) || !hasVertex(ptr->getDestination()->getId())) {
+        NES_ERROR("ExecutionGraph::addEdge: vertices are not in the graph");
         return false;
     }
 

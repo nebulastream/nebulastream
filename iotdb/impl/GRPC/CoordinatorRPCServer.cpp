@@ -56,21 +56,22 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext* context, const Unregi
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
             request->id());
 
-    size_t cnt = 0;
+    
+    size_t numberOfOccurrences = 0;
 
     NESTopologyEntryPtr sensorNode;
     for (auto e : sensorNodes) {
         if (e->getEntryType() != Coordinator) {
             sensorNode = e;
-            cnt++;
+            numberOfOccurrences++;
         }
     }
-    if (cnt > 1) {
+    if (numberOfOccurrences > 1) {
         NES_ERROR(
             "CoordinatorRPCServer::UnregisterNode: more than one worker node found with id " << request->id()
-                                                                                             << " cnt=" << cnt);
+                                                                                             << " numberOfOccurrences=" << numberOfOccurrences);
         throw Exception("node is ambitious");
-    } else if (cnt == 0) {
+    } else if (numberOfOccurrences == 0) {
         NES_ERROR("CoordinatorActor: node with id not found " << request->id());
         throw Exception("node not found");
     }

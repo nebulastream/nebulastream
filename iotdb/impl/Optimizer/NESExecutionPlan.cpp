@@ -26,11 +26,11 @@ ExecutionNodePtr NESExecutionPlan::createExecutionNode(std::string operatorName,
     return ptr;
 };
 
-bool NESExecutionPlan::hasVertex(int searchId) {
+bool NESExecutionPlan::hasVertex(size_t searchId) {
     return exeGraphPtr->hasVertex(searchId);
 }
 
-ExecutionNodePtr NESExecutionPlan::getExecutionNode(int searchId) {
+ExecutionNodePtr NESExecutionPlan::getExecutionNode(size_t searchId) {
     return exeGraphPtr->getNode(searchId);
 }
 
@@ -69,8 +69,8 @@ json::value NESExecutionPlan::getExecutionGraphAsJson() const {
         const std::string& operatorName = executionNodePtr->getOperatorName();
         const std::string nodeType = executionNodePtr->getNESNode()->getEntryTypeString();
 
-        int cpuCapacity = vertex.ptr->getNESNode()->getCpuCapacity();
-        int remainingCapacity = vertex.ptr->getNESNode()->getRemainingCpuCapacity();
+        size_t cpuCapacity = vertex.ptr->getNESNode()->getCpuCapacity();
+        size_t remainingCapacity = vertex.ptr->getNESNode()->getRemainingCpuCapacity();
 
         vertexInfo["id"] = json::value::string(id);
         vertexInfo["capacity"] = json::value::string(std::to_string(cpuCapacity));
@@ -157,7 +157,7 @@ void NESExecutionPlan::freeResources() {
             NES_INFO(
                 "NESEXECUTIONPLAN: Capacity before-" << v.ptr->getNESNode()->getId() << "->"
                                                      << v.ptr->getNESNode()->getRemainingCpuCapacity());
-            int usedCapacity = v.ptr->getNESNode()->getCpuCapacity()
+            size_t usedCapacity = v.ptr->getNESNode()->getCpuCapacity()
                 - v.ptr->getNESNode()->getRemainingCpuCapacity();
             v.ptr->getNESNode()->increaseCpuCapacity(usedCapacity);
             NES_INFO(

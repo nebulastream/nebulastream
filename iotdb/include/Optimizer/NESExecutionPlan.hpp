@@ -80,14 +80,14 @@ class NESExecutionPlan {
    * @param id of the vertex
    * @return bool indicating existence
    */
-  bool hasVertex(int searchId);
+  bool hasVertex(size_t searchId);
 
   /**
    * @brief method to get a execution ode
    * @param id of the node
    * @return ptr to the execution node
    */
-  ExecutionNodePtr getExecutionNode(int searchId);
+  ExecutionNodePtr getExecutionNode(size_t searchId);
 
   /**
    * @brief method to get the execution graph as a json object

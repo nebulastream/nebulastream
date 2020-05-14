@@ -55,6 +55,7 @@ NESTopologyWorkerNodePtr NESTopologyPlan::createNESWorkerNode(
 
 NESTopologySensorNodePtr NESTopologyPlan::createNESSensorNode(
     size_t id, std::string ip, CPUCapacity cpuCapacity) {
+    NES_DEBUG("NESTopologyPlan::createNESSensorNode: id=" << id << " ip=" << ip);
     // create sensor node
     auto ptr = std::make_shared<NESTopologySensorNode>(id, ip);
     ptr->setCpuCapacity(cpuCapacity);
@@ -80,10 +81,17 @@ NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(
     NESTopologyEntryPtr pSourceNode, NESTopologyEntryPtr pDestNode,
     size_t pLinkCapacity, size_t pLinkLatency) {
 
+    NES_DEBUG("NESTopologyPlan::createNESTopologyLink: "
+                  << " sourceip=" << pSourceNode->getIp()
+                  << " sourceid=" << pSourceNode->getId()
+                  << " destip=" << pDestNode->getIp()
+                  << " destid=" << pDestNode->getId());
+
     // check if link already exists
     if (fGraphPtr->hasLink(pSourceNode, pDestNode)) {
         // return already existing link
-        NES_DEBUG("NESTopologyPlan::createNESTopologyLink: link between " << pSourceNode << " and " << pDestNode << " already exists");
+        NES_DEBUG("NESTopologyPlan::createNESTopologyLink: link between " << pSourceNode << " and " << pDestNode
+                                                                          << " already exists");
         return fGraphPtr->getLink(pSourceNode, pDestNode);
     }
 
@@ -98,7 +106,8 @@ NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(
         NES_ERROR("NESTopologyPlan: could not add node");
         return nullptr;
     }
-    return linkPtr;
+    return
+        linkPtr;
 }
 
 bool NESTopologyPlan::removeNESTopologyLink(NESTopologyLinkPtr linkPtr) {

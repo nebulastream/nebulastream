@@ -41,7 +41,6 @@ class QueryCatalogServiceTest : public testing::Test {
         CoordinatorService::getInstance();
     coordinatorServicePtr->clearQueryCatalogs();
     for (int i = 1; i < 5; i++) {
-      //FIXME: add node properties
       PhysicalStreamConfig streamConf;
         std::string address = ip + ":" + std::to_string(publish_port);
       auto entry = coordinatorServicePtr->registerNode(i, address, 2, "",

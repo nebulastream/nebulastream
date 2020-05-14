@@ -90,6 +90,7 @@ class ZmqSource : public DataSource {
      * serialization/deserialization process
      */
     friend class boost::serialization::access;
+    friend class DataSource;
     template<class Archive>
     void serialize(Archive& ar,
                    const unsigned int version) {

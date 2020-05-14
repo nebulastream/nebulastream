@@ -24,6 +24,7 @@ NesCoordinator::NesCoordinator() {
 
     queryCatalogServicePtr = QueryCatalogService::getInstance();
     streamCatalogServicePtr = StreamCatalogService::getInstance();
+    StreamCatalog::instance();
     coordinatorServicePtr = CoordinatorService::getInstance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
 }
@@ -116,10 +117,6 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     std::promise<bool> promRest;
     std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this());
 
-    //    restThread = ([&]() {
-    //      startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
-    //    });
-
     restThread = std::make_shared<std::thread>(([&]() {
         startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
     }));
@@ -150,12 +147,14 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
             throw Exception("Error while stopping NesCoordinator");
         }
+
         NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
         if (restThread->joinable()) {
             NES_DEBUG("NesCoordinator: join restThread");
             restThread->join();
         } else {
-            NES_WARNING("NesCoordinator: rest thread not joinable");
+            NES_ERROR("NesCoordinator: rest thread not joinable");
+            throw Exception("Error while stopping restThread->join");
         }
 
         NES_DEBUG("NesCoordinator: stopping rpc server");
@@ -164,7 +163,8 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_DEBUG("NesCoordinator: join rpcThread");
             rpcThread->join();
         } else {
-            NES_WARNING("NesCoordinator: rpc thread not joinable");
+            NES_ERROR("NesCoordinator: rpc thread not joinable");
+            throw Exception("Error while stopping thread->join");
         }
 
         bool successShutdownWorker = worker->stop(force);
