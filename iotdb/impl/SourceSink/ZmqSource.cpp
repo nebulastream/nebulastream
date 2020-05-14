@@ -135,7 +135,7 @@ bool ZmqSource::connect() {
 bool ZmqSource::disconnect() {
     NES_DEBUG("ZmqSource::disconnect() connected=" << connected);
     if (connected) {
-//        context.shutdown();//TODO activate with new zmq version
+        context.shutdown();
         connected = false;
     }
     if (!connected) {

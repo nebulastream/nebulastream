@@ -55,8 +55,6 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/grpc/grpc
         GIT_TAG v1.28.0
 )
-
-set(FETCHCONTENT_QUIET OFF)
 FetchContent_MakeAvailable(gRPC)
 
 # Since FetchContent uses add_subdirectory under the hood, we can use
@@ -104,36 +102,52 @@ add_custom_command(
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
-# ZMQ
-#find_package(ZMQ REQUIRED)
-#if(ZMQ_FOUND)
-#    message(STATUS "ZMQ found ${ZMQ_INCLUDE_DIRS}")
-#else(ZMQ_FOUND)
-#    message(ERROR "ZMQ not found")
-#endif(ZMQ_FOUND)
+# LibZMQ
+# ------
 
+message(STATUS "Libzmq")
 
-FetchContent_Declare(zmq
-        URL https://github.com/zeromq/libzmq/releases/download/v4.3.2/zeromq-4.3.2.zip
-        URL_HASH SHA256=d01517983ded9ff1b6c40f8206fc2b44ac96157a5aea7b974e8b0079547edfda)
-FetchContent_MakeAvailable(zmq)
+set(BUILD_SHARED ON CACHE BOOL "enable libzmq shared build" FORCE)
+set(BUILD_STATIC ON CACHE BOOL "enable libzmq static build" FORCE)
+set(WITH_DOC OFF CACHE BOOL "do not generate libzmq documentation" FORCE)
+set(BUILD_TESTS OFF CACHE BOFFOOL "do not build libzmq tests" FORCE)
 
-FetchContent_GetProperties(zmq)
-if(NOT zmq_POPULATED)
-    FetchContent_Populate(zmq)
-    if(POLICY CMP0077)  # Avoid building shared library and tests on CMake 3.13+
-        cmake_policy(SET CMP0077 NEW)
-        set(BUILD_SHARED OFF CACHE BOOL "")
-        set(BUILD_TESTS OFF CACHE BOOL "")
-    endif()
-    add_subdirectory(${zmq_SOURCE_DIR} ${zmq_BINARY_DIR})
+if(WIN32)
+    set(WITH_LIBSODIUM OFF CACHE BOOL "do not use libsodium in zeromq" FORCE)
 endif()
-include_directories(${ZMQ_INCLUDE_DIRS})
-set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
-message("lib=" ${LIBRARIES})
-message("zlib=" ${zmq_libraries})
 
-set(LIBRARIES ${LIBRARIES} libzmq-static)
+FetchContent_Declare(
+        libzmq
+        GIT_REPOSITORY https://github.com/zeromq/libzmq
+        GIT_TAG ${ZEROMQ_GIT_TAG}
+)
+FetchContent_MakeAvailable(libzmq)
+FetchContent_GetProperties(libzmq)
+
+if(NOT libzmq_POPULATED)
+    FetchContent_Populate(libzmq)
+    add_subdirectory(${libzmq_SOURCE_DIR} ${libzmq_BINARY_DIR})
+endif()
+
+# CppZMQ
+# ------cppzmq
+
+message(STATUS "Fetching cppzmq")
+
+set(CPPZMQ_BUILD_TESTS OFF CACHE BOOL "Don't build cppzmq tests" FORCE)
+
+FetchContent_Declare(
+        cppzmq
+        GIT_REPOSITORY https://github.com/zeromq/cppzmq
+        GIT_TAG ${CPPZMQ_GIT_TAG}
+)
+FetchContent_MakeAvailable(cppzmq)
+FetchContent_GetProperties(cppzmq)
+
+if(NOT cppzmq_POPULATED)
+    FetchContent_Populate(cppzmq)
+    add_subdirectory(${cppzmq_SOURCE_DIR} ${cppzmq_BINARY_DIR})
+endif()
 
 
 # Log4cc
@@ -183,8 +197,8 @@ find_package(cpprestsdk REQUIRED)
 set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest)
 
 # Library containing actor framework
-find_package(CAF COMPONENTS core io)
-set(LIBRARIES ${LIBRARIES} ${CAF_EXTRA_LDFLAGS} ${CAF_LIBRARIES} ${PTHREAD_LIBRARIES})
+#find_package(CAF COMPONENTS core io)
+#set(LIBRARIES ${LIBRARIES} ${CAF_EXTRA_LDFLAGS} ${CAF_LIBRARIES} ${PTHREAD_LIBRARIES})
 
 # Library containing Kafka client
 find_package(CppKafka REQUIRED)
@@ -243,7 +257,7 @@ get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
 add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
 target_include_directories(iotdb PUBLIC "include")
-target_link_libraries(iotdb ${LIBRARIES} grpc++_reflection)
+target_link_libraries(iotdb ${LIBRARIES} grpc++_reflection cppzmq)
 
 # Documentation
 add_subdirectory(docs)
