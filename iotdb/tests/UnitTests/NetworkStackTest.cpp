@@ -158,8 +158,9 @@ TEST_F(NetworkStackTest, registerChannelWithActors) {
 
     string query = "InputQuery::from(default_logical).print(std::cout);";
 
-    crd->addQuery(query, "BottomUp");
+    std::string queryId = crd->addQuery(query, "BottomUp");
     sleep(2);
+    crd->removeQuery(queryId);
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);

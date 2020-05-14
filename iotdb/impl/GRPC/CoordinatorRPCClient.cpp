@@ -201,7 +201,7 @@ bool CoordinatorRPCClient::registerNode(std::string localAddress,
                                         NESNodeType type,
                                         string nodeProperties) {
     if (type == NESNodeType::Sensor) {
-        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor");
+        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
     } else if (type == NESNodeType::Worker) {
         NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a worker");
     } else {
@@ -212,7 +212,8 @@ bool CoordinatorRPCClient::registerNode(std::string localAddress,
     RegisterNodeRequest request;
     request.set_address(localAddress);
     request.set_numberofcpus(numberOfCpus);
-    request.set_nodeproperties(nodeProperties);
+    //TODO Enable
+//    request.set_nodeproperties(nodeProperties);
     request.set_type(type);
     NES_DEBUG("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
 

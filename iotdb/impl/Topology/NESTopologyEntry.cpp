@@ -54,7 +54,7 @@ uint16_t NESTopologyEntry::getReceivePort() {
 }
 
 uint16_t NESTopologyEntry::getNextFreeReceivePort() {
-    receive_port = receive_port - 12 + time(0) * 321 * rand() % 10000 + 1024;
+    receive_port = (receive_port + 12123123 + time(0) * 321 * rand() % 65535) + 1024;
     return receive_port;
 }
 

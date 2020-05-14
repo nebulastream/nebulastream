@@ -14,7 +14,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
-#include <Actors/ExecutableTransferObject.hpp>
+#include <GRPC/ExecutableTransferObject.hpp>
 #include <Services/OptimizerService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>

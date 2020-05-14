@@ -259,7 +259,6 @@ vector<DataSourcePtr> CoordinatorService::getSources(const string& queryId,
         BufferManagerPtr bPtr;
         QueryManagerPtr disPtr;
         source = createZmqSource(schema, bPtr, disPtr, kRootNode->getIp(), assign_port(queryId));
-        //        assert(0);
     }
     out.emplace_back(source);
     return out;
