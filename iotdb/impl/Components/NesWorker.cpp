@@ -41,11 +41,6 @@ bool NesWorker::setWithParent(std::string parentId) {
     return true;
 }
 
-size_t NesWorker::getRandomPort(size_t base) {
-    //TODO will be removed once the new network stack is in place
-    return base - 12 + time(0) * 321 * rand() % 10000;
-}
-
 void startWorkerRPCServer(std::shared_ptr<Server>& rpcServer, std::string address, NodeEnginePtr nodeEngine, std::promise<bool>& prom) {
     NES_DEBUG("startWorkerRPCServer");
 
@@ -150,16 +145,13 @@ bool NesWorker::stop(bool force) {
 }
 
 bool NesWorker::connect() {
+    std::string address = coordinatorIp + ":" + coordinatorPort;
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(
-        coordinatorIp,
-        coordinatorPort,
-        localWorkerIp,
-        localWorkerPort,
-        2,
-        this->type,
-        nodeEngine->getNodePropertiesAsString());
+        address);
 
-    bool successPRCRegister = coordinatorRpcClient->registerNode();
+    std::string localAddress = localWorkerIp + ":" + localWorkerPort;
+    bool successPRCRegister = coordinatorRpcClient->registerNode(localAddress, 2,
+        type, nodeEngine->getNodePropertiesAsString());
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         return true;
@@ -170,9 +162,9 @@ bool NesWorker::connect() {
 }
 
 bool NesWorker::disconnect() {
-    bool success = coordinatorRpcClient->disconnecting();
-    NES_DEBUG("NesWorker::disconnect success=" << success);
-    return success;
+    //TODO: check if we have to close the channel manually
+    NES_DEBUG("NesWorker::disconnect()");
+    return true;
 }
 
 bool NesWorker::registerLogicalStream(std::string name, std::string path) {

@@ -326,7 +326,6 @@ int CoordinatorService::assign_port(const string& queryId) {
         const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
                                                   .getRootNode();
         uint16_t kFreeZmqPort = kRootNode->getNextFreeReceivePort();
-        kFreeZmqPort = kFreeZmqPort - 12 + time(0) * 321 * rand() % 10000 + 1024;
         this->queryToPort.insert({queryId, kFreeZmqPort});
         NES_DEBUG("CoordinatorService::assign_port create a new port for query id=" << queryId << " port=" << kFreeZmqPort);
         return kFreeZmqPort;

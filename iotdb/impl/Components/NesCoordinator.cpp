@@ -104,12 +104,12 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
 
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    wrk = std::make_shared<NesWorker>(serverIp,
-                                      std::to_string(rpcPort),
-                                      serverIp,
-                                      std::to_string(rpcPort + 1),
-                                      NESNodeType::Worker);
-    wrk->start(/**blocking*/ false, /**withConnect*/ true);
+    worker = std::make_shared<NesWorker>(serverIp,
+                                         std::to_string(rpcPort),
+                                         serverIp,
+                                         std::to_string(rpcPort + 1),
+                                         NESNodeType::Worker);
+    worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //Start rest that accepts quiers form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
@@ -167,7 +167,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_WARNING("NesCoordinator: rpc thread not joinable");
         }
 
-        bool successShutdownWorker = wrk->stop(force);
+        bool successShutdownWorker = worker->stop(force);
         if (!successShutdownWorker) {
             NES_ERROR("NesCoordinator::stop node engine stop not successful");
             throw Exception("NesCoordinator::stop error while stopping node engine");
@@ -188,7 +188,7 @@ void NesCoordinator::setServerIp(std::string serverIp) {
 }
 
 QueryStatisticsPtr NesCoordinator::getQueryStatistics(std::string queryId) {
-    return wrk->getNodeEngine()->getQueryStatistics(queryId);
+    return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
 
 string NesCoordinator::addQuery(const string queryString, const string strategy) {

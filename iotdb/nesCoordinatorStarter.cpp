@@ -31,7 +31,6 @@ int main(int argc, const char* argv[]) {
     cout << logo << endl;
 
     CoordinatorRPCServer();
-    //    RunServer();
 
     // Initializing defaults
     uint16_t restPort = 8081;

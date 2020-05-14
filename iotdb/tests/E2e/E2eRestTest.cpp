@@ -35,7 +35,7 @@ class E2eRestTest : public testing::Test {
     }
 
     static void TearDownTestCase() {
-        std::cout << "Tear d own ActorCoordinatorWorkerTest test class."
+        std::cout << "Tear down ActorCoordinatorWorkerTest test class."
                   << std::endl;
     }
 };

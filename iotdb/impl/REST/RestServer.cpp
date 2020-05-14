@@ -45,7 +45,6 @@ bool RestServer::start() {
 bool RestServer::stop() {
     NES_DEBUG("RestServer::stop");
     InterruptHandler::handleUserInterrupt(SIGINT);
-    //    server.shutdown().wait();
     return true;
 }
 

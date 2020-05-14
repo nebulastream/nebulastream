@@ -14,13 +14,10 @@ bool WorkerRPCClient::deployQuery(std::string address, std::string executableTra
     request.set_eto(executableTransferObject);
 
     DeployQueryReply reply;
-
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
     Status status = workerStub->DeployQuery(&context, request, &reply);
 
     if (status.ok()) {
@@ -43,13 +40,10 @@ bool WorkerRPCClient::undeployQuery(std::string address, std::string queryId) {
     request.set_queryid(queryId);
 
     UndeployQueryReply reply;
-
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
     Status status = workerStub->UndeployQuery(&context, request, &reply);
 
     if (status.ok()) {
@@ -72,13 +66,10 @@ bool WorkerRPCClient::registerQuery(std::string address, std::string executableT
     request.set_eto(executableTransferObject);
 
     RegisterQueryReply reply;
-
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
     Status status = workerStub->RegisterQuery(&context, request, &reply);
 
     if (status.ok()) {
@@ -101,13 +92,10 @@ bool WorkerRPCClient::unregisterQuery(std::string address, std::string queryId) 
     request.set_queryid(queryId);
 
     UnregisterQueryReply reply;
-
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
     Status status = workerStub->UnregisterQuery(&context, request, &reply);
 
     if (status.ok()) {
@@ -130,13 +118,10 @@ bool WorkerRPCClient::startQuery(std::string address, std::string queryId) {
     request.set_queryid(queryId);
 
     StartQueryReply reply;
-
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
     Status status = workerStub->StartQuery(&context, request, &reply);
 
     if (status.ok()) {
@@ -159,13 +144,10 @@ bool WorkerRPCClient::stopQuery(std::string address, std::string queryId) {
     request.set_queryid(queryId);
 
     StopQueryReply reply;
-
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
     Status status = workerStub->StopQuery(&context, request, &reply);
 
     if (status.ok()) {
