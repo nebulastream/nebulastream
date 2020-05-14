@@ -302,7 +302,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
       }
     }).wait();
     cout << "before sleep" << endl;
-    sleep(10);
+    sleep(5);
     cout << "after sleep" << endl;
     std::cout << "try to acc return" << std::endl;
 
