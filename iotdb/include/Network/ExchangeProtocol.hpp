@@ -10,10 +10,10 @@ namespace Network {
 class ExchangeProtocol {
   public:
     explicit ExchangeProtocol(std::function<void(uint64_t*, TupleBuffer)>&& onDataBuffer,
-                              std::function<void()>&& onEndOfStream,
-                              std::function<void(std::exception_ptr)>&& onException) : onDataBufferCb(std::move(onDataBuffer)),
-                                                                                       onEndOfStreamCb(std::move(onEndOfStream)),
-                                                                                       onExceptionCb(std::move(onException)) {
+                              std::function<void(NesPartition)>&& onEndOfStream,
+                              std::function<void(Messages::ErroMessage)>&& onException) : onDataBufferCb(std::move(onDataBuffer)),
+                                                                                          onEndOfStreamCb(std::move(onEndOfStream)),
+                                                                                          onExceptionCb(std::move(onException)) {
     }
 
     /**
@@ -42,21 +42,22 @@ class ExchangeProtocol {
      *
      * @param ex
      */
-    void onError(std::exception_ptr ex) {
-        onExceptionCb(ex);
+    Messages::ErroMessage onError(const Messages::ErroMessage error) {
+        onExceptionCb(error);
+        return error;
     }
 
     /**
      *
      */
-    void onEndOfStream() {
-        onEndOfStreamCb();
+    void onEndOfStream(NesPartition subpartition) {
+        onEndOfStreamCb(subpartition);
     }
 
   private:
     std::function<void(uint64_t*, TupleBuffer)> onDataBufferCb;
-    std::function<void()> onEndOfStreamCb;
-    std::function<void(std::exception_ptr)> onExceptionCb;
+    std::function<void(NesPartition subpartition)> onEndOfStreamCb;
+    std::function<void(Messages::ErroMessage)> onExceptionCb;
 };
 
 }// namespace Network

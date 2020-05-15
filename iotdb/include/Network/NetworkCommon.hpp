@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <zmq.hpp>
+#include <tuple>
 
 namespace NES {
 namespace Network {
@@ -15,6 +16,66 @@ using SubpartitionId = uint64_t;
 using PartitionId = uint64_t;
 using OperatorId = uint64_t;
 using QueryId = uint64_t;
+
+class NesPartition {
+  public:
+    explicit NesPartition(QueryId queryId,
+                          OperatorId operatorId,
+                          PartitionId partitionId,
+                          SubpartitionId subpartitionId) : queryId(queryId),
+                                                           operatorId(operatorId),
+                                                           partitionId(partitionId),
+                                                           subpartitionId(subpartitionId) {}
+    /**
+     * @brief getter for the queryId
+     * @return the queryId
+     */
+    QueryId getQueryId() const {
+        return queryId;
+    }
+
+    /**
+     * @brief getter for the operatorId
+     * @return the operatorId
+     */
+    OperatorId getOperatorId() const {
+        return operatorId;
+    }
+
+    /**
+     * @brief getter for the partitionId
+     * @return the partitionId
+     */
+    PartitionId getPartitionId() const {
+        return partitionId;
+    }
+
+    /**
+     * @brief getter for the getSubpartitionId
+     * @return the subpartitionId
+     */
+    SubpartitionId getSubpartitionId() const {
+        return subpartitionId;
+    }
+
+    const std::string toString() {
+        return std::to_string(queryId) + "::" + std::to_string(operatorId) + "::"
+            + std::to_string(partitionId) + "::" + std::to_string(subpartitionId);
+    }
+
+    bool operator==(const NesPartition& rhs) const {
+        return queryId == rhs.queryId &&
+            operatorId == rhs.operatorId &&
+            partitionId == rhs.partitionId &&
+            subpartitionId == rhs.subpartitionId;
+    }
+
+  private:
+    const QueryId queryId;
+    const OperatorId operatorId;
+    const PartitionId partitionId;
+    const SubpartitionId subpartitionId;
+};
 
 class NodeLocation {
   private:
@@ -45,5 +106,22 @@ class NodeLocation {
 };
 }// namespace Network
 }// namespace NES
+
+// this is required to add the hashing function for NesPartition to std namespace
+namespace std {
+template<>
+struct hash<NES::Network::NesPartition> {
+    std::size_t operator()(const NES::Network::NesPartition& k) const {
+        using std::hash;
+
+        // Compute individual hash values and combine them using XOR and bit shifting:
+        return ((hash<uint64_t>()(k.getQueryId())
+            ^ (hash<uint64_t>()(k.getOperatorId()) << 1)) >> 1)
+            ^ ((hash<uint64_t>()(k.getPartitionId())
+                ^ (hash<uint64_t>()(k.getSubpartitionId()) << 1)) >> 1);
+    }
+};
+
+}
 
 #endif//NES_NETWORKCOMMON_HPP

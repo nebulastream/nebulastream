@@ -3,6 +3,7 @@
 
 #include <Network/NetworkMessage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <Network/ExchangeProtocol.hpp>
 #include <boost/core/noncopyable.hpp>
 #include <iostream>
 #include <memory>
@@ -22,13 +23,16 @@ class OutputChannel : public boost::noncopyable {
         OperatorId operatorId,
         PartitionId partitionId,
         SubpartitionId subpartitionId,
-        const std::string& address)
+        const std::string& address,
+        std::function<void(Messages::ErroMessage)>&& onError)
         : zmqSocket(*zmqContext, ZMQ_DEALER),
           queryId(queryId),
           operatorId(operatorId),
           partitionId(partitionId),
           subpartitionId(subpartitionId),
-          isClosed(false) {
+          isClosed(false),
+          ready(false),
+          onErrorCb(std::move(onError)){
         init(address);
     }
 
@@ -40,14 +44,30 @@ class OutputChannel : public boost::noncopyable {
     void init(const std::string& socketAddr);
 
   public:
-    void sendBuffer(TupleBuffer& inputBuffer);
+    /**
+     * @brief Send buffer to the destination zmqContext defined in the constructor.
+     * @param the inputBuffer
+     * @return true if send was successfull, else false
+     */
+    bool sendBuffer(TupleBuffer& inputBuffer);
 
-    void onError(/** error info **/);
+    /**
+     * @brief Method to handle the error
+     * @param the error message
+     */
+    void onError(Messages::ErroMessage& errorMsg);
 
     /**
      * Close the outchannel and send EndOfStream message to consumer
      */
     void close();
+
+    /**
+     * @brief Returns true, if the registration to the server was successful and the OutputChannel can seamlessly send
+     * data to the server.
+     * @return true if registration was successful, else false
+     */
+    bool isReady();
 
   private:
     zmq::socket_t zmqSocket;
@@ -57,7 +77,11 @@ class OutputChannel : public boost::noncopyable {
     const SubpartitionId subpartitionId;
 
     bool isClosed;
+    bool ready;
+
+    std::function<void(Messages::ErroMessage)> onErrorCb;
 };
+
 }// namespace Network
 }// namespace NES
 

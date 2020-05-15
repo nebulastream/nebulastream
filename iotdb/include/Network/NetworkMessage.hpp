@@ -3,6 +3,7 @@
 
 #include <Network/NetworkCommon.hpp>
 #include <cstdint>
+#include <utility>
 
 namespace NES {
 namespace Network {
@@ -11,11 +12,18 @@ namespace Messages {
 using nes_magic_number_t = uint64_t;
 static constexpr nes_magic_number_t NES_NETWORK_MAGIC_NUMBER = 0xBADC0FFEE;
 
-enum MessageType { ClientAnnouncement,
-                   ServerReady,
-                   DataBuffer,
-                   ErrorMessage,
-                   EndOfStream };
+enum MessageType {
+    ClientAnnouncement,
+    ServerReady,
+    DataBuffer,
+    ErrorMessage,
+    EndOfStream
+};
+
+enum ErrorType {
+    PartitionNotRegisteredError,
+    UnknownError
+};
 
 class MessageHeader {
   public:
@@ -198,8 +206,20 @@ class EndOfStreamMessage {
 class ErroMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = ErrorMessage;
+    explicit ErroMessage(ErrorType error) : error(error) {};
+
+    const ErrorType getErrorType() const { return error; }
+
+    const std::string getErrorTypeAsString() const {
+        if (error == ErrorType::PartitionNotRegisteredError) {
+            return "PartitionNotRegisteredError";
+        } else {
+            return "UnknownError";
+        }
+    }
 
   private:
+    const ErrorType error;
 };
 
 }// namespace Messages
