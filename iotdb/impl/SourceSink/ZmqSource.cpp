@@ -135,7 +135,10 @@ bool ZmqSource::connect() {
 bool ZmqSource::disconnect() {
     NES_DEBUG("ZmqSource::disconnect() connected=" << connected);
     if (connected) {
-        context.shutdown();
+        // we put assert here because it d be called anyway from the shutdown method
+        // that we commented out
+        assert(zmq_ctx_shutdown(static_cast<void*>(context)) == 0);
+//        context.shutdown();
         connected = false;
     }
     if (!connected) {
