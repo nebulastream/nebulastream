@@ -58,7 +58,7 @@ class NesPartition {
         return subpartitionId;
     }
 
-    const std::string toString() {
+    const std::string toString() const {
         return std::to_string(queryId) + "::" + std::to_string(operatorId) + "::"
             + std::to_string(partitionId) + "::" + std::to_string(subpartitionId);
     }

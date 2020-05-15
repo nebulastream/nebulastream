@@ -43,7 +43,8 @@ class NetworkStackTest : public testing::Test {
 TEST_F(NetworkStackTest, serverMustStartAndStop) {
     try {
         ExchangeProtocol
-            exchangeProtocol([](uint64_t* id, TupleBuffer buf) {}, [](NesPartition p) {}, [](Messages::ErroMessage ex) {});
+            exchangeProtocol
+            ([](uint64_t* id, TupleBuffer buf) {}, [](NesPartition p) {}, [](Messages::ErroMessage ex) {});
         ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol, bufferManager, partitionManager);
         server.start();
         ASSERT_EQ(server.getIsRunning(), true);
@@ -93,7 +94,8 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, 0, 0, 0, 0, onError);
+        auto senderChannel =
+            netManager.registerSubpartitionProducer(nodeLocation, NesPartition(0, 0, 0, 0), onError, 1, 3);
 
         senderChannel->close();
 
@@ -125,16 +127,18 @@ TEST_F(NetworkStackTest, testSendData) {
 
         NetworkManager netManager("127.0.0.1", 31337, onBuffer, onEndOfStream, onError, bufferManager,
                                   partitionManager);
-        netManager.registerSubpartitionConsumer(1, 22, 333, 444);
 
         std::thread t([&netManager, &completed] {
           // register the incoming channel
+          // TODO: why is sleep here not working
+          netManager.registerSubpartitionConsumer(1, 22, 333, 444);
           auto v = completed.get_future().get();
           ASSERT_EQ(v, true);
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, 1, 22, 333, 444, onError);
+        auto senderChannel =
+            netManager.registerSubpartitionProducer(nodeLocation, NesPartition(1, 22, 333, 444), onError, 1, 3);
 
         // create testbuffer
         auto buffer = bufferManager->getBufferBlocking();
@@ -167,47 +171,37 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
     //TODO: enable asynchronous registration of OutputChannel
     try {
         // start zmqServer
-        std::promise<bool> completed;
-        bool serverError = false;
-        bool channelError = false;
+        std::promise<bool> serverError;
+        std::promise<bool> channelError;
 
         auto onBuffer = [](uint64_t* id, TupleBuffer buf) {
         };
 
         auto onErrorServer = [&serverError](Messages::ErroMessage errorMsg) {
+          serverError.set_value(true);
+          NES_INFO("NetworkStackTest: Server error called!");
           ASSERT_EQ(errorMsg.getErrorType(), Messages::PartitionNotRegisteredError);
-          serverError = true;
         };
 
         auto onErrorChannel = [&channelError](Messages::ErroMessage errorMsg) {
+          channelError.set_value(true);
+          NES_INFO("NetworkStackTest: Channel error called!");
           ASSERT_EQ(errorMsg.getErrorType(), Messages::PartitionNotRegisteredError);
-          channelError = true;
         };
-        auto onEndOfStream = [&completed](NesPartition) { completed.set_value(true); };
+        auto onEndOfStream = [](NesPartition) {};
 
         NetworkManager netManager("127.0.0.1", 31337, onBuffer, onEndOfStream,
                                   onErrorServer, bufferManager, partitionManager);
-        // register the incoming channel
-        netManager.registerSubpartitionConsumer(1, 22, 333, 4444);
-
-        std::thread t([&completed] {
-          auto v = completed.get_future().get();
-          ASSERT_EQ(v, true);
-        });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, 1, 22, 333, 4445, onErrorChannel);
+        ASSERT_ANY_THROW(netManager.registerSubpartitionProducer(nodeLocation,
+                                                                 NesPartition(1, 22, 333, 4445),
+                                                                 onErrorChannel,
+                                                                 0,
+                                                                 0););
 
-        // create testbuffer
-        auto buffer = bufferManager->getBufferBlocking();
-        senderChannel->sendBuffer(buffer);
-
-        senderChannel->close();
-        t.join();
-
-        ASSERT_EQ(channelError, true);
-        ASSERT_EQ(serverError, true);
-
+        ASSERT_EQ(serverError.get_future().get(), true);
+        ASSERT_EQ(channelError.get_future().get(), true);
     } catch (...) {
         ASSERT_EQ(true, false);
     }

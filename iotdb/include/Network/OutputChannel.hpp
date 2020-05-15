@@ -19,21 +19,16 @@ class OutputChannel : public boost::noncopyable {
   public:
     explicit OutputChannel(
         std::shared_ptr<zmq::context_t> zmqContext,
-        QueryId queryId,
-        OperatorId operatorId,
-        PartitionId partitionId,
-        SubpartitionId subpartitionId,
         const std::string& address,
-        std::function<void(Messages::ErroMessage)>&& onError)
-        : zmqSocket(*zmqContext, ZMQ_DEALER),
-          queryId(queryId),
-          operatorId(operatorId),
-          partitionId(partitionId),
-          subpartitionId(subpartitionId),
+        NesPartition nesPartition,
+        std::function<void(Messages::ErroMessage)> onError)
+        : socketAddr(address),
+          zmqSocket(*zmqContext, ZMQ_DEALER),
+          nesPartition(nesPartition),
           isClosed(false),
           ready(false),
-          onErrorCb(std::move(onError)){
-        init(address);
+          onErrorCb(std::move(onError)) {
+        ready = init();
     }
 
     ~OutputChannel() {
@@ -41,7 +36,7 @@ class OutputChannel : public boost::noncopyable {
     }
 
   private:
-    void init(const std::string& socketAddr);
+    bool init();
 
   public:
     /**
@@ -70,11 +65,10 @@ class OutputChannel : public boost::noncopyable {
     bool isReady();
 
   private:
+    const std::string& socketAddr;
+
     zmq::socket_t zmqSocket;
-    const QueryId queryId;
-    const OperatorId operatorId;
-    const PartitionId partitionId;
-    const SubpartitionId subpartitionId;
+    const NesPartition nesPartition;
 
     bool isClosed;
     bool ready;
