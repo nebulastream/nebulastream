@@ -247,10 +247,4 @@ set_tests_properties(e2e-rest-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_D
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
 # Custom test commands --------------------------------------------------------
-add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -V DEPENDS ${UNITTESTS})
-#add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})
-
-add_custom_target(test_ext COMMAND ${CMAKE_CTEST_COMMAND} --gtest_filter=*XYZ*)
-#add_custom_target(test_e2e COMMAND ${CMAKE_CTEST_COMMAND} --gtest_filter=E2e*)
-
-
+add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})
