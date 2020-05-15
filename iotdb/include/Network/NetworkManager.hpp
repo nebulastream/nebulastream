@@ -36,11 +36,9 @@ class NetworkManager : public boost::noncopyable {
                                       PartitionId partitionId,
                                       SubpartitionId subpartitionId);
 
-    OutputChannel* registerSubpartitionProducer(const NodeLocation& nodeLocation, QueryId queryId,
-                                                OperatorId operatorId,
-                                                PartitionId partitionId,
-                                                SubpartitionId subpartitionId,
-                                                std::function<void(Messages::ErroMessage)>&& onError);
+    OutputChannel* registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
+                                                std::function<void(Messages::ErroMessage)>&& onError,
+                                                u_int64_t waitTime, u_int64_t retryTimes);
 
   private:
     // TODO decide whethere unique_ptr is better here
