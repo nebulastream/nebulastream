@@ -4,6 +4,7 @@
 #include <Network/ZmqUtils.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES {
 namespace Network {
@@ -35,56 +36,82 @@ void OutputChannel::init(const std::string& socketAddr) {
                 auto serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
                 // check if server responds with a ServerReadyMessage
                 // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
-                if (!(serverReadyMsg->getQueryId() == queryId && serverReadyMsg->getOperatorId() == operatorId && serverReadyMsg->getPartitionId() == partitionId && serverReadyMsg->getSubpartitionId() == subpartitionId)) {
-                    NES_ERROR("[OutputChannel] Connection failed with server "
-                              << socketAddr << " for queryId=" << queryId << " operatorId=" << operatorId
-                              << " partitionId=" << partitionId << " subpartitionId=" << subpartitionId);
-                    throw std::runtime_error("[OutputChannel] Wrong server ready message");
+                if (!(serverReadyMsg->getQueryId() == queryId && serverReadyMsg->getOperatorId() == operatorId
+                    && serverReadyMsg->getPartitionId() == partitionId
+                    && serverReadyMsg->getSubpartitionId() == subpartitionId)) {
+                    NES_ERROR("OutputChannel: Connection failed with server "
+                                  << socketAddr << " for queryId=" << queryId << " operatorId=" << operatorId
+                                  << " partitionId=" << partitionId << " subpartitionId=" << subpartitionId);
+                    throw std::runtime_error("OutputChannel: Wrong server ready message->Partitions are not matching");
                 }
-                NES_INFO("[OutputChannel] Connection established with server "
-                         << socketAddr << " for queryId=" << queryId << " operatorId=" << operatorId
-                         << " partitionId=" << partitionId << " subpartitionId=" << subpartitionId);
+                NES_INFO("OutputChannel: Connection established with server "
+                             << socketAddr << " for queryId=" << queryId << " operatorId=" << operatorId
+                             << " partitionId=" << partitionId << " subpartitionId=" << subpartitionId);
+                ready = true;
+                break;
+            }
+            case Messages::ErrorMessage: {
+                // if server receives a message that an error occured
+                zmq::message_t recvMsg;
+                zmqSocket.recv(&recvMsg);
+                auto errorMsg = recvMsg.data<Messages::ErroMessage>();
+
+                NES_ERROR("OutputChannel: Received error from server-> " << errorMsg->getErrorTypeAsString());
+                onError(*errorMsg);
                 break;
             }
             default: {
                 // got a wrong message type!
                 NES_ERROR("OutputChannel: received unknown message " << recvHeader->getMsgType());
-                throw std::runtime_error("[OutputChannel] Wrong message received");
+                throw std::runtime_error("OutputChannel: Unknown received");
             }
         }
 
     } catch (zmq::error_t& err) {
-        // TODO check and log
-        // TODO rethrow
+        if (err.num() == ETERM) {
+            NES_DEBUG("OutputChannel: Zmq context closed!");
+        } else {
+            NES_ERROR("OutputChannel: Zmq error " << err.what());
+            throw err;
+        }
     }
 }
 
-void OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
-    // create a header message for MessageType
-    Messages::MessageHeader header{Messages::DataBuffer, sizeof(Messages::DataBuffer)};
-    zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
+bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
+    try {
+        // create a header message for MessageType
+        Messages::MessageHeader header{Messages::DataBuffer, sizeof(Messages::DataBuffer)};
+        zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
 
-    // create the header for the buffer
-    Messages::DataBufferMessage bufferHeader{static_cast<unsigned int>(inputBuffer.getBufferSize()),
-                                             static_cast<unsigned int>(inputBuffer.getNumberOfTuples())};
-    zmq::message_t sendBufferHeader(&bufferHeader, sizeof(Messages::DataBufferMessage));
+        // create the header for the buffer
+        Messages::DataBufferMessage bufferHeader{static_cast<unsigned int>(inputBuffer.getBufferSize()),
+                                                 static_cast<unsigned int>(inputBuffer.getNumberOfTuples())};
+        zmq::message_t sendBufferHeader(&bufferHeader, sizeof(Messages::DataBufferMessage));
 
-    // create the message with the buffer payload
-    // TODO: in future change that buffer is sent without copying
-    zmq::message_t sendBuffer(inputBuffer.getBuffer(), inputBuffer.getBufferSize());
+        // create the message with the buffer payload
+        // TODO: in future change that buffer is sent without copying
+        zmq::message_t sendBuffer(inputBuffer.getBuffer(), inputBuffer.getBufferSize());
 
-    // send all messages in one shot
-    NES_DEBUG("[OutputChannel] Sending buffer for queryId="
-              << queryId << " operatorId=" << operatorId << " partitionId=" << partitionId << " subpartitionId="
-              << subpartitionId << " with " << inputBuffer.getNumberOfTuples() << "/"
-              << inputBuffer.getBufferSize());
+        // send all messages in one shot
+        NES_DEBUG("OutputChannel: Sending buffer for queryId="
+                      << queryId << " operatorId=" << operatorId << " partitionId=" << partitionId << " subpartitionId="
+                      << subpartitionId << " with " << inputBuffer.getNumberOfTuples() << "/"
+                      << inputBuffer.getBufferSize());
 
-    zmqSocket.send(sendHeader, kSendMore);
-    zmqSocket.send(sendBufferHeader, kSendMore);
-    zmqSocket.send(sendBuffer);
+        zmqSocket.send(sendHeader, kSendMore);
+        zmqSocket.send(sendBufferHeader, kSendMore);
+        zmqSocket.send(sendBuffer);
+        return true;
+    }
+    catch (std::exception& ex) {
+        NES_ERROR(ex.what());
+        return false;
+    }
 }
 
-void OutputChannel::onError() {}
+void OutputChannel::onError(Messages::ErroMessage& errorMsg) {
+    onErrorCb(errorMsg);
+}
 
 void OutputChannel::close() {
     if (isClosed) {
@@ -92,9 +119,13 @@ void OutputChannel::close() {
     }
     sendMessage<Messages::EndOfStreamMessage>(zmqSocket, queryId, operatorId, partitionId, subpartitionId);
     zmqSocket.close();
-    NES_DEBUG("[OutputChannel] Socket closed for queryId=" << queryId << " operatorId=" << operatorId << " partitionId="
-                                                           << partitionId << " subpartitionId=" << subpartitionId);
+    NES_DEBUG("OutputChannel: Socket closed for queryId=" << queryId << " operatorId=" << operatorId << " partitionId="
+                                                          << partitionId << " subpartitionId=" << subpartitionId);
     isClosed = true;
+}
+
+bool OutputChannel::isReady() {
+    return ready;
 }
 
 }// namespace Network

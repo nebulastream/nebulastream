@@ -3,6 +3,7 @@
 
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkCommon.hpp>
+#include <Network/PartitionManager.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <atomic>
 #include <boost/core/noncopyable.hpp>
@@ -29,7 +30,7 @@ class ZmqServer : public boost::noncopyable {
      * @param exchangeProtocol
      */
     explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads,
-                       ExchangeProtocol& exchangeProtocol, BufferManagerPtr bufferManager);
+                       ExchangeProtocol& exchangeProtocol, BufferManagerPtr bufferManager, PartitionManagerPtr partitionManager);
 
     ~ZmqServer();
 
@@ -65,7 +66,7 @@ class ZmqServer : public boost::noncopyable {
      * @brief handler thread where threads are passed from the frontend loop
      * @param the threadBarrier to enable synchronization
      */
-    void handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int index);
+    void messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int index);
 
   private:
     const std::string hostname;
@@ -73,7 +74,7 @@ class ZmqServer : public boost::noncopyable {
     const uint16_t numNetworkThreads;
 
     std::shared_ptr<zmq::context_t> zmqContext;
-    std::unique_ptr<std::thread> frontendThread;
+    std::unique_ptr<std::thread> routerThread;
     std::vector<std::unique_ptr<std::thread>> handlerThreads;
 
     std::atomic_bool isRunning;
@@ -81,6 +82,7 @@ class ZmqServer : public boost::noncopyable {
 
     ExchangeProtocol& exchangeProtocol;
     BufferManagerPtr bufferManager;
+    PartitionManagerPtr partitionManager;
 
     // error management
     std::promise<bool> errorPromise;
