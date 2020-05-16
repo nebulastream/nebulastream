@@ -122,9 +122,9 @@ target_link_libraries(memory-layout-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
 
 ### CoordinatorService Tests ###
-add_executable(coordinator-service-tests "UnitTests/Services/CoordinatorServiceTest.cpp")
-target_link_libraries(coordinator-service-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME coordinator-service-tests COMMAND coordinator-service-tests)
+#add_executable(coordinator-service-tests "UnitTests/Services/CoordinatorServiceTest.cpp")
+#target_link_libraries(coordinator-service-tests iotdb ${GTEST_LIBRARIES})
+#add_test(NAME coordinator-service-tests COMMAND coordinator-service-tests)
 
 ### Stream Catalog Tests ###
 add_executable(stream-catalog-test "UnitTests/StreamCatalogTest.cpp")

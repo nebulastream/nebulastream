@@ -3,11 +3,11 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <Topology/NESTopologyManager.hpp>
 
 using namespace NES;
 
 CoordinatorRPCServer::CoordinatorRPCServer() {
-    coordinatorServicePtr = NES::CoordinatorService::getInstance();
 };
 
 size_t getIdFromIp(std::string ip) {
@@ -28,18 +28,102 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext* context, const Register
                                                         << " numberOfCpus=" << request->numberofcpus()
                                                         << " nodeProperties=" << request->nodeproperties()
                                                         << " type=" << request->type());
-
+    //get unique id for the new node
     size_t id = getIdFromIp(request->address());
-    PhysicalStreamConfig streamConf;
-    NESTopologyEntryPtr node = coordinatorServicePtr->registerNode(
-        id, request->address(), request->numberofcpus(),
-        request->nodeproperties(), streamConf, (NESNodeType) request->type());
 
-    if (!node) {
-        NES_ERROR("CoordinatorRPCServer::RegisterNode : node not created");
-        reply->set_id(0);//TODO: check on the other side
-        return Status::CANCELLED;
+    NESTopologyEntryPtr nodePtr;
+    if (request->type() == NESNodeType::Sensor) {
+        NES_DEBUG("CoordinatorRPCServer::registerNode: register sensor node");
+        nodePtr = NESTopologyManager::getInstance().createNESSensorNode(id,
+                                                                        request->address(),
+                                                                        CPUCapacity::Value(request->numberofcpus()));
+
+        if (!nodePtr) {
+            NES_ERROR("CoordinatorRPCServer::RegisterNode : node not created");
+            reply->set_id(0);//TODO: check on the other side
+            return Status::CANCELLED;
+        }
+
+        PhysicalStreamConfig streamConf;
+        NESTopologySensorNode* sensor = dynamic_cast<NESTopologySensorNode*>(nodePtr.get());
+        sensor->setPhysicalStreamName(streamConf.physicalStreamName);
+
+        NES_DEBUG(
+            "CoordinatorRPCServer::registerNode: try to register sensor phyName=" << streamConf.physicalStreamName
+                                                                                  << " logName="
+                                                                                  << streamConf.logicalStreamName
+                                                                                  << " nodeID=" << nodePtr->getId());
+
+        //check if logical stream exists
+        if (!StreamCatalog::instance().testIfLogicalStreamExistsInSchemaMapping(
+            streamConf.logicalStreamName)) {
+            NES_ERROR(
+                "CoordinatorRPCServer::registerNode: error logical stream" << streamConf.logicalStreamName
+                                                                           << " does not exist when adding physical stream "
+                                                                           << streamConf.physicalStreamName);
+            throw Exception(
+                "CoordinatorRPCServer::registerNode logical stream does not exist " + streamConf.logicalStreamName);
+        }
+
+        SchemaPtr schema = StreamCatalog::instance().getSchemaForLogicalStream(
+            streamConf.logicalStreamName);
+
+        DataSourcePtr source;
+        if (streamConf.sourceType != "CSVSource"
+            && streamConf.sourceType != "DefaultSource") {
+            NES_ERROR(
+                "CoordinatorRPCServer::registerNode: error source type " << streamConf.sourceType
+                                                                         << " is not supported");
+            throw Exception(
+                "CoordinatorRPCServer::registerNode: error source type " + streamConf.sourceType
+                    + " is not supported");
+        }
+
+        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
+            streamConf, nodePtr);
+
+        bool success = StreamCatalog::instance().addPhysicalStream(
+            streamConf.logicalStreamName, sce);
+        if (!success) {
+            NES_ERROR(
+                "CoordinatorRPCServer::registerNode: physical stream " << streamConf.physicalStreamName
+                                                                       << " could not be added to catalog");
+            throw Exception(
+                "CoordinatorRPCServer::registerNode: physical stream " + streamConf.physicalStreamName
+                    + " could not be added to catalog");
+        }
+
+    } else if (request->type() == NESNodeType::Worker) {
+        NES_DEBUG("CoordinatorRPCServer::registerNode: register worker node");
+        nodePtr = NESTopologyManager::getInstance().createNESWorkerNode(id, request->address(), CPUCapacity::Value(request->numberofcpus()));
+
+        if (!nodePtr) {
+            NES_ERROR("CoordinatorRPCServer::RegisterNode : node not created");
+            reply->set_id(0);//TODO: check on the other side
+            return Status::CANCELLED;
+        }
+    } else {
+        NES_ERROR("CoordinatorRPCServer::registerNode type not supported " << request->type());
+        assert(0);
     }
+    assert(nodePtr);
+
+    if (request->nodeproperties() != "defaultProperties") {
+        nodePtr->setNodeProperty(request->nodeproperties());
+    }
+
+    const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
+        .getRootNode();
+
+    if (kRootNode == nodePtr) {
+        NES_DEBUG("CoordinatorRPCServer::registerNode: tree is empty so this becomes new root");
+    } else {
+        NES_DEBUG("CoordinatorRPCServer::registerNode: add link to root node " << kRootNode << " of type"
+                                                                               << kRootNode->getEntryType());
+        NESTopologyManager::getInstance().createNESTopologyLink(nodePtr, kRootNode, 1, 1);
+    }
+
+    NES_DEBUG("CoordinatorRPCServer::registerNode: topology after insert");
     NESTopologyManager::getInstance().printNESTopologyPlan();
     reply->set_id(id);
     //TODO: do the bookkeeping
@@ -56,7 +140,6 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext* context, const Unregi
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
             request->id());
 
-    
     size_t numberOfOccurrences = 0;
 
     NESTopologyEntryPtr sensorNode;
@@ -69,7 +152,8 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext* context, const Unregi
     if (numberOfOccurrences > 1) {
         NES_ERROR(
             "CoordinatorRPCServer::UnregisterNode: more than one worker node found with id " << request->id()
-                                                                                             << " numberOfOccurrences=" << numberOfOccurrences);
+                                                                                             << " numberOfOccurrences="
+                                                                                             << numberOfOccurrences);
         throw Exception("node is ambitious");
     } else if (numberOfOccurrences == 0) {
         NES_ERROR("CoordinatorActor: node with id not found " << request->id());
@@ -83,7 +167,7 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext* context, const Unregi
 
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: found sensor, try to delete it in toplogy");
     //remove from topology
-    bool successTopology = coordinatorServicePtr->deregisterSensor(sensorNode);
+    bool successTopology =  NESTopologyManager::getInstance().removeNESNode(sensorNode);
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: success in topology is " << successTopology);
 
     if (successCatalog && successTopology) {
@@ -115,8 +199,8 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext* context,
 
     NES_DEBUG(
         "CoordinatorRPCServer::RegisterPhysicalStream: try to register physical stream with conf= "
-        << streamConf.toString() << " for workerId="
-        << request->id());
+            << streamConf.toString() << " for workerId="
+            << request->id());
 
     std::vector<NESTopologyEntryPtr> sensorNodes =
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -158,8 +242,8 @@ Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext* context,
     NES_DEBUG(
         "CoordinatorRPCServer::UnregisterPhysicalStream: try to remove physical "
         "stream with name "
-        << request->physicalstreamname() << " logical name "
-        << request->logicalstreamname() << " workerId=" << request->id());
+            << request->physicalstreamname() << " logical name "
+            << request->logicalstreamname() << " workerId=" << request->id());
 
     std::vector<NESTopologyEntryPtr> sensorNodes =
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -237,33 +321,118 @@ Status CoordinatorRPCServer::AddParent(ServerContext* context, const AddParentRe
                                        AddParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalStream: request =" << request);
 
-    bool success = coordinatorServicePtr->addNewParentToSensorNode(request->childid(),
-                                                                   request->parentid());
-
-    if (success) {
-        NES_DEBUG("CoordinatorRPCServer::AddParent success");
-        reply->set_success(true);
-        return Status::OK;
-    } else {
-        NES_ERROR("CoordinatorRPCServer::AddParent failed");
+    if (request->childid() == request->parentid()) {
+        NES_ERROR("CoordinatorRPCServer::AddParent: cannot add link to itself");
         reply->set_success(false);
         return Status::CANCELLED;
     }
+
+    std::vector<NESTopologyEntryPtr> sensorNodes = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(request->childid());
+    if (sensorNodes.size() == 0) {
+        NES_ERROR("CoordinatorRPCServer::AddParent: source node " << request->childid() << " does not exists");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    } else if (sensorNodes.size() > 1) {
+        NES_ERROR(
+            "CoordinatorRPCServer::AddParent: more than one sensorNodes node with id exists " << request->childid()
+                                                                                                         << " count="
+                                                                                                         << sensorNodes.size());
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+    NES_ERROR("CoordinatorRPCServer::AddParent: source node " << request->childid() << " exists");
+
+    std::vector<NESTopologyEntryPtr> sensorParent = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(request->parentid());
+    if (sensorParent.size() == 0) {
+        NES_ERROR("CoordinatorRPCServer::AddParent: sensorParent node " << request->parentid() << " does not exists");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    } else if (sensorParent.size() > 1) {
+        NES_ERROR("CoordinatorRPCServer::AddParent: more than one sensorParent node with id exists "
+                      << request->parentid() << " count=" << sensorParent.size());
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+    NES_ERROR("CoordinatorRPCServer::AddParent: sensorParent node " << request->parentid() << " exists");
+
+    bool connected = NESTopologyManager::getInstance().getNESTopologyPlan()->getNESTopologyGraph()->hasLink(sensorNodes[0],
+                                                                                          sensorParent[0]);
+    if (connected) {
+        NES_ERROR("CoordinatorRPCServer::AddParent: nodes " << request->childid() << " and " << request->parentid()
+                                                                       << " already exists");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+
+    NESTopologyLinkPtr link = NESTopologyManager::getInstance().getNESTopologyPlan()->createNESTopologyLink(sensorNodes[0],
+                                                                                          sensorParent[0], 1, 1);
+    if (link) {
+        NES_DEBUG("CoordinatorRPCServer::AddParent: created link successfully");
+    } else {
+        NES_ERROR("CoordinatorRPCServer::AddParent: created NOT successfully added");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+
+    NES_DEBUG("CoordinatorRPCServer::AddParent success");
+    reply->set_success(true);
+    return Status::OK;
 }
 
 Status CoordinatorRPCServer::RemoveParent(ServerContext* context, const RemoveParentRequest* request,
                                           RemoveParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RemoveParent: request =" << request);
 
-    bool success = coordinatorServicePtr->removeParentFromSensorNode(request->childid(),
-                                                                     request->parentid());
-    if (success) {
-        NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
-        reply->set_success(true);
-        return Status::OK;
-    } else {
-        NES_ERROR("CoordinatorRPCServer::RemoveParent failed");
+    std::vector<NESTopologyEntryPtr> sensorNodes = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(request->childid());
+    if (sensorNodes.size() == 0) {
+        NES_ERROR("CoordinatorService::change_sensor_position: source node " << request->childid() << " does not exists");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    } else if (sensorNodes.size() > 1) {
+        NES_ERROR(
+            "CoordinatorService::change_sensor_position: more than one sensorNodes node with id exists " << request->childid()
+                                                                                                         << " count="
+                                                                                                         << sensorNodes.size());
         reply->set_success(false);
         return Status::CANCELLED;
     }
+
+    std::vector<NESTopologyEntryPtr> sensorParent = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(request->parentid());
+    if (sensorParent.size() == 0) {
+        NES_ERROR("CoordinatorService::change_sensor_position: sensorParent node " << request->childid() << " does not exists");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    } else if (sensorParent.size() > 1) {
+        NES_ERROR(
+            "CoordinatorService::change_sensor_position: more than one sensorParent node with id exists " << request->childid()
+                                                                                                          << " count="
+                                                                                                          << sensorNodes.size());
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+
+    bool connected = NESTopologyManager::getInstance().getNESTopologyPlan()->getNESTopologyGraph()->hasLink(sensorNodes[0],
+                                                                                          sensorParent[0]);
+    if (!connected) {
+        NES_ERROR("CoordinatorService::change_sensor_position: nodes " << request->childid() << " and " << request->parentid()
+                                                                       << " are not connected");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+
+    NESTopologyLinkPtr link = NESTopologyManager::getInstance().getNESTopologyPlan()->getNESTopologyGraph()->getLink(sensorNodes[0],
+                                                                                                   sensorParent[0]);
+
+    bool success = NESTopologyManager::getInstance().getNESTopologyPlan()->getNESTopologyGraph()->removeEdge(link->getId());
+    if (!success) {
+        NES_ERROR("CoordinatorService::change_sensor_position: edge between  " << request->childid() << " and " << request->parentid()
+                                                                               << " could not be removed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+
+    NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
+    reply->set_success(true);
+    return Status::OK;
+
 }

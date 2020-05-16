@@ -32,9 +32,10 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string optimizationStrategyName = req.at("strategyName").as_string();
 
                     // Call the service
-                    string queryId = coordinatorServicePtr->registerQuery(userQuery, optimizationStrategyName);
+                    string queryId = QueryCatalog::instance().registerQuery(userQuery, optimizationStrategyName);
 
-                    NESExecutionPlanPtr executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
+                    NESExecutionPlanPtr executionPlan = QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
+
                     json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
                     json::value restResponse{};

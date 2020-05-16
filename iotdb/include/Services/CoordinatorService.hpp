@@ -41,10 +41,10 @@ class CoordinatorService {
   public:
     ~CoordinatorService() = default;
 
-    static CoordinatorServicePtr getInstance() {
-        static CoordinatorServicePtr instance{new CoordinatorService};
-        return instance;
-    }
+//    static CoordinatorServicePtr getInstance() {
+//        static CoordinatorServicePtr instance{new CoordinatorService};
+//        return instance;
+//    }
 
     /**
      * @brief registers a CAF worker into the NES topology and creates a corresponding NESTopologyWorkerNode object
