@@ -25,8 +25,8 @@ NesCoordinator::NesCoordinator() {
     queryCatalogServicePtr = QueryCatalogService::getInstance();
     streamCatalogServicePtr = StreamCatalogService::getInstance();
     StreamCatalog::instance();
-    coordinatorServicePtr = CoordinatorService::getInstance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
+    queryDeployer = std::make_shared<QueryDeployer>();
 }
 
 NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort)
@@ -38,7 +38,6 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
 
     queryCatalogServicePtr = QueryCatalogService::getInstance();
     streamCatalogServicePtr = StreamCatalogService::getInstance();
-    coordinatorServicePtr = CoordinatorService::getInstance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
 }
 
@@ -50,13 +49,6 @@ NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     StreamCatalog::instance().reset();
     QueryCatalog::instance().clearQueries();
-    CoordinatorService::getInstance()->clearQueryCatalogs();
-    CoordinatorService::getInstance()->shutdown();
-}
-
-size_t NesCoordinator::getRandomPort(size_t base) {
-    //TODO will be removed once the new network stack is in place
-    return base - 12 + time(0) * 321 * rand() % 10000;
 }
 
 /**
@@ -98,7 +90,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //Start RPC server that listen to calls form the clients
     std::promise<bool> promRPC;//promise to make sure we wait until the server is started
     rpcThread = std::make_shared<std::thread>(([&]() {
-        startCoordinatorRPCServer(rpcServer, address, promRPC);
+      startCoordinatorRPCServer(rpcServer, address, promRPC);
     }));
     promRPC.get_future().get();
     NES_DEBUG("WorkerActor::startCoordinatorRPCServer: ready");
@@ -118,7 +110,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this());
 
     restThread = std::make_shared<std::thread>(([&]() {
-        startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
+      startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
     }));
 
     promRest.get_future().get();//promise to make sure we wait until the server is started
@@ -191,6 +183,7 @@ QueryStatisticsPtr NesCoordinator::getQueryStatistics(std::string queryId) {
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
 
+
 string NesCoordinator::addQuery(const string queryString, const string strategy) {
     NES_DEBUG("NesCoordinator:addQuery queryString=" << queryString << " strategy=" << strategy);
 
@@ -204,7 +197,7 @@ string NesCoordinator::addQuery(const string queryString, const string strategy)
     }
 
     NES_DEBUG("NesCoordinator:addQuery: create Deployment");
-    QueryDeployment deployments = coordinatorServicePtr->prepareExecutableTransferObject(queryId);
+    QueryDeployment deployments = queryDeployer->generateDeployment(queryId);
     NES_DEBUG("CoordinatorActor::addQuery" << deployments.size() << " objects topology before"
                                            << NESTopologyManager::getInstance().getNESTopologyPlanString());
     stringstream ss;
@@ -285,7 +278,8 @@ bool NesCoordinator::deployQuery(std::string queryId) {
 
     QueryDeployment& deployments = currentDeployments[queryId];
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId() << " eto="
+        NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId()
+                                                                           << " eto="
                                                                            << x->second.toString());
         string serEto = SerializationTools::ser_eto(x->second);
         NES_DEBUG(

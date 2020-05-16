@@ -1,0 +1,156 @@
+#include <Deployer/QueryDeployer.hpp>
+#include <string>
+#include <Topology/NESTopologyManager.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+#include <GRPC/ExecutableTransferObject.hpp>
+#include <Optimizer/NESExecutionPlan.hpp>
+#include <SourceSink/SourceCreator.hpp>
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/DataSink.hpp>
+#include <SourceSink/DataSource.hpp>
+#include <Operators/Impl/SinkOperator.hpp>
+#include <Operators/Impl/SourceOperator.hpp>
+
+namespace NES {
+
+QueryDeployer::QueryDeployer()
+{
+    NES_INFO("QueryDeployer()");
+}
+
+QueryDeployer::~QueryDeployer()
+{
+    NES_INFO("~QueryDeployer()");
+    queryToPort.clear();
+}
+
+map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployer::generateDeployment(const string &queryId) {
+    map<NESTopologyEntryPtr, ExecutableTransferObject> output;
+    if (QueryCatalog::instance().queryExists(queryId)
+        && !QueryCatalog::instance().isQueryRunning(queryId)) {
+        NES_INFO("QueryDeployer::generateDeployment for query " << queryId);
+
+        NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
+        SchemaPtr schema = QueryCatalog::instance().getQuery(queryId)->getInputQueryPtr()->getSourceStream()->getSchema();
+
+        //iterate through all vertices in the topology
+        for (const ExecutionVertex& v : execPlan->getExecutionGraph()->getAllVertex()) {
+            OperatorPtr operators = v.ptr->getRootOperator();
+            if (operators) {
+                // if node contains operators to be deployed -> serialize and send them to the according node
+                vector<DataSourcePtr> sources = getSources(queryId, v);
+                vector<DataSinkPtr> destinations = getSinks(queryId, v);
+                NESTopologyEntryPtr nesNode = v.ptr->getNESNode();
+                //TODO: this will break for multiple streams
+                ExecutableTransferObject eto = ExecutableTransferObject(queryId, schema,
+                                                                        sources,
+                                                                        destinations,
+                                                                        operators);
+                output.insert({nesNode, eto});
+            }
+        }
+
+        QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Scheduling);
+
+    } else if (QueryCatalog::instance().getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
+        NES_WARNING("QueryDeployer::generateDeployment: Query is already running -> " << queryId);
+    } else {
+        NES_WARNING("QueryDeployer::generateDeployment: Query is not registered -> " << queryId);
+    }
+
+    NES_INFO("QueryDeployer::generateDeployment: prepareExecutableTransferObject successfully " << queryId);
+
+    return output;
+}
+
+vector<DataSourcePtr> QueryDeployer::getSources(const string& queryId,
+                                                     const ExecutionVertex& v) {
+    vector<DataSourcePtr> sources = vector<DataSourcePtr>();
+    NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
+    SchemaPtr schema = QueryCatalog::instance().getQuery(queryId)->getInputQueryPtr()->getSourceStream()->getSchema();
+
+    DataSourcePtr source = findDataSourcePointer(v.ptr->getRootOperator());
+
+    if (source->getType() == ZMQ_SOURCE) {
+        const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
+            .getRootNode();
+
+        //TODO: this does not work this way, replace it here with the descriptor
+        BufferManagerPtr bPtr;
+        QueryManagerPtr disPtr;
+        source = createZmqSource(schema, bPtr, disPtr, kRootNode->getIp(), assign_port(queryId));
+    }
+    sources.emplace_back(source);
+    NES_DEBUG("QueryDeployer::generateDeployment getSources: " << source->toString());
+
+    return sources;
+}
+
+vector<DataSinkPtr> QueryDeployer::getSinks(const string& queryId,
+                                                 const ExecutionVertex& v) {
+    vector<DataSinkPtr> sinks = vector<DataSinkPtr>();
+    //TODO: I am not sure what is happening here with the idx 0 and 1
+    NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
+    DataSinkPtr sink = findDataSinkPointer(v.ptr->getRootOperator());
+
+    //FIXME: what about user defined a ZMQ sink?
+    if (sink->getType() == ZMQ_SINK) {
+        //FIXME: Maybe a better way to do it? perhaps type cast to ZMQSink type and just update the port number
+        //create local zmq sink
+        const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
+            .getRootNode();
+
+        sink = createZmqSink(sink->getSchema(), kRootNode->getIp(),
+                             assign_port(queryId));
+    }
+    sinks.emplace_back(sink);
+    NES_DEBUG("QueryDeployer::getSinks " << sink->toString());
+    return sinks;
+}
+
+DataSinkPtr QueryDeployer::findDataSinkPointer(OperatorPtr operatorPtr) {
+
+    if (!operatorPtr->getParent() && operatorPtr->getOperatorType() == SINK_OP) {
+        SinkOperator* sinkOperator = dynamic_cast<SinkOperator*>(operatorPtr.get());
+        return sinkOperator->getDataSinkPtr();
+    } else if (operatorPtr->getParent() != nullptr) {
+        return findDataSinkPointer(operatorPtr->getParent());
+    } else {
+        NES_WARNING("QueryDeployer::findDataSinkPointer Found query graph without a SINK.");
+        return nullptr;
+    }
+}
+
+DataSourcePtr QueryDeployer::findDataSourcePointer(
+    OperatorPtr operatorPtr) {
+    vector<OperatorPtr> children = operatorPtr->getChildren();
+    if (children.empty() && operatorPtr->getOperatorType() == SOURCE_OP) {
+        SourceOperator* sourceOperator = dynamic_cast<SourceOperator*>(operatorPtr
+            .get());
+        return sourceOperator->getDataSourcePtr();
+    } else if (!children.empty()) {
+        //FIXME: What if there are more than one source?
+        for (OperatorPtr child : children) {
+            return findDataSourcePointer(operatorPtr->getParent());
+        }
+    }
+    NES_WARNING("QueryDeployer::findDataSourcePointer Found query graph without a SOURCE.");
+    return nullptr;
+}
+
+int QueryDeployer::assign_port(const string& queryId) {
+    if (this->queryToPort.find(queryId) != this->queryToPort.end()) {
+        NES_DEBUG("QueryDeployer::assign_port query found with id=" << queryId << " return port=" << this->queryToPort.at(queryId));
+        return this->queryToPort.at(queryId);
+    } else {
+        // increase max port in map by 1
+        const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
+            .getRootNode();
+        uint16_t kFreeZmqPort = kRootNode->getNextFreeReceivePort();
+        this->queryToPort.insert({queryId, kFreeZmqPort});
+        NES_DEBUG("CoordinatorService::assign_port create a new port for query id=" << queryId << " port=" << kFreeZmqPort);
+        return kFreeZmqPort;
+    }
+}
+
+}

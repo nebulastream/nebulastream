@@ -9,6 +9,7 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
+#include <Deployer/QueryDeployer.hpp>
 
 namespace NES {
 typedef map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployment;
@@ -124,19 +125,15 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
         return streamCatalogServicePtr;
     }
 
-    CoordinatorServicePtr getCoordinatorServicePtr() {
-        return coordinatorServicePtr;
-    }
-
   private:
-    size_t getRandomPort(size_t base);
-
     std::shared_ptr<grpc::Server> rpcServer;
     uint16_t rpcPort;
     std::shared_ptr<std::thread> rpcThread;
     NesWorkerPtr worker;
 
     WorkerRPCClientPtr workerRPCClient;
+
+    QueryDeployerPtr queryDeployer;
 
     std::shared_ptr<RestServer> restServer;
     uint16_t restPort;
@@ -148,7 +145,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
 
     QueryCatalogServicePtr queryCatalogServicePtr;
     StreamCatalogServicePtr streamCatalogServicePtr;
-    CoordinatorServicePtr coordinatorServicePtr;
     std::map<std::string, QueryDeployment> currentDeployments;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;

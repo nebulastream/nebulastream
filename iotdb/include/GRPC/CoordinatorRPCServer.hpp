@@ -39,5 +39,4 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                         RemoveParentReply* reply) override;
 
   private:
-    NES::CoordinatorServicePtr coordinatorServicePtr;
 };

@@ -1,6 +1,4 @@
 #include <iostream>
-#include <sstream>
-#include <vector>
 
 #include <Operators/Impl/SourceOperator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>

@@ -37,15 +37,15 @@ class QueryCatalogServiceTest : public testing::Test {
     std::string host = "localhost";
     uint16_t publish_port = 4711;
 
-    CoordinatorServicePtr coordinatorServicePtr =
-        CoordinatorService::getInstance();
-    coordinatorServicePtr->clearQueryCatalogs();
-    for (int i = 1; i < 5; i++) {
-      PhysicalStreamConfig streamConf;
-        std::string address = ip + ":" + std::to_string(publish_port);
-      auto entry = coordinatorServicePtr->registerNode(i, address, 2, "",
-                                                       streamConf, NESNodeType::Sensor);
-    }
+//    CoordinatorServicePtr coordinatorServicePtr =
+//        CoordinatorService::getInstance();
+//    coordinatorServicePtr->clearQueryCatalogs();
+//    for (int i = 1; i < 5; i++) {
+//      PhysicalStreamConfig streamConf;
+//        std::string address = ip + ":" + std::to_string(publish_port);
+//      auto entry = coordinatorServicePtr->registerNode(i, address, 2, "",
+//                                                       streamConf, NESNodeType::Sensor);
+//    }
     NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
     std::cout << "Setup QueryCatalogService test case." << std::endl;
   }

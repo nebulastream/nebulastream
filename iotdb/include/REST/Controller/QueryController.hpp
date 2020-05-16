@@ -13,7 +13,6 @@ typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 class QueryController : public BaseController {
   public:
     QueryController() {
-        coordinatorServicePtr = CoordinatorService::getInstance();
         queryServicePtr = QueryService::getInstance();
         nesTopologyServicePtr = NESTopologyService::getInstance();
     }
