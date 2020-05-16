@@ -9,6 +9,7 @@
 #include <GRPC/CoordinatorRPCServer.hpp>
 
 #include <Util/Logger.hpp>
+#include <Util/TestUtils.hpp>
 
 using namespace NES;
 
@@ -33,15 +34,15 @@ class QueryCatalogTest : public testing::Test {
     uint16_t receive_port = 0;
     std::string host = "localhost";
     uint16_t publish_port = 4711;
-//
-//    QueryCatalog::instance().clearQueries();
-//    for (int i = 1; i < 5; i++) {
-//      //FIXME: add node properties
-//      PhysicalStreamConfig streamConf;
-//      std::string address = ip + ":" + std::to_string(publish_port);
-//      auto entry = server.RegisterNode(i, address, 2, "",
-//                                                       streamConf, NESNodeType::Sensor);
-//    }
+
+    QueryCatalog::instance().clearQueries();
+    for (int i = 1; i < 5; i++) {
+      //FIXME: add node properties
+      PhysicalStreamConfig streamConf;
+      std::string address = ip + ":" + std::to_string(publish_port);
+      auto entry = TestUtils::registerTestNode(i, address, 2, "",
+                                                       streamConf, NESNodeType::Sensor);
+    }
     NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
     std::cout << "Setup QueryCatalogTest test case." << std::endl;
   }
