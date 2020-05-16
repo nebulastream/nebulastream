@@ -572,7 +572,7 @@ ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs&, const Generat
 
     CodeFile file = fileBuilder.addDeclaration(functionBuilder.build()).build();
     Compiler compiler;
-    CompiledCodePtr compiledCode = compiler.compile(file.code);
+    CompiledCodePtr compiledCode = compiler.compile(file.code, true /*debugging flag replace later*/);
     return CompiledExecutablePipeline::create(compiledCode);
 }
 
