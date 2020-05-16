@@ -41,7 +41,7 @@ class E2eRestTest : public testing::Test {
 };
 
 
-TEST_F(E2eRestTest, _testExecutingValidUserQueryWithPrintOutput) {
+TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
     cout << " start coordinator" << endl;
     string path = "./nesCoordinator --coordinatorPort=12345";
     bp::child coordinatorProc(path.c_str());
@@ -186,7 +186,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
-TEST_F(E2eRestTest, _testExecutingValidUserQueryWithFileOutputWithFilter) {
+TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
     cout << " start coordinator" << endl;
     std::string outputFilePath = "UserQueryWithFileOutputWithFilterTestResult.txt";
     remove(outputFilePath.c_str());
@@ -362,7 +362,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
     coordinatorProc.terminate();
 }
 
-TEST_F(E2eRestTest, _testExecutingValidUserQueryWithFileOutputAndRegisterPhyStream) {
+TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStream) {
     cout << " start coordinator" << endl;
     std::string outputFilePath =
         "ValidUserQueryWithFileOutputAndRegisterPhyStreamTestResult.txt";

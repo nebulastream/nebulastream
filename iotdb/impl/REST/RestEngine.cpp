@@ -116,6 +116,7 @@ pplx::task<void> RestEngine::accept() {
 }
 
 pplx::task<void> RestEngine::shutdown() {
+    cout << "Shutting Down Server" << endl;
     return _listener.close();
 }
 

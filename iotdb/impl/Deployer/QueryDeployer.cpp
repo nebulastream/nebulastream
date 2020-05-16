@@ -65,8 +65,8 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployer::generateDeploy
 
 vector<DataSourcePtr> QueryDeployer::getSources(const string& queryId,
                                                      const ExecutionVertex& v) {
+    NES_DEBUG("QueryDeployer::getSources: queryid=" << queryId << " vertex=" << v.id);
     vector<DataSourcePtr> sources = vector<DataSourcePtr>();
-    NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
     SchemaPtr schema = QueryCatalog::instance().getQuery(queryId)->getInputQueryPtr()->getSourceStream()->getSchema();
 
     DataSourcePtr source = findDataSourcePointer(v.ptr->getRootOperator());
@@ -88,9 +88,8 @@ vector<DataSourcePtr> QueryDeployer::getSources(const string& queryId,
 
 vector<DataSinkPtr> QueryDeployer::getSinks(const string& queryId,
                                                  const ExecutionVertex& v) {
+    NES_DEBUG("QueryDeployer::getSinks: queryid=" << queryId << " vertex=" << v.id);
     vector<DataSinkPtr> sinks = vector<DataSinkPtr>();
-    //TODO: I am not sure what is happening here with the idx 0 and 1
-    NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
     DataSinkPtr sink = findDataSinkPointer(v.ptr->getRootOperator());
 
     //FIXME: what about user defined a ZMQ sink?
