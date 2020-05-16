@@ -14,50 +14,36 @@ typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
 class CompiledCode;
 typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
 
+class Compiler;
+typedef std::shared_ptr<Compiler> CompilerPtr;
+
+class CompilerFlags;
+typedef std::shared_ptr<CompilerFlags> CompilerFlagsPtr;
+
 /**
  * @brief The Compiler compiles a source code fragment to a dynamic library.
  */
 class Compiler {
   public:
-    Compiler();
+    CompilerPtr create();
+
     /**
      * @brief Compiles the source string.
      * @param source
+     * @param debugging flag indicates if we should use debugging options for compiling this code.
      * @return CompiledCode
      */
-    CompiledCodePtr compile(const std::string& source);
+    CompiledCodePtr compile(const std::string& source, bool debugging);
 
   private:
-    void init();
-    void initCompilerArgs();
-    /**
-     * @brief Creates a precompiled header for the runtime lib.
-     * TODO this is currently not used and need a rework see issue #392.
-     * @return
-     */
-    Timestamp createPrecompiledHeader();
-    bool rebuildPrecompiledHeader();
+    std::string getFileName();
+    void callSystemCompiler(CompilerFlagsPtr args);
 
-    CompiledCodePtr compileWithSystemCompiler(const std::string& source, const Timestamp pch_time);
-
-    void callSystemCompiler(const std::vector<std::string>& args);
-
-    void handleDebugging(const std::string& source);
-
-    std::vector<std::string> getPrecompiledHeaderCompilerArgs();
-    std::vector<std::string> getCompilerArgs();
-    bool show_generated_code_ = false;
-    bool debug_code_generator_ = false;
-    bool keep_last_generated_query_code_ = false;
-    std::vector<std::string> compiler_args_;
+    void writeSourceToFile(const std::string& filename, const std::string& source);
+    void formatAndPrintSource(const std::string& source);
 
     const static std::string IncludePath;
-    const static std::string MinimalApiHeaderPath;
-    std::string PrecompiledHeaderName;
 };
-
-void exportSourceToFile(const std::string& filename, const std::string& source);
-void pretty_print_code(const std::string& source);
 
 }// namespace NES
 

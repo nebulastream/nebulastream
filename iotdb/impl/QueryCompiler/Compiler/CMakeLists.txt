@@ -4,5 +4,6 @@ add_source_iotdb(
         PipelineContext.cpp
         CompiledCode.cpp
         SystemCompilerCompiledCode.cpp
+        CompilerFlags.cpp
 
 )

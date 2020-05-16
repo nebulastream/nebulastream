@@ -648,7 +648,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
         .build();
 
     Compiler compiler;
-    auto stage = CompiledExecutablePipeline::create(compiler.compile(file.code));
+    auto stage = CompiledExecutablePipeline::create(compiler.compile(file.code, true /** debugging **/));
 
     /* setup input and output for test */
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
