@@ -141,8 +141,14 @@ Status CoordinatorRPCServer::RemoveParent(ServerContext* context, const RemovePa
                                           RemoveParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RemoveParent: request =" << request);
 
-    NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
-    reply->set_success(true);
-    return Status::OK;
-
+    bool success = coordinatorEngine->removeParent(request->childid(), request->parentid());
+    if (success) {
+        NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
+        reply->set_success(true);
+        return Status::OK;
+    } else {
+        NES_ERROR("CoordinatorRPCServer::RemoveParent failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
 }
