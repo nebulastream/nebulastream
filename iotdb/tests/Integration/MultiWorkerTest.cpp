@@ -30,7 +30,8 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
@@ -52,13 +53,15 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+20), NESNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+20), NESNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
@@ -84,13 +87,15 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+20), NESNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+20), NESNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
@@ -116,13 +121,15 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/true);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+10), NESNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+20), NESNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+20), NESNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
@@ -153,14 +160,16 @@ TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/true);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+10), NESNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+20), NESNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
 
@@ -182,13 +191,15 @@ TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+        std::to_string(port+20), NESNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/false);
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;

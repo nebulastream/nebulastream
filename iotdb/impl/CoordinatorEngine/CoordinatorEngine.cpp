@@ -32,7 +32,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
 
     auto nodes = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(address);
     if (!nodes.empty()) {
-        NES_ERROR("CoordinatorEngine::registerNode: node with this address already exists=" << address);
+        NES_ERROR("CoordinatorEngine::registerNode: node with this address already exists=" << address << " id=" << nodes[0]->getId());
         return false;
     }
     NESTopologyEntryPtr nodePtr;

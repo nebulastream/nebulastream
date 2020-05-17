@@ -55,6 +55,7 @@ NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     StreamCatalog::instance().reset();
     QueryCatalog::instance().clearQueries();
+    NESTopologyManager::getInstance().resetNESTopologyPlan();
 }
 
 /**
