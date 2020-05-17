@@ -30,8 +30,6 @@ int main(int argc, const char* argv[]) {
     NES::setupLogging("nesCoordinatorStarter.log", NES::LOG_DEBUG);
     cout << logo << endl;
 
-    CoordinatorRPCServer();
-
     // Initializing defaults
     uint16_t restPort = 8081;
     uint16_t rpcPort = 4000;
