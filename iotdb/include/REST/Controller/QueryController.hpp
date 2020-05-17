@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BaseController.hpp"
-#include <Services/CoordinatorService.hpp>
 #include <Services/NESTopologyService.hpp>
 #include <Services/QueryService.hpp>
 #include <cpprest/http_msg.h>
@@ -26,7 +25,6 @@ class QueryController : public BaseController {
   private:
     QueryServicePtr queryServicePtr;
     NESTopologyServicePtr nesTopologyServicePtr;
-    CoordinatorServicePtr coordinatorServicePtr;
     NesCoordinatorPtr coordinator;
 };
 

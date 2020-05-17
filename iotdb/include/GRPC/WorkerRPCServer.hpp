@@ -1,6 +1,5 @@
 #pragma once
 #include <NodeEngine/NodeEngine.hpp>
-#include <Services/CoordinatorService.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>

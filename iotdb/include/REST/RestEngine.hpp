@@ -30,12 +30,8 @@ class RestEngine : public BaseController {
     QueryCatalogController queryCatalogController;
 
   public:
-    RestEngine() {
-        NES_DEBUG("RestEngine");
-    };
-    ~RestEngine() {
-        NES_DEBUG("~RestEngine");
-    };
+    RestEngine();
+    ~RestEngine();
 
     void handleGet(http_request message);
     void handlePost(http_request message);

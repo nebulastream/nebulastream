@@ -2,14 +2,12 @@
 
 #include <iostream>
 #include <future>
-
-#include <Services/CoordinatorService.hpp>
-
 #include <API/Schema.hpp>
-
 #include <Util/Logger.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/SourceCreator.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 using namespace NES;
 
 class QueryExecutionTest : public testing::Test {

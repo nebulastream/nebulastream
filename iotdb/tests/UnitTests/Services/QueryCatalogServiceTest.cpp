@@ -4,7 +4,6 @@
 #include <Util/Logger.hpp>
 #include <Topology/NESTopologyManager.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Services/CoordinatorService.hpp>
 #include <Util/TestUtils.hpp>
 using namespace NES;
 
