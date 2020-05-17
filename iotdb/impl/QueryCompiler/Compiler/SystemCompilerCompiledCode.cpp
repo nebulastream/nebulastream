@@ -34,8 +34,7 @@ void SystemCompilerCompiledCode::cleanUp() {
     }
 }
 
-CompiledCodePtr createSystemCompilerCompiledCode(SharedLibraryPtr library,
-                                                 const std::string& baseName) {
+CompiledCodePtr SystemCompilerCompiledCode::create(SharedLibraryPtr library, const std::string& baseName) {
     return std::make_shared<SystemCompilerCompiledCode>(library, baseName);
 }
 }// namespace NES

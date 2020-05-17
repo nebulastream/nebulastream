@@ -5,13 +5,10 @@
 
 #include <Util/SharedLibrary.hpp>
 
-#include <boost/filesystem/operations.hpp>
-
 #include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
@@ -37,25 +34,29 @@ std::string Compiler::getFileName() {
 }
 
 CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
+    // if we are in compile in debugging mode we create print the source file.
     if (debugging) {
         formatAndPrintSource(source);
     }
+    // write source to cpp file
     std::string basename = getFileName();
-    std::string filename = basename + ".c";
+    std::string filename = basename + ".cpp";
     std::string libraryName = basename + ".so";
     writeSourceToFile(filename, source);
 
+    // init compilation flag dependent on compilation mode
     auto flags = debugging ? CompilerFlags::createDebuggingCompilerFlags() : CompilerFlags::createDefaultCompilerFlags();
     flags->addFlag("--shared");
     flags->addFlag("-xc++ ");
     flags->addFlag("-I" + IncludePath);
     flags->addFlag("-o" + libraryName);
     flags->addFlag(filename);
+
+    // call compiler to generate shared lib from source code
     callSystemCompiler(flags);
-
+    // load shared lib
     auto sharedLibrary = SharedLibrary::load("./" + libraryName);
-
-    return createSystemCompilerCompiledCode(sharedLibrary, basename);
+    return SystemCompilerCompiledCode::create(sharedLibrary, basename);
 }
 
 void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
@@ -83,14 +84,13 @@ void Compiler::formatAndPrintSource(const std::string& source) {
                   "symbolic link.");
         return;
     }
+    // write source to a temp file, which we format.
     const std::string filename = "temporary_file.c";
-
     writeSourceToFile(filename, source);
 
     auto formatCommand = std::string("clang-format ") + filename;
     /* try a syntax highlighted output first */
     /* command highlight available? */
-
     ret = system("which highlight > /dev/null");
     if (ret == 0) {
         formatCommand += " | highlight --src-lang=c++ -O ansi";
