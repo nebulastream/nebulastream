@@ -24,7 +24,7 @@ class ExecutionNodeLink {
         this->linkLatency = linkLatency;
     }
 
-    int getLinkId() { return this->linkId; }
+    size_t getLinkId() { return this->linkId; }
     ExecutionNodePtr getSource() { return this->src; }
     ExecutionNodePtr getDestination() { return this->dest; }
     size_t getLinkLatency() { return linkLatency; }

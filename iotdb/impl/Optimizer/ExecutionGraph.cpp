@@ -207,7 +207,9 @@ bool ExecutionGraph::addEdge(ExecutionNodeLinkPtr ptr) {
     // add edge with link
     auto src = getVertex(ptr->getSource()->getId());
     auto dst = getVertex(ptr->getDestination()->getId());
-    boost::add_edge(src, dst, ExecutionEdge{ptr->getLinkId(), ptr}, graph);
+    auto linkID = ptr->getLinkId();
+    auto edge = ExecutionEdge{linkID, ptr};
+    boost::add_edge(src, dst, edge, graph);
 
     return true;
 };
