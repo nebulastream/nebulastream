@@ -83,15 +83,15 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
-        connect();
+        assert(connect());
     }
     if (withRegisterStream) {
         NES_DEBUG("NesWorker: start with register stream");
-        registerPhysicalStream(conf);
+        assert(registerPhysicalStream(conf));
     }
     if (withParent) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
-        addParent(atoi(parentId.c_str()));
+        assert(addParent(atoi(parentId.c_str())));
     }
 
     stopped = false;
@@ -147,10 +147,12 @@ bool NesWorker::stop(bool force) {
 
 bool NesWorker::connect() {
     std::string address = coordinatorIp + ":" + coordinatorPort;
+
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(
         address);
-
     std::string localAddress = localWorkerIp + ":" + localWorkerPort;
+
+    NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddres=" << localAddress);
     bool successPRCRegister = coordinatorRpcClient->registerNode(localAddress, 2,
         type, nodeEngine->getNodePropertiesAsString());
     if (successPRCRegister) {
@@ -163,9 +165,15 @@ bool NesWorker::connect() {
 }
 
 bool NesWorker::disconnect() {
-    //TODO: check if we have to close the channel manually
     NES_DEBUG("NesWorker::disconnect()");
-    return true;
+    bool successPRCRegister = coordinatorRpcClient->unregisterNode();
+    if (successPRCRegister) {
+        NES_DEBUG("NesWorker::registerNode rpc unregister success");
+        return true;
+    } else {
+        NES_DEBUG("NesWorker::registerNode rpc unregister failed");
+        return false;
+    }
 }
 
 bool NesWorker::registerLogicalStream(std::string name, std::string path) {

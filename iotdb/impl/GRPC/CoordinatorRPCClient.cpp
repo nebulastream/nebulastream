@@ -39,8 +39,7 @@ bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
         NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream "
-                  "error="
+        NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream error="
                       << status.error_code() << ": "
                       << status.error_message());
         return reply.success();
@@ -80,8 +79,7 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName,
         NES_DEBUG("CoordinatorRPCClient::registerLogicalStream: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::registerLogicalStream "
-                  "error="
+        NES_DEBUG(" CoordinatorRPCClient::registerLogicalStream error="
                       << status.error_code() << ": "
                       << status.error_message());
         return reply.success();
@@ -109,8 +107,7 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamNam
         NES_DEBUG("CoordinatorRPCClient::unregisterPhysicalStream: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::unregisterPhysicalStream "
-                  "error="
+        NES_DEBUG(" CoordinatorRPCClient::unregisterPhysicalStream error="
                       << status.error_code() << ": "
                       << status.error_message());
         return reply.success();
@@ -134,8 +131,7 @@ bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
         NES_DEBUG("CoordinatorRPCClient::unregisterLogicalStream: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::unregisterLogicalStream "
-                  "error="
+        NES_DEBUG(" CoordinatorRPCClient::unregisterLogicalStream error="
                       << status.error_code() << ": "
                       << status.error_message());
         return reply.success();
@@ -159,8 +155,7 @@ bool CoordinatorRPCClient::addParent(size_t parentId) {
         NES_DEBUG("CoordinatorRPCClient::addParent: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::addParent "
-                  "error="
+        NES_DEBUG(" CoordinatorRPCClient::addParent error="
                       << status.error_code() << ": "
                       << status.error_message());
         return reply.success();
@@ -188,13 +183,37 @@ bool CoordinatorRPCClient::removeParent(size_t parentId) {
         NES_DEBUG("CoordinatorRPCClient::removeParent: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::removeParent "
-                  "error="
+        NES_DEBUG(" CoordinatorRPCClient::removeParent error="
                       << status.error_code() << ": "
                       << status.error_message());
         return reply.success();
     }
 }
+
+bool CoordinatorRPCClient::unregisterNode()
+{
+    NES_DEBUG("CoordinatorRPCClient::unregisterNode workerId=" << workerId);
+
+    UnregisterNodeRequest request;
+    request.set_id(workerId);
+    NES_DEBUG("CoordinatorRPCClient::unregisterNode request=" << request.DebugString());
+
+    UnregisterNodeReply reply;
+    ClientContext context;
+
+    Status status = coordinatorStub->UnregisterNode(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("CoordinatorRPCClient::unregisterNode: status ok return success=" << reply.success());
+        return reply.success();
+    } else {
+        NES_DEBUG(" CoordinatorRPCClient::unregisterNode error="
+                      << status.error_code() << ": "
+                      << status.error_message());
+        return reply.success();
+    }
+}
+
 
 bool CoordinatorRPCClient::registerNode(std::string localAddress,
                                         size_t numberOfCpus,
@@ -227,8 +246,7 @@ bool CoordinatorRPCClient::registerNode(std::string localAddress,
         this->workerId = reply.id();
         return true;
     } else {
-        NES_ERROR(" CoordinatorRPCClient::registerNode "
-                  "error="
+        NES_ERROR(" CoordinatorRPCClient::registerNode error="
                       << status.error_code() << ": "
                       << status.error_message());
         return false;

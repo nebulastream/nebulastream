@@ -77,6 +77,15 @@ class CoordinatorRPCClient {
                       NESNodeType type,
                       string nodeProperties);
 
+
+    /**
+   * @brief method to unregister a node after the connection is established
+   * @return bool indicating success
+   */
+    bool unregisterNode();
+
+
+
     /**
      * @brief method to get own id form server
      * @return own id as listed in the graph
