@@ -42,6 +42,7 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
     StreamCatalog::instance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
     queryDeployer = std::make_shared<QueryDeployer>();
+    coordinatorEngine = std::make_shared<CoordinatorEngine>();
 
 }
 

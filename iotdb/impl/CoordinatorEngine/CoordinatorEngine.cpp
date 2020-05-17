@@ -279,7 +279,7 @@ bool CoordinatorEngine::addParent(size_t childId, size_t parentId) {
                                                                                            << sensorNodes.size());
         return false;
     }
-    NES_ERROR("CoordinatorEngine::AddParent: source node " << childId << " exists");
+    NES_DEBUG("CoordinatorEngine::AddParent: source node " << childId << " exists");
 
     std::vector<NESTopologyEntryPtr>
         sensorParent = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(parentId);
@@ -291,7 +291,7 @@ bool CoordinatorEngine::addParent(size_t childId, size_t parentId) {
                       << parentId << " count=" << sensorParent.size());
         return false;
     }
-    NES_ERROR("CoordinatorEngine::AddParent: sensorParent node " << parentId << " exists");
+    NES_DEBUG("CoordinatorEngine::AddParent: sensorParent node " << parentId << " exists");
 
     bool connected =
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNESTopologyGraph()->hasLink(sensorNodes[0],
@@ -320,37 +320,43 @@ bool CoordinatorEngine::removeParent(size_t childId, size_t parentId) {
     std::vector<NESTopologyEntryPtr>
         sensorNodes = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(childId);
     if (sensorNodes.size() == 0) {
-        NES_ERROR("CoordinatorEngine::change_sensor_position: source node " << childId << " does not exists");
+        NES_ERROR("CoordinatorEngine::removeParent: source node " << childId << " does not exists");
         return false;
     } else if (sensorNodes.size() > 1) {
         NES_ERROR(
-            "CoordinatorEngine::change_sensor_position: more than one sensorNodes node with id exists " << childId
+            "CoordinatorEngine::removeParent: more than one sensorNodes node with id exists " << childId
                                                                                                         << " count="
                                                                                                         << sensorNodes.size());
         return false;
     }
+    NES_DEBUG("CoordinatorEngine::removeParent: source node " << childId << " exists");
+
 
     std::vector<NESTopologyEntryPtr>
         sensorParent = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(parentId);
     if (sensorParent.size() == 0) {
-        NES_ERROR("CoordinatorEngine::change_sensor_position: sensorParent node " << childId << " does not exists");
+        NES_ERROR("CoordinatorEngine::removeParent: sensorParent node " << childId << " does not exists");
         return false;
     } else if (sensorParent.size() > 1) {
         NES_ERROR(
-            "CoordinatorEngine::change_sensor_position: more than one sensorParent node with id exists " << childId
+            "CoordinatorEngine::removeParent: more than one sensorParent node with id exists " << childId
                                                                                                          << " count="
                                                                                                          << sensorNodes.size());
         return false;
     }
+    NES_DEBUG("CoordinatorEngine::AddParent: sensorParent node " << parentId << " exists");
+
 
     bool connected =
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNESTopologyGraph()->hasLink(sensorNodes[0],
                                                                                                sensorParent[0]);
     if (!connected) {
-        NES_ERROR("CoordinatorEngine::change_sensor_position: nodes " << childId << " and " << parentId
+        NES_ERROR("CoordinatorEngine::removeParent: nodes " << childId << " and " << parentId
                                                                       << " are not connected");
         return false;
     }
+    NES_DEBUG("CoordinatorEngine::removeParent: nodes connected");
+
 
     NESTopologyLinkPtr
         link = NESTopologyManager::getInstance().getNESTopologyPlan()->getNESTopologyGraph()->getLink(sensorNodes[0],
@@ -359,11 +365,11 @@ bool CoordinatorEngine::removeParent(size_t childId, size_t parentId) {
     bool success =
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNESTopologyGraph()->removeEdge(link->getId());
     if (!success) {
-        NES_ERROR("CoordinatorEngine::change_sensor_position: edge between  " << childId << " and " << parentId
+        NES_ERROR("CoordinatorEngine::removeParent: edge between  " << childId << " and " << parentId
                                                                               << " could not be removed");
         return false;
     }
-
+    NES_DEBUG("CoordinatorEngine::removeParent: successfull");
     return true;
 }
 }
