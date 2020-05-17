@@ -13,6 +13,9 @@ class SystemCompilerCompiledCode : public CompiledCode {
     SystemCompilerCompiledCode(SharedLibraryPtr library,
                                const std::string& baseName);
 
+    static CompiledCodePtr create(SharedLibraryPtr library,
+                                  const std::string& baseName);
+
     ~SystemCompilerCompiledCode() override;
 
   protected:
@@ -24,10 +27,6 @@ class SystemCompilerCompiledCode : public CompiledCode {
     SharedLibraryPtr library;
     std::string baseFileName;
 };
-
-CompiledCodePtr createSystemCompilerCompiledCode(SharedLibraryPtr library,
-                                                 const std::string& baseName);
-
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_COMPILER_SYSTEMCOMPILERCOMPILEDCODE_HPP_
