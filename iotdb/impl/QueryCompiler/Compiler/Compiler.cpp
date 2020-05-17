@@ -9,7 +9,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-
+#include <random>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
@@ -28,21 +28,28 @@ CompilerPtr Compiler::create() {
 std::string Compiler::getFileName() {
     auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
+
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(1, 10000);
+
     std::ostringstream oss;
-    oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
-    return "gen_query_" + oss.str();
+    oss << "gen_query_" << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);
+    return oss.str();
 }
 
 CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
-    // if we are in compile in debugging mode we create print the source file.
-    if (debugging) {
-        formatAndPrintSource(source);
-    }
+
     // write source to cpp file
     std::string basename = getFileName();
     std::string filename = basename + ".cpp";
     std::string libraryName = basename + ".so";
     writeSourceToFile(filename, source);
+
+    // if we are in compile in debugging mode we create print the source file.
+    if (debugging) {
+        formatAndPrintSource(filename);
+    }
 
     // init compilation flag dependent on compilation mode
     auto flags = debugging ? CompilerFlags::createDebuggingCompilerFlags() : CompilerFlags::createDefaultCompilerFlags();
@@ -75,7 +82,7 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
     }
 }
 
-void Compiler::formatAndPrintSource(const std::string& source) {
+void Compiler::formatAndPrintSource(const std::string& filename) {
     int ret = system("which clang-format > /dev/null");
     if (ret != 0) {
         NES_ERROR("Compiler: Did not find external tool 'clang-format'. "
@@ -84,9 +91,6 @@ void Compiler::formatAndPrintSource(const std::string& source) {
                   "symbolic link.");
         return;
     }
-    // write source to a temp file, which we format.
-    const std::string filename = "temporary_file.c";
-    writeSourceToFile(filename, source);
 
     auto formatCommand = std::string("clang-format ") + filename;
     /* try a syntax highlighted output first */
@@ -96,8 +100,6 @@ void Compiler::formatAndPrintSource(const std::string& source) {
         formatCommand += " | highlight --src-lang=c++ -O ansi";
     }
     ret = system(formatCommand.c_str());
-    std::string cleanupCommand = std::string("rm ") + filename;
-    ret = system(cleanupCommand.c_str());
 }
 
 void Compiler::writeSourceToFile(const std::string& filename,
