@@ -27,6 +27,7 @@ NesCoordinator::NesCoordinator() {
     StreamCatalog::instance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
     queryDeployer = std::make_shared<QueryDeployer>();
+    coordinatorEngine = std::make_shared<CoordinatorEngine>();
 }
 
 NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort)
@@ -69,10 +70,10 @@ void startRestServer(std::shared_ptr<RestServer> restServer,
  * @brief this method will start the RPC Coordinator service which is responsible for reacting to calls from the
  * CoordinatorRPCClient which will be send by the worker
  */
-void startCoordinatorRPCServer(std::shared_ptr<Server>& rpcServer, std::string address, std::promise<bool>& prom) {
+void startCoordinatorRPCServer(std::shared_ptr<Server>& rpcServer, std::string address, std::promise<bool>& prom, CoordinatorEnginePtr coordinatorEngine) {
     NES_DEBUG("startCoordinatorRPCServer");
     grpc::ServerBuilder builder;
-    CoordinatorRPCServer service;
+    CoordinatorRPCServer service(coordinatorEngine);
 
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
@@ -93,7 +94,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //Start RPC server that listen to calls form the clients
     std::promise<bool> promRPC;//promise to make sure we wait until the server is started
     rpcThread = std::make_shared<std::thread>(([&]() {
-      startCoordinatorRPCServer(rpcServer, address, promRPC);
+      startCoordinatorRPCServer(rpcServer, address, promRPC, coordinatorEngine);
     }));
     promRPC.get_future().get();
     NES_DEBUG("WorkerActor::startCoordinatorRPCServer: ready");
