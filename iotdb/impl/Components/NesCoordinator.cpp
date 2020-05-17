@@ -1,6 +1,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Topology/NESTopologyEntry.hpp>
+#include <Topology/NESTopologyManager.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <future>
 #include <thread>

@@ -4,6 +4,8 @@
 #include <ctime>
 #include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Topology/NESTopologyManager.hpp>
+
 namespace NES {
 
 class UpdateTopologyRemoteTest : public testing::Test {

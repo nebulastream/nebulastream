@@ -1,7 +1,8 @@
+#include <NodeEngine/NodeEngine.hpp>
+#include <cmath>
 #include <cassert>
 #include <iostream>
 #include <gtest/gtest.h>
-#include <Services/CoordinatorService.hpp>
 #include <Util/Logger.hpp>
 #include <API/Schema.hpp>
 #include <API/UserAPIExpression.hpp>

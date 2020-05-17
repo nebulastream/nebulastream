@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include <Catalogs/QueryCatalog.hpp>
-#include <Services/CoordinatorService.hpp>
 
 #include <Topology/NESTopologyManager.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>

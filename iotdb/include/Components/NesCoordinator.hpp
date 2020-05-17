@@ -3,7 +3,6 @@
 #include "REST/RestServer.hpp"
 #include <Components/NesWorker.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Services/CoordinatorService.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <grpcpp/grpcpp.h>
@@ -11,6 +10,8 @@
 #include <string>
 #include <Deployer/QueryDeployer.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
+
+
 namespace NES {
 typedef map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployment;
 

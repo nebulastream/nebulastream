@@ -26,6 +26,10 @@ std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeById(size_t id) {
     return fGraphPtr->getVertexById(id);
 }
 
+std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeByIp(std::string ip) {
+    return fGraphPtr->getVertexByIp(ip);
+}
+
 NESTopologyPlan::NESTopologyPlan() {
     fGraphPtr = std::make_shared<NESTopologyGraph>();
     currentLinkId = 0;

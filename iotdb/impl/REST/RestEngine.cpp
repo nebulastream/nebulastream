@@ -1,7 +1,16 @@
 #include "REST/RestEngine.hpp"
 #include "REST/NetworkUtils.hpp"
+#include <Util/Logger.hpp>
 
 namespace NES {
+
+RestEngine::RestEngine() {
+    NES_DEBUG("RestEngine");
+};
+RestEngine::~RestEngine() {
+    NES_DEBUG("~RestEngine");
+};
+
 
 void RestEngine::initRestOpHandlers() {
     _listener.support(methods::GET, std::bind(&RestEngine::handleGet, this, std::placeholders::_1));

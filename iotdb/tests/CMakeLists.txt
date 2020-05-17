@@ -71,7 +71,7 @@ target_link_libraries(nes-topology-manager-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME nes-topology-manager-tests COMMAND nes-topology-manager-tests)
 
 ### Buffer Manager Test ###
-add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp")
+add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp" UnitTests/CoordinaotEngineTest.cpp)
 target_link_libraries(buffer-manager-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
@@ -195,6 +195,12 @@ add_test(NAME filter-push-down-test COMMAND filter-push-down-test)
 add_executable(translate-from-legacy-plan-phase-test "UnitTests/Nodes/Phases/TranslateFromLegacyPlanPhaseTest.cpp")
 target_link_libraries(translate-from-legacy-plan-phase-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME translate-from-legacy-plan-phase-test COMMAND translate-from-legacy-plan-phase-test)
+
+### CoordinatorEngine Tests ###
+add_executable(coordinator-engine-tests "UnitTests/CoordinaotEngineTest.cpp")
+target_link_libraries(coordinator-engine-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME coordinator-engine-tests COMMAND coordinator-engine-tests)
+
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###

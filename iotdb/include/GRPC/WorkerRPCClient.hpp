@@ -4,8 +4,6 @@
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
 
-#include <Services/CoordinatorService.hpp>
-
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <grpcpp/grpcpp.h>
