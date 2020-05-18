@@ -38,7 +38,7 @@ message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 
 # lcryto is required for asio to communicate
-set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl grpc++)
+set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 
 # LLVM
 find_package(LLVM 3 REQUIRED)
@@ -77,7 +77,6 @@ if (GRPC_AVAILABLE)
     else()
         set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
     endif()
-    set(LIBRARIES ${LIBRARIES} ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 else()
     message(STATUS "Installing gRPC from repository")
     ## Fetch and build source for grpc and protobuf and all dependencies
@@ -102,6 +101,7 @@ else()
         set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
     endif()
 endif()
+set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
 # Proto file
 set(PROTO_PATH "${PROJECT_SOURCE_DIR}/grpc")
@@ -131,9 +131,6 @@ add_custom_command(
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
         "${PROTO_FILE_PATH}"
         DEPENDS "${PROTO_FILE_PATH}")
-
-# Include generated *.pb.h files
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # LibZMQ
 # ------
@@ -252,6 +249,7 @@ foreach(dir ${dirs})
 endforeach()
 
 message(STATUS " Libraries: ${LIBRARIES}")
+message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 
@@ -297,20 +295,31 @@ get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
 add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
 target_include_directories(iotdb PUBLIC "include")
-target_link_libraries(iotdb ${LIBRARIES} grpc++_reflection cppzmq)
-
+target_include_directories(iotdb PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+target_link_libraries(iotdb PUBLIC ${LIBRARIES} cppzmq)
+if (GRPC_LIBRARIES)
+target_link_libraries(iotdb PRIVATE ${GRPC_LIBRARIES})
+endif()
 # Documentation
 add_subdirectory(docs)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
 
 add_executable(nesCoordinator nesCoordinatorStarter.cpp)
-target_link_libraries(nesCoordinator ${LIBRARIES} iotdb)
+target_link_libraries(nesCoordinator PUBLIC ${LIBRARIES} iotdb)
 target_include_directories(nesCoordinator PUBLIC "include")
+target_include_directories(nesCoordinator PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+if (GRPC_LIBRARIES)
+    target_link_libraries(nesCoordinator PRIVATE ${GRPC_LIBRARIES})
+endif()
 
 add_executable(nesWorker nesWorkerStarter.cpp)
-target_link_libraries(nesWorker ${LIBRARIES} iotdb)
+target_link_libraries(nesWorker PUBLIC ${LIBRARIES} iotdb)
 target_include_directories(nesWorker PUBLIC "include")
+target_include_directories(nesWorker PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+if (GRPC_LIBRARIES)
+    target_link_libraries(nesWorker PRIVATE ${GRPC_LIBRARIES})
+endif()
 
 # Add tests with command
 enable_testing()
