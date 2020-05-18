@@ -134,6 +134,10 @@ class BufferControlBlock {
  *
  *
  * Reminder: this class should be header-only to help inlining
+ *
+ *
+ *
+ *
  */
 class MemorySegment {
     friend class NES::TupleBuffer;
@@ -168,6 +172,23 @@ class MemorySegment {
     uint32_t getSize() const { return size; }
 
   private:
+/*
+
+     Layout of the mem segment
+     +----------------------------+----------------+-----------------------------------+
+     |    pointer to data  (8b)   |  size (4b)     |  pointer to control block (8b)    |
+     +------------+---------------+----------------+-----------------------------------+
+                  |                                          |
+     -------------+                                          |
+     |                                                       |
+     v                                                       v
+     +----------------------------+-------------------------+----------------------------+
+     |    data region (variable size)                       | control block (fixed size) |
+     +----------------------------+-------------------------+----------------------------+
+
+*/
+
+
     uint8_t* ptr;
     uint32_t size;
     detail::BufferControlBlock* controlBlock;
