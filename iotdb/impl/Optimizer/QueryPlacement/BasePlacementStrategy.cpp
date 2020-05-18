@@ -1,5 +1,8 @@
 #include <API/Query.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
 #include <Operators/Operator.hpp>
+#include <Optimizer/ExecutionGraph.hpp>
+#include <Optimizer/NESExecutionPlan.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
@@ -9,9 +12,6 @@
 #include <Optimizer/QueryPlacement/MinimumResourceConsumptionStrategy.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
-#include <Optimizer/ExecutionGraph.hpp>
-#include <Optimizer/NESExecutionPlan.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <SourceSink/SenseSource.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
@@ -30,13 +30,13 @@ std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::s
     }
 
     switch (stringToPlacementStrategyType[placementStrategyName]) {
-        case TopDown:return TopDownStrategy::create();
-        case BottomUp:return BottomUpStrategy::create();
-        case LowLatency:return LowLatencyStrategy::create();
-        case HighThroughput:return HighThroughputStrategy::create();
-        case MinimumResourceConsumption:return MinimumResourceConsumptionStrategy::create();
-        case MinimumEnergyConsumption:return MinimumEnergyConsumptionStrategy::create();
-        case HighAvailability:return HighAvailabilityStrategy::create();
+        case TopDown: return TopDownStrategy::create();
+        case BottomUp: return BottomUpStrategy::create();
+        case LowLatency: return LowLatencyStrategy::create();
+        case HighThroughput: return HighThroughputStrategy::create();
+        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create();
+        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create();
+        case HighAvailability: return HighAvailabilityStrategy::create();
     }
 }
 
@@ -181,10 +181,10 @@ void BasePlacementStrategy::addForwardOperators(vector<NESTopologyEntryPtr> cand
     for (NESTopologyEntryPtr candidateNode : candidateNodes) {
         if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
             nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
-                /**executableOperator**/ nullptr);
+                                                     /**executableOperator**/ nullptr);
             candidateNode->reduceCpuCapacity(1);
         }
     }
 }
 
-} // namespace NES
+}// namespace NES

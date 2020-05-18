@@ -1,9 +1,9 @@
 #include <API/Query.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
+#include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Optimizer/NESOptimizer.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
-#include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 

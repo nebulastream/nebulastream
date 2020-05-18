@@ -86,7 +86,7 @@ class CSVSource : public DataSource {
 };
 
 typedef std::shared_ptr<CSVSource> CSVSourcePtr;
-}  // namespace NES
+}// namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

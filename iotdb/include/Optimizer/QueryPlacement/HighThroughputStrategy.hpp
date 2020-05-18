@@ -32,7 +32,7 @@ class HighThroughputStrategy : public BasePlacementStrategy {
      * @return
      */
     std::vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const std::vector<NESTopologyEntryPtr>& sourceNodes,
-                                                                         const NESTopologyEntryPtr rootNode) const;
+                                                                              const NESTopologyEntryPtr rootNode) const;
 };
 
 }// namespace NES

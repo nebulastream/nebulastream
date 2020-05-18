@@ -1,8 +1,8 @@
 #ifndef BOTTOMUP_HPP
 #define BOTTOMUP_HPP
 
-#include <iostream>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <iostream>
 
 namespace NES {
 
@@ -15,7 +15,7 @@ using namespace std;
  */
 class BottomUpStrategy : public BasePlacementStrategy {
   public:
-    ~BottomUpStrategy() {};
+    ~BottomUpStrategy(){};
 
     NESExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
@@ -47,6 +47,6 @@ class BottomUpStrategy : public BasePlacementStrategy {
     std::vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                               const NESTopologyEntryPtr rootNode) const;
 };
-}
+}// namespace NES
 
-#endif //BOTTOMUP_HPP
+#endif//BOTTOMUP_HPP

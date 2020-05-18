@@ -58,7 +58,7 @@ void startWorkerRPCServer(std::shared_ptr<Server>& rpcServer, std::string addres
 
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking " << blocking << " coordinatorIp=" << coordinatorIp
-    << " coordinatorPort=" << coordinatorPort << " localWorkerIp=" << localWorkerIp << " localWorkerPort=" << localWorkerPort
+                                                << " coordinatorPort=" << coordinatorPort << " localWorkerIp=" << localWorkerIp << " localWorkerPort=" << localWorkerPort
                                                 << " type=" << type);
 
     NES_DEBUG("NesWorker::start: start NodeEngine");
@@ -154,7 +154,7 @@ bool NesWorker::connect() {
 
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddres=" << localAddress);
     bool successPRCRegister = coordinatorRpcClient->registerNode(localAddress, 2,
-        type, nodeEngine->getNodePropertiesAsString());
+                                                                 type, nodeEngine->getNodePropertiesAsString());
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         return true;

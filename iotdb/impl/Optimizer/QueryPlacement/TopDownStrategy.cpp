@@ -1,18 +1,18 @@
-#include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <API/Query.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
-#include <Topology/NESTopologyPlan.hpp>
-#include <Optimizer/NESExecutionPlan.hpp>
-#include <Optimizer/ExecutionNode.hpp>
-#include <Operators/Operator.hpp>
-#include <Util/Logger.hpp>
-#include <Optimizer/Utils/PathFinder.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Operators/Operator.hpp>
+#include <Optimizer/ExecutionNode.hpp>
+#include <Optimizer/NESExecutionPlan.hpp>
+#include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
+#include <Topology/NESTopologyPlan.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -26,7 +26,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr inputQuery
     const string streamName = inputQuery->getSourceStreamName();
 
     const vector<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
-        .getSourceNodesForLogicalStream(streamName);
+                                                         .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_THROW_RUNTIME_ERROR("Unable to find the source node to place the operator");
@@ -62,7 +62,7 @@ vector<NESTopologyEntryPtr> TopDownStrategy::getCandidateNodesForFwdOperatorPlac
                                                                                       const NESTopologyEntryPtr rootNode) const {
     PathFinder pathFinder;
     vector<NESTopologyEntryPtr> candidateNodes;
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+    for (NESTopologyEntryPtr targetSource : sourceNodes) {
         vector<NESTopologyEntryPtr> nodesOnPath = pathFinder.findPathBetween(targetSource, rootNode);
         candidateNodes.insert(candidateNodes.end(), nodesOnPath.begin(), nodesOnPath.end());
     }
@@ -104,7 +104,7 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                     if (executionPlanPtr->hasVertex(node.operator*()->getId())) {
 
                         const ExecutionNodePtr existingExecutionNode = executionPlanPtr
-                            ->getExecutionNode(node.operator*()->getId());
+                                                                           ->getExecutionNode(node.operator*()->getId());
 
                         size_t operatorId = targetOperator->getId();
 
@@ -115,7 +115,7 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                         if (exists != residentOperatorIds.end()) {
                             NES_DEBUG("TopDown: Add child operators for next placement");
                             vector<NodePtr> nextOperatorsToProcess = targetOperator->getChildren();
-                            for (NodePtr nodePtr: nextOperatorsToProcess) {
+                            for (NodePtr nodePtr : nextOperatorsToProcess) {
                                 operatorsToProcess.emplace_back(nodePtr->as<LogicalOperatorNode>());
                             }
                             break;
@@ -138,7 +138,7 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
 
                         NES_DEBUG("TopDown: Add child operators for next placement");
                         vector<NodePtr> nextOperatorsToProcess = targetOperator->getChildren();
-                        for (NodePtr nodePtr: nextOperatorsToProcess) {
+                        for (NodePtr nodePtr : nextOperatorsToProcess) {
                             operatorsToProcess.emplace_back(nodePtr->as<LogicalOperatorNode>());
                         }
                         break;
@@ -188,12 +188,12 @@ void TopDownStrategy::addOperatorToExistingNode(OperatorPtr operatorPtr, Executi
 
     stringstream operatorName;
     operatorName << operatorPtr->toString()
-                 << "(OP-" << to_string(operatorPtr->getOperatorType()) << ")" << "=>"
+                 << "(OP-" << to_string(operatorPtr->getOperatorType()) << ")"
+                 << "=>"
                  << executionNode->getOperatorName();
     executionNode->setOperatorName(operatorName.str());
     executionNode->addChild(operatorPtr->copy());
     executionNode->addOperatorId(operatorPtr->getOperatorId());
 }
 
-}
-
+}// namespace NES

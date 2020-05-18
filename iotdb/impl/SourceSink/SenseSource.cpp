@@ -48,4 +48,4 @@ const string& SenseSource::getUdsf() const {
     return udsf;
 }
 
-}  // namespace NES
+}// namespace NES

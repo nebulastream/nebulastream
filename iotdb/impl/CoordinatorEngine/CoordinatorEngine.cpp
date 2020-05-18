@@ -1,11 +1,11 @@
+#include <API/Schema.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <Topology/NESTopologyManager.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <Topology/NESTopologyManager.hpp>
-#include <API/Schema.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 size_t getIdFromIp(std::string ip) {
@@ -59,7 +59,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
 
         //check if logical stream exists
         if (!StreamCatalog::instance().testIfLogicalStreamExistsInSchemaMapping(
-            streamConf.logicalStreamName)) {
+                streamConf.logicalStreamName)) {
             NES_ERROR(
                 "CoordinatorEngine::registerNode: error logical stream" << streamConf.logicalStreamName
                                                                         << " does not exist when adding physical stream "
@@ -78,7 +78,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
                                                                       << " is not supported");
             throw Exception(
                 "CoordinatorEngine::registerNode: error source type " + streamConf.sourceType
-                    + " is not supported");
+                + " is not supported");
         }
 
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
@@ -92,7 +92,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
                                                                     << " could not be added to catalog");
             throw Exception(
                 "CoordinatorEngine::registerNode: physical stream " + streamConf.physicalStreamName
-                    + " could not be added to catalog");
+                + " could not be added to catalog");
         }
 
     } else if (type == NESNodeType::Worker) {
@@ -113,7 +113,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
     }
 
     const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
-        .getRootNode();
+                                              .getRootNode();
 
     if (!kRootNode) {
         NES_DEBUG("CoordinatorEngine::registerNode: tree is empty so this becomes new root");
@@ -124,10 +124,9 @@ size_t CoordinatorEngine::registerNode(std::string address,
     }
 
     NES_DEBUG("CoordinatorEngine::registerNode: topology after insert = "
-                  << NESTopologyManager::getInstance().getNESTopologyPlan()->getTopologyPlanString());
+              << NESTopologyManager::getInstance().getNESTopologyPlan()->getTopologyPlanString());
 
     return id;
-
 }
 
 bool CoordinatorEngine::unregisterNode(size_t nodeId) {
@@ -168,7 +167,6 @@ bool CoordinatorEngine::unregisterNode(size_t nodeId) {
     NES_DEBUG("CoordinatorEngine::UnregisterNode: success in topology is " << successTopology);
 
     return successCatalog && successTopology;
-
 }
 
 bool CoordinatorEngine::registerPhysicalStream(size_t nodeId,
@@ -189,8 +187,8 @@ bool CoordinatorEngine::registerPhysicalStream(size_t nodeId,
 
     NES_DEBUG(
         "CoordinatorEngine::RegisterPhysicalStream: try to register physical stream with conf= "
-            << streamConf.toString() << " for workerId="
-            << nodeId);
+        << streamConf.toString() << " for workerId="
+        << nodeId);
 
     std::vector<NESTopologyEntryPtr> sensorNodes =
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -219,8 +217,8 @@ bool CoordinatorEngine::unregisterPhysicalStream(size_t nodeId, std::string phys
     NES_DEBUG(
         "CoordinatorEngine::UnregisterPhysicalStream: try to remove physical "
         "stream with name "
-            << physicalStreamName << " logical name "
-            << logicalStreamName << " workerId=" << nodeId);
+        << physicalStreamName << " logical name "
+        << logicalStreamName << " workerId=" << nodeId);
 
     std::vector<NESTopologyEntryPtr> sensorNodes =
         NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -292,7 +290,7 @@ bool CoordinatorEngine::addParent(size_t childId, size_t parentId) {
         return false;
     } else if (sensorParent.size() > 1) {
         NES_ERROR("CoordinatorEngine::AddParent: more than one sensorParent node with id exists "
-                      << parentId << " count=" << sensorParent.size());
+                  << parentId << " count=" << sensorParent.size());
         return false;
     }
     NES_DEBUG("CoordinatorEngine::AddParent: sensorParent node " << parentId << " exists");
@@ -373,4 +371,4 @@ bool CoordinatorEngine::removeParent(size_t childId, size_t parentId) {
     NES_DEBUG("CoordinatorEngine::removeParent: successfull");
     return true;
 }
-}
+}// namespace NES

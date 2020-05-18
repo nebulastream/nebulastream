@@ -2,15 +2,14 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #include "REST/RestServer.hpp"
 #include <Components/NesWorker.hpp>
+#include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <Deployer/QueryDeployer.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
-#include <Deployer/QueryDeployer.hpp>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
-
 
 namespace NES {
 typedef map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployment;

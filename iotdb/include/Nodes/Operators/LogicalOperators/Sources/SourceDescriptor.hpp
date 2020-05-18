@@ -13,13 +13,12 @@ typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>{
+class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
 
   public:
+    SourceDescriptor(SchemaPtr schema) : schema(schema){};
 
-    SourceDescriptor(SchemaPtr schema) : schema(schema) {};
-
-    virtual ~SourceDescriptor()=default;
+    virtual ~SourceDescriptor() = default;
 
     /**
      * @brief Returns the schema, which is produced by this source descriptor

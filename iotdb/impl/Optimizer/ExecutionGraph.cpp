@@ -1,6 +1,6 @@
 #include <Optimizer/ExecutionGraph.hpp>
-#include <boost/graph/graphviz.hpp>
 #include <Util/Logger.hpp>
+#include <boost/graph/graphviz.hpp>
 using namespace NES;
 
 ExecutionNodePtr ExecutionGraph::getRoot() {

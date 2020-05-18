@@ -173,7 +173,6 @@ class MemorySegment {
     detail::BufferControlBlock* controlBlock;
 };
 
-
 /**
  * @brief This is the callback that is called when ZMQ is done with the sending of the buffer with payload in ptr.
  * The hint parameter is the size of the whole buffer (casted as void*)

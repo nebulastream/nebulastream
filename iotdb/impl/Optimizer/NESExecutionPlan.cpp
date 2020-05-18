@@ -1,7 +1,7 @@
-#include <Optimizer/NESExecutionPlan.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
-#include <Util/Logger.hpp>
+#include <Optimizer/NESExecutionPlan.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
+#include <Util/Logger.hpp>
 
 using namespace NES;
 using namespace web;

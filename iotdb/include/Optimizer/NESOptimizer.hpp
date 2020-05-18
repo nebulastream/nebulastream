@@ -26,7 +26,6 @@ typedef std::shared_ptr<TranslateFromLegacyPlanPhase> TranslateFromLegacyPlanPha
 class NESOptimizer {
 
   public:
-
     NESOptimizer();
 
     /**
@@ -43,6 +42,6 @@ class NESOptimizer {
   private:
     TranslateFromLegacyPlanPhasePtr translateFromLegacyPlanPhase;
 };
-}
+}// namespace NES
 
-#endif //NESOPTIMIZER_HPP
+#endif//NESOPTIMIZER_HPP

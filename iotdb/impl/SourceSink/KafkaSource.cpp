@@ -125,5 +125,5 @@ const std::unique_ptr<cppkafka::Consumer>& KafkaSource::getConsumer() const {
     return consumer;
 }
 
-} // namespace NES
+}// namespace NES
 BOOST_CLASS_EXPORT(NES::KafkaSource);

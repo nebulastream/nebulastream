@@ -1,30 +1,30 @@
+#include <API/UserAPIExpression.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Node.hpp>
-#include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
-#include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
-#include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
-#include <Operators/Operator.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Operators/Impl/SourceOperator.hpp>
-#include <Operators/Impl/SinkOperator.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Nodes/Node.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
+#include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
+#include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 #include <Operators/Impl/MapOperator.hpp>
-#include <API/UserAPIExpression.hpp>
+#include <Operators/Impl/SinkOperator.hpp>
+#include <Operators/Impl/SourceOperator.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES {
 
@@ -38,7 +38,7 @@ TranslateFromLegacyPlanPhasePtr TranslateFromLegacyPlanPhase::create() {
 OperatorNodePtr TranslateFromLegacyPlanPhase::transform(OperatorPtr operatorPtr) {
     NES_DEBUG("TranslateFromLegacyPlanPhase: translate " << operatorPtr);
     auto operatorNode = transformIndividualOperator(operatorPtr);
-    for (const OperatorPtr child: operatorPtr->getChildren()) {
+    for (const OperatorPtr child : operatorPtr->getChildren()) {
         auto legacyChildOperator = transform(child);
         operatorNode->addChild(legacyChildOperator);
     }
@@ -53,21 +53,18 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transform(OperatorPtr operatorPtr)
 ExpressionNodePtr TranslateFromLegacyPlanPhase::transformToExpression(UserAPIExpressionPtr expression) {
 
     if (PredicatePtr predicate = std::dynamic_pointer_cast<Predicate>(expression)) {
-        if (predicate->getOperatorType() == LESS_THAN_EQUAL_OP || predicate->getOperatorType() == LESS_THAN_OP ||
-            predicate->getOperatorType() == GREATER_THAN_EQUAL_OP || predicate->getOperatorType() == GREATER_THAN_OP ||
-            predicate->getOperatorType() == EQUAL_OP) {
+        if (predicate->getOperatorType() == LESS_THAN_EQUAL_OP || predicate->getOperatorType() == LESS_THAN_OP || predicate->getOperatorType() == GREATER_THAN_EQUAL_OP || predicate->getOperatorType() == GREATER_THAN_OP || predicate->getOperatorType() == EQUAL_OP) {
             NES_DEBUG("TranslateFromLegacyPlanPhase: translate expression into logical logical expression");
             // Translate logical expressions to the legacy representation
             return transformLogicalExpressions(predicate);
-        } else if (predicate->getOperatorType() == PLUS_OP || predicate->getOperatorType() == MINUS_OP ||
-            predicate->getOperatorType() == DIVISION_OP || predicate->getOperatorType() == MULTIPLY_OP) {
+        } else if (predicate->getOperatorType() == PLUS_OP || predicate->getOperatorType() == MINUS_OP || predicate->getOperatorType() == DIVISION_OP || predicate->getOperatorType() == MULTIPLY_OP) {
             NES_DEBUG("TranslateFromLegacyPlanPhase: translate expression into logical arithmetic expression");
             // Translate arithmetical expressions to the legacy representation
             return transformArithmeticalExpressions(predicate);
         }
         NES_THROW_RUNTIME_ERROR(
             "TranslateFromLegacyPlanPhase: No transformation implemented for this predicate: "
-                + expression->toString());
+            + expression->toString());
         NES_NOT_IMPLEMENTED();
     } else if (FieldPtr field = std::dynamic_pointer_cast<Field>(expression)) {
         NES_DEBUG("TranslateFromLegacyPlanPhase: translate expression into field access expression");
@@ -87,7 +84,7 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformToExpression(UserAPIExp
     }
     NES_THROW_RUNTIME_ERROR(
         "TranslateFromLegacyPlanPhase: No transformation implemented for this UserAPIExpression: "
-            + expression->toString());
+        + expression->toString());
     NES_NOT_IMPLEMENTED();
 }
 
@@ -170,7 +167,7 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformArithmeticalExpressions
     }
     NES_THROW_RUNTIME_ERROR(
         "TranslateFromLegacyPlanPhase: No transformation implemented for this arithmetical predicate: "
-            + predicate->toString());
+        + predicate->toString());
     NES_NOT_IMPLEMENTED();
 }
 
@@ -220,7 +217,7 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformLogicalExpressions(Pred
     }
     NES_THROW_RUNTIME_ERROR(
         "TranslateFromLegacyPlanPhase: No transformation implemented for this Physical expression node: "
-            + predicate->toString());
+        + predicate->toString());
 }
 
-}
+}// namespace NES

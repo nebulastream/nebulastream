@@ -25,7 +25,7 @@ using executionEdge_iterator = boost::graph_traits<executionGraph_t>::edge_itera
 
 class ExecutionGraph {
   public:
-    ExecutionGraph() {};
+    ExecutionGraph(){};
 
     /**
      * @brief method to get the root node of the graph (with id 0)
@@ -146,5 +146,5 @@ class ExecutionGraph {
 
 typedef std::shared_ptr<ExecutionGraph> ExecutionGraphPtr;
 
-}
+}// namespace NES
 #endif /* INCLUDE_OPTIMIZER_EXECUTIONGRAPH_HPP_ */

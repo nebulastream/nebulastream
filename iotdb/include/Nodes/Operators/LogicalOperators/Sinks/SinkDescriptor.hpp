@@ -18,7 +18,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
   public:
     SinkDescriptor(){};
 
-    virtual ~SinkDescriptor()=default;
+    virtual ~SinkDescriptor() = default;
 
     /**
     * @brief Checks if the current node is of type SinkType

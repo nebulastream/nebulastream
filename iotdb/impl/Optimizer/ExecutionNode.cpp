@@ -1,5 +1,5 @@
-#include <Optimizer/ExecutionNode.hpp>
 #include <Operators/Operator.hpp>
+#include <Optimizer/ExecutionNode.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 
 namespace NES {
@@ -12,11 +12,11 @@ ExecutionNode::ExecutionNode(std::string operatorName,
       nodeName(nodeName),
       nesNode(nesNode),
       rootOperator(rootOperator),
-      id(nesNode->getId()){}
+      id(nesNode->getId()) {}
 
 void ExecutionNode::addOperator(OperatorPtr operatorPtr) {
     OperatorPtr root = rootOperator;
-    while(root->getParent() != nullptr){
+    while (root->getParent() != nullptr) {
         root = root->getParent();
     }
     operatorPtr->setChildren({root});
@@ -30,4 +30,4 @@ void ExecutionNode::addChild(OperatorPtr operatorPtr) {
     rootOperator = operatorPtr;
 }
 
-}
+}// namespace NES

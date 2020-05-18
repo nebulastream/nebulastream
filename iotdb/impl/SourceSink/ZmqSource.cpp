@@ -78,10 +78,9 @@ std::optional<TupleBuffer> ZmqSource::receiveData() {
             }
             return buffer;
         } catch (const zmq::error_t& ex) {
-                NES_ERROR("ZMQSOURCE error: " << ex.what());
-                return std::nullopt;
-        }
-        catch (...) {
+            NES_ERROR("ZMQSOURCE error: " << ex.what());
+            return std::nullopt;
+        } catch (...) {
             NES_ERROR("ZMQSOURCE general error");
             return std::nullopt;
         }
@@ -138,7 +137,7 @@ bool ZmqSource::disconnect() {
         // we put assert here because it d be called anyway from the shutdown method
         // that we commented out
         assert(zmq_ctx_shutdown(static_cast<void*>(context)) == 0);
-//        context.shutdown();
+        //        context.shutdown();
         connected = false;
     }
     if (!connected) {
@@ -159,6 +158,6 @@ uint16_t ZmqSource::getPort() const {
     return port;
 }
 
-} // namespace NES
+}// namespace NES
 
 BOOST_CLASS_EXPORT(NES::ZmqSource);

@@ -94,9 +94,9 @@ class ZmqSource : public DataSource {
     template<class Archive>
     void serialize(Archive& ar,
                    const unsigned int version) {
-        ar & boost::serialization::base_object<DataSource>(*this);
-        ar & host;
-        ar & port;
+        ar& boost::serialization::base_object<DataSource>(*this);
+        ar& host;
+        ar& port;
     }
     std::string host;
     uint16_t port;
@@ -106,5 +106,5 @@ class ZmqSource : public DataSource {
 };
 
 typedef std::shared_ptr<ZmqSource> ZmqSourcePtr;
-}  // namespace NES
-#endif // ZMQSOURCE_HPP
+}// namespace NES
+#endif// ZMQSOURCE_HPP

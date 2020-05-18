@@ -4,6 +4,7 @@
 #include <Network/ZmqUtils.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+#include <NodeEngine/detail/TupleBufferImpl.hpp>
 
 namespace NES {
 namespace Network {
@@ -112,7 +113,7 @@ void OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
     auto numOfTuples = inputBuffer.getNumberOfTuples();
     auto payloadSize = tupleSize * numOfTuples;
     auto ptr = inputBuffer.getBuffer<uint8_t>();
-    auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize); // DON'T TRY THIS AT HOME :P
+    auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize);// DON'T TRY THIS AT HOME :P
     sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples);
     inputBuffer.retain();
     zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer));

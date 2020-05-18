@@ -21,7 +21,6 @@
 
 namespace NES {
 
-
 std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeById(size_t id) {
     return fGraphPtr->getVertexById(id);
 }
@@ -85,10 +84,10 @@ NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(
     size_t pLinkCapacity, size_t pLinkLatency) {
 
     NES_DEBUG("NESTopologyPlan::createNESTopologyLink: "
-                  << " sourceip=" << pSourceNode->getIp()
-                  << " sourceid=" << pSourceNode->getId()
-                  << " destip=" << pDestNode->getIp()
-                  << " destid=" << pDestNode->getId());
+              << " sourceip=" << pSourceNode->getIp()
+              << " sourceid=" << pSourceNode->getId()
+              << " destip=" << pDestNode->getIp()
+              << " destid=" << pDestNode->getId());
 
     // check if link already exists
     if (fGraphPtr->hasLink(pSourceNode, pDestNode)) {
@@ -109,8 +108,7 @@ NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(
         NES_ERROR("NESTopologyPlan: could not add node");
         return nullptr;
     }
-    return
-        linkPtr;
+    return linkPtr;
 }
 
 bool NESTopologyPlan::removeNESTopologyLink(NESTopologyLinkPtr linkPtr) {

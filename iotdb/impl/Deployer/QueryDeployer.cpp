@@ -1,30 +1,28 @@
-#include <Deployer/QueryDeployer.hpp>
-#include <string>
-#include <Topology/NESTopologyManager.hpp>
 #include <Catalogs/QueryCatalog.hpp>
+#include <Deployer/QueryDeployer.hpp>
 #include <GRPC/ExecutableTransferObject.hpp>
-#include <Optimizer/NESExecutionPlan.hpp>
-#include <SourceSink/SourceCreator.hpp>
-#include <SourceSink/SinkCreator.hpp>
-#include <SourceSink/DataSink.hpp>
-#include <SourceSink/DataSource.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
+#include <Optimizer/NESExecutionPlan.hpp>
+#include <SourceSink/DataSink.hpp>
+#include <SourceSink/DataSource.hpp>
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/SourceCreator.hpp>
+#include <Topology/NESTopologyManager.hpp>
+#include <string>
 
 namespace NES {
 
-QueryDeployer::QueryDeployer()
-{
+QueryDeployer::QueryDeployer() {
     NES_INFO("QueryDeployer()");
 }
 
-QueryDeployer::~QueryDeployer()
-{
+QueryDeployer::~QueryDeployer() {
     NES_INFO("~QueryDeployer()");
     queryToPort.clear();
 }
 
-map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployer::generateDeployment(const string &queryId) {
+map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployer::generateDeployment(const string& queryId) {
     map<NESTopologyEntryPtr, ExecutableTransferObject> output;
     if (QueryCatalog::instance().queryExists(queryId)
         && !QueryCatalog::instance().isQueryRunning(queryId)) {
@@ -64,7 +62,7 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployer::generateDeploy
 }
 
 vector<DataSourcePtr> QueryDeployer::getSources(const string& queryId,
-                                                     const ExecutionVertex& v) {
+                                                const ExecutionVertex& v) {
     NES_DEBUG("QueryDeployer::getSources: queryid=" << queryId << " vertex=" << v.id);
     vector<DataSourcePtr> sources = vector<DataSourcePtr>();
     SchemaPtr schema = QueryCatalog::instance().getQuery(queryId)->getInputQueryPtr()->getSourceStream()->getSchema();
@@ -73,7 +71,7 @@ vector<DataSourcePtr> QueryDeployer::getSources(const string& queryId,
 
     if (source->getType() == ZMQ_SOURCE) {
         const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
-            .getRootNode();
+                                                  .getRootNode();
 
         //TODO: this does not work this way, replace it here with the descriptor
         BufferManagerPtr bPtr;
@@ -87,7 +85,7 @@ vector<DataSourcePtr> QueryDeployer::getSources(const string& queryId,
 }
 
 vector<DataSinkPtr> QueryDeployer::getSinks(const string& queryId,
-                                                 const ExecutionVertex& v) {
+                                            const ExecutionVertex& v) {
     NES_DEBUG("QueryDeployer::getSinks: queryid=" << queryId << " vertex=" << v.id);
     vector<DataSinkPtr> sinks = vector<DataSinkPtr>();
     DataSinkPtr sink = findDataSinkPointer(v.ptr->getRootOperator());
@@ -97,7 +95,7 @@ vector<DataSinkPtr> QueryDeployer::getSinks(const string& queryId,
         //FIXME: Maybe a better way to do it? perhaps type cast to ZMQSink type and just update the port number
         //create local zmq sink
         const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
-            .getRootNode();
+                                                  .getRootNode();
 
         sink = createZmqSink(sink->getSchema(), kRootNode->getIp(),
                              assign_port(queryId));
@@ -125,7 +123,7 @@ DataSourcePtr QueryDeployer::findDataSourcePointer(
     vector<OperatorPtr> children = operatorPtr->getChildren();
     if (children.empty() && operatorPtr->getOperatorType() == SOURCE_OP) {
         SourceOperator* sourceOperator = dynamic_cast<SourceOperator*>(operatorPtr
-            .get());
+                                                                           .get());
         return sourceOperator->getDataSourcePtr();
     } else if (!children.empty()) {
         //FIXME: What if there are more than one source?
@@ -144,7 +142,7 @@ int QueryDeployer::assign_port(const string& queryId) {
     } else {
         // increase max port in map by 1
         const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
-            .getRootNode();
+                                                  .getRootNode();
         uint16_t kFreeZmqPort = kRootNode->getNextFreeReceivePort();
         this->queryToPort.insert({queryId, kFreeZmqPort});
         NES_DEBUG("CoordinatorService::assign_port create a new port for query id=" << queryId << " port=" << kFreeZmqPort);
@@ -152,4 +150,4 @@ int QueryDeployer::assign_port(const string& queryId) {
     }
 }
 
-}
+}// namespace NES

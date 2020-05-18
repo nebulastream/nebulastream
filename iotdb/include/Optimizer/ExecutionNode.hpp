@@ -18,7 +18,6 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 class ExecutionNode {
 
   public:
-
     ExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode, OperatorPtr rootOperator);
 
     size_t getId() { return this->id; };
@@ -63,7 +62,7 @@ class ExecutionNode {
      * Note: root is always the child operator.
      * @param operatorPtr  : operator to be added
      */
-    void addChild(OperatorPtr operatorPtr) ;
+    void addChild(OperatorPtr operatorPtr);
 
     void addOperatorId(size_t childOperatorId) {
         this->operatorIds.push_back(childOperatorId);
@@ -79,6 +78,6 @@ class ExecutionNode {
 };
 
 typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
-}
+}// namespace NES
 
-#endif //EXECUTIONNODE_HPP
+#endif//EXECUTIONNODE_HPP

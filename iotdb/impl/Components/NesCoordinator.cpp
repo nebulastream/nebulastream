@@ -1,8 +1,8 @@
+#include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/NESTopologyManager.hpp>
-#include <Catalogs/QueryCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <future>
 #include <thread>
@@ -97,7 +97,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //Start RPC server that listen to calls form the clients
     std::promise<bool> promRPC;//promise to make sure we wait until the server is started
     rpcThread = std::make_shared<std::thread>(([&]() {
-      startCoordinatorRPCServer(rpcServer, address, promRPC, coordinatorEngine);
+        startCoordinatorRPCServer(rpcServer, address, promRPC, coordinatorEngine);
     }));
     promRPC.get_future().get();
     NES_DEBUG("WorkerActor::startCoordinatorRPCServer: ready");
@@ -117,7 +117,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this());
 
     restThread = std::make_shared<std::thread>(([&]() {
-      startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
+        startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
     }));
 
     promRest.get_future().get();//promise to make sure we wait until the server is started
@@ -189,7 +189,6 @@ void NesCoordinator::setServerIp(std::string serverIp) {
 QueryStatisticsPtr NesCoordinator::getQueryStatistics(std::string queryId) {
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
-
 
 string NesCoordinator::addQuery(const string queryString, const string strategy) {
     NES_DEBUG("NesCoordinator:addQuery queryString=" << queryString << " strategy=" << strategy);

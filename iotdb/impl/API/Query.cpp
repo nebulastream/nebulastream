@@ -1,9 +1,9 @@
-#include <iostream>
 #include <API/Query.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
+#include <iostream>
 
 namespace NES {
 
@@ -18,7 +18,7 @@ Query Query::from(const std::string sourceStreamName) {
 
 //FIXME: Temp method for porting code from operators to nes node implementation. We will remove the call once we have fixed
 // issue #512 and #511
-Query Query::createFromQueryPlan(std::string sourceStreamName,QueryPlanPtr queryPlan) {
+Query Query::createFromQueryPlan(std::string sourceStreamName, QueryPlanPtr queryPlan) {
     return Query(sourceStreamName, queryPlan);
 }
 
@@ -51,4 +51,4 @@ const std::string Query::getSourceStreamName() const {
     return sourceStreamName;
 }
 
-} // namespace NES
+}// namespace NES

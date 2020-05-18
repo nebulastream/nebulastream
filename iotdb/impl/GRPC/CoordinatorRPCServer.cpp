@@ -1,11 +1,9 @@
-#include <GRPC/CoordinatorRPCServer.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
 using namespace NES;
 
-CoordinatorRPCServer::CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine) :
-    coordinatorEngine(coordinatorEngine) {
-};
+CoordinatorRPCServer::CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine) : coordinatorEngine(coordinatorEngine){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext* context, const RegisterNodeRequest* request,
                                           RegisterNodeReply* reply) {
@@ -73,8 +71,7 @@ Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext* context,
 
     bool success = coordinatorEngine->unregisterPhysicalStream(request->id(),
                                                                request->physicalstreamname(),
-                                                               request->logicalstreamname()
-    );
+                                                               request->logicalstreamname());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalStream success");

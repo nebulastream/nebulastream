@@ -1,18 +1,18 @@
-#include <Optimizer/QueryPlacement/MinimumResourceConsumptionStrategy.hpp>
 #include <API/Query.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
-#include <Topology/NESTopologyPlan.hpp>
-#include <Optimizer/NESExecutionPlan.hpp>
-#include <Optimizer/ExecutionNode.hpp>
-#include <Operators/Operator.hpp>
-#include <Util/Logger.hpp>
-#include <Optimizer/Utils/PathFinder.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Operators/Operator.hpp>
+#include <Optimizer/ExecutionNode.hpp>
+#include <Optimizer/NESExecutionPlan.hpp>
+#include <Optimizer/QueryPlacement/MinimumResourceConsumptionStrategy.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
+#include <Topology/NESTopologyPlan.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -30,7 +30,7 @@ NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(
     }
 
     const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
-        .getSourceNodesForLogicalStream(streamName);
+                                                        .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_THROW_RUNTIME_ERROR("MinimumResourceConsumption: Unable to find the target source: " + streamName);
@@ -61,7 +61,8 @@ NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(
 }
 
 vector<NESTopologyEntryPtr> MinimumResourceConsumptionStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<
-    NESTopologyEntryPtr>& sourceNodes, const NES::NESTopologyEntryPtr rootNode) const {
+                                                                                                             NESTopologyEntryPtr>& sourceNodes,
+                                                                                                         const NES::NESTopologyEntryPtr rootNode) const {
 
     PathFinder pathFinder;
     vector<NESTopologyEntryPtr> candidateNodes;
@@ -69,7 +70,7 @@ vector<NESTopologyEntryPtr> MinimumResourceConsumptionStrategy::getCandidateNode
     map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
         pathMap = pathFinder.findUniquePathBetween(sourceNodes, rootNode);
 
-    for (auto[key, value] : pathMap) {
+    for (auto [key, value] : pathMap) {
         candidateNodes.insert(candidateNodes.end(), value.begin(), value.end());
     }
 
@@ -90,14 +91,16 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
 
     //Prepare list of ordered common nodes
     vector<vector<NESTopologyEntryPtr>> listOfPaths;
-    transform(pathMap.begin(), pathMap.end(), back_inserter(listOfPaths), [](const auto pair) { return pair.second; });
+    transform(pathMap.begin(), pathMap.end(), back_inserter(listOfPaths), [](const auto pair) {
+        return pair.second;
+    });
 
     vector<NESTopologyEntryPtr> commonPath;
 
     for (size_t i = 0; i < listOfPaths.size(); i++) {
         vector<NESTopologyEntryPtr> path_i = listOfPaths[i];
 
-        for (NESTopologyEntryPtr node_i: path_i) {
+        for (NESTopologyEntryPtr node_i : path_i) {
             bool nodeOccursInAllPaths = false;
             for (size_t j = i; j < listOfPaths.size(); j++) {
                 if (i == j) {
@@ -106,7 +109,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
 
                 vector<NESTopologyEntryPtr> path_j = listOfPaths[j];
                 const auto itr = find_if(path_j.begin(), path_j.end(), [node_i](NESTopologyEntryPtr node_j) {
-                  return node_i->getId() == node_j->getId();
+                    return node_i->getId() == node_j->getId();
                 });
 
                 if (itr != path_j.end()) {
@@ -126,12 +129,12 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
     NES_DEBUG("MinimumResourceConsumption: Transforming New Operator into legacy operator");
     OperatorPtr legacySourceOperator = translator->transform(sourceOperator);
 
-    for (NESTopologyEntryPtr sourceNode: sourceNodes) {
+    for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 
         NES_DEBUG("MinimumResourceConsumption: Create new execution node for source operator.");
         stringstream operatorName;
         operatorName << sourceOperator->toString() << "(OP-"
-        << std::to_string(sourceOperator->getId()) << ")";
+                     << std::to_string(sourceOperator->getId()) << ")";
 
         const ExecutionNodePtr newExecutionNode =
             executionPlanPtr->createExecutionNode(operatorName.str(), to_string(sourceNode->getId()), sourceNode,
@@ -154,7 +157,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
         if (!node) {
             NES_ERROR(
                 "MinimumResourceConsumption: Can not schedule the operator. No free resource available capacity is="
-                    << sinkNode->getRemainingCpuCapacity());
+                << sinkNode->getRemainingCpuCapacity());
             throw std::runtime_error(
                 "Can not schedule the operator. No free resource available.");
         }
@@ -173,7 +176,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
                 "MinimumResourceConsumption: node " << node->toString() << " was already used by other deployment");
 
             const ExecutionNodePtr existingExecutionNode = executionPlanPtr
-                ->getExecutionNode(node->getId());
+                                                               ->getExecutionNode(node->getId());
 
             stringstream operatorName;
             operatorName << existingExecutionNode->getOperatorName() << "=>"
@@ -216,7 +219,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
                 "MinimumResourceConsumption: node " << sinkNode->toString() << " was already used by other deployment");
 
             const ExecutionNodePtr existingExecutionNode = executionPlanPtr
-                ->getExecutionNode(sinkNode->getId());
+                                                               ->getExecutionNode(sinkNode->getId());
 
             stringstream operatorName;
             operatorName << existingExecutionNode->getOperatorName() << "=>"
@@ -246,10 +249,10 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
     } else {
         NES_ERROR(
             "MinimumResourceConsumption: Can not schedule the operator. No free resource available capacity is="
-                << sinkNode->getRemainingCpuCapacity());
+            << sinkNode->getRemainingCpuCapacity());
         throw std::runtime_error(
             "Can not schedule the operator. No free resource available.");
     }
 }
 
-}
+}// namespace NES

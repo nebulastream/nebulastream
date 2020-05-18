@@ -338,13 +338,12 @@ std::string NESTopologyGraph::getNodesString() const {
         ss,
         graph,
         [&](auto& out, auto v) {
-          out << "[label=\"" << graph[v].id << " type="
-              << graph[v].ptr->getEntryTypeString() << "\"]";
+            out << "[label=\"" << graph[v].id << " type="
+                << graph[v].ptr->getEntryTypeString() << "\"]";
         });
     ss << std::flush;
     return ss.str();
 }
-
 
 std::string NESTopologyGraph::getEdgesString() const {
     std::stringstream ss;
@@ -352,7 +351,7 @@ std::string NESTopologyGraph::getEdgesString() const {
         ss,
         graph,
         [&](auto& out, auto e) {
-          out << "[label=\"" << graph[e].id << "\"]";
+            out << "[label=\"" << graph[e].id << "\"]";
         });
     ss << std::flush;
     return ss.str();
