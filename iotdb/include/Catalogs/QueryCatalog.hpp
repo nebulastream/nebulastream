@@ -191,6 +191,20 @@ class QueryCatalog {
      */
     std::string printQueries();
 
+    /**
+    * @brief Get the queries in the user defined status
+    * @param status : query status
+    * @return returns map of query Id and query string
+    * @throws exception in case of invalid status
+    */
+    std::map<std::string, std::string> getQueriesWithStatus(std::string status);
+
+    /**
+     * @brief Get all queries registered in the system
+     * @return map of query ids and query string with query status
+     */
+    std::map<std::string, std::string> getAllRegisteredQueries();
+
   private:
     map<string, QueryCatalogEntryPtr> queries;
     map<string, std::vector<NESTopologyEntryPtr>> queriesToExecNodeMap;

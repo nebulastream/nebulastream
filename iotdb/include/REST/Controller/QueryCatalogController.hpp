@@ -2,7 +2,6 @@
 #define NES_IMPL_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 
 #include "BaseController.hpp"
-#include <Services/QueryCatalogService.hpp>
 namespace NES {
 class NesCoordinator;
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
@@ -11,7 +10,6 @@ class QueryCatalogController : public BaseController {
 
   public:
     QueryCatalogController() {
-        queryCatalogServicePtr = QueryCatalogService::getInstance();
     }
 
     void setCoordinator(NesCoordinatorPtr coordinator);
@@ -20,7 +18,6 @@ class QueryCatalogController : public BaseController {
 
   private:
     NesCoordinatorPtr coordinator;
-    QueryCatalogServicePtr queryCatalogServicePtr;
 };
 
 }// namespace NES

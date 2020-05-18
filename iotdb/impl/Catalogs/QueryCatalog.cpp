@@ -15,6 +15,43 @@ QueryCatalog& QueryCatalog::instance() {
     return instance;
 }
 
+std::map<string, string> QueryCatalog::getQueriesWithStatus(std::string status) {
+
+    NES_INFO("QueryCatalog : fetching all queries with status " << status);
+
+    std::transform(status.begin(), status.end(),status.begin(), ::toupper);
+
+    if (StringToQueryStatus.find(status) == StringToQueryStatus.end()) {
+        throw std::invalid_argument("Unknown query status " + status);
+    }
+
+    QueryStatus queryStatus = StringToQueryStatus[status];
+    map<string, QueryCatalogEntryPtr> queries = QueryCatalog::instance().getQueries(queryStatus);
+
+    map<string, string> result;
+    for (auto [key, value] : queries) {
+        result[key] = value->getQueryString();
+    }
+
+    NES_INFO("QueryCatalog : found " << result.size() << " all queries with status " << status);
+    return result;
+}
+
+std::map<std::string, std::string> QueryCatalog::getAllRegisteredQueries() {
+
+    NES_INFO("QueryCatalog : get all registered queries");
+
+    map<string, QueryCatalogEntryPtr> registeredQueries = QueryCatalog::instance().getRegisteredQueries();
+
+    map<string, string> result;
+    for (auto [key, value] : registeredQueries) {
+        result[key] = value->getQueryString();
+    }
+
+    NES_INFO("QueryCatalog : found " << result.size() << " registered queries");
+    return result;
+}
+
 string QueryCatalog::registerQuery(const string& queryString,
                                    const string& optimizationStrategyName) {
     NES_DEBUG(

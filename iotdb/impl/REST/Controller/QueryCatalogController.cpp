@@ -2,6 +2,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+
 namespace NES {
 
 void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {
@@ -17,7 +19,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
                     //Prepare the response
                     json::value result{};
-                    map<string, string> queries = queryCatalogServicePtr->getQueriesWithStatus(queryStatus);
+                    map<string, string> queries = QueryCatalog::instance().getQueriesWithStatus(queryStatus);
 
                     for (auto [key, value] : queries) {
                         result[key] = json::value::string(value);
@@ -48,7 +50,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 try {
                     //Prepare the response
                     json::value result{};
-                    map<string, string> queries = queryCatalogServicePtr->getAllRegisteredQueries();
+                    map<string, string> queries = QueryCatalog::instance().getAllRegisteredQueries();
 
                     for (auto [key, value] : queries) {
                         result[key] = json::value::string(value);
