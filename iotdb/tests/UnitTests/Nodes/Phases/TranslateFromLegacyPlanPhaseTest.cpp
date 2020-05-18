@@ -3,7 +3,7 @@
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <API/InputQuery.hpp>
 #include <API/Query.hpp>
@@ -41,8 +41,9 @@ class TranslateFromLegacyPlanPhaseTest : public testing::Test {
 
     void static setupSensorNodeAndStreamCatalog() {
         NES_INFO("Setup TranslateFromLegacyPlanPhase test case.");
-        NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
-            .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+        TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
+        NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 
         PhysicalStreamConfig streamConf;
         streamConf.physicalStreamName = "test2";

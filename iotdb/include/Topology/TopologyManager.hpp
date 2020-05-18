@@ -13,6 +13,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include <cpprest/json.h>
+
 /**
  * TODO: add return of create
  */
@@ -21,16 +22,13 @@ namespace NES {
 using namespace web;
 
 //FIXME:add docu here
-class NESTopologyManager {
+class TopologyManager {
   public:
-    static NESTopologyManager& getInstance() {
-        static NESTopologyManager instance;// Guaranteed to be destroyed.
-        // Instantiated on first use.
-        return instance;
-    }
-
-    NESTopologyManager(NESTopologyManager const&);// Don't Implement
-    void operator=(NESTopologyManager const&);    // Don't implement
+//    static TopologyManager& getInstance() {
+//        static TopologyManager instance;// Guaranteed to be destroyed.
+//        // Instantiated on first use.
+//        return instance;
+//    }
 
     /**
      * @brief create a nes coordinator node
@@ -143,12 +141,17 @@ class NESTopologyManager {
      */
     void resetNESTopologyPlan();
 
-  private:
-    NESTopologyManager() {
-        currentPlan = std::make_shared<NESTopologyPlan>();
+    TopologyManager() {
+        currentPlan.reset(new NESTopologyPlan);
+//        currentPlan = std::make_shared<NESTopologyPlan>();
     }
 
+    web::json::value getNESTopologyAsJson();
+
+  private:
     NESTopologyPlanPtr currentPlan;
 };
+typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+
 }// namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYMANAGER_HPP_ */

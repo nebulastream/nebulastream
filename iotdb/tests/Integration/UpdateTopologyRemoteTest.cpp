@@ -4,7 +4,7 @@
 #include <ctime>
 #include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 
 namespace NES {
 
@@ -42,10 +42,10 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;
 
-    NESTopologyManager::getInstance().printNESTopologyPlan();
+    TopologyManagerPtr topologyManger = crd->getTopologyManger();
 
     //NOTE: we cannot check full output as ids change each run
-    std::string retString = NESTopologyManager::getInstance().getNESTopologyPlanString();
+    std::string retString = topologyManger->getNESTopologyPlanString();
     cout << "returned=" << retString;
     ASSERT_TRUE(retString.find("type=Worker\"];") != std::string::npos);
     ASSERT_TRUE(retString.find("type=Sensor(default_physical)") != std::string::npos);
@@ -75,7 +75,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     EXPECT_TRUE(successAddPar);
 
     //NOTE: we cannot check full output as ids change each run
-    std::string retString2 = NESTopologyManager::getInstance().getNESTopologyPlanString();
+    std::string retString2 = topologyManger->getNESTopologyPlanString();
     cout << "retString2=" << retString2;
     ASSERT_TRUE(retString2.find("type=Worker\"];") != std::string::npos);
     ASSERT_TRUE(retString2.find("type=Sensor(default_physical)") != std::string::npos);
@@ -87,8 +87,8 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     bool successRemoveParent = wrk->removeParent(secIdInt);
     EXPECT_TRUE(successAddPar);
 
+    std::string retString3 = topologyManger->getNESTopologyPlanString();
     //NOTE: we cannot check full output as ids change each run
-    std::string retString3 = NESTopologyManager::getInstance().getNESTopologyPlanString();
     cout << "retString3=" << retString3;
     ASSERT_TRUE(retString3.find("type=Worker\"];") != std::string::npos);
     ASSERT_TRUE(retString3.find("type=Sensor(default_physical)") != std::string::npos);
@@ -126,10 +126,10 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;
 
-    NESTopologyManager::getInstance().printNESTopologyPlan();
+    TopologyManagerPtr topologyManger = crd->getTopologyManger();
 
     //NOTE: we cannot check full output as ids change each run
-    std::string retString = NESTopologyManager::getInstance().getNESTopologyPlanString();
+    std::string retString = topologyManger->getNESTopologyPlanString();
     cout << "returned=" << retString;
     ASSERT_TRUE(retString.find("type=Worker\"];") != std::string::npos);
     ASSERT_TRUE(retString.find("type=Sensor(default_physical)") != std::string::npos);
@@ -159,7 +159,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     EXPECT_TRUE(!successRemoveParent);
 
     //NOTE: we cannot check full output as ids change each run
-    std::string retString3 = NESTopologyManager::getInstance().getNESTopologyPlanString();
+    std::string retString3 = topologyManger->getNESTopologyPlanString();
     cout << "retString3=" << retString3;
     ASSERT_TRUE(retString3.find("type=Worker\"];") != std::string::npos);
     ASSERT_TRUE(retString3.find("type=Sensor(default_physical)") != std::string::npos);

@@ -84,6 +84,11 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
         return streamCatalog;
     }
 
+    TopologyManagerPtr getTopologyManger()
+    {
+        return topologyManager;
+    }
+
   private:
     /**
     * @brief method to register a query without start
@@ -135,13 +140,11 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     NesWorkerPtr worker;
 
     WorkerRPCClientPtr workerRPCClient;
-
     CoordinatorEnginePtr coordinatorEngine;
-
     QueryDeployerPtr queryDeployer;
-
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;
+    TopologyManagerPtr topologyManager;
 
     std::shared_ptr<RestServer> restServer;
     uint16_t restPort;

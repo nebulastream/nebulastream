@@ -9,7 +9,7 @@
 #include "../../include/Topology/NESTopologyPlan.hpp"
 #include "../../include/Topology/NESTopologySensorNode.hpp"
 #include "../../include/Topology/NESTopologyWorkerNode.hpp"
-#include "../../include/Topology/NESTopologyManager.hpp"
+#include "../../include/Topology/TopologyManager.hpp"
 #include <Topology/TestTopology.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include "Util/CPUCapacity.hpp"
@@ -28,7 +28,6 @@ class NesTopologyManagerTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
         std::cout << "Setup NesTopologyManager test case." << std::endl;
-        NESTopologyManager::getInstance().resetNESTopologyPlan();
         NES::setupLogging("NesTopologyManager.log", NES::LOG_DEBUG);
     }
 
@@ -48,15 +47,16 @@ class NesTopologyManagerTest : public testing::Test {
 
 TEST_F(NesTopologyManagerTest, createNode) {
     size_t invalid_id = INVALID_NODE_ID;
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
 
-    auto workerNode = NESTopologyManager::getInstance().createNESWorkerNode(
+    auto workerNode = topologyManager->createNESWorkerNode(
         1, "localhost", CPUCapacity::MEDIUM);
     EXPECT_NE(workerNode.get(), nullptr);
     EXPECT_EQ(workerNode->getEntryType(), Worker);
     EXPECT_EQ(workerNode->getEntryTypeString(), "Worker");
     EXPECT_NE(workerNode->getId(), invalid_id);
 
-    auto sensorNode = NESTopologyManager::getInstance().createNESSensorNode(
+    auto sensorNode = topologyManager->createNESSensorNode(
         2, "localhost", CPUCapacity::LOW);
     EXPECT_NE(sensorNode.get(), nullptr);
     EXPECT_EQ(sensorNode->getEntryType(), Sensor);
@@ -69,54 +69,60 @@ TEST_F(NesTopologyManagerTest, createNode) {
 
 /* Remove an existing node. */
 TEST_F(NesTopologyManagerTest, removeNode) {
-    auto worker_node = NESTopologyManager::getInstance().createNESWorkerNode(
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
+    auto worker_node = topologyManager->createNESWorkerNode(
         1, "localhost", CPUCapacity::MEDIUM);
-    auto result_worker = NESTopologyManager::getInstance().removeNESWorkerNode(
+    auto result_worker = topologyManager->removeNESWorkerNode(
         worker_node);
     EXPECT_TRUE(result_worker);
 
-    auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode(
+    auto sensor_node = topologyManager->createNESSensorNode(
         1, "localhost", CPUCapacity::LOW);
-    auto result_sensor = NESTopologyManager::getInstance().removeNESSensorNode(
+    auto result_sensor = topologyManager->removeNESSensorNode(
         sensor_node);
     EXPECT_TRUE(result_sensor);
 }
 
 /* Remove a non-existing node. */
 TEST_F(NesTopologyManagerTest, removeNonExistingNode) {
-    auto workerNode = NESTopologyManager::getInstance().createNESWorkerNode(
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
+    auto workerNode = topologyManager->createNESWorkerNode(
         1, "localhost", CPUCapacity::MEDIUM);
     EXPECT_TRUE(
-        NESTopologyManager::getInstance().removeNESWorkerNode(workerNode));
+        topologyManager->removeNESWorkerNode(workerNode));
     EXPECT_FALSE(
-        NESTopologyManager::getInstance().removeNESWorkerNode(workerNode));
+        topologyManager->removeNESWorkerNode(workerNode));
 
-    auto sensorNode = NESTopologyManager::getInstance().createNESSensorNode(
+    auto sensorNode = topologyManager->createNESSensorNode(
         1, "localhost", CPUCapacity::LOW);
     EXPECT_TRUE(
-        NESTopologyManager::getInstance().removeNESSensorNode(sensorNode));
+        topologyManager->removeNESSensorNode(sensorNode));
     EXPECT_FALSE(
-        NESTopologyManager::getInstance().removeNESSensorNode(sensorNode));
+        topologyManager->removeNESSensorNode(sensorNode));
 }
 
 /* - Links ----------------------------------------------------------------- */
 /* Create a new link. */
 TEST_F(NesTopologyManagerTest, createLink) {
-    auto workerNode0 = NESTopologyManager::getInstance().createNESWorkerNode(
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
+    auto workerNode0 = topologyManager->createNESWorkerNode(
         1, "localhost", CPUCapacity::MEDIUM);
-    auto workerNode1 = NESTopologyManager::getInstance().createNESWorkerNode(
+    auto workerNode1 = topologyManager->createNESWorkerNode(
         2, "localhost", CPUCapacity::MEDIUM);
-    auto worker_node_2 = NESTopologyManager::getInstance().createNESWorkerNode(
+    auto worker_node_2 = topologyManager->createNESWorkerNode(
         3, "localhost", CPUCapacity::MEDIUM);
-    auto workerNode3 = NESTopologyManager::getInstance().createNESWorkerNode(
+    auto workerNode3 = topologyManager->createNESWorkerNode(
         4, "localhost", CPUCapacity::MEDIUM);
 
-    auto sensor_node_0 = NESTopologyManager::getInstance().createNESSensorNode(
+    auto sensor_node_0 = topologyManager->createNESSensorNode(
         5, "localhost", CPUCapacity::LOW);
-    auto sensorNode1 = NESTopologyManager::getInstance().createNESSensorNode(
+    auto sensorNode1 = topologyManager->createNESSensorNode(
         6, "localhost", CPUCapacity::LOW);
 
-    auto link_node_node = NESTopologyManager::getInstance().createNESTopologyLink(
+    auto link_node_node = topologyManager->createNESTopologyLink(
         workerNode0, workerNode1, 1, 1);
 
     size_t notExistingLinkId = NOT_EXISTING_LINK_ID;
@@ -130,7 +136,7 @@ TEST_F(NesTopologyManagerTest, createLink) {
     EXPECT_EQ(link_node_node->getLinkType(), NodeToNode);
     EXPECT_EQ(link_node_node->getLinkTypeString(), "NodeToNode");
 
-    auto linkNodeSensor = NESTopologyManager::getInstance().createNESTopologyLink(
+    auto linkNodeSensor = topologyManager->createNESTopologyLink(
         worker_node_2, sensor_node_0, 1, 1);
     EXPECT_NE(linkNodeSensor.get(), nullptr);
     EXPECT_NE(linkNodeSensor->getId(), notExistingLinkId);
@@ -141,7 +147,7 @@ TEST_F(NesTopologyManagerTest, createLink) {
     EXPECT_EQ(linkNodeSensor->getLinkType(), NodeToSensor);
     EXPECT_EQ(linkNodeSensor->getLinkTypeString(), "NodeToSensor");
 
-    auto linkSensorNode = NESTopologyManager::getInstance().createNESTopologyLink(
+    auto linkSensorNode = topologyManager->createNESTopologyLink(
         sensorNode1, workerNode3, 1, 1);
     EXPECT_NE(linkSensorNode.get(), nullptr);
     EXPECT_NE(linkSensorNode->getId(), notExistingLinkId);
@@ -155,60 +161,68 @@ TEST_F(NesTopologyManagerTest, createLink) {
 
 /* Create link, where a link already exists. */
 TEST_F(NesTopologyManagerTest, createExistingLink) {
-    auto node_0 = NESTopologyManager::getInstance().createNESWorkerNode(
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
+    auto node_0 = topologyManager->createNESWorkerNode(
         1, "localhost", CPUCapacity::MEDIUM);
-    auto node_1 = NESTopologyManager::getInstance().createNESWorkerNode(
+    auto node_1 = topologyManager->createNESWorkerNode(
         2, "localhost", CPUCapacity::MEDIUM);
-    auto link = NESTopologyManager::getInstance().createNESTopologyLink(node_0,
+    auto link = topologyManager->createNESTopologyLink(node_0,
                                                                         node_1, 1,
                                                                         1);
     EXPECT_EQ(
         link,
-        NESTopologyManager::getInstance().createNESTopologyLink(node_0, node_1, 1,
+        topologyManager->createNESTopologyLink(node_0, node_1, 1,
                                                                 1));
 }
 
 /* Remove an existing link. */
 TEST_F(NesTopologyManagerTest, removeLink) {
-    auto node_0 = NESTopologyManager::getInstance().createNESWorkerNode(
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
+    auto node_0 = topologyManager->createNESWorkerNode(
         1, "localhost", CPUCapacity::MEDIUM);
-    auto node_1 = NESTopologyManager::getInstance().createNESWorkerNode(
+    auto node_1 = topologyManager->createNESWorkerNode(
         2, "localhost", CPUCapacity::MEDIUM);
-    auto link = NESTopologyManager::getInstance().createNESTopologyLink(node_0,
+    auto link = topologyManager->createNESTopologyLink(node_0,
                                                                         node_1, 1,
                                                                         1);
 
-    EXPECT_TRUE(NESTopologyManager::getInstance().removeNESTopologyLink(link));
+    EXPECT_TRUE(topologyManager->removeNESTopologyLink(link));
 }
 
 /* Remove a non-existing link. */
 TEST_F(NesTopologyManagerTest, removeNonExistingLink) {
-    auto node_0 = NESTopologyManager::getInstance().createNESWorkerNode(
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
+    auto node_0 = topologyManager->createNESWorkerNode(
         1, "localhost", CPUCapacity::MEDIUM);
-    auto node_1 = NESTopologyManager::getInstance().createNESWorkerNode(
+    auto node_1 = topologyManager->createNESWorkerNode(
         2, "localhost", CPUCapacity::MEDIUM);
-    auto link = NESTopologyManager::getInstance().createNESTopologyLink(node_0,
+    auto link = topologyManager->createNESTopologyLink(node_0,
                                                                         node_1, 1,
                                                                         1);
 
-    EXPECT_TRUE(NESTopologyManager::getInstance().removeNESTopologyLink(link));
-    EXPECT_FALSE(NESTopologyManager::getInstance().removeNESTopologyLink(link));
+    EXPECT_TRUE(topologyManager->removeNESTopologyLink(link));
+    EXPECT_FALSE(topologyManager->removeNESTopologyLink(link));
 
     // What happens to a link, if one node was removed?
     // Expectation: Link is removed as well.
-    link = NESTopologyManager::getInstance().createNESTopologyLink(node_0, node_1,
+    link = topologyManager->createNESTopologyLink(node_0, node_1,
                                                                    1, 1);
-    EXPECT_TRUE(NESTopologyManager::getInstance().removeNESWorkerNode(node_0));
-    EXPECT_FALSE(NESTopologyManager::getInstance().removeNESTopologyLink(link));
+    EXPECT_TRUE(topologyManager->removeNESWorkerNode(node_0));
+    EXPECT_FALSE(topologyManager->removeNESTopologyLink(link));
 }
 
 /* - Usage Pattern --------------------------------------------------------- */
 TEST_F(NesTopologyManagerTest, manyNodes) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     // creater workers
     std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
     for (uint32_t i = 0; i < 15; ++i) {
         workers.push_back(
-            NESTopologyManager::getInstance().createNESWorkerNode(
+            topologyManager->createNESWorkerNode(
                 i, "localhost", CPUCapacity::MEDIUM));
     }
 
@@ -216,41 +230,43 @@ TEST_F(NesTopologyManagerTest, manyNodes) {
     std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
     for (uint32_t i = 15; i < 45; ++i) {
         sensors.push_back(
-            NESTopologyManager::getInstance().createNESSensorNode(
+            topologyManager->createNESSensorNode(
                 i, "localhost", CPUCapacity::LOW));
     }
 
     // remove some workers
     for (uint32_t i = 0; i < workers.size(); i += 4) {
-        NESTopologyManager::getInstance().removeNESWorkerNode(workers.at(i));
+        topologyManager->removeNESWorkerNode(workers.at(i));
     }
 
     // creater some workers
     for (uint32_t i = 45; i < 50; ++i) {
         workers.push_back(
-            NESTopologyManager::getInstance().createNESWorkerNode(
+            topologyManager->createNESWorkerNode(
                 i, "localhost", CPUCapacity::MEDIUM));
     }
 
     // remove some sensors
     for (uint32_t i = 0; i < sensors.size(); i += 3) {
-        NESTopologyManager::getInstance().removeNESSensorNode(sensors.at(i));
+        topologyManager->removeNESSensorNode(sensors.at(i));
     }
 
     // create some sensors
     for (uint32_t i = 50; i < 60; ++i) {
         sensors.push_back(
-            NESTopologyManager::getInstance().createNESSensorNode(
+            topologyManager->createNESSensorNode(
                 i, "localhost", CPUCapacity::LOW));
     }
 }
 
 TEST_F(NesTopologyManagerTest, manyLinks) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     // creater workers
     std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
     for (uint32_t i = 0; i < 15; ++i) {
         workers.push_back(
-            NESTopologyManager::getInstance().createNESWorkerNode(
+            topologyManager->createNESWorkerNode(
                 i, "localhost", CPUCapacity::MEDIUM));
     }
 
@@ -258,7 +274,7 @@ TEST_F(NesTopologyManagerTest, manyLinks) {
     std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
     for (uint32_t i = 15; i < 45; ++i) {
         sensors.push_back(
-            NESTopologyManager::getInstance().createNESSensorNode(
+            topologyManager->createNESSensorNode(
                 i, "localhost", CPUCapacity::LOW));
     }
 
@@ -268,7 +284,7 @@ TEST_F(NesTopologyManagerTest, manyLinks) {
         for (uint32_t j = i; j != 15; ++j) {
             if (i != j) {
                 links.push_back(
-                    NESTopologyManager::getInstance().createNESTopologyLink(
+                    topologyManager->createNESTopologyLink(
                         workers.at(i), workers.at(j), 1, 1));
             }
         }
@@ -279,12 +295,12 @@ TEST_F(NesTopologyManagerTest, manyLinks) {
         if (i%2 == 0) {
             // even sensor
             links.push_back(
-                NESTopologyManager::getInstance().createNESTopologyLink(
+                topologyManager->createNESTopologyLink(
                     sensors.at(i), workers.at(i/2), 1, 1));
         } else {
             // odd sensor
             links.push_back(
-                NESTopologyManager::getInstance().createNESTopologyLink(
+                topologyManager->createNESTopologyLink(
                     sensors.at(i), workers.at((i - 1)/2), 1, 1));
         }
     }
@@ -292,17 +308,19 @@ TEST_F(NesTopologyManagerTest, manyLinks) {
     // remove some links
     for (uint32_t i = 0; i < links.size(); i += 4) {
         EXPECT_TRUE(
-            NESTopologyManager::getInstance().removeNESTopologyLink(links.at(i)));
+            topologyManager->removeNESTopologyLink(links.at(i)));
     }
 }
 
 /* - Print ----------------------------------------------------------------- */
 TEST_F(NesTopologyManagerTest, printGraph) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     // creater workers
     std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
     for (uint32_t i = 0; i < 7; ++i) {
         workers.push_back(
-            NESTopologyManager::getInstance().createNESWorkerNode(
+            topologyManager->createNESWorkerNode(
                 i, "localhost", CPUCapacity::MEDIUM));
     }
 
@@ -310,36 +328,36 @@ TEST_F(NesTopologyManagerTest, printGraph) {
     std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
     for (uint32_t i = 7; i < 22; ++i) {
         sensors.push_back(
-            NESTopologyManager::getInstance().createNESSensorNode(
+            topologyManager->createNESSensorNode(
                 i, "localhost", CPUCapacity::LOW));
     }
 
     // link each worker with its neighbor
     std::vector<std::shared_ptr<NESTopologyLink>> links;
     links.push_back(
-        NESTopologyManager::getInstance().createNESTopologyLink(workers.at(0),
+        topologyManager->createNESTopologyLink(workers.at(0),
                                                                 workers.at(1), 1,
                                                                 1));
     links.push_back(
-        NESTopologyManager::getInstance().createNESTopologyLink(workers.at(2),
+        topologyManager->createNESTopologyLink(workers.at(2),
                                                                 workers.at(1), 1,
                                                                 1));
 
     links.push_back(
-        NESTopologyManager::getInstance().createNESTopologyLink(workers.at(3),
+        topologyManager->createNESTopologyLink(workers.at(3),
                                                                 workers.at(4), 1,
                                                                 1));
     links.push_back(
-        NESTopologyManager::getInstance().createNESTopologyLink(workers.at(5),
+        topologyManager->createNESTopologyLink(workers.at(5),
                                                                 workers.at(4), 1,
                                                                 1));
 
     links.push_back(
-        NESTopologyManager::getInstance().createNESTopologyLink(workers.at(1),
+        topologyManager->createNESTopologyLink(workers.at(1),
                                                                 workers.at(6), 1,
                                                                 1));
     links.push_back(
-        NESTopologyManager::getInstance().createNESTopologyLink(workers.at(4),
+        topologyManager->createNESTopologyLink(workers.at(4),
                                                                 workers.at(6), 1,
                                                                 1));
 
@@ -347,20 +365,20 @@ TEST_F(NesTopologyManagerTest, printGraph) {
     for (uint32_t i = 0; i != 15; ++i) {
         if (i%3 == 0) {
             links.push_back(
-                NESTopologyManager::getInstance().createNESTopologyLink(
+                topologyManager->createNESTopologyLink(
                     sensors.at(i), workers.at(i/3), 1, 1));
         } else if (i%3 == 1) {
             links.push_back(
-                NESTopologyManager::getInstance().createNESTopologyLink(
+                topologyManager->createNESTopologyLink(
                     sensors.at(i), workers.at((i - 1)/3), 1, 1));
         } else {
             links.push_back(
-                NESTopologyManager::getInstance().createNESTopologyLink(
+                topologyManager->createNESTopologyLink(
                     sensors.at(i), workers.at((i - 2)/3), 1, 1));
         }
     }
     std::cout << " current plan from topo="
-              << NESTopologyManager::getInstance().getNESTopologyPlanString()
+              << topologyManager->getNESTopologyPlanString()
               << std::endl;
     stringstream ss;
     ss << "graph G {\n"
@@ -413,17 +431,18 @@ TEST_F(NesTopologyManagerTest, printGraph) {
     string expected_result = ss.str();
     cout << "expected_result=" << expected_result << endl;
 
-    EXPECT_EQ(NESTopologyManager::getInstance().getNESTopologyPlanString(),
+    EXPECT_EQ(topologyManager->getNESTopologyPlanString(),
               expected_result);
 }
 
 TEST_F(NesTopologyManagerTest, printGraphWithoutEdges) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
 
     // creater workers
     std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
     for (uint32_t i = 0; i < 7; ++i) {
         workers.push_back(
-            NESTopologyManager::getInstance().createNESWorkerNode(
+            topologyManager->createNESWorkerNode(
                 i, "localhost", CPUCapacity::MEDIUM));
     }
 
@@ -431,11 +450,11 @@ TEST_F(NesTopologyManagerTest, printGraphWithoutEdges) {
     std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
     for (uint32_t i = 7; i < 22; ++i) {
         sensors.push_back(
-            NESTopologyManager::getInstance().createNESSensorNode(
+            topologyManager->createNESSensorNode(
                 i, "localhost", CPUCapacity::LOW));
     }
 
-    std::cout << NESTopologyManager::getInstance().getNESTopologyPlanString()
+    std::cout << topologyManager->getNESTopologyPlanString()
               << std::endl;
 
     std::string expected_result = "graph G {\n"
@@ -464,21 +483,22 @@ TEST_F(NesTopologyManagerTest, printGraphWithoutEdges) {
                                   "}\n";
 
     EXPECT_TRUE(
-        NESTopologyManager::getInstance().getNESTopologyPlanString()
+        topologyManager->getNESTopologyPlanString()
             == expected_result);
 }
 
 TEST_F(NesTopologyManagerTest, printGraphWithoutAnything) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
 
     std::string expected_result = "graph G {\n}\n";
     EXPECT_TRUE(
-        NESTopologyManager::getInstance().getNESTopologyPlanString()
+        topologyManager->getNESTopologyPlanString()
             == expected_result);
 }
 
 /* ------------------------------------------------------------------------- */
 /* - NesTopologyGraph ------------------------------------------------------ */
-class NesTopologyGraphTest : public testing::Test {
+class TopologyGraphTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -504,7 +524,9 @@ class NesTopologyGraphTest : public testing::Test {
 };
 
 /* - Vertices -------------------------------------------------------------- */
-TEST_F(NesTopologyGraphTest, addVertex) {
+TEST_F(TopologyGraphTest, addVertex) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
     EXPECT_TRUE(nes_graph->addVertex(worker_node));
 
@@ -512,13 +534,17 @@ TEST_F(NesTopologyGraphTest, addVertex) {
     EXPECT_TRUE(nes_graph->addVertex(sensor_node));
 }
 
-TEST_F(NesTopologyGraphTest, addExistingVertex) {
+TEST_F(TopologyGraphTest, addExistingVertex) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
     EXPECT_TRUE(nes_graph->addVertex(worker_node));
     EXPECT_FALSE(nes_graph->addVertex(worker_node));
 }
 
-TEST_F(NesTopologyGraphTest, removeVertex) {
+TEST_F(TopologyGraphTest, removeVertex) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
     EXPECT_TRUE(nes_graph->addVertex(worker_node));
 
@@ -529,7 +555,9 @@ TEST_F(NesTopologyGraphTest, removeVertex) {
     EXPECT_TRUE(nes_graph->removeVertex(sensor_node->getId()));
 }
 
-TEST_F(NesTopologyGraphTest, removeNonExistingVertex) {
+TEST_F(TopologyGraphTest, removeNonExistingVertex) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
     nes_graph->addVertex(worker_node);
 
@@ -538,7 +566,9 @@ TEST_F(NesTopologyGraphTest, removeNonExistingVertex) {
 }
 
 /* - Edges ----------------------------------------------------------------- */
-TEST_F(NesTopologyGraphTest, addEdge) {
+TEST_F(TopologyGraphTest, addEdge) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
     EXPECT_TRUE(nes_graph->addVertex(workerNode));
 
@@ -554,7 +584,9 @@ TEST_F(NesTopologyGraphTest, addEdge) {
     EXPECT_TRUE(nes_graph->addEdge(link_1));
 }
 
-TEST_F(NesTopologyGraphTest, addExistingEdge) {
+TEST_F(TopologyGraphTest, addExistingEdge) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
     EXPECT_TRUE(nes_graph->addVertex(workerNode));
 
@@ -570,7 +602,9 @@ TEST_F(NesTopologyGraphTest, addExistingEdge) {
     EXPECT_FALSE(nes_graph->addEdge(link_1));
 }
 
-TEST_F(NesTopologyGraphTest, addInvalidEdge) {
+TEST_F(TopologyGraphTest, addInvalidEdge) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
     EXPECT_TRUE(nes_graph->addVertex(workerNode));
 
@@ -581,7 +615,9 @@ TEST_F(NesTopologyGraphTest, addInvalidEdge) {
     EXPECT_FALSE(nes_graph->addEdge(link_0));
 }
 
-TEST_F(NesTopologyGraphTest, removeEdge) {
+TEST_F(TopologyGraphTest, removeEdge) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
     EXPECT_TRUE(nes_graph->addVertex(workerNode));
 
@@ -595,7 +631,9 @@ TEST_F(NesTopologyGraphTest, removeEdge) {
     EXPECT_TRUE(nes_graph->removeEdge(link_0->getId()));
 }
 
-TEST_F(NesTopologyGraphTest, removeNonExistingEdge) {
+TEST_F(TopologyGraphTest, removeNonExistingEdge) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
     auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
     EXPECT_TRUE(nes_graph->addVertex(workerNode));
 
@@ -610,10 +648,10 @@ TEST_F(NesTopologyGraphTest, removeNonExistingEdge) {
     EXPECT_FALSE(nes_graph->removeEdge(link_0->getId()));
 }
 
-TEST_F(NesTopologyGraphTest, getExampleTopologyAsJson) {
-    NESTopologyManager& topologyManager = NESTopologyManager::getInstance();
+TEST_F(TopologyGraphTest, getExampleTopologyAsJson) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    createExampleTopology(streamCatalog);
-    const json::value& treeJson = topologyManager.getNESTopologyGraphAsJson();
+    createExampleTopology(streamCatalog, topologyManager);
+    const json::value& treeJson = topologyManager->getNESTopologyGraphAsJson();
     EXPECT_TRUE(treeJson.size() > 0);
 }

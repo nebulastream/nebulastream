@@ -66,7 +66,7 @@ target_link_libraries(code-generation-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
 ### NES Topology Tests ###
-add_executable(nes-topology-manager-tests "UnitTests/NESTopologyManagerTest.cpp")
+add_executable(nes-topology-manager-tests "UnitTests/TopologyManagerTest.cpp")
 target_link_libraries(nes-topology-manager-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME nes-topology-manager-tests COMMAND nes-topology-manager-tests)
 

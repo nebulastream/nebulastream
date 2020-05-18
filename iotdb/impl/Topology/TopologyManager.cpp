@@ -1,64 +1,64 @@
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
 
-NESTopologyCoordinatorNodePtr NESTopologyManager::createNESCoordinatorNode(size_t id,
+NESTopologyCoordinatorNodePtr TopologyManager::createNESCoordinatorNode(size_t id,
                                                                            const std::string ipAddr,
                                                                            CPUCapacity cpuCapacity) {
     assert(0);
     return currentPlan->createNESCoordinatorNode(id, ipAddr, cpuCapacity);
 }
 
-NESTopologyWorkerNodePtr NESTopologyManager::createNESWorkerNode(
+NESTopologyWorkerNodePtr TopologyManager::createNESWorkerNode(
     size_t id, const std::string ipAddr, CPUCapacity cpuCapacity) {
     return currentPlan->createNESWorkerNode(id, ipAddr, cpuCapacity);
 }
 
-NESTopologySensorNodePtr NESTopologyManager::createNESSensorNode(size_t id, std::string ip,
+NESTopologySensorNodePtr TopologyManager::createNESSensorNode(size_t id, std::string ip,
                                                                  CPUCapacity cpuCapacity) {
     return currentPlan->createNESSensorNode(id, ip, cpuCapacity);
 }
 
-bool NESTopologyManager::removeNESWorkerNode(NESTopologyWorkerNodePtr ptr) {
+bool TopologyManager::removeNESWorkerNode(NESTopologyWorkerNodePtr ptr) {
     return currentPlan->removeNESWorkerNode(std::move(ptr));
 }
 
-bool NESTopologyManager::removeNESSensorNode(NESTopologySensorNodePtr ptr) {
+bool TopologyManager::removeNESSensorNode(NESTopologySensorNodePtr ptr) {
     return currentPlan->removeNESSensorNode(std::move(ptr));
 }
 
-bool NESTopologyManager::removeNESNode(NESTopologyEntryPtr ptr) {
+bool TopologyManager::removeNESNode(NESTopologyEntryPtr ptr) {
     return currentPlan->removeNESNode(std::move(ptr));
 }
 
-NESTopologyLinkPtr NESTopologyManager::createNESTopologyLink(NESTopologyEntryPtr sourceNode,
+NESTopologyLinkPtr TopologyManager::createNESTopologyLink(NESTopologyEntryPtr sourceNode,
                                                              NESTopologyEntryPtr destNode,
                                                              size_t linkCapacity,
                                                              size_t linkLatency) {
     return currentPlan->createNESTopologyLink(sourceNode, destNode, linkCapacity, linkLatency);
 }
 
-bool NESTopologyManager::removeNESTopologyLink(NESTopologyLinkPtr linkPtr) {
+bool TopologyManager::removeNESTopologyLink(NESTopologyLinkPtr linkPtr) {
     return currentPlan->removeNESTopologyLink(linkPtr);
 }
 
-void NESTopologyManager::printNESTopologyPlan() {
+void TopologyManager::printNESTopologyPlan() {
     NES_DEBUG(getNESTopologyPlanString());
 }
 
-std::string NESTopologyManager::getNESTopologyPlanString() {
+std::string TopologyManager::getNESTopologyPlanString() {
     return currentPlan->getTopologyPlanString();
 }
 
-NESTopologyPlanPtr NESTopologyManager::getNESTopologyPlan() {
+NESTopologyPlanPtr TopologyManager::getNESTopologyPlan() {
     return currentPlan;
 }
 
-NESTopologyEntryPtr NESTopologyManager::getRootNode() {
+NESTopologyEntryPtr TopologyManager::getRootNode() {
     return currentPlan->getRootNode();
 };
 
-json::value NESTopologyManager::getNESTopologyGraphAsJson() {
+json::value TopologyManager::getNESTopologyGraphAsJson() {
 
     const NESTopologyGraphPtr& nesGraphPtr = getNESTopologyPlan()->getNESTopologyGraph();
     const std::vector<NESTopologyLinkPtr>& allEdges = nesGraphPtr->getAllEdges();
@@ -111,7 +111,7 @@ json::value NESTopologyManager::getNESTopologyGraphAsJson() {
     return result;
 }
 
-std::vector<json::value> NESTopologyManager::getChildrenNodes(
+std::vector<json::value> TopologyManager::getChildrenNodes(
     NESTopologyEntryPtr nesParentNode) {
 
     const NESTopologyGraphPtr& nesGraphPtr = getNESTopologyPlan()->getNESTopologyGraph();
@@ -142,7 +142,7 @@ std::vector<json::value> NESTopologyManager::getChildrenNodes(
     return children;
 }
 
-void NESTopologyManager::resetNESTopologyPlan() {
+void TopologyManager::resetNESTopologyPlan() {
     currentPlan.reset(new NESTopologyPlan());
 }
 

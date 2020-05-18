@@ -1,7 +1,7 @@
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Optimizer/NESOptimizer.hpp>
 #include <Services/OptimizerService.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
 #include <chrono>
 
@@ -10,14 +10,18 @@ using namespace web;
 using namespace std;
 using namespace std::chrono;
 
+OptimizerService::OptimizerService(TopologyManagerPtr topologyManager) :
+    topologyManager(topologyManager) {
+    NES_DEBUG("OptimizerService()");
+}
+
 json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, string optimizationStrategyName) {
     return getExecutionPlan(inputQuery, optimizationStrategyName)->getExecutionGraphAsJson();
 }
 
 NESExecutionPlanPtr OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
 
-    NESTopologyManager& nesTopologyManager = NESTopologyManager::getInstance();
-    const NESTopologyPlanPtr& topologyPlan = nesTopologyManager.getNESTopologyPlan();
+    const NESTopologyPlanPtr& topologyPlan = topologyManager->getNESTopologyPlan();
     NES_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString());
 
     NESOptimizer queryOptimizer;
