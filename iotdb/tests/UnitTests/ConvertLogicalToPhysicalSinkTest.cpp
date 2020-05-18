@@ -1,16 +1,15 @@
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
-#include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 class ConvertLogicalToPhysicalSinkTest : public testing::Test {
   public:
-
     static void SetUpTestCase() {
         NES::setupLogging("ConvertLogicalToPhysicalSinkTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup ConvertLogicalToPhysicalSinkTest test class.");
@@ -27,37 +26,35 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create(schema,
-                                                                  "file.log",
+    SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create("file.log",
                                                                   FileOutputMode::FILE_OVERWRITE,
                                                                   FileOutputType::CSV_TYPE);
-    DataSinkPtr fileOutputSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
+    DataSinkPtr fileOutputSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
     EXPECT_EQ(fileOutputSink->getType(), FILE_SINK);
 }
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = ZmqSinkDescriptor::create(schema, "loclahost", 2000);
-    DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
+    SinkDescriptorPtr sinkDescriptor = ZmqSinkDescriptor::create("loclahost", 2000);
+    DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
     EXPECT_EQ(zmqSink->getType(), ZMQ_SINK);
 }
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create(schema, "test", "localhost:9092", 1000);
-    DataSinkPtr kafkaSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
+    SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create("test", "localhost:9092", 1000);
+    DataSinkPtr kafkaSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
     EXPECT_EQ(kafkaSink->getType(), KAFKA_SINK);
 }
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create(schema);
-    DataSinkPtr printSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
+    SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create();
+    DataSinkPtr printSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
     EXPECT_EQ(printSink->getType(), PRINT_SINK);
 }
 
-}
-
+}// namespace NES

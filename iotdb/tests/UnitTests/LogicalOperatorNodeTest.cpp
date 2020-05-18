@@ -1,25 +1,28 @@
-#include <gtest/gtest.h>
-#include <iostream>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Nodes/Util/DumpContext.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Nodes/Util/DumpContext.hpp>
 #include <Util/Logger.hpp>
+#include <gtest/gtest.h>
+#include <iostream>
 
-#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <API/InputQuery.hpp>
 #include <API/UserAPIExpression.hpp>
-#include <Operators/Operator.hpp>
-#include <Operators/Impl/FilterOperator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Operators/Impl/FilterOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <SourceSink/DefaultSource.hpp>
 #include <memory>
 
+#include <API/Expressions/ArithmeticalExpressions.hpp>
+#include <API/Expressions/Expressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
@@ -27,9 +30,6 @@
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <SourceSink/SinkCreator.hpp>
-#include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/ArithmeticalExpressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
 
 namespace NES {
 
@@ -41,7 +41,7 @@ class LogicalOperatorNodeTest : public testing::Test {
 
         sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException("default_logical");
         SchemaPtr schema = sPtr->getSchema();
-        auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/0, /*frequency*/0);
+        auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0);
 
         pred1 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
         pred2 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "2"));
@@ -246,7 +246,6 @@ TEST_F(LogicalOperatorNodeTest, addAndRemoveMultiplePredecessors) {
     EXPECT_TRUE(removed);
     parents = filterOp3->getParents();
     EXPECT_EQ(parents.size(), 0);
-
 }
 
 TEST_F(LogicalOperatorNodeTest, addAndRemoveDuplicatedPredecessors) {
@@ -770,7 +769,6 @@ TEST_F(LogicalOperatorNodeTest, equalWithAllSuccessors3) {
     EXPECT_FALSE(same);
 }
 
-
 /**
  *
  *                                  /<- filterOp4
@@ -871,7 +869,6 @@ TEST_F(LogicalOperatorNodeTest, equalWithAllPredecessors3) {
     same = filterOp2->equalWithAllParents(filterOp2Copy);
     EXPECT_TRUE(same);
 }
-
 
 // TODO: add more operator casting
 TEST_F(LogicalOperatorNodeTest, as) {
@@ -1041,7 +1038,8 @@ TEST_F(LogicalOperatorNodeTest, getOperatorByType) {
     expected.push_back(filterOp2);
     expected.push_back(filterOp3);
     expected.push_back(filterOp4);
-    const vector<FilterLogicalOperatorNodePtr> children = filterOp1->getNodesByType<FilterLogicalOperatorNode>();;
+    const vector<FilterLogicalOperatorNodePtr> children = filterOp1->getNodesByType<FilterLogicalOperatorNode>();
+    ;
     // EXPECT_EQ(children.size(), expected.size());
 
     for (int i = 0; i < children.size(); i++) {
@@ -1186,7 +1184,6 @@ TEST_F(LogicalOperatorNodeTest, swap4) {
     EXPECT_EQ(ss.str(), expected.str());
 }
 
-
 /**
  *  swap filterOp2 by filterOp3
  *                        /-> filterOp4 -->|
@@ -1242,7 +1239,6 @@ TEST_F(LogicalOperatorNodeTest, swap6) {
 
     bool swapped = filterOp6->swap(filterOp3, filterOp4);
     EXPECT_FALSE(swapped);
-
 }
 
 /**
@@ -1263,7 +1259,6 @@ TEST_F(LogicalOperatorNodeTest, splitWithSinglePredecessor) {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
     }
 }
-
 
 /**
  * split at filterOp3
@@ -1392,7 +1387,6 @@ TEST_F(LogicalOperatorNodeTest, dfIterator) {
     ASSERT_EQ(*iterator, filterOp6);
     ++iterator;
     ASSERT_EQ(*iterator, filterOp5);
-
 }
 
 TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
@@ -1401,7 +1395,7 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
      */
     auto schema = Schema::create();
 
-    auto printSinkDescriptorPtr = PrintSinkDescriptor::create(schema);
+    auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
     auto constValue = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
     auto fieldRead = FieldAccessExpressionNode::create(createDataType(BasicType::INT8), "FieldName");
@@ -1414,15 +1408,14 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
     auto translatePhase = TranslateToLegacyPlanPhase::create();
     auto legacySink = translatePhase->transform(sinkOperator->as<OperatorNode>());
     std::cout << legacySink->toString() << std::endl;
-    ASSERT_EQ(legacySink->getOperatorType(), SINK_OP);
+    ASSERT_TRUE(legacySink->getOperatorType() == SINK_OP);
     auto legacyFilter = legacySink->getChildren()[0];
-    ASSERT_EQ(legacyFilter->getOperatorType(), FILTER_OP);
+    ASSERT_TRUE(legacyFilter->getOperatorType() == FILTER_OP);
     auto legacyPredicate = std::dynamic_pointer_cast<FilterOperator>(legacyFilter)->getPredicate();
     std::cout << legacyPredicate->toString() << std::endl;
-    ASSERT_EQ(legacyPredicate->toString(), "(1 == FieldName:INT8 )");
+    ASSERT_TRUE(legacyPredicate->toString() == "(1 == FieldName:INT8 )");
     auto legacySource = legacyFilter->getChildren()[0];
-    ASSERT_EQ(legacySource->getOperatorType(), SOURCE_OP);
-
+    ASSERT_TRUE(legacySource->getOperatorType() == SOURCE_OP);
 }
 
-} // namespace NES
+}// namespace NES

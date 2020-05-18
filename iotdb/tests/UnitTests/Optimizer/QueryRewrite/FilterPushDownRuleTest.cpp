@@ -61,7 +61,7 @@ class FilterPushDownRuleTest : public testing::Test {
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
 
     // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
         .map(Attribute("value") = 40)
         .filter(Attribute("id") < 45)
@@ -98,7 +98,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
 
     // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
         .filter(Attribute("id") > 45)
         .map(Attribute("value") = 40)
@@ -140,7 +140,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
 TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
 
     // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
         .map(Attribute("value") = 80)
         .filter(Attribute("id") > 45)
@@ -187,7 +187,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
 TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
 
     // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
         .map(Attribute("value") = 40)
         .filter(Attribute("id") > 45)
@@ -229,7 +229,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
 TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
 
     // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
         .filter(Attribute("id") > 45)
         .map(Attribute("value") = 40)

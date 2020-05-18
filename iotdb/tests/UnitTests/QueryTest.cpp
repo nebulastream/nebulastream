@@ -64,7 +64,7 @@ TEST_F(QueryTest, testQueryFilter) {
 
     auto lessExpression = Attribute("field_1") <= 10;
 
-    auto printSinkDescriptor = PrintSinkDescriptor::create(schema);
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = plan->getSourceOperators();
