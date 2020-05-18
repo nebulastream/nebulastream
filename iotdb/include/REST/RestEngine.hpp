@@ -43,6 +43,7 @@ class RestEngine : public BaseController {
     void handleMerge(http_request message);
 
     void setCoordinator(NesCoordinatorPtr coordinator);
+    void setQueryCatalog(QueryCatalogPtr queryCatalog);
     void initRestOpHandlers();
     void setEndpoint(const std::string& value);
     std::string endpoint() const;

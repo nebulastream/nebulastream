@@ -7,10 +7,12 @@
 namespace NES {
 
 RestServer::RestServer(std::string host, u_int16_t port,
-                       NesCoordinatorPtr coordinator) {
+                       NesCoordinatorPtr coordinator,
+                       QueryCatalogPtr queryCatalog) {
     this->host = host;
     this->port = port;
     this->coordinator = coordinator;
+    this->queryCatalog = queryCatalog;
     InterruptHandler::hookSIGINT();
 }
 
@@ -23,6 +25,7 @@ bool RestServer::start() {
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
 
     server.setCoordinator(coordinator);
+    server.setQueryCatalog(queryCatalog);
     server.setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
 
     try {

@@ -8,6 +8,9 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
+#include <Deployer/QueryDeployer.hpp>
+#include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 
 namespace NES {
 typedef map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployment;
@@ -124,7 +127,10 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     WorkerRPCClientPtr workerRPCClient;
 
     CoordinatorEnginePtr coordinatorEngine;
+
     QueryDeployerPtr queryDeployer;
+
+    QueryCatalogPtr queryCatalog;
 
     std::shared_ptr<RestServer> restServer;
     uint16_t restPort;

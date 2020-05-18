@@ -19,7 +19,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
                     //Prepare the response
                     json::value result{};
-                    map<string, string> queries = QueryCatalog::instance().getQueriesWithStatus(queryStatus);
+                    map<string, string> queries = queryCatalog->getQueriesWithStatus(queryStatus);
 
                     for (auto [key, value] : queries) {
                         result[key] = json::value::string(value);
@@ -50,7 +50,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 try {
                     //Prepare the response
                     json::value result{};
-                    map<string, string> queries = QueryCatalog::instance().getAllRegisteredQueries();
+                    map<string, string> queries = queryCatalog->getAllRegisteredQueries();
 
                     for (auto [key, value] : queries) {
                         result[key] = json::value::string(value);
@@ -80,6 +80,10 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
 void QueryCatalogController::setCoordinator(NesCoordinatorPtr coordinator) {
     this->coordinator = coordinator;
+}
+
+void QueryCatalogController::setQueryCatalog(QueryCatalogPtr queryCatalog) {
+    this->queryCatalog = queryCatalog;
 }
 
 void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, web::http::http_request message) {

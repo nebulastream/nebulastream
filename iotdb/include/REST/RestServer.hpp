@@ -19,7 +19,8 @@ class RestServer {
    * */
     RestServer(
         std::string host, u_int16_t port,
-        NesCoordinatorPtr coordinator);
+        NesCoordinatorPtr coordinator,
+        QueryCatalogPtr queryCatalog);
 
     ~RestServer();
     /**
@@ -39,6 +40,8 @@ class RestServer {
     std::string host;
     u_int16_t port;
     NesCoordinatorPtr coordinator;
+    QueryCatalogPtr queryCatalog;
+
 };
 }// namespace NES
 

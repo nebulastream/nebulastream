@@ -6,6 +6,9 @@ namespace NES {
 class NesCoordinator;
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+
 class QueryCatalogController : public BaseController {
 
   public:
@@ -13,10 +16,13 @@ class QueryCatalogController : public BaseController {
     }
 
     void setCoordinator(NesCoordinatorPtr coordinator);
+    void setQueryCatalog(QueryCatalogPtr queryCatalog);
+
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
     void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
+    QueryCatalogPtr queryCatalog;
     NesCoordinatorPtr coordinator;
 };
 

@@ -6,6 +6,7 @@
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 //#include <Topology/TestTopology.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 #include <Util/Logger.hpp>
 
 using namespace web;
@@ -34,9 +35,9 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string optimizationStrategyName = req.at("strategyName").as_string();
 
                     // Call the service
-                    string queryId = QueryCatalog::instance().registerQuery(userQuery, optimizationStrategyName);
+                    string queryId = queryCatalog->registerQuery(userQuery, optimizationStrategyName);
 
-                    NESExecutionPlanPtr executionPlan = QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
+                    NESExecutionPlanPtr executionPlan = queryCatalog->getQuery(queryId)->getNesPlanPtr();
 
                     json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
@@ -148,6 +149,10 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
         RuntimeUtils::printStackTrace();
         internalServerErrorImpl(message);
     }
+}
+
+void QueryController::setQueryCatalog(QueryCatalogPtr queryCatalog) {
+    this->queryCatalog = queryCatalog;
 }
 
 void QueryController::setCoordinator(NesCoordinatorPtr coordinator) {

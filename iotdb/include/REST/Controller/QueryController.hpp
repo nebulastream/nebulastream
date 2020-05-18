@@ -5,10 +5,12 @@
 #include <Services/QueryService.hpp>
 #include <cpprest/http_msg.h>
 
+
 namespace NES {
 class NesCoordinator;
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
-
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 class QueryController : public BaseController {
   public:
     QueryController() {
@@ -19,10 +21,13 @@ class QueryController : public BaseController {
     ~QueryController() {}
 
     void setCoordinator(NesCoordinatorPtr coordinator);
+    void setQueryCatalog(QueryCatalogPtr queryCatalog);
+
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
+    QueryCatalogPtr queryCatalog;
     QueryServicePtr queryServicePtr;
     NESTopologyServicePtr nesTopologyServicePtr;
     NesCoordinatorPtr coordinator;
