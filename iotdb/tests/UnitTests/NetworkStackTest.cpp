@@ -153,6 +153,9 @@ TEST_F(NetworkStackTest, testSendData) {
         } else {
             // create testbuffer
             auto buffer = bufferManager->getBufferBlocking();
+            buffer.getBuffer<uint64_t>()[0] = 0;
+            buffer.setNumberOfTuples(1);
+            buffer.setTupleSizeInBytes(sizeof(uint64_t));
             senderChannel->sendBuffer(buffer);
             delete senderChannel;
         }
