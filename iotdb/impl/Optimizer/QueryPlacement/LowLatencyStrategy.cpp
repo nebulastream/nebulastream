@@ -30,8 +30,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQu
         NES_THROW_RUNTIME_ERROR("LowLatency: Unable to find the source operator.");
     }
 
-    const std::vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
-                                                             .getSourceNodesForLogicalStream(streamName);
+    const std::vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_ERROR("LowLatency: Unable to find the target source: " << streamName);

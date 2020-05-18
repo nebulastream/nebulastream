@@ -3,16 +3,19 @@
 #include <REST/usr_interrupt_handler.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
+#include <Catalogs/StreamCatalog.hpp>
 
 namespace NES {
 
 RestServer::RestServer(std::string host, u_int16_t port,
                        NesCoordinatorPtr coordinator,
-                       QueryCatalogPtr queryCatalog) {
+                       QueryCatalogPtr queryCatalog,
+                       StreamCatalogPtr streamCatalog) {
     this->host = host;
     this->port = port;
     this->coordinator = coordinator;
     this->queryCatalog = queryCatalog;
+    restEngine = std::make_shared<RestEngine>(streamCatalog);
     InterruptHandler::hookSIGINT();
 }
 
@@ -24,17 +27,17 @@ bool RestServer::start() {
 
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
 
-    server.setCoordinator(coordinator);
-    server.setQueryCatalog(queryCatalog);
-    server.setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
+    restEngine->setCoordinator(coordinator);
+    restEngine->setQueryCatalog(queryCatalog);
+    restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
 
     try {
         // wait for server initialization...
-        server.accept().wait();
+        restEngine->accept().wait();
         NES_DEBUG("RestServer: Server started");
-        NES_DEBUG("RestServer: REST Server now listening for requests at: " << server.endpoint());
+        NES_DEBUG("RestServer: REST Server now listening for requests at: " << restEngine->endpoint());
         InterruptHandler::waitForUserInterrupt();
-        server.shutdown();
+        restEngine->shutdown();
         NES_DEBUG("RestServer: after waitForUserInterrupt");
     } catch (const std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server << " << e.what());

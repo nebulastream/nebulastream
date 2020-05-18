@@ -1,4 +1,3 @@
-
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -11,13 +10,20 @@
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 
 namespace NES {
 
 TypeInferencePhase::TypeInferencePhase() {}
 
-TypeInferencePhasePtr TypeInferencePhase::create() {
+TypeInferencePhasePtr TypeInferencePhase::create()
+{
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase());
+}
+
+void TypeInferencePhase::setStreamCatalog(StreamCatalogPtr streamCatalog)
+{
+    this->streamCatalog = streamCatalog;
 }
 
 QueryPlanPtr TypeInferencePhase::transform(QueryPlanPtr queryPlan) {
@@ -47,8 +53,8 @@ QueryPlanPtr TypeInferencePhase::transform(QueryPlanPtr queryPlan) {
 
 SourceDescriptorPtr TypeInferencePhase::createSourceDescriptor(std::string streamName) {
 
-    auto schema = StreamCatalog::instance().getSchemaForLogicalStream(streamName);
-    auto physicalStreams = StreamCatalog::instance().getPhysicalStreams(streamName);
+    auto schema = streamCatalog->getSchemaForLogicalStream(streamName);
+    auto physicalStreams = streamCatalog->getPhysicalStreams(streamName);
 
     if (physicalStreams.empty()) {
         NES_ERROR("TypeInferencePhase: the logical stream does not exists in the catalog" << streamName);

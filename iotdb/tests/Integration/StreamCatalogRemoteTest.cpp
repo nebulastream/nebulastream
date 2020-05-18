@@ -47,7 +47,7 @@ TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
     bool registered = wrk->registerLogicalStream("testStream1", testSchemaFileName);
     EXPECT_TRUE(registered);
 
-    SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
+    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream(
         "testStream1");
     EXPECT_NE(sPtr, nullptr);
 
@@ -84,17 +84,16 @@ TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
     bool success = wrk->registerLogicalStream("default_logical", testSchemaFileName);
     EXPECT_TRUE(!success);
 
-    SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
+    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream(
         "default_logical");
     EXPECT_NE(sPtr, nullptr);
 
     //check if schma was not overwritten
-    SchemaPtr sch = StreamCatalog::instance().getSchemaForLogicalStream(
+    SchemaPtr sch = crd->getStreamCatalog()->getSchemaForLogicalStream(
         "default_logical");
     EXPECT_NE(sch, nullptr);
 
-    map<std::string, SchemaPtr> allLogicalStream = StreamCatalog::instance()
-        .getAllLogicalStream();
+    map<std::string, SchemaPtr> allLogicalStream = crd->getStreamCatalog()->getAllLogicalStream();
     string exp = "id:UINT32 value:UINT64 ";
     EXPECT_EQ(allLogicalStream.size(), 2);
 
@@ -134,14 +133,14 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
     bool success = wrk->registerLogicalStream("testStream", testSchemaFileName);
     EXPECT_TRUE(success);
 
-    SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
+    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream(
         "testStream");
     EXPECT_NE(sPtr, nullptr);
 
     bool success2 = wrk->unregisterLogicalStream("testStream");
     EXPECT_TRUE(success2);
 
-    SchemaPtr sPtr2 = StreamCatalog::instance().getSchemaForLogicalStream(
+    SchemaPtr sPtr2 = crd->getStreamCatalog()->getSchemaForLogicalStream(
         "testStream");
     EXPECT_EQ(sPtr2, nullptr);
 
@@ -169,7 +168,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
     bool success = wrk->unregisterLogicalStream("default_logical");
     EXPECT_TRUE(!success);
 
-    SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
+    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream(
         "default_logical");
     EXPECT_NE(sPtr, nullptr);
 
@@ -203,10 +202,9 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     bool success = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success);
 
-    cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
+    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString()
          << endl;
-    std::vector<StreamCatalogEntryPtr> phys = StreamCatalog::instance()
-        .getPhysicalStreams("default_logical");
+    std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
     EXPECT_EQ(phys.size(), 2);
     EXPECT_EQ(phys[0]->getPhysicalName(), "default_physical");
@@ -254,10 +252,9 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     bool success2 = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success2);
 
-    cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
+    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString()
          << endl;
-    std::vector<StreamCatalogEntryPtr> phys = StreamCatalog::instance()
-        .getPhysicalStreams("testStream");
+    std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("testStream");
 
     EXPECT_EQ(phys.size(), 1);
     EXPECT_EQ(phys[0]->getPhysicalName(), "physical_test");
@@ -286,10 +283,9 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     bool success = wrk->unregisterPhysicalStream("default_logical", "default_physical");
     EXPECT_TRUE(success);
 
-    cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
+    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString()
          << endl;
-    std::vector<StreamCatalogEntryPtr> phys = StreamCatalog::instance()
-        .getPhysicalStreams("default_logical");
+    std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
     EXPECT_EQ(phys.size(), 0);
 
@@ -317,14 +313,13 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     bool success = wrk->unregisterPhysicalStream("default_logical2", "default_physical");
     EXPECT_TRUE(!success);
 
-    SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
+    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream(
         "default_logical");
     EXPECT_NE(sPtr, nullptr);
 
-    cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
+    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString()
          << endl;
-    std::vector<StreamCatalogEntryPtr> phys = StreamCatalog::instance()
-        .getPhysicalStreams("default_logical");
+    std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
     EXPECT_EQ(phys.size(), 1);
 

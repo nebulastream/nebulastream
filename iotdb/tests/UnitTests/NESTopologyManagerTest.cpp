@@ -612,7 +612,8 @@ TEST_F(NesTopologyGraphTest, removeNonExistingEdge) {
 
 TEST_F(NesTopologyGraphTest, getExampleTopologyAsJson) {
     NESTopologyManager& topologyManager = NESTopologyManager::getInstance();
-    createExampleTopology();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    createExampleTopology(streamCatalog);
     const json::value& treeJson = topologyManager.getNESTopologyGraphAsJson();
     EXPECT_TRUE(treeJson.size() > 0);
 }

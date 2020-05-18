@@ -26,5 +26,8 @@ class QueryCatalogController : public BaseController {
     NesCoordinatorPtr coordinator;
 };
 
+typedef std::shared_ptr<QueryCatalogController> QueryCatalogControllerPtr;
+
+
 }// namespace NES
 #endif//NES_IMPL_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_

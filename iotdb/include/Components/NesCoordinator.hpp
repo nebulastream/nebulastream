@@ -11,6 +11,7 @@
 #include <Deployer/QueryDeployer.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 
 namespace NES {
 typedef map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployment;
@@ -74,6 +75,15 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      */
     void setServerIp(std::string serverIp);
 
+    /**
+     * @brief catalog method for debug use only
+     * @return streamCatalog
+     */
+    StreamCatalogPtr getStreamCatalog()
+    {
+        return streamCatalog;
+    }
+
   private:
     /**
     * @brief method to register a query without start
@@ -131,6 +141,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     QueryDeployerPtr queryDeployer;
 
     QueryCatalogPtr queryCatalog;
+    StreamCatalogPtr streamCatalog;
 
     std::shared_ptr<RestServer> restServer;
     uint16_t restPort;

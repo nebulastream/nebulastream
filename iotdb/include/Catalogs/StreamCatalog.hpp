@@ -25,7 +25,7 @@ class StreamCatalog {
     /**
    * @brief Singleton implementation of stream catalog
    */
-    static StreamCatalog& instance();
+//    static StreamCatalog& instance();
 
     /**
    * @brief method to add a logical stream
@@ -176,20 +176,16 @@ class StreamCatalog {
      */
     bool updatedLogicalStream(std::string& streamName, std::string& streamSchema);
 
-  private:
-    /* implement singleton semantics: no construction,
-   * copying or destruction of stream catalog objects
-   * outside of the class
-   * Default thread count is 1
-   */
     StreamCatalog();
     ~StreamCatalog();
 
+  private:
     //map logical stream to schema
     std::map<std::string, SchemaPtr> logicalStreamToSchemaMapping;
 
     //map logical stream to physical source
     std::map<std::string, std::vector<StreamCatalogEntryPtr>> logicalToPhysicalStreamMapping;
 };
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 }// namespace NES
 #endif /* INCLUDE_CATALOGS_STREAMCATALOG_HPP_ */

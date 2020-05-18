@@ -8,19 +8,23 @@
 #include <cpprest/json.h>
 
 namespace NES {
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 class StreamCatalogController : public BaseController {
 
   public:
-    StreamCatalogController() {
-    }
+    StreamCatalogController(StreamCatalogPtr streamCatalog);
 
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
     void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
+    StreamCatalogPtr streamCatalog;
 };
+typedef std::shared_ptr<StreamCatalogController> StreamCatalogControllerPtr;
+
 }// namespace NES
 
 #endif//NES_INCLUDE_REST_CONTROLLER_STREAMCATALOGCONTROLLER_HPP_

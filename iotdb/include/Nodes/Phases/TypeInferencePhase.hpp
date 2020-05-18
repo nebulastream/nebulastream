@@ -12,6 +12,8 @@ class TypeInferencePhase;
 typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 class SourceDescriptor;
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 /**
  * @brief The type inference phase receives and query plan and infers all input and output schemata for all operators.
@@ -37,6 +39,8 @@ class TypeInferencePhase {
      */
     QueryPlanPtr transform(QueryPlanPtr queryPlan);
 
+    void setStreamCatalog(StreamCatalogPtr streamCatalog);
+
   private:
     /**
      * @brief creates the corresponding source descriptor from a given stream name.
@@ -45,6 +49,7 @@ class TypeInferencePhase {
      */
     SourceDescriptorPtr createSourceDescriptor(std::string streamName);
     TypeInferencePhase();
+    StreamCatalogPtr streamCatalog;
 };
 }// namespace NES
 

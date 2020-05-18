@@ -1,11 +1,17 @@
 #include "REST/RestEngine.hpp"
 #include "REST/NetworkUtils.hpp"
 #include <Util/Logger.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 
 namespace NES {
 
-RestEngine::RestEngine() {
+RestEngine::RestEngine(StreamCatalogPtr streamCatalog):
+    streamCatalog(streamCatalog)
+{
     NES_DEBUG("RestEngine");
+    streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
+    queryController = std::make_shared<QueryController>();
+    queryCatalogController = std::make_shared<QueryCatalogController>();
 };
 RestEngine::~RestEngine() {
     NES_DEBUG("~RestEngine");
@@ -38,15 +44,14 @@ void RestEngine::setEndpoint(const std::string& value) {
 
 //NOTE: maybe someone can suggest a better way to do this.
 void RestEngine::setCoordinator(NesCoordinatorPtr coordinator) {
-    this->queryController.setCoordinator(coordinator);
-    this->queryCatalogController.setCoordinator(coordinator);
+    this->queryController->setCoordinator(coordinator);
+    this->queryCatalogController->setCoordinator(coordinator);
 };
 
 void RestEngine::setQueryCatalog(QueryCatalogPtr queryCatalog)  {
-    this->queryController.setQueryCatalog(queryCatalog);
-    this->queryCatalogController.setQueryCatalog(queryCatalog);
+    this->queryController->setQueryCatalog(queryCatalog);
+    this->queryCatalogController->setQueryCatalog(queryCatalog);
 };
-
 
 void RestEngine::handleGet(http_request message) {
 
@@ -55,13 +60,13 @@ void RestEngine::handleGet(http_request message) {
 
     if (!paths.empty()) {
         if (paths[0] == "query") {
-            queryController.handleGet(paths, message);
+            queryController->handleGet(paths, message);
             return;
         } else if (paths[0] == "streamCatalog") {
-            streamCatalogController.handleGet(paths, message);
+            streamCatalogController->handleGet(paths, message);
             return;
         } else if (paths[0] == "queryCatalog") {
-            queryCatalogController.handleGet(paths, message);
+            queryCatalogController->handleGet(paths, message);
             return;
         }
     }
@@ -74,10 +79,10 @@ void RestEngine::handlePost(http_request message) {
 
     if (!paths.empty()) {
         if (paths[0] == "query") {
-            queryController.handlePost(paths, message);
+            queryController->handlePost(paths, message);
             return;
         } else if (paths[0] == "streamCatalog") {
-            streamCatalogController.handlePost(paths, message);
+            streamCatalogController->handlePost(paths, message);
             return;
         }
     }
@@ -90,10 +95,10 @@ void RestEngine::handleDelete(http_request message) {
 
     if (!paths.empty()) {
         if (paths[0] == "streamCatalog") {
-            streamCatalogController.handleDelete(paths, message);
+            streamCatalogController->handleDelete(paths, message);
             return;
         } else if (paths[0] == "queryCatalog") {
-            queryCatalogController.handleDelete(paths, message);
+            queryCatalogController->handleDelete(paths, message);
             return;
         }
     }

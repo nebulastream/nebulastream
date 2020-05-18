@@ -12,6 +12,10 @@
 
 namespace NES {
 
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
+
 class Operator;
 
 typedef std::shared_ptr<Operator> OperatorPtr;
@@ -177,6 +181,7 @@ class InputQuery {
   private:
     InputQuery(StreamPtr source_stream);
 
+    StreamCatalogPtr streamCatalog;
     int operatorIdCounter = 0;
     OperatorPtr root;
     StreamPtr sourceStream;

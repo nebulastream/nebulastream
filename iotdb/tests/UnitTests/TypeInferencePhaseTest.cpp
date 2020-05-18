@@ -45,7 +45,6 @@ class TypeInferencePhaseTest : public testing::Test {
  * @brief In this test we infer the output and input schemas of each operator in a query.
  */
 TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
-
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -58,7 +57,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     plan->appendOperator(map);
     plan->appendOperator(sink);
 
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     auto phase = TypeInferencePhase::create();
+    phase->setStreamCatalog(streamCatalog);
+
     auto resultPlan = phase->transform(plan);
 
     // we just access the old references
@@ -91,7 +93,9 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     plan->appendOperator(map);
     plan->appendOperator(sink);
 
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     auto phase = TypeInferencePhase::create();
+    phase->setStreamCatalog(streamCatalog);
     ASSERT_ANY_THROW(phase->transform(plan));
 }
 
@@ -121,7 +125,10 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
         .sink(FileSinkDescriptor::create(schema, "", FILE_APPEND, CSV_TYPE));
     auto plan = query.getQueryPlan();
 
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     auto phase = TypeInferencePhase::create();
+    phase->setStreamCatalog(streamCatalog);
+
     plan = phase->transform(plan);
     auto sink = plan->getSinkOperators()[0];
 

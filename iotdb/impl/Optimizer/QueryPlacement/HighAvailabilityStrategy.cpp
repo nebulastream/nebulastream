@@ -28,8 +28,7 @@ NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPtr i
         NES_THROW_RUNTIME_ERROR("HighAvailabilityStrategy: Unable to find the source operator.");
     }
 
-    const std::vector<NESTopologyEntryPtr> sourceNodePtrs = StreamCatalog::instance()
-                                                                .getSourceNodesForLogicalStream(streamName);
+    const std::vector<NESTopologyEntryPtr> sourceNodePtrs = streamCatalog->getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodePtrs.empty()) {
         NES_ERROR("HighAvailabilityStrategy: Unable to find the target source: " << streamName);

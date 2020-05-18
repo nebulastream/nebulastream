@@ -9,11 +9,18 @@
 
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+
 
 using namespace NES;
 
+std::string ip = "127.0.0.1";
+std::string host = "localhost";
+uint16_t publish_port = 4711;
+
 class QueryCatalogTest : public testing::Test {
   public:
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         std::cout << "Setup QueryCatalogTest test class." << std::endl;
@@ -28,18 +35,9 @@ class QueryCatalogTest : public testing::Test {
         kCoordinatorNode->setPublishPort(4711);
         kCoordinatorNode->setReceivePort(4815);
 
-        std::string ip = "127.0.0.1";
-        uint16_t receive_port = 0;
-        std::string host = "localhost";
-        uint16_t publish_port = 4711;
 
-        for (int i = 1; i < 5; i++) {
-            //FIXME: add node properties
-            PhysicalStreamConfig streamConf;
-            std::string address = ip + ":" + std::to_string(publish_port);
-            auto entry = TestUtils::registerTestNode(i, address, 2, "",
-                                                     streamConf, NESNodeType::Sensor);
-        }
+
+
         NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
         std::cout << "Setup QueryCatalogTest test case." << std::endl;
     }
@@ -55,10 +53,23 @@ class QueryCatalogTest : public testing::Test {
     }
 };
 
+void setupTests(StreamCatalogPtr streamCatalog)
+{
+    for (int i = 1; i < 5; i++) {
+        //FIXME: add node properties
+        PhysicalStreamConfig streamConf;
+        std::string address = ip + ":" + std::to_string(publish_port);
+        auto entry = TestUtils::registerTestNode(i, address, 2, "",
+                                                 streamConf, NESNodeType::Sensor, streamCatalog);
+    }
+}
 
 TEST_F(QueryCatalogTest, testAddQuery) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupTests(streamCatalog);
 
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     string queryId = queryCatalog->registerQuery(queryString,
@@ -76,6 +87,9 @@ TEST_F(QueryCatalogTest, testAddQuery) {
 TEST_F(QueryCatalogTest, testAddQueryAndStartStop) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupTests(streamCatalog);
 
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
@@ -106,6 +120,9 @@ TEST_F(QueryCatalogTest, testAddRemoveQuery) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupTests(streamCatalog);
+
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     string queryId = queryCatalog->registerQuery(queryString,
@@ -125,6 +142,9 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupTests(streamCatalog);
+
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     string queryId = queryCatalog->registerQuery(queryString,
@@ -140,6 +160,9 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
 
 TEST_F(QueryCatalogTest, get_all_registered_queries_without_query_registration) {
 
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupTests(streamCatalog);
+
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     std::map<std::string, std::string> allRegisteredQueries =
@@ -148,6 +171,8 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_without_query_registration) 
 }
 
 TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupTests(streamCatalog);
 
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
@@ -164,6 +189,8 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
 }
 
 TEST_F(QueryCatalogTest, get_all_running_queries) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupTests(streamCatalog);
 
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
@@ -181,6 +208,8 @@ TEST_F(QueryCatalogTest, get_all_running_queries) {
 }
 
 TEST_F(QueryCatalogTest, throw_exception_when_query_status_is_unknown) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupTests(streamCatalog);
 
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 

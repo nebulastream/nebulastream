@@ -25,8 +25,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr inputQuery
     //find the source Node
     const string streamName = inputQuery->getSourceStreamName();
 
-    const vector<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
-                                                         .getSourceNodesForLogicalStream(streamName);
+    const vector<NESTopologyEntryPtr>& sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_THROW_RUNTIME_ERROR("Unable to find the source node to place the operator");

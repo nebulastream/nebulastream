@@ -42,9 +42,9 @@ class FilterPushDownRuleTest : public testing::Test {
         streamConf.physicalStreamName = "test2";
         streamConf.logicalStreamName = "test_stream";
 
-        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
-
-        StreamCatalog::instance().addPhysicalStream("default_logical", sce);
+        assert(0);
+//        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
+//        StreamCatalog::instance().addPhysicalStream("default_logical", sce);
     }
 
     /* Will be called before a test is executed. */

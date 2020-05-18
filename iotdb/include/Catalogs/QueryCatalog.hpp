@@ -99,8 +99,6 @@ typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
  */
 class QueryCatalog {
   public:
-//    static QueryCatalog& instance();
-
     QueryCatalog();
     /**
      * @brief registers a CAF query into the NES topology to make it deployable

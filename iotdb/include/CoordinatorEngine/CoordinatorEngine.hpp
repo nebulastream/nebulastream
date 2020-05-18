@@ -4,10 +4,14 @@
 #include <memory>
 
 namespace NES {
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
 class CoordinatorEngine {
 
   public:
-    CoordinatorEngine() = default;
+
+    CoordinatorEngine(StreamCatalogPtr streamCatalog);
 
     /**
      * @brief registers a node
@@ -84,6 +88,9 @@ class CoordinatorEngine {
      * @return bool indicating success
      */
     bool removeParent(size_t childId, size_t parentId);
+
+  private:
+    StreamCatalogPtr streamCatalog;
 };
 
 typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;
