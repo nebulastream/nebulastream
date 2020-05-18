@@ -151,15 +151,14 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
         EXPECT_EQ(
-            memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->read(
-                buffer),
+            memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(buffer),
             recordIndex);
     }
     testSink->shutdown();
     plan->stop();
 }
 
-TEST_F(QueryExecutionTest, DISABLED_windowQuery) {
+TEST_F(QueryExecutionTest, DISABLED_w << indowQu >> ery) {
     // TODO in this test, it is not clear what we are testing
     // TODO 10 windows are fired -> 10 output buffers in the sink
     // TODO however, we check the 2nd buffer only
