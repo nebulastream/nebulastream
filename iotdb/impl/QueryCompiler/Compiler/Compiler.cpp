@@ -22,19 +22,19 @@ namespace NES {
 const std::string Compiler::IncludePath = PATH_TO_NES_SOURCE_CODE "/include/";
 
 CompilerPtr Compiler::create() {
-    return std::make_shared<Compiler>(Compiler());
+    return std::make_shared<Compiler>();
 }
 
 std::string Compiler::getFileName() {
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
+    auto time = std::time(nullptr);
+    auto localtime = *std::localtime(&time);
 
     std::random_device dev;
     std::mt19937 rng(dev());
     std::uniform_int_distribution<std::mt19937::result_type> dist(1, 10000);
 
     std::ostringstream oss;
-    oss << "gen_query_" << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);
+    oss << "gen_query_" << std::put_time(&localtime, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);
     return oss.str();
 }
 

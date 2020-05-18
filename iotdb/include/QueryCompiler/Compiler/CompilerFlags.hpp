@@ -12,12 +12,15 @@ typedef std::shared_ptr<CompilerFlags> CompilerFlagsPtr;
 
 class CompilerFlags {
   public:
+    // sets the cpp language version for the code
     inline static const std::string CXX_VERSION = "-std=c++17";
     // disables trigraphs
     inline static const std::string NO_TRIGRAPHS = "-fno-trigraphs";
     //Position Independent Code means that the generated machine code is not dependent on being located at a specific address in order to work.
     inline static const std::string FPIC = "-fpic";
+    // Turn warnings into errors.
     inline static const std::string WERROR = "-Werror";
+    // warning: equality comparison with extraneous parentheses
     inline static const std::string WPARENTHESES_EQUALITY = "-Wparentheses-equality";
 
     inline static const std::string ALL_OPTIMIZATIONS = "-O3";

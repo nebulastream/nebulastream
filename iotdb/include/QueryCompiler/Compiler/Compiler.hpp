@@ -36,6 +36,7 @@ class Compiler {
      * @brief Compiles the source string.
      * @param source
      * @param debugging flag indicates if we should use debugging options for compiling this code.
+     * This impacts the compiler flags and if the code is formatted and printed to the console
      * @return CompiledCode
      */
     CompiledCodePtr compile(const std::string& source, bool debugging);
