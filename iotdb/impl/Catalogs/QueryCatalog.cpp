@@ -10,9 +10,14 @@
 
 namespace NES {
 
-QueryCatalog& QueryCatalog::instance() {
-    static QueryCatalog instance;
-    return instance;
+//QueryCatalog& QueryCatalog::instance() {
+//    static QueryCatalog instance;
+//    return instance;
+//}
+
+QueryCatalog::QueryCatalog()
+{
+
 }
 
 std::map<string, string> QueryCatalog::getQueriesWithStatus(std::string status) {
@@ -26,7 +31,7 @@ std::map<string, string> QueryCatalog::getQueriesWithStatus(std::string status) 
     }
 
     QueryStatus queryStatus = StringToQueryStatus[status];
-    map<string, QueryCatalogEntryPtr> queries = QueryCatalog::instance().getQueries(queryStatus);
+    map<string, QueryCatalogEntryPtr> queries = getQueries(queryStatus);
 
     map<string, string> result;
     for (auto [key, value] : queries) {
@@ -41,7 +46,7 @@ std::map<std::string, std::string> QueryCatalog::getAllRegisteredQueries() {
 
     NES_INFO("QueryCatalog : get all registered queries");
 
-    map<string, QueryCatalogEntryPtr> registeredQueries = QueryCatalog::instance().getRegisteredQueries();
+    map<string, QueryCatalogEntryPtr> registeredQueries = getRegisteredQueries();
 
     map<string, string> result;
     for (auto [key, value] : registeredQueries) {
@@ -104,11 +109,11 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
         return false;
     } else {
         NES_DEBUG("QueryCatalog: De-registering query ...");
-        NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
+        NESExecutionPlanPtr execPlan = getQuery(queryId)->getNesPlanPtr();
         execPlan->freeResources();
-        if (QueryCatalog::instance().getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
+        if (getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
             NES_DEBUG("QueryCatalog: query is running, stopping it");
-            QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Stopped);
+            markQueryAs(queryId, QueryStatus::Stopped);
         }
         NES_DEBUG("QueryCatalog: erase query " << queryId);
         std::map<string, QueryCatalogEntryPtr>::iterator it;

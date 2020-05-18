@@ -13,135 +13,137 @@
 using namespace NES;
 
 class QueryCatalogTest : public testing::Test {
- public:
-  /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() {
-    std::cout << "Setup QueryCatalogTest test class." << std::endl;
-  }
-
-  /* Will be called before a test is executed. */
-  void SetUp() {
-    NES::setupLogging("QueryCatalogTest.log", NES::LOG_DEBUG);
-    QueryCatalog::instance().clearQueries();
-    NESTopologyManager::getInstance().resetNESTopologyPlan();
-    const auto &kCoordinatorNode = NESTopologyManager::getInstance()
-        .createNESWorkerNode(0, "127.0.0.1", CPUCapacity::HIGH);
-    kCoordinatorNode->setPublishPort(4711);
-    kCoordinatorNode->setReceivePort(4815);
-
-    std::string ip = "127.0.0.1";
-    uint16_t receive_port = 0;
-    std::string host = "localhost";
-    uint16_t publish_port = 4711;
-
-    QueryCatalog::instance().clearQueries();
-    for (int i = 1; i < 5; i++) {
-      //FIXME: add node properties
-      PhysicalStreamConfig streamConf;
-      std::string address = ip + ":" + std::to_string(publish_port);
-      auto entry = TestUtils::registerTestNode(i, address, 2, "",
-                                                       streamConf, NESNodeType::Sensor);
+  public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        std::cout << "Setup QueryCatalogTest test class." << std::endl;
     }
-    NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
-    std::cout << "Setup QueryCatalogTest test case." << std::endl;
-  }
 
-  /* Will be called before a test is executed. */
-  void TearDown() {
-    std::cout << "Tear down QueryCatalogTest test case." << std::endl;
-  }
+    /* Will be called before a test is executed. */
+    void SetUp() {
+        NES::setupLogging("QueryCatalogTest.log", NES::LOG_DEBUG);
+        NESTopologyManager::getInstance().resetNESTopologyPlan();
+        const auto& kCoordinatorNode = NESTopologyManager::getInstance()
+            .createNESWorkerNode(0, "127.0.0.1", CPUCapacity::HIGH);
+        kCoordinatorNode->setPublishPort(4711);
+        kCoordinatorNode->setReceivePort(4815);
 
-  /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() {
-    std::cout << "Tear down QueryCatalogTest test class." << std::endl;
-  }
+        std::string ip = "127.0.0.1";
+        uint16_t receive_port = 0;
+        std::string host = "localhost";
+        uint16_t publish_port = 4711;
+
+        for (int i = 1; i < 5; i++) {
+            //FIXME: add node properties
+            PhysicalStreamConfig streamConf;
+            std::string address = ip + ":" + std::to_string(publish_port);
+            auto entry = TestUtils::registerTestNode(i, address, 2, "",
+                                                     streamConf, NESNodeType::Sensor);
+        }
+        NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
+        std::cout << "Setup QueryCatalogTest test case." << std::endl;
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() {
+        std::cout << "Tear down QueryCatalogTest test case." << std::endl;
+    }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() {
+        std::cout << "Tear down QueryCatalogTest test class." << std::endl;
+    }
 };
 
+
 TEST_F(QueryCatalogTest, testAddQuery) {
-  std::string queryString =
-      "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+    std::string queryString =
+        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
-  string queryId = QueryCatalog::instance().registerQuery(queryString,
-                                                          "BottomUp");
-  map<string, QueryCatalogEntryPtr> reg = QueryCatalog::instance()
-      .getRegisteredQueries();
-  EXPECT_TRUE(reg.size() == 1);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    string queryId = queryCatalog->registerQuery(queryString,
+                                                            "BottomUp");
+    map<string, QueryCatalogEntryPtr> reg = queryCatalog->getRegisteredQueries();
+    EXPECT_TRUE(reg.size() == 1);
 
-  map<string, QueryCatalogEntryPtr> run = QueryCatalog::instance().getQueries(
-      QueryStatus::Running);
-  EXPECT_TRUE(run.size() == 0);
+    map<string, QueryCatalogEntryPtr> run = queryCatalog->getQueries(
+        QueryStatus::Running);
+    EXPECT_TRUE(run.size() == 0);
 
-  EXPECT_TRUE(QueryCatalog::instance().queryExists(queryId));
+    EXPECT_TRUE(queryCatalog->queryExists(queryId));
 }
 
 TEST_F(QueryCatalogTest, testAddQueryAndStartStop) {
-  std::string queryString =
-      "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+    std::string queryString =
+        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
-  string queryId = QueryCatalog::instance().registerQuery(queryString,
-                                                          "BottomUp");
-  map<string, QueryCatalogEntryPtr> reg = QueryCatalog::instance()
-      .getRegisteredQueries();
-  EXPECT_TRUE(reg.size() == 1);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
-  map<string, QueryCatalogEntryPtr> run = QueryCatalog::instance().getQueries(
-      QueryStatus::Running);
-  EXPECT_TRUE(run.size() == 0);
+    string queryId = queryCatalog->registerQuery(queryString,
+                                                            "BottomUp");
+    map<string, QueryCatalogEntryPtr> reg = queryCatalog->getRegisteredQueries();
+    EXPECT_TRUE(reg.size() == 1);
 
-  QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Running);
-  map<string, QueryCatalogEntryPtr> run_new = QueryCatalog::instance()
-      .getQueries(QueryStatus::Running);
-  EXPECT_TRUE(run_new.size() == 1);
+    map<string, QueryCatalogEntryPtr> run = queryCatalog->getQueries(
+        QueryStatus::Running);
+    EXPECT_TRUE(run.size() == 0);
 
-  EXPECT_TRUE(QueryCatalog::instance().queryExists(queryId));
-  EXPECT_TRUE(QueryCatalog::instance().isQueryRunning(queryId));
+    queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+    map<string, QueryCatalogEntryPtr> run_new = queryCatalog->getQueries(QueryStatus::Running);
+    EXPECT_TRUE(run_new.size() == 1);
 
-  QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Stopped);
-  map<string, QueryCatalogEntryPtr> run_new_stop = QueryCatalog::instance()
-      .getQueries(QueryStatus::Running);
-  EXPECT_TRUE(run_new_stop.size() == 0);
+    EXPECT_TRUE(queryCatalog->queryExists(queryId));
+    EXPECT_TRUE(queryCatalog->isQueryRunning(queryId));
 
-  EXPECT_FALSE(QueryCatalog::instance().isQueryRunning(queryId));
+    queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
+    map<string, QueryCatalogEntryPtr> run_new_stop = queryCatalog->getQueries(QueryStatus::Running);
+    EXPECT_TRUE(run_new_stop.size() == 0);
+
+    EXPECT_FALSE(queryCatalog->isQueryRunning(queryId));
 }
 
 TEST_F(QueryCatalogTest, testAddRemoveQuery) {
-  std::string queryString =
-      "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+    std::string queryString =
+        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
-  string queryId = QueryCatalog::instance().registerQuery(queryString,
-                                                          "BottomUp");
-  map<string, QueryCatalogEntryPtr> reg = QueryCatalog::instance()
-      .getRegisteredQueries();
-  EXPECT_TRUE(reg.size() == 1);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
-  map<string, QueryCatalogEntryPtr> run = QueryCatalog::instance().getQueries(
-      QueryStatus::Running);
-  EXPECT_TRUE(run.size() == 0);
+    string queryId = queryCatalog->registerQuery(queryString,
+                                                            "BottomUp");
+    map<string, QueryCatalogEntryPtr> reg = queryCatalog->getRegisteredQueries();
+    EXPECT_TRUE(reg.size() == 1);
 
-  QueryCatalog::instance().deleteQuery(queryId);
-  EXPECT_FALSE(QueryCatalog::instance().queryExists(queryId));
+    map<string, QueryCatalogEntryPtr> run = queryCatalog->getQueries(
+        QueryStatus::Running);
+    EXPECT_TRUE(run.size() == 0);
+
+    queryCatalog->deleteQuery(queryId);
+    EXPECT_FALSE(queryCatalog->queryExists(queryId));
 }
 
 TEST_F(QueryCatalogTest, testPrintQuery) {
-  std::string queryString =
-      "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+    std::string queryString =
+        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
-  string queryId = QueryCatalog::instance().registerQuery(queryString,
-                                                          "BottomUp");
-  map<string, QueryCatalogEntryPtr> reg = QueryCatalog::instance()
-      .getRegisteredQueries();
-  EXPECT_TRUE(reg.size() == 1);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
-  std::string ret = QueryCatalog::instance().printQueries();
-  cout << "ret=" << ret << endl;
+    string queryId = queryCatalog->registerQuery(queryString,
+                                                            "BottomUp");
+    map<string, QueryCatalogEntryPtr> reg = queryCatalog->getRegisteredQueries();
+    EXPECT_TRUE(reg.size() == 1);
+
+    std::string ret = queryCatalog->printQueries();
+    cout << "ret=" << ret << endl;
 }
 
 //
 
 TEST_F(QueryCatalogTest, get_all_registered_queries_without_query_registration) {
 
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+
     std::map<std::string, std::string> allRegisteredQueries =
-        QueryCatalog::instance().getAllRegisteredQueries();
+        queryCatalog->getAllRegisteredQueries();
     EXPECT_TRUE(allRegisteredQueries.empty());
 }
 
@@ -150,11 +152,13 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
-    const string queryId = QueryCatalog::instance().registerQuery(queryString,
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+
+    const string queryId = queryCatalog->registerQuery(queryString,
                                                                   "BottomUp");
 
     std::map<std::string, std::string> allRegisteredQueries =
-    QueryCatalog::instance().getAllRegisteredQueries();
+        queryCatalog->getAllRegisteredQueries();
     EXPECT_EQ(allRegisteredQueries.size(), 1);
     EXPECT_TRUE(allRegisteredQueries.find(queryId) != allRegisteredQueries.end());
 }
@@ -164,20 +168,24 @@ TEST_F(QueryCatalogTest, get_all_running_queries) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
-    const string queryId = QueryCatalog::instance().registerQuery(queryString,
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+
+    const string queryId = queryCatalog->registerQuery(queryString,
                                                                   "BottomUp");
 
-    QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Running);
+    queryCatalog->markQueryAs(queryId, QueryStatus::Running);
 
-    std::map<std::string, std::string> queries = QueryCatalog::instance().getQueriesWithStatus("running");
+    std::map<std::string, std::string> queries = queryCatalog->getQueriesWithStatus("running");
     EXPECT_EQ(queries.size(), 1);
     EXPECT_TRUE(queries.find(queryId) != queries.end());
 }
 
 TEST_F(QueryCatalogTest, throw_exception_when_query_status_is_unknown) {
 
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+
     try {
-        std::map<std::string, std::string> queries = QueryCatalog::instance().getQueriesWithStatus("something_random");
+        std::map<std::string, std::string> queries = queryCatalog->getQueriesWithStatus("something_random");
         NES_DEBUG("Should have thrown invalid argument exception");
         FAIL();
     } catch (std::invalid_argument e) {

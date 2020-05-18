@@ -24,9 +24,11 @@ NesCoordinator::NesCoordinator() {
     rpcPort = 4000;
     stopped = false;
 
+    queryCatalog = std::make_shared<QueryCatalog>();
     StreamCatalog::instance();
+    NESTopologyManager::getInstance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
-    queryDeployer = std::make_shared<QueryDeployer>();
+    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog);
     coordinatorEngine = std::make_shared<CoordinatorEngine>();
 }
 
@@ -37,9 +39,11 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
     NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
     stopped = false;
 
+    queryCatalog = std::make_shared<QueryCatalog>();
     StreamCatalog::instance();
+    NESTopologyManager::getInstance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
-    queryDeployer = std::make_shared<QueryDeployer>();
+    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog);
     coordinatorEngine = std::make_shared<CoordinatorEngine>();
 }
 
@@ -50,7 +54,7 @@ NesCoordinator::~NesCoordinator() {
     currentDeployments.clear();
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     StreamCatalog::instance().reset();
-    QueryCatalog::instance().clearQueries();
+    queryCatalog->clearQueries();
     NESTopologyManager::getInstance().resetNESTopologyPlan();
 }
 
@@ -110,7 +114,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //Start rest that accepts quiers form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     std::promise<bool> promRest;
-    std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this());
+    std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(), queryCatalog);
 
     restThread = std::make_shared<std::thread>(([&]() {
         startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
@@ -267,12 +271,12 @@ bool NesCoordinator::removeQuery(const string queryId) {
 
 string NesCoordinator::registerQuery(const string queryString, const string strategy) {
     NES_DEBUG("NesCoordinator:registerQuery queryString=" << queryString << " strategy=" << strategy);
-    return QueryCatalog::instance().registerQuery(queryString, strategy);
+    return queryCatalog->registerQuery(queryString, strategy);
 }
 
 bool NesCoordinator::unregisterQuery(const string queryId) {
     NES_DEBUG("NesCoordinator:unregisterQuery queryId=" << queryId);
-    return QueryCatalog::instance().deleteQuery(queryId);
+    return queryCatalog->deleteQuery(queryId);
 }
 
 bool NesCoordinator::deployQuery(std::string queryId) {

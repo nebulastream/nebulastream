@@ -42,6 +42,12 @@ void RestEngine::setCoordinator(NesCoordinatorPtr coordinator) {
     this->queryCatalogController.setCoordinator(coordinator);
 };
 
+void RestEngine::setQueryCatalog(QueryCatalogPtr queryCatalog)  {
+    this->queryController.setQueryCatalog(queryCatalog);
+    this->queryCatalogController.setQueryCatalog(queryCatalog);
+};
+
+
 void RestEngine::handleGet(http_request message) {
 
     auto path = getPath(message);

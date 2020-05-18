@@ -99,8 +99,9 @@ typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
  */
 class QueryCatalog {
   public:
-    static QueryCatalog& instance();
+//    static QueryCatalog& instance();
 
+    QueryCatalog();
     /**
      * @brief registers a CAF query into the NES topology to make it deployable
      * @param queryString a queryString of the query
@@ -209,6 +210,8 @@ class QueryCatalog {
     map<string, QueryCatalogEntryPtr> queries;
     map<string, std::vector<NESTopologyEntryPtr>> queriesToExecNodeMap;
 };
+
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 }// namespace NES
 
 #endif /* INCLUDE_CATALOGS_QUERYCATALOG_HPP_ */

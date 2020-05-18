@@ -4,6 +4,7 @@
 #include <GRPC/ExecutableTransferObject.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
 #include <SourceSink/DataSource.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 
 #include <map>
 #include <vector>
@@ -12,7 +13,8 @@ namespace NES {
 class QueryDeployer {
 
   public:
-    QueryDeployer();
+    QueryDeployer(QueryCatalogPtr queryCatalog);
+
     ~QueryDeployer();
 
     /**
@@ -73,6 +75,8 @@ class QueryDeployer {
 
   private:
     unordered_map<string, int> queryToPort;
+    QueryCatalogPtr queryCatalog;
+
 };
 
 typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;

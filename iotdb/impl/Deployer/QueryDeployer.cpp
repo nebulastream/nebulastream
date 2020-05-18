@@ -13,7 +13,9 @@
 
 namespace NES {
 
-QueryDeployer::QueryDeployer() {
+QueryDeployer::QueryDeployer(QueryCatalogPtr queryCatalog):
+    queryCatalog(queryCatalog)
+{
     NES_INFO("QueryDeployer()");
 }
 
@@ -24,12 +26,12 @@ QueryDeployer::~QueryDeployer() {
 
 map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployer::generateDeployment(const string& queryId) {
     map<NESTopologyEntryPtr, ExecutableTransferObject> output;
-    if (QueryCatalog::instance().queryExists(queryId)
-        && !QueryCatalog::instance().isQueryRunning(queryId)) {
+    if (queryCatalog->queryExists(queryId)
+        && !queryCatalog->isQueryRunning(queryId)) {
         NES_INFO("QueryDeployer::generateDeployment for query " << queryId);
 
-        NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
-        SchemaPtr schema = QueryCatalog::instance().getQuery(queryId)->getInputQueryPtr()->getSourceStream()->getSchema();
+        NESExecutionPlanPtr execPlan = queryCatalog->getQuery(queryId)->getNesPlanPtr();
+        SchemaPtr schema = queryCatalog->getQuery(queryId)->getInputQueryPtr()->getSourceStream()->getSchema();
 
         //iterate through all vertices in the topology
         for (const ExecutionVertex& v : execPlan->getExecutionGraph()->getAllVertex()) {
@@ -48,9 +50,9 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployer::generateDeploy
             }
         }
 
-        QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Scheduling);
+        queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 
-    } else if (QueryCatalog::instance().getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
+    } else if (queryCatalog->getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
         NES_WARNING("QueryDeployer::generateDeployment: Query is already running -> " << queryId);
     } else {
         NES_WARNING("QueryDeployer::generateDeployment: Query is not registered -> " << queryId);
@@ -65,7 +67,7 @@ vector<DataSourcePtr> QueryDeployer::getSources(const string& queryId,
                                                 const ExecutionVertex& v) {
     NES_DEBUG("QueryDeployer::getSources: queryid=" << queryId << " vertex=" << v.id);
     vector<DataSourcePtr> sources = vector<DataSourcePtr>();
-    SchemaPtr schema = QueryCatalog::instance().getQuery(queryId)->getInputQueryPtr()->getSourceStream()->getSchema();
+    SchemaPtr schema = queryCatalog->getQuery(queryId)->getInputQueryPtr()->getSourceStream()->getSchema();
 
     DataSourcePtr source = findDataSourcePointer(v.ptr->getRootOperator());
 
