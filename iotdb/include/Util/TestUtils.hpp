@@ -100,7 +100,7 @@ class TestUtils {
     }
 
     static NESTopologyEntryPtr registerTestNode(size_t id, std::string address, int cpu, const string& nodeProperties,
-                                                PhysicalStreamConfig streamConf, NESNodeType type) {
+                                     PhysicalStreamConfig streamConf, NESNodeType type, StreamCatalogPtr streamCatalog) {
         NESTopologyEntryPtr nodePtr;
         if (type == NESNodeType::Sensor) {
             NES_DEBUG("CoordinatorService::registerNode: register sensor node");
@@ -113,8 +113,8 @@ class TestUtils {
                                                   << streamConf.logicalStreamName << " nodeID=" << nodePtr->getId());
 
             //check if logical stream exists
-            if (!StreamCatalog::instance().testIfLogicalStreamExistsInSchemaMapping(
-                    streamConf.logicalStreamName)) {
+            if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(
+                streamConf.logicalStreamName)) {
                 NES_ERROR(
                     "Coordinator: error logical stream" << streamConf.logicalStreamName
                                                         << " does not exist when adding physical stream "
@@ -123,7 +123,7 @@ class TestUtils {
                     "logical stream does not exist " + streamConf.logicalStreamName);
             }
 
-            SchemaPtr schema = StreamCatalog::instance().getSchemaForLogicalStream(
+            SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(
                 streamConf.logicalStreamName);
 
             DataSourcePtr source;
@@ -139,7 +139,7 @@ class TestUtils {
             StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
                 streamConf, nodePtr);
 
-            bool success = StreamCatalog::instance().addPhysicalStream(
+            bool success = streamCatalog->addPhysicalStream(
                 streamConf.logicalStreamName, sce);
             if (!success) {
                 NES_ERROR(

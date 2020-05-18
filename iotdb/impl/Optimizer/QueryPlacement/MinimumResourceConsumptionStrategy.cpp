@@ -29,8 +29,7 @@ NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(
         NES_THROW_RUNTIME_ERROR("MinimumResourceConsumption: Unable to find the source operator.");
     }
 
-    const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
-                                                        .getSourceNodesForLogicalStream(streamName);
+    const vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_THROW_RUNTIME_ERROR("MinimumResourceConsumption: Unable to find the target source: " + streamName);

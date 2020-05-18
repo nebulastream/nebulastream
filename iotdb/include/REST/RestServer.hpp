@@ -12,15 +12,17 @@ class RestServer {
 
   public:
     /**
-   * @brief constructor for rest server
-   * @param host as string
-   * @param port as uint
-   * @param handle to coordinator
+    * @brief constructor for rest server
+    * @param host as string
+    * @param port as uint
+    * @param handle to coordinator
+     *
    * */
     RestServer(
         std::string host, u_int16_t port,
         NesCoordinatorPtr coordinator,
-        QueryCatalogPtr queryCatalog);
+        QueryCatalogPtr queryCatalog,
+        StreamCatalogPtr streamCatalog);
 
     ~RestServer();
     /**
@@ -36,7 +38,7 @@ class RestServer {
     bool stop();
 
   private:
-    RestEngine server;
+    RestEnginePtr restEngine;
     std::string host;
     u_int16_t port;
     NesCoordinatorPtr coordinator;

@@ -20,17 +20,24 @@ namespace NES {
 class NesCoordinator;
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
+
 class RestEngine : public BaseController {
   protected:
     http_listener _listener;// main micro service network endpoint
 
   private:
-    QueryController queryController;
-    StreamCatalogController streamCatalogController;
-    QueryCatalogController queryCatalogController;
+    QueryControllerPtr queryController;
+    QueryCatalogControllerPtr queryCatalogController;
+
+    StreamCatalogPtr streamCatalog;
+    StreamCatalogControllerPtr streamCatalogController;
 
   public:
-    RestEngine();
+    RestEngine(StreamCatalogPtr streamCatalog);
+
     ~RestEngine();
 
     void handleGet(http_request message);
@@ -51,4 +58,6 @@ class RestEngine : public BaseController {
     pplx::task<void> shutdown();
     std::vector<utility::string_t> splitPath(utility::string_t path);
 };
+
+typedef std::shared_ptr<RestEngine> RestEnginePtr;
 }// namespace NES

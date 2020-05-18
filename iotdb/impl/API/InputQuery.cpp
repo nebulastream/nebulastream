@@ -12,6 +12,8 @@
 #include <Util/Logger.hpp>
 #include <cstddef>
 #include <iostream>
+#include <Catalogs/StreamCatalog.hpp>
+
 
 namespace NES {
 
@@ -79,10 +81,9 @@ InputQuery::~InputQuery() {
 
 InputQuery InputQuery::from(Stream& stream) {
     InputQuery q(std::make_shared<Stream>(stream));
-
     //TODO:here we assume that all sources are of the same type
-    std::vector<StreamCatalogEntryPtr> catalogEntry = StreamCatalog::instance()
-                                                          .getPhysicalStreams(stream.getName());
+    assert(0);
+    std::vector<StreamCatalogEntryPtr> catalogEntry; // = streamCatalog->getPhysicalStreams(stream.getName());
 
     OperatorPtr op;
 
@@ -275,7 +276,7 @@ InputQuery& InputQuery::writeToCSVFile(const std::string& file_name, const std::
 InputQuery& InputQuery::writeToZmq(const std::string& logicalStreamName,
                                    const std::string& host,
                                    const uint16_t& port) {
-    SchemaPtr ptr = StreamCatalog::instance().getSchemaForLogicalStream(
+    SchemaPtr ptr = streamCatalog->getSchemaForLogicalStream(
         logicalStreamName);
     OperatorPtr op = createSinkOperator(createZmqSink(ptr, host, port));
     int operatorId = this->getNextOperatorId();

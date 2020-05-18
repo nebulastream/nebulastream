@@ -8,6 +8,12 @@
 #include <boost/uuid/uuid_io.hpp>
 
 namespace NES {
+
+CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog)
+    : streamCatalog(streamCatalog) {
+    NES_DEBUG("CoordinatorEngine()");
+}
+
 size_t getIdFromIp(std::string ip) {
     std::hash<std::string> hashFn;
     boost::uuids::basic_random_generator<boost::mt19937> gen;
@@ -32,7 +38,8 @@ size_t CoordinatorEngine::registerNode(std::string address,
 
     auto nodes = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(address);
     if (!nodes.empty()) {
-        NES_ERROR("CoordinatorEngine::registerNode: node with this address already exists=" << address << " id=" << nodes[0]->getId());
+        NES_ERROR("CoordinatorEngine::registerNode: node with this address already exists=" << address << " id="
+                                                                                            << nodes[0]->getId());
         return false;
     }
     NESTopologyEntryPtr nodePtr;
@@ -58,8 +65,8 @@ size_t CoordinatorEngine::registerNode(std::string address,
                                                                                << " nodeID=" << nodePtr->getId());
 
         //check if logical stream exists
-        if (!StreamCatalog::instance().testIfLogicalStreamExistsInSchemaMapping(
-                streamConf.logicalStreamName)) {
+        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(
+            streamConf.logicalStreamName)) {
             NES_ERROR(
                 "CoordinatorEngine::registerNode: error logical stream" << streamConf.logicalStreamName
                                                                         << " does not exist when adding physical stream "
@@ -68,7 +75,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
                 "CoordinatorEngine::registerNode logical stream does not exist " + streamConf.logicalStreamName);
         }
 
-        SchemaPtr schema = StreamCatalog::instance().getSchemaForLogicalStream(
+        SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(
             streamConf.logicalStreamName);
 
         if (streamConf.sourceType != "CSVSource"
@@ -84,7 +91,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
             streamConf, nodePtr);
 
-        bool success = StreamCatalog::instance().addPhysicalStream(
+        bool success = streamCatalog->addPhysicalStream(
             streamConf.logicalStreamName, sce);
         if (!success) {
             NES_ERROR(
@@ -157,7 +164,7 @@ bool CoordinatorEngine::unregisterNode(size_t nodeId) {
     }
     NES_DEBUG("CoordinatorEngine::UnregisterNode: found sensor, try to delete it in catalog");
     //remove from catalog
-    bool successCatalog = StreamCatalog::instance().removePhysicalStreamByHashId(
+    bool successCatalog = streamCatalog->removePhysicalStreamByHashId(
         nodeId);
     NES_DEBUG("CoordinatorEngine::UnregisterNode: success in catalog is " << successCatalog);
 
@@ -206,7 +213,7 @@ bool CoordinatorEngine::registerPhysicalStream(size_t nodeId,
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
         streamConf, sensorNodes[0]);
 
-    bool success = StreamCatalog::instance().addPhysicalStream(
+    bool success = streamCatalog->addPhysicalStream(
         streamConf.logicalStreamName, sce);
 
     return success;
@@ -240,7 +247,7 @@ bool CoordinatorEngine::unregisterPhysicalStream(size_t nodeId, std::string phys
     }
     NES_DEBUG("node type=" << sensorNode->getEntryTypeString());
 
-    bool success = StreamCatalog::instance().removePhysicalStream(logicalStreamName,
+    bool success = streamCatalog->removePhysicalStream(logicalStreamName,
                                                                   physicalStreamName,
                                                                   nodeId);
     return success;
@@ -251,13 +258,13 @@ bool CoordinatorEngine::registerLogicalStream(std::string logicalStreamName, std
                                                                                    << schemaString);
     SchemaPtr schema = UtilityFunctions::createSchemaFromCode(schemaString);
     NES_DEBUG("StreamCatalogService: schema successfully created");
-    bool success = StreamCatalog::instance().addLogicalStream(logicalStreamName, schema);
+    bool success = streamCatalog->addLogicalStream(logicalStreamName, schema);
     return success;
 }
 
 bool CoordinatorEngine::unregisterLogicalStream(std::string logicalStreamName) {
     NES_DEBUG("CoordinatorEngine::unregisterLogicalStream: register logical stream=" << logicalStreamName);
-    bool success = StreamCatalog::instance().removeLogicalStream(logicalStreamName);
+    bool success = streamCatalog->removeLogicalStream(logicalStreamName);
     return success;
 }
 

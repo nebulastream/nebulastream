@@ -33,4 +33,6 @@ class QueryController : public BaseController {
     NesCoordinatorPtr coordinator;
 };
 
+typedef std::shared_ptr<QueryController> QueryControllerPtr;
+
 }// namespace NES

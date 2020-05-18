@@ -26,22 +26,6 @@ class CoordinatorEngineTest : public testing::Test {
     void SetUp() {
         std::cout << "Setup NES Coordinator test case." << std::endl;
         NES::setupLogging("CoordinatorEngineTest.log", NES::LOG_DEBUG);
-        //
-        //        NESTopologyManager::getInstance().resetNESTopologyPlan();
-        //        const auto& kCoordinatorNode = NESTopologyManager::getInstance()
-        //            .createNESWorkerNode(0, "127.0.0.1", CPUCapacity::HIGH);
-        //        kCoordinatorNode->setPublishPort(4711);
-        //        kCoordinatorNode->setReceivePort(4815);
-        //
-        //        coordinatorServicePtr = CoordinatorService::getInstance();
-        //        coordinatorServicePtr->clearQueryCatalogs();
-        //        for (int i = 1; i <= 5; i++) {
-        //            //FIXME: add node properties
-        //            PhysicalStreamConfig streamConf;
-        //            std::string address = ip + ":" + std::to_string(publish_port);
-        //            auto entry = coordinatorServicePtr->registerNode(i, address, 2, /**nodeProperties**/
-        //                                                             "", streamConf, NESNodeType::Sensor);
-        //        }
         NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
     }
 
@@ -64,7 +48,8 @@ class CoordinatorEngineTest : public testing::Test {
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog);
 
     size_t nodeId = coordinatorEngine->registerNode(address, 6, "",
                                                     NESNodeType::Sensor);
@@ -86,7 +71,8 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog);
     std::string logicalStreamName = "testStream";
     std::string testSchema =
         "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
@@ -108,7 +94,8 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog);
     std::string physicalStreamName = "testStream";
     PhysicalStreamConfig conf;
     conf.logicalStreamName = "testStream";

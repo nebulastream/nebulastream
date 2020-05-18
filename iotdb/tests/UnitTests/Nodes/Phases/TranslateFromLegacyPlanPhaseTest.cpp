@@ -49,8 +49,8 @@ class TranslateFromLegacyPlanPhaseTest : public testing::Test {
         streamConf.logicalStreamName = "test_stream";
 
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
-
-        StreamCatalog::instance().addPhysicalStream("default_logical", sce);
+        assert(0);
+//        StreamCatalog::instance().addPhysicalStream("default_logical", sce);
     }
 
     /* Will be called before a test is executed. */

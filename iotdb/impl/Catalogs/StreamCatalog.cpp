@@ -3,10 +3,10 @@
 #include <Util/UtilityFunctions.hpp>
 namespace NES {
 
-StreamCatalog& StreamCatalog::instance() {
-    static StreamCatalog instance;
-    return instance;
-}
+//StreamCatalog& StreamCatalog::instance() {
+//    static StreamCatalog instance;
+//    return instance;
+//}
 
 StreamCatalog::StreamCatalog() {
     NES_DEBUG("StreamCatalog: construct stream catalog");

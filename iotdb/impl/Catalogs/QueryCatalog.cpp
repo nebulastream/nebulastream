@@ -10,14 +10,9 @@
 
 namespace NES {
 
-//QueryCatalog& QueryCatalog::instance() {
-//    static QueryCatalog instance;
-//    return instance;
-//}
-
 QueryCatalog::QueryCatalog()
 {
-
+    NES_DEBUG("QueryCatalog()");
 }
 
 std::map<string, string> QueryCatalog::getQueriesWithStatus(std::string status) {

@@ -55,6 +55,9 @@ typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -118,6 +121,9 @@ class BasePlacementStrategy {
      * @param nesExecutionPlanPtr Pointer to the execution plan
      */
     void addForwardOperators(std::vector<NESTopologyEntryPtr> candidateNodes, NESExecutionPlanPtr nesExecutionPlanPtr);
+
+  protected:
+    StreamCatalogPtr streamCatalog;
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP

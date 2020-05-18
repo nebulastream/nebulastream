@@ -144,7 +144,6 @@ std::vector<json::value> NESTopologyManager::getChildrenNodes(
 
 void NESTopologyManager::resetNESTopologyPlan() {
     currentPlan.reset(new NESTopologyPlan());
-    StreamCatalog::instance().reset();
 }
 
 }// namespace NES

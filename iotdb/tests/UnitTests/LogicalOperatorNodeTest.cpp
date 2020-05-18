@@ -31,6 +31,11 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 
+#include <API/Expressions/Expressions.hpp>
+#include <API/Expressions/ArithmeticalExpressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+
 namespace NES {
 
 class LogicalOperatorNodeTest : public testing::Test {
@@ -39,7 +44,8 @@ class LogicalOperatorNodeTest : public testing::Test {
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
 
-        sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException("default_logical");
+        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+        sPtr = streamCatalog->getStreamForLogicalStreamOrThrowException("default_logical");
         SchemaPtr schema = sPtr->getSchema();
         auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0);
 

@@ -28,7 +28,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inp
         throw std::runtime_error("No source operator found in the query plan");
     }
 
-    const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance().getSourceNodesForLogicalStream(streamName);
+    const vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_ERROR("HighThroughput: Unable to find the target source: " << streamName);

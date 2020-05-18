@@ -25,11 +25,11 @@ NesCoordinator::NesCoordinator() {
     stopped = false;
 
     queryCatalog = std::make_shared<QueryCatalog>();
-    StreamCatalog::instance();
+    streamCatalog = std::make_shared<StreamCatalog>();
     NESTopologyManager::getInstance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
     queryDeployer = std::make_shared<QueryDeployer>(queryCatalog);
-    coordinatorEngine = std::make_shared<CoordinatorEngine>();
+    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog);
 }
 
 NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort)
@@ -40,11 +40,11 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
     stopped = false;
 
     queryCatalog = std::make_shared<QueryCatalog>();
-    StreamCatalog::instance();
+    streamCatalog = std::make_shared<StreamCatalog>();
     NESTopologyManager::getInstance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
     queryDeployer = std::make_shared<QueryDeployer>(queryCatalog);
-    coordinatorEngine = std::make_shared<CoordinatorEngine>();
+    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -53,7 +53,7 @@ NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator() clear map");
     currentDeployments.clear();
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
-    StreamCatalog::instance().reset();
+    streamCatalog->reset();
     queryCatalog->clearQueries();
     NESTopologyManager::getInstance().resetNESTopologyPlan();
 }
@@ -114,7 +114,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //Start rest that accepts quiers form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     std::promise<bool> promRest;
-    std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(), queryCatalog);
+    std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(), queryCatalog, streamCatalog);
 
     restThread = std::make_shared<std::thread>(([&]() {
         startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
