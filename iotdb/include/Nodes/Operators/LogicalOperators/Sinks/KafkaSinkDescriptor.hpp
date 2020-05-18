@@ -14,13 +14,12 @@ class KafkaSinkDescriptor : public SinkDescriptor {
   public:
     /**
      * @brief Factory method to create a new Kafka sink.
-     * @param schema
-     * @param topic
-     * @param brokers
-     * @param timeout
-     * @return
+     * @param topic kafka topic name
+     * @param brokers kafka broker list
+     * @param timeout Kafka producer timeout
+     * @return descriptor for kafka sink
      */
-    static SinkDescriptorPtr create(SchemaPtr schema, std::string topic, std::string brokers, uint64_t timeout);
+    static SinkDescriptorPtr create(std::string topic, std::string brokers, uint64_t timeout);
 
     /**
      * @brief Get Kafka topic where data is to be written
@@ -38,7 +37,7 @@ class KafkaSinkDescriptor : public SinkDescriptor {
     uint64_t getTimeout() const;
 
   private:
-    explicit KafkaSinkDescriptor(SchemaPtr schema, std::string topic, std::string brokers, uint64_t timeout);
+    explicit KafkaSinkDescriptor(std::string topic, std::string brokers, uint64_t timeout);
     std::string topic;
     std::string brokers;
     uint64_t timeout;

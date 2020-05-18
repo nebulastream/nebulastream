@@ -2,8 +2,8 @@
 
 namespace NES {
 
-ZmqSinkDescriptor::ZmqSinkDescriptor(SchemaPtr schema, std::string host, uint16_t port)
-    : SinkDescriptor(schema), host(host), port(port) {}
+ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port)
+    : host(host), port(port) {}
 
 const std::string& ZmqSinkDescriptor::getHost() const {
     return host;
@@ -12,8 +12,8 @@ const std::string& ZmqSinkDescriptor::getHost() const {
 uint16_t ZmqSinkDescriptor::getPort() const {
     return port;
 }
-SinkDescriptorPtr ZmqSinkDescriptor::create(SchemaPtr schema, std::string host, uint16_t port) {
-    return std::make_shared<ZmqSinkDescriptor>(ZmqSinkDescriptor(schema, host, port));
+SinkDescriptorPtr ZmqSinkDescriptor::create(std::string host, uint16_t port) {
+    return std::make_shared<ZmqSinkDescriptor>(ZmqSinkDescriptor(host, port));
 }
 
 }// namespace NES

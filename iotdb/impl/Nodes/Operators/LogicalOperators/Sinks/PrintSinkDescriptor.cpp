@@ -2,10 +2,10 @@
 
 namespace NES {
 
-PrintSinkDescriptor::PrintSinkDescriptor(SchemaPtr schema) : SinkDescriptor(schema) {}
+PrintSinkDescriptor::PrintSinkDescriptor() {}
 
-SinkDescriptorPtr PrintSinkDescriptor::create(SchemaPtr schema) {
-    return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor(schema));
+SinkDescriptorPtr PrintSinkDescriptor::create() {
+    return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor());
 }
 
 }// namespace NES

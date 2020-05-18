@@ -1,7 +1,6 @@
 #ifndef NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINK_SINKDESCRIPTOR_HPP_
 #define NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINK_SINKDESCRIPTOR_HPP_
 
-#include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <memory>
@@ -17,17 +16,9 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
-    SinkDescriptor(SchemaPtr schema) : schema(schema){};
+    SinkDescriptor(){};
 
     virtual ~SinkDescriptor()=default;
-
-    /**
-     * @brief Returns the schema for the sink
-     * @return schema pointer
-     */
-    const SchemaPtr getSchema() const {
-        return schema;
-    }
 
     /**
     * @brief Checks if the current node is of type SinkType
@@ -56,9 +47,6 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
             throw std::bad_cast();
         }
     }
-
-  private:
-    SchemaPtr schema;
 };
 
 }// namespace NES

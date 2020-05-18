@@ -27,9 +27,9 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param filePath the path to the output file
      * @param fileOutputMode the file output mode (FILE_OVERWRITE, FILE_APPEND)
      * @param fileOutputType the file output type (BINARY_TYPE, CSV_TYPE)
-     * @return
+     * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(SchemaPtr schema, std::string filePath, FileOutputMode fileOutputMode, FileOutputType fileOutputType);
+    static SinkDescriptorPtr create(std::string filePath, FileOutputMode fileOutputMode, FileOutputType fileOutputType);
 
     /**
      * @brief Get the file name where the data is to be written
@@ -47,7 +47,7 @@ class FileSinkDescriptor : public SinkDescriptor {
     FileOutputType getFileOutputType() const;
 
   private:
-    explicit FileSinkDescriptor(SchemaPtr schema, std::string fileName, FileOutputMode fileOutputMode, FileOutputType fileOutputType);
+    explicit FileSinkDescriptor(std::string fileName, FileOutputMode fileOutputMode, FileOutputType fileOutputType);
 
     std::string fileName;
     FileOutputMode fileOutputMode;
