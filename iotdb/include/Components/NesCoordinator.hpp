@@ -5,7 +5,6 @@
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <Deployer/QueryDeployer.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Services/QueryCatalogService.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
@@ -117,10 +116,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      */
     bool undeployQuery(std::string queryId);
 
-    QueryCatalogServicePtr getQueryCatalogServicePtr() {
-        return queryCatalogServicePtr;
-    }
-
     StreamCatalogServicePtr getStreamCatalogServicePtr() {
         return streamCatalogServicePtr;
     }
@@ -144,7 +139,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
 
     std::atomic<bool> stopped;
 
-    QueryCatalogServicePtr queryCatalogServicePtr;
     StreamCatalogServicePtr streamCatalogServicePtr;
     std::map<std::string, QueryDeployment> currentDeployments;
 };

@@ -3,5 +3,4 @@ add_source_iotdb(
         NESTopologyService.cpp
         OptimizerService.cpp
         StreamCatalogService.cpp
-        QueryCatalogService.cpp
 )

@@ -138,11 +138,6 @@ add_executable(query-catalog-tests "UnitTests/QueryCatalogTest.cpp")
 target_link_libraries(query-catalog-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 
-### QueryCatalogService Tests ###
-add_executable(query-catalog-service-tests "UnitTests/Services/QueryCatalogServiceTest.cpp")
-target_link_libraries(query-catalog-service-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME query-catalog-service-tests COMMAND query-catalog-service-tests)
-
 ### Path Finder Tests ###
 add_executable(path-finder-test "UnitTests/Optimizer/Utils/PathFinderTest.cpp")
 target_link_libraries(path-finder-test iotdb ${GTEST_LIBRARIES})
