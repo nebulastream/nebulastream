@@ -24,8 +24,9 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2
   tar -zxvf cmake-3.17.2.tar.gz && \
   cd cmake-3.17.2 && ./bootstrap && make -j3 && make install && \
   cd ${HOME} && rm -rf cmake-3.17.2 cmake-3.17.2.tar.gz && \
-  git clone --single-branch --branch 0.17.3 https://github.com/actor-framework/actor-framework.git && \
-  cd actor-framework && git checkout 0.17.3 && bash configure --libs-only && cd build && make -j3 && make install && \
+  cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
+  cd grpc && git submodule update --init && mkdir build && cmake .. -DCMAKE_BUILD_TYPE=Release && \
+  make -j2 && make install && cd ${HOME} && rm -rf grpc && \
   cd ${HOME} && git clone --single-branch --branch v0.3.1 https://github.com/mfontanini/cppkafka.git && \
   cd cppkafka && mkdir -p build && cd build && \
   cmake -DCPPKAFKA_BUILD_SHARED=ON -DCPPKAFKA_DISABLE_TESTS=ON -DCPPKAFKA_DISABLE_EXAMPLES=ON -DCPPKAFKA_RDKAFKA_STATIC_LIB=OFF .. && \
