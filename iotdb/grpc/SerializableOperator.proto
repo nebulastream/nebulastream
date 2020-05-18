@@ -1,0 +1,76 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+
+enum SerializableDataType{
+  UNDEFINED = 0;
+  INT8 = 1;
+  INT16 = 2;
+  INT32 = 3;
+  INT64 = 4;
+  UINT8 = 5;
+  UINT16 = 6;
+  UINT32 = 7;
+  UINT64 = 8;
+}
+
+message SerializableField{
+  string name = 1;
+  SerializableDataType type = 2;
+}
+
+message SerializableExpression {
+  repeated SerializableExpression children = 1;
+}
+
+message SerializableOperator{
+
+  message SourceDetails {
+    message SerializableBinarySourceDescriptor {
+
+    }
+
+    message SerializableCsvSourceDescriptor {
+
+    }
+
+    message SerializableDefaultSourceDescriptor {
+
+    }
+
+    message SerializableKafkaSourceDescriptor {
+
+    }
+
+    message SerializableLogicalStreamSourceDescriptor {
+
+    }
+
+    message SerializableSenseSourceDescriptor {
+
+    }
+
+    message SerializableZMQSourceDescriptor {
+
+    }
+    google.protobuf.Any sourceDescriptor = 1;
+  }
+
+  message SinkDetails {
+    SerializableExpression expression = 1;
+    SerializableField field = 2;
+  }
+
+  message MapDetails {
+    SerializableExpression expression = 1;
+    SerializableField field = 2;
+  }
+
+  message FilterDetails {
+    SerializableExpression predicate = 1;
+  }
+
+  google.protobuf.Any details = 1;
+  repeated SerializableOperator children = 2;
+
+
+}
