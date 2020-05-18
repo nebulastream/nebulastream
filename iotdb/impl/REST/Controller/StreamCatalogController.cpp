@@ -1,6 +1,7 @@
 #include "REST/Controller/StreamCatalogController.hpp"
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 
 using namespace web;
 using namespace http;
@@ -10,7 +11,7 @@ namespace NES {
 void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {
 
     if (path[1] == "allLogicalStream") {
-        const map<std::string, std::string>& allLogicalStreamAsString = streamCatalogServicePtr->getAllLogicalStreamAsString();
+        const map<std::string, std::string>& allLogicalStreamAsString = StreamCatalog::instance().getAllLogicalStreamAsString();
 
         json::value result{};
         if (allLogicalStreamAsString.empty()) {
@@ -35,7 +36,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
 
                     string logicalStreamName = req.at("streamName").as_string();
 
-                    const vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalogServicePtr->getAllPhysicalStream(logicalStreamName);
+                    const vector<StreamCatalogEntryPtr>& allPhysicalStream = StreamCatalog::instance().getPhysicalStreams(logicalStreamName);
 
                     //Prepare the response
                     json::value result{};
@@ -88,7 +89,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                         string streamName = req.at("streamName").as_string();
                         string schema = req.at("schema").as_string();
                         NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Try to add new Logical Stream " << streamName << " and" << schema);
-                        bool added = streamCatalogServicePtr->addNewLogicalStream(streamName, schema);
+                        bool added = StreamCatalog::instance().addLogicalStream(streamName, schema);
                         NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Successfully added new logical Stream ?" << added);
                         //Prepare the response
                         json::value result{};
@@ -120,7 +121,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                         string streamName = req.at("streamName").as_string();
                         string schema = req.at("schema").as_string();
 
-                        bool updated = streamCatalogServicePtr->updatedLogicalStream(streamName, schema);
+                        bool updated = StreamCatalog::instance().updatedLogicalStream(streamName, schema);
 
                         if (updated) {
                             //Prepare the response
@@ -167,7 +168,7 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
 
                     string streamName = req.at("streamName").as_string();
 
-                    bool added = streamCatalogServicePtr->removeLogicalStream(streamName);
+                    bool added = StreamCatalog::instance().removeLogicalStream(streamName);
 
                     //Prepare the response
                     json::value result{};

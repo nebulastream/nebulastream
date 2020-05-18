@@ -1,6 +1,6 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
-
+#include <Util/UtilityFunctions.hpp>
 namespace NES {
 
 StreamCatalog& StreamCatalog::instance() {
@@ -16,21 +16,21 @@ StreamCatalog::StreamCatalog() {
     NES_DEBUG("StreamCatalog: constructed default_logical");
 
     SchemaPtr schemaExdra = Schema::create()
-                                ->addField("type", createArrayDataType(BasicType::CHAR, 30))
-                                ->addField("metadata_generated", BasicType::UINT64)
-                                ->addField("metadata_title", createArrayDataType(BasicType::CHAR, 50))
-                                ->addField("metadata_id", createArrayDataType(BasicType::CHAR, 50))
-                                ->addField("features_type", createArrayDataType(BasicType::CHAR, 50))
-                                ->addField("features_properties_capacity", BasicType::UINT64)
-                                ->addField("features_properties_efficiency", BasicType::FLOAT32)
-                                ->addField("features_properties_mag", BasicType::FLOAT32)
-                                ->addField("features_properties_time", BasicType::UINT64)
-                                ->addField("features_properties_updated", BasicType::UINT64)
-                                ->addField("features_properties_type", createArrayDataType(BasicType::CHAR, 50))
-                                ->addField("features_geometry_type", createArrayDataType(BasicType::CHAR, 50))
-                                ->addField("features_geometry_coordinates_longitude", BasicType::FLOAT32)
-                                ->addField("features_geometry_coordinates_latitude", BasicType::FLOAT32)
-                                ->addField("features_eventId ", createArrayDataType(BasicType::CHAR, 50));
+        ->addField("type", createArrayDataType(BasicType::CHAR, 30))
+        ->addField("metadata_generated", BasicType::UINT64)
+        ->addField("metadata_title", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("metadata_id", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_type", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_properties_capacity", BasicType::UINT64)
+        ->addField("features_properties_efficiency", BasicType::FLOAT32)
+        ->addField("features_properties_mag", BasicType::FLOAT32)
+        ->addField("features_properties_time", BasicType::UINT64)
+        ->addField("features_properties_updated", BasicType::UINT64)
+        ->addField("features_properties_type", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_geometry_type", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_geometry_coordinates_longitude", BasicType::FLOAT32)
+        ->addField("features_geometry_coordinates_latitude", BasicType::FLOAT32)
+        ->addField("features_eventId ", createArrayDataType(BasicType::CHAR, 50));
     NES_DEBUG("StreamCatalog: schema for exdra is =" << schemaExdra->toString());
     addLogicalStream("exdra", schemaExdra);
     NES_DEBUG("StreamCatalog: constructed exdra");
@@ -40,6 +40,12 @@ StreamCatalog::StreamCatalog() {
 
 StreamCatalog::~StreamCatalog() {
     NES_DEBUG("StreamCatalog: deconstruct stream catalog");
+}
+
+bool StreamCatalog::addLogicalStream(const std::string& streamName, const std::string& streamSchema) {
+    SchemaPtr schema = UtilityFunctions::createSchemaFromCode(streamSchema);
+    NES_DEBUG("StreamCatalog: schema successfully created");
+    return addLogicalStream(streamName, schema);
 }
 
 bool StreamCatalog::addLogicalStream(std::string logicalStreamName,
@@ -161,7 +167,7 @@ bool StreamCatalog::removePhysicalStream(string logicalStreamName, string physic
             "StreamCatalog: logical stream " << logicalStreamName << " exists try to remove physical stream"
                                              << physicalStreamName << " from node " << hashId);
         for (vector<StreamCatalogEntryPtr>::const_iterator entry =
-                 logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
+            logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
              entry != logicalToPhysicalStreamMapping[logicalStreamName].cend();
              entry++) {
             NES_DEBUG(
@@ -181,7 +187,7 @@ bool StreamCatalog::removePhysicalStream(string logicalStreamName, string physic
                     logicalToPhysicalStreamMapping[logicalStreamName].erase(entry);
                     NES_DEBUG(
                         "StreamCatalog: number of entries afterwards "
-                        << logicalToPhysicalStreamMapping[logicalStreamName].size());
+                            << logicalToPhysicalStreamMapping[logicalStreamName].size());
                     return true;
                 }
             }
@@ -199,7 +205,7 @@ bool StreamCatalog::removePhysicalStreamByHashId(size_t hashId) {
     for (auto logStream : logicalToPhysicalStreamMapping) {
         NES_DEBUG("StreamCatalog: check log stream " << logStream.first);
         for (vector<StreamCatalogEntryPtr>::const_iterator entry =
-                 logicalToPhysicalStreamMapping[logStream.first].cbegin();
+            logicalToPhysicalStreamMapping[logStream.first].cbegin();
              entry != logicalToPhysicalStreamMapping[logStream.first].cend();
              entry++) {
             if (entry->get()->getNode()->getId() == hashId) {
@@ -211,7 +217,8 @@ bool StreamCatalog::removePhysicalStreamByHashId(size_t hashId) {
                 //TODO: fix this to return value of erase to update entry or if you use the foreach loop, collect the entries to remove, and remove them in a batch after
                 logicalToPhysicalStreamMapping[logStream.first].erase(entry);
                 NES_DEBUG("StreamCatalog: deleted physical stream with hashID" << hashId << "and name"
-                                                                               << entry->get()->getPhysicalName() << " successfully");
+                                                                               << entry->get()->getPhysicalName()
+                                                                               << " successfully");
                 return true;
             }
         }
@@ -281,21 +288,21 @@ bool StreamCatalog::reset() {
 
     //TODO I think we should get rid of this soon
     SchemaPtr schemaExdra = Schema::create()
-                                ->addField("type", createArrayDataType(BasicType::CHAR, 30))
-                                ->addField("metadata_generated", BasicType::UINT64)
-                                ->addField("metadata_title", createArrayDataType(BasicType::CHAR, 50))
-                                ->addField("metadata_id", createArrayDataType(BasicType::CHAR, 50))
-                                ->addField("features_type", createArrayDataType(BasicType::CHAR, 50))
-                                ->addField("features_properties_capacity", BasicType::UINT64)
-                                ->addField("features_properties_efficiency", BasicType::FLOAT32)
-                                ->addField("features_properties_mag", BasicType::FLOAT32)
-                                ->addField("features_properties_time", BasicType::UINT64)
-                                ->addField("features_properties_updated", BasicType::UINT64)
-                                ->addField("features_properties_type", createArrayDataType(BasicType::CHAR, 50))
-                                ->addField("features_geometry_type", createArrayDataType(BasicType::CHAR, 50))
-                                ->addField("features_geometry_coordinates_longitude", BasicType::FLOAT32)
-                                ->addField("features_geometry_coordinates_latitude", BasicType::FLOAT32)
-                                ->addField("features_eventId ", createArrayDataType(BasicType::CHAR, 50));
+        ->addField("type", createArrayDataType(BasicType::CHAR, 30))
+        ->addField("metadata_generated", BasicType::UINT64)
+        ->addField("metadata_title", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("metadata_id", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_type", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_properties_capacity", BasicType::UINT64)
+        ->addField("features_properties_efficiency", BasicType::FLOAT32)
+        ->addField("features_properties_mag", BasicType::FLOAT32)
+        ->addField("features_properties_time", BasicType::UINT64)
+        ->addField("features_properties_updated", BasicType::UINT64)
+        ->addField("features_properties_type", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_geometry_type", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_geometry_coordinates_longitude", BasicType::FLOAT32)
+        ->addField("features_geometry_coordinates_latitude", BasicType::FLOAT32)
+        ->addField("features_eventId ", createArrayDataType(BasicType::CHAR, 50));
 
     bool success2 = addLogicalStream("exdra", schemaExdra);
     if (!success2) {
@@ -327,6 +334,28 @@ std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(
 
 std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStream() {
     return logicalStreamToSchemaMapping;
+}
+
+std::map<std::string, std::string> StreamCatalog::getAllLogicalStreamAsString() {
+
+    std::map<std::string, std::string> allLogicalStreamAsString;
+    const map<std::string, SchemaPtr> allLogicalStream = getAllLogicalStream();
+
+    for (auto const&[key, val] : allLogicalStream) {
+        allLogicalStreamAsString[key] = val->toString();
+    }
+    return allLogicalStreamAsString;
+}
+
+bool StreamCatalog::updatedLogicalStream(std::string& streamName, std::string& streamSchema) {
+    SchemaPtr schema = UtilityFunctions::createSchemaFromCode(streamSchema);
+    bool removed = removeLogicalStream(streamName);
+
+    if (removed) {
+        return addLogicalStream(streamName, schema);
+    } else {
+        return false;
+    }
 }
 
 }// namespace NES

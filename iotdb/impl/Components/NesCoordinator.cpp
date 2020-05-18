@@ -24,7 +24,6 @@ NesCoordinator::NesCoordinator() {
     rpcPort = 4000;
     stopped = false;
 
-    streamCatalogServicePtr = StreamCatalogService::getInstance();
     StreamCatalog::instance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
     queryDeployer = std::make_shared<QueryDeployer>();
@@ -38,7 +37,6 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
     NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
     stopped = false;
 
-    streamCatalogServicePtr = StreamCatalogService::getInstance();
     StreamCatalog::instance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
     queryDeployer = std::make_shared<QueryDeployer>();

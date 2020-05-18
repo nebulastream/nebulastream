@@ -30,18 +30,28 @@ class StreamCatalog {
     /**
    * @brief method to add a logical stream
    * @param logical stream name
-   * @param schema of logical stream
+   * @param schema of logical stream as object
    * TODO: what to do if logical stream exists but the new one has a different schema
    * @return bool indicating if insert was successful
    */
     bool addLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
 
+
     /**
-   * @brief method to delete a logical stream
-   * @caution this method only remove the entry from the catalog not from the topology
-   * @param name of logical stream to delete
-   * @param bool indicating the success of the removal
-   */
+   * @brief method to add a logical stream
+   * @param logical stream name
+   * @param schema of logical stream as string
+   * @return bool indicating if insert was successful
+     */
+    bool addLogicalStream(const std::string& streamName, const std::string& streamSchema);
+
+
+        /**
+       * @brief method to delete a logical stream
+       * @caution this method only remove the entry from the catalog not from the topology
+       * @param name of logical stream to delete
+       * @param bool indicating the success of the removal
+       */
     bool removeLogicalStream(std::string logicalStreamName);
 
     /**
@@ -139,14 +149,32 @@ class StreamCatalog {
    */
     std::map<std::string, SchemaPtr> getAllLogicalStream();
 
-    /**
-   * @brief method to return the physical stream and the associated schemas
-   * @return string containing the content of the catalog
-   */
+    std::map<std::string, std::string> getAllLogicalStreamAsString();
+
+
+        /**
+       * @brief method to return the physical stream and the associated schemas
+       * @return string containing the content of the catalog
+       */
     std::string getPhysicalStreamAndSchemaAsString();
 
+
+    /**
+     * @brief get all pyhsical streams for a logical stream
+     * @param logicalStreamName
+     * @return
+     */
     std::vector<StreamCatalogEntryPtr> getPhysicalStreams(
         std::string logicalStreamName);
+
+
+    /**
+     * @brief update an existing stream
+     * @param streamName
+     * @param streamSchema
+     * @return
+     */
+    bool updatedLogicalStream(std::string& streamName, std::string& streamSchema);
 
   private:
     /* implement singleton semantics: no construction,
