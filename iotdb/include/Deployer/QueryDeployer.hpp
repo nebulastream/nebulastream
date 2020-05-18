@@ -10,10 +10,13 @@
 #include <vector>
 using namespace std;
 namespace NES {
+class TopologyManager;
+typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+
 class QueryDeployer {
 
   public:
-    QueryDeployer(QueryCatalogPtr queryCatalog);
+    QueryDeployer(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager);
 
     ~QueryDeployer();
 
@@ -76,7 +79,7 @@ class QueryDeployer {
   private:
     unordered_map<string, int> queryToPort;
     QueryCatalogPtr queryCatalog;
-
+    TopologyManagerPtr topologyManager;
 };
 
 typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;

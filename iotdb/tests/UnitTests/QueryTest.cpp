@@ -22,7 +22,7 @@
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
@@ -48,9 +48,9 @@ class QueryTest : public testing::Test {
 };
 
 TEST_F(QueryTest, testQueryFilter) {
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
 
-    NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
-        .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";

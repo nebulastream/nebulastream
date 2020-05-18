@@ -49,7 +49,8 @@ class CoordinatorEngineTest : public testing::Test {
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
     std::string address = ip + ":" + std::to_string(publish_port);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog);
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 
     size_t nodeId = coordinatorEngine->registerNode(address, 6, "",
                                                     NESNodeType::Sensor);
@@ -72,7 +73,8 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog);
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
     std::string logicalStreamName = "testStream";
     std::string testSchema =
         "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
@@ -95,7 +97,8 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog);
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
     std::string physicalStreamName = "testStream";
     PhysicalStreamConfig conf;
     conf.logicalStreamName = "testStream";

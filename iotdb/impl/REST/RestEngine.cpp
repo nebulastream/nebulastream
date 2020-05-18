@@ -5,13 +5,14 @@
 
 namespace NES {
 
-RestEngine::RestEngine(StreamCatalogPtr streamCatalog):
+RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordinator,
+                       QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager):
     streamCatalog(streamCatalog)
 {
     NES_DEBUG("RestEngine");
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
-    queryController = std::make_shared<QueryController>();
-    queryCatalogController = std::make_shared<QueryCatalogController>();
+    queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator);
+    queryController = std::make_shared<QueryController>(coordinator, queryCatalog, topologyManager);
 };
 RestEngine::~RestEngine() {
     NES_DEBUG("~RestEngine");
@@ -42,19 +43,7 @@ void RestEngine::setEndpoint(const std::string& value) {
     _listener = http_listener(endpointBuilder.to_uri());
 }
 
-//NOTE: maybe someone can suggest a better way to do this.
-void RestEngine::setCoordinator(NesCoordinatorPtr coordinator) {
-    this->queryController->setCoordinator(coordinator);
-    this->queryCatalogController->setCoordinator(coordinator);
-};
-
-void RestEngine::setQueryCatalog(QueryCatalogPtr queryCatalog)  {
-    this->queryController->setQueryCatalog(queryCatalog);
-    this->queryCatalogController->setQueryCatalog(queryCatalog);
-};
-
 void RestEngine::handleGet(http_request message) {
-
     auto path = getPath(message);
     auto paths = splitPath(path);
 

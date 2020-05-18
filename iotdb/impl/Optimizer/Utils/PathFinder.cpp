@@ -1,6 +1,6 @@
 #include <Optimizer/Utils/PathFinder.hpp>
 #include <Topology/NESTopologyEntry.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -100,9 +100,7 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEnt
     NES_INFO("PathFinder: finding a random path between " << source->toString() << " and "
                                                           << destination->toString());
 
-    NESTopologyManager& topologyManager = NESTopologyManager::getInstance();
-
-    const NESTopologyGraphPtr& nesGraphPtr = topologyManager.getNESTopologyPlan()->getNESTopologyGraph();
+    const NESTopologyGraphPtr& nesGraphPtr = topologyManager->getNESTopologyPlan()->getNESTopologyGraph();
     const vector<NESTopologyLinkPtr>& startLinks = nesGraphPtr->getAllEdgesFromNode(source);
 
     if (startLinks.empty()) {
@@ -270,9 +268,7 @@ std::vector<std::vector<NESTopologyEntryPtr>> PathFinder::findAllPathsBetween(NE
 std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween(NESTopologyEntryPtr source,
                                                                                  NESTopologyEntryPtr destination) {
 
-    NESTopologyManager& topologyManager = NESTopologyManager::getInstance();
-
-    const NESTopologyGraphPtr& nesGraphPtr = topologyManager.getNESTopologyPlan()->getNESTopologyGraph();
+    const NESTopologyGraphPtr& nesGraphPtr = topologyManager->getNESTopologyPlan()->getNESTopologyGraph();
     const vector<NESTopologyLinkPtr>& startLinks = nesGraphPtr->getAllEdgesFromNode(source);
 
     deque<NESTopologyLinkPtr> candidateLinks;
@@ -292,7 +288,7 @@ std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween
             if (!candidateLinks.empty()) {
                 traversedPath = backTrackTraversedPathTill(traversedPath, candidateLinks.front()->getSourceNode());
             }
-        } else if (link->getDestNodeId() == topologyManager.getRootNode()->getId()) {
+        } else if (link->getDestNodeId() == topologyManager->getRootNode()->getId()) {
             if (!candidateLinks.empty()) {
                 traversedPath = backTrackTraversedPathTill(traversedPath, candidateLinks.front()->getSourceNode());
             }

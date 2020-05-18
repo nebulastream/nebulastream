@@ -10,7 +10,8 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog()
+QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager):
+    topologyManager(topologyManager)
 {
     NES_DEBUG("QueryCatalog()");
 }
@@ -66,7 +67,8 @@ string QueryCatalog::registerQuery(const string& queryString,
         InputQueryPtr inputQueryPtr = UtilityFunctions::createQueryFromCodeString(queryString);
         SchemaPtr schema = inputQueryPtr->getSourceStream()->getSchema();
 
-        NESExecutionPlanPtr nesExecutionPtr = OptimizerService::getInstance()->getExecutionPlan(
+        OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
+        NESExecutionPlanPtr nesExecutionPtr = optimizerService->getExecutionPlan(
             inputQueryPtr, optimizationStrategyName);
 
         NES_DEBUG(

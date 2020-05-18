@@ -10,13 +10,13 @@ namespace NES {
 
 class OptimizerService;
 typedef std::shared_ptr<OptimizerService> OptimizerServicePtr;
+class TopologyManager;
+typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
 
 class OptimizerService {
   public:
-    static OptimizerServicePtr getInstance() {
-        static OptimizerServicePtr instance{new OptimizerService};
-        return instance;
-    };
+
+    OptimizerService(TopologyManagerPtr topologyManager);
 
     /**
      * @brief: get execution plan as json.
@@ -38,8 +38,11 @@ class OptimizerService {
     ~OptimizerService() = default;
 
   private:
-    OptimizerService() = default;
+    TopologyManagerPtr topologyManager;
 };
+
+typedef std::shared_ptr<OptimizerService> OptimizerServicePtr;
+
 }// namespace NES
 
 #endif//IMPL_SERVICES_OPTIMIZERSERVICE_H_

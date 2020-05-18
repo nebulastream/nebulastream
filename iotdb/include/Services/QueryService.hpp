@@ -18,16 +18,11 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
  */
 class QueryService {
 
-  private:
-    QueryService() = default;
 
   public:
     ~QueryService() = default;
 
-    static QueryServicePtr getInstance() {
-        static QueryServicePtr instance{new QueryService};
-        return instance;
-    }
+    QueryService() = default;
 
     /**
      * This method is used for generating the base query plan from the input query as string.

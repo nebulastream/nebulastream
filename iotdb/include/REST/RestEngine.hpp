@@ -36,7 +36,8 @@ class RestEngine : public BaseController {
     StreamCatalogControllerPtr streamCatalogController;
 
   public:
-    RestEngine(StreamCatalogPtr streamCatalog);
+    RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordinator,
+               QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager);
 
     ~RestEngine();
 

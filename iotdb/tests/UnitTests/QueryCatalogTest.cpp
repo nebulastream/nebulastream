@@ -4,7 +4,7 @@
 
 #include <Catalogs/QueryCatalog.hpp>
 
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 
 #include <Util/Logger.hpp>
@@ -29,14 +29,11 @@ class QueryCatalogTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
         NES::setupLogging("QueryCatalogTest.log", NES::LOG_DEBUG);
-        NESTopologyManager::getInstance().resetNESTopologyPlan();
-        const auto& kCoordinatorNode = NESTopologyManager::getInstance()
-            .createNESWorkerNode(0, "127.0.0.1", CPUCapacity::HIGH);
+        TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
+        const auto& kCoordinatorNode = topologyManager->createNESWorkerNode(0, "127.0.0.1", CPUCapacity::HIGH);
         kCoordinatorNode->setPublishPort(4711);
         kCoordinatorNode->setReceivePort(4815);
-
-
-
 
         NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
         std::cout << "Setup QueryCatalogTest test case." << std::endl;
@@ -53,14 +50,14 @@ class QueryCatalogTest : public testing::Test {
     }
 };
 
-void setupTests(StreamCatalogPtr streamCatalog)
+void setupTests(StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager)
 {
     for (int i = 1; i < 5; i++) {
         //FIXME: add node properties
         PhysicalStreamConfig streamConf;
         std::string address = ip + ":" + std::to_string(publish_port);
         auto entry = TestUtils::registerTestNode(i, address, 2, "",
-                                                 streamConf, NESNodeType::Sensor, streamCatalog);
+                                                 streamConf, NESNodeType::Sensor, streamCatalog, topologyManager);
     }
 }
 
@@ -69,9 +66,9 @@ TEST_F(QueryCatalogTest, testAddQuery) {
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupTests(streamCatalog);
-
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    setupTests(streamCatalog, topologyManager);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
     string queryId = queryCatalog->registerQuery(queryString,
                                                             "BottomUp");
     map<string, QueryCatalogEntryPtr> reg = queryCatalog->getRegisteredQueries();
@@ -89,9 +86,9 @@ TEST_F(QueryCatalogTest, testAddQueryAndStartStop) {
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupTests(streamCatalog);
-
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    setupTests(streamCatalog, topologyManager);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
     string queryId = queryCatalog->registerQuery(queryString,
                                                             "BottomUp");
@@ -119,11 +116,10 @@ TEST_F(QueryCatalogTest, testAddQueryAndStartStop) {
 TEST_F(QueryCatalogTest, testAddRemoveQuery) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
-
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupTests(streamCatalog);
-
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    setupTests(streamCatalog, topologyManager);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
     string queryId = queryCatalog->registerQuery(queryString,
                                                             "BottomUp");
@@ -141,11 +137,10 @@ TEST_F(QueryCatalogTest, testAddRemoveQuery) {
 TEST_F(QueryCatalogTest, testPrintQuery) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
-
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupTests(streamCatalog);
-
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    setupTests(streamCatalog, topologyManager);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
     string queryId = queryCatalog->registerQuery(queryString,
                                                             "BottomUp");
@@ -159,11 +154,10 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
 //
 
 TEST_F(QueryCatalogTest, get_all_registered_queries_without_query_registration) {
-
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupTests(streamCatalog);
-
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    setupTests(streamCatalog, topologyManager);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
     std::map<std::string, std::string> allRegisteredQueries =
         queryCatalog->getAllRegisteredQueries();
@@ -172,12 +166,12 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_without_query_registration) 
 
 TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupTests(streamCatalog);
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    setupTests(streamCatalog, topologyManager);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
-
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     const string queryId = queryCatalog->registerQuery(queryString,
                                                                   "BottomUp");
@@ -190,12 +184,12 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
 
 TEST_F(QueryCatalogTest, get_all_running_queries) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupTests(streamCatalog);
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    setupTests(streamCatalog, topologyManager);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
-
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     const string queryId = queryCatalog->registerQuery(queryString,
                                                                   "BottomUp");
@@ -209,9 +203,9 @@ TEST_F(QueryCatalogTest, get_all_running_queries) {
 
 TEST_F(QueryCatalogTest, throw_exception_when_query_status_is_unknown) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupTests(streamCatalog);
-
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    setupTests(streamCatalog, topologyManager);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
     try {
         std::map<std::string, std::string> queries = queryCatalog->getQueriesWithStatus("something_random");

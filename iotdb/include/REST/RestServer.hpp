@@ -22,7 +22,9 @@ class RestServer {
         std::string host, u_int16_t port,
         NesCoordinatorPtr coordinator,
         QueryCatalogPtr queryCatalog,
-        StreamCatalogPtr streamCatalog);
+        StreamCatalogPtr streamCatalog,
+        TopologyManagerPtr topologyManager);
+
 
     ~RestServer();
     /**

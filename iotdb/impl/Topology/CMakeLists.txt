@@ -1,7 +1,7 @@
 add_source_iotdb(
         NESTopologyPlan.cpp
         NESTopologyGraph.cpp
-        NESTopologyManager.cpp
+        TopologyManager.cpp
         NESTopologyCoordinatorNode.cpp
         NESTopologyWorkerNode.cpp
         NESTopologySensorNode.cpp

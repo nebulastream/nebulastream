@@ -7,11 +7,15 @@ namespace NES {
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
+class TopologyManager;
+typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+
+
 class CoordinatorEngine {
 
   public:
 
-    CoordinatorEngine(StreamCatalogPtr streamCatalog);
+    CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager);
 
     /**
      * @brief registers a node
@@ -91,6 +95,8 @@ class CoordinatorEngine {
 
   private:
     StreamCatalogPtr streamCatalog;
+    TopologyManagerPtr topologyManager;
+
 };
 
 typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;

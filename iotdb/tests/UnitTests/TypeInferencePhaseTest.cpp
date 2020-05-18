@@ -19,7 +19,7 @@
 #include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 
 namespace NES {
 

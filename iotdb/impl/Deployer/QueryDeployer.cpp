@@ -1,3 +1,6 @@
+#include <Deployer/QueryDeployer.hpp>
+#include <string>
+#include <Topology/TopologyManager.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Deployer/QueryDeployer.hpp>
 #include <GRPC/ExecutableTransferObject.hpp>
@@ -13,8 +16,9 @@
 
 namespace NES {
 
-QueryDeployer::QueryDeployer(QueryCatalogPtr queryCatalog):
-    queryCatalog(queryCatalog)
+QueryDeployer::QueryDeployer(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager):
+    queryCatalog(queryCatalog),
+    topologyManager(topologyManager)
 {
     NES_INFO("QueryDeployer()");
 }
@@ -72,8 +76,7 @@ vector<DataSourcePtr> QueryDeployer::getSources(const string& queryId,
     DataSourcePtr source = findDataSourcePointer(v.ptr->getRootOperator());
 
     if (source->getType() == ZMQ_SOURCE) {
-        const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
-                                                  .getRootNode();
+        const NESTopologyEntryPtr kRootNode = topologyManager->getRootNode();
 
         //TODO: this does not work this way, replace it here with the descriptor
         BufferManagerPtr bPtr;
@@ -96,8 +99,7 @@ vector<DataSinkPtr> QueryDeployer::getSinks(const string& queryId,
     if (sink->getType() == ZMQ_SINK) {
         //FIXME: Maybe a better way to do it? perhaps type cast to ZMQSink type and just update the port number
         //create local zmq sink
-        const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
-                                                  .getRootNode();
+        const NESTopologyEntryPtr kRootNode = topologyManager->getRootNode();
 
         sink = createZmqSink(sink->getSchema(), kRootNode->getIp(),
                              assign_port(queryId));
@@ -143,8 +145,7 @@ int QueryDeployer::assign_port(const string& queryId) {
         return this->queryToPort.at(queryId);
     } else {
         // increase max port in map by 1
-        const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
-                                                  .getRootNode();
+        const NESTopologyEntryPtr kRootNode = topologyManager->getRootNode();
         uint16_t kFreeZmqPort = kRootNode->getNextFreeReceivePort();
         this->queryToPort.insert({queryId, kFreeZmqPort});
         NES_DEBUG("CoordinatorService::assign_port create a new port for query id=" << queryId << " port=" << kFreeZmqPort);

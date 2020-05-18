@@ -2,7 +2,7 @@
 #include <iostream>
 #include <Util/Logger.hpp>
 #include <API/Query.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -35,8 +35,9 @@ class FilterPushDownRuleTest : public testing::Test {
 
     void static setupSensorNodeAndStreamCatalog() {
         NES_INFO("Setup FilterPushDownRuleTest test case.");
-        NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
-            .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+        TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+
+        NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 
         PhysicalStreamConfig streamConf;
         streamConf.physicalStreamName = "test2";

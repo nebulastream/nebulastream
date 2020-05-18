@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <Services/StreamCatalogService.hpp>
 #include <Util/Logger.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
 
 using namespace NES;

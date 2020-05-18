@@ -23,11 +23,6 @@ namespace NES {
 class StreamCatalog {
   public:
     /**
-   * @brief Singleton implementation of stream catalog
-   */
-//    static StreamCatalog& instance();
-
-    /**
    * @brief method to add a logical stream
    * @param logical stream name
    * @param schema of logical stream as object

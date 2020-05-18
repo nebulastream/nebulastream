@@ -1,5 +1,6 @@
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
+#include <Topology/TopologyManager.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <NodeEngine/NodeEngine.hpp>
@@ -100,11 +101,11 @@ class TestUtils {
     }
 
     static NESTopologyEntryPtr registerTestNode(size_t id, std::string address, int cpu, const string& nodeProperties,
-                                     PhysicalStreamConfig streamConf, NESNodeType type, StreamCatalogPtr streamCatalog) {
+                                     PhysicalStreamConfig streamConf, NESNodeType type, StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager) {
         NESTopologyEntryPtr nodePtr;
         if (type == NESNodeType::Sensor) {
             NES_DEBUG("CoordinatorService::registerNode: register sensor node");
-            nodePtr = NESTopologyManager::getInstance().createNESSensorNode(id, address, CPUCapacity::Value(cpu));
+            nodePtr = topologyManager->createNESSensorNode(id, address, CPUCapacity::Value(cpu));
             NESTopologySensorNode* sensor = dynamic_cast<NESTopologySensorNode*>(nodePtr.get());
             sensor->setPhysicalStreamName(streamConf.physicalStreamName);
 
@@ -152,7 +153,7 @@ class TestUtils {
 
         } else if (type == NESNodeType::Worker) {
             NES_DEBUG("CoordinatorService::registerNode: register worker node");
-            nodePtr = NESTopologyManager::getInstance().createNESWorkerNode(id, address, CPUCapacity::Value(cpu));
+            nodePtr = topologyManager->createNESWorkerNode(id, address, CPUCapacity::Value(cpu));
         } else {
             NES_ERROR("CoordinatorService::registerNode: type not supported " << type);
             assert(0);
@@ -163,17 +164,15 @@ class TestUtils {
             nodePtr->setNodeProperty(nodeProperties);
         }
 
-        const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
-                                                  .getRootNode();
+        const NESTopologyEntryPtr kRootNode = topologyManager->getRootNode();
 
         if (kRootNode == nodePtr) {
             NES_DEBUG("CoordinatorService::registerNode: tree is empty so this becomes new root");
         } else {
             NES_DEBUG("CoordinatorService::registerNode: add link to root node " << kRootNode << " of type"
                                                                                  << kRootNode->getEntryType());
-            NESTopologyManager::getInstance().createNESTopologyLink(nodePtr, kRootNode, 1, 1);
+            topologyManager->createNESTopologyLink(nodePtr, kRootNode, 1, 1);
         }
-
         return nodePtr;
     }
 };

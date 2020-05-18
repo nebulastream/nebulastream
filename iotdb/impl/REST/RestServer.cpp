@@ -10,12 +10,13 @@ namespace NES {
 RestServer::RestServer(std::string host, u_int16_t port,
                        NesCoordinatorPtr coordinator,
                        QueryCatalogPtr queryCatalog,
-                       StreamCatalogPtr streamCatalog) {
+                       StreamCatalogPtr streamCatalog,
+                       TopologyManagerPtr topologyManager) {
     this->host = host;
     this->port = port;
     this->coordinator = coordinator;
     this->queryCatalog = queryCatalog;
-    restEngine = std::make_shared<RestEngine>(streamCatalog);
+    restEngine = std::make_shared<RestEngine>(streamCatalog, coordinator, queryCatalog, topologyManager);
     InterruptHandler::hookSIGINT();
 }
 
@@ -27,10 +28,7 @@ bool RestServer::start() {
 
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
 
-    restEngine->setCoordinator(coordinator);
-    restEngine->setQueryCatalog(queryCatalog);
     restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
-
     try {
         // wait for server initialization...
         restEngine->accept().wait();

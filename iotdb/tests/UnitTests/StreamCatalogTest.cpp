@@ -5,7 +5,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <API/Schema.hpp>
 
 #include <Util/Logger.hpp>
@@ -93,12 +93,12 @@ TEST_F(StreamCatalogTest, testGetNotExistingKey) {
 
 TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
 
     streamCatalog->addLogicalStream(
         "test_stream", Schema::create());
 
-    NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
-        .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -125,13 +125,12 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
 
 TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
 
-    NESTopologyManager::getInstance().resetNESTopologyPlan();
     streamCatalog->addLogicalStream(
         "test_stream", Schema::create());
 
-    NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
-        .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -153,10 +152,9 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
 
 TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
 
-    NESTopologyManager::getInstance().resetNESTopologyPlan();
-    NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
-        .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
@@ -195,14 +193,14 @@ TEST_F(StreamCatalogTest, testAddLogicalStream) {
 
 TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
 
     std::string newLogicalStreamName = "test_stream";
 
     streamCatalog->addLogicalStream(newLogicalStreamName,
                                                testSchema);
 
-    NESTopologyManager& topologyManager = NESTopologyManager::getInstance();
-    NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(
         1, "127.0.0.1", CPUCapacity::LOW);
 
     PhysicalStreamConfig conf;

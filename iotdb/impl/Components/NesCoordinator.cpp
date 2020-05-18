@@ -2,7 +2,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Topology/NESTopologyEntry.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <future>
 #include <thread>
@@ -24,12 +25,12 @@ NesCoordinator::NesCoordinator() {
     rpcPort = 4000;
     stopped = false;
 
-    queryCatalog = std::make_shared<QueryCatalog>();
+    topologyManager = std::make_shared<TopologyManager>();
+    queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
     streamCatalog = std::make_shared<StreamCatalog>();
-    NESTopologyManager::getInstance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
-    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog);
-    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog);
+    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager);
+    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 }
 
 NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort)
@@ -39,12 +40,12 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
     NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
     stopped = false;
 
-    queryCatalog = std::make_shared<QueryCatalog>();
+    topologyManager = std::make_shared<TopologyManager>();
+    queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
     streamCatalog = std::make_shared<StreamCatalog>();
-    NESTopologyManager::getInstance();
     workerRPCClient = std::make_shared<WorkerRPCClient>();
-    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog);
-    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog);
+    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager);
+    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -55,7 +56,7 @@ NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     streamCatalog->reset();
     queryCatalog->clearQueries();
-    NESTopologyManager::getInstance().resetNESTopologyPlan();
+    topologyManager->resetNESTopologyPlan();
 }
 
 /**
@@ -73,7 +74,10 @@ void startRestServer(std::shared_ptr<RestServer> restServer,
  * @brief this method will start the RPC Coordinator service which is responsible for reacting to calls from the
  * CoordinatorRPCClient which will be send by the worker
  */
-void startCoordinatorRPCServer(std::shared_ptr<Server>& rpcServer, std::string address, std::promise<bool>& prom, CoordinatorEnginePtr coordinatorEngine) {
+void startCoordinatorRPCServer(std::shared_ptr<Server>& rpcServer,
+                               std::string address,
+                               std::promise<bool>& prom,
+                               CoordinatorEnginePtr coordinatorEngine) {
     NES_DEBUG("startCoordinatorRPCServer");
     grpc::ServerBuilder builder;
     CoordinatorRPCServer service(coordinatorEngine);
@@ -114,7 +118,8 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //Start rest that accepts quiers form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     std::promise<bool> promRest;
-    std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(), queryCatalog, streamCatalog);
+    std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(),
+                                                                          queryCatalog, streamCatalog, topologyManager);
 
     restThread = std::make_shared<std::thread>(([&]() {
         startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
@@ -205,7 +210,7 @@ string NesCoordinator::addQuery(const string queryString, const string strategy)
     NES_DEBUG("NesCoordinator:addQuery: create Deployment");
     QueryDeployment deployments = queryDeployer->generateDeployment(queryId);
     NES_DEBUG("CoordinatorActor::addQuery" << deployments.size() << " objects topology before"
-                                           << NESTopologyManager::getInstance().getNESTopologyPlanString());
+                                           << topologyManager->getNESTopologyPlanString());
     stringstream ss;
     for (auto element : deployments) {
         ss << "nodeID=" << element.first->getId();

@@ -8,6 +8,7 @@
 //#include <Topology/TestTopology.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Util/Logger.hpp>
+#include <Topology/TopologyManager.hpp>
 
 using namespace web;
 using namespace http;
@@ -18,7 +19,7 @@ namespace NES {
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 
     if (path[1] == "nes-topology") {
-        const auto& nesTopology = nesTopologyServicePtr->getNESTopologyAsJson();
+        const auto& nesTopology = topologyManager->getNESTopologyGraphAsJson();
         //Prepare the response
         successMessageImpl(message, nesTopology);
         return;
@@ -149,14 +150,6 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
         RuntimeUtils::printStackTrace();
         internalServerErrorImpl(message);
     }
-}
-
-void QueryController::setQueryCatalog(QueryCatalogPtr queryCatalog) {
-    this->queryCatalog = queryCatalog;
-}
-
-void QueryController::setCoordinator(NesCoordinatorPtr coordinator) {
-    this->coordinator = coordinator;
 }
 
 }// namespace NES
