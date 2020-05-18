@@ -161,7 +161,6 @@ class DataSource {
     size_t getGatheringInterval() const;
 
   protected:
-
     /**
      * @brief Internal protected constructor without schema
      */

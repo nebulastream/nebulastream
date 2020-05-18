@@ -121,4 +121,4 @@ const std::string CSVSource::getFilePath() const {
 const std::string CSVSource::getDelimiter() const {
     return delimiter;
 }
-}  // namespace NES
+}// namespace NES

@@ -179,4 +179,4 @@ size_t DataSource::getGatheringInterval() const {
     return gatheringInterval;
 }
 
-} // namespace NES
+}// namespace NES

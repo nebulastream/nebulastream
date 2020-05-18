@@ -11,7 +11,6 @@ RestEngine::~RestEngine() {
     NES_DEBUG("~RestEngine");
 };
 
-
 void RestEngine::initRestOpHandlers() {
     _listener.support(methods::GET, std::bind(&RestEngine::handleGet, this, std::placeholders::_1));
     _listener.support(methods::PUT, std::bind(&RestEngine::handlePut, this, std::placeholders::_1));

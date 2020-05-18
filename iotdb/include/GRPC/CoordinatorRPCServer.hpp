@@ -1,9 +1,9 @@
 #pragma once
+#include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -13,7 +13,6 @@ using grpc::Status;
 namespace NES {
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
-
     CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine);
 
     /**
@@ -99,4 +98,4 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   private:
     CoordinatorEnginePtr coordinatorEngine;
 };
-}
+}// namespace NES

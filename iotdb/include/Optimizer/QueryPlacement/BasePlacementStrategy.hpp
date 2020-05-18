@@ -2,8 +2,8 @@
 #define NESPLACEMENTOPTIMIZER_HPP
 
 #include <iostream>
-#include <memory>
 #include <map>
+#include <memory>
 #include <vector>
 
 namespace NES {
@@ -59,7 +59,7 @@ typedef std::shared_ptr<Operator> OperatorPtr;
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
 class BasePlacementStrategy {
-    
+
   private:
     const char* NO_OPERATOR = "NO-OPERATOR";
 
@@ -118,7 +118,6 @@ class BasePlacementStrategy {
      * @param nesExecutionPlanPtr Pointer to the execution plan
      */
     void addForwardOperators(std::vector<NESTopologyEntryPtr> candidateNodes, NESExecutionPlanPtr nesExecutionPlanPtr);
-
 };
-}
-#endif //NESPLACEMENTOPTIMIZER_HPP
+}// namespace NES
+#endif//NESPLACEMENTOPTIMIZER_HPP

@@ -27,7 +27,6 @@ class ConvertPhysicalToLogicalSource {
     ConvertPhysicalToLogicalSource() = default;
 };
 
-}
+}// namespace NES
 
-
-#endif //NES_IMPL_NODES_PHASES_CONVERTPHYSICALTOLOGICALSOURCE_HPP_
+#endif//NES_IMPL_NODES_PHASES_CONVERTPHYSICALTOLOGICALSOURCE_HPP_

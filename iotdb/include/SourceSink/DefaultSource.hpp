@@ -24,5 +24,5 @@ class DefaultSource : public GeneratorSource {
 
 typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;
 
-}
+}// namespace NES
 #endif /* INCLUDE_SOURCESINK_DEFAULTSOURCE_HPP_ */

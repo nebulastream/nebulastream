@@ -72,4 +72,4 @@ SourceType BinarySource::getType() const {
 const std::string& BinarySource::getFilePath() const {
     return file_path;
 }
-}  // namespace NES
+}// namespace NES

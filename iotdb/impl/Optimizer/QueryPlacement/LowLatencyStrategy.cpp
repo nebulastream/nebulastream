@@ -1,18 +1,18 @@
 #include <API/Query.hpp>
-#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
-#include <Optimizer/Utils/PathFinder.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
-#include <Operators/Operator.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Topology/NESTopologyPlan.hpp>
+#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
 #include <Topology/NESTopologyGraph.hpp>
+#include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 
 namespace NES {
 
@@ -27,11 +27,11 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQu
     const string streamName = inputQuery->getSourceStreamName();
 
     if (!sourceOperator) {
-        NES_THROW_RUNTIME_ERROR(    "LowLatency: Unable to find the source operator.");
+        NES_THROW_RUNTIME_ERROR("LowLatency: Unable to find the source operator.");
     }
 
     const std::vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
-        .getSourceNodesForLogicalStream(streamName);
+                                                             .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_ERROR("LowLatency: Unable to find the target source: " << streamName);
@@ -63,11 +63,12 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQu
 }
 
 vector<NESTopologyEntryPtr> LowLatencyStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<
-NESTopologyEntryPtr>& sourceNodes, const NESTopologyEntryPtr rootNode) const {
+                                                                                             NESTopologyEntryPtr>& sourceNodes,
+                                                                                         const NESTopologyEntryPtr rootNode) const {
 
     PathFinder pathFinder;
     vector<NESTopologyEntryPtr> candidateNodes;
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+    for (NESTopologyEntryPtr targetSource : sourceNodes) {
         //Find the list of nodes connecting the source and destination nodes
         std::vector<NESTopologyEntryPtr>
             nodesOnPath = pathFinder.findPathWithMinLinkLatency(targetSource, rootNode);
@@ -84,7 +85,7 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
     PathFinder pathFinder;
 
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
-    for (NESTopologyEntryPtr sourceNode: sourceNodes) {
+    for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 
         LogicalOperatorNodePtr targetOperator = sourceOperator;
         const vector<NESTopologyEntryPtr> targetPath = pathFinder.findPathWithMinLinkLatency(sourceNode, sinkNode);
@@ -111,7 +112,7 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
                 } else {
 
                     const ExecutionNodePtr existingExecutionNode = executionPlanPtr
-                        ->getExecutionNode(node->getId());
+                                                                       ->getExecutionNode(node->getId());
                     size_t operatorId = legacyOperator->getOperatorId();
                     vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
                     const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);

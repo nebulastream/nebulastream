@@ -52,6 +52,7 @@ class SenseSource : public DataSource {
      * @brief Get UDFs for sense
      */
     const std::string& getUdsf() const;
+
   private:
     SenseSource();
 
@@ -64,14 +65,14 @@ class SenseSource : public DataSource {
     template<class Archive>
     void serialize(Archive& ar,
                    const unsigned int version) {
-        ar & boost::serialization::base_object<DataSource>(*this);
-        ar & udsf;
+        ar& boost::serialization::base_object<DataSource>(*this);
+        ar& udsf;
     }
 };
 
 typedef std::shared_ptr<SenseSource> SenseSourcePtr;
 
-}  // namespace NES
+}// namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

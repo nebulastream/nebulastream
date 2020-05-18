@@ -38,8 +38,8 @@ class TranslateFromLegacyPlanPhase {
      * @return Operator Node
      */
     OperatorNodePtr transform(OperatorPtr operatorPtr);
-  private:
 
+  private:
     /**
      * @brief Translates an individual operator to its legacy representation.
      * @param Legacy Operator
@@ -69,6 +69,6 @@ class TranslateFromLegacyPlanPhase {
     ExpressionNodePtr transformArithmeticalExpressions(PredicatePtr expressionPtr);
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_PHASES_TRANSLATEFROMLEGECYPLAN_HPP_
+#endif//NES_INCLUDE_NODES_PHASES_TRANSLATEFROMLEGECYPLAN_HPP_

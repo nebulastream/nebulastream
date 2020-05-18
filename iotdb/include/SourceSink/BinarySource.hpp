@@ -73,7 +73,7 @@ class BinarySource : public DataSource {
 
 typedef std::shared_ptr<BinarySource> BinarySourcePtr;
 
-}  // namespace NES
+}// namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

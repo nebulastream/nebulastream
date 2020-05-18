@@ -1,17 +1,17 @@
 #ifndef API_QUERY_H
 #define API_QUERY_H
 
-#include <API/Expressions/ArithmeticalExpressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
-#include <API/Expressions/Expressions.hpp>
 #include <API/Config.hpp>
+#include <API/Expressions/ArithmeticalExpressions.hpp>
+#include <API/Expressions/Expressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
 
-#include <string>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <SourceSink/DataSource.hpp>
 #include <cppkafka/configuration.h>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <string>
 
 namespace NES {
 

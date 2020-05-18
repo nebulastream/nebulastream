@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
-#include <Topology/NESTopologyManager.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Topology/NESTopologyManager.hpp>
 #include <chrono>
 #include <iostream>
 #include <memory>
@@ -100,7 +100,7 @@ class TestUtils {
     }
 
     static NESTopologyEntryPtr registerTestNode(size_t id, std::string address, int cpu, const string& nodeProperties,
-                                     PhysicalStreamConfig streamConf, NESNodeType type) {
+                                                PhysicalStreamConfig streamConf, NESNodeType type) {
         NESTopologyEntryPtr nodePtr;
         if (type == NESNodeType::Sensor) {
             NES_DEBUG("CoordinatorService::registerNode: register sensor node");
@@ -114,7 +114,7 @@ class TestUtils {
 
             //check if logical stream exists
             if (!StreamCatalog::instance().testIfLogicalStreamExistsInSchemaMapping(
-                streamConf.logicalStreamName)) {
+                    streamConf.logicalStreamName)) {
                 NES_ERROR(
                     "Coordinator: error logical stream" << streamConf.logicalStreamName
                                                         << " does not exist when adding physical stream "
@@ -133,7 +133,7 @@ class TestUtils {
                     "Coordinator: error source type " << streamConf.sourceType << " is not supported");
                 throw Exception(
                     "Coordinator: error source type " + streamConf.sourceType
-                        + " is not supported");
+                    + " is not supported");
             }
 
             StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
@@ -147,7 +147,7 @@ class TestUtils {
                                                     << " could not be added to catalog");
                 throw Exception(
                     "Coordinator: physical stream " + streamConf.physicalStreamName
-                        + " could not be added to catalog");
+                    + " could not be added to catalog");
             }
 
         } else if (type == NESNodeType::Worker) {
@@ -164,7 +164,7 @@ class TestUtils {
         }
 
         const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
-            .getRootNode();
+                                                  .getRootNode();
 
         if (kRootNode == nodePtr) {
             NES_DEBUG("CoordinatorService::registerNode: tree is empty so this becomes new root");

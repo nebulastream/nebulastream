@@ -1,17 +1,17 @@
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Optimizer/NESExecutionPlan.hpp>
-#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
 #include <Optimizer/ExecutionNode.hpp>
+#include <Optimizer/NESExecutionPlan.hpp>
+#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
-#include <Operators/Operator.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
@@ -35,7 +35,7 @@ NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPtr inputQuer
     }
 
     const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
-        .getSourceNodesForLogicalStream(streamName);
+                                                        .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_ERROR("BottomUp: Unable to find the target source: " << streamName);
@@ -70,7 +70,7 @@ vector<NESTopologyEntryPtr> BottomUpStrategy::getCandidateNodesForFwdOperatorPla
                                                                                        const NESTopologyEntryPtr rootNode) const {
     PathFinder pathFinder;
     vector<NESTopologyEntryPtr> candidateNodes;
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+    for (NESTopologyEntryPtr targetSource : sourceNodes) {
         vector<NESTopologyEntryPtr> nodesOnPath = pathFinder.findPathBetween(targetSource, rootNode);
         candidateNodes.insert(candidateNodes.end(), nodesOnPath.begin(), nodesOnPath.end());
     }
@@ -85,7 +85,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
     PathFinder pathFinder;
 
     NES_DEBUG("BottomUp: Place the operator chain from each source node");
-    for (NESTopologyEntryPtr sourceNode: sourceNodes) {
+    for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 
         NES_INFO("BottomUp: Find the path between source and sink node");
         const vector<NESTopologyEntryPtr> path = pathFinder.findPathBetween(sourceNode, sinkNode);
@@ -106,7 +106,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
                     if ((*pathItr)->getRemainingCpuCapacity() > 0) {
                         nesNodeToPlaceOperator = (*pathItr);
                         NES_DEBUG("BottomUp: Found NES node for placing the operators with id : "
-                                      + nesNodeToPlaceOperator->getId());
+                                  + nesNodeToPlaceOperator->getId());
                         break;
                     }
                 }
@@ -174,4 +174,4 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
         }
     }
 }
-}
+}// namespace NES

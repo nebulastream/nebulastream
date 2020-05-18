@@ -24,6 +24,7 @@ class MapOperator : public Operator {
     ~MapOperator() override;
     const PredicatePtr& getPredicate() const;
     const AttributeFieldPtr& getField() const;
+
   private:
     PredicatePtr predicate_;
     AttributeFieldPtr field_;

@@ -1,19 +1,19 @@
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <SourceSink/ZmqSource.hpp>
-#include <SourceSink/DefaultSource.hpp>
-#include <SourceSink/CSVSource.hpp>
 #include <SourceSink/BinarySource.hpp>
+#include <SourceSink/CSVSource.hpp>
+#include <SourceSink/DataSource.hpp>
+#include <SourceSink/DefaultSource.hpp>
 #include <SourceSink/KafkaSource.hpp>
 #include <SourceSink/SenseSource.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <SourceSink/ZmqSource.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -83,4 +83,4 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
     }
 }
 
-} // namespace NES
+}// namespace NES

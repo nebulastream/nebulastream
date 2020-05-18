@@ -15,7 +15,6 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 class ConvertLogicalToPhysicalSink {
 
   public:
-
     /**
      * @brief This method is responsible for creating the physical sink from logical sink descriptor
      * @param sinkDescriptor: logical sink descriptor

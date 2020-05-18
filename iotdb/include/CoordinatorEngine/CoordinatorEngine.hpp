@@ -1,13 +1,12 @@
 #ifndef NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
-#include <memory>
 #include <Topology/NESTopologyEntry.hpp>
+#include <memory>
 
 namespace NES {
 class CoordinatorEngine {
 
   public:
-
     CoordinatorEngine() = default;
 
     /**
@@ -85,11 +84,10 @@ class CoordinatorEngine {
      * @return bool indicating success
      */
     bool removeParent(size_t childId, size_t parentId);
-
 };
 
 typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
+#endif//NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_

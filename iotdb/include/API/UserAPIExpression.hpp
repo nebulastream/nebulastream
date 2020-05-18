@@ -49,11 +49,12 @@ typedef std::shared_ptr<Field> FieldPtr;
 
 class UserAPIExpression {
   public:
-    virtual ~UserAPIExpression() {};
+    virtual ~UserAPIExpression(){};
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code) const = 0;
     virtual const std::string toString() const = 0;
     virtual UserAPIExpressionPtr copy() const = 0;
     virtual bool equals(const UserAPIExpression& rhs) const = 0;
+
   private:
     friend class boost::serialization::access;
 
@@ -81,6 +82,7 @@ class Predicate : public UserAPIExpression {
     BinaryOperatorType getOperatorType() const;
     const UserAPIExpressionPtr getLeft() const;
     const UserAPIExpressionPtr getRight() const;
+
   private:
     Predicate() = default;
     BinaryOperatorType op;
@@ -91,15 +93,15 @@ class Predicate : public UserAPIExpression {
 
     friend class boost::serialization::access;
 
-  template<class Archive>
-  void serialize(Archive &ar, unsigned) {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(UserAPIExpression)
-        & BOOST_SERIALIZATION_NVP(op)
-        & BOOST_SERIALIZATION_NVP(left)
-        & BOOST_SERIALIZATION_NVP(right)
-        & BOOST_SERIALIZATION_NVP(bracket)
-        & BOOST_SERIALIZATION_NVP(functionCallOverload);
-  }
+    template<class Archive>
+    void serialize(Archive& ar, unsigned) {
+        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(UserAPIExpression)
+            & BOOST_SERIALIZATION_NVP(op)
+            & BOOST_SERIALIZATION_NVP(left)
+            & BOOST_SERIALIZATION_NVP(right)
+            & BOOST_SERIALIZATION_NVP(bracket)
+            & BOOST_SERIALIZATION_NVP(functionCallOverload);
+    }
 };
 
 class PredicateItem : public UserAPIExpression {
@@ -133,6 +135,7 @@ class PredicateItem : public UserAPIExpression {
         return this->attribute;
     };
     const ValueTypePtr& getValue() const;
+
   private:
     PredicateItem() = default;
     PredicateItemMutation mutation;
@@ -155,6 +158,7 @@ typedef std::shared_ptr<PredicateItem> PredicateItemPtr;
 class Field : public PredicateItem {
   public:
     Field(AttributeFieldPtr name);
+
   private:
     std::string _name;
 };
