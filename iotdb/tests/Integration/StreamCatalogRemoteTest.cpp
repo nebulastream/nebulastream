@@ -3,6 +3,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 
 namespace NES {
 

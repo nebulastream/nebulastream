@@ -124,7 +124,7 @@ pplx::task<void> RestEngine::accept() {
 }
 
 pplx::task<void> RestEngine::shutdown() {
-    cout << "Shutting Down Server" << endl;
+    NES_DEBUG( "RestEngine::shutdown(): Shutting Down Server");
     return _listener.close();
 }
 

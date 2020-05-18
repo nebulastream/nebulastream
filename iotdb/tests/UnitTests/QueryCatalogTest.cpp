@@ -136,3 +136,51 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
   cout << "ret=" << ret << endl;
 }
 
+//
+
+TEST_F(QueryCatalogTest, get_all_registered_queries_without_query_registration) {
+
+    std::map<std::string, std::string> allRegisteredQueries =
+        QueryCatalog::instance().getAllRegisteredQueries();
+    EXPECT_TRUE(allRegisteredQueries.empty());
+}
+
+TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
+
+    std::string queryString =
+        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+
+    const string queryId = QueryCatalog::instance().registerQuery(queryString,
+                                                                  "BottomUp");
+
+    std::map<std::string, std::string> allRegisteredQueries =
+    QueryCatalog::instance().getAllRegisteredQueries();
+    EXPECT_EQ(allRegisteredQueries.size(), 1);
+    EXPECT_TRUE(allRegisteredQueries.find(queryId) != allRegisteredQueries.end());
+}
+
+TEST_F(QueryCatalogTest, get_all_running_queries) {
+
+    std::string queryString =
+        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+
+    const string queryId = QueryCatalog::instance().registerQuery(queryString,
+                                                                  "BottomUp");
+
+    QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Running);
+
+    std::map<std::string, std::string> queries = QueryCatalog::instance().getQueriesWithStatus("running");
+    EXPECT_EQ(queries.size(), 1);
+    EXPECT_TRUE(queries.find(queryId) != queries.end());
+}
+
+TEST_F(QueryCatalogTest, throw_exception_when_query_status_is_unknown) {
+
+    try {
+        std::map<std::string, std::string> queries = QueryCatalog::instance().getQueriesWithStatus("something_random");
+        NES_DEBUG("Should have thrown invalid argument exception");
+        FAIL();
+    } catch (std::invalid_argument e) {
+        SUCCEED();
+    }
+}

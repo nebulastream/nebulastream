@@ -3,7 +3,6 @@
 #define NES_INCLUDE_REST_CONTROLLER_STREAMCATALOGCONTROLLER_HPP_
 
 #include "BaseController.hpp"
-#include <Services/StreamCatalogService.hpp>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_msg.h>
 #include <cpprest/json.h>
@@ -14,7 +13,6 @@ class StreamCatalogController : public BaseController {
 
   public:
     StreamCatalogController() {
-        streamCatalogServicePtr = StreamCatalogService::getInstance();
     }
 
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
@@ -22,7 +20,6 @@ class StreamCatalogController : public BaseController {
     void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
-    StreamCatalogServicePtr streamCatalogServicePtr;
 };
 }// namespace NES
 
