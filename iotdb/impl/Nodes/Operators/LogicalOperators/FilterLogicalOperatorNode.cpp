@@ -1,4 +1,5 @@
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

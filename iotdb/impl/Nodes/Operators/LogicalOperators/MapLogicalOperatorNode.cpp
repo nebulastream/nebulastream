@@ -1,4 +1,5 @@
 #include <API/Types/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 

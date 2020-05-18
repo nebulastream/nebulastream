@@ -68,12 +68,12 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         const OperatorPtr operatorPtr = createMapOperator(legacyField->getAttributeField(), legacyPredicate);
         operatorPtr->setOperatorId(operatorNode->getId());
         return operatorPtr;
-
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         // Translate sink operator node.
         auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
         const SinkDescriptorPtr sinkDescriptor = sinkNodeOperator->getSinkDescriptor();
-        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
+        const SchemaPtr schema = sinkNodeOperator->getOutputSchema();
+        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
         const OperatorPtr operatorPtr = createSinkOperator(dataSink);
         operatorPtr->setOperatorId(operatorNode->getId());
         return operatorPtr;

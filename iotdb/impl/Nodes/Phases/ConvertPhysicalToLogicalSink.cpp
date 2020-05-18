@@ -1,10 +1,10 @@
-#include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/FileOutputSink.hpp>
 #include <SourceSink/KafkaSink.hpp>
@@ -21,27 +21,24 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
 
         case PRINT_SINK: {
             NES_INFO("ConvertPhysicalToLogicalSink: Creating print sink");
-            const SchemaPtr schema = dataSink->getSchema();
-            return PrintSinkDescriptor::create(schema);
+            return PrintSinkDescriptor::create();
         }
         case ZMQ_SINK: {
             NES_INFO("ConvertPhysicalToLogicalSink: Creating ZMQ sink");
             ZmqSinkPtr zmqSink = std::dynamic_pointer_cast<ZmqSink>(dataSink);
-            return ZmqSinkDescriptor::create(zmqSink->getSchema(), zmqSink->getHost(), zmqSink->getPort());
+            return ZmqSinkDescriptor::create(zmqSink->getHost(), zmqSink->getPort());
         }
         case KAFKA_SINK: {
             NES_INFO("ConvertPhysicalToLogicalSink: Creating Kafka sink");
             KafkaSinkPtr kafkaSink = std::dynamic_pointer_cast<KafkaSink>(dataSink);
-            return KafkaSinkDescriptor::create(kafkaSink->getSchema(),
-                                               kafkaSink->getTopic(),
+            return KafkaSinkDescriptor::create(kafkaSink->getTopic(),
                                                kafkaSink->getBrokers(),
                                                kafkaSink->getKafkaProducerTimeout());
         }
         case FILE_SINK: {
             NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink");
             FileOutputSinkPtr fileOutputSink = std::dynamic_pointer_cast<FileOutputSink>(dataSink);
-            return FileSinkDescriptor::create(fileOutputSink->getSchema(),
-                                              fileOutputSink->getFilePath(),
+            return FileSinkDescriptor::create(fileOutputSink->getFilePath(),
                                               fileOutputSink->getOutputMode(),
                                               fileOutputSink->getOutputType());
         }

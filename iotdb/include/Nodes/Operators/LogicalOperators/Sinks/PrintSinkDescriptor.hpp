@@ -13,13 +13,12 @@ class PrintSinkDescriptor : public SinkDescriptor {
   public:
     /**
      * @brief Factory method to create a new prink sink descriptor
-     * @param schema
-     * @return
+     * @return descriptor for print sink
      */
-    static SinkDescriptorPtr create(SchemaPtr schema);
+    static SinkDescriptorPtr create();
 
   private:
-    explicit PrintSinkDescriptor(SchemaPtr schema);
+    explicit PrintSinkDescriptor();
 };
 
 typedef std::shared_ptr<PrintSinkDescriptor> PrintSinkDescriptorPtr;

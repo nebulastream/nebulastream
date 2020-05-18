@@ -11,7 +11,13 @@ namespace NES {
 class ZmqSinkDescriptor : public SinkDescriptor {
 
   public:
-    static SinkDescriptorPtr create(SchemaPtr schema, std::string host, uint16_t port);
+    /**
+     * @brief Creates the ZMQ sink descriptot
+     * @param host: host name for connecting to zmq
+     * @param port: port number for connecting to zmq
+     * @return descriptor for ZMQ sink
+     */
+    static SinkDescriptorPtr create(std::string host, uint16_t port);
 
     /**
      * @brief Get the zmq host where the data is to be written
@@ -24,7 +30,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     uint16_t getPort() const;
 
   private:
-    explicit ZmqSinkDescriptor(SchemaPtr schema, std::string host, uint16_t port);
+    explicit ZmqSinkDescriptor(std::string host, uint16_t port);
 
     std::string host;
     uint16_t port;
