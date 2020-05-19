@@ -29,7 +29,7 @@ class QueryCatalogTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
         NES::setupLogging("QueryCatalogTest.log", NES::LOG_DEBUG);
-        TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+        TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
         const auto& kCoordinatorNode = topologyManager->createNESWorkerNode(0, "127.0.0.1", CPUCapacity::HIGH);
         kCoordinatorNode->setPublishPort(4711);
@@ -66,7 +66,7 @@ TEST_F(QueryCatalogTest, testAddQuery) {
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
     string queryId = queryCatalog->registerQuery(queryString,
@@ -86,7 +86,7 @@ TEST_F(QueryCatalogTest, testAddQueryAndStartStop) {
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
@@ -117,7 +117,7 @@ TEST_F(QueryCatalogTest, testAddRemoveQuery) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
@@ -138,7 +138,7 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
@@ -155,7 +155,7 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
 
 TEST_F(QueryCatalogTest, get_all_registered_queries_without_query_registration) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
@@ -166,7 +166,7 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_without_query_registration) 
 
 TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
@@ -184,7 +184,7 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
 
 TEST_F(QueryCatalogTest, get_all_running_queries) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 
@@ -203,7 +203,7 @@ TEST_F(QueryCatalogTest, get_all_running_queries) {
 
 TEST_F(QueryCatalogTest, throw_exception_when_query_status_is_unknown) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager);
 

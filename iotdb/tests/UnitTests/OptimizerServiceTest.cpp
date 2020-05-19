@@ -38,7 +38,7 @@ class OptimizerServiceTest : public testing::Test {
 
 /* Test nes topology service create plan for valid query string for  */
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bottomup) {
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     createExampleTopology(streamCatalog, topologyManager);
@@ -56,7 +56,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bot
 }
 /* Test nes topology service create plan for valid query string for  */
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_topdown) {
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     createExampleTopology(streamCatalog, topologyManager);
@@ -74,7 +74,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_top
 
 /* Test nes topology service create plan for invalid query string for  */
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_query) {
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     createExampleTopology(streamCatalog, topologyManager);
@@ -93,7 +93,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_query) {
 
 /* Test nes topology service create plan for invalid optimization strategy */
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_strategy) {
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     createExampleTopology(streamCatalog, topologyManager);

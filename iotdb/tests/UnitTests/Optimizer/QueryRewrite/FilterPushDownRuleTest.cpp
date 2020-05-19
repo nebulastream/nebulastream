@@ -35,7 +35,7 @@ class FilterPushDownRuleTest : public testing::Test {
 
     void static setupSensorNodeAndStreamCatalog() {
         NES_INFO("Setup FilterPushDownRuleTest test case.");
-        TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+        TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
         NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 

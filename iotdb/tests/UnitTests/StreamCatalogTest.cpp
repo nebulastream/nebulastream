@@ -93,7 +93,7 @@ TEST_F(StreamCatalogTest, testGetNotExistingKey) {
 
 TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     streamCatalog->addLogicalStream(
         "test_stream", Schema::create());
@@ -125,7 +125,7 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
 
 TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     streamCatalog->addLogicalStream(
         "test_stream", Schema::create());
@@ -152,7 +152,7 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
 
 TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 
@@ -193,7 +193,7 @@ TEST_F(StreamCatalogTest, testAddLogicalStream) {
 
 TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     std::string newLogicalStreamName = "test_stream";
 
