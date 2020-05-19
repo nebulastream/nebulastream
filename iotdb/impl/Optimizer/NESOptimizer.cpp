@@ -14,7 +14,7 @@ NESOptimizer::NESOptimizer() {
 }
 
 NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, InputQueryPtr inputQuery,
-                                                        NESTopologyPlanPtr nesTopologyPlan) {
+                                                        NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
 
     NES_INFO("NESOptimizer: Preparing execution graph for input query");
 
@@ -37,6 +37,6 @@ NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, In
     QueryPtr queryPtr = std::make_shared<Query>(query);
 
     NES_INFO("NESOptimizer: Building Execution plan for the input query");
-    NESExecutionPlanPtr nesExecutionPlanPtr = placementStrategyPtr->initializeExecutionPlan(queryPtr, nesTopologyPlan);
+    NESExecutionPlanPtr nesExecutionPlanPtr = placementStrategyPtr->initializeExecutionPlan(queryPtr, nesTopologyPlan, streamCatalog);
     return nesExecutionPlanPtr;
 };

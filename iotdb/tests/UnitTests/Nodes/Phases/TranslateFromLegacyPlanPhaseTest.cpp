@@ -25,11 +25,6 @@ class TranslateFromLegacyPlanPhaseTest : public testing::Test {
 
     SchemaPtr schema;
 
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES_INFO("Setup TranslateFromLegacyPlanPhase test class.");
-        setupSensorNodeAndStreamCatalog();
-    }
 
     /* Will be called before a test is executed. */
     void SetUp() {
@@ -39,20 +34,20 @@ class TranslateFromLegacyPlanPhaseTest : public testing::Test {
             "value", BasicType::UINT64);
     }
 
-    void static setupSensorNodeAndStreamCatalog() {
-        NES_INFO("Setup TranslateFromLegacyPlanPhase test case.");
-        TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-
-        NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
-
-        PhysicalStreamConfig streamConf;
-        streamConf.physicalStreamName = "test2";
-        streamConf.logicalStreamName = "test_stream";
-
-        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
-        assert(0);
-//        StreamCatalog::instance().addPhysicalStream("default_logical", sce);
-    }
+//    void static setupSensorNodeAndStreamCatalog() {
+//        NES_INFO("Setup TranslateFromLegacyPlanPhase test case.");
+////        TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+////
+////        NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+////
+////        PhysicalStreamConfig streamConf;
+////        streamConf.physicalStreamName = "test2";
+////        streamConf.logicalStreamName = "test_stream";
+////
+////        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
+////        assert(0);
+////        StreamCatalog::instance().addPhysicalStream("default_logical", sce);
+//    }
 
     /* Will be called before a test is executed. */
     void TearDown() {
@@ -65,7 +60,22 @@ class TranslateFromLegacyPlanPhaseTest : public testing::Test {
     }
 };
 
+void setupSensorNodeAndStreamCatalog(TopologyManagerPtr topologyManager , StreamCatalogPtr streamCatalog) {
+    NES_INFO("Setup FilterPushDownTest test case.");
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+
+    PhysicalStreamConfig streamConf;
+    streamConf.physicalStreamName = "test2";
+    streamConf.logicalStreamName = "test_stream";
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
+    streamCatalog->addPhysicalStream("default_logical", sce);
+}
+
 TEST_F(TranslateFromLegacyPlanPhaseTest, testTranslationOfInputQueryToLogicalPlan) {
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupSensorNodeAndStreamCatalog(topologyManager, streamCatalog);
 
     // Prepare
     Stream def = Stream("default_logical", schema);

@@ -34,7 +34,7 @@ NESExecutionPlanPtr OptimizerService::getExecutionPlan(InputQueryPtr inputQuery,
     auto start = high_resolution_clock::now();
 
     const NESExecutionPlanPtr
-        executionGraph = queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan);
+        executionGraph = queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan, inputQuery->streamCatalog);
 
     auto stop = high_resolution_clock::now();
     const auto duration = duration_cast<milliseconds>(stop - start);

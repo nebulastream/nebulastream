@@ -5,7 +5,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
-
+#include <Catalogs/StreamCatalog.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -16,7 +16,7 @@ namespace NES {
 
 std::string UtilityFunctions::trim(std::string s) {
     auto not_space = [](char c) {
-        return isspace(c) == 0;
+      return isspace(c) == 0;
     };
     // trim left
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), not_space));
@@ -26,7 +26,7 @@ std::string UtilityFunctions::trim(std::string s) {
 }
 
 InputQueryPtr UtilityFunctions::createQueryFromCodeString(
-    const std::string& query_code_snippet) {
+    const std::string& query_code_snippet, StreamCatalogPtr streamCatalog) {
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
@@ -38,7 +38,7 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
         code << "#include <API/UserAPIExpression.hpp>" << std::endl;
         code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
-        code << "InputQuery createQuery(){" << std::endl;
+        code << "InputQuery createQuery(StreamCatalogPtr streamCatalog){" << std::endl;
 
         //we will get the schema from the catalog, if stream does not exists this will through an exception
         std::string streamName = query_code_snippet.substr(
@@ -46,7 +46,7 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
         streamName = streamName.substr(7, streamName.find(")") - 7);
         std::cout << " stream name = " << streamName << std::endl;
         code
-            << "StreamPtr sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException(\""
+            << "StreamPtr sPtr = streamCatalog->getStreamForLogicalStreamOrThrowException(\""
             << streamName << "\");";
         //code << "Stream& stream = *sPtr.get();" << std::endl;
         std::string newQuery = query_code_snippet;
@@ -78,18 +78,23 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
             NES_ERROR("Compilation of query code failed! Code: " << code.str());
         }
 
-        typedef InputQuery (*CreateQueryFunctionPtr)();
-        CreateQueryFunctionPtr func = compiled_code
-                                          ->getFunctionPointer<CreateQueryFunctionPtr>("_ZN3NES11createQueryEv");//was  _ZN5iotdb11createQueryEv
+        //TODO: remove once the new API is in place
+        InputQuery::streamCatalog = streamCatalog;
+
+        typedef InputQuery (* CreateQueryFunctionPtr)(StreamCatalogPtr streamCatalog);
+        CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>(
+            "_ZN3NES11createQueryESt10shared_ptrINS_13StreamCatalogEE");
         if (!func) {
             NES_ERROR("Error retrieving function! Symbol not found!");
         }
         /* call loaded function to create query object */
-        InputQuery query((*func)());
+        InputQuery query((*func)(streamCatalog));
+
         return std::make_shared<InputQuery>(query);
     } catch (std::exception& exc) {
         NES_ERROR(
-            "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet << exc.what());
+            "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet
+                                                                                    << exc.what());
         throw;
     } catch (...) {
         NES_ERROR(
@@ -122,10 +127,10 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
             NES_ERROR("Compilation of schema code failed! Code: " << code.str());
         }
 
-        typedef Schema (*CreateSchemaFunctionPtr)();
+        typedef Schema (* CreateSchemaFunctionPtr)();
         CreateSchemaFunctionPtr func = compiled_code
-                                           ->getFunctionPointer<CreateSchemaFunctionPtr>(
-                                               "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
+            ->getFunctionPointer<CreateSchemaFunctionPtr>(
+                "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
         if (!func) {
             NES_ERROR("Error retrieving function! Symbol not found!");
         }

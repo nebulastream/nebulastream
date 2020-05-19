@@ -10,6 +10,9 @@ namespace NES {
 class QueryService;
 typedef std::shared_ptr<QueryService> QueryServicePtr;
 
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
 /**\brief:
  *          This class is used for serving different requests related to user query.
  *
@@ -22,7 +25,7 @@ class QueryService {
   public:
     ~QueryService() = default;
 
-    QueryService() = default;
+    QueryService(StreamCatalogPtr streamCatalog);
 
     /**
      * This method is used for generating the base query plan from the input query as string.
@@ -39,6 +42,9 @@ class QueryService {
      * @return a json object representing the query plan
      */
     InputQueryPtr getInputQueryFromQueryString(std::string userQuery);
+
+  private:
+    StreamCatalogPtr streamCatalog;
 };
 
 };// namespace NES

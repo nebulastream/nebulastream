@@ -10,8 +10,9 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager):
-    topologyManager(topologyManager)
+QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog):
+    topologyManager(topologyManager),
+    streamCatalog(streamCatalog)
 {
     NES_DEBUG("QueryCatalog()");
 }
@@ -64,7 +65,7 @@ string QueryCatalog::registerQuery(const string& queryString,
         throw Exception("Queries are not allowed to define schemas anymore");
     }
     try {
-        InputQueryPtr inputQueryPtr = UtilityFunctions::createQueryFromCodeString(queryString);
+        InputQueryPtr inputQueryPtr = UtilityFunctions::createQueryFromCodeString(queryString, streamCatalog);
         SchemaPtr schema = inputQueryPtr->getSourceStream()->getSchema();
 
         OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);

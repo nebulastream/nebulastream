@@ -17,7 +17,8 @@
 namespace NES {
 
 NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(QueryPtr inputQuery,
-                                                                              NESTopologyPlanPtr nesTopologyPlan) {
+                                                                              NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
+    this->nesTopologyPlan = nesTopologyPlan;
 
     const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
@@ -64,7 +65,7 @@ vector<NESTopologyEntryPtr> MinimumEnergyConsumptionStrategy::getCandidateNodesF
                                                                                                            NESTopologyEntryPtr>& sourceNodes,
                                                                                                        const NES::NESTopologyEntryPtr rootNode) const {
 
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     vector<NESTopologyEntryPtr> candidateNodes;
 
     map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
@@ -88,7 +89,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
     NES_INFO(
         "MinimumEnergyConsumption: preparing common path between sources");
     vector<NESTopologyEntryPtr> commonPath;
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
         pathMap = pathFinder.findUniquePathBetween(sourceNodes, sinkNode);
 

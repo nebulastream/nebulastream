@@ -20,7 +20,7 @@ namespace NES {
  *    - TODO: add mutex to make it secure
  *    - TODO: delete methods only delete catalog entries not the entries in the topology
  */
-class StreamCatalog {
+class StreamCatalog{
   public:
     /**
    * @brief method to add a logical stream

@@ -179,7 +179,7 @@ add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-t
 #add_test(NAME type-inference-tests COMMAND type-inference-tests)
 
 # FilterPushDownTest
-add_executable(filter-push-down-test "UnitTests/Optimizer/QueryRewrite/FilterPushDownRuleTest.cpp")
+add_executable(filter-push-down-test "UnitTests/Optimizer/QueryRewrite/FilterPushDownTest.cpp")
 target_link_libraries(filter-push-down-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME filter-push-down-test COMMAND filter-push-down-test)
 

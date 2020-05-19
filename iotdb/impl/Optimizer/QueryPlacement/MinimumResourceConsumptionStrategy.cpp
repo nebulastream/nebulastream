@@ -17,7 +17,9 @@
 namespace NES {
 
 NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(QueryPtr inputQuery,
-                                                                                NESTopologyPlanPtr nesTopologyPlan) {
+                                                                                NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
+    this->nesTopologyPlan = nesTopologyPlan;
+
     const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
@@ -63,7 +65,7 @@ vector<NESTopologyEntryPtr> MinimumResourceConsumptionStrategy::getCandidateNode
                                                                                                              NESTopologyEntryPtr>& sourceNodes,
                                                                                                          const NES::NESTopologyEntryPtr rootNode) const {
 
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     vector<NESTopologyEntryPtr> candidateNodes;
 
     map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
@@ -82,7 +84,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
                                                         vector<NESTopologyEntryPtr> sourceNodes) {
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
 
     map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>

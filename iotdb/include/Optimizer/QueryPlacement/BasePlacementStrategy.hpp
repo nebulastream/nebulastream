@@ -75,7 +75,7 @@ class BasePlacementStrategy {
      * @param nesTopologyPlan
      * @return
      */
-    virtual NESExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) = 0;
+    virtual NESExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) = 0;
 
     /**
      * @brief This method will add system generated zmq source and sinks for each execution node.
@@ -123,7 +123,7 @@ class BasePlacementStrategy {
     void addForwardOperators(std::vector<NESTopologyEntryPtr> candidateNodes, NESExecutionPlanPtr nesExecutionPlanPtr);
 
   protected:
-    StreamCatalogPtr streamCatalog;
+    NESTopologyPlanPtr nesTopologyPlan;
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP

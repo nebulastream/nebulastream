@@ -11,18 +11,22 @@ class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 class TopologyManager;
 typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 class QueryController : public BaseController {
   public:
     QueryController(NesCoordinatorPtr coordinator,
                     QueryCatalogPtr queryCatalog,
-                    TopologyManagerPtr topologyManager
+                    TopologyManagerPtr topologyManager,
+                    StreamCatalogPtr streamCatalog
     ):
         coordinator(coordinator),
         queryCatalog(queryCatalog),
-        topologyManager(topologyManager)
+        topologyManager(topologyManager),
+        streamCatalog(streamCatalog)
     {
-        queryServicePtr = std::make_shared<QueryService>();
+        queryServicePtr = std::make_shared<QueryService>(streamCatalog);
     }
 
     ~QueryController() {}
@@ -35,6 +39,7 @@ class QueryController : public BaseController {
     QueryCatalogPtr queryCatalog;
     QueryServicePtr queryServicePtr;
     NesCoordinatorPtr coordinator;
+    StreamCatalogPtr streamCatalog;
 };
 
 typedef std::shared_ptr<QueryController> QueryControllerPtr;

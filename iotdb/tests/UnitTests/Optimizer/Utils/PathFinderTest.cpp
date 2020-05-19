@@ -10,8 +10,6 @@ using namespace NES;
 class PathFinderTest : public testing::Test {
   public:
 
-    PathFinder pathFinder;
-
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         std::cout << "Setup PathFinderTest test class." << std::endl;
@@ -37,6 +35,7 @@ class PathFinderTest : public testing::Test {
 TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
@@ -88,6 +87,7 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
@@ -144,6 +144,7 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
 TEST_F(PathFinderTest, find_path_with_min_latency) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
@@ -196,6 +197,7 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
 TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()
         ->addField("id", BasicType::UINT32)
@@ -252,6 +254,7 @@ TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
 TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
 
     //prepare
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
@@ -291,6 +294,7 @@ TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
 TEST_F(PathFinderTest, find_common_path_between_source_destination) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
 
     //prepare
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
@@ -412,6 +416,8 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
 TEST_F(PathFinderTest, find_path_from_non_linked_source) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
+
     try {
         SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
             "value", BasicType::UINT64);
@@ -444,6 +450,7 @@ TEST_F(PathFinderTest, find_path_from_non_linked_source) {
 TEST_F(PathFinderTest, find_path_between_non_linked_source_and_destination) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
@@ -472,6 +479,7 @@ TEST_F(PathFinderTest, find_path_between_non_linked_source_and_destination) {
 TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
@@ -512,5 +520,4 @@ TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
 
         EXPECT_TRUE(result != actualPath.end());
     }
-
 }
