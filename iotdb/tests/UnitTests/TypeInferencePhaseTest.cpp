@@ -104,8 +104,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
  */
 TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
 
-    NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
-        .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";

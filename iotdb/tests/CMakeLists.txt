@@ -109,7 +109,7 @@ target_link_libraries(predicate-tree-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME predicate-tree-tests COMMAND predicate-tree-tests)
 
 ###  Predicate Tree Tests ###
-add_executable(optimizer-service-tests "UnitTests/Services/OptimizerServiceTest.cpp")
+add_executable(optimizer-service-tests "UnitTests/OptimizerServiceTest.cpp")
 target_link_libraries(optimizer-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
 
