@@ -107,7 +107,7 @@ bool OutputChannel::registerAtServer() {
     }
 }
 
-void OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
+bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
     auto bufferSize = inputBuffer.getBufferSize();
     auto tupleSize = inputBuffer.getTupleSizeInBytes();
     auto numOfTuples = inputBuffer.getNumberOfTuples();
@@ -117,9 +117,10 @@ void OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
     sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples);
     inputBuffer.retain();
     zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer));
-    NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
-                                                   << inputBuffer.getNumberOfTuples() << "/"
-                                                   << inputBuffer.getBufferSize());
+//    NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
+//                                                   << inputBuffer.getNumberOfTuples() << "/"
+//                                                   << inputBuffer.getBufferSize());
+    return true;
 }
 
 void OutputChannel::onError(Messages::ErroMessage& errorMsg) {
