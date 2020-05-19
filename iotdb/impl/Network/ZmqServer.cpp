@@ -192,9 +192,9 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     if (partitionManager->isRegistered(nesPartition)) {
                         // create a string for logging of the identity which corresponds to the
                         // queryId::operatorId::partitionId::subpartitionId
-                        NES_DEBUG("ZmqServer: DataBuffer received from " << nesPartition.toString() << " with "
-                                                                        << bufferHeader->getNumOfRecords() << "/"
-                                                                        << bufferHeader->getPayloadSize());
+//                        NES_DEBUG("ZmqServer: DataBuffer received from " << nesPartition.toString() << " with "
+//                                                                        << bufferHeader->getNumOfRecords() << "/"
+//                                                                        << bufferHeader->getPayloadSize());
                         exchangeProtocol.onBuffer(nesPartition, buffer);
                     } else {
                         // partition is not registered, discard the buffer

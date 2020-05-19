@@ -9,7 +9,7 @@ namespace NES {
 namespace Network {
 class ExchangeProtocol {
   public:
-    explicit ExchangeProtocol(std::function<void(NesPartition, TupleBuffer)>&& onDataBuffer,
+    explicit ExchangeProtocol(std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer,
                               std::function<void(NesPartition)>&& onEndOfStream,
                               std::function<void(Messages::ErroMessage)>&& onException) : onDataBufferCb(std::move(onDataBuffer)),
                                                                                           onEndOfStreamCb(std::move(onEndOfStream)),
@@ -55,7 +55,7 @@ class ExchangeProtocol {
     }
 
   private:
-    std::function<void(NesPartition, TupleBuffer)> onDataBufferCb;
+    std::function<void(NesPartition, TupleBuffer&)> onDataBufferCb;
     std::function<void(NesPartition subpartition)> onEndOfStreamCb;
     std::function<void(Messages::ErroMessage)> onExceptionCb;
 };

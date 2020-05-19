@@ -9,7 +9,7 @@
 using namespace std;
 
 namespace NES {
-const size_t buffersManaged = 10;
+const size_t buffersManaged = 1024;
 const size_t bufferSize = 4*1024;
 
 namespace Network {
@@ -166,6 +166,66 @@ TEST_F(NetworkStackTest, testSendData) {
     }
     ASSERT_EQ(bufferReceived, true);
     ASSERT_EQ(completed, true);
+}
+
+TEST_F(NetworkStackTest, testMassiveSending) {
+    std::promise<bool> completedProm;
+
+    size_t totalNumBuffer = 1'000'000;
+    size_t bufferReceived = 0;
+    auto nesPartition = NesPartition(1, 22, 333, 444);
+
+    try {
+        // start zmqServer
+        auto onBuffer = [&bufferReceived](NesPartition id, TupleBuffer& buffer) {
+          ASSERT_EQ((buffer.getBufferSize() == bufferSize)
+              && (id.getQueryId(), 1) && (id.getOperatorId(), 22) && (id.getPartitionId(), 333)
+              && (id.getSubpartitionId(), 444), true);
+          for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
+              ASSERT_EQ(buffer.getBuffer<uint64_t>()[j], j);
+          }
+          bufferReceived++;
+        };
+
+        auto onError = [](Messages::ErroMessage ex) {
+          //can be empty for this test
+        };
+
+        auto onEndOfStream = [&completedProm](NesPartition p) { completedProm.set_value(true); };
+
+        NetworkManager netManager("127.0.0.1", 31337, onBuffer, onEndOfStream, onError, bufferManager,
+                                  partitionManager);
+
+        std::thread t([&netManager, &nesPartition, &completedProm] {
+          // register the incoming channel
+          netManager.registerSubpartitionConsumer(nesPartition);
+          completedProm.get_future().get();
+        });
+
+        NodeLocation nodeLocation(0, "127.0.0.1", 31337);
+        auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, 1, 5);
+
+        if (senderChannel == nullptr) {
+            NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
+            completedProm.set_value(false);
+        } else {
+            auto buffer = bufferManager->getBufferBlocking();
+            for (size_t i = 0; i < totalNumBuffer; ++i) {
+                for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
+                    buffer.getBuffer<uint64_t>()[j] = j;
+                }
+                buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
+                buffer.setTupleSizeInBytes(sizeof(uint64_t));
+                senderChannel->sendBuffer(buffer);
+            }
+            delete senderChannel;
+        }
+
+        t.join();
+    } catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(bufferReceived, totalNumBuffer);
 }
 
 TEST_F(NetworkStackTest, testPartitionManager) {
