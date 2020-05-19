@@ -158,7 +158,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     plan->stop();
 }
 
-TEST_F(QueryExecutionTest, DISABLED_w << indowQu >> ery) {
+TEST_F(QueryExecutionTest, DISABLED_windowQuery) {
     // TODO in this test, it is not clear what we are testing
     // TODO 10 windows are fired -> 10 output buffers in the sink
     // TODO however, we check the 2nd buffer only
