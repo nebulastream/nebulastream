@@ -114,7 +114,8 @@ struct hash<NES::Network::NesPartition> {
     std::size_t operator()(const NES::Network::NesPartition& k) const {
         using std::hash;
 
-        // Compute individual hash values and combine them using XOR and bit shifting:
+        // Hash function for the NesPartition
+        // Compute individual hash values of the Ints and combine them using XOR and bit shifting:
         return ((hash<uint64_t>()(k.getQueryId())
             ^ (hash<uint64_t>()(k.getOperatorId()) << 1)) >> 1)
             ^ ((hash<uint64_t>()(k.getPartitionId())

@@ -55,7 +55,7 @@ class OutputChannel : public boost::noncopyable {
      * @brief checks if the OutputChannel has successfully established a connection with the server
      * @return true if connection is established, else false
      */
-    bool isConnected();
+    bool isConnected() const;
 
   private:
     const std::string& socketAddr;
