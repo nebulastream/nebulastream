@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update -qq && apt-get install -qq \
   clang \
   libdwarf-dev \
   libdwarf1 \
@@ -25,12 +25,18 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2
   cd cmake-3.17.2 && ./bootstrap && make -j3 && make install && \
   cd ${HOME} && rm -rf cmake-3.17.2 cmake-3.17.2.tar.gz && \
   cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
-  cd grpc && git submodule update --init && mkdir build && cmake .. -DCMAKE_BUILD_TYPE=Release && \
+  cd grpc && git submodule update --init && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && \
   make -j2 && make install && cd ${HOME} && rm -rf grpc && \
   cd ${HOME} && git clone --single-branch --branch v0.3.1 https://github.com/mfontanini/cppkafka.git && \
   cd cppkafka && mkdir -p build && cd build && \
   cmake -DCPPKAFKA_BUILD_SHARED=ON -DCPPKAFKA_DISABLE_TESTS=ON -DCPPKAFKA_DISABLE_EXAMPLES=ON -DCPPKAFKA_RDKAFKA_STATIC_LIB=OFF .. && \
-  make -j -w && make install && cd ${HOME} && rm -rf actor-framework cppkafka* && \
+  make -j -w && make install && cd ${HOME} && rm -rf cppkafka* && \
+  cd ${HOME} && git clone --single-branch --branch v4.3.2 https://github.com/zeromq/libzmq.git && cd libzmq && \
+  mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make -j2 && make install && \
+  cd ${HOME} && rm -rf libzmq && \
+  cd ${HOME} && git clone --single-branch --branch v4.6.0 https://github.com/zeromq/cppzmq.git && cd cppzmq && \
+  mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make -j2 && make install && \
+  cd ${HOME} && rm -rf cppzmq && \
   apt-get purge -y wget && apt autoremove -y
 
 ADD ./scripts/entrypoint-nes-build.sh /entrypoint.sh
