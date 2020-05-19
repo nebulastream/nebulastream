@@ -180,9 +180,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     auto bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
 
                     // parse identity
-                    uint64_t* id;
-                    id = (uint64_t*) identityEnvelope.data();
-                    auto partitionId = NesPartition(id[0], id[1], id[2], id[3]);
+                    auto nesPartition = *identityEnvelope.data<NesPartition>();
 
                     // receive buffer content
                     TupleBuffer buffer = bufferManager->getBufferBlocking();
@@ -190,17 +188,17 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
 
                     // check if identity is registered
-                    if (partitionManager->isRegistered(partitionId)) {
+                    if (partitionManager->isRegistered(nesPartition)) {
                         // create a string for logging of the identity which corresponds to the
                         // queryId::operatorId::partitionId::subpartitionId
-                        NES_INFO("ZmqServer: DataBuffer received from " << partitionId.toString() << " with "
+                        NES_DEBUG("ZmqServer: DataBuffer received from " << nesPartition.toString() << " with "
                                                                         << bufferHeader->getNumOfRecords() << "/"
                                                                         << bufferHeader->getPayloadSize());
-                        exchangeProtocol.onBuffer(id, buffer);
+                        exchangeProtocol.onBuffer(nesPartition, buffer);
                     } else {
                         // partition is not registered, discard the buffer
                         buffer.release();
-                        NES_ERROR("ZmqServer: " << "DataBuffer for " + partitionId.toString()
+                        NES_ERROR("ZmqServer: " << "DataBuffer for " + nesPartition.toString()
                             + " is not registered and was discarded!");
                     }
                     break;
@@ -212,9 +210,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                 }
                 case Messages::EndOfStream: {
                     // if server receives a message that the stream did terminate
-                    uint64_t* id;
-                    id = (uint64_t*) identityEnvelope.data();
-                    auto partitionId = NesPartition(id[0], id[1], id[2], id[3]);
+                    auto partitionId = *identityEnvelope.data<NesPartition>();
 
                     NES_INFO("ZmqServer: EndOfStream message received from " << partitionId.toString());
                     exchangeProtocol.onEndOfStream(partitionId);

@@ -44,7 +44,7 @@ TEST_F(NetworkStackTest, serverMustStartAndStop) {
     try {
         ExchangeProtocol
             exchangeProtocol
-            ([](uint64_t* id, TupleBuffer buf) {}, [](NesPartition p) {}, [](Messages::ErroMessage ex) {});
+            ([](NesPartition id, TupleBuffer buf) {}, [](NesPartition p) {}, [](Messages::ErroMessage ex) {});
         ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol, bufferManager, partitionManager);
         server.start();
         ASSERT_EQ(server.getIsRunning(), true);
@@ -60,7 +60,7 @@ TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
         NetworkManager netManager(
             "127.0.0.1",
             31337,
-            [](uint64_t* id, TupleBuffer buf) {},
+            [](NesPartition id, TupleBuffer buf) {},
             [](NesPartition p) {},
             [](Messages::ErroMessage ex) {},
             bufferManager, partitionManager);
@@ -75,7 +75,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
     try {
         // start zmqServer
         std::promise<bool> completed;
-        auto onBuffer = [](uint64_t* id, TupleBuffer buf) {};
+        auto onBuffer = [](NesPartition id, TupleBuffer buf) {};
         auto onError = [&completed](Messages::ErroMessage ex) {
           completed.set_exception(make_exception_ptr(runtime_error("Error")));
         };
@@ -116,9 +116,10 @@ TEST_F(NetworkStackTest, testSendData) {
 
     try {
         // start zmqServer
-        auto onBuffer = [&bufferReceived](uint64_t* id, TupleBuffer buf) {
+        auto onBuffer = [&bufferReceived](NesPartition id, TupleBuffer buf) {
           bufferReceived = (buf.getBufferSize() == bufferSize)
-              && (id[0], 1) && (id[1], 22) && (id[2], 333) && (id[3], 444);
+              && (id.getQueryId(), 1) && (id.getOperatorId(), 22) && (id.getPartitionId(), 333)
+              && (id.getSubpartitionId(), 444);
         };
 
         auto onError = [](Messages::ErroMessage ex) {
@@ -188,8 +189,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
         std::promise<bool> serverError;
         std::promise<bool> channelError;
 
-        auto onBuffer = [](uint64_t* id, TupleBuffer buf) {
-        };
+        auto onBuffer = [](NesPartition id, TupleBuffer buf) {};
 
         auto onErrorServer = [&serverError, &retryTimes, &errorCallsServer](Messages::ErroMessage errorMsg) {
           errorCallsServer++;

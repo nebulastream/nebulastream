@@ -7,7 +7,6 @@
 #include <map>
 
 namespace NES::Network {
-using namespace std;
 
 class PartitionManager {
   public:
@@ -41,7 +40,7 @@ class PartitionManager {
      * @param the partition
      * @return true if registered, else false
      */
-    bool isRegistered(NesPartition partition);
+    bool isRegistered(NesPartition partition) const;
 
     /**
      * @brief removes a subpartition completely from the entry list
@@ -56,8 +55,8 @@ class PartitionManager {
     void clear();
 
   private:
-    unordered_map<NesPartition, uint64_t> partitionCounter;
-    mutex partitionCounterMutex;
+    std::unordered_map<NesPartition, uint64_t> partitionCounter;
+    std::mutex partitionCounterMutex;
 };
 typedef std::shared_ptr<PartitionManager> PartitionManagerPtr;
 

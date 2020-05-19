@@ -21,22 +21,16 @@ class OutputChannel : public boost::noncopyable {
         std::shared_ptr<zmq::context_t> zmqContext,
         const std::string& address,
         NesPartition nesPartition,
-        std::function<void(Messages::ErroMessage)> onError)
-        : socketAddr(address),
-          zmqSocket(*zmqContext, ZMQ_DEALER),
-          nesPartition(nesPartition),
-          isClosed(false),
-          ready(false),
-          onErrorCb(std::move(onError)) {
-        ready = init();
-    }
+        uint8_t waitTime, uint8_t retryTimes,
+        std::function<void(Messages::ErroMessage)> onError);
 
     ~OutputChannel() {
         close();
     }
 
   private:
-    bool init();
+    void init(u_int64_t waitTime, u_int64_t retryTimes);
+    bool registerAtServer();
 
   public:
     /**
@@ -58,11 +52,10 @@ class OutputChannel : public boost::noncopyable {
     void close();
 
     /**
-     * @brief Returns true, if the registration to the server was successful and the OutputChannel can seamlessly send
-     * data to the server.
-     * @return true if registration was successful, else false
+     * @brief checks if the OutputChannel has successfully established a connection with the server
+     * @return true if connection is established, else false
      */
-    bool isReady();
+    bool isConnected();
 
   private:
     const std::string& socketAddr;
@@ -71,7 +64,7 @@ class OutputChannel : public boost::noncopyable {
     const NesPartition nesPartition;
 
     bool isClosed;
-    bool ready;
+    bool connected;
 
     std::function<void(Messages::ErroMessage)> onErrorCb;
 };

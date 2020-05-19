@@ -25,7 +25,7 @@ class OutputChannel;
 class NetworkManager : public boost::noncopyable {
   public:
     explicit NetworkManager(const std::string& hostname, uint16_t port,
-                            std::function<void(uint64_t*, TupleBuffer)>&& onDataBuffer,
+                            std::function<void(NesPartition, TupleBuffer)>&& onDataBuffer,
                             std::function<void(NesPartition)>&& onEndOfStream,
                             std::function<void(Messages::ErroMessage)>&& onError,
                             BufferManagerPtr bufferManager, PartitionManagerPtr partitionManager,
@@ -35,8 +35,9 @@ class NetworkManager : public boost::noncopyable {
      * @brief This method is called on the receiver side to register a SubpartitionConsumer, i.e. indicate that the
      * server is ready to receive particular subpartitions.
      * @param the nesPartition
+     * @return the current counter of the subpartition
      */
-    void registerSubpartitionConsumer(NesPartition nesPartition);
+    uint64_t registerSubpartitionConsumer(NesPartition nesPartition);
 
     /**
      * @brief This method is called on the sender side to register a SubpartitionProducer. If the connection to
@@ -51,7 +52,7 @@ class NetworkManager : public boost::noncopyable {
      */
     OutputChannel* registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
                                                 std::function<void(Messages::ErroMessage)>&& onError,
-                                                u_int64_t waitTime, u_int64_t retryTimes);
+                                                u_int8_t waitTime, u_int8_t retryTimes);
 
   private:
     // TODO decide whethere unique_ptr is better here
