@@ -25,6 +25,8 @@ using namespace web;
 class TopologyManager {
   public:
 
+    TopologyManager();
+
     /**
      * @brief create a nes coordinator node
      * @param id of the coordinator as size_t
@@ -135,11 +137,6 @@ class TopologyManager {
      * @brief method to reset the topology
      */
     void resetNESTopologyPlan();
-
-    TopologyManager() {
-        currentPlan.reset(new NESTopologyPlan);
-//        currentPlan = std::make_shared<NESTopologyPlan>();
-    }
 
     web::json::value getNESTopologyAsJson();
 

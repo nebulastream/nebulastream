@@ -48,7 +48,7 @@ class QueryTest : public testing::Test {
 };
 
 TEST_F(QueryTest, testQueryFilter) {
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 

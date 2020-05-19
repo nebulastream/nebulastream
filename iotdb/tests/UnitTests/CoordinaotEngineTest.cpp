@@ -8,6 +8,8 @@
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include "../../include/Topology/TopologyManager.hpp"
+
 #include <string>
 using namespace std;
 using namespace NES;
@@ -49,7 +51,7 @@ class CoordinatorEngineTest : public testing::Test {
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
     std::string address = ip + ":" + std::to_string(publish_port);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 
     size_t nodeId = coordinatorEngine->registerNode(address, 6, "",
@@ -73,7 +75,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
     std::string logicalStreamName = "testStream";
     std::string testSchema =
@@ -97,7 +99,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::shared_ptr<TopologyManager>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
     std::string physicalStreamName = "testStream";
     PhysicalStreamConfig conf;
