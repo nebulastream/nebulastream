@@ -176,7 +176,7 @@ std::string UtilityFunctions::generateQueryId() {
     for (i = 0; i < 12; i++) {
         ss << dis(gen);
     };
-    NES_DEBUG("UtilityFunctions: generateId: " + ss.str());
+    NES_DEBUG("UtilityFunctions: generateQueryId: " + ss.str());
     return ss.str();
 }
 
@@ -186,8 +186,8 @@ std::string UtilityFunctions::generateId() {
 
     std::uniform_int_distribution<int> dist(0, 15);
 
-    const char *v = "0123456789";
-    const bool dash[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    const char *v = "0123456789abcdef";
+    const bool dash[] = { 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 };
 
     std::string res;
     for (int i = 0; i < 16; i++) {
@@ -195,6 +195,8 @@ std::string UtilityFunctions::generateId() {
         res += v[dist(rng)];
         res += v[dist(rng)];
     }
+
+    NES_DEBUG("UtilityFunctions: generateId: " + res);
     return res;
 
 }
