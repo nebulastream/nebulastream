@@ -3,10 +3,6 @@
 #include <sstream>
 #include <string>
 
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/graphviz.hpp>
-
 #include <Topology/NESTopologyCoordinatorNode.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/NESTopologyGraph.hpp>
@@ -16,8 +12,7 @@
 #include <Topology/NESTopologyWorkerNode.hpp>
 #include <Util/CPUCapacity.hpp>
 #include <Util/Logger.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -98,7 +93,13 @@ NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(
     }
 
     // create new link
-    size_t linkId = getNextFreeLinkId();
+    std::string linkID_string = UtilityFunctions::generateQueryId();
+    NES_DEBUG("NESTopologyPlan::createNESTopologyLink: create a new link with string_id=" << linkID_string);
+    //std::stringstream sstream(linkID_string);
+    //size_t linkId = std::hash(linkID_string);
+    std::hash<std::string> hash_fn;
+    size_t linkId = hash_fn(linkID_string);
+    //sstream >> linkId;
     NES_DEBUG("NESTopologyPlan::createNESTopologyLink: create a new link with id=" << linkId);
     auto linkPtr = std::make_shared<NESTopologyLink>(linkId, pSourceNode,
                                                      pDestNode, pLinkCapacity,
@@ -117,12 +118,6 @@ bool NESTopologyPlan::removeNESTopologyLink(NESTopologyLinkPtr linkPtr) {
 
 std::string NESTopologyPlan::getTopologyPlanString() const {
     return fGraphPtr->getGraphString();
-}
-
-size_t NESTopologyPlan::getNextFreeLinkId() {
-    boost::uuids::basic_random_generator<boost::mt19937> gen;
-    boost::uuids::uuid u = gen();
-    return boost::uuids::hash_value(u);
 }
 
 NESTopologyGraphPtr NESTopologyPlan::getNESTopologyGraph() const {

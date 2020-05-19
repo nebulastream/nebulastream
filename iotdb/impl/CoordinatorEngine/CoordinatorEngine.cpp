@@ -3,9 +3,6 @@
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
 
 namespace NES {
 
@@ -17,9 +14,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyMan
 
 size_t getIdFromIp(std::string ip) {
     std::hash<std::string> hashFn;
-    boost::uuids::basic_random_generator<boost::mt19937> gen;
-    boost::uuids::uuid u = gen();
-    string uidString = boost::uuids::to_string(u);
+    string uidString = UtilityFunctions::generateId();
 
     return hashFn(uidString + ip);
 }
@@ -174,6 +169,7 @@ bool CoordinatorEngine::unregisterNode(size_t nodeId) {
     NES_DEBUG("CoordinatorEngine::UnregisterNode: success in topology is " << successTopology);
 
     return successCatalog && successTopology;
+
 }
 
 bool CoordinatorEngine::registerPhysicalStream(size_t nodeId,

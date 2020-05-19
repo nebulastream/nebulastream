@@ -2,9 +2,6 @@
 #include <Services/OptimizerService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <string>
 #include <unordered_set>
 
@@ -73,9 +70,7 @@ string QueryCatalog::registerQuery(const string& queryString,
         NES_DEBUG(
             "QueryCatalog: Final Execution Plan =" << nesExecutionPtr->getTopologyPlanString());
 
-        boost::uuids::basic_random_generator<boost::mt19937> gen;
-        boost::uuids::uuid u = gen();
-        std::string queryId = boost::uuids::to_string(u);//TODO: I am not sure this will not create a unique one
+        std::string queryId = UtilityFunctions::generateQueryId();
 
         QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(
             queryId, queryString, inputQueryPtr, nesExecutionPtr, QueryStatus::Registered);

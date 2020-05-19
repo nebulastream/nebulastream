@@ -6,9 +6,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
+#include <random>
 
 namespace NES {
 
@@ -149,10 +147,56 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
     }
 }
 
-std::string UtilityFunctions::generateUuid() {
-    boost::uuids::basic_random_generator<boost::mt19937> gen;
-    boost::uuids::uuid u = gen();
-    return boost::uuids::to_string(u);
+std::string UtilityFunctions::generateQueryId() {
+    static std::random_device              rd;
+    static std::mt19937                    gen(rd());
+    static std::uniform_int_distribution<> dis(0, 15);
+    static std::uniform_int_distribution<> dis2(8, 11);
+
+    std::stringstream ss;
+    int i;
+    ss << std::hex;
+    for (i = 0; i < 8; i++) {
+        ss << dis(gen);
+    }
+    ss << "-";
+    for (i = 0; i < 4; i++) {
+        ss << dis(gen);
+    }
+    ss << "-4";
+    for (i = 0; i < 3; i++) {
+        ss << dis(gen);
+    }
+    ss << "-";
+    ss << dis2(gen);
+    for (i = 0; i < 3; i++) {
+        ss << dis(gen);
+    }
+    ss << "-";
+    for (i = 0; i < 12; i++) {
+        ss << dis(gen);
+    };
+    NES_DEBUG("UtilityFunctions: generateId: " + ss.str());
+    return ss.str();
+}
+
+std::string UtilityFunctions::generateId() {
+    static std::random_device dev;
+    static std::mt19937 rng(dev());
+
+    std::uniform_int_distribution<int> dist(0, 15);
+
+    const char *v = "0123456789";
+    const bool dash[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    std::string res;
+    for (int i = 0; i < 16; i++) {
+        if (dash[i]) res += "-";
+        res += v[dist(rng)];
+        res += v[dist(rng)];
+    }
+    return res;
+
 }
 
 std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(
