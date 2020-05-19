@@ -17,7 +17,9 @@
 namespace NES {
 
 NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr inputQuery,
-                                                             NESTopologyPlanPtr nesTopologyPlanPtr) {
+                                                             NESTopologyPlanPtr nesTopologyPlanPtr,
+                                                             StreamCatalogPtr streamCatalog) {
+    this->nesTopologyPlan = nesTopologyPlanPtr;
     const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
@@ -59,7 +61,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr inputQuery
 
 vector<NESTopologyEntryPtr> TopDownStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                                       const NESTopologyEntryPtr rootNode) const {
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     vector<NESTopologyEntryPtr> candidateNodes;
     for (NESTopologyEntryPtr targetSource : sourceNodes) {
         vector<NESTopologyEntryPtr> nodesOnPath = pathFinder.findPathBetween(targetSource, rootNode);
@@ -73,7 +75,7 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                                      vector<NESTopologyEntryPtr> nesSourceNodes,
                                      NESTopologyGraphPtr nesTopologyGraphPtr) {
 
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
 
     for (NESTopologyEntryPtr nesSourceNode : nesSourceNodes) {

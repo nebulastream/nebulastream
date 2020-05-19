@@ -14,8 +14,9 @@
 
 namespace NES {
 
-NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
+NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
 
+    this->nesTopologyPlan = nesTopologyPlan;
     const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
@@ -62,7 +63,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inp
 vector<NESTopologyEntryPtr> HighThroughputStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                                              const NES::NESTopologyEntryPtr rootNode) const {
 
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     vector<NESTopologyEntryPtr> candidateNodes;
     for (NESTopologyEntryPtr targetSource : sourceNodes) {
         //Find the list of nodes connecting the source and destination nodes
@@ -80,7 +81,7 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
                                             vector<NESTopologyEntryPtr> sourceNodes) {
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 

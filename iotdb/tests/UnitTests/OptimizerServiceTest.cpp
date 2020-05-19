@@ -42,7 +42,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bot
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     createExampleTopology(streamCatalog, topologyManager);
-    QueryServicePtr queryService = std::make_shared<QueryService>();
+    QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
 
     std::stringstream code;
     code << "InputQuery::from(temperature)" << ".filter(temperature[\"id\"]==5)"
@@ -60,7 +60,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_top
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     createExampleTopology(streamCatalog, topologyManager);
-    QueryServicePtr queryService = std::make_shared<QueryService>();
+    QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
 
     std::stringstream code;
     code << "InputQuery::from(temperature).filter(temperature[\"value\"]==5)"
@@ -78,7 +78,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_query) {
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     createExampleTopology(streamCatalog, topologyManager);
-    QueryServicePtr queryService = std::make_shared<QueryService>();
+    QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
 
     try {
         std::stringstream code;
@@ -97,7 +97,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     createExampleTopology(streamCatalog, topologyManager);
-    QueryServicePtr queryService = std::make_shared<QueryService>();
+    QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
 
     try {
         std::stringstream code;

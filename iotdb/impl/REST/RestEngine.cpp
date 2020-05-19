@@ -12,11 +12,12 @@ RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordin
     NES_DEBUG("RestEngine");
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator);
-    queryController = std::make_shared<QueryController>(coordinator, queryCatalog, topologyManager);
-};
+    queryController = std::make_shared<QueryController>(coordinator, queryCatalog, topologyManager, streamCatalog);
+}
+
 RestEngine::~RestEngine() {
     NES_DEBUG("~RestEngine");
-};
+}
 
 void RestEngine::initRestOpHandlers() {
     _listener.support(methods::GET, std::bind(&RestEngine::handleGet, this, std::placeholders::_1));

@@ -14,8 +14,9 @@ typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
 class NESTopologyLink;
 typedef std::shared_ptr<NESTopologyLink> NESTopologyLinkPtr;
 
-class TopologyManager;
-typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+class NESTopologyPlan;
+typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
+
 /**
  * @brief This class is used for finding the paths between any given nodes.
  */
@@ -49,6 +50,7 @@ class PathFinder {
      */
     std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> findUniquePathBetween(std::vector<NESTopologyEntryPtr> sources,
                                                                                           NESTopologyEntryPtr destination);
+
 
     /**
      * @brief Find a path between given source and destination
@@ -85,6 +87,8 @@ class PathFinder {
      */
     std::vector<std::vector<NESTopologyEntryPtr>> findAllPathsBetween(NESTopologyEntryPtr source, NESTopologyEntryPtr destination);
 
+    PathFinder(NESTopologyPlanPtr nesTopologyPlan);
+
   private:
     /**
      * @brief Backtrack the path to the point where nesNode was the destination
@@ -112,7 +116,7 @@ class PathFinder {
     std::vector<NESTopologyEntryPtr> convertLinkPathIntoNodePath(const NESTopologyEntryPtr source,
                                                                  const std::vector<NESTopologyLinkPtr>& selectedPath);
 
-    TopologyManagerPtr topologyManager;
+    NESTopologyPlanPtr nesTopologyPlan;
 };
 }// namespace NES
 

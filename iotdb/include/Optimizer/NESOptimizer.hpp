@@ -16,6 +16,10 @@ typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
 
 class TranslateFromLegacyPlanPhase;
 typedef std::shared_ptr<TranslateFromLegacyPlanPhase> TranslateFromLegacyPlanPhasePtr;
+
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
 /**
  * @brief:
  *         This class is responsible for producing the execution graph for the queries on nes topology. We can have
@@ -37,7 +41,7 @@ class NESOptimizer {
      */
     NESExecutionPlanPtr prepareExecutionGraph(std::string strategy,
                                               InputQueryPtr inputQuery,
-                                              NESTopologyPlanPtr nesTopologyPlan);
+                                              NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
 
   private:
     TranslateFromLegacyPlanPhasePtr translateFromLegacyPlanPhase;

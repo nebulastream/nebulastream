@@ -1,8 +1,14 @@
 #include "Services/QueryService.hpp"
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Util/UtilityFunctions.hpp>
-
+#include <Util/Logger.hpp>
 using namespace NES;
+
+QueryService::QueryService(StreamCatalogPtr streamCatalog)
+: streamCatalog(streamCatalog)
+{
+    NES_DEBUG("QueryService()");
+}
 
 json::value QueryService::generateBaseQueryPlanFromQueryString(std::string userQuery) {
 
@@ -17,5 +23,5 @@ json::value QueryService::generateBaseQueryPlanFromQueryString(std::string userQ
 }
 
 InputQueryPtr QueryService::getInputQueryFromQueryString(std::string userQuery) {
-    return UtilityFunctions::createQueryFromCodeString(userQuery);
+    return UtilityFunctions::createQueryFromCodeString(userQuery, streamCatalog);
 }

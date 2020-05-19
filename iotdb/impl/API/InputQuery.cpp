@@ -1,5 +1,3 @@
-#include <boost/algorithm/string.hpp>
-
 #include <API/InputQuery.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <API/Window/WindowDefinition.hpp>
@@ -79,11 +77,22 @@ InputQuery& InputQuery::operator=(const InputQuery& query) {
 InputQuery::~InputQuery() {
 }
 
+StreamCatalogPtr InputQuery::streamCatalog = nullptr;
+
 InputQuery InputQuery::from(Stream& stream) {
     InputQuery q(std::make_shared<Stream>(stream));
     //TODO:here we assume that all sources are of the same type
-    assert(0);
-    std::vector<StreamCatalogEntryPtr> catalogEntry; // = streamCatalog->getPhysicalStreams(stream.getName());
+
+    std::vector<StreamCatalogEntryPtr> catalogEntry;
+    if(streamCatalog)
+    {
+        catalogEntry = streamCatalog->getPhysicalStreams(stream.getName());
+    }
+    else
+    {
+       NES_ERROR("InputQuery::from: stream catalog not set");
+    }
+
 
     OperatorPtr op;
 

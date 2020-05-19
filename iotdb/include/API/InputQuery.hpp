@@ -178,10 +178,11 @@ class InputQuery {
 
     void setUdsf(std::string udsf);
 
+    static StreamCatalogPtr streamCatalog;
+
   private:
     InputQuery(StreamPtr source_stream);
 
-    StreamCatalogPtr streamCatalog;
     int operatorIdCounter = 0;
     OperatorPtr root;
     StreamPtr sourceStream;

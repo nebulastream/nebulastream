@@ -16,6 +16,8 @@ class InputQuery;
 typedef std::shared_ptr<InputQuery> InputQueryPtr;
 class TopologyManager;
 typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 
 /**
@@ -103,7 +105,7 @@ typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
  */
 class QueryCatalog {
   public:
-    QueryCatalog(TopologyManagerPtr topologyManager);
+    QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog);
     /**
      * @brief registers a CAF query into the NES topology to make it deployable
      * @param queryString a queryString of the query
@@ -210,6 +212,7 @@ class QueryCatalog {
 
   private:
     TopologyManagerPtr topologyManager;
+    StreamCatalogPtr streamCatalog;
 
     map<string, QueryCatalogEntryPtr> queries;
     map<string, std::vector<NESTopologyEntryPtr>> queriesToExecNodeMap;

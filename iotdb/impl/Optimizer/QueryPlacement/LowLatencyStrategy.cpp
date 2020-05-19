@@ -17,8 +17,8 @@
 namespace NES {
 
 NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQuery,
-                                                                NESTopologyPlanPtr nesTopologyPlan) {
-
+                                                                NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
+    this->nesTopologyPlan = nesTopologyPlan;
     const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
@@ -65,7 +65,7 @@ vector<NESTopologyEntryPtr> LowLatencyStrategy::getCandidateNodesForFwdOperatorP
                                                                                              NESTopologyEntryPtr>& sourceNodes,
                                                                                          const NESTopologyEntryPtr rootNode) const {
 
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     vector<NESTopologyEntryPtr> candidateNodes;
     for (NESTopologyEntryPtr targetSource : sourceNodes) {
         //Find the list of nodes connecting the source and destination nodes
@@ -81,7 +81,7 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
                                         LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
 
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     for (NESTopologyEntryPtr sourceNode : sourceNodes) {

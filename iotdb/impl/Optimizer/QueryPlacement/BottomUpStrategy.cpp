@@ -20,7 +20,8 @@ using namespace std;
 
 namespace NES {
 
-NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
+NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
+    this->nesTopologyPlan = nesTopologyPlan;
 
     const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
@@ -67,7 +68,7 @@ NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPtr inputQuer
 
 vector<NESTopologyEntryPtr> BottomUpStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                                        const NESTopologyEntryPtr rootNode) const {
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     vector<NESTopologyEntryPtr> candidateNodes;
     for (NESTopologyEntryPtr targetSource : sourceNodes) {
         vector<NESTopologyEntryPtr> nodesOnPath = pathFinder.findPathBetween(targetSource, rootNode);
@@ -81,7 +82,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
 
     NES_DEBUG("BottomUp: Place the operator chain from each source node");
     for (NESTopologyEntryPtr sourceNode : sourceNodes) {

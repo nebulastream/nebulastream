@@ -16,7 +16,9 @@
 namespace NES {
 
 NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPtr inputQuery,
-                                                                      NESTopologyPlanPtr nesTopologyPlan) {
+                                                                      NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
+    this->nesTopologyPlan = nesTopologyPlan;
+
     const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
@@ -58,7 +60,7 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     size_t linkRedundency = 2;
 
     NES_INFO(
@@ -264,7 +266,7 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
 void HighAvailabilityStrategy::addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
                                                    NES::NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
-    PathFinder pathFinder;
+    PathFinder pathFinder(this->nesTopologyPlan);
     // We iterate over the nodes used for the placement in the path and find all paths between two consecutive nodes.
     // Since, we want to stop before the last node the loop terminates before last node.
     // This loop is done to avoid placing forward operators on a path not selected for the placement after being considered

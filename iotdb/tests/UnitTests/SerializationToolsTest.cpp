@@ -86,7 +86,7 @@ TEST_F(SerializationToolsTest, testSerializeDeserializeSinkOp)
 
 /* Test serialization for operators  */
 
-TEST_F(SerializationToolsTest, testSerializeDeserializeQueryQperators)
+TEST_F(SerializationToolsTest, testSerializeDeserializeQueryOperators)
 {
     // TODO: implement equals method for all operators
     InputQuery& query = InputQuery::from(*stream).filter(stream->getField("value") < 42).print(std::cout);

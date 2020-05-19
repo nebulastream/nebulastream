@@ -8,6 +8,8 @@
  * @brief a collection of shared utility functions
  */
 namespace NES {
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 class UtilityFunctions {
   public:
@@ -21,7 +23,7 @@ class UtilityFunctions {
    *  @return Smart pointer to InputQuery object of the query
    *  */
     static InputQueryPtr createQueryFromCodeString(
-        const std::string& query_code_snippet);
+        const std::string& query_code_snippet, StreamCatalogPtr streamCatalog);
 
     /**
    *  @brief this function **executes** the code provided by the user and returns an schema Object
