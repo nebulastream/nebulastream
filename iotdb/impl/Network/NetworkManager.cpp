@@ -10,7 +10,7 @@ namespace Network {
 
 NetworkManager::NetworkManager(const std::string& hostname,
                                uint16_t port,
-                               std::function<void(uint64_t*, TupleBuffer)>&& onDataBuffer,
+                               std::function<void(NesPartition, TupleBuffer)>&& onDataBuffer,
                                std::function<void(NesPartition)>&& onEndOfStream,
                                std::function<void(Messages::ErroMessage)>&& onError,
                                BufferManagerPtr bufferManager,
@@ -28,33 +28,19 @@ NetworkManager::NetworkManager(const std::string& hostname,
     }
 }
 
-void NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition) {
+uint64_t NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition) {
     NES_INFO("NetworkManager: Registering SubpartitionConsumer: " << nesPartition.toString());
-    partitionManager->registerSubpartition(nesPartition);
+    return partitionManager->registerSubpartition(nesPartition);
 }
 
 OutputChannel* NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
                                                             std::function<void(Messages::ErroMessage)>&& onError,
-                                                            u_int64_t waitTime, u_int64_t retryTimes) {
+                                                            u_int8_t waitTime, u_int8_t retryTimes) {
     NES_INFO("NetworkManager: Registering SubpartitionProducer: " << nesPartition.toString());
     // method needs to return a pointer so that it can be passed to boost::thread_specific_ptr
-    auto channel = new OutputChannel(server->getContext(), nodeLocation.createZmqURI(), nesPartition, onError);
-    if (channel->isReady()) {
-        //channel is connected and ready to go
-        return channel;
-    } else if (retryTimes > 0) {
-        // try to reconnect
-        int i = 1;
-        while (!channel->isReady() && i <= retryTimes) {
-            delete channel;
-            sleep(waitTime);
-            NES_INFO("NetworkManager: Registration of SubpartitionProducer not successful! Reconnecting " << i);
-            channel = new OutputChannel(server->getContext(), nodeLocation.createZmqURI(), nesPartition, onError);
-            i = i + 1;
-        }
-    }
+    auto channel = new OutputChannel(server->getContext(), nodeLocation.createZmqURI(), nesPartition, waitTime, retryTimes, onError);
 
-    if (channel->isReady()) {
+    if (channel->isConnected()) {
         // if reconnect successful, return
         return channel;
     } else {

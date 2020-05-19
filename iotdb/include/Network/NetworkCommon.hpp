@@ -63,11 +63,11 @@ class NesPartition {
             + std::to_string(partitionId) + "::" + std::to_string(subpartitionId);
     }
 
-    bool operator==(const NesPartition& rhs) const {
-        return queryId == rhs.queryId &&
-            operatorId == rhs.operatorId &&
-            partitionId == rhs.partitionId &&
-            subpartitionId == rhs.subpartitionId;
+    friend bool operator==(const NesPartition& lhs, const NesPartition& rhs) {
+        return lhs.queryId == rhs.queryId &&
+            lhs.operatorId == rhs.operatorId &&
+            lhs.partitionId == rhs.partitionId &&
+            lhs.subpartitionId == rhs.subpartitionId;
     }
 
   private:

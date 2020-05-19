@@ -54,7 +54,7 @@ void PartitionManager::clear() {
     partitionCounter.clear();
 }
 
-bool PartitionManager::isRegistered(NesPartition partition) {
+bool PartitionManager::isRegistered(NesPartition partition) const {
     //check if partition is present
     return partitionCounter.find(partition) != partitionCounter.end();
 }

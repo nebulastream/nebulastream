@@ -3,5 +3,4 @@ add_source_iotdb(
         NetworkManager.cpp
         OutputChannel.cpp
         PartitionManager.cpp
-        NetworkCommon.cpp
 )
