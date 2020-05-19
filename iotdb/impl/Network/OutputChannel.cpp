@@ -65,6 +65,7 @@ bool OutputChannel::registerAtServer() {
 
     if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
         NES_ERROR("OutputChannel: Message from server is corrupt!");
+        //TODO: think if it makes sense to reconnect after this error
         return false;
     }
 
@@ -155,7 +156,7 @@ void OutputChannel::close() {
     connected = false;
 }
 
-bool OutputChannel::isConnected() {
+bool OutputChannel::isConnected() const {
     return connected;
 }
 
