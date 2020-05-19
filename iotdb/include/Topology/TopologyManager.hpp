@@ -24,11 +24,6 @@ using namespace web;
 //FIXME:add docu here
 class TopologyManager {
   public:
-//    static TopologyManager& getInstance() {
-//        static TopologyManager instance;// Guaranteed to be destroyed.
-//        // Instantiated on first use.
-//        return instance;
-//    }
 
     /**
      * @brief create a nes coordinator node
