@@ -37,9 +37,7 @@ class UtilityFunctions {
    * @return the ID string
    * https://stackoverflow.com/questions/24365331/how-can-i-generate-uuid-in-c-without-using-boost-library
    */
-    static std::string generateQueryId();
-
-    static std::string generateId();
+   static std::string generateId();
 
     /**
    * @brief get the first substring between a unique first delimiter and a non-unique second delimiter
