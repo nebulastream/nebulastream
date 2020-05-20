@@ -1,6 +1,10 @@
 name: NES CI
 
 on: [push, pull_request]
+  tags-ignore:
+    - '*'
+  paths-ignore:
+    - iotdb/include/Version/version.hpp
 
 jobs:
   build-job:
@@ -20,3 +24,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       if: always()
+
+  release:
+    name: Release New Version        
+    #if: ${{ github.ref == 'master' }}
+    needs: build-job 
+    steps:
+      run: |
+          docker run -v $GITHUB_WORKSPACE/iotdb:/iotdb --entrypoint /iotdb/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest   
