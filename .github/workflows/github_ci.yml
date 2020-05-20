@@ -20,7 +20,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Run tests
       run: |
-          docker run -v $GITHUB_WORKSPACE/iotdb:/iotdb --entrypoint /iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+          docker run -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IotDB/iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
     - name: Notify Slack
       uses: 8398a7/action-slack@v2
       with:
@@ -39,5 +39,5 @@ jobs:
     - uses: actions/checkout@v2
     - name: Release new version
       run: |
-          docker run -v $GITHUB_WORKSPACE/iotdb:/iotdb --entrypoint /iotdb/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+          docker run -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
 
