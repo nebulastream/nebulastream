@@ -57,7 +57,7 @@ macro(project_enable_release)
                 COMMENT "Updated NES version ${${PROJECT_NAME}_VERSION}")
         add_custom_command(TARGET release
                 COMMAND ${GIT_EXECUTABLE} tag v${${PROJECT_NAME}_VERSION} -m "GIT-CI: Releasing New Tag v${${PROJECT_NAME}_VERSION}"
-                COMMAND ${GIT_EXECUTABLE} push --origin v${${PROJECT_NAME}_VERSION}
+                COMMAND ${GIT_EXECUTABLE} push origin v${${PROJECT_NAME}_VERSION}
                 COMMENT "Released and pushed new tag to the repository")
     else ()
         message(INFO " -- Disabled release target as currently not on master branch.")
@@ -69,7 +69,7 @@ macro(project_enable_release)
                 COMMENT "Updated NES version ${${PROJECT_NAME}_VERSION}")
         add_custom_command(TARGET release
                 COMMAND ${GIT_EXECUTABLE} tag v${${PROJECT_NAME}_VERSION} -m "GIT-CI: Releasing New Tag v${${PROJECT_NAME}_VERSION}"
-                COMMAND ${GIT_EXECUTABLE} push --origin v${${PROJECT_NAME}_VERSION}
+                COMMAND ${GIT_EXECUTABLE} push origin v${${PROJECT_NAME}_VERSION}
                 COMMENT "Released and pushed new tag to the repository")
     endif ()
 endmacro(project_enable_release)
