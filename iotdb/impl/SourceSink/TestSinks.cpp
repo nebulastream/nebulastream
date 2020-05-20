@@ -44,10 +44,10 @@ const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
                                 const uint16_t port) {
     return std::make_shared<ZmqSink>(schema, host, port);
 }
-
+#ifdef ENABLE_KAFKA_BUILD
 const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
                                             const size_t kafkaProducerTimeout) {
     return std::make_shared<KafkaSink>(schema, brokers, topic, kafkaProducerTimeout);
 }
-
+#endif
 }// namespace NES

@@ -53,10 +53,10 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
                                        numbersOfBufferToProduce, frequency);
 }
-
+#ifdef ENABLE_KAFKA_BUILD
 const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string brokers, std::string topic, std::string groupId,
                                       bool autoCommit, uint64_t kafkaConsumerTimeout) {
     return std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, groupId, autoCommit, kafkaConsumerTimeout);
 }
-
+#endif
 }// namespace NES

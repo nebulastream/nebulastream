@@ -1,6 +1,6 @@
 #ifndef NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
 #define NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
-
+#ifdef ENABLE_KAFKA_BUILD
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <cppkafka/cppkafka.h>
 
@@ -45,5 +45,5 @@ class KafkaSinkDescriptor : public SinkDescriptor {
 
 typedef std::shared_ptr<KafkaSinkDescriptor> KafkaSinkDescriptorPtr;
 }// namespace NES
-
+#endif
 #endif//NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_

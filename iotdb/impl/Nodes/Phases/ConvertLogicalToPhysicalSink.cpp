@@ -19,12 +19,14 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
         return createZmqSink(schema, zmqSinkDescriptor->getHost(), zmqSinkDescriptor->getPort());
+#ifdef ENABLE_KAFKA_BUILD
     } else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
         const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
         return createKafkaSinkWithSchema(schema, kafkaSinkDescriptor->getBrokers(),
                                          kafkaSinkDescriptor->getTopic(),
                                          kafkaSinkDescriptor->getTimeout());
+#endif
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating File sink");
         const FileSinkDescriptorPtr fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();

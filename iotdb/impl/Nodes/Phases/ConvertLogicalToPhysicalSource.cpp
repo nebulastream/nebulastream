@@ -38,6 +38,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
         return createCSVFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
                                    csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
                                    csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency());
+#ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Kafka source");
         const KafkaSourceDescriptorPtr kafkaSourceDescriptor = sourceDescriptor->as<KafkaSourceDescriptor>();
@@ -45,13 +46,14 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
                                  kafkaSourceDescriptor->getBrokers(), kafkaSourceDescriptor->getTopic(),
                                  kafkaSourceDescriptor->getGroupId(), kafkaSourceDescriptor->isAutoCommit(),
                                  kafkaSourceDescriptor->getKafkaConnectTimeout());
+#endif
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating sense source");
         const SenseSourceDescriptorPtr senseSourceDescriptor = sourceDescriptor->as<SenseSourceDescriptor>();
         return createSenseSource(senseSourceDescriptor->getSchema(), bufferManager, queryManager,
                                  senseSourceDescriptor->getUdfs());
     } else {
-        NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type");
+        NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
 }

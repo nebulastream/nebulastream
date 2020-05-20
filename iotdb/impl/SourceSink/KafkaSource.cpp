@@ -1,3 +1,4 @@
+#ifdef ENABLE_KAFKA_BUILD
 #include <SourceSink/KafkaSource.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
@@ -127,3 +128,4 @@ const std::unique_ptr<cppkafka::Consumer>& KafkaSource::getConsumer() const {
 
 }// namespace NES
 BOOST_CLASS_EXPORT(NES::KafkaSource);
+#endif

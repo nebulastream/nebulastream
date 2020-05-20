@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-
+#ifdef ENABLE_KAFKA_BUILD
 #include <string>
 #include <cstring>
 #include <thread>
@@ -105,3 +105,4 @@ TEST_F(KafkaTest, KafkaSinkInitWithEmptyTopic) {
 }
 
 }
+#endif

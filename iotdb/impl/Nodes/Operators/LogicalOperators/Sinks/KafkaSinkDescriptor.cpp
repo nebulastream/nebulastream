@@ -1,5 +1,5 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
-
+#ifdef ENABLE_KAFKA_BUILD
 namespace NES {
 
 KafkaSinkDescriptor::KafkaSinkDescriptor(std::string topic, std::string brokers, uint64_t timeout)
@@ -23,3 +23,4 @@ SinkDescriptorPtr KafkaSinkDescriptor::create(std::string topic,
 }
 
 }// namespace NES
+#endif

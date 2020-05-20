@@ -66,7 +66,7 @@ const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
  * @brief create test sink of YSB benchmark
  */
 const DataSinkPtr createYSBPrintSink();
-
+#ifdef ENABLE_KAFKA_BUILD
 /**
  * @brief create kafka sink
  * @param schema: schema of the data
@@ -77,6 +77,6 @@ const DataSinkPtr createYSBPrintSink();
  */
 const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
                                             const size_t kafkaProducerTimeout);
-
+#endif
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_SINKCREATOR_HPP_ */
