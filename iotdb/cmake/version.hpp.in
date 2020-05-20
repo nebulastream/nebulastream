@@ -1,0 +1,7 @@
+#ifndef __VERSION_HPP__
+#define __VERSION_HPP__
+#define NES_VERSION_MAJOR @NES_VERSION_MAJOR@
+#define NES_VERSION_MINOR @NES_VERSION_MINOR@
+#define NES_VERSION_PATCH @NES_VERSION_PATCH@
+constexpr char const* NES_VERSION      = "@NES_VERSION@";
+#endif
