@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v2
-    - name: Fetch all tags
+    - name: Fetch git history
       run: |
           git fetch --prune --unshallow --tags
     - name: Run tests
@@ -36,10 +36,13 @@ jobs:
 
   release:
     runs-on: self-hosted
-    #if: ${{ github.ref == 'master' }}
+    if: ${{ github.ref == 'master' }}
     needs: build-job
     steps:
     - uses: actions/checkout@v2
+    - name: Fetch git history
+      run: |
+        git fetch --prune --unshallow --tags
     - name: Release new version
       run: |
           docker run -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
