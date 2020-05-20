@@ -93,13 +93,10 @@ NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(
     }
 
     // create new link
-    std::string linkID_string = UtilityFunctions::generateQueryId();
+    std::string linkID_string = UtilityFunctions::generateId();
     NES_DEBUG("NESTopologyPlan::createNESTopologyLink: create a new link with string_id=" << linkID_string);
-    //std::stringstream sstream(linkID_string);
-    //size_t linkId = std::hash(linkID_string);
     std::hash<std::string> hash_fn;
     size_t linkId = hash_fn(linkID_string);
-    //sstream >> linkId;
     NES_DEBUG("NESTopologyPlan::createNESTopologyLink: create a new link with id=" << linkId);
     auto linkPtr = std::make_shared<NESTopologyLink>(linkId, pSourceNode,
                                                      pDestNode, pLinkCapacity,
