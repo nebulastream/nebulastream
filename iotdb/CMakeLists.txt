@@ -331,6 +331,8 @@ add_subdirectory(tests)
 configure_file(include/QueryLib/WindowManagerLib.hpp ${CMAKE_CURRENT_BINARY_DIR}/tests)
 configure_file(include/QueryLib/WindowManagerLib.hpp ${CMAKE_CURRENT_BINARY_DIR})
 
+include(./cmake/SemVerConfig.cmake)
+
 install(TARGETS nesCoordinator nesWorker iotdb
         COMPONENT NebulaStream
         RUNTIME DESTINATION "/opt/local/nebula-stream"
