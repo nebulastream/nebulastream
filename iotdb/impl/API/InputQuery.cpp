@@ -294,7 +294,7 @@ InputQuery& InputQuery::print(std::ostream& out) {
     root = op;
     return *this;
 }
-
+#ifdef ENABLE_KAFKA_BUILD
 InputQuery& InputQuery::writeToKafka(const std::string& brokers,
                                      const std::string& topic,
                                      const size_t kafkaProducerTimeout) {
@@ -307,6 +307,7 @@ InputQuery& InputQuery::writeToKafka(const std::string& brokers,
     root = op;
     return *this;
 }
+#endif
 const StreamPtr InputQuery::getSourceStream() const {
     return sourceStream;
 }

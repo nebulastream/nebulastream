@@ -96,10 +96,12 @@ target_link_libraries(source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME source-tests COMMAND source-tests)
 
 ### Kafka Tests ###
+if(NES_USE_KAFKA)
 add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
 message("libraies: ${LIBRARIES}")
 target_link_libraries(kafka-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME kafka-tests COMMAND kafka-tests)
+endif(NES_USE_KAFKA)
 
 ### Predicate Tree Tests ###
 add_executable(predicate-tree-tests "UnitTests/PredicateTest.cpp")

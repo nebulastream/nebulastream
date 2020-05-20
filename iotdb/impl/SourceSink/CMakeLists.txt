@@ -10,8 +10,13 @@ add_source_iotdb(
         CSVSource.cpp
         TestSources.cpp
         TestSinks.cpp
-        KafkaSink.cpp
-        KafkaSource.cpp
         DefaultSource.cpp
         SenseSource.cpp
 )
+
+if(NES_USE_KAFKA)
+    add_source_iotdb(
+        KafkaSink.cpp
+        KafkaSource.cpp
+    )
+endif()

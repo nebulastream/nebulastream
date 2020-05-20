@@ -51,7 +51,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingZMQLogiclaToPhysicalSou
     DataSourcePtr zqmSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
     EXPECT_EQ(zqmSource->getType(), ZMQ_SOURCE);
 }
-
+#ifdef ENABLE_KAFKA_BUILD
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingKafkaLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
@@ -59,7 +59,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingKafkaLogiclaToPhysicalS
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
     EXPECT_EQ(csvFileSource->getType(), KAFKA_SOURCE);
 }
-
+#endif
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();

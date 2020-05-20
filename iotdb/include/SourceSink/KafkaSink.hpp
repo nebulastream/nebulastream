@@ -1,6 +1,6 @@
 #ifndef KAFKASINK_HPP
 #define KAFKASINK_HPP
-
+#ifdef ENABLE_KAFKA_BUILD
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -71,5 +71,5 @@ class KafkaSink : public DataSink {
 };
 typedef std::shared_ptr<KafkaSink> KafkaSinkPtr;
 }// namespace NES
-
+#endif
 #endif// KAFKASINK_HPP

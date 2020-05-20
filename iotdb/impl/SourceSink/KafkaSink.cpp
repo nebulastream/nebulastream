@@ -1,3 +1,4 @@
+#ifdef ENABLE_KAFKA_BUILD
 #include <NodeEngine/QueryManager.hpp>
 #include <SourceSink/KafkaSink.hpp>
 #include <Util/Logger.hpp>
@@ -96,3 +97,4 @@ const uint64_t KafkaSink::getKafkaProducerTimeout() const {
 }// namespace NES
 
 BOOST_CLASS_EXPORT(NES::KafkaSink);
+#endif

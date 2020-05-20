@@ -57,6 +57,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
                                             csvSourcePtr->getGatheringInterval());
             return csvSourceDescriptor;
         }
+#ifdef ENABLE_KAFKA_BUILD
         case KAFKA_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Kafka source");
             const KafkaSourcePtr kafkaSourcePtr = std::dynamic_pointer_cast<KafkaSource>(dataSource);
@@ -69,6 +70,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
                                               kafkaSourcePtr->getKafkaConsumerTimeout().count());
             return kafkaSourceDescriptor;
         }
+#endif
         case SENSE_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating sense source");
             const SenseSourcePtr senseSourcePtr = std::dynamic_pointer_cast<SenseSource>(dataSource);

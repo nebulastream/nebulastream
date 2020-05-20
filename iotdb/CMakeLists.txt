@@ -238,8 +238,11 @@ set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest)
 #set(LIBRARIES ${LIBRARIES} ${CAF_EXTRA_LDFLAGS} ${CAF_LIBRARIES} ${PTHREAD_LIBRARIES})
 
 # Library containing Kafka client
+if(NES_USE_KAFKA)
 find_package(CppKafka REQUIRED)
 set(LIBRARIES ${LIBRARIES} ${CppKafka_LIBRARIES})
+add_compile_definitions(ENABLE_KAFKA_BUILD)
+endif(NES_USE_KAFKA)
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")

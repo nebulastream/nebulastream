@@ -40,7 +40,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink)
     DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
     EXPECT_EQ(zmqSink->getType(), ZMQ_SINK);
 }
-
+#ifdef ENABLE_KAFKA_BUILD
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
@@ -48,7 +48,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSin
     DataSinkPtr kafkaSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
     EXPECT_EQ(kafkaSink->getType(), KAFKA_SINK);
 }
-
+#endif
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();

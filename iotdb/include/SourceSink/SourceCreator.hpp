@@ -66,7 +66,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
                                         const std::string& delimiter,
                                         size_t numBuffersToProcess,
                                         size_t frequency);
-
+#ifdef ENABLE_KAFKA_BUILD
 /**
  * @brief Create kafka source
  * @param schema schema of the elements
@@ -83,6 +83,6 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
                                       std::string groupId,
                                       bool autoCommit,
                                       uint64_t kafkaConsumerTimeout);
-
+#endif
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_SOURCECREATOR_HPP_ */
