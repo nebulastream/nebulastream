@@ -1,15 +1,19 @@
 name: NES CI
 
-on: [push, pull_request]
-  tags-ignore:
+on:
+  push:
+    tags-ignore:
     - '*'
-  paths-ignore:
+    paths-ignore:
     - iotdb/include/Version/version.hpp
+  pull_request:
+    branches:
+    - '*'
 
 jobs:
   build-job:
     runs-on: self-hosted
-    timeout-minutes: 30    
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v2
     - name: Run tests
@@ -26,9 +30,12 @@ jobs:
       if: always()
 
   release:
-    name: Release New Version        
+    runs-on: self-hosted
     #if: ${{ github.ref == 'master' }}
-    needs: build-job 
+    needs: build-job
     steps:
+    - uses: actions/checkout@v2
+    - name: Release new version
       run: |
-          docker run -v $GITHUB_WORKSPACE/iotdb:/iotdb --entrypoint /iotdb/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest   
+          docker run -v $GITHUB_WORKSPACE/iotdb:/iotdb --entrypoint /iotdb/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+
