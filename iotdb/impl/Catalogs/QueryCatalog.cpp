@@ -70,7 +70,7 @@ string QueryCatalog::registerQuery(const string& queryString,
         NES_DEBUG(
             "QueryCatalog: Final Execution Plan =" << nesExecutionPtr->getTopologyPlanString());
 
-        std::string queryId = UtilityFunctions::generateQueryId();
+        std::string queryId = UtilityFunctions::generateId();
 
         QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(
             queryId, queryString, inputQueryPtr, nesExecutionPtr, QueryStatus::Registered);
