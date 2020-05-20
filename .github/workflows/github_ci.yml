@@ -20,7 +20,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Fetch all tags
       run: |
-          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+          git fetch --prune --unshallow --tags
     - name: Run tests
       run: |
           docker run -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
