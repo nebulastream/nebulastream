@@ -66,6 +66,7 @@ macro(project_enable_release)
                 )
         add_custom_command(TARGET release
                 COMMAND ${GIT_EXECUTABLE} commit -am "GIT-CI: Updating NES version to ${${PROJECT_NAME}_VERSION}"
+                COMMAND ${GIT_EXECUTABLE} push
                 COMMENT "Updated NES version ${${PROJECT_NAME}_VERSION}")
         add_custom_command(TARGET release
                 COMMAND ${GIT_EXECUTABLE} tag v${${PROJECT_NAME}_VERSION} -m "GIT-CI: Releasing New Tag v${${PROJECT_NAME}_VERSION}"
