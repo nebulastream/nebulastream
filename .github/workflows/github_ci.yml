@@ -2,6 +2,8 @@ name: NES CI
 
 on:
   push:
+    branches:
+    - '*'
     tags-ignore:
     - '*'
     paths-ignore:
