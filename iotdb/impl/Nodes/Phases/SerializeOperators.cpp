@@ -53,7 +53,30 @@ class SerializeOperators {
     void serializeDataType(DataTypePtr dataType, SerializableDataType* serializedDataType) {
         if (dataType->isUndefined()) {
             serializedDataType->set_type(SerializableDataType_Type_UNDEFINED);
-        } else if (dataType->isArrayDataType()) {
+        } else if (dataType->isEqual(createDataType(BasicType::CHAR))) {
+            serializedDataType->set_type(SerializableDataType_Type_UNDEFINED);
+        } else if (dataType->isEqual(createDataType(BasicType::INT8))) {
+            serializedDataType->set_type(SerializableDataType_Type_INT8);
+        } else if (dataType->isEqual(createDataType(BasicType::INT16))) {
+            serializedDataType->set_type(SerializableDataType_Type_INT16);
+        } else if (dataType->isEqual(createDataType(BasicType::INT32))) {
+            serializedDataType->set_type(SerializableDataType_Type_INT32);
+        } else if (dataType->isEqual(createDataType(BasicType::INT64))) {
+            serializedDataType->set_type(SerializableDataType_Type_INT64);
+        } else if (dataType->isEqual(createDataType(BasicType::UINT8))) {
+            serializedDataType->set_type(SerializableDataType_Type_UINT8);
+        } else if (dataType->isEqual(createDataType(BasicType::UINT16))) {
+            serializedDataType->set_type(SerializableDataType_Type_UINT16);
+        } else if (dataType->isEqual(createDataType(BasicType::UINT32))) {
+            serializedDataType->set_type(SerializableDataType_Type_UINT32);
+        } else if (dataType->isEqual(createDataType(BasicType::UINT64))) {
+            serializedDataType->set_type(SerializableDataType_Type_UINT64);
+        } else if (dataType->isEqual(createDataType(BasicType::FLOAT32))) {
+            serializedDataType->set_type(SerializableDataType_Type_FLOAT32);
+        } else if (dataType->isEqual(createDataType(BasicType::FLOAT64))) {
+            serializedDataType->set_type(SerializableDataType_Type_FLOAT64);
+        } else {
+            NES_THROW_RUNTIME_ERROR("Serialize: serialization is not possible.");
         }
     }
 

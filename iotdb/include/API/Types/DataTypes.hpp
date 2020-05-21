@@ -103,6 +103,7 @@ const DataTypePtr createReferenceDataType(const BasicType& type);
 
 const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string& value);
 const DataTypePtr createArrayDataType(const BasicType& type, uint32_t dimension);
+const DataTypePtr createArrayDataType(const DataTypePtr type, uint32_t dimension);
 const ValueTypePtr createStringValueType(const std::string& value);
 const ValueTypePtr createStringValueType(const char* value, u_int16_t dimension = 0);
 const ValueTypePtr createArrayValueType(const BasicType& type, const std::vector<std::string>& value);

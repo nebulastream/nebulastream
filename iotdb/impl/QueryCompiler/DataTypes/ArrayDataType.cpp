@@ -109,4 +109,8 @@ const DataTypePtr createArrayDataType(const BasicType& type, uint32_t dimension)
     return std::make_shared<ArrayDataType>(ArrayDataType(BasicDataType(type).copy(), dimension));
 }
 
+const DataTypePtr createArrayDataType(const DataTypePtr type, uint32_t dimension) {
+    return std::make_shared<ArrayDataType>(ArrayDataType(type, dimension));
+}
+
 }// namespace NES

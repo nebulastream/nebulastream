@@ -5,3 +5,5 @@ add_source_iotdb(
         WorkerRPCServer.cpp
         ExecutableTransferObject.cpp
 )
+
+add_subdirectory(Serialization)

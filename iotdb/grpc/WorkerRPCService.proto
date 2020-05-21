@@ -14,7 +14,7 @@ service WorkerRPCService {
 }
 
 message QueryPlan{
-  SerializableOperator operator = 1;
+  NES.SerializableOperator operator = 1;
 }
 
 message DeployQueryRequest {
