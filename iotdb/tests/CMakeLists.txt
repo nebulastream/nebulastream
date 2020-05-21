@@ -188,6 +188,11 @@ add_executable(translate-from-legacy-plan-phase-test "UnitTests/Nodes/Phases/Tra
 target_link_libraries(translate-from-legacy-plan-phase-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME translate-from-legacy-plan-phase-test COMMAND translate-from-legacy-plan-phase-test)
 
+# SerializationUtilTest
+add_executable(serialize-operator-test "UnitTests/Nodes/SerializationUtilTest.cpp")
+target_link_libraries(serialize-operator-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME serialize-operator-test COMMAND serialize-operator-test)
+
 ### CoordinatorEngine Tests ###
 add_executable(coordinator-engine-tests "UnitTests/CoordinaotEngineTest.cpp")
 target_link_libraries(coordinator-engine-tests iotdb ${GTEST_LIBRARIES})

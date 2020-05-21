@@ -85,7 +85,7 @@ if (GRPC_AVAILABLE)
     else ()
         set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
     endif ()
-else ()
+else()
     message(STATUS "Installing gRPC from repository")
     ## Fetch and build source for grpc and protobuf and all dependencies
     include(FetchContent)
@@ -134,7 +134,6 @@ add_custom_command(
         OUTPUT ${OUTPUT_SOURCES}
         COMMAND ${_PROTOBUF_PROTOC}
         ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
-        --proto_path "/home/pgrulich/projects/NES/IoTDB/iotdb/cmake-build-debug/_deps/grpc-src/third_party/protobuf/src"
         --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
         -I "${PROTO_PATH}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
@@ -308,7 +307,7 @@ get_header_iotdb(iotdb_HEADER_FILES)
 add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
 target_include_directories(iotdb PUBLIC "include")
 target_include_directories(iotdb PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(iotdb PUBLIC ${LIBRARIES} cppzmq)
+target_link_libraries(iotdb PUBLIC ${LIBRARIES} cppzmq ${PROTOBUF_LIBRARIES})
 if (GRPC_LIBRARIES)
     target_link_libraries(iotdb PRIVATE ${GRPC_LIBRARIES})
 endif ()

@@ -1,0 +1,133 @@
+#include <API/InputQuery.hpp>
+#include <API/Query.hpp>
+#include <API/Schema.hpp>
+#include <API/Types/DataTypes.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
+#include <GRPC/Serialization/OperatorSerializationUtil.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Nodes/Node.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
+#include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <QueryCompiler/DataTypes/ArrayDataType.hpp>
+#include <SerializableOperator.pb.h>
+#include <Topology/NESTopologyManager.hpp>
+#include <Topology/NESTopologySensorNode.hpp>
+#include <Util/Logger.hpp>
+#include <google/protobuf/util/json_util.h>
+#include <gtest/gtest.h>
+#include <iostream>
+using namespace NES;
+
+class SerializationUtilTest : public testing::Test {
+
+  public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES_INFO("Setup SerializationUtilTest test class.");
+    }
+
+    /* Will be called before a test is executed. */
+    void SetUp() {
+        NES::setupLogging("SerializationUtilTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup SerializationUtilTest test case.");
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() {
+        NES_INFO("Setup SerializationUtilTest test case.");
+    }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() {
+        NES_INFO("Tear down SerializationUtilTest test class.");
+    }
+};
+
+TEST_F(SerializationUtilTest, dataTypeSerialization) {
+
+    // serialize and deserialize int8
+    auto serializedInt8 = DataTypeSerializationUtil::serializeDataType(createDataType(INT8), new SerializableDataType());
+    auto deserializedInt8 = DataTypeSerializationUtil::deserializeDataType(serializedInt8);
+    ASSERT_TRUE(createDataType(INT8)->isEqual(deserializedInt8));
+
+    // serialize and deserialize int16
+    auto serializedInt16 = DataTypeSerializationUtil::serializeDataType(createDataType(INT16), new SerializableDataType());
+    auto deserializedInt16 = DataTypeSerializationUtil::deserializeDataType(serializedInt16);
+    ASSERT_TRUE(createDataType(INT16)->isEqual(deserializedInt16));
+
+    // serialize and deserialize int32
+    auto serializedInt32 = DataTypeSerializationUtil::serializeDataType(createDataType(INT32), new SerializableDataType());
+    auto deserializedInt32 = DataTypeSerializationUtil::deserializeDataType(serializedInt32);
+    ASSERT_TRUE(createDataType(INT32)->isEqual(deserializedInt32));
+
+    // serialize and deserialize int64
+    auto serializedInt64 = DataTypeSerializationUtil::serializeDataType(createDataType(INT64), new SerializableDataType());
+    auto deserializedInt64 = DataTypeSerializationUtil::deserializeDataType(serializedInt64);
+    ASSERT_TRUE(createDataType(INT64)->isEqual(deserializedInt64));
+
+    // serialize and deserialize uint8
+    auto serializedUInt8 = DataTypeSerializationUtil::serializeDataType(createDataType(UINT8), new SerializableDataType());
+    auto deserializedUInt8 = DataTypeSerializationUtil::deserializeDataType(serializedUInt8);
+    ASSERT_TRUE(createDataType(UINT8)->isEqual(deserializedUInt8));
+
+    // serialize and deserialize uint16
+    auto serializedUInt16 = DataTypeSerializationUtil::serializeDataType(createDataType(UINT16), new SerializableDataType());
+    auto deserializedUInt16 = DataTypeSerializationUtil::deserializeDataType(serializedUInt16);
+    ASSERT_TRUE(createDataType(UINT16)->isEqual(deserializedUInt16));
+
+    // serialize and deserialize uint32
+    auto serializedUInt32 = DataTypeSerializationUtil::serializeDataType(createDataType(UINT32), new SerializableDataType());
+    auto deserializedUInt32 = DataTypeSerializationUtil::deserializeDataType(serializedUInt32);
+    ASSERT_TRUE(createDataType(UINT32)->isEqual(deserializedUInt32));
+
+    // serialize and deserialize uint64
+    auto serializedUInt64 = DataTypeSerializationUtil::serializeDataType(createDataType(UINT64), new SerializableDataType());
+    auto deserializedUInt64 = DataTypeSerializationUtil::deserializeDataType(serializedUInt64);
+    ASSERT_TRUE(createDataType(UINT64)->isEqual(deserializedUInt64));
+
+    // serialize and deserialize float32
+    auto serializedFloat32 = DataTypeSerializationUtil::serializeDataType(createDataType(FLOAT32), new SerializableDataType());
+    auto deserializedFloat32 = DataTypeSerializationUtil::deserializeDataType(serializedFloat32);
+    ASSERT_TRUE(createDataType(FLOAT32)->isEqual(deserializedFloat32));
+
+    // serialize and deserialize float64
+    auto serializedFloat64 = DataTypeSerializationUtil::serializeDataType(createDataType(FLOAT64), new SerializableDataType());
+    auto deserializedFloat64 = DataTypeSerializationUtil::deserializeDataType(serializedFloat64);
+    ASSERT_TRUE(createDataType(FLOAT64)->isEqual(deserializedFloat64));
+
+    // serialize and deserialize float64
+    auto serializedArray = DataTypeSerializationUtil::serializeDataType(createArrayDataType(INT8, 42), new SerializableDataType());
+    auto deserializedArray = DataTypeSerializationUtil::deserializeDataType(serializedArray);
+    ASSERT_TRUE(createArrayDataType(INT8, 42)->isEqual(deserializedArray));
+
+    /*
+   std::string json_string;
+   google::protobuf::util::MessageToJsonString(type, &json_string);
+   std::cout << json_string << std::endl;
+   */
+}
+
+TEST_F(SerializationUtilTest, schemaSerializationTest) {
+
+    auto schema = Schema::create();
+    schema->addField("f1", createDataType(FLOAT64));
+    schema->addField("f2", createDataType(INT32));
+    schema->addField("f3", createArrayDataType(INT8, 42));
+
+    auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
+    auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(serializedSchema);
+    ASSERT_TRUE(deserializedSchema->equals(schema));
+
+    std::string json_string;
+    auto options = google::protobuf::util::JsonOptions();
+    options.add_whitespace = true;
+    google::protobuf::util::MessageToJsonString(*serializedSchema, &json_string, options);
+    std::cout << json_string << std::endl;
+}
