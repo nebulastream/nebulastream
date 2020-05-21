@@ -25,7 +25,6 @@ class RestServer {
         StreamCatalogPtr streamCatalog,
         TopologyManagerPtr topologyManager);
 
-
     ~RestServer();
     /**
    * @brief method to start the rest server
@@ -45,7 +44,6 @@ class RestServer {
     u_int16_t port;
     NesCoordinatorPtr coordinator;
     QueryCatalogPtr queryCatalog;
-
 };
 }// namespace NES
 

@@ -1,10 +1,10 @@
 #ifndef NES_INCLUDE_DEPLOYER_QUERYDEPLOYER_HPP_
 #define NES_INCLUDE_DEPLOYER_QUERYDEPLOYER_HPP_
 
+#include <Catalogs/QueryCatalog.hpp>
 #include <GRPC/ExecutableTransferObject.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
 #include <SourceSink/DataSource.hpp>
-#include <Catalogs/QueryCatalog.hpp>
 
 #include <map>
 #include <vector>

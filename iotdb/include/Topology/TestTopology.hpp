@@ -4,7 +4,6 @@
 namespace NES {
 #include <Catalogs/StreamCatalog.hpp>
 #include <Topology/TopologyManager.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 
 /**\brief:
    *          This is a temporary method used for simulating an example topology.
@@ -84,114 +83,114 @@ void createExampleTopology(StreamCatalogPtr streamCatalog, TopologyManagerPtr to
     assert(streamCatalog->addPhysicalStream("humidity", e4));
 
     topologyManager->createNESTopologyLink(workerNode1,
-                                                            sinkNode,
-                                                            /**Link Capacity**/ 3,
-                                                            /**Link Latency**/ 1);
+                                           sinkNode,
+                                           /**Link Capacity**/ 3,
+                                           /**Link Latency**/ 1);
     topologyManager->createNESTopologyLink(workerNode2,
-                                                            sinkNode,
-                                                            /**Link Capacity**/ 3,
-                                                            /**Link Latency**/ 1);
+                                           sinkNode,
+                                           /**Link Capacity**/ 3,
+                                           /**Link Latency**/ 1);
     topologyManager->createNESTopologyLink(workerNode3,
-                                                            sinkNode,
-                                                            /**Link Capacity**/ 3,
-                                                            /**Link Latency**/ 1);
+                                           sinkNode,
+                                           /**Link Capacity**/ 3,
+                                           /**Link Latency**/ 1);
     topologyManager->createNESTopologyLink(workerNode4,
-                                                            workerNode1,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode1,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode5,
-                                                            workerNode2,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 1);
+                                           workerNode2,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 1);
     topologyManager->createNESTopologyLink(workerNode6,
-                                                            workerNode3,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode3,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode10,
-                                                            workerNode6,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode6,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
 
     topologyManager->createNESTopologyLink(workerNode7,
-                                                            workerNode4,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 1);
+                                           workerNode4,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 1);
     topologyManager->createNESTopologyLink(workerNode8,
-                                                            workerNode4,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode4,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode8,
-                                                            workerNode5,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode5,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode9,
-                                                            workerNode6,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode6,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode10,
-                                                            workerNode5,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 1);
+                                           workerNode5,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 1);
     topologyManager->createNESTopologyLink(workerNode11,
-                                                            workerNode7,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 1);
+                                           workerNode7,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 1);
     topologyManager->createNESTopologyLink(workerNode12,
-                                                            workerNode8,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode8,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode13,
-                                                            workerNode12,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode12,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode13,
-                                                            workerNode11,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 1);
+                                           workerNode11,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 1);
     topologyManager->createNESTopologyLink(workerNode14,
-                                                            workerNode12,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode12,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode15,
-                                                            workerNode10,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 1);
+                                           workerNode10,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 1);
     topologyManager->createNESTopologyLink(workerNode16,
-                                                            workerNode15,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode15,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode17,
-                                                            workerNode15,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode15,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode18,
-                                                            workerNode9,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode9,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode12,
-                                                            workerNode7,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode7,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(workerNode15,
-                                                            workerNode18,
-                                                            /**Link Capacity**/ 2,
-                                                            /**Link Latency**/ 2);
+                                           workerNode18,
+                                           /**Link Capacity**/ 2,
+                                           /**Link Latency**/ 2);
     topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode13,
-                                                            /**Link Capacity**/ 1,
-                                                            /**Link Latency**/ 3);
+                                           workerNode13,
+                                           /**Link Capacity**/ 1,
+                                           /**Link Latency**/ 3);
     topologyManager->createNESTopologyLink(sensorNode2,
-                                                            workerNode14,
-                                                            /**Link Capacity**/ 1,
-                                                            /**Link Latency**/ 3);
+                                           workerNode14,
+                                           /**Link Capacity**/ 1,
+                                           /**Link Latency**/ 3);
     topologyManager->createNESTopologyLink(sensorNode3,
-                                                            workerNode16,
-                                                            /**Link Capacity**/ 1,
-                                                            /**Link Latency**/ 3);
+                                           workerNode16,
+                                           /**Link Capacity**/ 1,
+                                           /**Link Latency**/ 3);
     topologyManager->createNESTopologyLink(sensorNode4,
-                                                            workerNode17,
-                                                            /**Link Capacity**/ 1,
-                                                            /**Link Latency**/ 3);
+                                           workerNode17,
+                                           /**Link Capacity**/ 1,
+                                           /**Link Latency**/ 3);
 }
 }// namespace NES
 #endif /* INCLUDE_TOPOLOGY_TESTTOPOLOGY_HPP_ */

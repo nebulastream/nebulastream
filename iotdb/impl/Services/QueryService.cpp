@@ -1,12 +1,11 @@
 #include "Services/QueryService.hpp"
 #include <Operators/OperatorJsonUtil.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 using namespace NES;
 
 QueryService::QueryService(StreamCatalogPtr streamCatalog)
-: streamCatalog(streamCatalog)
-{
+    : streamCatalog(streamCatalog) {
     NES_DEBUG("QueryService()");
 }
 

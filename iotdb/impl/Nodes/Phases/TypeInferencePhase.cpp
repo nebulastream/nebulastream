@@ -10,19 +10,16 @@
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 
 namespace NES {
 
 TypeInferencePhase::TypeInferencePhase() {}
 
-TypeInferencePhasePtr TypeInferencePhase::create()
-{
+TypeInferencePhasePtr TypeInferencePhase::create() {
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase());
 }
 
-void TypeInferencePhase::setStreamCatalog(StreamCatalogPtr streamCatalog)
-{
+void TypeInferencePhase::setStreamCatalog(StreamCatalogPtr streamCatalog) {
     this->streamCatalog = streamCatalog;
 }
 

@@ -1,9 +1,9 @@
 #ifndef NES_OUTPUTCHANNEL_HPP
 #define NES_OUTPUTCHANNEL_HPP
 
+#include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <Network/ExchangeProtocol.hpp>
 #include <boost/core/noncopyable.hpp>
 #include <iostream>
 #include <memory>

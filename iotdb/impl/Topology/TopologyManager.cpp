@@ -4,21 +4,18 @@ namespace NES {
 
 TopologyManager::TopologyManager() {
     NES_DEBUG("TopologyManager()");
-    if(currentPlan)
-    {
+    if (currentPlan) {
         NES_DEBUG("TopologyManager() reset plan");
         currentPlan.reset(new NESTopologyPlan);
-    }
-    else
-    {
+    } else {
         NES_DEBUG("TopologyManager() create new plan");
         currentPlan = std::make_shared<NESTopologyPlan>();
     }
 }
 
 NESTopologyCoordinatorNodePtr TopologyManager::createNESCoordinatorNode(size_t id,
-                                                                           const std::string ipAddr,
-                                                                           CPUCapacity cpuCapacity) {
+                                                                        const std::string ipAddr,
+                                                                        CPUCapacity cpuCapacity) {
     assert(0);
     return currentPlan->createNESCoordinatorNode(id, ipAddr, cpuCapacity);
 }
@@ -29,7 +26,7 @@ NESTopologyWorkerNodePtr TopologyManager::createNESWorkerNode(
 }
 
 NESTopologySensorNodePtr TopologyManager::createNESSensorNode(size_t id, std::string ip,
-                                                                 CPUCapacity cpuCapacity) {
+                                                              CPUCapacity cpuCapacity) {
     return currentPlan->createNESSensorNode(id, ip, cpuCapacity);
 }
 
@@ -46,9 +43,9 @@ bool TopologyManager::removeNESNode(NESTopologyEntryPtr ptr) {
 }
 
 NESTopologyLinkPtr TopologyManager::createNESTopologyLink(NESTopologyEntryPtr sourceNode,
-                                                             NESTopologyEntryPtr destNode,
-                                                             size_t linkCapacity,
-                                                             size_t linkLatency) {
+                                                          NESTopologyEntryPtr destNode,
+                                                          size_t linkCapacity,
+                                                          size_t linkLatency) {
     return currentPlan->createNESTopologyLink(sourceNode, destNode, linkCapacity, linkLatency);
 }
 

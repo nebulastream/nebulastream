@@ -1,20 +1,17 @@
 #include <API/Schema.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <Topology/TopologyManager.hpp>
-#include <API/Schema.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager)
     : streamCatalog(streamCatalog),
-      topologyManager(topologyManager){
+      topologyManager(topologyManager) {
     NES_DEBUG("CoordinatorEngine()");
 }
 
@@ -50,8 +47,8 @@ size_t CoordinatorEngine::registerNode(std::string address,
     if (type == NESNodeType::Sensor) {
         NES_DEBUG("CoordinatorEngine::registerNode: register sensor node");
         nodePtr = topologyManager->createNESSensorNode(id,
-                                                                        address,
-                                                                        CPUCapacity::Value(numberOfCPUs));
+                                                       address,
+                                                       CPUCapacity::Value(numberOfCPUs));
 
         if (!nodePtr) {
             NES_ERROR("CoordinatorEngine::RegisterNode : node not created");
@@ -70,7 +67,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
 
         //check if logical stream exists
         if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(
-            streamConf.logicalStreamName)) {
+                streamConf.logicalStreamName)) {
             NES_ERROR(
                 "CoordinatorEngine::registerNode: error logical stream" << streamConf.logicalStreamName
                                                                         << " does not exist when adding physical stream "
@@ -134,7 +131,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
     }
 
     NES_DEBUG("CoordinatorEngine::registerNode: topology after insert = "
-                  << topologyManager->getNESTopologyPlan()->getTopologyPlanString());
+              << topologyManager->getNESTopologyPlan()->getTopologyPlanString());
 
     return id;
 }
@@ -251,8 +248,8 @@ bool CoordinatorEngine::unregisterPhysicalStream(size_t nodeId, std::string phys
     NES_DEBUG("node type=" << sensorNode->getEntryTypeString());
 
     bool success = streamCatalog->removePhysicalStream(logicalStreamName,
-                                                                  physicalStreamName,
-                                                                  nodeId);
+                                                       physicalStreamName,
+                                                       nodeId);
     return success;
 }
 
@@ -307,7 +304,7 @@ bool CoordinatorEngine::addParent(size_t childId, size_t parentId) {
 
     bool connected =
         topologyManager->getNESTopologyPlan()->getNESTopologyGraph()->hasLink(sensorNodes[0],
-                                                                                               sensorParent[0]);
+                                                                              sensorParent[0]);
     if (connected) {
         NES_ERROR("CoordinatorEngine::AddParent: nodes " << childId << " and " << parentId
                                                          << " already exists");
@@ -316,7 +313,7 @@ bool CoordinatorEngine::addParent(size_t childId, size_t parentId) {
 
     NESTopologyLinkPtr
         link = topologyManager->getNESTopologyPlan()->createNESTopologyLink(sensorNodes[0],
-                                                                                             sensorParent[0], 1, 1);
+                                                                            sensorParent[0], 1, 1);
     if (link) {
         NES_DEBUG("CoordinatorEngine::AddParent: created link successfully");
         return true;
@@ -359,7 +356,7 @@ bool CoordinatorEngine::removeParent(size_t childId, size_t parentId) {
 
     bool connected =
         topologyManager->getNESTopologyPlan()->getNESTopologyGraph()->hasLink(sensorNodes[0],
-                                                                                               sensorParent[0]);
+                                                                              sensorParent[0]);
     if (!connected) {
         NES_ERROR("CoordinatorEngine::removeParent: nodes " << childId << " and " << parentId
                                                             << " are not connected");
@@ -369,7 +366,7 @@ bool CoordinatorEngine::removeParent(size_t childId, size_t parentId) {
 
     NESTopologyLinkPtr
         link = topologyManager->getNESTopologyPlan()->getNESTopologyGraph()->getLink(sensorNodes[0],
-                                                                                                      sensorParent[0]);
+                                                                                     sensorParent[0]);
 
     bool success =
         topologyManager->getNESTopologyPlan()->getNESTopologyGraph()->removeEdge(link->getId());

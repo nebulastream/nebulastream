@@ -19,13 +19,10 @@ class QueryController : public BaseController {
     QueryController(NesCoordinatorPtr coordinator,
                     QueryCatalogPtr queryCatalog,
                     TopologyManagerPtr topologyManager,
-                    StreamCatalogPtr streamCatalog
-    ):
-        coordinator(coordinator),
-        queryCatalog(queryCatalog),
-        topologyManager(topologyManager),
-        streamCatalog(streamCatalog)
-    {
+                    StreamCatalogPtr streamCatalog) : coordinator(coordinator),
+                                                      queryCatalog(queryCatalog),
+                                                      topologyManager(topologyManager),
+                                                      streamCatalog(streamCatalog) {
         queryServicePtr = std::make_shared<QueryService>(streamCatalog);
     }
 

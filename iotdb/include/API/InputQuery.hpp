@@ -15,7 +15,6 @@ namespace NES {
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
-
 class Operator;
 
 typedef std::shared_ptr<Operator> OperatorPtr;

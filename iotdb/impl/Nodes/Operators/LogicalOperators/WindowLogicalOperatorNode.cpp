@@ -1,5 +1,5 @@
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <API/Schema.hpp>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <sstream>
 
 namespace NES {

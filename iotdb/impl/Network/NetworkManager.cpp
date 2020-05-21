@@ -1,7 +1,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/OutputChannel.hpp>
-#include <Network/ZmqServer.hpp>
 #include <Network/PartitionManager.hpp>
+#include <Network/ZmqServer.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

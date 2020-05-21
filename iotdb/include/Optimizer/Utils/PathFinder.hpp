@@ -51,7 +51,6 @@ class PathFinder {
     std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> findUniquePathBetween(std::vector<NESTopologyEntryPtr> sources,
                                                                                           NESTopologyEntryPtr destination);
 
-
     /**
      * @brief Find a path between given source and destination
      * @param source : source node

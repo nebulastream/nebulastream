@@ -4,8 +4,8 @@
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkCommon.hpp>
 #include <Network/OutputChannel.hpp>
-#include <NodeEngine/BufferManager.hpp>
 #include <Network/PartitionManager.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <boost/core/noncopyable.hpp>
 #include <cstdint>
 #include <functional>

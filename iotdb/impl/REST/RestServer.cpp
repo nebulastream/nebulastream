@@ -1,9 +1,9 @@
+#include <Catalogs/StreamCatalog.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
-#include <Catalogs/StreamCatalog.hpp>
 
 namespace NES {
 

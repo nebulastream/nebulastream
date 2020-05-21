@@ -24,7 +24,6 @@ using namespace web;
 //FIXME:add docu here
 class TopologyManager {
   public:
-
     TopologyManager();
 
     /**

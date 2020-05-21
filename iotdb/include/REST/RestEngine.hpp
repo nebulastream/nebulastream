@@ -23,7 +23,6 @@ typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
-
 class RestEngine : public BaseController {
   protected:
     http_listener _listener;// main micro service network endpoint

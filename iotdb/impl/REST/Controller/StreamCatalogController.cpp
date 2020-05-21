@@ -1,19 +1,16 @@
 #include "REST/Controller/StreamCatalogController.hpp"
+#include <Catalogs/StreamCatalog.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 
 using namespace web;
 using namespace http;
 
 namespace NES {
 
-StreamCatalogController::StreamCatalogController(StreamCatalogPtr streamCatalog):
-    streamCatalog(streamCatalog)
-{
+StreamCatalogController::StreamCatalogController(StreamCatalogPtr streamCatalog) : streamCatalog(streamCatalog) {
     NES_DEBUG("StreamCatalogController()");
 }
-
 
 void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {
 

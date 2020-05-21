@@ -8,11 +8,9 @@ using namespace std;
 namespace NES {
 
 PathFinder::PathFinder(NESTopologyPlanPtr nesTopologyPlan)
-    : nesTopologyPlan(nesTopologyPlan)
-{
+    : nesTopologyPlan(nesTopologyPlan) {
     NES_DEBUG("PathFinder()");
 }
-
 
 std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopologyEntryPtr source,
                                                                       NESTopologyEntryPtr destination) {

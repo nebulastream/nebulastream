@@ -3,8 +3,8 @@
 
 #include <cstdint>
 #include <string>
-#include <zmq.hpp>
 #include <tuple>
+#include <zmq.hpp>
 
 namespace NES {
 namespace Network {
@@ -64,10 +64,7 @@ class NesPartition {
     }
 
     friend bool operator==(const NesPartition& lhs, const NesPartition& rhs) {
-        return lhs.queryId == rhs.queryId &&
-            lhs.operatorId == rhs.operatorId &&
-            lhs.partitionId == rhs.partitionId &&
-            lhs.subpartitionId == rhs.subpartitionId;
+        return lhs.queryId == rhs.queryId && lhs.operatorId == rhs.operatorId && lhs.partitionId == rhs.partitionId && lhs.subpartitionId == rhs.subpartitionId;
     }
 
   private:
@@ -117,12 +114,14 @@ struct hash<NES::Network::NesPartition> {
         // Hash function for the NesPartition
         // Compute individual hash values of the Ints and combine them using XOR and bit shifting:
         return ((hash<uint64_t>()(k.getQueryId())
-            ^ (hash<uint64_t>()(k.getOperatorId()) << 1)) >> 1)
+                 ^ (hash<uint64_t>()(k.getOperatorId()) << 1))
+                >> 1)
             ^ ((hash<uint64_t>()(k.getPartitionId())
-                ^ (hash<uint64_t>()(k.getSubpartitionId()) << 1)) >> 1);
+                ^ (hash<uint64_t>()(k.getSubpartitionId()) << 1))
+               >> 1);
     }
 };
 
-}
+}// namespace std
 
 #endif//NES_NETWORKCOMMON_HPP

@@ -1,6 +1,3 @@
-#include <Deployer/QueryDeployer.hpp>
-#include <string>
-#include <Topology/TopologyManager.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Deployer/QueryDeployer.hpp>
 #include <GRPC/ExecutableTransferObject.hpp>
@@ -11,15 +8,13 @@
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <string>
 
 namespace NES {
 
-QueryDeployer::QueryDeployer(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager):
-    queryCatalog(queryCatalog),
-    topologyManager(topologyManager)
-{
+QueryDeployer::QueryDeployer(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager) : queryCatalog(queryCatalog),
+                                                                                                 topologyManager(topologyManager) {
     NES_INFO("QueryDeployer()");
 }
 

@@ -1,6 +1,6 @@
 
-#include <Util/Logger.hpp>
 #include <Network/PartitionManager.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES::Network {
 
@@ -29,8 +29,7 @@ uint64_t PartitionManager::unregisterSubpartition(NesPartition partition) {
         //if counter reaches 0, erase partition
         partitionCounter.erase(partition);
         return 0;
-    }
-    else {
+    } else {
         // else set and return new counter
         partitionCounter[partition] = newCounter;
         return newCounter;
@@ -59,4 +58,4 @@ bool PartitionManager::isRegistered(NesPartition partition) const {
     return partitionCounter.find(partition) != partitionCounter.end();
 }
 
-}
+}// namespace NES::Network

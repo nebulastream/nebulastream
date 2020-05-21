@@ -10,11 +10,9 @@ typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 class TopologyManager;
 typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
 
-
 class CoordinatorEngine {
 
   public:
-
     CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager);
 
     /**
@@ -96,7 +94,6 @@ class CoordinatorEngine {
   private:
     StreamCatalogPtr streamCatalog;
     TopologyManagerPtr topologyManager;
-
 };
 
 typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;

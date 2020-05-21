@@ -10,8 +10,6 @@
 #include <Util/Logger.hpp>
 #include <cstddef>
 #include <iostream>
-#include <Catalogs/StreamCatalog.hpp>
-
 
 namespace NES {
 
@@ -84,15 +82,11 @@ InputQuery InputQuery::from(Stream& stream) {
     //TODO:here we assume that all sources are of the same type
 
     std::vector<StreamCatalogEntryPtr> catalogEntry;
-    if(streamCatalog)
-    {
+    if (streamCatalog) {
         catalogEntry = streamCatalog->getPhysicalStreams(stream.getName());
+    } else {
+        NES_ERROR("InputQuery::from: stream catalog not set");
     }
-    else
-    {
-       NES_ERROR("InputQuery::from: stream catalog not set");
-    }
-
 
     OperatorPtr op;
 

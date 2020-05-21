@@ -38,8 +38,7 @@ void OutputChannel::init(u_int64_t waitTime, u_int64_t retryTimes) {
             i = i + 1;
             connected = registerAtServer();
         }
-    }
-    catch (zmq::error_t& err) {
+    } catch (zmq::error_t& err) {
         if (err.num() == ETERM) {
             NES_DEBUG("OutputChannel: Zmq context closed!");
         } else {
@@ -77,12 +76,12 @@ bool OutputChannel::registerAtServer() {
             // check if server responds with a ServerReadyMessage
             // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
             if (!(serverReadyMsg->getQueryId() == nesPartition.getQueryId()
-                && serverReadyMsg->getOperatorId() == nesPartition.getOperatorId()
-                && serverReadyMsg->getPartitionId() == nesPartition.getPartitionId()
-                && serverReadyMsg->getSubpartitionId() == nesPartition.getSubpartitionId())) {
+                  && serverReadyMsg->getOperatorId() == nesPartition.getOperatorId()
+                  && serverReadyMsg->getPartitionId() == nesPartition.getPartitionId()
+                  && serverReadyMsg->getSubpartitionId() == nesPartition.getSubpartitionId())) {
                 NES_ERROR("OutputChannel: Connection failed with server "
-                              << socketAddr << " for " << nesPartition.toString()
-                              << "->Wrong server ready message! Reason: Partitions are not matching");
+                          << socketAddr << " for " << nesPartition.toString()
+                          << "->Wrong server ready message! Reason: Partitions are not matching");
                 return false;
             }
             NES_INFO("OutputChannel: Connection established with server " << socketAddr << " for "
@@ -108,19 +107,32 @@ bool OutputChannel::registerAtServer() {
 }
 
 bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
-    auto bufferSize = inputBuffer.getBufferSize();
-    auto tupleSize = inputBuffer.getTupleSizeInBytes();
-    auto numOfTuples = inputBuffer.getNumberOfTuples();
-    auto payloadSize = tupleSize * numOfTuples;
-    auto ptr = inputBuffer.getBuffer<uint8_t>();
-    auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize);// DON'T TRY THIS AT HOME :P
-    sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples);
-    inputBuffer.retain();
-    zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer));
-//    NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
-//                                                   << inputBuffer.getNumberOfTuples() << "/"
-//                                                   << inputBuffer.getBufferSize());
-    return true;
+    try {
+        // create a header message for MessageType
+        Messages::MessageHeader header{Messages::DataBuffer, sizeof(Messages::DataBuffer)};
+        zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
+
+        // create the header for the buffer
+        Messages::DataBufferMessage bufferHeader{static_cast<unsigned int>(inputBuffer.getBufferSize()),
+                                                 static_cast<unsigned int>(inputBuffer.getNumberOfTuples())};
+        zmq::message_t sendBufferHeader(&bufferHeader, sizeof(Messages::DataBufferMessage));
+
+        // create the message with the buffer payload
+        // TODO: in future change that buffer is sent without copying
+        zmq::message_t sendBuffer(inputBuffer.getBuffer(), inputBuffer.getBufferSize());
+
+        // send all messages in one shot
+        NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
+                                                       << inputBuffer.getNumberOfTuples() << "/"
+                                                       << inputBuffer.getBufferSize());
+
+        zmqSocket.send(sendHeader, kSendMore);
+        zmqSocket.send(sendBufferHeader, kSendMore);
+        zmqSocket.send(sendBuffer);
+        return true;
+    } catch (zmq::error_t& err) {
+        NES_ERROR("OutputChannel: Zmq error " << err.what());
+    }
 }
 
 void OutputChannel::onError(Messages::ErroMessage& errorMsg) {

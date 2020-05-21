@@ -1,10 +1,9 @@
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
-#include <Topology/TopologyManager.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Topology/NESTopologyManager.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <chrono>
 #include <iostream>
 #include <memory>
@@ -101,7 +100,7 @@ class TestUtils {
     }
 
     static NESTopologyEntryPtr registerTestNode(size_t id, std::string address, int cpu, const string& nodeProperties,
-                                     PhysicalStreamConfig streamConf, NESNodeType type, StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager) {
+                                                PhysicalStreamConfig streamConf, NESNodeType type, StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager) {
         NESTopologyEntryPtr nodePtr;
         if (type == NESNodeType::Sensor) {
             NES_DEBUG("CoordinatorService::registerNode: register sensor node");
@@ -115,7 +114,7 @@ class TestUtils {
 
             //check if logical stream exists
             if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(
-                streamConf.logicalStreamName)) {
+                    streamConf.logicalStreamName)) {
                 NES_ERROR(
                     "Coordinator: error logical stream" << streamConf.logicalStreamName
                                                         << " does not exist when adding physical stream "
