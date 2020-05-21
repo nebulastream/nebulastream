@@ -16,7 +16,7 @@ SerializableSchema* SchemaSerializationUtil::serializeSchema(SchemaPtr schema, S
 }
 
 SchemaPtr SchemaSerializationUtil::deserializeSchema(SerializableSchema* serializedSchema) {
-    // serialize all field in schema
+    // deserialize field from serialized schema to the schema object.
     auto deserializedSchema = Schema::create();
     for (auto serializedField : serializedSchema->fields()) {
         auto fieldName = serializedField.name();
