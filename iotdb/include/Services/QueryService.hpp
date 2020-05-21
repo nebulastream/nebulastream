@@ -21,7 +21,6 @@ typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
  */
 class QueryService {
 
-
   public:
     ~QueryService() = default;
 

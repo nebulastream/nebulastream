@@ -1,6 +1,8 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #include "REST/RestServer.hpp"
+#include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Components/NesWorker.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <Deployer/QueryDeployer.hpp>
@@ -8,10 +10,6 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
-#include <Deployer/QueryDeployer.hpp>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
-#include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 
 namespace NES {
 typedef map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployment;
@@ -79,13 +77,11 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      * @brief catalog method for debug use only
      * @return streamCatalog
      */
-    StreamCatalogPtr getStreamCatalog()
-    {
+    StreamCatalogPtr getStreamCatalog() {
         return streamCatalog;
     }
 
-    TopologyManagerPtr getTopologyManger()
-    {
+    TopologyManagerPtr getTopologyManger() {
         return topologyManager;
     }
 

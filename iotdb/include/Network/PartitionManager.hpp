@@ -2,9 +2,9 @@
 #define NES_PARTITIONMANAGER_HPP
 
 #include <Network/NetworkCommon.hpp>
+#include <map>
 #include <mutex>
 #include <unordered_map>
-#include <map>
 
 namespace NES::Network {
 
@@ -60,6 +60,6 @@ class PartitionManager {
 };
 typedef std::shared_ptr<PartitionManager> PartitionManagerPtr;
 
-}// namespace NES
+}// namespace NES::Network
 
 #endif//NES_PARTITIONMANAGER_HPP

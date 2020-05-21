@@ -206,7 +206,7 @@ class EndOfStreamMessage {
 class ErroMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = ErrorMessage;
-    explicit ErroMessage(ErrorType error) : error(error) {};
+    explicit ErroMessage(ErrorType error) : error(error){};
 
     const ErrorType getErrorType() const { return error; }
 

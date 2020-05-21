@@ -1,14 +1,12 @@
 #include "REST/RestEngine.hpp"
 #include "REST/NetworkUtils.hpp"
-#include <Util/Logger.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
 RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordinator,
-                       QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager):
-    streamCatalog(streamCatalog)
-{
+                       QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager) : streamCatalog(streamCatalog) {
     NES_DEBUG("RestEngine");
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator);
@@ -125,7 +123,7 @@ pplx::task<void> RestEngine::accept() {
 }
 
 pplx::task<void> RestEngine::shutdown() {
-    NES_DEBUG( "RestEngine::shutdown(): Shutting Down Server");
+    NES_DEBUG("RestEngine::shutdown(): Shutting Down Server");
     return _listener.close();
 }
 

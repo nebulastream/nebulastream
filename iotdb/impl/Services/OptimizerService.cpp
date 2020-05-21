@@ -10,8 +10,7 @@ using namespace web;
 using namespace std;
 using namespace std::chrono;
 
-OptimizerService::OptimizerService(TopologyManagerPtr topologyManager) :
-    topologyManager(topologyManager) {
+OptimizerService::OptimizerService(TopologyManagerPtr topologyManager) : topologyManager(topologyManager) {
     NES_DEBUG("OptimizerService()");
 }
 

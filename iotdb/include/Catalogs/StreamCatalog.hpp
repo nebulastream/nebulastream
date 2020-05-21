@@ -20,7 +20,7 @@ namespace NES {
  *    - TODO: add mutex to make it secure
  *    - TODO: delete methods only delete catalog entries not the entries in the topology
  */
-class StreamCatalog{
+class StreamCatalog {
   public:
     /**
    * @brief method to add a logical stream
@@ -31,7 +31,6 @@ class StreamCatalog{
    */
     bool addLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
 
-
     /**
    * @brief method to add a logical stream
    * @param logical stream name
@@ -40,8 +39,7 @@ class StreamCatalog{
      */
     bool addLogicalStream(const std::string& streamName, const std::string& streamSchema);
 
-
-        /**
+    /**
        * @brief method to delete a logical stream
        * @caution this method only remove the entry from the catalog not from the topology
        * @param name of logical stream to delete
@@ -146,13 +144,11 @@ class StreamCatalog{
 
     std::map<std::string, std::string> getAllLogicalStreamAsString();
 
-
-        /**
+    /**
        * @brief method to return the physical stream and the associated schemas
        * @return string containing the content of the catalog
        */
     std::string getPhysicalStreamAndSchemaAsString();
-
 
     /**
      * @brief get all pyhsical streams for a logical stream
@@ -161,7 +157,6 @@ class StreamCatalog{
      */
     std::vector<StreamCatalogEntryPtr> getPhysicalStreams(
         std::string logicalStreamName);
-
 
     /**
      * @brief update an existing stream

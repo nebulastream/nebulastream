@@ -15,7 +15,6 @@ typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
 
 class OptimizerService {
   public:
-
     OptimizerService(TopologyManagerPtr topologyManager);
 
     /**

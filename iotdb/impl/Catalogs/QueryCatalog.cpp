@@ -10,10 +10,8 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog):
-    topologyManager(topologyManager),
-    streamCatalog(streamCatalog)
-{
+QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog) : topologyManager(topologyManager),
+                                                                                                 streamCatalog(streamCatalog) {
     NES_DEBUG("QueryCatalog()");
 }
 
@@ -21,13 +19,13 @@ std::map<string, string> QueryCatalog::getQueriesWithStatus(std::string status) 
 
     NES_INFO("QueryCatalog : fetching all queries with status " << status);
 
-    std::transform(status.begin(), status.end(),status.begin(), ::toupper);
+    std::transform(status.begin(), status.end(), status.begin(), ::toupper);
 
-    if (StringToQueryStatus.find(status) == StringToQueryStatus.end()) {
+    if (stringToQueryStatusMap.find(status) == stringToQueryStatusMap.end()) {
         throw std::invalid_argument("Unknown query status " + status);
     }
 
-    QueryStatus queryStatus = StringToQueryStatus[status];
+    QueryStatus queryStatus = stringToQueryStatusMap[status];
     map<string, QueryCatalogEntryPtr> queries = getQueries(queryStatus);
 
     map<string, string> result;

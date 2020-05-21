@@ -1,3 +1,4 @@
+#include <Catalogs/StreamCatalog.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
@@ -5,7 +6,6 @@
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -16,7 +16,7 @@ namespace NES {
 
 std::string UtilityFunctions::trim(std::string s) {
     auto not_space = [](char c) {
-      return isspace(c) == 0;
+        return isspace(c) == 0;
     };
     // trim left
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), not_space));
@@ -81,7 +81,7 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
         //TODO: remove once the new API is in place
         InputQuery::streamCatalog = streamCatalog;
 
-        typedef InputQuery (* CreateQueryFunctionPtr)(StreamCatalogPtr streamCatalog);
+        typedef InputQuery (*CreateQueryFunctionPtr)(StreamCatalogPtr streamCatalog);
         CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>(
             "_ZN3NES11createQueryESt10shared_ptrINS_13StreamCatalogEE");
         if (!func) {
@@ -127,10 +127,10 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
             NES_ERROR("Compilation of schema code failed! Code: " << code.str());
         }
 
-        typedef Schema (* CreateSchemaFunctionPtr)();
+        typedef Schema (*CreateSchemaFunctionPtr)();
         CreateSchemaFunctionPtr func = compiled_code
-            ->getFunctionPointer<CreateSchemaFunctionPtr>(
-                "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
+                                           ->getFunctionPointer<CreateSchemaFunctionPtr>(
+                                               "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
         if (!func) {
             NES_ERROR("Error retrieving function! Symbol not found!");
         }

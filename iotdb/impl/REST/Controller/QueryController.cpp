@@ -7,8 +7,8 @@
 #include <REST/std_service.hpp>
 //#include <Topology/TestTopology.hpp>
 #include <Catalogs/QueryCatalog.hpp>
-#include <Util/Logger.hpp>
 #include <Topology/TopologyManager.hpp>
+#include <Util/Logger.hpp>
 
 using namespace web;
 using namespace http;

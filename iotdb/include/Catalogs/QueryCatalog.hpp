@@ -19,7 +19,6 @@ typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
-
 /**
  * @brief Represents various states the user query goes through.
  *
@@ -36,7 +35,7 @@ enum QueryStatus { Registered,
                    Stopped,
                    Failed };
 
-static std::map<std::string, QueryStatus> StringToQueryStatus{
+static std::map<std::string, QueryStatus> stringToQueryStatusMap{
     {"REGISTERED", Registered},
     {"SCHEDULING", Scheduling},
     {"RUNNING", Running},
