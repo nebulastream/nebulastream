@@ -292,7 +292,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
 }
 
 TEST_F(NetworkStackTest, testMassiveMultiSending) {
-    size_t totalNumBuffer = 1000;
+    size_t totalNumBuffer = 100;
     size_t numSendingThreads = 10;
 
     // create a couple of NesPartitions
@@ -314,6 +314,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
               ASSERT_EQ(buffer.getBuffer<uint64_t>()[j], j);
           }
           bufferCounter[id.getQueryId()]++;
+          usleep(rand()%10000+1000);
         };
 
         auto onError = [](Messages::ErroMessage ex) {
