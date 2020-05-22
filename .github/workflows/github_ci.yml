@@ -13,16 +13,16 @@ on:
       - '*'
 
 jobs:
-#  build-job:
-#    runs-on: self-hosted
-#    timeout-minutes: 30
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Fetch git history
-#        with:
-#          ssh-key: ${{ secrets.CI_SECRET }}
-#        run: |
-#          git fetch --prune --unshallow --tags
+  build-job:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v2
+      - name: Fetch git history
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+        run: |
+          git fetch --prune --unshallow --tags
 #      - name: Run tests
 #        run: |
 #          docker run -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
