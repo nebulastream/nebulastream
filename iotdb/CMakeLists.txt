@@ -8,8 +8,10 @@ endif ()
 # Find project version
 include(cmake/GetSemanticVersion.cmake)
 
-# Update when releasing
-configure_file(cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp)
+# Update version
+if (Git_FOUND)
+    configure_file(cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp)
+endif ()
 
 # target bar is only build when `make bar` is issued
 add_custom_target(bar
