@@ -3,47 +3,53 @@ name: NES CI
 on:
   push:
     branches:
-    - '*'
+      - '*'
     tags-ignore:
-    - '*'
+      - '*'
     paths-ignore:
-    - iotdb/include/Version/version.hpp
+      - iotdb/include/Version/version.hpp
   pull_request:
     branches:
-    - '*'
+      - '*'
 
 jobs:
-  build-job:
-    runs-on: self-hosted
-    timeout-minutes: 30
-    steps:
-    - uses: actions/checkout@v2
-    - name: Fetch git history
-      run: |
-          git fetch --prune --unshallow --tags
-    - name: Run tests
-      run: |
-          docker run -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
-    - name: Notify Slack
-      uses: 8398a7/action-slack@v2
-      with:
-          status: ${{ job.status }}
-          author_name: ${{ github.actor }}
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      if: always()
+#  build-job:
+#    runs-on: self-hosted
+#    timeout-minutes: 30
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Fetch git history
+#        with:
+#          ssh-key: ${{ secrets.CI_SECRET }}
+#        run: |
+#          git fetch --prune --unshallow --tags
+#      - name: Run tests
+#        run: |
+#          docker run -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+#      - name: Notify Slack
+#        uses: 8398a7/action-slack@v2
+#        with:
+#          status: ${{ job.status }}
+#          author_name: ${{ github.actor }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#        if: always()
 
   release:
     runs-on: self-hosted
     #if: ${{ github.ref == 'master' }}
     needs: build-job
     steps:
-    - uses: actions/checkout@v2
-    - name: Fetch git history
-      run: |
-        git fetch --prune --unshallow --tags
-    - name: Release new version
-      run: |
-          docker run -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+      - uses: actions/checkout@v2
+      - name: Fetch git history
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+        env:
+          CI_SECRET: ${{ secrets.CI_SECRET }}
+        run: |
+          git fetch --prune --unshallow --tags
+      - name: Release new version
+        run: |
+          docker run -e GITHUB_SECRET=%CI_SECRET% -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
 
