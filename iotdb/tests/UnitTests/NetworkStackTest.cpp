@@ -292,7 +292,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
 }
 
 TEST_F(NetworkStackTest, testMassiveMultiSending) {
-    size_t totalNumBuffer = 10;
+    size_t totalNumBuffer = 1000;
     size_t numSendingThreads = 10;
 
     // create a couple of NesPartitions
