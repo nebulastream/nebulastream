@@ -10,7 +10,7 @@ namespace Network {
 class ExchangeProtocol {
   public:
     explicit ExchangeProtocol(std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer,
-                              std::function<void(NesPartition)>&& onEndOfStream,
+                              std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream,
                               std::function<void(Messages::ErroMessage)>&& onException) : onDataBufferCb(std::move(onDataBuffer)),
                                                                                           onEndOfStreamCb(std::move(onEndOfStream)),
                                                                                           onExceptionCb(std::move(onException)) {
@@ -26,9 +26,7 @@ class ExchangeProtocol {
 
         // if all good, send message back
 
-        return Messages::ServerReadyMessage{clientAnnounceMessage->getQueryId(), clientAnnounceMessage->getOperatorId(),
-                                            clientAnnounceMessage->getPartitionId(),
-                                            clientAnnounceMessage->getSubpartitionId()};
+        return Messages::ServerReadyMessage(clientAnnounceMessage->getNesPartition());
     }
 
     /**
@@ -50,13 +48,13 @@ class ExchangeProtocol {
     /**
      *
      */
-    void onEndOfStream(NesPartition subpartition) {
+    void onEndOfStream(Messages::EndOfStreamMessage subpartition) {
         onEndOfStreamCb(subpartition);
     }
 
   private:
     std::function<void(NesPartition, TupleBuffer&)> onDataBufferCb;
-    std::function<void(NesPartition subpartition)> onEndOfStreamCb;
+    std::function<void(Messages::EndOfStreamMessage)> onEndOfStreamCb;
     std::function<void(Messages::ErroMessage)> onExceptionCb;
 };
 

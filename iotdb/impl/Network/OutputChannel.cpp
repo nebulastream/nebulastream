@@ -54,8 +54,7 @@ void OutputChannel::init(u_int64_t waitTime, u_int64_t retryTimes) {
 
 bool OutputChannel::registerAtServer() {
     // send announcement to server to register channel
-    sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, nesPartition.getQueryId(), nesPartition.getOperatorId(),
-                                                 nesPartition.getPartitionId(), nesPartition.getSubpartitionId());
+    sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, nesPartition);
 
     zmq::message_t recvHeaderMsg;
     zmqSocket.recv(&recvHeaderMsg);
@@ -75,10 +74,7 @@ bool OutputChannel::registerAtServer() {
             auto serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
             // check if server responds with a ServerReadyMessage
             // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
-            if (!(serverReadyMsg->getQueryId() == nesPartition.getQueryId()
-                  && serverReadyMsg->getOperatorId() == nesPartition.getOperatorId()
-                  && serverReadyMsg->getPartitionId() == nesPartition.getPartitionId()
-                  && serverReadyMsg->getSubpartitionId() == nesPartition.getSubpartitionId())) {
+            if (!(serverReadyMsg->getNesPartition() == nesPartition)) {
                 NES_ERROR("OutputChannel: Connection failed with server "
                           << socketAddr << " for " << nesPartition.toString()
                           << "->Wrong server ready message! Reason: Partitions are not matching");
@@ -115,11 +111,15 @@ bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
     auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize);// DON'T TRY THIS AT HOME :P
     sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples);
     inputBuffer.retain();
-    zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer));
-    //    NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
-    //                                                   << inputBuffer.getNumberOfTuples() << "/"
-    //                                                   << inputBuffer.getBufferSize());
-    return true;
+    size_t sentBytes = zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer));
+    if (sentBytes>0) {
+        //NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
+        //                                               << inputBuffer.getNumberOfTuples() << "/"
+        //                                               << inputBuffer.getBufferSize());
+        return true;
+    }
+    NES_ERROR("OutputChannel: Error sending buffer for " << nesPartition.toString());
+    return false;
 }
 
 void OutputChannel::onError(Messages::ErroMessage& errorMsg) {
@@ -131,8 +131,7 @@ void OutputChannel::close() {
         return;
     }
     if (connected) {
-        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, nesPartition.getQueryId(), nesPartition.getOperatorId(),
-                                                  nesPartition.getPartitionId(), nesPartition.getSubpartitionId());
+        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, nesPartition);
     }
 
     zmqSocket.close();

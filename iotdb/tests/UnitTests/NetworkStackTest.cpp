@@ -44,7 +44,7 @@ TEST_F(NetworkStackTest, serverMustStartAndStop) {
     try {
         ExchangeProtocol
             exchangeProtocol
-            ([](NesPartition id, TupleBuffer buf) {}, [](NesPartition p) {}, [](Messages::ErroMessage ex) {});
+            ([](NesPartition id, TupleBuffer buf) {}, [](Messages::EndOfStreamMessage p) {}, [](Messages::ErroMessage ex) {});
         ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol, bufferManager, partitionManager);
         server.start();
         ASSERT_EQ(server.getIsRunning(), true);
@@ -61,7 +61,7 @@ TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
             "127.0.0.1",
             31337,
             [](NesPartition id, TupleBuffer buf) {},
-            [](NesPartition p) {},
+            [](Messages::EndOfStreamMessage p) {},
             [](Messages::ErroMessage ex) {},
             bufferManager, partitionManager);
     }
@@ -79,7 +79,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         auto onError = [&completed](Messages::ErroMessage ex) {
           completed.set_exception(make_exception_ptr(runtime_error("Error")));
         };
-        auto onEndOfStream = [&completed](NesPartition p) {
+        auto onEndOfStream = [&completed](Messages::EndOfStreamMessage p) {
           completed.set_value(true);
         };
 
@@ -126,7 +126,7 @@ TEST_F(NetworkStackTest, testSendData) {
           //can be empty for this test
         };
 
-        auto onEndOfStream = [&completedProm](NesPartition p) { completedProm.set_value(true); };
+        auto onEndOfStream = [&completedProm](Messages::EndOfStreamMessage p) { completedProm.set_value(true); };
 
         NetworkManager netManager("127.0.0.1", 31337, onBuffer, onEndOfStream, onError, bufferManager,
                                   partitionManager);
@@ -179,8 +179,8 @@ TEST_F(NetworkStackTest, testMassiveSending) {
         // start zmqServer
         auto onBuffer = [&bufferReceived](NesPartition id, TupleBuffer& buffer) {
           ASSERT_EQ((buffer.getBufferSize() == bufferSize)
-              && (id.getQueryId(), 1) && (id.getOperatorId(), 22) && (id.getPartitionId(), 333)
-              && (id.getSubpartitionId(), 444), true);
+                        && (id.getQueryId(), 1) && (id.getOperatorId(), 22) && (id.getPartitionId(), 333)
+                        && (id.getSubpartitionId(), 444), true);
           for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
               ASSERT_EQ(buffer.getBuffer<uint64_t>()[j], j);
           }
@@ -191,7 +191,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
           //can be empty for this test
         };
 
-        auto onEndOfStream = [&completedProm](NesPartition p) { completedProm.set_value(true); };
+        auto onEndOfStream = [&completedProm](Messages::EndOfStreamMessage p) { completedProm.set_value(true); };
 
         NetworkManager netManager("127.0.0.1", 31337, onBuffer, onEndOfStream, onError, bufferManager,
                                   partitionManager);
@@ -271,7 +271,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
           NES_INFO("NetworkStackTest: Channel error called!");
           ASSERT_EQ(errorMsg.getErrorType(), Messages::PartitionNotRegisteredError);
         };
-        auto onEndOfStream = [](NesPartition) {};
+        auto onEndOfStream = [](Messages::EndOfStreamMessage) {};
 
         NetworkManager netManager("127.0.0.1", 31337, onBuffer, onEndOfStream,
                                   onErrorServer, bufferManager, partitionManager);
@@ -280,7 +280,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
         auto channel = netManager.registerSubpartitionProducer(nodeLocation,
                                                                NesPartition(1, 22, 333, 4445),
                                                                onErrorChannel,
-                                                               0,
+                                                               1,
                                                                retryTimes);
         ASSERT_EQ(channel, nullptr);
         ASSERT_EQ(serverError.get_future().get(), true);
@@ -289,6 +289,95 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
         ASSERT_EQ(true, false);
     }
     ASSERT_EQ(true, true);
+}
+
+TEST_F(NetworkStackTest, testMassiveMultiSending) {
+    size_t totalNumBuffer = 10;
+    size_t numSendingThreads = 10;
+
+    // create a couple of NesPartitions
+    auto sendingThreads = std::vector<std::thread>();
+    auto nesPartitions = std::vector<NesPartition>();
+    auto completedPromises = std::vector<std::promise<bool>>();
+    auto bufferCounter = std::vector<std::size_t>();
+
+    for (int i = 0; i < numSendingThreads; i++) {
+        nesPartitions.emplace_back(i, i + 10, i + 20, i + 30);
+        completedPromises.emplace_back(std::promise<bool>());
+        bufferCounter.emplace_back(0);
+    }
+
+    try {
+        // start zmqServer
+        auto onBuffer = [&bufferCounter](NesPartition id, TupleBuffer& buffer) {
+          for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
+              ASSERT_EQ(buffer.getBuffer<uint64_t>()[j], j);
+          }
+          bufferCounter[id.getQueryId()]++;
+        };
+
+        auto onError = [](Messages::ErroMessage ex) {
+          //can be empty for this test
+        };
+
+        auto onEndOfStream = [&completedPromises](Messages::EndOfStreamMessage p) {
+            completedPromises[p.getNesPartition().getQueryId()].set_value(true);
+        };
+
+        NetworkManager netManager("127.0.0.1", 31337, onBuffer, onEndOfStream, onError, bufferManager,
+                                  partitionManager);
+
+        std::thread receivingThread([&netManager, &nesPartitions, &completedPromises] {
+          // register the incoming channel
+          for (NesPartition p: nesPartitions) {
+              netManager.registerSubpartitionConsumer(p);
+          }
+
+          for (std::promise<bool>& p: completedPromises) {
+              p.get_future().get();
+          }
+        });
+
+        NodeLocation nodeLocation(0, "127.0.0.1", 31337);
+
+        for (int i = 0; i < numSendingThreads; i++) {
+            std::thread sendingThread([&, i] {
+              // register the incoming channel
+              NesPartition nesPartition(i, i + 10, i + 20, i + 30);
+              auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, 5, 5);
+
+              if (senderChannel == nullptr) {
+                  NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
+                  completedPromises[i].set_value(false);
+              } else {
+                  auto buffer = bufferManager->getBufferBlocking();
+                  for (size_t i = 0; i < totalNumBuffer; ++i) {
+                      for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
+                          buffer.getBuffer<uint64_t>()[j] = j;
+                      }
+                      buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
+                      buffer.setTupleSizeInBytes(sizeof(uint64_t));
+                      senderChannel->sendBuffer(buffer);
+                  }
+                  delete senderChannel;
+              }
+            });
+            sendingThreads.emplace_back(std::move(sendingThread));
+        }
+
+        for (std::thread& t: sendingThreads) {
+            if (t.joinable()) {
+                t.join();
+            }
+        }
+
+        receivingThread.join();
+    } catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    for (size_t cnt: bufferCounter) {
+        ASSERT_EQ(cnt, totalNumBuffer);
+    }
 }
 
 } // namespace Network
