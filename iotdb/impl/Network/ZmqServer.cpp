@@ -26,11 +26,11 @@ ZmqServer::ZmqServer(const std::string& hostname,
 
 bool ZmqServer::start() {
     std::promise<bool> start_promise;
-    uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
-    uint16_t numHandlerThreads = numNetworkThreads / 2;
+    uint16_t numZmqThreads = (numNetworkThreads - 1)/2;
+    uint16_t numHandlerThreads = numNetworkThreads/2;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
     routerThread = std::make_unique<std::thread>([this, numHandlerThreads, &start_promise]() {
-        routerLoop(numHandlerThreads, start_promise);
+      routerLoop(numHandlerThreads, start_promise);
     });
     return start_promise.get_future().get();
 }
@@ -69,7 +69,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
         NES_DEBUG("Created Zmq Server socket on " << hostname << ":" << port);
         for (int i = 0; i < numHandlerThreads; ++i) {
             handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
-                messageHandlerEventLoop(barrier, i);
+              messageHandlerEventLoop(barrier, i);
             }));
         }
     } catch (...) {
@@ -132,9 +132,10 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
             dispatcherSocket.recv(&identityEnvelope);
             dispatcherSocket.recv(&headerEnvelope);
             auto msgHeader = headerEnvelope.data<Messages::MessageHeader>();
+
             if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
                 // TODO handle error -- need to discuss how we handle errors on the node engine
-                NES_ERROR("ZmqServer: stream is corrupted");
+                NES_THROW_RUNTIME_ERROR("ZmqServer: Stream is corrupted-->Wrong magic number");
             }
             switch (msgHeader->getMsgType()) {
                 case Messages::ClientAnnouncement: {
@@ -148,9 +149,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     auto serverReadyMsg = exchangeProtocol.onClientAnnouncement(
                         clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>());
 
-                    auto subpartitionId = NesPartition(serverReadyMsg.getQueryId(), serverReadyMsg.getOperatorId(),
-                                                       serverReadyMsg.getPartitionId(),
-                                                       serverReadyMsg.getSubpartitionId());
+                    auto subpartitionId = serverReadyMsg.getNesPartition();
 
                     NES_INFO("ZmqServer: ClientAnnouncement received for " << subpartitionId.toString());
 
@@ -178,30 +177,25 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     dispatcherSocket.recv(&bufferHeaderMsg);
                     // parse buffer header
                     auto bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
-
-                    // parse identity
                     auto nesPartition = *identityEnvelope.data<NesPartition>();
 
                     // receive buffer content
                     TupleBuffer buffer = bufferManager->getBufferBlocking();
-                    dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize(), 0);
+                    dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize());
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
-                    buffer.setTupleSizeInBytes(bufferHeader->getPayloadSize() / bufferHeader->getNumOfRecords());
+                    buffer.setTupleSizeInBytes(bufferHeader->getPayloadSize()/bufferHeader->getNumOfRecords());
 
                     // check if identity is registered
                     if (partitionManager->isRegistered(nesPartition)) {
                         // create a string for logging of the identity which corresponds to the
                         // queryId::operatorId::partitionId::subpartitionId
-                        NES_DEBUG("ZmqServer: DataBuffer received from " << nesPartition.toString() << " with "
-                                                                         << bufferHeader->getNumOfRecords() << "/"
-                                                                         << bufferHeader->getPayloadSize());
                         exchangeProtocol.onBuffer(nesPartition, buffer);
                     } else {
                         // partition is not registered, discard the buffer
                         buffer.release();
                         NES_ERROR("ZmqServer: "
-                                  << "DataBuffer for " + nesPartition.toString()
-                                      + " is not registered and was discarded!");
+                                      << "DataBuffer for " + nesPartition.toString()
+                                          + " is not registered and was discarded!");
                     }
                     break;
                 }
@@ -212,10 +206,16 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                 }
                 case Messages::EndOfStream: {
                     // if server receives a message that the stream did terminate
-                    auto partitionId = *identityEnvelope.data<NesPartition>();
+                    zmq::message_t eosEnvelope;
+                    dispatcherSocket.recv(&eosEnvelope);
+                    auto eosMsg = *eosEnvelope.data<Messages::EndOfStreamMessage>();
 
-                    NES_INFO("ZmqServer: EndOfStream message received from " << partitionId.toString());
-                    exchangeProtocol.onEndOfStream(partitionId);
+                    NES_INFO("ZmqServer: EndOfStream message received from " << eosMsg.getNesPartition().toString());
+                    if (partitionManager->isRegistered(eosMsg.getNesPartition())) {
+                        partitionManager->unregisterSubpartition(eosMsg.getNesPartition());
+                    }
+
+                    exchangeProtocol.onEndOfStream(eosMsg);
                     break;
                 }
                 default: {

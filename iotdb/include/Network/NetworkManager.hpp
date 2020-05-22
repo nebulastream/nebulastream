@@ -26,7 +26,7 @@ class NetworkManager : public boost::noncopyable {
   public:
     explicit NetworkManager(const std::string& hostname, uint16_t port,
                             std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer,
-                            std::function<void(NesPartition)>&& onEndOfStream,
+                            std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream,
                             std::function<void(Messages::ErroMessage)>&& onError,
                             BufferManagerPtr bufferManager, PartitionManagerPtr partitionManager,
                             uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);

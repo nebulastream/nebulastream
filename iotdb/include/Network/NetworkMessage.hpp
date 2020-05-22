@@ -53,105 +53,38 @@ class ClientAnnounceMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = ClientAnnouncement;
 
-    explicit ClientAnnounceMessage(QueryId queryId,
-                                   OperatorId operatorId,
-                                   PartitionId partitionId,
-                                   SubpartitionId subpartitionId)
-        : queryId(queryId),
-          operatorId(operatorId),
-          partitionId(partitionId),
-          subpartitionId(subpartitionId) {}
+    explicit ClientAnnounceMessage(NesPartition nesPartition)
+        : nesPartition(nesPartition) {}
 
     /**
      * @brief getter for the queryId
      * @return the queryId
      */
-    QueryId getQueryId() const {
-        return queryId;
-    }
-
-    /**
-     * @brief getter for the operatorId
-     * @return the operatorId
-     */
-    OperatorId getOperatorId() const {
-        return operatorId;
-    }
-
-    /**
-     * @brief getter for the partitionId
-     * @return the partitionId
-     */
-    PartitionId getPartitionId() const {
-        return partitionId;
-    }
-
-    /**
-     * @brief getter for the getSubpartitionId
-     * @return the subpartitionId
-     */
-    SubpartitionId getSubpartitionId() const {
-        return subpartitionId;
+    NesPartition getNesPartition() const {
+        return nesPartition;
     }
 
   private:
-    const QueryId queryId;
-    const OperatorId operatorId;
-    const PartitionId partitionId;
-    const SubpartitionId subpartitionId;
+    NesPartition nesPartition;
 };
 
 class ServerReadyMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = ServerReady;
 
-    explicit ServerReadyMessage(
-        QueryId queryId,
-        OperatorId operatorId,
-        PartitionId partitionId,
-        SubpartitionId subpartitionId)
-        : queryId(queryId),
-          operatorId(operatorId),
-          partitionId(partitionId),
-          subpartitionId(subpartitionId) {}
+    explicit ServerReadyMessage(NesPartition nesPartition)
+        : nesPartition(nesPartition) {}
 
     /**
      * @brief getter for the queryId
      * @return the queryId
      */
-    QueryId getQueryId() const {
-        return queryId;
-    }
-
-    /**
-     * @brief getter for the operatorId
-     * @return the operatorId
-     */
-    OperatorId getOperatorId() const {
-        return operatorId;
-    }
-
-    /**
-     * @brief getter for the partitionId
-     * @return the partitionId
-     */
-    PartitionId getPartitionId() const {
-        return partitionId;
-    }
-
-    /**
-     * @brief getter for the getSubpartitionId
-     * @return the subpartitionId
-     */
-    SubpartitionId getSubpartitionId() const {
-        return subpartitionId;
+    NesPartition getNesPartition() const {
+        return nesPartition;
     }
 
   private:
-    const QueryId queryId;
-    const OperatorId operatorId;
-    const PartitionId partitionId;
-    const SubpartitionId subpartitionId;
+    NesPartition nesPartition;
 };
 
 class DataBufferMessage {
@@ -186,27 +119,25 @@ class DataBufferMessage {
 class EndOfStreamMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = EndOfStream;
-    explicit EndOfStreamMessage(
-        QueryId queryId,
-        OperatorId operatorId,
-        PartitionId partitionId,
-        SubpartitionId subpartitionId)
-        : queryId(queryId),
-          operatorId(operatorId),
-          partitionId(partitionId),
-          subpartitionId(subpartitionId) {}
+    explicit EndOfStreamMessage(NesPartition nesPartition)
+        : nesPartition(nesPartition) {}
+
+    /**
+     * @brief getter for the queryId
+     * @return the queryId
+     */
+    NesPartition getNesPartition() const {
+        return nesPartition;
+    }
 
   private:
-    const QueryId queryId;
-    const OperatorId operatorId;
-    const PartitionId partitionId;
-    const SubpartitionId subpartitionId;
+    NesPartition nesPartition;
 };
 
 class ErroMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = ErrorMessage;
-    explicit ErroMessage(ErrorType error) : error(error){};
+    explicit ErroMessage(ErrorType error) : error(error) {};
 
     const ErrorType getErrorType() const { return error; }
 
