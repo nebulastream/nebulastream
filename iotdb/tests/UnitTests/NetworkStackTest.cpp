@@ -330,6 +330,8 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
         std::thread receivingThread([&netManager, &nesPartitions, &completedPromises] {
           // register the incoming channel
           for (NesPartition p: nesPartitions) {
+              //add random latency
+              sleep(rand()%3);
               netManager.registerSubpartitionConsumer(p);
           }
 
