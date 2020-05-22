@@ -3,14 +3,14 @@ name: NES CI
 on:
   push:
     branches:
-      - '*'
+      - *
     tags-ignore:
-      - '*'
+      - *
     paths-ignore:
       - iotdb/include/Version/version.hpp
   pull_request:
     branches:
-      - '*'
+      - *
 
 jobs:
   build-job:
@@ -55,4 +55,12 @@ jobs:
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
           docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
-
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
