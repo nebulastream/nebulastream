@@ -23,6 +23,8 @@ class ZmqSourceDescriptor : public SourceDescriptor {
      */
     uint16_t getPort() const;
 
+    bool equal(SourceDescriptorPtr other) override;
+
   private:
     explicit ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port);
 

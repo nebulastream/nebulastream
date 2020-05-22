@@ -36,6 +36,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
      * @brief get the frequency of reading the csv file
      */
     size_t getFrequency() const;
+    bool equal(SourceDescriptorPtr other) override;
 
   private:
     explicit CsvSourceDescriptor(SchemaPtr schema,

@@ -45,6 +45,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
      * @return
      */
     uint64_t getKafkaConnectTimeout() const;
+    bool equal(SourceDescriptorPtr other) override;
 
   private:
     explicit KafkaSourceDescriptor(SchemaPtr schema,

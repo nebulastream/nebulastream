@@ -17,6 +17,7 @@ class SenseSourceDescriptor : public SourceDescriptor {
      * @brief Get the udf for the sense node
      */
     const std::string& getUdfs() const;
+    bool equal(SourceDescriptorPtr other) override;
 
   private:
     explicit SenseSourceDescriptor(SchemaPtr schema, std::string udfs);
