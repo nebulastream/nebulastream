@@ -1,5 +1,5 @@
+#include <API/Schema.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-
 namespace NES {
 
 CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
@@ -34,6 +34,13 @@ SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
                                                 size_t numBuffersToProcess,
                                                 size_t frequency) {
     return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(schema, filePath, delimiter, numBuffersToProcess, frequency));
+}
+
+bool CsvSourceDescriptor::equal(SourceDescriptorPtr other) {
+    if (!other->instanceOf<CsvSourceDescriptor>())
+        return false;
+    auto otherSource = other->as<CsvSourceDescriptor>();
+    return filePath == otherSource->getFilePath() && delimiter == otherSource->getDelimiter() && numBuffersToProcess == otherSource->getNumBuffersToProcess() && frequency == otherSource->getFrequency() && getSchema()->equals(otherSource->getSchema());
 }
 
 }// namespace NES

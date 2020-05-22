@@ -1,5 +1,5 @@
+#include <API/Schema.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-
 namespace NES {
 
 DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema,
@@ -22,5 +22,10 @@ SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema,
                                                                              numbersOfBufferToProduce,
                                                                              frequency));
 }
-
+bool DefaultSourceDescriptor::equal(SourceDescriptorPtr other) {
+    if (!other->instanceOf<DefaultSourceDescriptor>())
+        return false;
+    auto otherSource = other->as<DefaultSourceDescriptor>();
+    return numbersOfBufferToProduce == otherSource->getNumbersOfBufferToProduce() && frequency == otherSource->getFrequency() && getSchema()->equals(otherSource->getSchema());
+}
 }// namespace NES

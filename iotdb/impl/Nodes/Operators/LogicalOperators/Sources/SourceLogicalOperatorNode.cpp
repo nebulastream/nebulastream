@@ -12,7 +12,7 @@ bool SourceLogicalOperatorNode::equal(const NodePtr rhs) const {
     }
     if (rhs->instanceOf<SourceLogicalOperatorNode>()) {
         auto sourceOperator = rhs->as<SourceLogicalOperatorNode>();
-        return true;
+        return sourceOperator->getSourceDescriptor()->equal(sourceDescriptor);
     }
     return false;
 }

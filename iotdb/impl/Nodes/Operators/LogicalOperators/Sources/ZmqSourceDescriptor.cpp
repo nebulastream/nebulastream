@@ -1,3 +1,4 @@
+#include <API/Schema.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 
 namespace NES {
@@ -15,6 +16,13 @@ const std::string& ZmqSourceDescriptor::getHost() const {
 
 uint16_t ZmqSourceDescriptor::getPort() const {
     return port;
+}
+bool ZmqSourceDescriptor::equal(SourceDescriptorPtr other) {
+
+    if (!other->instanceOf<ZmqSourceDescriptor>())
+        return false;
+    auto otherZMQSource = other->as<ZmqSourceDescriptor>();
+    return host == otherZMQSource->getHost() && port == otherZMQSource->getPort() && getSchema()->equals(other->getSchema());
 }
 
 }// namespace NES
