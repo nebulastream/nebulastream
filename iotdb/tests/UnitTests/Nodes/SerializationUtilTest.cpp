@@ -1,3 +1,5 @@
+#include <API/Expressions/Expressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
 #include <API/InputQuery.hpp>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
@@ -10,14 +12,20 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <SerializableOperator.pb.h>
-#include <Topology/NESTopologyManager.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
 #include <Util/Logger.hpp>
 #include <google/protobuf/util/json_util.h>
@@ -129,5 +137,76 @@ TEST_F(SerializationUtilTest, schemaSerializationTest) {
     auto options = google::protobuf::util::JsonOptions();
     options.add_whitespace = true;
     google::protobuf::util::MessageToJsonString(*serializedSchema, &json_string, options);
+    std::cout << json_string << std::endl;
+}
+
+TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
+    auto schema = Schema::create();
+    schema->addField("f1", INT32);
+
+    {
+        auto source = ZmqSourceDescriptor::create(schema, "localhost", 42);
+        auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto source = BinarySourceDescriptor::create(schema, "localhost");
+        auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto source = CsvSourceDescriptor::create(schema, "localhost", ",", 10, 10);
+        auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+        std::string json_string;
+        auto options = google::protobuf::util::JsonOptions();
+        options.add_whitespace = true;
+        google::protobuf::util::MessageToJsonString(*serializedSourceDescriptor, &json_string, options);
+        std::cout << json_string << std::endl;
+    }
+
+    {
+        auto source = DefaultSourceDescriptor::create(schema, 55, 42);
+        auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto source = LogicalStreamSourceDescriptor::create("localhost");
+        auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto source = SenseSourceDescriptor::create(schema, "senseusf");
+        auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+    }
+}
+
+TEST_F(SerializationUtilTest, operatorSerialization) {
+
+    auto source = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create("testStream"));
+    auto filter = createFilterLogicalOperatorNode(Attribute("f1") == 10);
+    filter->addChild(source);
+    auto map = createMapLogicalOperatorNode(Attribute("f2") = 10);
+    map->addChild(filter);
+    auto sink = createSinkLogicalOperatorNode(PrintSinkDescriptor::create());
+    sink->addChild(map);
+
+    auto serializedOperator = OperatorSerializationUtil::serializeOperator(sink, new SerializableOperator());
+
+    std::string json_string;
+    auto options = google::protobuf::util::JsonOptions();
+    options.add_whitespace = true;
+    google::protobuf::util::MessageToJsonString(*serializedOperator, &json_string, options);
     std::cout << json_string << std::endl;
 }
