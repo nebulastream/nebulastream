@@ -1,7 +1,9 @@
 
 #include <API/Schema.hpp>
+#include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -41,9 +43,13 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(NodePtr node,
         serializedOperator->mutable_details()->PackFrom(sinkDetails);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         auto filterDetails = SerializableOperator_FilterDetails();
+        auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
+        ExpressionSerializationUtil::serializeExpression(filterOperator->getPredicate(), filterDetails.mutable_predicate());
         serializedOperator->mutable_details()->PackFrom(filterDetails);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         auto mapDetails = SerializableOperator_MapDetails();
+        auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
+        ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
         serializedOperator->mutable_details()->PackFrom(mapDetails);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: we could not serialize this operator: " << node->toString());

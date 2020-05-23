@@ -39,8 +39,18 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(Express
         // Translate field read expression node.
         auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
         auto serializedFieldAccessExpression = SerializableExpression_FieldAccessExpression();
+        // todo add field type
         serializedFieldAccessExpression.set_fieldname(fieldAccessExpression->getFieldName());
         serializedExpression->mutable_details()->PackFrom(serializedFieldAccessExpression);
+    } else if (expression->instanceOf<FieldAssignmentExpressionNode>()) {
+        // Translate field read expression node.
+        auto fieldAssignmentExpressionNode = expression->as<FieldAssignmentExpressionNode>();
+        auto serializedFieldAssignmentExpression = SerializableExpression_FieldAssignmentExpression();
+        // todo add field type
+        auto serializedFieldAccessExpression = serializedFieldAssignmentExpression.mutable_field();
+        serializedFieldAccessExpression->set_fieldname(fieldAssignmentExpressionNode->getField()->getFieldName());
+        serializeExpression(fieldAssignmentExpressionNode->getAssignment(), serializedFieldAssignmentExpression.mutable_assignment());
+        serializedExpression->mutable_details()->PackFrom(serializedFieldAssignmentExpression);
     }
     DataTypeSerializationUtil::serializeDataType(expression->getStamp(), serializedExpression->mutable_stamp());
     return serializedExpression;
@@ -66,6 +76,15 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             serializedExpression->details().UnpackTo(&serializedFieldAccessExpression);
             auto name = serializedFieldAccessExpression.fieldname();
             expressionNodePtr = FieldAccessExpressionNode::create(name);
+        } else if (serializedExpression->details().Is<SerializableExpression_FieldAssignmentExpression>()) {
+            // Translate field read expression node.
+            SerializableExpression_FieldAssignmentExpression serializedFieldAccessExpression;
+            serializedExpression->details().UnpackTo(&serializedFieldAccessExpression);
+            auto field = serializedFieldAccessExpression.mutable_field();
+            // todo add field type
+            auto fieldAccessNode = FieldAccessExpressionNode::create(field->fieldname());
+            auto fieldAssignmentExpression = deserializeExpression(serializedFieldAccessExpression.mutable_assignment());
+            expressionNodePtr = FieldAssignmentExpressionNode::create(fieldAccessNode->as<FieldAccessExpressionNode>(), fieldAssignmentExpression);
         }
     }
     auto stamp = DataTypeSerializationUtil::deserializeDataType(serializedExpression->mutable_stamp());
