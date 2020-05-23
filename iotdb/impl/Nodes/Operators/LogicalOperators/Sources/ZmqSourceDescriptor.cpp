@@ -25,4 +25,8 @@ bool ZmqSourceDescriptor::equal(SourceDescriptorPtr other) {
     return host == otherZMQSource->getHost() && port == otherZMQSource->getPort() && getSchema()->equals(other->getSchema());
 }
 
+const std::string& ZmqSourceDescriptor::toString() {
+    return "ZmqSourceDescriptor()";
+}
+
 }// namespace NES

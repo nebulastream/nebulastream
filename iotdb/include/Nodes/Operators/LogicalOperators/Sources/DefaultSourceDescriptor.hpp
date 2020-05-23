@@ -24,6 +24,7 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     uint32_t getFrequency() const;
 
     bool equal(SourceDescriptorPtr other) override;
+    const std::string& toString() override;
 
 
   private:

@@ -17,4 +17,7 @@ bool BinarySourceDescriptor::equal(SourceDescriptorPtr other) {
     auto otherDefaultSource = other->as<BinarySourceDescriptor>();
     return filePath == otherDefaultSource->getFilePath() && getSchema()->equals(otherDefaultSource->getSchema());
 }
+const std::string& BinarySourceDescriptor::toString() {
+    return "BinarySourceDescriptor(" + filePath + ")";
+}
 }// namespace NES
