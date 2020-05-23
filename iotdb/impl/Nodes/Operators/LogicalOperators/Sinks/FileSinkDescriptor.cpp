@@ -21,5 +21,14 @@ FileOutputMode FileSinkDescriptor::getFileOutputMode() const {
 FileOutputType FileSinkDescriptor::getFileOutputType() const {
     return fileOutputType;
 }
+const std::string& FileSinkDescriptor::toString() {
+    return "FileSinkDescriptor()";
+}
+bool FileSinkDescriptor::equal(SinkDescriptorPtr other) {
+    if (!other->instanceOf<FileSinkDescriptor>())
+        return false;
+    auto otherSinkDescriptor = other->as<FileSinkDescriptor>();
+    return fileOutputType == otherSinkDescriptor->fileOutputType && fileOutputType == otherSinkDescriptor->getFileOutputType() && fileName == otherSinkDescriptor->fileName:
+}
 
 }// namespace NES

@@ -8,4 +8,11 @@ SinkDescriptorPtr PrintSinkDescriptor::create() {
     return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor());
 }
 
+const std::string& PrintSinkDescriptor::toString() {
+    return "PrintSinkDescriptor()";
+}
+bool PrintSinkDescriptor::equal(SinkDescriptorPtr other) {
+    return other->instanceOf<PrintSinkDescriptor>();
+}
+
 }// namespace NES
