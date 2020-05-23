@@ -20,4 +20,8 @@ bool LogicalStreamSourceDescriptor::equal(SourceDescriptorPtr other) {
     auto otherZMQSource = other->as<LogicalStreamSourceDescriptor>();
     return streamName == otherZMQSource->getStreamName();
 }
+
+const std::string& LogicalStreamSourceDescriptor::toString() {
+    return "LogicalStreamSourceDescriptor()";
+}
 }// namespace NES

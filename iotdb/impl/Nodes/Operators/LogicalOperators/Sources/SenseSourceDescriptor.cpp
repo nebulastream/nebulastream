@@ -16,9 +16,12 @@ SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string 
 bool SenseSourceDescriptor::equal(SourceDescriptorPtr other) {
     if (!other->instanceOf<SenseSourceDescriptor>())
         return false;
-    auto otherZMQSource = other->as<SenseSourceDescriptor>();
-    return udfs == otherZMQSource->getUdfs() && getSchema()->equals(otherSource->getSchema());
-    ;
+    auto otherSource = other->as<SenseSourceDescriptor>();
+    return udfs == otherSource->getUdfs() && getSchema()->equals(otherSource->getSchema());
+}
+
+const std::string& SenseSourceDescriptor::toString() {
+    return "SenseSourceDescriptor()";
 }
 
 }// namespace NES

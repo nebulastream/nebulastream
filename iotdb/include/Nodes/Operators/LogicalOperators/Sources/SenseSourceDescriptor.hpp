@@ -18,6 +18,7 @@ class SenseSourceDescriptor : public SourceDescriptor {
      */
     const std::string& getUdfs() const;
     bool equal(SourceDescriptorPtr other) override;
+    const std::string& toString() override;
 
   private:
     explicit SenseSourceDescriptor(SchemaPtr schema, std::string udfs);

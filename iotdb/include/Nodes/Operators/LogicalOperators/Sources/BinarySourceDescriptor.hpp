@@ -18,7 +18,10 @@ class BinarySourceDescriptor : public SourceDescriptor {
      * @return
      */
     const std::string& getFilePath() const;
+
     bool equal(SourceDescriptorPtr other) override;
+
+    const std::string& toString() override;
 
   private:
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
