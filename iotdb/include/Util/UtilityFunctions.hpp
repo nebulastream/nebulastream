@@ -36,8 +36,15 @@ class UtilityFunctions {
    * @brief this function creates an ID string
    * @return the ID string
    * https://stackoverflow.com/questions/24365331/how-can-i-generate-uuid-in-c-without-using-boost-library
+   * example id: 665b3caf-f097-568e-2b2f-220b6c0a9bcd
    */
-   static std::string generateId();
+   static std::string generateIdString();
+
+    /**
+  * @brief this function creates a hased ID as int
+  * @return the ID as site_t
+  */
+    static std::size_t generateIdInt();
 
     /**
    * @brief get the first substring between a unique first delimiter and a non-unique second delimiter

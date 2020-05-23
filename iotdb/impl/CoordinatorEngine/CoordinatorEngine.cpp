@@ -14,8 +14,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyMan
 
 size_t getIdFromIp(std::string ip) {
     std::hash<std::string> hashFn;
-    string uidString = UtilityFunctions::generateId();
-
+    string uidString = UtilityFunctions::generateIdString();
     return hashFn(uidString + ip);
 }
 
@@ -169,7 +168,6 @@ bool CoordinatorEngine::unregisterNode(size_t nodeId) {
     NES_DEBUG("CoordinatorEngine::UnregisterNode: success in topology is " << successTopology);
 
     return successCatalog && successTopology;
-
 }
 
 bool CoordinatorEngine::registerPhysicalStream(size_t nodeId,

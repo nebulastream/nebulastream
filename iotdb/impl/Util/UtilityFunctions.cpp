@@ -147,7 +147,7 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
     }
 }
 
-std::string UtilityFunctions::generateId() {
+std::string UtilityFunctions::generateIdString() {
     static std::random_device dev;
     static std::mt19937 rng(dev());
 
@@ -162,10 +162,15 @@ std::string UtilityFunctions::generateId() {
         res += v[dist(rng)];
         res += v[dist(rng)];
     }
-
-    NES_DEBUG("UtilityFunctions: generateId: " + res);
+    NES_DEBUG("UtilityFunctions: generateIdString: " + res);
     return res;
+}
 
+std::size_t UtilityFunctions::generateIdInt(){
+    std::string linkID_string = UtilityFunctions::generateIdString();
+    NES_DEBUG("UtilityFunctions: generateIdInt: create a new string_id=" << linkID_string);
+    std::hash<std::string> hash_fn;
+    return hash_fn(linkID_string);
 }
 
 std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(

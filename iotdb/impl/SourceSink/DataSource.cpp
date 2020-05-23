@@ -22,7 +22,7 @@ namespace NES {
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0),
-      lastGatheringTimeStamp(0), sourceId(UtilityFunctions::generateId()) { NES_DEBUG(
+      lastGatheringTimeStamp(0), sourceId(UtilityFunctions::generateIdString()) { NES_DEBUG(
                                      "DataSource " << this->getSourceId() << ": Init Data Source with schema"); };
 
 DataSource::DataSource() {
