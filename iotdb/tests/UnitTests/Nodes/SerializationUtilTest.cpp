@@ -6,8 +6,25 @@
 #include <API/Types/DataTypes.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
+#include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Node.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
@@ -223,6 +240,92 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+    }
+}
+
+TEST_F(SerializationUtilTest, expressionSerialization) {
+
+    {
+        auto fieldAccess = FieldAccessExpressionNode::create(createDataType(INT32), "f1");
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(fieldAccess, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(fieldAccess->equal(deserializedExpression));
+    }
+    auto f1 = FieldAccessExpressionNode::create(createDataType(INT32), "f1");
+    auto f2 = FieldAccessExpressionNode::create(createDataType(INT32), "f2");
+
+    {
+        auto expression = AndExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
+    }
+
+    {
+        auto expression = OrExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
+    }
+
+    {
+        auto expression = EqualsExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
+    }
+
+    {
+        auto expression = LessExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
+    }
+
+    {
+        auto expression = LessEqualsExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
+    }
+
+    {
+        auto expression = GreaterExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
+    }
+
+    {
+        auto expression = GreaterExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
+    }
+
+    {
+        auto expression = AddExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
+    }
+    {
+        auto expression = MulExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
+    }
+    {
+        auto expression = DivExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
+    }
+    {
+        auto expression = SubExpressionNode::create(f1, f2);
+        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+        ASSERT_TRUE(expression->equal(deserializedExpression));
     }
 }
 
