@@ -8,6 +8,14 @@ namespace NES {
 class SerializableOperator;
 typedef std::shared_ptr<SerializableOperator> SerializableOperatorPtr;
 
+class SerializableOperator_SourceDetails;
+
+class SourceLogicalOperatorNode;
+typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+
+class SourceDescriptor;
+typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
+
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
@@ -26,11 +34,11 @@ class OperatorSerializationUtil {
   public:
     SerializableOperatorPtr serialize(QueryPlanPtr plan);
 
-    void serializeNode(NodePtr node, SerializableOperator* serializedOperator){};
-
-    void serializeSchema(SchemaPtr schema, SerializableSchema* serializedSchema){};
-
-    void serializeOperator(NodePtr parent, SerializableOperator* serializedParent){};
+    static SerializableOperator* serializeOperator(NodePtr parent, SerializableOperator* serializedParent);
+    static SerializableOperator_SourceDetails serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator);
+    static SerializableOperator_SourceDetails* serializeSourceSourceDescriptor(SourceDescriptorPtr sourceOperator, SerializableOperator_SourceDetails* serializedSourceDetails);
+    static SourceLogicalOperatorNodePtr deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails);
+    static SourceDescriptorPtr deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails);
 };
 
 }// namespace NES

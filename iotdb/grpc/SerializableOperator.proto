@@ -47,6 +47,7 @@ message SerializableOperator{
   message SourceDetails {
     message SerializableBinarySourceDescriptor {
       string filePath = 1;
+      SerializableSchema sourceSchema = 2;
     }
 
     message SerializableCsvSourceDescriptor {
@@ -54,11 +55,13 @@ message SerializableOperator{
       string delimiter = 2;
       uint64 numBuffersToProcess = 3;
       uint64 frequency = 4;
+      SerializableSchema sourceSchema = 5;
     }
 
     message SerializableDefaultSourceDescriptor {
-      uint64 numBuffersToProcess = 3;
-      uint64 frequency = 4;
+      uint64 numBuffersToProcess = 1;
+      uint64 frequency = 2;
+      SerializableSchema sourceSchema = 3;
     }
 
     message SerializableKafkaSourceDescriptor {
@@ -67,6 +70,7 @@ message SerializableOperator{
       string groupId = 3;
       bool autoCommit = 4;
       uint64 kafkaConnectTimeout = 5;
+      SerializableSchema sourceSchema = 6;
     }
 
     message SerializableLogicalStreamSourceDescriptor {
@@ -75,11 +79,13 @@ message SerializableOperator{
 
     message SerializableSenseSourceDescriptor {
       string udfs = 1;
+      SerializableSchema sourceSchema = 2;
     }
 
     message SerializableZMQSourceDescriptor {
       string host = 1;
       uint32 port = 2;
+      SerializableSchema sourceSchema = 3;
     }
     google.protobuf.Any sourceDescriptor = 1;
   }
