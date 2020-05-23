@@ -17,6 +17,7 @@ message SerializableDataType{
     FLOAT64 = 10;
     CHAR = 11;
     ARRAY = 12;
+    BOOLEAN = 13;
   }
 
   message ArrayDetails{
@@ -35,7 +36,66 @@ message SerializableField{
 }
 
 message SerializableExpression {
-  repeated SerializableExpression children = 1;
+  message ConstantValueExpression{
+    SerializableDataType type = 1;
+    string value = 2;
+  }
+  message FieldAccessExpression{
+    string fieldName = 1;
+  }
+  message FieldAssignmentExpression{
+    FieldAccessExpression field = 1;
+    SerializableExpression assignment = 2;
+  }
+  message AndExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  message EqualsExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  message GreaterEqualsExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  message GreaterExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  message LessEqualsExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  message LessExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  message NegateExpression{
+    SerializableExpression child = 1;
+  }
+  message OrExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  message AddExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  message DivExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  message MulExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  message SubExpression{
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
+  }
+  SerializableDataType stamp = 1;
+  google.protobuf.Any details = 2;
 }
 
 message SerializableSchema{

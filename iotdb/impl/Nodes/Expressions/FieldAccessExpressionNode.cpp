@@ -17,7 +17,7 @@ ExpressionNodePtr FieldAccessExpressionNode::create(std::string fieldName) {
 bool FieldAccessExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<FieldAccessExpressionNode>()) {
         auto otherFieldRead = rhs->as<FieldAccessExpressionNode>();
-        return otherFieldRead->fieldName == fieldName && otherFieldRead->stamp == stamp;
+        return otherFieldRead->fieldName == fieldName && otherFieldRead->stamp->isEqual(stamp);
     }
     return false;
 }
