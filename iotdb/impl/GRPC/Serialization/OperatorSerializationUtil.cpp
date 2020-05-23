@@ -4,7 +4,12 @@
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -32,7 +37,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(NodePtr node,
         auto sourceDetails = serializeSourceOperator(operatorNode->as<SourceLogicalOperatorNode>());
         serializedOperator->mutable_details()->PackFrom(sourceDetails);
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        auto sinkDetails = SerializableOperator_SinkDetails();
+        auto sinkDetails = serializeSinkOperator(operatorNode->as<SinkLogicalOperatorNode>());
         serializedOperator->mutable_details()->PackFrom(sinkDetails);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         auto filterDetails = SerializableOperator_FilterDetails();
@@ -61,6 +66,23 @@ SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOpe
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     serializeSourceSourceDescriptor(sourceDescriptor, &sourceDetails);
     return sourceDetails;
+}
+
+LogicalOperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails) {
+    auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDetails);
+    return createSourceLogicalOperatorNode(sourceDescriptor);
+}
+
+SerializableOperator_SinkDetails OperatorSerializationUtil::serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator) {
+    auto sinkDetails = SerializableOperator_SinkDetails();
+    auto sinkDescriptor = sinkOperator->getSinkDescriptor();
+    serializeSinkDescriptor(sinkDescriptor, &sinkDetails);
+    return sinkDetails;
+}
+
+LogicalOperatorNodePtr OperatorSerializationUtil::deserializeSinkOperator(SerializableOperator_SinkDetails* sinkDetails) {
+    auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
+    return createSinkLogicalOperatorNode(sinkDescriptor);
 }
 
 SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor, SerializableOperator_SourceDetails* sourceDetails) {
@@ -143,10 +165,65 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         auto logicalStreamSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&logicalStreamSerializedSourceDescriptor);
         return LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname());
-
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << serializedSourceDescriptor.type_url());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
+}
+SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescriptor, SerializableOperator_SinkDetails* sinkDetails) {
+    if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor();
+        sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
+    } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
+        auto zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor();
+        serializedSinkDescriptor.set_port(zmqSinkDescriptor->getPort());
+        serializedSinkDescriptor.set_host(zmqSinkDescriptor->getHost());
+        sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
+    } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
+        auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
+
+        serializedSinkDescriptor.set_filepath(fileSinkDescriptor->getFileName());
+
+        auto fileOutputType = fileSinkDescriptor->getFileOutputType() == BINARY_TYPE
+            ? SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputType_BINARY_TYPE
+            : SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputType_CSV_TYPE;
+        serializedSinkDescriptor.set_fileoutputtype(fileOutputType);
+
+        auto fileOutputMode = fileSinkDescriptor->getFileOutputMode() == FILE_OVERWRITE
+            ? SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_OVERWRITE
+            : SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_APPEND;
+        serializedSinkDescriptor.set_fileoutputmode(fileOutputMode);
+
+        sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
+    } else {
+        NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - " << sinkDescriptor->toString());
+        throw std::invalid_argument("Unknown Sink Descriptor Type");
+    }
+    return sinkDetails;
+}
+SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(SerializableOperator_SinkDetails* sinkDetails) {
+    const auto& serializedSourceDescriptor = sinkDetails->sinkdescriptor();
+    if (serializedSourceDescriptor.Is<SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor>()) {
+        return PrintSinkDescriptor::create();
+    } else if (serializedSourceDescriptor.Is<SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor>()) {
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor();
+        serializedSourceDescriptor.UnpackTo(&serializedSinkDescriptor);
+        return ZmqSinkDescriptor::create(serializedSinkDescriptor.host(), serializedSinkDescriptor.port());
+    } else if (serializedSourceDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
+        serializedSourceDescriptor.UnpackTo(&serializedSinkDescriptor);
+        auto fileOutputType = serializedSinkDescriptor.fileoutputtype() == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputType_BINARY_TYPE
+            ? BINARY_TYPE
+            : CSV_TYPE;
+
+        auto fileOutputMode = serializedSinkDescriptor.fileoutputmode() == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_APPEND
+            ? FILE_APPEND
+            : FILE_OVERWRITE;
+
+        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), fileOutputMode, fileOutputType);
+    }
+    return nullptr;
 }
 }// namespace NES
