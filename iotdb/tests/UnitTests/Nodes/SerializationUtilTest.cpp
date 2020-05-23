@@ -9,9 +9,12 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Nodes/Node.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -189,6 +192,37 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+    }
+}
+
+TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
+
+    {
+        auto sink = ZmqSinkDescriptor::create("localhost", 42);
+        auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto sink = PrintSinkDescriptor::create();
+        auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto sink = FileSinkDescriptor::create("test", FILE_OVERWRITE, CSV_TYPE);
+        auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto sink = FileSinkDescriptor::create("test", FILE_APPEND, BINARY_TYPE);
+        auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 }
 

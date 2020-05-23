@@ -119,7 +119,7 @@ message SerializableOperator{
       string host = 1;
       uint32 port = 2;
     }
-    google.protobuf.Any sourceDescriptor = 1;
+    google.protobuf.Any sinkDescriptor = 1;
   }
 
   message MapDetails {

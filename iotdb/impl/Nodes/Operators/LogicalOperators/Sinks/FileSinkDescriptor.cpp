@@ -28,7 +28,7 @@ bool FileSinkDescriptor::equal(SinkDescriptorPtr other) {
     if (!other->instanceOf<FileSinkDescriptor>())
         return false;
     auto otherSinkDescriptor = other->as<FileSinkDescriptor>();
-    return fileOutputType == otherSinkDescriptor->fileOutputType && fileOutputType == otherSinkDescriptor->getFileOutputType() && fileName == otherSinkDescriptor->fileName:
+    return fileOutputType == otherSinkDescriptor->fileOutputType && fileOutputType == otherSinkDescriptor->getFileOutputType() && fileName == otherSinkDescriptor->fileName;
 }
 
 }// namespace NES

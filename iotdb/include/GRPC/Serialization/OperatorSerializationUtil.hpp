@@ -9,12 +9,22 @@ class SerializableOperator;
 typedef std::shared_ptr<SerializableOperator> SerializableOperatorPtr;
 
 class SerializableOperator_SourceDetails;
+class SerializableOperator_SinkDetails;
+
+class LogicalOperatorNode;
+typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 
 class SourceLogicalOperatorNode;
 typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 
+class SinkLogicalOperatorNode;
+typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
+
 class SourceDescriptor;
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
+
+class SinkDescriptor;
+typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
@@ -36,9 +46,15 @@ class OperatorSerializationUtil {
 
     static SerializableOperator* serializeOperator(NodePtr parent, SerializableOperator* serializedParent);
     static SerializableOperator_SourceDetails serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator);
-    static SerializableOperator_SourceDetails* serializeSourceSourceDescriptor(SourceDescriptorPtr sourceOperator, SerializableOperator_SourceDetails* serializedSourceDetails);
-    static SourceLogicalOperatorNodePtr deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails);
+    static LogicalOperatorNodePtr deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails);
+    static SerializableOperator_SinkDetails serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator);
+    static LogicalOperatorNodePtr deserializeSinkOperator(SerializableOperator_SinkDetails* sinkDetails);
+
+    static SerializableOperator_SourceDetails* serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor, SerializableOperator_SourceDetails* serializedSourceDetails);
     static SourceDescriptorPtr deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails);
+
+    static SerializableOperator_SinkDetails* serializeSinkDescriptor(SinkDescriptorPtr sinkDescriptor, SerializableOperator_SinkDetails* sinkDetails);
+    static SinkDescriptorPtr deserializeSinkDescriptor(SerializableOperator_SinkDetails* sinkDetails);
 };
 
 }// namespace NES
