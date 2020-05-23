@@ -46,6 +46,9 @@ class FileSinkDescriptor : public SinkDescriptor {
      */
     FileOutputType getFileOutputType() const;
 
+    const std::string& toString() override;
+    bool equal(SinkDescriptorPtr other) override;
+
   private:
     explicit FileSinkDescriptor(std::string fileName, FileOutputMode fileOutputMode, FileOutputType fileOutputType);
 

@@ -16,6 +16,8 @@ class PrintSinkDescriptor : public SinkDescriptor {
      * @return descriptor for print sink
      */
     static SinkDescriptorPtr create();
+    const std::string& toString() override;
+    bool equal(SinkDescriptorPtr other) override;
 
   private:
     explicit PrintSinkDescriptor();
