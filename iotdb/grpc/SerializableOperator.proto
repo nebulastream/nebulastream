@@ -31,8 +31,6 @@ message SerializableDataType{
 
 }
 
-
-
 message SerializableDataValue {
   message BasicValue {
     SerializableDataType type = 1;
@@ -210,4 +208,5 @@ message SerializableOperator{
   repeated SerializableOperator children = 2;
   SerializableSchema inputSchema = 3;
   SerializableSchema outputSchema = 4;
+  uint64 operatorId = 5;
 }

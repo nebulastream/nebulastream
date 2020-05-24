@@ -340,7 +340,9 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     sink->addChild(map);
 
     auto serializedOperator = OperatorSerializationUtil::serializeOperator(sink, new SerializableOperator());
-
+    auto rootOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+    ASSERT_TRUE(sink->equal(rootOperator));
+    ASSERT_TRUE(sink->equalWithAllChildren(rootOperator));
     std::string json_string;
     auto options = google::protobuf::util::JsonOptions();
     options.add_whitespace = true;

@@ -45,6 +45,7 @@ class OperatorSerializationUtil {
     SerializableOperatorPtr serialize(QueryPlanPtr plan);
 
     static SerializableOperator* serializeOperator(NodePtr parent, SerializableOperator* serializedParent);
+    static LogicalOperatorNodePtr deserializeOperator(SerializableOperator* serializableOperator);
     static SerializableOperator_SourceDetails serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator);
     static LogicalOperatorNodePtr deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails);
     static SerializableOperator_SinkDetails serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator);

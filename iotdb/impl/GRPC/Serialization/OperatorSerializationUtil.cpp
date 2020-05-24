@@ -1,5 +1,6 @@
 
 #include <API/Schema.hpp>
+#include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
@@ -59,12 +60,54 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(NodePtr node,
     // serialize output schema
     SchemaSerializationUtil::serializeSchema(operatorNode->getOutputSchema(), serializedOperator->mutable_outputschema());
 
+    // serialize operator id
+    serializedOperator->set_operatorid(operatorNode->getId());
+
     // append children if the node has any
     for (const auto& child : node->getChildren()) {
         auto serializedChild = serializedOperator->add_children();
         serializeOperator(child, serializedChild);
     }
     return serializedOperator;
+}
+
+LogicalOperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOperator* serializableOperator) {
+    auto details = serializableOperator->details();
+    LogicalOperatorNodePtr operatorNode;
+    if (details.Is<SerializableOperator_SourceDetails>()) {
+        // source operator
+        auto serializedSourceDescriptor = SerializableOperator_SourceDetails();
+        details.UnpackTo(&serializedSourceDescriptor);
+        auto sourceDescriptor = deserializeSourceDescriptor(&serializedSourceDescriptor);
+        operatorNode = createSourceLogicalOperatorNode(sourceDescriptor);
+    } else if (details.Is<SerializableOperator_SinkDetails>()) {
+        // sink operator
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails();
+        details.UnpackTo(&serializedSinkDescriptor);
+        auto sinkDescriptor = deserializeSinkDescriptor(&serializedSinkDescriptor);
+        operatorNode = createSinkLogicalOperatorNode(sinkDescriptor);
+    } else if (details.Is<SerializableOperator_FilterDetails>()) {
+        auto serializedFilterOperator = SerializableOperator_FilterDetails();
+        details.UnpackTo(&serializedFilterOperator);
+        auto filterExpression = ExpressionSerializationUtil::deserializeExpression(serializedFilterOperator.mutable_predicate());
+        operatorNode = createFilterLogicalOperatorNode(filterExpression);
+    } else if (details.Is<SerializableOperator_MapDetails>()) {
+        auto serializedMapOperator = SerializableOperator_MapDetails();
+        details.UnpackTo(&serializedMapOperator);
+        auto mapExpression = ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
+        auto type = DataTypeSerializationUtil::deserializeDataType(serializedMapOperator.mutable_field()->mutable_type());
+        auto fileAccessNode = FieldAccessExpressionNode::create(type, serializedMapOperator.mutable_field()->name());
+        auto fieldAssignmentNode = FieldAssignmentExpressionNode::create(fileAccessNode->as<FieldAccessExpressionNode>(), mapExpression);
+        operatorNode = createMapLogicalOperatorNode(fieldAssignmentNode);
+    }
+
+    operatorNode->setOutputSchema(SchemaSerializationUtil::deserializeSchema(serializableOperator->mutable_outputschema()));
+    operatorNode->setInputSchema(SchemaSerializationUtil::deserializeSchema(serializableOperator->mutable_inputschema()));
+    operatorNode->setId(serializableOperator->operatorid());
+    for (auto child : serializableOperator->children()) {
+        operatorNode->addChild(deserializeOperator(&child));
+    }
+    return operatorNode;
 }
 
 SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator) {
