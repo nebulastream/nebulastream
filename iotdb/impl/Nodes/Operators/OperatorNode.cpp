@@ -1,10 +1,11 @@
 #include <API/Schema.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
+#include <utility>
 namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode() : inputSchema(Schema::create()), outputSchema(Schema::create()) {}
+OperatorNode::OperatorNode() : inputSchema(Schema::create()), outputSchema(Schema::create()), id(0) {}
 
 SchemaPtr OperatorNode::getInputSchema() const {
     return inputSchema;
@@ -37,6 +38,14 @@ size_t OperatorNode::getId() const {
 
 void OperatorNode::setId(size_t id) {
     OperatorNode::id = id;
+}
+
+void OperatorNode::setInputSchema(SchemaPtr inputSchema) {
+    this->inputSchema = std::move(inputSchema);
+}
+
+void OperatorNode::setOutputSchema(SchemaPtr outputSchema) {
+    this->outputSchema = std::move(outputSchema);
 }
 
 }// namespace NES

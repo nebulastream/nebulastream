@@ -20,12 +20,14 @@ class OperatorNode : public Node {
     * @return SchemaPtr
     */
     SchemaPtr getInputSchema() const;
+    void setInputSchema(SchemaPtr inputSchema);
 
     /**
     * @brief get the result schema of this operator
     * @return SchemaPtr
     */
     SchemaPtr getOutputSchema() const;
+    void setOutputSchema(SchemaPtr outputSchema);
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.
