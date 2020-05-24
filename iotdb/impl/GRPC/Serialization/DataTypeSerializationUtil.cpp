@@ -1,8 +1,12 @@
 #include <API/Types/DataTypes.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <QueryCompiler/DataTypes/ArrayDataType.hpp>
+#include <QueryCompiler/DataTypes/ArrayValueType.hpp>
+#include <QueryCompiler/DataTypes/BasicValueType.hpp>
+#include <QueryCompiler/DataTypes/ValueType.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>
+#include <vector>
 namespace NES {
 
 SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr dataType, SerializableDataType* serializedDataType) {
@@ -81,6 +85,49 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
         return createArrayDataType(componentType, arrayDetails.dimensions());
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization is not possible");
+}
+
+SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(ValueTypePtr valueType, SerializableDataValue* serializedDataValue) {
+    if (!valueType->isArrayValueType()) {
+        auto basicValueType = std::dynamic_pointer_cast<BasicValueType>(valueType);
+        auto serializedBasicValue = SerializableDataValue_BasicValue();
+        serializedBasicValue.set_value(basicValueType->getValue());
+        serializeDataType(basicValueType->getType(), serializedBasicValue.mutable_type());
+        serializedDataValue->mutable_value()->PackFrom(serializedBasicValue);
+    } else {
+        auto arrayValueType = std::dynamic_pointer_cast<ArrayValueType>(valueType);
+        auto serializedArrayValue = SerializableDataValue_ArrayValue();
+        for (const auto& value : serializedArrayValue.values()) {
+            serializedArrayValue.add_values(value);
+        }
+        serializeDataType(arrayValueType->getType(), serializedArrayValue.mutable_type());
+        serializedDataValue->mutable_value()->PackFrom(serializedArrayValue);
+    }
+    return serializedDataValue;
+}
+
+ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataValue* serializedDataValue) {
+    const auto& dataValue = serializedDataValue->value();
+    if (dataValue.Is<SerializableDataValue_BasicValue>()) {
+        auto serializedBasicValue = SerializableDataValue_BasicValue();
+        dataValue.UnpackTo(&serializedBasicValue);
+        auto dataTypePtr = deserializeDataType(serializedBasicValue.release_type());
+        // todo replace after reworking the type system
+        auto basicDataType = std::dynamic_pointer_cast<BasicDataType>(dataTypePtr)->getType();
+        return createBasicTypeValue(basicDataType, serializedBasicValue.value());
+    } else if (dataValue.Is<SerializableDataValue_BasicValue>()) {
+        auto serializedArrayValue = SerializableDataValue_ArrayValue();
+        dataValue.UnpackTo(&serializedArrayValue);
+        auto dataTypePtr = deserializeDataType(serializedArrayValue.release_type());
+        // todo replace after reworking the type system
+        auto basicDataType = std::dynamic_pointer_cast<BasicDataType>(dataTypePtr)->getType();
+        std::vector<std::string> values;
+        for (const auto& value : serializedArrayValue.values()) {
+            values.emplace_back(value);
+        }
+        return createArrayValueType(basicDataType, values);
+    }
+    NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization of value type is not possible: " + dataValue.type_url());
 }
 
 }// namespace NES

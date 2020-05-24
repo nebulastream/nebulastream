@@ -34,19 +34,21 @@ class ArrayValueType : public ValueType {
 
     bool operator==(const ValueType& rhs) const override;
 
+    std::vector<std::string> getValues();
+
   private:
-    ArrayDataTypePtr type_;
-    bool isString_ = false;
-    std::vector<std::string> value_;
+    ArrayDataTypePtr type;
+    bool isString = false;
+    std::vector<std::string> values;
 
     friend class boost::serialization::access;
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
         ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(ValueType)
-            & BOOST_SERIALIZATION_NVP(type_)
-            & BOOST_SERIALIZATION_NVP(isString_)
-            & BOOST_SERIALIZATION_NVP(value_);
+            & BOOST_SERIALIZATION_NVP(type)
+            & BOOST_SERIALIZATION_NVP(isString)
+            & BOOST_SERIALIZATION_NVP(values);
     }
 };
 

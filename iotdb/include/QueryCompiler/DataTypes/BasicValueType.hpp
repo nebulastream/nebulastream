@@ -14,6 +14,7 @@ class BasicValueType : public ValueType {
     ~BasicValueType() override = default;
 
     BasicValueType(const BasicType& type, std::string value);
+    BasicValueType(const DataTypePtr type, std::string value);
 
     const DataTypePtr getType() const override;
 
@@ -24,18 +25,19 @@ class BasicValueType : public ValueType {
     bool isArrayValueType() const override;
 
     bool operator==(const ValueType& _rhs) const;
+    std::string getValue();
 
   private:
-    BasicType type_;
-    std::string value_;
+    BasicType type;
+    std::string value;
 
     friend class boost::serialization::access;
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
         ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(ValueType)
-            & BOOST_SERIALIZATION_NVP(type_)
-            & BOOST_SERIALIZATION_NVP(value_);
+            & BOOST_SERIALIZATION_NVP(type)
+            & BOOST_SERIALIZATION_NVP(value);
     }
 };
 }// namespace NES

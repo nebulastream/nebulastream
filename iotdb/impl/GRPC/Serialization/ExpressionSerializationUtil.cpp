@@ -33,20 +33,18 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(Express
         auto constantValueExpression = expression->as<ConstantValueExpressionNode>();
         auto value = constantValueExpression->getConstantValue();
         auto serializedConstantValue = SerializableExpression_ConstantValueExpression();
-        // todo serialize constant value
+        DataTypeSerializationUtil::serializeDataValue(value, serializedConstantValue.mutable_value());
         serializedExpression->mutable_details()->PackFrom(serializedConstantValue);
     } else if (expression->instanceOf<FieldAccessExpressionNode>()) {
         // Translate field read expression node.
         auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
         auto serializedFieldAccessExpression = SerializableExpression_FieldAccessExpression();
-        // todo add field type
         serializedFieldAccessExpression.set_fieldname(fieldAccessExpression->getFieldName());
         serializedExpression->mutable_details()->PackFrom(serializedFieldAccessExpression);
     } else if (expression->instanceOf<FieldAssignmentExpressionNode>()) {
         // Translate field read expression node.
         auto fieldAssignmentExpressionNode = expression->as<FieldAssignmentExpressionNode>();
         auto serializedFieldAssignmentExpression = SerializableExpression_FieldAssignmentExpression();
-        // todo add field type
         auto serializedFieldAccessExpression = serializedFieldAssignmentExpression.mutable_field();
         serializedFieldAccessExpression->set_fieldname(fieldAssignmentExpressionNode->getField()->getFieldName());
         serializeExpression(fieldAssignmentExpressionNode->getAssignment(), serializedFieldAssignmentExpression.mutable_assignment());
@@ -67,9 +65,8 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             // Translate constant value expression node.
             auto serializedConstantValue = SerializableExpression_ConstantValueExpression();
             serializedExpression->details().UnpackTo(&serializedConstantValue);
-            auto type = DataTypeSerializationUtil::deserializeDataType(serializedConstantValue.release_type());
-            // todo deserialize constant value
-            expressionNodePtr = ConstantValueExpressionNode::create(type->getDefaultInitValue());
+            auto valueType = DataTypeSerializationUtil::deserializeDataValue(serializedConstantValue.release_value());
+            expressionNodePtr = ConstantValueExpressionNode::create(valueType);
         } else if (serializedExpression->details().Is<SerializableExpression_FieldAccessExpression>()) {
             // Translate field read expression node.
             SerializableExpression_FieldAccessExpression serializedFieldAccessExpression;
@@ -81,7 +78,6 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             SerializableExpression_FieldAssignmentExpression serializedFieldAccessExpression;
             serializedExpression->details().UnpackTo(&serializedFieldAccessExpression);
             auto field = serializedFieldAccessExpression.mutable_field();
-            // todo add field type
             auto fieldAccessNode = FieldAccessExpressionNode::create(field->fieldname());
             auto fieldAssignmentExpression = deserializeExpression(serializedFieldAccessExpression.mutable_assignment());
             expressionNodePtr = FieldAssignmentExpressionNode::create(fieldAccessNode->as<FieldAccessExpressionNode>(), fieldAssignmentExpression);

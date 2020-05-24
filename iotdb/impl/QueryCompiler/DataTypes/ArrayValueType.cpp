@@ -13,32 +13,32 @@ namespace NES {
  * class ArrayValueType keeps a field of values of basic types
  */
 ArrayValueType::ArrayValueType(const ArrayDataType& type, const std::vector<std::string>& value)
-    : type_(std::make_shared<
-            ArrayDataType>(type)),
-      value_(value){};
+    : type(std::make_shared<
+           ArrayDataType>(type)),
+      values(value){};
 
 ArrayValueType::ArrayValueType(const ArrayDataType& type, const std::string& value)
-    : type_(std::make_shared<ArrayDataType>(type)), isString_(true) {
-    value_.push_back(value);
+    : type(std::make_shared<ArrayDataType>(type)), isString(true) {
+    values.push_back(value);
 };
 
-const DataTypePtr ArrayValueType::getType() const { return type_; }
+const DataTypePtr ArrayValueType::getType() const { return type; }
 
 const CodeExpressionPtr ArrayValueType::getCodeExpression() const {
     std::stringstream str;
-    if (isString_) {
-        str << "\"" << value_.at(0) << "\"";
+    if (isString) {
+        str << "\"" << values.at(0) << "\"";
         return std::make_shared<CodeExpression>(str.str());
     }
-    bool isCharArray = (type_->isCharDataType());
+    bool isCharArray = (type->isCharDataType());
     str << "{";
     u_int32_t i;
-    for (i = 0; i < value_.size(); i++) {
+    for (i = 0; i < values.size(); i++) {
         if (i != 0)
             str << ", ";
         if (isCharArray)
             str << "\'";
-        str << value_.at(i);
+        str << values.at(i);
         if (isCharArray)
             str << "\'";
     }
@@ -53,17 +53,21 @@ const ValueTypePtr ArrayValueType::copy() const {
 bool ArrayValueType::isArrayValueType() const { return true; }
 
 bool ArrayValueType::operator==(const ArrayValueType& rhs) const {
-    return static_cast<const NES::ValueType&>(*this) == static_cast<const NES::ValueType&>(rhs) && type_ == rhs.type_ && isString_ == rhs.isString_ && value_ == rhs.value_;
+    return static_cast<const NES::ValueType&>(*this) == static_cast<const NES::ValueType&>(rhs) && type == rhs.type && isString == rhs.isString && values == rhs.values;
 }
 
 bool ArrayValueType::operator==(const ValueType& rhs) const {
-    return type_ == dynamic_cast<const NES::ArrayValueType&>(rhs).type_ && isString_ == dynamic_cast<const NES::ArrayValueType&>(rhs).isString_ && value_ == dynamic_cast<const NES::ArrayValueType&>(rhs).value_;
+    return type == dynamic_cast<const NES::ArrayValueType&>(rhs).type && isString == dynamic_cast<const NES::ArrayValueType&>(rhs).isString && values == dynamic_cast<const NES::ArrayValueType&>(rhs).values;
 }
 
 ArrayValueType::~ArrayValueType() {}
 const std::string ArrayValueType::toString() const {
 
     return "[]: " + getType()->toString();
+}
+
+std::vector<std::string> ArrayValueType::getValues() {
+    return values;
 }
 
 /**
