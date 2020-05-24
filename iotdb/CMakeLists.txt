@@ -13,19 +13,6 @@ if (Git_FOUND)
     configure_file(cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp)
 endif ()
 
-# target bar is only build when `make bar` is issued
-add_custom_target(bar
-        # cmake -E support copy/env/echo and so on. use cmake -E to see
-        # COMMAND/COMMENT must be upper case
-        COMMAND ${CMAKE_COMMAND} -E echo bar:hello
-        #COMMAND ${CMAKE_COMMAND} -E environment
-
-        COMMENT "testing add_custom_target 'bar'..."
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-
-        #DEPENDS zoo
-        )
-
 # Custome CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 include(cmake/macros.cmake)

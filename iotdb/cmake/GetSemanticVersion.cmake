@@ -60,38 +60,3 @@ else ()
 endif ()
 
 message("NES Version: " ${${PROJECT_NAME}_VERSION})
-
-#if (Git_FOUND)
-#    if (${${PROJECT_NAME}_BRANCH_NAME} STREQUAL "master")
-#        if (RELEASE_MAJOR)
-#            math(EXPR ${PROJECT_NAME}_VERSION_MAJOR ${${PROJECT_NAME}_VERSION_MAJOR} + 1)
-#            set(${PROJECT_NAME}_VERSION_MINOR 0)
-#            set(${PROJECT_NAME}_VERSION_PATCH 0)
-#        elseif (RELEASE_MINOR)
-#            math(EXPR ${PROJECT_NAME}_VERSION_MINOR ${${PROJECT_NAME}_VERSION_MINOR} + 1)
-#            set(${PROJECT_NAME}_VERSION_PATCH 0)
-#        else ()
-#            math(EXPR ${PROJECT_NAME}_VERSION_PATCH ${${PROJECT_NAME}_VERSION_PATCH} + 1)
-#        endif ()
-#
-#        set(${PROJECT_NAME}_VERSION ${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}
-#                .${${PROJECT_NAME}_VERSION_PATCH})
-#    else ()
-#        set(${PROJECT_NAME}_VERSION ${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}
-#                .${${PROJECT_NAME}_VERSION_PATCH}.${${PROJECT_NAME}_VERSION_GIT_SHA})
-#    endif ()
-#
-#    # Save version to file (which will be used when Git is not available
-#    # or VERSION_UPDATE_FROM_GIT is disabled)
-#    file(WRITE ${CMAKE_SOURCE_DIR}/VERSION ${${PROJECT_NAME}_VERSION_STRING_FULL}
-#            "*" ${${PROJECT_NAME}_VERSION_STRING}
-#            "*" ${${PROJECT_NAME}_VERSION_MAJOR}
-#            "*" ${${PROJECT_NAME}_VERSION_MINOR}
-#            "*" ${${PROJECT_NAME}_VERSION_PATCH}
-#            "*" ${${PROJECT_NAME}_VERSION_GIT_SHA})
-#else ()
-#
-#endif ()
-
-
-# Set project version (without the preceding 'v')
