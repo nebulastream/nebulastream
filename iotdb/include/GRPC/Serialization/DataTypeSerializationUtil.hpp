@@ -9,11 +9,14 @@ class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
 class SerializableDataType;
+class SerializableDataValue;
 
 class DataTypeSerializationUtil {
   public:
     static SerializableDataType* serializeDataType(DataTypePtr dataType, SerializableDataType* serializedDataType);
     static DataTypePtr deserializeDataType(SerializableDataType* serializedDataType);
+    static SerializableDataValue* serializeDataValue(ValueTypePtr valueType, SerializableDataValue* serializedDataValue);
+    static ValueTypePtr deserializeDataValue(SerializableDataValue* serializedDataValue);
 };
 }// namespace NES
 
