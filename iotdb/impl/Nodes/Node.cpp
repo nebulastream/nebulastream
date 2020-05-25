@@ -345,17 +345,8 @@ bool Node::equalWithAllChildren(const NodePtr otherNode) {
     if (!equal(otherNode)) {
         return false;
     }
-    if (children.size() != otherNode->children.size()) {
-        return false;
-    }
 
-    for (uint64_t childIndex = 0; childIndex < children.size(); childIndex++) {
-        if (!children[childIndex]->equalWithAllChildren(otherNode->children[childIndex])) {
-            return false;
-        }
-    }
-
-    return true;
+    return equalWithAllChildrenHelper(shared_from_this(), otherNode);
 }// namespace NES
 
 bool Node::equalWithAllParentsHelper(const NodePtr node1, const NodePtr node2) {
