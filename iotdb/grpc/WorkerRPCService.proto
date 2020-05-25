@@ -1,9 +1,7 @@
 syntax = "proto3";
-import "SerializableOperator.proto";
 
 service WorkerRPCService {
   rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
-  rpc DeployQueryPlan (QueryPlan) returns (DeployQueryReply) {}
   rpc UndeployQuery (UndeployQueryRequest) returns (UndeployQueryReply) {}
 
   rpc RegisterQuery (RegisterQueryRequest) returns (RegisterQueryReply) {}
@@ -11,10 +9,6 @@ service WorkerRPCService {
 
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
-}
-
-message QueryPlan{
-  NES.SerializableOperator operator = 1;
 }
 
 message DeployQueryRequest {

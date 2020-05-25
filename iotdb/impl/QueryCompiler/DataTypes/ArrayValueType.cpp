@@ -69,6 +69,12 @@ const std::string ArrayValueType::toString() const {
 std::vector<std::string> ArrayValueType::getValues() {
     return values;
 }
+bool ArrayValueType::equals(ValueTypePtr rhs) const {
+    auto otherArrayType = std::dynamic_pointer_cast<ArrayValueType>(rhs);
+    if (otherArrayType == nullptr)
+        return false;
+    return type->isEqual(otherArrayType->type) && values == otherArrayType->values && isString == otherArrayType->isString;
+}
 
 /**
  * creates a "string"-value (means char *)

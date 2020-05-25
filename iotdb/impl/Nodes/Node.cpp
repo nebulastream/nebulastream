@@ -1,4 +1,5 @@
 #include <Nodes/Node.hpp>
+#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <queue>
 #include <unordered_set>
 
@@ -339,13 +340,23 @@ bool Node::equalWithAllChildrenHelper(const NodePtr node1, const NodePtr node2) 
     return true;
 }
 
-bool Node::equalWithAllChildren(const NodePtr node) {
+bool Node::equalWithAllChildren(const NodePtr otherNode) {
     // the root is equal
-    if (!equal(node)) {
+    if (!equal(otherNode)) {
         return false;
     }
-    return equalWithAllChildrenHelper(shared_from_this(), node);
-}
+    if (children.size() != otherNode->children.size()) {
+        return false;
+    }
+
+    for (uint64_t childIndex = 0; childIndex < children.size(); childIndex++) {
+        if (!children[childIndex]->equalWithAllChildren(otherNode->children[childIndex])) {
+            return false;
+        }
+    }
+
+    return true;
+}// namespace NES
 
 bool Node::equalWithAllParentsHelper(const NodePtr node1, const NodePtr node2) {
     if (node1->parents.size() != node2->parents.size())

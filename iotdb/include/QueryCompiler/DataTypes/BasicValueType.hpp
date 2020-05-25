@@ -25,6 +25,7 @@ class BasicValueType : public ValueType {
     bool isArrayValueType() const override;
 
     bool operator==(const ValueType& _rhs) const;
+    bool equals(const ValueTypePtr rhs) const override;
     std::string getValue();
 
   private:
@@ -40,6 +41,7 @@ class BasicValueType : public ValueType {
             & BOOST_SERIALIZATION_NVP(value);
     }
 };
+typedef std::shared_ptr<BasicValueType> BasicValueTypePtr;
 }// namespace NES
 
 #endif//INCLUDE_BASICVALUETYPE_HPP_

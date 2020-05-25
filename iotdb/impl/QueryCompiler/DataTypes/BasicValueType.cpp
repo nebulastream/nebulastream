@@ -32,6 +32,12 @@ bool BasicValueType::operator==(const ValueType& _rhs) const {
 std::string BasicValueType::getValue() {
     return value;
 }
+bool BasicValueType::equals(const ValueTypePtr rhs) const {
+    auto otherValueType = std::dynamic_pointer_cast<BasicValueType>(rhs);
+    if (otherValueType == nullptr)
+        return false;
+    return type == otherValueType->type && value == otherValueType->value;
+}
 
 const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string& value) {
 

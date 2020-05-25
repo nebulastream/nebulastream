@@ -341,11 +341,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     auto serializedOperator = OperatorSerializationUtil::serializeOperator(sink, new SerializableOperator());
     auto rootOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+
     ASSERT_TRUE(sink->equal(rootOperator));
     ASSERT_TRUE(sink->equalWithAllChildren(rootOperator));
-    std::string json_string;
-    auto options = google::protobuf::util::JsonOptions();
-    options.add_whitespace = true;
-    google::protobuf::util::MessageToJsonString(*serializedOperator, &json_string, options);
-    std::cout << json_string << std::endl;
 }

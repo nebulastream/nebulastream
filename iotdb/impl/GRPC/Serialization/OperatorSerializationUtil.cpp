@@ -8,7 +8,6 @@
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -16,7 +15,6 @@
 #include <Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -94,11 +92,8 @@ LogicalOperatorNodePtr OperatorSerializationUtil::deserializeOperator(Serializab
     } else if (details.Is<SerializableOperator_MapDetails>()) {
         auto serializedMapOperator = SerializableOperator_MapDetails();
         details.UnpackTo(&serializedMapOperator);
-        auto mapExpression = ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
-        auto type = DataTypeSerializationUtil::deserializeDataType(serializedMapOperator.mutable_field()->mutable_type());
-        auto fileAccessNode = FieldAccessExpressionNode::create(type, serializedMapOperator.mutable_field()->name());
-        auto fieldAssignmentNode = FieldAssignmentExpressionNode::create(fileAccessNode->as<FieldAccessExpressionNode>(), mapExpression);
-        operatorNode = createMapLogicalOperatorNode(fieldAssignmentNode);
+        auto fieldAssignmentExpression = ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
+        operatorNode = createMapLogicalOperatorNode(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>());
     }
 
     operatorNode->setOutputSchema(SchemaSerializationUtil::deserializeSchema(serializableOperator->mutable_outputschema()));

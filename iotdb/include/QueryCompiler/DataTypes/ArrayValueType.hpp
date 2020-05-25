@@ -33,7 +33,7 @@ class ArrayValueType : public ValueType {
     bool operator==(const ArrayValueType& rhs) const;
 
     bool operator==(const ValueType& rhs) const override;
-
+    bool equals(ValueTypePtr rhs) const override;
     std::vector<std::string> getValues();
 
   private:
