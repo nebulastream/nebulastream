@@ -1,0 +1,53 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+package NES;
+
+
+/*
+The serializable wrapper definition for data type objects
+ */
+message SerializableDataType{
+  // Enum do identify the data type
+  enum Type{
+    UNDEFINED = 0;
+    INT8 = 1;
+    INT16 = 2;
+    INT32 = 3;
+    INT64 = 4;
+    UINT8 = 5;
+    UINT16 = 6;
+    UINT32 = 7;
+    UINT64 = 8;
+    FLOAT32 = 9;
+    FLOAT64 = 10;
+    CHAR = 11;
+    ARRAY = 12;
+    BOOLEAN = 13;
+  }
+
+  /**
+  Details for array data types
+   */
+  message ArrayDetails{
+    SerializableDataType componentType = 1;
+    uint64 dimensions = 2;
+  }
+
+  Type type = 1;
+  // field for custom type properties
+  google.protobuf.Any details = 2;
+
+}
+
+message SerializableDataValue {
+  message BasicValue {
+    SerializableDataType type = 1;
+    string value = 2;
+  }
+
+  message ArrayValue {
+    SerializableDataType type = 1;
+    repeated string values = 2;
+  }
+  google.protobuf.Any value = 1;
+}

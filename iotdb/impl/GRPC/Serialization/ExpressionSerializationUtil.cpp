@@ -18,7 +18,7 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <QueryCompiler/DataTypes/ValueType.hpp>
-#include <SerializableOperator.pb.h>
+#include <SerializableExpression.pb.h>
 namespace NES {
 
 SerializableExpression* ExpressionSerializationUtil::serializeExpression(ExpressionNodePtr expression, SerializableExpression* serializedExpression) {

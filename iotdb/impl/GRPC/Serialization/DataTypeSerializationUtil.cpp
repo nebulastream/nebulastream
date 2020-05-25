@@ -4,7 +4,7 @@
 #include <QueryCompiler/DataTypes/ArrayValueType.hpp>
 #include <QueryCompiler/DataTypes/BasicValueType.hpp>
 #include <QueryCompiler/DataTypes/ValueType.hpp>
-#include <SerializableOperator.pb.h>
+#include <SerializableDataType.pb.h>
 #include <Util/Logger.hpp>
 #include <vector>
 namespace NES {
