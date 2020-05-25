@@ -25,33 +25,31 @@
 
 namespace NES {
 
-SerializableOperatorPtr OperatorSerializationUtil::serialize(QueryPlanPtr plan) {
-    auto ope = std::shared_ptr<SerializableOperator>();
-    auto rootOperator = plan->getRootOperator();
-    serializeOperator(rootOperator, ope.get());
-    return ope;
-}
-
-SerializableOperator* OperatorSerializationUtil::serializeOperator(NodePtr node, SerializableOperator* serializedOperator) {
-    auto operatorNode = node->as<OperatorNode>();
+SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodePtr operatorNode, SerializableOperator* serializedOperator) {
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+        // serialize source operator
         auto sourceDetails = serializeSourceOperator(operatorNode->as<SourceLogicalOperatorNode>());
         serializedOperator->mutable_details()->PackFrom(sourceDetails);
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+        // serialize sink operator
         auto sinkDetails = serializeSinkOperator(operatorNode->as<SinkLogicalOperatorNode>());
         serializedOperator->mutable_details()->PackFrom(sinkDetails);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+        // serialize filter operator
         auto filterDetails = SerializableOperator_FilterDetails();
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
+        // serialize filter expression
         ExpressionSerializationUtil::serializeExpression(filterOperator->getPredicate(), filterDetails.mutable_predicate());
         serializedOperator->mutable_details()->PackFrom(filterDetails);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+        // serialize map operator
         auto mapDetails = SerializableOperator_MapDetails();
         auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
+        // serialize map expression
         ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
         serializedOperator->mutable_details()->PackFrom(mapDetails);
     } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: we could not serialize this operator: " << node->toString());
+        NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
     }
     // serialize input schema
     SchemaSerializationUtil::serializeSchema(operatorNode->getInputSchema(), serializedOperator->mutable_inputschema());
@@ -61,45 +59,59 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(NodePtr node,
     // serialize operator id
     serializedOperator->set_operatorid(operatorNode->getId());
 
-    // append children if the node has any
-    for (const auto& child : node->getChildren()) {
+    // serialize and append children if the node has any
+    for (const auto& child : operatorNode->getChildren()) {
         auto serializedChild = serializedOperator->add_children();
-        serializeOperator(child, serializedChild);
+        // serialize this child
+        serializeOperator(child->as<OperatorNode>(), serializedChild);
     }
     return serializedOperator;
 }
 
-LogicalOperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOperator* serializableOperator) {
+OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOperator* serializableOperator) {
     auto details = serializableOperator->details();
     LogicalOperatorNodePtr operatorNode;
     if (details.Is<SerializableOperator_SourceDetails>()) {
-        // source operator
+        // de-serialize source operator
         auto serializedSourceDescriptor = SerializableOperator_SourceDetails();
         details.UnpackTo(&serializedSourceDescriptor);
+        // de-serialize source descriptor
         auto sourceDescriptor = deserializeSourceDescriptor(&serializedSourceDescriptor);
         operatorNode = createSourceLogicalOperatorNode(sourceDescriptor);
     } else if (details.Is<SerializableOperator_SinkDetails>()) {
-        // sink operator
+        // de-serialize sink operator
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails();
         details.UnpackTo(&serializedSinkDescriptor);
+        // de-serialize sink descriptor
         auto sinkDescriptor = deserializeSinkDescriptor(&serializedSinkDescriptor);
         operatorNode = createSinkLogicalOperatorNode(sinkDescriptor);
     } else if (details.Is<SerializableOperator_FilterDetails>()) {
+        // de-serialize filter operator
         auto serializedFilterOperator = SerializableOperator_FilterDetails();
         details.UnpackTo(&serializedFilterOperator);
+        // de-serialize filter expression
         auto filterExpression = ExpressionSerializationUtil::deserializeExpression(serializedFilterOperator.mutable_predicate());
         operatorNode = createFilterLogicalOperatorNode(filterExpression);
     } else if (details.Is<SerializableOperator_MapDetails>()) {
+        // de-serialize map operator
         auto serializedMapOperator = SerializableOperator_MapDetails();
         details.UnpackTo(&serializedMapOperator);
+        // de-serialize map expression
         auto fieldAssignmentExpression = ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
         operatorNode = createMapLogicalOperatorNode(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>());
+    } else {
+        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: " << details.type_url());
     }
 
+    // de-serialize operator output schema
     operatorNode->setOutputSchema(SchemaSerializationUtil::deserializeSchema(serializableOperator->mutable_outputschema()));
+    // de-serialize operator input schema
     operatorNode->setInputSchema(SchemaSerializationUtil::deserializeSchema(serializableOperator->mutable_inputschema()));
+    // de-serialize operator id
     operatorNode->setId(serializableOperator->operatorid());
+    // de-serialize child operators if it has any
     for (auto child : serializableOperator->children()) {
+        //de-serialize child
         operatorNode->addChild(deserializeOperator(&child));
     }
     return operatorNode;
@@ -112,7 +124,7 @@ SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOpe
     return sourceDetails;
 }
 
-LogicalOperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails) {
+OperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails) {
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDetails);
     return createSourceLogicalOperatorNode(sourceDescriptor);
 }
@@ -124,49 +136,60 @@ SerializableOperator_SinkDetails OperatorSerializationUtil::serializeSinkOperato
     return sinkDetails;
 }
 
-LogicalOperatorNodePtr OperatorSerializationUtil::deserializeSinkOperator(SerializableOperator_SinkDetails* sinkDetails) {
+OperatorNodePtr OperatorSerializationUtil::deserializeSinkOperator(SerializableOperator_SinkDetails* sinkDetails) {
     auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
     return createSinkLogicalOperatorNode(sinkDescriptor);
 }
 
 SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor, SerializableOperator_SourceDetails* sourceDetails) {
-
+    // serialize a source descriptor and all its properties depending of its type
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
+        // serialize zmq source descriptor
         auto zmqSourceDescriptor = sourceDescriptor->as<ZmqSourceDescriptor>();
         auto zmqSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor();
         zmqSerializedSourceDescriptor.set_host(zmqSourceDescriptor->getHost());
         zmqSerializedSourceDescriptor.set_port(zmqSourceDescriptor->getPort());
+        // serialize source schema
         SchemaSerializationUtil::serializeSchema(zmqSourceDescriptor->getSchema(), zmqSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(zmqSerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
+        // serialize default source descriptor
         auto defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
         defaultSerializedSourceDescriptor.set_frequency(defaultSourceDescriptor->getFrequency());
         defaultSerializedSourceDescriptor.set_numbufferstoprocess(defaultSourceDescriptor->getNumbersOfBufferToProduce());
+        // serialize source schema
         SchemaSerializationUtil::serializeSchema(defaultSourceDescriptor->getSchema(), defaultSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(defaultSerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
+        // serialize binary source descriptor
         auto binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
         auto binarySerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor();
         binarySerializedSourceDescriptor.set_filepath(binarySourceDescriptor->getFilePath());
+        // serialize source schema
         SchemaSerializationUtil::serializeSchema(binarySourceDescriptor->getSchema(), binarySerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(binarySerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
+        // serialize csv source descriptor
         auto csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         csvSerializedSourceDescriptor.set_filepath(csvSourceDescriptor->getFilePath());
         csvSerializedSourceDescriptor.set_frequency(csvSourceDescriptor->getFrequency());
         csvSerializedSourceDescriptor.set_delimiter(csvSourceDescriptor->getDelimiter());
         csvSerializedSourceDescriptor.set_numbufferstoprocess(csvSourceDescriptor->getNumBuffersToProcess());
+        // serialize source schema
         SchemaSerializationUtil::serializeSchema(csvSourceDescriptor->getSchema(), csvSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(csvSerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
+        // serialize sense source descriptor
         auto senseSourceDescriptor = sourceDescriptor->as<SenseSourceDescriptor>();
         auto senseSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor();
         senseSerializedSourceDescriptor.set_udfs(senseSourceDescriptor->getUdfs());
+        // serialize source schema
         SchemaSerializationUtil::serializeSchema(senseSourceDescriptor->getSchema(), senseSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(senseSerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
+        // serialize logical stream source descriptor
         auto logicalStreamSourceDescriptor = sourceDescriptor->as<LogicalStreamSourceDescriptor>();
         auto logicalStreamSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
@@ -179,33 +202,45 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
 }
 
 SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails) {
+    // de-serialize source details and all its properties to a SourceDescriptor
     const auto& serializedSourceDescriptor = serializedSourceDetails->sourcedescriptor();
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor>()) {
+        // de-serialize zmq source descriptor
         auto zmqSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&zmqSerializedSourceDescriptor);
+        // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(zmqSerializedSourceDescriptor.release_sourceschema());
         return ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor>()) {
+        // de-serialize default stream source descriptor
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&defaultSerializedSourceDescriptor);
+        // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(defaultSerializedSourceDescriptor.release_sourceschema());
         return DefaultSourceDescriptor::create(schema, defaultSerializedSourceDescriptor.numbufferstoprocess(), defaultSerializedSourceDescriptor.frequency());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor>()) {
+        // de-serialize binary source descriptor
         auto binarySerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&binarySerializedSourceDescriptor);
+        // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(binarySerializedSourceDescriptor.release_sourceschema());
         return BinarySourceDescriptor::create(schema, binarySerializedSourceDescriptor.filepath());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor>()) {
+        // de-serialize csv source descriptor
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&csvSerializedSourceDescriptor);
+        // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.release_sourceschema());
         return CsvSourceDescriptor::create(schema, csvSerializedSourceDescriptor.filepath(), csvSerializedSourceDescriptor.delimiter(), csvSerializedSourceDescriptor.numbufferstoprocess(), csvSerializedSourceDescriptor.frequency());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
+        // de-serialize sense source descriptor
         auto senseSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&senseSerializedSourceDescriptor);
+        // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(senseSerializedSourceDescriptor.release_sourceschema());
         return SenseSourceDescriptor::create(schema, senseSerializedSourceDescriptor.udfs());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor>()) {
+        // de-serialize logical stream source descriptor
         auto logicalStreamSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&logicalStreamSerializedSourceDescriptor);
         return LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname());
@@ -215,16 +250,20 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
     }
 }
 SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescriptor, SerializableOperator_SinkDetails* sinkDetails) {
+    // serialize a sink descriptor and all its properties depending of its type
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
+        // serialize print sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor();
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
+        // serialize print sink descriptor
         auto zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor();
         serializedSinkDescriptor.set_port(zmqSinkDescriptor->getPort());
         serializedSinkDescriptor.set_host(zmqSinkDescriptor->getHost());
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
+        // serialize file sink descriptor. The file sink has different types which have to be set correctly
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
 
@@ -248,14 +287,18 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
     return sinkDetails;
 }
 SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(SerializableOperator_SinkDetails* sinkDetails) {
+    // de-serialize a sink descriptor and all its properties to a SinkDescriptor.
     const auto& serializedSourceDescriptor = sinkDetails->sinkdescriptor();
     if (serializedSourceDescriptor.Is<SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor>()) {
+        // de-serialize print sink descriptor
         return PrintSinkDescriptor::create();
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor>()) {
+        // de-serialize zmq sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor();
         serializedSourceDescriptor.UnpackTo(&serializedSinkDescriptor);
         return ZmqSinkDescriptor::create(serializedSinkDescriptor.host(), serializedSinkDescriptor.port());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
+        // de-serialize file sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
         serializedSourceDescriptor.UnpackTo(&serializedSinkDescriptor);
         auto fileOutputType = serializedSinkDescriptor.fileoutputtype() == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputType_BINARY_TYPE
