@@ -39,6 +39,9 @@ message SerializableDataType{
 
 }
 
+/*
+The serializable wrapper definition for data value objects
+ */
 message SerializableDataValue {
   message BasicValue {
     SerializableDataType type = 1;

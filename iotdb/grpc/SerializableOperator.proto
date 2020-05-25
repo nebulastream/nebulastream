@@ -9,6 +9,9 @@ message SerializableSchema{
   repeated SerializableField fields = 1;
 }
 
+/*
+The serializable wrapper definition for operator nodes
+ */
 message SerializableOperator{
 
   message SourceDetails {
