@@ -29,6 +29,7 @@ class ValueType {
     virtual const std::string toString() const = 0;
     virtual bool isArrayValueType() const = 0;
     virtual bool operator==(const ValueType& rhs) const = 0;
+    virtual bool equals(const ValueTypePtr rhs) const = 0;
     virtual ~ValueType();
 
   protected:
