@@ -10,16 +10,18 @@ SerializableSchema* SchemaSerializationUtil::serializeSchema(SchemaPtr schema, S
     for (const auto& field : schema->fields) {
         auto serializedField = serializedSchema->add_fields();
         serializedField->set_name(field->name);
+        // serialize data type
         DataTypeSerializationUtil::serializeDataType(field->getDataType(), serializedField->mutable_type());
     }
     return serializedSchema;
 }
 
 SchemaPtr SchemaSerializationUtil::deserializeSchema(SerializableSchema* serializedSchema) {
-    // deserialize field from serialized schema to the schema object.
+    // de-serialize field from serialized schema to the schema object.
     auto deserializedSchema = Schema::create();
     for (auto serializedField : serializedSchema->fields()) {
         auto fieldName = serializedField.name();
+        // de-serialize data type
         auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.mutable_type());
         deserializedSchema->addField(fieldName, type);
     }
