@@ -39,7 +39,7 @@ jobs:
 
   release:
     runs-on: self-hosted
-    if: ${{ github.ref == 'master' }}
+    if: github.ref == 'refs/heads/master'
     needs: build-job
     steps:
       - uses: actions/checkout@v2
