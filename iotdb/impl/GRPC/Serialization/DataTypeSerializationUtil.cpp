@@ -10,6 +10,7 @@
 namespace NES {
 
 SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr dataType, SerializableDataType* serializedDataType) {
+    // serialize data type to the serializedDataType
     if (dataType->isUndefined()) {
         serializedDataType->set_type(SerializableDataType_Type_UNDEFINED);
     } else if (dataType->isEqual(createDataType(CHAR))) {
@@ -37,13 +38,16 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
     } else if (dataType->isEqual(createDataType(BOOLEAN))) {
         serializedDataType->set_type(SerializableDataType_Type_BOOLEAN);
     } else if (dataType->isArrayDataType()) {
-        // cast to array data type
+        // for arrays we store additional information in the SerializableDataType_ArrayDetails
+        // 1. cast to array data type
         auto arrayType = std::dynamic_pointer_cast<ArrayDataType>(dataType);
         serializedDataType->set_type(SerializableDataType_Type_ARRAY);
-        // create details
+        // 2. create details
         auto serializedArray = SerializableDataType_ArrayDetails();
         serializedArray.set_dimensions(arrayType->getDimensions());
+        // 3. serialize the array component type
         serializeDataType(arrayType->getComponentDataType(), serializedArray.mutable_componenttype());
+        // 4. store details in serialized object.
         serializedDataType->mutable_details()->PackFrom(serializedArray);
     } else {
         NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: serialization is not possible for " + dataType->toString());
@@ -52,6 +56,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
 }
 
 DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType* serializedDataType) {
+    // de-serialize data type to the DataTypePtr
     if (serializedDataType->type() == SerializableDataType_Type_UNDEFINED) {
         return createUndefinedDataType();
     } else if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
@@ -79,8 +84,10 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     } else if (serializedDataType->type() == SerializableDataType_Type_BOOLEAN) {
         return createDataType(BOOLEAN);
     } else if (serializedDataType->type() == SerializableDataType_Type_ARRAY) {
+        // for arrays get additional information from the SerializableDataType_ArrayDetails
         auto arrayDetails = SerializableDataType_ArrayDetails();
         serializedDataType->details().UnpackTo(&arrayDetails);
+        // get component data type
         auto componentType = deserializeDataType(arrayDetails.release_componenttype());
         return createArrayDataType(componentType, arrayDetails.dimensions());
     }
@@ -88,25 +95,37 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
 }
 
 SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(ValueTypePtr valueType, SerializableDataValue* serializedDataValue) {
-    if (!valueType->isArrayValueType()) {
-        auto basicValueType = std::dynamic_pointer_cast<BasicValueType>(valueType);
-        auto serializedBasicValue = SerializableDataValue_BasicValue();
-        serializedBasicValue.set_value(basicValueType->getValue());
-        serializeDataType(basicValueType->getType(), serializedBasicValue.mutable_type());
-        serializedDataValue->mutable_value()->PackFrom(serializedBasicValue);
-    } else {
+    // serialize data value
+    if (valueType->isArrayValueType()) {
+        // serialize all information for array value types
+        // 1. cast to ArrayValueType
         auto arrayValueType = std::dynamic_pointer_cast<ArrayValueType>(valueType);
+        // 2. create array value details
         auto serializedArrayValue = SerializableDataValue_ArrayValue();
+        // 3. copy array values
         for (const auto& value : serializedArrayValue.values()) {
             serializedArrayValue.add_values(value);
         }
+        // 4. serialize array type
         serializeDataType(arrayValueType->getType(), serializedArrayValue.mutable_type());
         serializedDataValue->mutable_value()->PackFrom(serializedArrayValue);
+    } else {
+        // serialize all information for basic value types
+        // 1. cast to BasicValueType
+        auto basicValueType = std::dynamic_pointer_cast<BasicValueType>(valueType);
+        // 2. create basic value details
+        auto serializedBasicValue = SerializableDataValue_BasicValue();
+        // 3. copy value
+        serializedBasicValue.set_value(basicValueType->getValue());
+        serializeDataType(basicValueType->getType(), serializedBasicValue.mutable_type());
+        // 4. serialize basic type
+        serializedDataValue->mutable_value()->PackFrom(serializedBasicValue);
     }
     return serializedDataValue;
 }
 
 ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataValue* serializedDataValue) {
+    // de-serialize data value
     const auto& dataValue = serializedDataValue->value();
     if (dataValue.Is<SerializableDataValue_BasicValue>()) {
         auto serializedBasicValue = SerializableDataValue_BasicValue();
@@ -115,12 +134,13 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataVal
         // todo replace after reworking the type system
         auto basicDataType = std::dynamic_pointer_cast<BasicDataType>(dataTypePtr)->getType();
         return createBasicTypeValue(basicDataType, serializedBasicValue.value());
-    } else if (dataValue.Is<SerializableDataValue_BasicValue>()) {
+    } else if (dataValue.Is<SerializableDataValue_ArrayValue>()) {
         auto serializedArrayValue = SerializableDataValue_ArrayValue();
         dataValue.UnpackTo(&serializedArrayValue);
         auto dataTypePtr = deserializeDataType(serializedArrayValue.release_type());
         // todo replace after reworking the type system
         auto basicDataType = std::dynamic_pointer_cast<BasicDataType>(dataTypePtr)->getType();
+        // copy values from serializedArrayValue to array values
         std::vector<std::string> values;
         for (const auto& value : serializedArrayValue.values()) {
             values.emplace_back(value);
