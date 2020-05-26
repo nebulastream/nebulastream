@@ -9,7 +9,6 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <SourceSink/DataSink.hpp>
 
 namespace NES {
@@ -21,6 +20,16 @@ namespace NES {
 class FileOutputSink : public DataSink {
 
   public:
+    enum FileOutputType {
+        BINARY_TYPE,
+        CSV_TYPE
+    };
+
+    enum FileOutputMode {
+        FILE_OVERWRITE,
+        FILE_APPEND
+    };
+
     /**
      * @brief default constructor that creates an empty file sink
      */

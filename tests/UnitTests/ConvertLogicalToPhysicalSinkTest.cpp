@@ -26,9 +26,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create("file.log",
-                                                                  FileOutputMode::FILE_OVERWRITE,
-                                                                  FileOutputType::CSV_TYPE);
+    SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create("file.log");
     DataSinkPtr fileOutputSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
     EXPECT_EQ(fileOutputSink->getType(), FILE_SINK);
 }

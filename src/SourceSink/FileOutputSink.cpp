@@ -82,10 +82,10 @@ SinkType FileOutputSink::getType() const {
 const std::string FileOutputSink::getFilePath() const {
     return filePath;
 }
-FileOutputType FileOutputSink::getOutputType() const {
+FileOutputSink::FileOutputType FileOutputSink::getOutputType() const {
     return outputType;
 }
-FileOutputMode FileOutputSink::getOutputMode() const {
+FileOutputSink::FileOutputMode FileOutputSink::getOutputMode() const {
     return outputMode;
 }
 
