@@ -25,14 +25,14 @@ ZmqServer::ZmqServer(const std::string& hostname,
 }
 
 bool ZmqServer::start() {
-    std::promise<bool> start_promise;
+    std::promise<bool> startPromise;
     uint16_t numZmqThreads = (numNetworkThreads - 1)/2;
     uint16_t numHandlerThreads = numNetworkThreads/2;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
-    routerThread = std::make_unique<std::thread>([this, numHandlerThreads, &start_promise]() {
-      routerLoop(numHandlerThreads, start_promise);
+    routerThread = std::make_unique<std::thread>([this, numHandlerThreads, &startPromise]() {
+      routerLoop(numHandlerThreads, startPromise);
     });
-    return start_promise.get_future().get();
+    return startPromise.get_future().get();
 }
 
 ZmqServer::~ZmqServer() {
