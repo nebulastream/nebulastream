@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <limits>
 #include <NodeEngine/QueryManager.hpp>
 
 #include <Util/Logger.hpp>
@@ -40,6 +41,29 @@ struct __attribute__((packed)) ysbRecord {
 };
 // size 78 bytes
 
+struct __attribute__((packed)) everyIntTypeRecord {
+    uint64_t uint64_entry;
+    int64_t int64_entry;
+    uint32_t uint32_entry;
+    int32_t int32_entry;
+    uint16_t uint16_entry;
+    int16_t int16_entry;
+    uint8_t uint8_entry;
+    int8_t int8_entry;
+};
+
+struct __attribute__((packed)) everyFloatTypeRecord {
+    double float64_entry;
+    float float32_entry;
+};
+
+struct __attribute__((packed)) everyBooleanTypeRecord {
+    bool false_entry;
+    bool true_entry;
+    bool falsey_entry;
+    bool truthy_entry;
+};
+
 typedef const DataSourcePtr (* createFileSourceFuncPtr)(SchemaPtr,
                                                         BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                                         const std::string&);
@@ -75,7 +99,6 @@ TEST_F(SourceTest, testBinarySource) {
 
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.bin";
-    createFileSourceFuncPtr funcPtr = &createBinaryFileSource;
 
     SchemaPtr schema =
         Schema::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
@@ -87,9 +110,7 @@ TEST_F(SourceTest, testBinarySource) {
     size_t num_of_buffers = 1;
     uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
 
-    assert(buffer_size > 0);
-
-    const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file);
+    const DataSourcePtr source = createBinaryFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -110,7 +131,6 @@ TEST_F(SourceTest, testBinarySource) {
 
     EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
-    std::cout << "Success" << std::endl;
 }
 
 TEST_F(SourceTest, testCSVSource) {
@@ -119,7 +139,6 @@ TEST_F(SourceTest, testCSVSource) {
 
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.csv";
-    createCSVSourceFuncPtr funcPtr = &createCSVFileSource;
 
     const std::string& del = ",";
     size_t num = 1;
@@ -134,10 +153,7 @@ TEST_F(SourceTest, testCSVSource) {
     size_t num_of_buffers = 10;
     uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
 
-    //    uint64_t buffer_size = num_tuples_to_process*tuple_size / num_of_buffers;
-    assert(buffer_size > 0);
-
-    const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
                                             frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
@@ -159,7 +175,196 @@ TEST_F(SourceTest, testCSVSource) {
 
     EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
-    std::cout << "dataSuccess" << std::endl;
+}
+
+TEST_F(SourceTest, testCSVSourceIntTypes) {
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
+
+    std::string path_to_file =
+        "../tests/test_data/every-int.csv";
+
+    const std::string& del = ",";
+    size_t num = 1;
+    size_t frequency = 1;
+    SchemaPtr schema =
+        Schema::create()
+            ->addField("uint64", UINT64)
+            ->addField("int64", INT64)
+            ->addField("uint32", UINT32)
+            ->addField("int32", INT32)
+            ->addField("uint16", UINT16)
+            ->addField("int16", INT16)
+            ->addField("uint8", UINT8)
+            ->addField("int8", INT8);
+
+    uint64_t tuple_size = schema->getSchemaSizeInBytes();
+    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
+    size_t num_of_buffers = 2;
+    uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
+
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
+                                                     frequency);
+
+    while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
+        auto optBuf = source->receiveData();
+        size_t i = 0;
+        while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
+            everyIntTypeRecord record(
+                *((everyIntTypeRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
+            std::cout << "i=" << i
+                      << " record.uint64_entry: " << record.uint64_entry
+                      << ", record.int64_entry: " << record.int64_entry
+                      << ", record.uint32_entry: " << record.uint32_entry
+                      << ", record.int32_entry: " << record.int32_entry
+                      << ", record.uint16_entry: " << record.uint16_entry
+                      << ", record.int16_entry: " << record.int16_entry
+                      << ", record.uint8_entry: " << record.uint8_entry
+                      << ", record.int8_entry: " << record.int8_entry
+                      << std::endl;
+
+            // number is in the expected range
+            EXPECT_LE(record.uint64_entry, std::numeric_limits<uint64_t>::max());
+            EXPECT_GE(record.uint64_entry, std::numeric_limits<uint64_t>::min());
+            // unsigned number is equal to max, no specific numbers in code
+            EXPECT_EQ(record.uint64_entry, std::numeric_limits<uint64_t>::max());
+
+            // number is in the expected range
+            EXPECT_LE(record.int64_entry, std::numeric_limits<int64_t>::max());
+            EXPECT_GE(record.int64_entry, std::numeric_limits<int64_t>::min());
+            // checks for min, covers signed case
+            EXPECT_EQ(record.int64_entry, std::numeric_limits<int64_t>::min());
+
+            EXPECT_LE(record.uint32_entry, std::numeric_limits<uint32_t>::max());
+            EXPECT_GE(record.uint32_entry, std::numeric_limits<uint32_t>::min());
+            EXPECT_EQ(record.uint32_entry, std::numeric_limits<uint32_t>::max());
+
+            EXPECT_LE(record.int32_entry, std::numeric_limits<int32_t>::max());
+            EXPECT_GE(record.int32_entry, std::numeric_limits<int32_t>::min());
+            EXPECT_EQ(record.int32_entry, std::numeric_limits<int32_t>::min());
+
+            EXPECT_LE(record.uint16_entry, std::numeric_limits<uint16_t>::max());
+            EXPECT_GE(record.uint16_entry, std::numeric_limits<uint16_t>::min());
+            EXPECT_EQ(record.uint16_entry, std::numeric_limits<uint16_t>::max());
+
+            EXPECT_LE(record.int16_entry, std::numeric_limits<int16_t>::max());
+            EXPECT_GE(record.int16_entry, std::numeric_limits<int16_t>::min());
+            EXPECT_EQ(record.int16_entry, std::numeric_limits<int16_t>::min());
+
+            EXPECT_LE(record.uint8_entry, std::numeric_limits<uint8_t>::max());
+            EXPECT_GE(record.uint8_entry, std::numeric_limits<uint8_t>::min());
+            EXPECT_EQ(record.uint8_entry, std::numeric_limits<uint8_t>::max());
+
+            EXPECT_LE(record.int8_entry, std::numeric_limits<int8_t>::max());
+            EXPECT_GE(record.int8_entry, std::numeric_limits<int8_t>::min());
+            EXPECT_EQ(record.int8_entry, std::numeric_limits<int8_t>::min());
+
+            i++;
+        }
+    }
+
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
+    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
+}
+
+TEST_F(SourceTest, testCSVSourceFloatTypes) {
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
+
+    std::string path_to_file =
+        "../tests/test_data/every-float.csv";
+
+    const std::string& del = ",";
+    size_t num = 1;
+    size_t frequency = 1;
+    SchemaPtr schema =
+        Schema::create()
+            ->addField("float64", FLOAT64)
+            ->addField("float32", FLOAT32);
+
+    uint64_t tuple_size = schema->getSchemaSizeInBytes();
+    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
+    size_t num_of_buffers = 2;
+    uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
+
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
+                                                     frequency);
+
+    while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
+        auto optBuf = source->receiveData();
+        size_t i = 0;
+        while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
+            everyFloatTypeRecord record(
+                *((everyFloatTypeRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
+            std::cout << "i=" << i
+                      << " record.float64_entry: " << record.float64_entry
+                      << ", record.float32_entry: " << record.float32_entry
+                      << std::endl;
+
+            EXPECT_LE(record.float64_entry, std::numeric_limits<double>::max());
+            EXPECT_GE(record.float64_entry, std::numeric_limits<double>::min());
+            EXPECT_DOUBLE_EQ(record.float64_entry, std::numeric_limits<double>::max());
+
+            EXPECT_LE(record.float32_entry, std::numeric_limits<float>::max());
+            EXPECT_GE(record.float32_entry, std::numeric_limits<float>::min());
+            EXPECT_FLOAT_EQ(record.float32_entry, std::numeric_limits<float>::max());
+
+            i++;
+        }
+    }
+
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
+    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
+}
+
+TEST_F(SourceTest, testCSVSourceBooleanTypes) {
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
+
+    std::string path_to_file =
+        "../tests/test_data/every-boolean.csv";
+
+    const std::string& del = ",";
+    size_t num = 1;
+    size_t frequency = 1;
+    SchemaPtr schema =
+        Schema::create()
+            ->addField("false", BOOLEAN)
+            ->addField("true", BOOLEAN)
+            ->addField("falsey", BOOLEAN)
+            ->addField("truthy", BOOLEAN);
+
+    uint64_t tuple_size = schema->getSchemaSizeInBytes();
+    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
+    size_t num_of_buffers = 2;
+    uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
+
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
+                                                     frequency);
+
+    while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
+        auto optBuf = source->receiveData();
+        size_t i = 0;
+        while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
+            everyBooleanTypeRecord record(
+                *((everyBooleanTypeRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
+            std::cout << "i=" << i
+                      << " record.false_entry: " << record.false_entry
+                      << ", record.true_entry: " << record.true_entry
+                      << ", record.falsey_entry: " << record.falsey_entry
+                      << ", record.truthy_entry: " << record.truthy_entry
+                      << std::endl;
+
+            EXPECT_FALSE(record.false_entry);
+            EXPECT_TRUE(record.true_entry);
+            EXPECT_FALSE(record.falsey_entry);
+            EXPECT_TRUE(record.truthy_entry);
+            i++;
+        }
+    }
+
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
+    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
 }
 
 TEST_F(SourceTest, testSenseSource) {
