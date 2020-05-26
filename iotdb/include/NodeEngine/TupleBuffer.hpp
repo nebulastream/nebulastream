@@ -128,7 +128,5 @@ class TupleBuffer {
     uint32_t size;
 };
 
-std::string toString(TupleBuffer& buffer, SchemaPtr schema);
-
 }// namespace NES
 #endif /* INCLUDE_TUPLEBUFFER_H_ */

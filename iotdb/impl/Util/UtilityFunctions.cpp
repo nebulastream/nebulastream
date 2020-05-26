@@ -1,4 +1,5 @@
 #include <Catalogs/StreamCatalog.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
@@ -153,12 +154,13 @@ std::string UtilityFunctions::generateIdString() {
 
     std::uniform_int_distribution<int> dist(0, 15);
 
-    const char *v = "0123456789abcdef";
-    const bool dash[] = { 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 };
+    const char* v = "0123456789abcdef";
+    const bool dash[] = {0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0};
 
     std::string res;
     for (int i = 0; i < 16; i++) {
-        if (dash[i]) res += "-";
+        if (dash[i])
+            res += "-";
         res += v[dist(rng)];
         res += v[dist(rng)];
     }
@@ -166,7 +168,7 @@ std::string UtilityFunctions::generateIdString() {
     return res;
 }
 
-std::size_t UtilityFunctions::generateIdInt(){
+std::size_t UtilityFunctions::generateIdInt() {
     std::string linkID_string = UtilityFunctions::generateIdString();
     NES_DEBUG("UtilityFunctions: generateIdInt: create a new string_id=" << linkID_string);
     std::hash<std::string> hash_fn;
@@ -181,6 +183,50 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(
     unsigned lastDelimPos = input.find_first_of(s2, endPosOfFirstDelim);
 
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
+}
+
+std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, SchemaPtr schema) {
+    if (!buffer.isValid()) {
+        return "INVALID_BUFFER_PTR";
+    }
+    std::stringstream str;
+    std::vector<uint32_t> offsets;
+    std::vector<DataTypePtr> types;
+    for (uint32_t i = 0; i < schema->getSize(); ++i) {
+        offsets.push_back(schema->get(i)->getFieldSize());
+        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") + std::to_string(schema->get(i)->getFieldSize()));
+        types.push_back(schema->get(i)->getDataType());
+    }
+
+    uint32_t prefix_sum = 0;
+    for (uint32_t i = 0; i < offsets.size(); ++i) {
+        uint32_t val = offsets[i];
+        offsets[i] = prefix_sum;
+        prefix_sum += val;
+        NES_DEBUG("CodeGenerator: " + std::string("Prefix Sum: ") + schema->get(i)->toString() + std::string(": ") + std::to_string(offsets[i]));
+    }
+
+    str << "+----------------------------------------------------+" << std::endl;
+    str << "|";
+    for (uint32_t i = 0; i < schema->getSize(); ++i) {
+        str << schema->get(i)->toString() << "|";
+    }
+    str << std::endl;
+    str << "+----------------------------------------------------+" << std::endl;
+
+    auto buf = buffer.getBufferAs<char>();
+    for (uint32_t i = 0; i < buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes();
+         i += schema->getSchemaSizeInBytes()) {
+        str << "|";
+        for (uint32_t s = 0; s < offsets.size(); ++s) {
+            void* value = &buf[i + offsets[s]];
+            std::string tmp = types[s]->convertRawToString(value);
+            str << tmp << "|";
+        }
+        str << std::endl;
+    }
+    str << "+----------------------------------------------------+";
+    return str.str();
 }
 
 }// namespace NES
