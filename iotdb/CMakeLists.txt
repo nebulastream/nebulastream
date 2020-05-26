@@ -9,7 +9,7 @@ endif ()
 include(cmake/GetSemanticVersion.cmake)
 
 # Update version
-if (Git_FOUND)
+if (IS_GIT_DIRECTORY)
     configure_file(cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp)
 endif ()
 

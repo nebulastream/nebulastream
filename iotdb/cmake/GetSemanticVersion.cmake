@@ -1,6 +1,15 @@
 find_package(Git)
 
 if (Git_FOUND)
+    # Check if inside git repository
+    execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --is-inside-work-tree
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            OUTPUT_VARIABLE IS_GIT_DIRECTORY
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET OUTPUT_QUIET)
+endif ()
+
+if (IS_GIT_DIRECTORY)
 
     # Get last tag from git
     execute_process(COMMAND ${GIT_EXECUTABLE} describe --abbrev=0 --tags
@@ -55,7 +64,7 @@ if (Git_FOUND)
     # Unset the list
     unset(${PROJECT_NAME}_PARTIAL_VERSION_LIST)
 else ()
-    message(WARNING "Unable to find git configured. Using UNKNOWN as version")
+    message(AUTHOR_WARNING "-- Git not configured. Using UNKNOWN as version")
     set(${PROJECT_NAME}_VERSION "UNKNOWN")
 endif ()
 
