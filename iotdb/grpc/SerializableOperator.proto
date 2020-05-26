@@ -4,7 +4,9 @@ import "SerializableExpression.proto";
 package NES;
 
 
-
+/**
+The serializable wrapper for a schema object
+ */
 message SerializableSchema{
   repeated SerializableField fields = 1;
 }
@@ -14,6 +16,9 @@ The serializable wrapper definition for operator nodes
  */
 message SerializableOperator{
 
+  /**
+  Source Details contains properties for the source operator, such as the source descriptor
+   */
   message SourceDetails {
     message SerializableBinarySourceDescriptor {
       string filePath = 1;
@@ -60,6 +65,9 @@ message SerializableOperator{
     google.protobuf.Any sourceDescriptor = 1;
   }
 
+  /**
+  Sink Details contains properties for the sink operator, such as the sink descriptor
+  */
   message SinkDetails {
     message SerializableFileSinkDescriptor {
       enum FileOutputType{
@@ -92,11 +100,16 @@ message SerializableOperator{
     google.protobuf.Any sinkDescriptor = 1;
   }
 
+  /**
+  Map Details contains properties for the map operator, such as the field assignment expression
+  */
   message MapDetails {
     SerializableExpression expression = 1;
-    SerializableField field = 2;
   }
 
+  /**
+   Filter Details contains properties for the filter operator, such as the filter predicate expression
+ */
   message FilterDetails {
     SerializableExpression predicate = 1;
   }
