@@ -79,8 +79,8 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             return senseSourceDescriptor;
         }
         default: {
-            NES_ERROR("ConvertPhysicalToLogicalSource: Unknown Data Source Type " + srcType);
-            throw std::invalid_argument("Unknown Source Descriptor Type " + srcType);
+            NES_ERROR("ConvertPhysicalToLogicalSource: Unknown Data Source Type " << srcType);
+            throw std::invalid_argument("Unknown Source Descriptor Type ");
         }
     }
 }

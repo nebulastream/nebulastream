@@ -22,7 +22,7 @@ const std::string BasicValueType::toString() const {
     return value_ + ": " + getType()->toString();
 }
 
-const bool BasicValueType::isArrayValueType() const { return false; }
+bool BasicValueType::isArrayValueType() const { return false; }
 
 bool BasicValueType::operator==(const ValueType& _rhs) const {
     auto rhs = dynamic_cast<const BasicValueType&>(_rhs);

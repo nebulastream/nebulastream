@@ -21,7 +21,7 @@ class BasicValueType : public ValueType {
 
     const ValueTypePtr copy() const override;
     const std::string toString() const override;
-    const bool isArrayValueType() const override;
+    bool isArrayValueType() const override;
 
     bool operator==(const ValueType& _rhs) const;
 

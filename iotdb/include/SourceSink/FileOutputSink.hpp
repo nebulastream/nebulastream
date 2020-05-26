@@ -72,7 +72,7 @@ class FileOutputSink : public DataSink {
      * @param tuple buffer pointer to be filled
      * @return bool indicating write success
      */
-    bool writeData(TupleBuffer& input_buffer);
+    bool writeData(TupleBuffer& input_buffer) override;
 
     /**
      * @brief override the toString method for the file output sink

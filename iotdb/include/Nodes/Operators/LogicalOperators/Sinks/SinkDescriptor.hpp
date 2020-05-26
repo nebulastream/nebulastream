@@ -26,7 +26,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     * @return bool true if node is of SinkType
     */
     template<class SinkType>
-    const bool instanceOf() {
+    bool instanceOf() {
         if (dynamic_cast<SinkType*>(this)) {
             return true;
         };

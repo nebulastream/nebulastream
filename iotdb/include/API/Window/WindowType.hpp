@@ -32,7 +32,7 @@ class TumblingWindow : public WindowType {
         return currentTs + size.getTime() - (currentTs % size.getTime());
     }
 
-    void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const;
+    void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 
   private:
     TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size);
@@ -60,7 +60,7 @@ class SlidingWindow : public WindowType {
 
     const TimeMeasure size;
     const TimeMeasure slide;
-    void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const;
+    void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 };
 
 /**
@@ -85,7 +85,7 @@ class SessionWindow : public WindowType {
         return 0;
     }
 
-    void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const;
+    void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 
   private:
     SessionWindow(TimeCharacteristic timeType, TimeMeasure gap);

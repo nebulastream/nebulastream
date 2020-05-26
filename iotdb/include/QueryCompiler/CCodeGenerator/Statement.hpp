@@ -333,12 +333,12 @@ class AnonymUserDefinedDataType : public DataType {
         str << " " << identifier;
         return combine(getCode(), std::make_shared<CodeExpression>(str.str()));
     }
-    const bool isArrayDataType() const override { return false; }
-    const bool isCharDataType() const override { return false; }
+    bool isArrayDataType() const override { return false; }
+    bool isCharDataType() const override { return false; }
     const DataTypePtr copy() const override {
         return std::make_shared<AnonymUserDefinedDataType>(*this);
     }
-    const bool isEqual(DataTypePtr ptr) const override {
+    bool isEqual(DataTypePtr ptr) const override {
         std::shared_ptr<AnonymUserDefinedDataType> temp = std::dynamic_pointer_cast<AnonymUserDefinedDataType>(ptr);
         if (temp)
             return isEqual(temp);
@@ -381,12 +381,12 @@ class UserDefinedDataType : public DataType {
     const CodeExpressionPtr getTypeDefinitionCode() const { return std::make_shared<CodeExpression>(decl_.getCode()); }
     const CodeExpressionPtr getCode() const { return std::make_shared<CodeExpression>(decl_.getTypeName()); }
     const CodeExpressionPtr getDeclCode(const std::string& identifier) const override { return getCode(); }
-    const bool isArrayDataType() const override { return false; }
-    const bool isCharDataType() const override { return false; }
+    bool isArrayDataType() const override { return false; }
+    bool isCharDataType() const override { return false; }
     const DataTypePtr copy() const override {
         return std::make_shared<UserDefinedDataType>(*this);
     }
-    const bool isEqual(DataTypePtr ptr) const override {
+    bool isEqual(DataTypePtr ptr) const override {
         std::shared_ptr<UserDefinedDataType> temp = std::dynamic_pointer_cast<UserDefinedDataType>(ptr);
         if (temp)
             return isEqual(temp);

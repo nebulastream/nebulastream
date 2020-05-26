@@ -80,9 +80,9 @@ const CodeExpressionPtr ArrayDataType::getCode() const {
     return combine(componentDataType->getCode(), std::make_shared<CodeExpression>(str.str()));
 }
 
-const bool ArrayDataType::isEqual(DataTypePtr ptr) const { return (this->toString().compare(ptr->toString()) == 0); };
-const bool ArrayDataType::isCharDataType() const { return this->componentDataType->isCharDataType(); }
-const bool ArrayDataType::isArrayDataType() const { return true; }
+bool ArrayDataType::isEqual(DataTypePtr ptr) const { return (this->toString().compare(ptr->toString()) == 0); };
+bool ArrayDataType::isCharDataType() const { return this->componentDataType->isCharDataType(); }
+bool ArrayDataType::isArrayDataType() const { return true; }
 
 const CodeExpressionPtr ArrayDataType::getTypeDefinitionCode() const {
     return std::make_shared<CodeExpression>("");

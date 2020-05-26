@@ -2,11 +2,8 @@
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/FileOutputSink.hpp>
 #include <Util/Logger.hpp>
-#include <cstring>
 #include <fstream>
 #include <iostream>
-#include <memory>
-#include <sstream>
 #include <string>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(NES::FileOutputSink);

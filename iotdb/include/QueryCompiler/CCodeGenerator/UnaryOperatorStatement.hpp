@@ -20,11 +20,11 @@ class UnaryOperatorStatement : public ExpressionStatment {
     UnaryOperatorStatement(const ExpressionStatment& expr, const UnaryOperatorType& op,
                            BracketMode bracket_mode = NO_BRACKETS);
 
-    virtual StatementType getStamentType() const;
+    StatementType getStamentType() const override;
 
-    virtual const CodeExpressionPtr getCode() const;
+    const CodeExpressionPtr getCode() const override;
 
-    virtual const ExpressionStatmentPtr copy() const;
+    const ExpressionStatmentPtr copy() const override;
 
     virtual ~UnaryOperatorStatement();
 

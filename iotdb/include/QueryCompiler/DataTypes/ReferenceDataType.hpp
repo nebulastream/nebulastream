@@ -17,15 +17,15 @@ class ReferenceDataType : public DataType {
     uint32_t getSizeBytes() const override;
     const std::string toString() const override;
     const std::string convertRawToString(void* data) const override;
-    const bool isArrayDataType() const;
+    bool isArrayDataType() const;
 
     const CodeExpressionPtr getDeclCode(const std::string& identifier) const override;
 
     const CodeExpressionPtr getCode() const override;
 
-    const bool isCharDataType() const override;
+    bool isCharDataType() const override;
 
-    const bool isEqual(DataTypePtr ptr) const override;
+    bool isEqual(DataTypePtr ptr) const override;
 
     const bool isEqual(std::shared_ptr<ReferenceDataType> btr) const;
 

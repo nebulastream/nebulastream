@@ -27,7 +27,7 @@ class ValueType {
     virtual const CodeExpressionPtr getCodeExpression() const = 0;
     virtual const ValueTypePtr copy() const = 0;
     virtual const std::string toString() const = 0;
-    virtual const bool isArrayValueType() const = 0;
+    virtual bool isArrayValueType() const = 0;
     virtual bool operator==(const ValueType& rhs) const = 0;
     virtual ~ValueType();
 

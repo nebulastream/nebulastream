@@ -129,7 +129,7 @@ class PredicateItem : public UserAPIExpression {
 
     bool equals(const UserAPIExpression& rhs) const override;
 
-    const bool isStringType() const;
+    bool isStringType() const;
     const DataTypePtr getDataTypePtr() const;
     AttributeFieldPtr getAttributeField() {
         return this->attribute;
