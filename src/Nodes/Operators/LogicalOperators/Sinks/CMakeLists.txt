@@ -4,4 +4,5 @@ add_source_nes(
         KafkaSinkDescriptor.cpp
         ZmqSinkDescriptor.cpp
         PrintSinkDescriptor.cpp
+        CsvSinkDescriptor.cpp
 )
