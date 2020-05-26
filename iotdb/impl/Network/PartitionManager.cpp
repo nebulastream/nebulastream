@@ -13,16 +13,16 @@ uint64_t PartitionManager::registerSubpartition(NesPartition partition) {
     } else {
         partitionCounter[partition] = 0;
     }
-    NES_INFO("PartitionManager: Registering " << partition.toString() << ":" << partitionCounter[partition]);
+    NES_INFO("PartitionManager: Registering " << partition.toString() << "<<" << partitionCounter[partition]);
     return partitionCounter[partition];
 }
 
 uint64_t PartitionManager::unregisterSubpartition(NesPartition partition) {
     std::unique_lock<std::mutex> lock(partitionCounterMutex);
-    NES_INFO("PartitionManager: Unregistering " << partition.toString());
 
     // if partition is contained, decrement counter
     auto newCounter = partitionCounter.at(partition) - 1;
+    NES_INFO("PartitionManager: Unregistering " << partition.toString() << "; newCnt(" << newCounter << ")");
 
     if (newCounter == 0) {
         //if counter reaches 0, erase partition
