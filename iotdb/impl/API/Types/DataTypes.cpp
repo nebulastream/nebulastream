@@ -15,11 +15,11 @@ const StatementPtr DataType::getStmtCopyAssignment(const AssignmentStatment& aPa
     return VarRef(aParam.lhs_tuple_var)[VarRef(aParam.lhs_index_var)].accessRef(VarRef(aParam.lhs_field_var)).assign(VarRef(aParam.rhs_tuple_var)[VarRef(aParam.rhs_index_var)].accessRef(VarRef(aParam.rhs_field_var))).copy();
 }
 
-const bool DataType::isUndefined() const {
+bool DataType::isUndefined() const {
     return false;
 }
 
-const bool DataType::isNumerical() const {
+bool DataType::isNumerical() const {
     return false;
 }
 

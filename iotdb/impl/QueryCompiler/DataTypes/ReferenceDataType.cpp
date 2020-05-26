@@ -18,7 +18,8 @@ const std::string ReferenceDataType::convertRawToString(void* data) const {
         return "";
     return "REFERENCE";// std::to_string(data);
 }
-const bool ReferenceDataType::isArrayDataType() const { return false; }
+
+bool ReferenceDataType::isArrayDataType() const { return false; }
 
 const CodeExpressionPtr ReferenceDataType::getDeclCode(const std::string& identifier) const {
     return std::make_shared<CodeExpression>(base_type_->getCode()->code_ + "& " + identifier);
@@ -28,9 +29,9 @@ const CodeExpressionPtr ReferenceDataType::getCode() const {
     return std::make_shared<CodeExpression>(base_type_->getCode()->code_ + "&");
 }
 
-const bool ReferenceDataType::isCharDataType() const { return this->base_type_->isCharDataType(); }
+bool ReferenceDataType::isCharDataType() const { return this->base_type_->isCharDataType(); }
 
-const bool ReferenceDataType::isEqual(DataTypePtr ptr) const {
+bool ReferenceDataType::isEqual(DataTypePtr ptr) const {
     std::shared_ptr<ReferenceDataType> temp = std::dynamic_pointer_cast<ReferenceDataType>(ptr);
     if (temp)
         return isEqual(temp);

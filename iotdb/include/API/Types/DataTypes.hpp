@@ -28,7 +28,7 @@ typedef std::shared_ptr<Statement> StatementPtr;
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
-class AssignmentStatment;
+struct AssignmentStatment;
 
 enum BasicType {
     INT8,
@@ -58,11 +58,11 @@ class DataType {
     virtual const CodeExpressionPtr getDeclCode(const std::string& identifier) const = 0;
     virtual const StatementPtr getStmtCopyAssignment(const AssignmentStatment& aParam) const;
     virtual const CodeExpressionPtr getCode() const = 0;
-    virtual const bool isEqual(DataTypePtr ptr) const = 0;
-    virtual const bool isArrayDataType() const = 0;
-    virtual const bool isCharDataType() const = 0;
-    virtual const bool isUndefined() const;
-    virtual const bool isNumerical() const;
+    virtual bool isEqual(DataTypePtr ptr) const = 0;
+    virtual bool isArrayDataType() const = 0;
+    virtual bool isCharDataType() const = 0;
+    virtual bool isUndefined() const;
+    virtual bool isNumerical() const;
     /**
      * @brief Calculates the joined data type between this data type and the other.
      * If they have no possible joined data type, the coined type is Undefined.

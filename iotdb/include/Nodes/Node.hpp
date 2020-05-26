@@ -162,7 +162,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @return bool true if node is of NodeType
      */
     template<class NodeType>
-    const bool instanceOf() {
+    bool instanceOf() {
         if (dynamic_cast<NodeType*>(this)) {
             return true;
         };

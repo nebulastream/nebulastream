@@ -154,7 +154,7 @@ const std::string PredicateItem::toString() const {
     return "";
 }
 
-const bool PredicateItem::isStringType() const {
+bool PredicateItem::isStringType() const {
     return (getDataTypePtr()->isCharDataType()) && (getDataTypePtr()->isArrayDataType());
 }
 

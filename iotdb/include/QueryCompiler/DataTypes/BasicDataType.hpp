@@ -15,21 +15,21 @@ class BasicDataType : public DataType {
 
     ValueTypePtr getNullValue() const override;
 
-    const bool isEqual(DataTypePtr ptr) const override;
+    bool isEqual(DataTypePtr ptr) const override;
 
     const bool isEqual(std::shared_ptr<BasicDataType> btr) const;
 
-    const bool isArrayDataType() const override;
+    bool isArrayDataType() const override;
 
-    const bool isCharDataType() const override;
+    bool isCharDataType() const override;
 
-    const bool isNumerical() const override;
+    bool isNumerical() const override;
 
     BasicType getType();
 
     const DataTypePtr join(DataTypePtr other) const override;
     uint32_t getSizeBytes() const override;
-    const bool isUndefined() const override;
+    bool isUndefined() const override;
     uint32_t getFixSizeBytes() const;
     const std::string toString() const override;
     const std::string convertRawToString(void* data) const override;

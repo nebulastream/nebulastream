@@ -752,7 +752,7 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     auto inputBuffer = source->receiveData().value();;
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
 
-    auto sizeOfTuple = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char)*12);
+    auto sizeOfTuple = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char) * 12);
 
     /* execute Stage */
     auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
@@ -761,12 +761,12 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
     NES_INFO(
         "Number of generated output tuples: " << resultBuffer.getNumberOfTuples());
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
 
     auto resultData = (SelectionDataGenSource::InputTuple*) resultBuffer.getBuffer();
     for (uint64_t i = 0; i < 5; ++i) {
         EXPECT_EQ(resultData[i].id, i);
-        EXPECT_EQ(resultData[i].value, i*2);
+        EXPECT_EQ(resultData[i].value, i * 2);
     }
 }
 
@@ -920,14 +920,12 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     auto inputLayout = createRowLayout(inputSchema);
     auto outputLayout = createRowLayout(outputSchema);
-    auto size = outputSchema->getSchemaSizeInBytes();
-    for (int recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples()-1; recordIndex++) {
-        auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/2)->read(inputBuffer);
-        auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/3)->read(inputBuffer);
-        auto reference = (floatValue*doubleValue) + 2;
-        auto mapedValue = outputLayout->getValueField<double>(recordIndex, /*fieldIndex*/4)->read(resultBuffer);
+    for (size_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
+        auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/ 2)->read(inputBuffer);
+        auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 3)->read(inputBuffer);
+        auto reference = (floatValue * doubleValue) + 2;
+        auto mapedValue = outputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 4)->read(resultBuffer);
         EXPECT_EQ(reference, mapedValue);
     }
-
 }
 }  // namespace NES

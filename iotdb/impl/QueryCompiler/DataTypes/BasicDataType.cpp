@@ -16,7 +16,7 @@ ValueTypePtr BasicDataType::getDefaultInitValue() const { return ValueTypePtr();
 
 ValueTypePtr BasicDataType::getNullValue() const { return ValueTypePtr(); }
 
-const bool BasicDataType::isEqual(DataTypePtr ptr) const {
+bool BasicDataType::isEqual(DataTypePtr ptr) const {
     std::shared_ptr<BasicDataType> temp = std::dynamic_pointer_cast<BasicDataType>(ptr);
     if (temp)
         return isEqual(temp);
@@ -27,9 +27,9 @@ const bool BasicDataType::isEqual(std::shared_ptr<BasicDataType> btr) const {
     return ((btr->type == this->type) && (btr->getSizeBytes() == this->getSizeBytes()));
 }
 
-const bool BasicDataType::isArrayDataType() const { return false; }
+bool BasicDataType::isArrayDataType() const { return false; }
 
-const bool BasicDataType::isCharDataType() const { return (this->type == BasicType::CHAR); }
+bool BasicDataType::isCharDataType() const { return (this->type == BasicType::CHAR); }
 
 uint32_t BasicDataType::getSizeBytes() const {
     if (dataSize == 0) {
@@ -152,10 +152,10 @@ bool BasicDataType::operator==(const DataType& _rhs) const {
     auto rhs = dynamic_cast<const NES::BasicDataType&>(_rhs);
     return type == rhs.type && dataSize == rhs.dataSize;
 }
-const bool BasicDataType::isUndefined() const {
+bool BasicDataType::isUndefined() const {
     return type == UNDEFINED;
 }
-const bool BasicDataType::isNumerical() const {
+bool BasicDataType::isNumerical() const {
     return type == BasicType::UINT8 || type == BasicType::UINT16 || type == BasicType::UINT32
         || type == BasicType::UINT64 || type == BasicType::INT8 || type == BasicType::INT16
         || type == BasicType::INT32 || type == BasicType::INT64 || type == BasicType::FLOAT32

@@ -30,9 +30,9 @@ class ArrayDataType : public DataType {
 
     const CodeExpressionPtr getCode() const override;
 
-    const bool isEqual(DataTypePtr ptr) const override;
-    const bool isCharDataType() const override;
-    const bool isArrayDataType() const override;
+    bool isEqual(DataTypePtr ptr) const override;
+    bool isCharDataType() const override;
+    bool isArrayDataType() const override;
 
     const CodeExpressionPtr getTypeDefinitionCode() const override;
     const u_int32_t getDimensions() const;

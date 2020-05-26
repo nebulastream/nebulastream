@@ -57,7 +57,7 @@ class WindowSliceStore {
     * @param ts timestamp of the record.
     * @return the index of a slice.
     */
-    inline const uint64_t getSliceIndexByTs(const uint64_t ts) {
+    inline uint64_t getSliceIndexByTs(const uint64_t ts) {
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
             auto slice = sliceMetaData[i];
             if (slice.getStartTs() <= ts && slice.getEndTs() > ts) {
@@ -79,11 +79,11 @@ class WindowSliceStore {
     /**
      * @return most current slice'index.
      */
-    inline const uint64_t getCurrentSliceIndex() {
+    inline uint64_t getCurrentSliceIndex() {
         return sliceMetaData.size() - 1;
     }
 
-    inline const uint64_t empty() {
+    inline uint64_t empty() {
         return sliceMetaData.empty();
     }
 
@@ -131,7 +131,7 @@ class WindowManager {
      * @param store the window slice store
      */
     template<class PartialAggregateType>
-    inline const void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store) {
+    inline void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store) {
 
         // updates the maximal record ts
         store->updateMaxTs(ts);
@@ -165,7 +165,7 @@ class WindowManager {
     const WindowDefinitionPtr& GetWindowDefinition() const {
         return windowDefinition;
     }
-    const uint64_t GetAllowedLateness() const {
+    uint64_t GetAllowedLateness() const {
         return allowedLateness;
     }
 

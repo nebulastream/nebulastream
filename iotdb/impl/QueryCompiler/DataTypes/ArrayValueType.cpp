@@ -50,7 +50,7 @@ const ValueTypePtr ArrayValueType::copy() const {
     return std::make_shared<ArrayValueType>(*this);
 }
 
-const bool ArrayValueType::isArrayValueType() const { return true; }
+bool ArrayValueType::isArrayValueType() const { return true; }
 
 bool ArrayValueType::operator==(const ArrayValueType& rhs) const {
     return static_cast<const NES::ValueType&>(*this) == static_cast<const NES::ValueType&>(rhs) && type_ == rhs.type_ && isString_ == rhs.isString_ && value_ == rhs.value_;

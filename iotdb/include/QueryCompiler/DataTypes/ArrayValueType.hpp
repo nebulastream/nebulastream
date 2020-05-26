@@ -26,7 +26,7 @@ class ArrayValueType : public ValueType {
 
     const std::string toString() const override;
 
-    const bool isArrayValueType() const override;
+    bool isArrayValueType() const override;
 
     virtual ~ArrayValueType() override;
 

@@ -18,7 +18,7 @@ const std::string PointerDataType::convertRawToString(void* data) const {
         return "";
     return "POINTER";// std::to_string(data);
 }
-const bool PointerDataType::isArrayDataType() const { return false; }
+bool PointerDataType::isArrayDataType() const { return false; }
 
 const CodeExpressionPtr PointerDataType::getDeclCode(const std::string& identifier) const {
     return std::make_shared<CodeExpression>(base_type_->getCode()->code_ + "* " + identifier);
@@ -28,9 +28,9 @@ const CodeExpressionPtr PointerDataType::getCode() const {
     return std::make_shared<CodeExpression>(base_type_->getCode()->code_ + "*");
 }
 
-const bool PointerDataType::isCharDataType() const { return this->base_type_->isCharDataType(); }
+bool PointerDataType::isCharDataType() const { return this->base_type_->isCharDataType(); }
 
-const bool PointerDataType::isEqual(DataTypePtr ptr) const {
+bool PointerDataType::isEqual(DataTypePtr ptr) const {
     std::shared_ptr<PointerDataType> temp = std::dynamic_pointer_cast<PointerDataType>(ptr);
     if (temp)
         return isEqual(temp);

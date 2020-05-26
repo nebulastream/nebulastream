@@ -16,7 +16,7 @@ class ZmqSink : public DataSink {
     ZmqSink(SchemaPtr schema, const std::string& host, uint16_t port);
     ~ZmqSink() override;
 
-    bool writeData(TupleBuffer& input_buffer);
+    bool writeData(TupleBuffer& input_buffer) override;
     void setup() override { connect(); };
     void shutdown() override{};
     const std::string toString() const override;

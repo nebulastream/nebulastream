@@ -16,12 +16,12 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     /**
      * @brief Get number of buffers to be produced
      */
-    const uint64_t getNumbersOfBufferToProduce() const;
+    uint64_t getNumbersOfBufferToProduce() const;
 
     /**
      * @brief Get the frequency to produce the buffers
      */
-    const uint32_t getFrequency() const;
+    uint32_t getFrequency() const;
 
   private:
     explicit DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
