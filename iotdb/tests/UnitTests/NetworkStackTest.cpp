@@ -100,9 +100,8 @@ TEST_F(NetworkStackTest, startCloseChannel) {
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, 1, 3);
-
         senderChannel->close();
-
+        delete senderChannel;
         t.join();
     }
     catch (...) {
@@ -203,7 +202,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
         std::thread t([&netManager, &nesPartition, &completedProm] {
           // register the incoming channel
           netManager.registerSubpartitionConsumer(nesPartition);
-          completedProm.get_future().get();
+          ASSERT_TRUE(completedProm.get_future().get());
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
@@ -243,6 +242,13 @@ TEST_F(NetworkStackTest, testPartitionManager) {
     ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 1);
 
     partitionManager->unregisterSubpartition(partition1Copy);
+    ASSERT_EQ(partitionManager->isRegistered(partition1), true);
+    ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0);
+
+    partitionManager->unregisterSubpartition(partition1Copy);
+    ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0);
+
+    partitionManager->deletePartition(partition1);
     ASSERT_EQ(partitionManager->isRegistered(partition1), false);
 }
 
@@ -341,7 +347,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
           }
 
           for (std::promise<bool>& p: completedPromises) {
-              p.get_future().get();
+              ASSERT_TRUE(p.get_future().get());
           }
         });
 
@@ -422,19 +428,19 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         NetworkManager netManager{"127.0.0.1", 31337, onBuffer, onEndOfStream, onError,
                                   bufferManager, partitionManager};
 
-        std::thread receivingThread([&netManager, &nesPartition, &completed] {
+        std::thread receivingThread([this, &netManager, &nesPartition, &completed] {
           // register the incoming channel
           //add latency
           netManager.registerSubpartitionConsumer(nesPartition);
           completed.get_future().get();
+          this->partitionManager->deletePartition(nesPartition);
         });
 
         SchemaPtr schema = nullptr;
         NetworkSink networkSink{schema, netManager, nodeLocation, nesPartition};
-        auto barrier = std::make_shared<ThreadBarrier>(numSendingThreads+1);
 
         for (int i = 0; i < numSendingThreads; i++) {
-            std::thread sendingThread([this, &networkSink, &barrier, i] {
+            std::thread sendingThread([this, &networkSink, i] {
               // register the incoming channel
               auto buffer = this->bufferManager->getBufferBlocking();
               buffer.getBuffer<uint64_t>()[0] = 0;
@@ -442,13 +448,14 @@ TEST_F(NetworkStackTest, testNetworkSink) {
               buffer.setTupleSizeInBytes(sizeof(uint64_t));
 
               NES_DEBUG("NetworkStackTest: Thread " << to_string(i) << " sending data over NetworkSink.");
+              // artificially intended creation latency
               sleep(rand()%10);
               networkSink.writeData(buffer);
-              barrier->wait();
+              // artificially intended write latency
+              sleep(rand()%10);
             });
             sendingThreads.emplace_back(std::move(sendingThread));
         }
-        barrier->wait();
 
         for (std::thread& t: sendingThreads) {
             if (t.joinable()) {
