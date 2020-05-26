@@ -81,7 +81,9 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         std::promise<bool> completed;
         auto onBuffer = [](NesPartition id, TupleBuffer buf) {};
         auto onError = [&completed](Messages::ErroMessage ex) {
-          completed.set_exception(make_exception_ptr(runtime_error("Error")));
+          if (ex.getErrorType() != Messages::PartitionNotRegisteredError) {
+              completed.set_exception(make_exception_ptr(runtime_error("Error")));
+          }
         };
         auto onEndOfStream = [&completed](Messages::EndOfStreamMessage p) {
           completed.set_value(true);
@@ -234,7 +236,6 @@ TEST_F(NetworkStackTest, testMassiveSending) {
 TEST_F(NetworkStackTest, testPartitionManager) {
     auto partition1 = NesPartition(1, 2, 3, 4);
     auto partition1Copy = NesPartition(1, 2, 3, 4);
-    auto partition2 = NesPartition(1, 2, 3, 5);
 
     partitionManager->registerSubpartition(partition1);
     ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0);
@@ -246,9 +247,6 @@ TEST_F(NetworkStackTest, testPartitionManager) {
     ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0);
 
     partitionManager->unregisterSubpartition(partition1Copy);
-    ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0);
-
-    partitionManager->deletePartition(partition1);
     ASSERT_EQ(partitionManager->isRegistered(partition1), false);
 }
 
@@ -433,7 +431,8 @@ TEST_F(NetworkStackTest, testNetworkSink) {
           //add latency
           netManager.registerSubpartitionConsumer(nesPartition);
           completed.get_future().get();
-          this->partitionManager->deletePartition(nesPartition);
+          this->partitionManager->unregisterSubpartition(nesPartition);
+          ASSERT_FALSE(this->partitionManager->isRegistered(nesPartition));
         });
 
         SchemaPtr schema = nullptr;
