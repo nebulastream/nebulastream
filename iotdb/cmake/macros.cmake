@@ -45,10 +45,10 @@ macro(project_enable_clang_format)
 endmacro(project_enable_clang_format)
 
 macro(project_enable_release)
-    if (NOT Git_FOUND)
-        message(WARNING " -- Disabled release target as git not configured.")
+    if (NOT IS_GIT_DIRECTORY)
+        message(AUTHOR_WARNING " -- Disabled release target as git not configured.")
     elseif (${${PROJECT_NAME}_BRANCH_NAME} STREQUAL "master")
-        message("-- Enabled release target.")
+        message(INFO "-- Enabled release target.")
         add_custom_target(release
                 COMMAND echo "Releasing NES ${${PROJECT_NAME}_VERSION}"
                 )
