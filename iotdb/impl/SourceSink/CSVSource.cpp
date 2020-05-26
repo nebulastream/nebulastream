@@ -127,8 +127,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
             } else if (field->getDataType()->isEqual(createDataType(BasicType::BOOLEAN))) {
-                bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 ||
-                            atoi(tokens[j].c_str()) != 0);
+                bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 || atoi(tokens[j].c_str()) != 0);
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
             } else {
