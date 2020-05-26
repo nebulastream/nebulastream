@@ -14,7 +14,8 @@ enum SinkType {
     FILE_SINK,
     KAFKA_SINK,
     PRINT_SINK,
-    YSB_SINK
+    YSB_SINK,
+    NETWORK_SINK
 };
 
 /**

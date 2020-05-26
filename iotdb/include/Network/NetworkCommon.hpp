@@ -5,6 +5,7 @@
 #include <string>
 #include <tuple>
 #include <zmq.hpp>
+#include <thread>
 
 namespace NES {
 namespace Network {
@@ -58,6 +59,14 @@ class NesPartition {
         return subpartitionId;
     }
 
+    size_t getThreadId() const {
+        return threadId;
+    }
+
+    void setThreadId(size_t threadId) {
+        this->threadId = threadId;
+    }
+
     const std::string toString() const {
         return std::to_string(queryId) + "::" + std::to_string(operatorId) + "::"
             + std::to_string(partitionId) + "::" + std::to_string(subpartitionId);
@@ -72,6 +81,7 @@ class NesPartition {
     const OperatorId operatorId;
     const PartitionId partitionId;
     const SubpartitionId subpartitionId;
+    size_t threadId;
 };
 
 class NodeLocation {

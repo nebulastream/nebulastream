@@ -135,7 +135,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
 
             if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
                 // TODO handle error -- need to discuss how we handle errors on the node engine
-                NES_THROW_RUNTIME_ERROR("ZmqServer: Stream is corrupted-->Wrong magic number");
+                NES_THROW_RUNTIME_ERROR("ZmqServer: Stream is corrupted");
             }
             switch (msgHeader->getMsgType()) {
                 case Messages::ClientAnnouncement: {

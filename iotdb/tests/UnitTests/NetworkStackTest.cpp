@@ -1,6 +1,8 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqServer.hpp>
+#include <Network/NetworkSink.hpp>
+#include <Util/ThreadBarrier.hpp>
 #include <Util/Logger.hpp>
 
 #include <gtest/gtest.h>
@@ -44,7 +46,9 @@ TEST_F(NetworkStackTest, serverMustStartAndStop) {
     try {
         ExchangeProtocol
             exchangeProtocol
-            ([](NesPartition id, TupleBuffer buf) {}, [](Messages::EndOfStreamMessage p) {}, [](Messages::ErroMessage ex) {});
+            ([](NesPartition id, TupleBuffer buf) {},
+             [](Messages::EndOfStreamMessage p) {},
+             [](Messages::ErroMessage ex) {});
         ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol, bufferManager, partitionManager);
         server.start();
         ASSERT_EQ(server.getIsRunning(), true);
@@ -314,7 +318,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
               ASSERT_EQ(buffer.getBuffer<uint64_t>()[j], j);
           }
           bufferCounter[id.getQueryId()]++;
-          usleep(rand()%10000+1000);
+          usleep(rand()%10000 + 1000);
         };
 
         auto onError = [](Messages::ErroMessage ex) {
@@ -322,7 +326,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
         };
 
         auto onEndOfStream = [&completedPromises](Messages::EndOfStreamMessage p) {
-            completedPromises[p.getNesPartition().getQueryId()].set_value(true);
+          completedPromises[p.getNesPartition().getQueryId()].set_value(true);
         };
 
         NetworkManager netManager("127.0.0.1", 31337, onBuffer, onEndOfStream, onError, bufferManager,
@@ -381,6 +385,82 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
     for (size_t cnt: bufferCounter) {
         ASSERT_EQ(cnt, totalNumBuffer);
     }
+}
+
+TEST_F(NetworkStackTest, testNetworkSink) {
+    std::promise<bool> completed;
+    atomic<int> bufferCnt = 0;
+    atomic<int> eosCnt = 0;
+
+    int numSendingThreads = 10;
+    auto sendingThreads = std::vector<std::thread>();
+
+    NodeLocation nodeLocation{0, "127.0.0.1", 31337};
+    NesPartition nesPartition{1, 22, 33, 44};
+
+    try {
+        // create NetworkSink
+        auto onError = [&completed](Messages::ErroMessage ex) {
+          if (ex.getErrorType() != Messages::PartitionNotRegisteredError) {
+              completed.set_exception(make_exception_ptr(runtime_error("Error")));
+          }
+        };
+        auto onEndOfStream = [&eosCnt, &completed, &numSendingThreads](Messages::EndOfStreamMessage p) {
+          eosCnt++;
+          if (eosCnt == numSendingThreads) {
+              completed.set_value(true);
+          }
+        };
+
+        auto onBuffer = [&nesPartition, &bufferCnt](NesPartition id, TupleBuffer buf) {
+          NES_DEBUG("NetworkStackTest: Received buffer " << id.toString());
+          if (nesPartition == id) {
+              bufferCnt++;
+          }
+        };
+
+        NetworkManager netManager{"127.0.0.1", 31337, onBuffer, onEndOfStream, onError,
+                                  bufferManager, partitionManager};
+
+        std::thread receivingThread([&netManager, &nesPartition, &completed] {
+          // register the incoming channel
+          //add latency
+          netManager.registerSubpartitionConsumer(nesPartition);
+          completed.get_future().get();
+        });
+
+        SchemaPtr schema = nullptr;
+        NetworkSink networkSink{schema, netManager, nodeLocation, nesPartition};
+        auto barrier = std::make_shared<ThreadBarrier>(numSendingThreads+1);
+
+        for (int i = 0; i < numSendingThreads; i++) {
+            std::thread sendingThread([this, &networkSink, &barrier, i] {
+              // register the incoming channel
+              auto buffer = this->bufferManager->getBufferBlocking();
+              buffer.getBuffer<uint64_t>()[0] = 0;
+              buffer.setNumberOfTuples(1);
+              buffer.setTupleSizeInBytes(sizeof(uint64_t));
+
+              NES_DEBUG("NetworkStackTest: Thread " << to_string(i) << " sending data over NetworkSink.");
+              sleep(rand()%10);
+              networkSink.writeData(buffer);
+              barrier->wait();
+            });
+            sendingThreads.emplace_back(std::move(sendingThread));
+        }
+        barrier->wait();
+
+        for (std::thread& t: sendingThreads) {
+            if (t.joinable()) {
+                t.join();
+            }
+        }
+        receivingThread.join();
+    }
+    catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(bufferCnt, numSendingThreads);
 }
 
 } // namespace Network
