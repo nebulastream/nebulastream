@@ -86,47 +86,47 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
              * TODO: this requires underflow/overflow checks
              * TODO: our types need their own sto/strto methods
              */
-            if (field->getDataType()->toString() == "UINT64") {
-                size_t val = std::stoull(tokens[j].c_str());
+            if (field->getDataType()->isEqual(createDataType(BasicType::UINT64))) {
+                uint64_t val = std::stoull(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->toString() == "INT64") {
+            } else if (field->getDataType()->isEqual(createDataType(BasicType::INT64))) {
                 int64_t val = std::stoll(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->toString() == "UINT32") {
+            } else if (field->getDataType()->isEqual(createDataType(BasicType::UINT32))) {
                 uint32_t val = std::stoul(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->toString() == "INT32") {
+            } else if (field->getDataType()->isEqual(createDataType(BasicType::INT32))) {
                 int32_t val = std::stol(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->toString() == "UINT16") {
+            } else if (field->getDataType()->isEqual(createDataType(BasicType::UINT16))) {
                 uint16_t val = std::stol(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->toString() == "INT16") {
+            } else if (field->getDataType()->isEqual(createDataType(BasicType::INT16))) {
                 int16_t val = std::stol(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->toString() == "UINT8") {
+            } else if (field->getDataType()->isEqual(createDataType(BasicType::UINT8))) {
                 uint8_t val = std::stoi(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->toString() == "INT8") {
+            } else if (field->getDataType()->isEqual(createDataType(BasicType::INT8))) {
                 int8_t val = std::stoi(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->toString() == "FLOAT64") {
+            } else if (field->getDataType()->isEqual(createDataType(BasicType::FLOAT64))) {
                 double val = std::stod(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->toString() == "FLOAT32") {
+            } else if (field->getDataType()->isEqual(createDataType(BasicType::FLOAT32))) {
                 float val = std::stof(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->toString() == "BOOLEAN") {
+            } else if (field->getDataType()->isEqual(createDataType(BasicType::BOOLEAN))) {
                 bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 ||
                             atoi(tokens[j].c_str()) != 0);
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
