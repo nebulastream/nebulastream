@@ -1,13 +1,14 @@
 #include "gtest/gtest.h"
 
-#include <iostream>
-#include <future>
 #include <API/Schema.hpp>
-#include <Util/Logger.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-#include <NodeEngine/NodeEngine.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <future>
+#include <iostream>
 using namespace NES;
 
 class QueryExecutionTest : public testing::Test {
@@ -42,7 +43,7 @@ class TestSink : public DataSink {
     bool writeData(TupleBuffer& input_buffer) override {
         std::unique_lock lock(m);
         NES_DEBUG("TestSink: got buffer " << input_buffer);
-        NES_DEBUG(NES::toString(input_buffer, getSchema()));
+        NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchema()));
         resultBuffers.emplace_back(std::move(input_buffer));
         if (resultBuffers.size() == 10) {
             completed.set_value(true);

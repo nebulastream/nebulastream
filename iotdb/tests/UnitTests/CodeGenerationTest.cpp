@@ -1,31 +1,32 @@
-#include <NodeEngine/NodeEngine.hpp>
-#include <cmath>
-#include <cassert>
-#include <iostream>
-#include <gtest/gtest.h>
-#include <Util/Logger.hpp>
 #include <API/Schema.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <API/Types/DataTypes.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/PipelineContext.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
+#include <API/UserAPIExpression.hpp>
+#include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
-#include <Windows/WindowHandler.hpp>
-#include <SourceSink/SinkCreator.hpp>
-#include <SourceSink/GeneratorSource.hpp>
+#include <QueryCompiler/PipelineStage.hpp>
 #include <SourceSink/DefaultSource.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/QueryManager.hpp>
+#include <SourceSink/GeneratorSource.hpp>
+#include <SourceSink/SinkCreator.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <Windows/WindowHandler.hpp>
+#include <cassert>
+#include <cmath>
+#include <gtest/gtest.h>
+#include <iostream>
 #include <utility>
 
 namespace NES {
@@ -657,7 +658,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto layout = createRowLayout(recordSchema);
 
     for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
-        layout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->write(inputBuffer, recordIndex);
+        layout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->write(inputBuffer, recordIndex);
     }
     inputBuffer.setNumberOfTuples(100);
 
@@ -667,10 +668,10 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
         std::cout << "Error!" << std::endl;
     }
     auto outputBuffer = context.buffers[0];
-    NES_INFO(toString(outputBuffer, recordSchema));
+    NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
 
     /* check result for correctness */
-    auto sumGeneratedCode = layout->getValueField<int64_t>(/*recordIndex*/0, /*fieldIndex*/0)->read(outputBuffer);
+    auto sumGeneratedCode = layout->getValueField<int64_t>(/*recordIndex*/ 0, /*fieldIndex*/ 0)->read(outputBuffer);
     auto sum = 0;
     for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         sum += layout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(inputBuffer);
@@ -865,7 +866,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3);
 
-    NES_INFO(NES::toString(resultBuffer, inputSchema));
+    NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, inputSchema));
 }
 
 /**
