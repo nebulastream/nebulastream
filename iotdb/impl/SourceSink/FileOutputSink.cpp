@@ -2,6 +2,8 @@
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/FileOutputSink.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -44,7 +46,7 @@ bool FileOutputSink::writeData(TupleBuffer& input_buffer) {
 
     if (outputType == BINARY_TYPE) {
         std::fstream outputFile(filePath, std::fstream::in | std::fstream::out | std::fstream::app);
-        outputFile << NES::toString(input_buffer, this->getSchema());
+        outputFile << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, this->getSchema());
         outputFile.close();
     } else if (outputType == CSV_TYPE) {
         std::ofstream outputFile;

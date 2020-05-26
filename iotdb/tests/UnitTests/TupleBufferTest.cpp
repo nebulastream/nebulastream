@@ -6,6 +6,7 @@
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <SourceSink/GeneratorSource.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -77,7 +78,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer)
                             "|4|2.000000|0.800000|8|1234|\n"
                             "+----------------------------------------------------+";
 
-    std::string result = NES::toString(buf, s);
+    std::string result = UtilityFunctions::prettyPrintTupleBuffer(buf, s);
     NES_DEBUG("'" << reference << "'" << reference.size() << std::endl);
     NES_DEBUG("'" << result << "'" << result.size() << std::endl);
 
@@ -133,7 +134,7 @@ TEST_F(TupleBufferTest, testEndianessOneItem)
     testBuf.setTupleSizeInBytes(sizeof(decltype(ts)));
     testBuf.setNumberOfTuples(1);
     cout << "to string=" << endl;
-    std::string result = NES::toString(testBuf, s);
+    std::string result = UtilityFunctions::prettyPrintTupleBuffer(testBuf, s);
 
     cout << "to printTupleBuffer=" << testBuf.printTupleBuffer(s) << endl;
 
@@ -196,7 +197,7 @@ TEST_F(TupleBufferTest, testEndianessTwoItems)
                    ->addField("v10", FLOAT64);
 
     cout << "to string=" << endl;
-    std::string result = NES::toString(testBuf, s);
+    std::string result = UtilityFunctions::prettyPrintTupleBuffer(testBuf, s);
 
     cout << "to printTupleBuffer=" << testBuf.printTupleBuffer(s) << endl;
 

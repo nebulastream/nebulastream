@@ -1,6 +1,7 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <SourceSink/PrintSink.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <sstream>
 #include <string>
 
@@ -20,7 +21,7 @@ PrintSink::~PrintSink() {
 }
 
 bool PrintSink::writeData(TupleBuffer& input_buffer) {
-    outputStream << NES::toString(input_buffer, this->getSchema())
+    outputStream << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, this->getSchema())
                  << std::endl;
     return true;
 }
