@@ -1,3 +1,4 @@
+#include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -28,27 +29,20 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
                                          kafkaSinkDescriptor->getTimeout());
 #endif
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating File sink");
-        const FileSinkDescriptorPtr fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-        FileOutputType fileOutPutType = fileSinkDescriptor->getFileOutputType();
-        switch (fileOutPutType) {
-            case BINARY_TYPE: {
-                NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink");
-                return createBinaryFileSinkWithSchema(schema, fileSinkDescriptor->getFileName());
-            }
-            case CSV_TYPE: {
-                NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink");
-                if (fileSinkDescriptor->getFileOutputMode() == FILE_APPEND) {
-                    NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in append mode");
-                    return createCSVFileSinkWithSchemaAppend(schema, fileSinkDescriptor->getFileName());
-                } else if (fileSinkDescriptor->getFileOutputMode() == FILE_OVERWRITE) {
-                    NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in Overwrite mode");
-                    return createCSVFileSinkWithSchemaOverwrite(schema, fileSinkDescriptor->getFileName());
-                } else {
-                    NES_ERROR("ConvertLogicalToPhysicalSink: Unknown File Mode");
-                    throw std::invalid_argument("Unknown File Mode");
-                }
-            }
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink");
+        auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
+        return createBinaryFileSinkWithSchema(schema, fileSinkDescriptor->getFileName());
+    } else if (sinkDescriptor->instanceOf<CsvSinkDescriptor>()) {
+        auto csvSinkDescriptor = sinkDescriptor->as<CsvSinkDescriptor>();
+        if (csvSinkDescriptor->getFileOutputMode() == CsvSinkDescriptor::APPEND) {
+            NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in append mode");
+            return createCSVFileSinkWithSchemaAppend(schema, csvSinkDescriptor->getFileName());
+        } else if (csvSinkDescriptor->getFileOutputMode() == CsvSinkDescriptor::OVERWRITE) {
+            NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in Overwrite mode");
+            return createCSVFileSinkWithSchemaOverwrite(schema, csvSinkDescriptor->getFileName());
+        } else {
+            NES_ERROR("ConvertLogicalToPhysicalSink: Unknown File Mode");
+            throw std::invalid_argument("Unknown File Mode");
         }
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");

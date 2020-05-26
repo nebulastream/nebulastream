@@ -1,3 +1,4 @@
+#include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -38,11 +39,18 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
         }
 #endif
         case FILE_SINK: {
-            NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink");
+
             FileOutputSinkPtr fileOutputSink = std::dynamic_pointer_cast<FileOutputSink>(dataSink);
-            return FileSinkDescriptor::create(fileOutputSink->getFilePath(),
-                                              fileOutputSink->getOutputMode(),
-                                              fileOutputSink->getOutputType());
+            if (fileOutputSink->getOutputType() == FileOutputSink::BINARY_TYPE) {
+                NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink");
+                return FileSinkDescriptor::create(fileOutputSink->getFilePath());
+            } else {
+                NES_INFO("ConvertPhysicalToLogicalSink: Creating CSV sink");
+                auto outputMode = fileOutputSink->getOutputMode() == FileOutputSink::FILE_APPEND
+                    ? CsvSinkDescriptor::APPEND
+                    : CsvSinkDescriptor::OVERWRITE;
+                return CsvSinkDescriptor::create(fileOutputSink->getFilePath(), outputMode);
+            }
         }
         default: {
             NES_ERROR("ConvertPhysicalToLogicalSink: Unknown Data Sink Type");
