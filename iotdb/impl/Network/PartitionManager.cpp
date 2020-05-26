@@ -21,20 +21,21 @@ uint64_t PartitionManager::unregisterSubpartition(NesPartition partition) {
     std::unique_lock<std::mutex> lock(partitionCounterMutex);
 
     // if partition is contained, decrement counter
-    auto newCounter = partitionCounter.at(partition);
+    auto counter = partitionCounter.at(partition);
 
-    if (newCounter == 0) {
+    if (counter == 0) {
         //if counter reaches 0, log error
-        NES_ERROR("PartitionManager: Trying to unregister partition, although counter is at 0");
+        NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
+        partitionCounter.erase(partition);
     }
     else {
         //else decrement counter
-        partitionCounter[partition] = --newCounter;
-        NES_INFO("PartitionManager: Unregistering " << partition.toString() << "; newCnt(" << newCounter << ")");
+        partitionCounter[partition] = --counter;
+        NES_INFO("PartitionManager: Unregistering " << partition.toString() << "; newCnt(" << counter << ")");
     }
 
     // return new counter
-    return newCounter;
+    return counter;
 }
 
 uint64_t PartitionManager::getSubpartitionCounter(NesPartition partition) {
