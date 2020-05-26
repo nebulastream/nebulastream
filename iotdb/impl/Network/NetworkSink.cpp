@@ -12,10 +12,10 @@ NetworkSink::NetworkSink(SchemaPtr schema, NetworkManager& networkManager, const
 }
 
 bool NetworkSink::writeData(TupleBuffer& inputBuffer) {
-    NES_DEBUG("NetworkSink: Write data called");
     if (!outputChannel.get()) {
-        NES_DEBUG("NetworkSink: Initializing OutputChannel");
-        nesPartition.setThreadId(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+        auto threadId = std::hash<std::thread::id>{}(std::this_thread::get_id());
+        NES_DEBUG("NetworkSink: Initializing thread specific OutputChannel " << threadId);
+        nesPartition.setThreadId(threadId);
         auto channel = networkManager.registerSubpartitionProducer(nodeLocation,
                                                                    nesPartition,
                                                                    [](Messages::ErroMessage ex) {},
