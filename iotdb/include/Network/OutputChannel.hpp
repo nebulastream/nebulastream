@@ -21,7 +21,7 @@ class OutputChannel : public boost::noncopyable {
         std::shared_ptr<zmq::context_t> zmqContext,
         const std::string& address,
         NesPartition nesPartition,
-        uint8_t waitTime, uint8_t retryTimes,
+        std::chrono::seconds waitTime, uint8_t retryTimes,
         std::function<void(Messages::ErroMessage)> onError);
 
     ~OutputChannel() {
@@ -29,7 +29,7 @@ class OutputChannel : public boost::noncopyable {
     }
 
   private:
-    void init(u_int64_t waitTime, u_int64_t retryTimes);
+    void init(std::chrono::seconds waitTime, uint8_t retryTimes);
     bool registerAtServer();
 
   public:

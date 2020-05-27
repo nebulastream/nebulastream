@@ -3,8 +3,8 @@
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqUtils.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 namespace Network {
@@ -12,7 +12,7 @@ namespace Network {
 OutputChannel::OutputChannel(std::shared_ptr<zmq::context_t> zmqContext,
                              const std::string& address,
                              NesPartition nesPartition,
-                             uint8_t waitTime, uint8_t retryTimes,
+                             std::chrono::seconds waitTime, uint8_t retryTimes,
                              std::function<void(Messages::ErroMessage)> onError) : socketAddr(address),
                                                                                    zmqSocket(*zmqContext, ZMQ_DEALER),
                                                                                    nesPartition(nesPartition),
@@ -22,7 +22,7 @@ OutputChannel::OutputChannel(std::shared_ptr<zmq::context_t> zmqContext,
     init(waitTime, retryTimes);
 }
 
-void OutputChannel::init(u_int64_t waitTime, u_int64_t retryTimes) {
+void OutputChannel::init(std::chrono::seconds waitTime, uint8_t retryTimes) {
     int linger = -1;
     try {
         zmqSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
@@ -32,7 +32,7 @@ void OutputChannel::init(u_int64_t waitTime, u_int64_t retryTimes) {
 
         while ((!connected) && (i <= retryTimes)) {
             if (i > 0) {
-                sleep(waitTime);
+                std::this_thread::sleep_for(waitTime);
                 NES_INFO("OutputChannel: Connection with server failed! Reconnecting attempt " << i);
             }
             i = i + 1;
@@ -112,7 +112,7 @@ bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
     sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples);
     inputBuffer.retain();
     size_t sentBytes = zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer));
-    if (sentBytes>0) {
+    if (sentBytes > 0) {
         //NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
         //                                               << inputBuffer.getNumberOfTuples() << "/"
         //                                               << inputBuffer.getBufferSize());
