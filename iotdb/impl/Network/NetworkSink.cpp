@@ -4,23 +4,22 @@ namespace NES {
 
 namespace Network {
 
-using namespace std;
-
 NetworkSink::NetworkSink(SchemaPtr schema, NetworkManager& networkManager, const NodeLocation& nodeLocation,
-                         NesPartition nesPartition)
-    : DataSink(schema), networkManager(networkManager), nodeLocation(nodeLocation), nesPartition(nesPartition) {
+                         NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes)
+    : DataSink(schema), networkManager(networkManager), nodeLocation(nodeLocation), nesPartition(nesPartition),
+      waitTime(waitTime), retryTimes(retryTimes) {
 }
 
 bool NetworkSink::writeData(TupleBuffer& inputBuffer) {
     if (!outputChannel.get()) {
         auto threadId = std::hash<std::thread::id>{}(std::this_thread::get_id());
         NES_DEBUG("NetworkSink: Initializing thread specific OutputChannel " << threadId);
-        nesPartition.setThreadId(threadId);
-        auto channel = networkManager.registerSubpartitionProducer(nodeLocation,
-                                                                   nesPartition,
-                                                                   [](Messages::ErroMessage ex) {},
-                                                                   1,
-                                                                   3);
+        auto channel = networkManager.registerSubpartitionProducer(
+            nodeLocation, NesPartition{nesPartition, threadId},
+            [](Messages::ErroMessage ex) {
+                NES_ERROR("NetworkSink: Error in RegisterSubpartitionProducer " << ex.getErrorTypeAsString());
+            },
+            waitTime, retryTimes);
         outputChannel.reset(channel);
     }
 
@@ -41,6 +40,6 @@ const std::string NetworkSink::toString() const {
     return "NetworkSink: " + nesPartition.toString();
 }
 
-} // namespace Network
+}// namespace Network
 
-} // namespace NES
+}// namespace NES

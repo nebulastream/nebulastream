@@ -172,7 +172,7 @@ class MemorySegment {
     uint32_t getSize() const { return size; }
 
   private:
-/*
+    /*
 
      Layout of the mem segment
      +----------------------------+----------------+-----------------------------------+
@@ -187,7 +187,6 @@ class MemorySegment {
      +----------------------------+-------------------------+----------------------------+
 
 */
-
 
     uint8_t* ptr;
     uint32_t size;

@@ -101,7 +101,8 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, 1, 3);
+        auto senderChannel =
+            netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, std::chrono::seconds(1), 3);
         senderChannel->close();
         delete senderChannel;
         t.join();
@@ -150,7 +151,8 @@ TEST_F(NetworkStackTest, testSendData) {
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         OutputChannel* senderChannel;
-        senderChannel = netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, 1, 5);
+        senderChannel =
+            netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
             NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
@@ -208,7 +210,8 @@ TEST_F(NetworkStackTest, testMassiveSending) {
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, 1, 5);
+        auto senderChannel =
+            netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
             NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
@@ -288,7 +291,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
         auto channel = netManager.registerSubpartitionProducer(nodeLocation,
                                                                NesPartition(1, 22, 333, 4445),
                                                                onErrorChannel,
-                                                               1,
+                                                               std::chrono::seconds(1),
                                                                retryTimes);
         ASSERT_EQ(channel, nullptr);
         ASSERT_EQ(serverError.get_future().get(), true);
@@ -355,7 +358,8 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             std::thread sendingThread([&, i] {
               // register the incoming channel
               NesPartition nesPartition(i, i + 10, i + 20, i + 30);
-              auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, 5, 5);
+              auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError,
+                                                                           std::chrono::seconds(2), 10);
 
               if (senderChannel == nullptr) {
                   NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
@@ -395,6 +399,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
     std::promise<bool> completed;
     atomic<int> bufferCnt = 0;
     atomic<int> eosCnt = 0;
+    size_t totalNumBuffer = 100;
 
     int numSendingThreads = 10;
     auto sendingThreads = std::vector<std::thread>();
@@ -421,6 +426,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
           if (nesPartition == id) {
               bufferCnt++;
           }
+          ASSERT_EQ(id, nesPartition);
         };
 
         NetworkManager netManager{"127.0.0.1", 31337, onBuffer, onEndOfStream, onError,
@@ -438,15 +444,19 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         SchemaPtr schema = nullptr;
         NetworkSink networkSink{schema, netManager, nodeLocation, nesPartition};
 
-        for (int i = 0; i < numSendingThreads; i++) {
-            std::thread sendingThread([this, &networkSink, i] {
+        for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
+            std::thread sendingThread([this, &networkSink, &totalNumBuffer, threadNr] {
               // register the incoming channel
-              auto buffer = this->bufferManager->getBufferBlocking();
-              buffer.getBuffer<uint64_t>()[0] = 0;
-              buffer.setNumberOfTuples(1);
-              buffer.setTupleSizeInBytes(sizeof(uint64_t));
+              auto buffer = bufferManager->getBufferBlocking();
+              for (size_t i = 0; i < totalNumBuffer; ++i) {
+                  for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
+                      buffer.getBuffer<uint64_t>()[j] = j;
+                  }
+                  buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
+                  buffer.setTupleSizeInBytes(sizeof(uint64_t));
+              }
 
-              NES_DEBUG("NetworkStackTest: Thread " << to_string(i) << " sending data over NetworkSink.");
+              NES_DEBUG("NetworkStackTest: Thread " << to_string(threadNr) << " sending data over NetworkSink.");
               // artificially intended creation latency
               sleep(rand()%10);
               networkSink.writeData(buffer);

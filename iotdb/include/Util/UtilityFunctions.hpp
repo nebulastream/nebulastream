@@ -38,7 +38,7 @@ class UtilityFunctions {
    * https://stackoverflow.com/questions/24365331/how-can-i-generate-uuid-in-c-without-using-boost-library
    * example id: 665b3caf-f097-568e-2b2f-220b6c0a9bcd
    */
-   static std::string generateIdString();
+    static std::string generateIdString();
 
     /**
   * @brief this function creates a hased ID as int

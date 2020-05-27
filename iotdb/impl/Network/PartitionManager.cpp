@@ -27,8 +27,7 @@ uint64_t PartitionManager::unregisterSubpartition(NesPartition partition) {
         //if counter reaches 0, log error
         NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
         partitionCounter.erase(partition);
-    }
-    else {
+    } else {
         //else decrement counter
         partitionCounter[partition] = --counter;
         NES_INFO("PartitionManager: Unregistering " << partition.toString() << "; newCnt(" << counter << ")");

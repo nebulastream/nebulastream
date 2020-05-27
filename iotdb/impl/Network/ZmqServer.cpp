@@ -26,11 +26,11 @@ ZmqServer::ZmqServer(const std::string& hostname,
 
 bool ZmqServer::start() {
     std::promise<bool> startPromise;
-    uint16_t numZmqThreads = (numNetworkThreads - 1)/2;
-    uint16_t numHandlerThreads = numNetworkThreads/2;
+    uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
+    uint16_t numHandlerThreads = numNetworkThreads / 2;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
     routerThread = std::make_unique<std::thread>([this, numHandlerThreads, &startPromise]() {
-      routerLoop(numHandlerThreads, startPromise);
+        routerLoop(numHandlerThreads, startPromise);
     });
     return startPromise.get_future().get();
 }
@@ -69,7 +69,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
         NES_DEBUG("Created Zmq Server socket on " << hostname << ":" << port);
         for (int i = 0; i < numHandlerThreads; ++i) {
             handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
-              messageHandlerEventLoop(barrier, i);
+                messageHandlerEventLoop(barrier, i);
             }));
         }
     } catch (...) {
@@ -183,7 +183,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     TupleBuffer buffer = bufferManager->getBufferBlocking();
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize());
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
-                    buffer.setTupleSizeInBytes(bufferHeader->getPayloadSize()/bufferHeader->getNumOfRecords());
+                    buffer.setTupleSizeInBytes(bufferHeader->getPayloadSize() / bufferHeader->getNumOfRecords());
 
                     // check if identity is registered
                     if (partitionManager->isRegistered(nesPartition)) {
@@ -194,8 +194,8 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                         // partition is not registered, discard the buffer
                         buffer.release();
                         NES_ERROR("ZmqServer: "
-                                      << "DataBuffer for " + nesPartition.toString()
-                                          + " is not registered and was discarded!");
+                                  << "DataBuffer for " + nesPartition.toString()
+                                      + " is not registered and was discarded!");
                     }
                     break;
                 }

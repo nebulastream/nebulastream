@@ -35,10 +35,10 @@ uint64_t NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition)
 
 OutputChannel* NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
                                                             std::function<void(Messages::ErroMessage)>&& onError,
-                                                            u_int8_t waitTime, u_int8_t retryTimes) {
+                                                            std::chrono::seconds waitTime, uint8_t retryTimes) {
     NES_INFO("NetworkManager: Registering SubpartitionProducer: " << nesPartition.toString());
     // method needs to return a pointer so that it can be passed to boost::thread_specific_ptr
-    auto channel = new OutputChannel(server->getContext(), nodeLocation.createZmqURI(), nesPartition, waitTime, retryTimes, onError);
+    auto channel = new OutputChannel{server->getContext(), nodeLocation.createZmqURI(), nesPartition, waitTime, retryTimes, onError};
 
     if (channel->isConnected()) {
         // if reconnect successful, return

@@ -22,7 +22,7 @@ class NetworkSink : public DataSink {
      * @param nesPartition
      */
     explicit NetworkSink(SchemaPtr schema, NetworkManager& networkManager, const NodeLocation& nodeLocation,
-                         NesPartition nesPartition);
+        NesPartition nesPartition, std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes=5);
 
     bool writeData(TupleBuffer& inputBuffer) override;
 
@@ -30,17 +30,20 @@ class NetworkSink : public DataSink {
 
     const std::string toString() const override;
 
-    void setup() override; // not needed
-    void shutdown() override; // not needed
+    void setup() override;   // not needed
+    void shutdown() override;// not needed
   private:
     boost::thread_specific_ptr<OutputChannel> outputChannel;
 
     NetworkManager& networkManager;
     const NodeLocation& nodeLocation;
     NesPartition nesPartition;
+
+    const std::chrono::seconds waitTime;
+    const uint8_t retryTimes;
 };
 
-} // namespace Network
-} // namespace NES
+}// namespace Network
+}// namespace NES
 
-#endif // NES_NETWORKSINK_HPP
+#endif// NES_NETWORKSINK_HPP

@@ -52,7 +52,7 @@ class NetworkManager : public boost::noncopyable {
      */
     OutputChannel* registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
                                                 std::function<void(Messages::ErroMessage)>&& onError,
-                                                u_int8_t waitTime, u_int8_t retryTimes);
+                                                std::chrono::seconds waitTime, uint8_t retryTimes);
 
   private:
     std::shared_ptr<ZmqServer> server;

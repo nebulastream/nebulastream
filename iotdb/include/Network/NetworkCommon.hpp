@@ -3,9 +3,9 @@
 
 #include <cstdint>
 #include <string>
+#include <thread>
 #include <tuple>
 #include <zmq.hpp>
-#include <thread>
 
 namespace NES {
 namespace Network {
@@ -20,13 +20,14 @@ using QueryId = uint64_t;
 
 class NesPartition {
   public:
-    explicit NesPartition(QueryId queryId,
-                          OperatorId operatorId,
-                          PartitionId partitionId,
-                          SubpartitionId subpartitionId) : queryId(queryId),
-                                                           operatorId(operatorId),
-                                                           partitionId(partitionId),
-                                                           subpartitionId(subpartitionId) {}
+    explicit NesPartition(QueryId queryId, OperatorId operatorId, PartitionId partitionId,
+                          SubpartitionId subpartitionId, size_t threadId=0) : queryId(queryId), operatorId(operatorId), partitionId(partitionId), subpartitionId(subpartitionId),
+                                                                            threadId(threadId) {}
+
+    explicit NesPartition(NesPartition& nesPartition, size_t threadId) : queryId(nesPartition.getQueryId()), operatorId(nesPartition.getOperatorId()),
+                                                                         partitionId(nesPartition.getPartitionId()), subpartitionId(nesPartition.getSubpartitionId()),
+                                                                         threadId(threadId) {}
+
     /**
      * @brief getter for the queryId
      * @return the queryId
@@ -63,17 +64,20 @@ class NesPartition {
         return threadId;
     }
 
-    void setThreadId(size_t threadId) {
-        this->threadId = threadId;
-    }
-
     const std::string toString() const {
         return std::to_string(queryId) + "::" + std::to_string(operatorId) + "::"
             + std::to_string(partitionId) + "::" + std::to_string(subpartitionId);
     }
 
+    /**
+     * @brief The equals operator for the NesPartition. It is not comparing threadIds
+     * @param lhs
+     * @param rhs
+     * @return
+     */
     friend bool operator==(const NesPartition& lhs, const NesPartition& rhs) {
-        return lhs.queryId == rhs.queryId && lhs.operatorId == rhs.operatorId && lhs.partitionId == rhs.partitionId && lhs.subpartitionId == rhs.subpartitionId;
+        return lhs.queryId == rhs.queryId && lhs.operatorId == rhs.operatorId && lhs.partitionId == rhs.partitionId
+            && lhs.subpartitionId == rhs.subpartitionId;
     }
 
   private:
@@ -81,7 +85,8 @@ class NesPartition {
     const OperatorId operatorId;
     const PartitionId partitionId;
     const SubpartitionId subpartitionId;
-    size_t threadId;
+    // the threadId for the zmq identifier
+    const size_t threadId;
 };
 
 class NodeLocation {
