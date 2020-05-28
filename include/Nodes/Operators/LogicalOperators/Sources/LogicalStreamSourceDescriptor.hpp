@@ -24,7 +24,7 @@ class LogicalStreamSourceDescriptor : public SourceDescriptor {
      */
     const std::string& getStreamName() const;
     bool equal(SourceDescriptorPtr other) override;
-    const std::string& toString() override;
+    std::string toString() override;
 
   private:
     explicit LogicalStreamSourceDescriptor(std::string streamName);

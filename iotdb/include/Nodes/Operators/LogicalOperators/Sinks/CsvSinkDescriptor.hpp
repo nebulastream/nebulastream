@@ -34,7 +34,7 @@ class CsvSinkDescriptor : public SinkDescriptor {
      */
     CsvSinkDescriptor::FileOutputMode getFileOutputMode() const;
 
-    const std::string& toString() override;
+    std::string toString() override;
     bool equal(SinkDescriptorPtr other) override;
 
   private:

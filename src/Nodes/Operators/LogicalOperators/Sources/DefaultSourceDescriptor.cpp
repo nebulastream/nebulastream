@@ -29,7 +29,7 @@ bool DefaultSourceDescriptor::equal(SourceDescriptorPtr other) {
     return numbersOfBufferToProduce == otherSource->getNumbersOfBufferToProduce() && frequency == otherSource->getFrequency() && getSchema()->equals(otherSource->getSchema());
 }
 
-const std::string& DefaultSourceDescriptor::toString() {
+std::string DefaultSourceDescriptor::toString() {
     return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", " + std::to_string(frequency) + ")";
 }
 }// namespace NES

@@ -14,7 +14,7 @@ const std::string& FileSinkDescriptor::getFileName() const {
     return fileName;
 }
 
-const std::string& FileSinkDescriptor::toString() {
+std::string FileSinkDescriptor::toString() {
     return "FileSinkDescriptor()";
 }
 

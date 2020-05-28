@@ -16,7 +16,7 @@ SinkDescriptorPtr ZmqSinkDescriptor::create(std::string host, uint16_t port) {
     return std::make_shared<ZmqSinkDescriptor>(ZmqSinkDescriptor(host, port));
 }
 
-const std::string& ZmqSinkDescriptor::toString() {
+std::string ZmqSinkDescriptor::toString() {
     return "ZmqSinkDescriptor()";
 }
 bool ZmqSinkDescriptor::equal(SinkDescriptorPtr other) {

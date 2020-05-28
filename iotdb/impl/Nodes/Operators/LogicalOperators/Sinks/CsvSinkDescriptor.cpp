@@ -19,7 +19,7 @@ CsvSinkDescriptor::FileOutputMode CsvSinkDescriptor::getFileOutputMode() const {
     return fileOutputMode;
 }
 
-const std::string& CsvSinkDescriptor::toString() {
+std::string CsvSinkDescriptor::toString() {
     return "CSVSinkDescriptor()";
 }
 

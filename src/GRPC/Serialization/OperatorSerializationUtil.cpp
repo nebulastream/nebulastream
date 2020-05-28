@@ -299,17 +299,6 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
 
         serializedSinkDescriptor.set_filepath(fileSinkDescriptor->getFileName());
-
-        auto fileOutputType = fileSinkDescriptor->getFileOutputType() == BINARY_TYPE
-            ? SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputType_BINARY_TYPE
-            : SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputType_CSV_TYPE;
-        serializedSinkDescriptor.set_fileoutputtype(fileOutputType);
-
-        auto fileOutputMode = fileSinkDescriptor->getFileOutputMode() == FILE_OVERWRITE
-            ? SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_OVERWRITE
-            : SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_APPEND;
-        serializedSinkDescriptor.set_fileoutputmode(fileOutputMode);
-
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - " << sinkDescriptor->toString());
@@ -335,16 +324,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         // de-serialize file sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
         serializedSourceDescriptor.UnpackTo(&serializedSinkDescriptor);
-        auto fileOutputType = serializedSinkDescriptor.fileoutputtype() == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputType_BINARY_TYPE
-            ? BINARY_TYPE
-            : CSV_TYPE;
-
-        auto fileOutputMode = serializedSinkDescriptor.fileoutputmode() == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_APPEND
-            ? FILE_APPEND
-            : FILE_OVERWRITE;
-
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as FileSinkDescriptor");
-        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), fileOutputMode, fileOutputType);
+        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath());
     }
     return nullptr;
 }

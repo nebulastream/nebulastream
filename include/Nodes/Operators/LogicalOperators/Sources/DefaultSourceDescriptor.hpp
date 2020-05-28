@@ -24,8 +24,7 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     uint32_t getFrequency() const;
 
     bool equal(SourceDescriptorPtr other) override;
-    const std::string& toString() override;
-
+    std::string toString() override;
 
   private:
     explicit DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);

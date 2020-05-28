@@ -55,7 +55,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
             throw std::bad_cast();
         }
     }
-    virtual const std::string& toString() = 0;
+    virtual std::string toString() = 0;
     virtual bool equal(SourceDescriptorPtr other) = 0;
 
   private:
