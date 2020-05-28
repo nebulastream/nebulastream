@@ -2,10 +2,12 @@
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
 SerializableSchema* SchemaSerializationUtil::serializeSchema(SchemaPtr schema, SerializableSchema* serializedSchema) {
+    NES_DEBUG("SchemaSerializationUtil:: serialize schema " << schema->toString());
     // serialize all field in schema
     for (const auto& field : schema->fields) {
         auto serializedField = serializedSchema->add_fields();
@@ -18,6 +20,7 @@ SerializableSchema* SchemaSerializationUtil::serializeSchema(SchemaPtr schema, S
 
 SchemaPtr SchemaSerializationUtil::deserializeSchema(SerializableSchema* serializedSchema) {
     // de-serialize field from serialized schema to the schema object.
+    NES_DEBUG("SchemaSerializationUtil:: deserialize schema ");
     auto deserializedSchema = Schema::create();
     for (auto serializedField : serializedSchema->fields()) {
         auto fieldName = serializedField.name();

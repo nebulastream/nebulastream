@@ -40,10 +40,10 @@ class OperatorSerializationUtil {
 
     /**
      * @brief De-serializes the SerializableOperator and all its children back to a OperatorNodePtr
-     * @param serializableOperator the serialized operator.
+     * @param serializedOperator the serialized operator.
      * @return OperatorNodePtr
      */
-    static OperatorNodePtr deserializeOperator(SerializableOperator* serializableOperator);
+    static OperatorNodePtr deserializeOperator(SerializableOperator* serializedOperator);
 
     /**
     * @brief Serializes an source operator and all its properties to a SerializableOperator_SourceDetails object.

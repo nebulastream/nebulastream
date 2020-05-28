@@ -52,11 +52,13 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
     } else {
         NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: serialization is not possible for " + dataType->toString());
     }
+    NES_DEBUG("DataTypeSerializationUtil:: serialized " << dataType->toString() << " to " << serializedDataType->SerializeAsString());
     return serializedDataType;
 }
 
 DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType* serializedDataType) {
     // de-serialize data type to the DataTypePtr
+    NES_DEBUG("DataTypeSerializationUtil:: de-serialized " << serializedDataType->DebugString());
     if (serializedDataType->type() == SerializableDataType_Type_UNDEFINED) {
         return createUndefinedDataType();
     } else if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
@@ -121,11 +123,13 @@ SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(ValueTypePt
         // 4. serialize basic type
         serializedDataValue->mutable_value()->PackFrom(serializedBasicValue);
     }
+    NES_DEBUG("DataTypeSerializationUtil:: serialized " << valueType->toString() << " as " << serializedDataValue->DebugString());
     return serializedDataValue;
 }
 
 ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataValue* serializedDataValue) {
     // de-serialize data value
+    NES_DEBUG("DataTypeSerializationUtil:: de-serialized " << serializedDataValue->DebugString());
     const auto& dataValue = serializedDataValue->value();
     if (dataValue.Is<SerializableDataValue_BasicValue>()) {
         auto serializedBasicValue = SerializableDataValue_BasicValue();
@@ -147,7 +151,7 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataVal
         }
         return createArrayValueType(basicDataType, values);
     }
-    NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization of value type is not possible: " + dataValue.type_url());
+    NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization of value type is not possible: " + serializedDataValue->DebugString());
 }
 
 }// namespace NES
