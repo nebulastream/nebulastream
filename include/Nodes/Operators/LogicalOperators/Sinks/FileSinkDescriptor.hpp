@@ -23,7 +23,7 @@ class FileSinkDescriptor : public SinkDescriptor {
      */
     const std::string& getFileName() const;
 
-    const std::string& toString() override;
+    std::string toString() override;
     bool equal(SinkDescriptorPtr other) override;
 
   private:

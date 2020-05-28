@@ -20,7 +20,7 @@ bool SenseSourceDescriptor::equal(SourceDescriptorPtr other) {
     return udfs == otherSource->getUdfs() && getSchema()->equals(otherSource->getSchema());
 }
 
-const std::string& SenseSourceDescriptor::toString() {
+std::string SenseSourceDescriptor::toString() {
     return "SenseSourceDescriptor()";
 }
 

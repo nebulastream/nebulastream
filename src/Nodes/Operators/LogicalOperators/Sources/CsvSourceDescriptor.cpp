@@ -43,7 +43,7 @@ bool CsvSourceDescriptor::equal(SourceDescriptorPtr other) {
     return filePath == otherSource->getFilePath() && delimiter == otherSource->getDelimiter() && numBuffersToProcess == otherSource->getNumBuffersToProcess() && frequency == otherSource->getFrequency() && getSchema()->equals(otherSource->getSchema());
 }
 
-const std::string& CsvSourceDescriptor::toString() {
+std::string CsvSourceDescriptor::toString() {
     return "CsvSourceDescriptor(" + filePath + "," + delimiter + ", " + std::to_string(numBuffersToProcess) + ", " + std::to_string(frequency) + ")";
 }
 
