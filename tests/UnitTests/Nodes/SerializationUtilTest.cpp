@@ -26,6 +26,7 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Node.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -229,14 +230,14 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     }
 
     {
-        auto sink = FileSinkDescriptor::create("test", FILE_OVERWRITE, CSV_TYPE);
+        auto sink = FileSinkDescriptor::create("test");
         auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
     {
-        auto sink = FileSinkDescriptor::create("test", FILE_APPEND, BINARY_TYPE);
+        auto sink = CsvSinkDescriptor::create("test", CsvSinkDescriptor::APPEND);
         auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));

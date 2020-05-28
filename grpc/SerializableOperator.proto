@@ -69,19 +69,17 @@ message SerializableOperator{
   Sink Details contains properties for the sink operator, such as the sink descriptor
   */
   message SinkDetails {
-    message SerializableFileSinkDescriptor {
-      enum FileOutputType{
-        BINARY_TYPE = 0;
-        CSV_TYPE = 1;
-      }
-
+    message SerializableCsvSinkDescriptor {
       enum FileOutputMode{
         FILE_OVERWRITE = 0;
         FILE_APPEND = 1;
       }
       string filePath = 1;
-      FileOutputMode fileOutputMode = 2;
-      FileOutputType fileOutputType = 3;
+      FileOutputMode outputMode = 2;
+    }
+
+    message SerializableFileSinkDescriptor {
+      string filePath = 1;
     }
 
     message SerializableKafkaSinkDescriptor {
