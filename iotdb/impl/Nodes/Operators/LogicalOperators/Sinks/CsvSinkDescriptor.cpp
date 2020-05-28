@@ -19,4 +19,15 @@ CsvSinkDescriptor::FileOutputMode CsvSinkDescriptor::getFileOutputMode() const {
     return fileOutputMode;
 }
 
+const std::string& CsvSinkDescriptor::toString() {
+    return "CSVSinkDescriptor()";
+}
+
+bool CsvSinkDescriptor::equal(SinkDescriptorPtr other) {
+    if (!other->instanceOf<CsvSinkDescriptor>())
+        return false;
+    auto otherSinkDescriptor = other->as<CsvSinkDescriptor>();
+    return fileName == otherSinkDescriptor->fileName && fileOutputMode == otherSinkDescriptor->getFileOutputMode();
+}
+
 }// namespace NES
