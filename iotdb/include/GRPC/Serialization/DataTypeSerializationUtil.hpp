@@ -8,6 +8,9 @@ namespace NES {
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
+class ValueType;
+typedef std::shared_ptr<ValueType> ValueTypePtr;
+
 class SerializableDataType;
 class SerializableDataValue;
 
