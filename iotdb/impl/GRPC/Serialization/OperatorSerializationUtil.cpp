@@ -71,7 +71,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         serializeOperator(child->as<OperatorNode>(), serializedChild);
     }
 
-    NES_DEBUG("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to " << serializedOperator->DebugString());
+    NES_DEBUG("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to " << serializedOperator->details().type_url());
     return serializedOperator;
 }
 
@@ -218,7 +218,6 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
-    NES_DEBUG("OperatorSerializationUtil:: serialized SourceDescriptor to " << sourceDetails->DebugString());
     return sourceDetails;
 }
 
@@ -316,7 +315,6 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
         NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - " << sinkDescriptor->toString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }
-    NES_DEBUG("OperatorSerializationUtil:: serialized SinkDescriptor" << sinkDescriptor->toString() << " to " << sinkDetails->DebugString());
     return sinkDetails;
 }
 SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(SerializableOperator_SinkDetails* sinkDetails) {
