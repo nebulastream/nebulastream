@@ -218,7 +218,7 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
-    NES_DEBUG("OperatorSerializationUtil:: serialized SourceDescriptor" << sourceDescriptor->toString() << " to " << sourceDetails->DebugString());
+    NES_DEBUG("OperatorSerializationUtil:: serialized SourceDescriptor to " << sourceDetails->DebugString());
     return sourceDetails;
 }
 
