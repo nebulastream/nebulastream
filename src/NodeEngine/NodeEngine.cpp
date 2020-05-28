@@ -1,8 +1,13 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeProperties.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <Nodes/Phases/ConvertLogicalToPhysicalSource.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Util/Logger.hpp>
 #include <string>
-
 using namespace std;
 namespace NES {
 
@@ -75,12 +80,32 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool NodeEngine::registerQueryInNodeEngine(std::string executableTransferObject) {
-    ExecutableTransferObject eto = SerializationTools::parse_eto(
-        executableTransferObject);
+bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr operatorTree) {
+
     NES_DEBUG(
-        "WorkerActor::running() eto after parse=" << eto.toString());
-    QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(queryCompiler);
+        "WorkerActor::running() queryId after " << queryId);
+
+    NES_INFO("*** Creating QueryExecutionPlan for " << queryId);
+    auto translationPhase = TranslateToLegacyPlanPhase::create();
+    auto legacyOperatorPlan = translationPhase->transform(operatorTree);
+    QueryExecutionPlanPtr qep = queryCompiler->compile(legacyOperatorPlan);
+    qep->setQueryId(queryId);
+
+    for (const auto& sources : operatorTree->getNodesByType<SourceLogicalOperatorNode>()) {
+        auto sourceDescriptor = sources->getSourceDescriptor();
+        auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
+        qep->addDataSource(legacySource);
+        NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
+    }
+
+    for (const auto& sink : operatorTree->getNodesByType<SinkLogicalOperatorNode>()) {
+        auto sinkDescriptor = sink->getSinkDescriptor();
+        // todo use the correct schema
+        auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(qep->getSources()[0]->getSchema(), sinkDescriptor);
+        qep->addDataSink(legacySink);
+        NES_DEBUG("ExecutableTransferObject:: add source" << legacySink->toString());
+    }
+
     return registerQueryInNodeEngine(qep);
 }
 

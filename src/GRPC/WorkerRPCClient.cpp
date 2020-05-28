@@ -1,5 +1,7 @@
 #include <GRPC/ExecutableTransferObject.hpp>
+#include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -11,7 +13,7 @@ bool WorkerRPCClient::deployQuery(std::string address, std::string executableTra
         "WorkerRPCClient::deployQuery address=" << address << " eto=" << executableTransferObject);
 
     DeployQueryRequest request;
-    request.set_eto(executableTransferObject);
+    //request.set_eto(executableTransferObject);
 
     DeployQueryReply reply;
     ClientContext context;
@@ -58,13 +60,16 @@ bool WorkerRPCClient::undeployQuery(std::string address, std::string queryId) {
     }
 }
 
-bool WorkerRPCClient::registerQuery(std::string address, std::string executableTransferObject) {
+bool WorkerRPCClient::registerQuery(std::string address, std::string queryId, OperatorNodePtr operatorTree) {
     NES_DEBUG(
-        "WorkerRPCClient::registerQuery address=" << address << " eto=" << executableTransferObject);
+        "WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId);
 
     RegisterQueryRequest request;
-    request.set_eto(executableTransferObject);
+    request.set_queryid(queryId);
+    OperatorSerializationUtil::serializeOperator(operatorTree, request.mutable_operatortree());
 
+    NES_DEBUG(
+        "WorkerRPCClient:registerQuery -> " << request.DebugString());
     RegisterQueryReply reply;
     ClientContext context;
 

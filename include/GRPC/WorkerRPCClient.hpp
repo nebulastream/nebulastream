@@ -15,6 +15,10 @@ using grpc::ClientContext;
 using grpc::Status;
 
 namespace NES {
+
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
 class WorkerRPCClient {
 
   public:
@@ -41,7 +45,7 @@ class WorkerRPCClient {
     * @param query plan to register as eto
     * @return true if succeeded, else false
     */
-    bool registerQuery(std::string address, std::string executableTransferObject);
+    bool registerQuery(std::string address, std::string queryId, OperatorNodePtr tree);
 
     /**
      * @brief ungregisters a query

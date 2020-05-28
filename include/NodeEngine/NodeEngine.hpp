@@ -19,6 +19,9 @@ using namespace std;
 namespace NES {
 using JSON = nlohmann::json;
 
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality
@@ -75,7 +78,7 @@ class NodeEngine {
     * @param query plan to register as eto
     * @return true if succeeded, else false
     */
-    bool registerQueryInNodeEngine(std::string executableTransferObject);
+    bool registerQueryInNodeEngine(std::string executableTransferObject, OperatorNodePtr operatorTree);
 
     /**
      * @brief ungregisters a query

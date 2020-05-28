@@ -1,3 +1,4 @@
+#include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 
 using namespace NES;
@@ -10,7 +11,8 @@ WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
 Status WorkerRPCServer::DeployQuery(ServerContext* context, const DeployQueryRequest* request,
                                     DeployQueryReply* reply) {
     assert(0);
-    NES_DEBUG("WorkerRPCServer::DeployQuery: got request for " << request->eto());
+    /*
+    NES_DEBUG("WorkerRPCServer::DeployQuery: got request for " << request->queryid());
     bool success = nodeEngine->deployQueryInNodeEngine(request->eto());
     if (success) {
         NES_DEBUG("WorkerRPCServer::DeployQuery: success");
@@ -21,6 +23,7 @@ Status WorkerRPCServer::DeployQuery(ServerContext* context, const DeployQueryReq
         reply->set_success(false);
         return Status::CANCELLED;
     }
+     */
 }
 
 Status WorkerRPCServer::UndeployQuery(ServerContext* context, const UndeployQueryRequest* request,
@@ -41,8 +44,11 @@ Status WorkerRPCServer::UndeployQuery(ServerContext* context, const UndeployQuer
 
 Status WorkerRPCServer::RegisterQuery(ServerContext* context, const RegisterQueryRequest* request,
                                       RegisterQueryReply* reply) {
-    NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for " << request->eto());
-    bool success = nodeEngine->registerQueryInNodeEngine(request->eto());
+    auto queryId = request->queryid();
+
+    auto queryPlan = OperatorSerializationUtil::deserializeOperator((SerializableOperator*) &request->operatortree());
+    NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryId);
+    bool success = nodeEngine->registerQueryInNodeEngine(queryId, queryPlan);
     if (success) {
         NES_DEBUG("WorkerRPCServer::RegisterQuery: success");
         reply->set_success(true);
