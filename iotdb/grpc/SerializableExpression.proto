@@ -4,13 +4,16 @@ import "SerializableDataType.proto";
 package NES;
 
 /*
-The serializable wrapper definition for expression nodes
+The serializable wrapper definition for fields
  */
 message SerializableField{
   string name = 1;
   SerializableDataType type = 2;
 }
 
+/**
+The serializable wrapper definition for expression nodes
+ */
 message SerializableExpression {
   message ConstantValueExpression{
     SerializableDataValue value = 1;
