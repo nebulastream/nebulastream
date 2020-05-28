@@ -56,7 +56,7 @@ bool KafkaSourceDescriptor::equal(SourceDescriptorPtr other) {
     return brokers == otherKafkaSource->getBrokers() && topic == otherKafkaSource->getTopic() && kafkaConnectTimeout == otherKafkaSource->getKafkaConnectTimeout() && groupId == otherKafkaSource->getGroupId() && getSchema()->equals(other->getSchema());
 }
 
-const std::string& KafkaSourceDescriptor::toString() {
+std::string KafkaSourceDescriptor::toString() {
     return "KafkaSourceDescriptor()";
 }
 

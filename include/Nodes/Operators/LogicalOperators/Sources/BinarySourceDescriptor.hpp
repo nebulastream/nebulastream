@@ -21,7 +21,7 @@ class BinarySourceDescriptor : public SourceDescriptor {
 
     bool equal(SourceDescriptorPtr other) override;
 
-    const std::string& toString() override;
+    std::string toString() override;
 
   private:
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
