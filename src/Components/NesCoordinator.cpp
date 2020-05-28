@@ -1,5 +1,6 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/TopologyManager.hpp>
@@ -287,15 +288,26 @@ bool NesCoordinator::deployQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator:deployQuery queryId=" << queryId);
 
     QueryDeployment& deployments = currentDeployments[queryId];
+    auto translationUnit = TranslateFromLegacyPlanPhase::create();
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
         NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId()
                                                                            << " eto="
                                                                            << x->second.toString());
-        string serEto = SerializationTools::ser_eto(x->second);
-        NES_DEBUG(
-            "CoordinatorActor::deployQuery " << queryId << " to " << x->first->getIp());
 
-        bool success = workerRPCClient->registerQuery(x->first->getIp(), serEto);
+        auto executionTransferObject = x->second;
+        // todo serialization assumes the get the plan root.
+        auto rootOperator = executionTransferObject.getOperatorTree();
+        while (rootOperator->getParent() != nullptr) {
+            rootOperator = rootOperator->getParent();
+        }
+        // transform plan to new representation
+        auto newOperatorTree = translationUnit->transform(rootOperator);
+
+        //string serEto = SerializationTools::ser_eto(x->second);
+        NES_DEBUG(
+            "NesCoordinator:deployQuery: " << queryId << " to " << x->first->getIp());
+
+        bool success = workerRPCClient->registerQuery(x->first->getIp(), queryId, newOperatorTree);
         if (success) {
             NES_DEBUG("NesCoordinator:deployQuery: " << queryId << " to " << x->first->getIp() << " successful");
         } else {
