@@ -15,8 +15,7 @@ NetworkSource::~NetworkSource() {
 }
 
 std::optional<TupleBuffer> NetworkSource::receiveData() {
-    NES_ERROR("NetworkSource: ReceiveData() called, but method is invalid and should not be used.");
-    return std::nullopt;
+    NES_THROW_RUNTIME_ERROR("NetworkSource: ReceiveData() called, but method is invalid and should not be used.");
 }
 
 SourceType NetworkSource::getType() const {
