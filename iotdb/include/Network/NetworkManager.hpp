@@ -40,6 +40,13 @@ class NetworkManager : public boost::noncopyable {
     uint64_t registerSubpartitionConsumer(NesPartition nesPartition);
 
     /**
+     * @brief This method is called on the receiver side to remove a SubpartitionConsumer.
+     * @param the nesPartition
+     * @return the new counter of the subpartition
+     */
+    uint64_t unregisterSubpartitionConsumer(NesPartition nesPartition);
+
+    /**
      * @brief This method is called on the sender side to register a SubpartitionProducer. If the connection to
      * the destination server is successful, a pointer to the OutputChannel is returned, else nullptr is returned.
      * The OutputChannel is not thread safe!

@@ -2,8 +2,10 @@
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Network/NetworkSink.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/Logger.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 
 #include <gtest/gtest.h>
 #include <NodeEngine/BufferManager.hpp>
@@ -17,8 +19,9 @@ const size_t bufferSize = 4*1024;
 namespace Network {
 class NetworkStackTest : public testing::Test {
   public:
-    BufferManagerPtr bufferManager;
     PartitionManagerPtr partitionManager;
+    NodeEnginePtr nodeEngine;
+    BufferManagerPtr bufferManager;
 
     static void SetUpTestCase() {
         NES::setupLogging("NetworkStackTest.log", NES::LOG_DEBUG);
@@ -32,7 +35,9 @@ class NetworkStackTest : public testing::Test {
     /* Will be called before a  test is executed. */
     void SetUp() override {
         std::cout << "Setup BufferManagerTest test case." << std::endl;
-        bufferManager = std::make_shared<BufferManager>(bufferSize, buffersManaged);
+        nodeEngine = std::make_shared<NodeEngine>();
+        nodeEngine->createBufferManager(bufferSize, buffersManaged);
+        bufferManager = nodeEngine->getBufferManager();
         partitionManager = std::make_shared<PartitionManager>();
     }
 
@@ -477,6 +482,115 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         ASSERT_EQ(true, false);
     }
     ASSERT_EQ(bufferCnt, numSendingThreads);
+}
+
+TEST_F(NetworkStackTest, testNetworkSource) {
+    NetworkManager networkManager(
+        "127.0.0.1",
+        31337,
+        [](NesPartition id, TupleBuffer buf) {},
+        [](Messages::EndOfStreamMessage p) {},
+        [](Messages::ErroMessage ex) {},
+        bufferManager, partitionManager);
+
+    NesPartition nesPartition{1, 22, 33, 44};
+
+    SchemaPtr schema = Schema::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
+                "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
+            ->addField("current_ms", UINT64)->addField("ip", INT32);
+
+    auto networkSource = new NetworkSource{schema, bufferManager, nodeEngine->getQueryManager(),
+                                           networkManager, nesPartition};
+
+    ASSERT_EQ(partitionManager->getSubpartitionCounter(nesPartition), 0);
+    delete networkSource;
+    ASSERT_FALSE(partitionManager->isRegistered(nesPartition));
+}
+
+TEST_F(NetworkStackTest, testNetworkSourceSink) {
+    std::promise<bool> completed;
+    atomic<int> bufferCnt = 0;
+    atomic<int> eosCnt = 0;
+    size_t totalNumBuffer = 100;
+
+    int numSendingThreads = 10;
+    auto sendingThreads = std::vector<std::thread>();
+
+    NodeLocation nodeLocation{0, "127.0.0.1", 31337};
+    NesPartition nesPartition{1, 22, 33, 44};
+
+    try {
+        // create NetworkSink
+        auto onError = [&completed](Messages::ErroMessage ex) {
+          if (ex.getErrorType() != Messages::PartitionNotRegisteredError) {
+              completed.set_exception(make_exception_ptr(runtime_error("Error")));
+          }
+        };
+        auto onEndOfStream = [&eosCnt, &completed, &numSendingThreads](Messages::EndOfStreamMessage p) {
+          eosCnt++;
+          if (eosCnt == numSendingThreads) {
+              completed.set_value(true);
+          }
+        };
+
+        auto onBuffer = [&nesPartition, &bufferCnt](NesPartition id, TupleBuffer buf) {
+          NES_DEBUG("NetworkStackTest: Received buffer " << id.toString());
+          if (nesPartition == id) {
+              bufferCnt++;
+          }
+          ASSERT_EQ(id, nesPartition);
+        };
+
+        NetworkManager netManager{"127.0.0.1", 31337, onBuffer, onEndOfStream, onError,
+                                  bufferManager, partitionManager};
+
+        SchemaPtr schema = Schema::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
+                "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
+            ->addField("current_ms", UINT64)->addField("ip", INT32);
+
+        std::thread receivingThread([this, &netManager, &nesPartition, &completed, schema] {
+          // register the incoming channel
+          NetworkSource source{schema, bufferManager, nodeEngine->getQueryManager(),
+                                                 netManager, nesPartition};
+          ASSERT_TRUE(this->partitionManager->isRegistered(nesPartition));
+          completed.get_future().get();
+        });
+
+        NetworkSink networkSink{schema, netManager, nodeLocation, nesPartition};
+        for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
+            std::thread sendingThread([this, &networkSink, &totalNumBuffer, threadNr] {
+              // register the incoming channel
+              auto buffer = bufferManager->getBufferBlocking();
+              for (size_t i = 0; i < totalNumBuffer; ++i) {
+                  for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
+                      buffer.getBuffer<uint64_t>()[j] = j;
+                  }
+                  buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
+                  buffer.setTupleSizeInBytes(sizeof(uint64_t));
+              }
+
+              NES_DEBUG("NetworkStackTest: Thread " << to_string(threadNr) << " sending data over NetworkSink.");
+              // artificially intended creation latency
+              sleep(rand()%10);
+              networkSink.writeData(buffer);
+              // artificially intended write latency
+              sleep(rand()%10);
+            });
+            sendingThreads.emplace_back(std::move(sendingThread));
+        }
+
+        for (std::thread& t: sendingThreads) {
+            if (t.joinable()) {
+                t.join();
+            }
+        }
+        receivingThread.join();
+    }
+    catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(bufferCnt, numSendingThreads);
+    ASSERT_FALSE(this->partitionManager->isRegistered(nesPartition));
 }
 
 } // namespace Network
