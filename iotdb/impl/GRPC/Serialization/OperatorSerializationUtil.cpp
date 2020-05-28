@@ -279,7 +279,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
 }
 SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescriptor, SerializableOperator_SinkDetails* sinkDetails) {
     // serialize a sink descriptor and all its properties depending of its type
-    NES_DEBUG("OperatorSerializationUtil:: serialized SinkDescriptor " << sinkDescriptor->toString());
+    NES_DEBUG("OperatorSerializationUtil:: serialized SinkDescriptor ");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         // serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor");
