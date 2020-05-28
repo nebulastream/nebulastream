@@ -4,17 +4,19 @@ namespace NES {
 namespace Network {
 
 NetworkSource::NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                             NetworkManager& networkManager, const NodeLocation& nodeLocation,
+                             NetworkManager& networkManager,
                              NesPartition nesPartition) : DataSource(schema, bufferManager, queryManager),
-                                                          networkManager(networkManager), nodeLocation(nodeLocation), nesPartition(nesPartition) {
+                                                          networkManager(networkManager), nesPartition(nesPartition) {
     networkManager.registerSubpartitionConsumer(nesPartition);
 }
 
 NetworkSource::~NetworkSource() {
+    networkManager.unregisterSubpartitionConsumer(nesPartition);
 }
 
 std::optional<TupleBuffer> NetworkSource::receiveData() {
-    return std::optional<TupleBuffer>();
+    NES_ERROR("NetworkSource: ReceiveData() called, but method is invalid and should not be used.");
+    return std::nullopt;
 }
 
 SourceType NetworkSource::getType() const {

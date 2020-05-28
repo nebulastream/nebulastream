@@ -33,6 +33,11 @@ uint64_t NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition)
     return partitionManager->registerSubpartition(nesPartition);
 }
 
+uint64_t NetworkManager::unregisterSubpartitionConsumer(NesPartition nesPartition) {
+    NES_INFO("NetworkManager: Unregistering SubpartitionConsumer: " << nesPartition.toString());
+    return partitionManager->unregisterSubpartition(nesPartition);
+}
+
 OutputChannel* NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
                                                             std::function<void(Messages::ErroMessage)>&& onError,
                                                             std::chrono::seconds waitTime, uint8_t retryTimes) {

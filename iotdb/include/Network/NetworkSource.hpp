@@ -14,17 +14,14 @@ namespace Network {
 class NetworkSource : public DataSource {
 
   public:
-    NetworkSource(SchemaPtr schema,
-                  BufferManagerPtr bufferManager,
-                  QueryManagerPtr queryManager,
-                  NetworkManager& networkManager, const NodeLocation& nodeLocation,
-                  NesPartition nesPartition);
+    NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                  NetworkManager& networkManager, NesPartition nesPartition);
 
     ~NetworkSource();
 
     /**
-     * @brief blocking method to receive a buffer
-     * @return TupleBufferPtr containing thre received buffer
+     * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
+     * @return TupleBufferPtr containing the received buffer
      */
     std::optional<TupleBuffer> receiveData() override;
 
@@ -41,7 +38,6 @@ class NetworkSource : public DataSource {
 
   private:
     NetworkManager& networkManager;
-    const NodeLocation& nodeLocation;
     NesPartition nesPartition;
 };
 
