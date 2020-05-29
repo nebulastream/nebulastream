@@ -1,7 +1,5 @@
-#include <GRPC/ExecutableTransferObject.hpp>
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -13,7 +11,6 @@ bool WorkerRPCClient::deployQuery(std::string address, std::string executableTra
         "WorkerRPCClient::deployQuery address=" << address << " eto=" << executableTransferObject);
 
     DeployQueryRequest request;
-    //request.set_eto(executableTransferObject);
 
     DeployQueryReply reply;
     ClientContext context;
