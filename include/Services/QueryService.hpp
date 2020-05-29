@@ -2,7 +2,7 @@
 #ifndef QUERYSERVICE_HPP
 #define QUERYSERVICE_HPP
 
-#include <API/InputQuery.hpp>
+#include <API/Query.hpp>
 #include <cpprest/json.h>
 
 namespace NES {
@@ -40,7 +40,7 @@ class QueryService {
      * @param userQuery : user query as string
      * @return a json object representing the query plan
      */
-    InputQueryPtr getInputQueryFromQueryString(std::string userQuery);
+    QueryPtr getQueryFromQueryString(std::string userQuery);
 
   private:
     StreamCatalogPtr streamCatalog;

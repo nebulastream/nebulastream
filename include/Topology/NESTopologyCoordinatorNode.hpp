@@ -94,13 +94,13 @@ class NESTopologyCoordinatorNode : public NESTopologyEntry {
    * @brief method to deploy a query here
    * @param InputQueryPtr to the query for this node
    */
-    void setQuery(InputQueryPtr pQuery) override;
+    void setQuery(QueryPtr pQuery) override;
 
   private:
     size_t cpuCapacity;
     size_t remainingCPUCapacity;
     bool isASink;
-    InputQueryPtr query;
+    QueryPtr queryPtr;
 };
 
 typedef std::shared_ptr<NESTopologyCoordinatorNode> NESTopologyCoordinatorNodePtr;

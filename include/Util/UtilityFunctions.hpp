@@ -1,7 +1,7 @@
 #ifndef UTILITY_FUNCTIONS_HPP
 #define UTILITY_FUNCTIONS_HPP
 
-#include <API/InputQuery.hpp>
+#include <API/Query.hpp>
 #include <string>
 
 /**
@@ -22,7 +22,7 @@ class UtilityFunctions {
    *  @param query as a string
    *  @return Smart pointer to InputQuery object of the query
    *  */
-    static InputQueryPtr createQueryFromCodeString(
+    static QueryPtr createQueryFromCodeString(
         const std::string& query_code_snippet, StreamCatalogPtr streamCatalog);
 
     /**

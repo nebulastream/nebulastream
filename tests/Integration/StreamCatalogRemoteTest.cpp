@@ -11,8 +11,8 @@ class StreamCatalogRemoteTest : public testing::Test {
   public:
     std::string host = "localhost";
     std::string queryString =
-        "InputQuery inputQueryPtr = InputQuery::from(default_logical).filter(default_logical[\"id\"] < 42).print(std::cout); "
-        "return inputQueryPtr;";
+        "QueryPtr query = Query::from(\"default_logical\").filter(Attribute(\"id\") < 42).sink(PrintSinkDescriptor::create()); "
+        "return query;";
 
     void SetUp() {
         NES::setupLogging("StreamCatalogRemoteTest.log", NES::LOG_DEBUG);

@@ -36,7 +36,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerPrint) {
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
-    string query = "InputQuery::from(default_logical).print(std::cout);";
+    string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
 
     string queryId = crd->addQuery(query, "BottomUp");
 
@@ -75,7 +75,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerPrint) {
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
 
-    string query = "InputQuery::from(default_logical).print(std::cout);";
+    string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
 
     cout << "start query" << endl;
     std::string queryId = crd->addQuery(query, "BottomUp");
@@ -116,7 +116,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
-    string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
+    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\", FILE_OVERWRITE, BINARY_TYPE));";
 
     cout << "add query" << endl;
     std::string queryId = crd->addQuery(query, "BottomUp");
@@ -181,7 +181,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
-    string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
+    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\", FILE_OVERWRITE, BINARY_TYPE));";
 
     string queryId = crd->addQuery(query, "BottomUp");
     ASSERT_NE(queryId, "");
@@ -222,7 +222,7 @@ TEST_F(QueryDeploymentTest, testDeployAndUndeployTwoWorkerFileOutput) {
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
 
-    string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
+    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\", FILE_OVERWRITE, BINARY_TYPE));";
 
     string queryId = crd->addQuery(query, "BottomUp");
     ASSERT_NE(queryId, "");

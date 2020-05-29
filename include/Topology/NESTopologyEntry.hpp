@@ -7,8 +7,8 @@
 
 namespace NES {
 
-class InputQuery;
-typedef std::shared_ptr<InputQuery> InputQueryPtr;
+class Query;
+typedef std::shared_ptr<Query> QueryPtr;
 
 enum NESNodeType {
     Coordinator,
@@ -58,7 +58,7 @@ class NESTopologyEntry {
    * @brief method to deploy a query here
    * @param InputQueryPtr to the query for this node
    */
-    virtual void setQuery(InputQueryPtr pQuery) = 0;
+    virtual void setQuery(QueryPtr pQuery) = 0;
 
     /**
    * @brief method to get the overall cpu capacity of the node

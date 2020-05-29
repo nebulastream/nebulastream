@@ -5,6 +5,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
@@ -16,15 +17,16 @@
 
 namespace NES {
 
-NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQuery,
+NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr query,
                                                                 NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
-    const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
+    TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();
+    const QueryPlanPtr queryPlan = typeInferencePhasePtr->transform(query->getQueryPlan());
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string streamName = inputQuery->getSourceStreamName();
+    const string streamName = query->getSourceStreamName();
 
     if (!sourceOperator) {
         NES_THROW_RUNTIME_ERROR("LowLatency: Unable to find the source operator.");

@@ -31,8 +31,8 @@ std::string NESTopologySensorNode::getEntryTypeString() {
     return "Sensor(" + physicalStreamName + ")";
 }
 
-void NESTopologySensorNode::setQuery(InputQueryPtr pQuery) {
-    this->query = pQuery;
+void NESTopologySensorNode::setQuery(QueryPtr pQuery) {
+    this->queryPtr = pQuery;
 }
 
 std::string NESTopologySensorNode::getPhysicalStreamName() {
