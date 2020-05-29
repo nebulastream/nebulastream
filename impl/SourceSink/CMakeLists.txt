@@ -16,7 +16,7 @@ add_source_iotdb(
 
 if(NES_USE_KAFKA)
     add_source_iotdb(
-        KafkaSink.cpp
-        KafkaSource.cpp
+            KafkaSink.cpp
+            KafkaSource.cpp
     )
 endif()
