@@ -60,6 +60,7 @@ This change added tests and can be verified as follows:
   - The compiler: (yes / no / don't know)
   - The threading model: (yes / no / don't know)
   - The runtime per-record code paths (performance sensitive): (yes / no / don't know)
+  - The network stack: (yes / no / don't know)
   - Anything that affects deployment or recovery: Coordinator (and its components), NodeEngine (and its components): (yes / no / don't know)
 
 ## Documentation

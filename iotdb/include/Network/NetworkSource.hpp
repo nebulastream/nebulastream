@@ -36,6 +36,28 @@ class NetworkSource : public DataSource {
      */
     SourceType getType() const override;
 
+    /**
+     * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
+     * It registers the source on the NetworkManager
+     * @return true if registration on the network stack is successful
+     */
+    bool start();
+
+    /**
+     * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
+     * It de-registers the source on the NetworkManager
+     * @return true if deregistration on the network stack is successful
+     */
+    bool stop();
+
+
+    /**
+     * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
+     * @param bufferManager
+     * @param queryManager
+     */
+    void runningRoutine(BufferManagerPtr, QueryManagerPtr);
+
   private:
     NetworkManager& networkManager;
     NesPartition nesPartition;

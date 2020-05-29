@@ -501,8 +501,10 @@ TEST_F(NetworkStackTest, testNetworkSource) {
 
     auto networkSource = new NetworkSource{schema, bufferManager, nodeEngine->getQueryManager(),
                                            networkManager, nesPartition};
+    ASSERT_TRUE(networkSource->start());
 
     ASSERT_EQ(partitionManager->getSubpartitionCounter(nesPartition), 0);
+    ASSERT_TRUE(networkSource->stop());
     delete networkSource;
     ASSERT_FALSE(partitionManager->isRegistered(nesPartition));
 }
@@ -552,8 +554,10 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
           // register the incoming channel
           NetworkSource source{schema, bufferManager, nodeEngine->getQueryManager(),
                                                  netManager, nesPartition};
+          ASSERT_TRUE(source.start());
           ASSERT_TRUE(this->partitionManager->isRegistered(nesPartition));
           completed.get_future().get();
+          ASSERT_TRUE(source.stop());
         });
 
         NetworkSink networkSink{schema, netManager, nodeLocation, nesPartition};
