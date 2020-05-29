@@ -8,8 +8,8 @@ namespace NES {
 class NESExecutionPlan;
 typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
 
-class InputQuery;
-typedef std::shared_ptr<InputQuery> InputQueryPtr;
+class Query;
+typedef std::shared_ptr<Query> QueryPtr;
 
 class NESTopologyPlan;
 typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
@@ -40,7 +40,7 @@ class NESOptimizer {
      * @return Execution plan for the input query
      */
     NESExecutionPlanPtr prepareExecutionGraph(std::string strategy,
-                                              InputQueryPtr inputQuery,
+                                              QueryPtr queryPtr,
                                               NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
 
   private:

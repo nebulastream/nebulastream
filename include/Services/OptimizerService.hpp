@@ -1,7 +1,7 @@
 #ifndef IMPL_SERVICES_OPTIMIZERSERVICE_H_
 #define IMPL_SERVICES_OPTIMIZERSERVICE_H_
 
-#include <API/InputQuery.hpp>
+#include <API/Query.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
 #include <cpprest/json.h>
 #include <string>
@@ -24,7 +24,7 @@ class OptimizerService {
      * @param optimizationStrategyName
      * @return
      */
-    web::json::value getExecutionPlanAsJson(InputQueryPtr inputQuery, std::string optimizationStrategyName);
+    web::json::value getExecutionPlanAsJson(QueryPtr queryPtr, std::string optimizationStrategyName);
 
     /**
      * @brief: get execution plan for the input query using the specified strategy.
@@ -32,7 +32,7 @@ class OptimizerService {
      * @param optimizationStrategyName
      * @return pointer to nes execution plan
      */
-    NESExecutionPlanPtr getExecutionPlan(InputQueryPtr inputQuery, std::string optimizationStrategyName);
+    NESExecutionPlanPtr getExecutionPlan(QueryPtr queryPtr, std::string optimizationStrategyName);
 
     ~OptimizerService() = default;
 

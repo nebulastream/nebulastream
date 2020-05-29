@@ -14,11 +14,11 @@ OptimizerService::OptimizerService(TopologyManagerPtr topologyManager) : topolog
     NES_DEBUG("OptimizerService()");
 }
 
-json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, string optimizationStrategyName) {
-    return getExecutionPlan(inputQuery, optimizationStrategyName)->getExecutionGraphAsJson();
+json::value OptimizerService::getExecutionPlanAsJson(QueryPtr queryPtr, string optimizationStrategyName) {
+    return getExecutionPlan(queryPtr, optimizationStrategyName)->getExecutionGraphAsJson();
 }
 
-NESExecutionPlanPtr OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
+NESExecutionPlanPtr OptimizerService::getExecutionPlan(QueryPtr queryPtr, string optimizationStrategyName) {
 
     const NESTopologyPlanPtr& topologyPlan = topologyManager->getNESTopologyPlan();
     NES_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString());
@@ -26,14 +26,14 @@ NESExecutionPlanPtr OptimizerService::getExecutionPlan(InputQueryPtr inputQuery,
     NESOptimizer queryOptimizer;
 
     OperatorJsonUtil operatorJsonUtil;
-    const json::value& basePlan = operatorJsonUtil.getBasePlan(inputQuery);
+    const json::value& basePlan = operatorJsonUtil.getBasePlan(queryPtr);
 
     NES_DEBUG("OptimizerService: query plan=" << basePlan);
 
     auto start = high_resolution_clock::now();
 
     const NESExecutionPlanPtr
-        executionGraph = queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan, inputQuery->streamCatalog);
+        executionGraph = queryOptimizer.prepareExecutionGraph(optimizationStrategyName, queryPtr, topologyPlan, queryPtr->streamCatalog);
 
     auto stop = high_resolution_clock::now();
     const auto duration = duration_cast<milliseconds>(stop - start);

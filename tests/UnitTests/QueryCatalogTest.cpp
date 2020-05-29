@@ -63,8 +63,8 @@ void setupTests(StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManag
 }
 
 TEST_F(QueryCatalogTest, testAddQuery) {
-    std::string queryString =
-        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+  std::string queryString =
+      "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
@@ -83,8 +83,8 @@ TEST_F(QueryCatalogTest, testAddQuery) {
 }
 
 TEST_F(QueryCatalogTest, testAddQueryAndStartStop) {
-    std::string queryString =
-        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+  std::string queryString =
+      "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
@@ -115,8 +115,8 @@ TEST_F(QueryCatalogTest, testAddQueryAndStartStop) {
 }
 
 TEST_F(QueryCatalogTest, testAddRemoveQuery) {
-    std::string queryString =
-        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+  std::string queryString =
+      "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     setupTests(streamCatalog, topologyManager);
@@ -136,8 +136,8 @@ TEST_F(QueryCatalogTest, testAddRemoveQuery) {
 }
 
 TEST_F(QueryCatalogTest, testPrintQuery) {
-    std::string queryString =
-        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+  std::string queryString =
+      "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     setupTests(streamCatalog, topologyManager);
@@ -172,7 +172,7 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog);
 
     std::string queryString =
-        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+        "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
 
     const string queryId = queryCatalog->registerQuery(queryString,
                                                                   "BottomUp");
@@ -190,7 +190,7 @@ TEST_F(QueryCatalogTest, get_all_running_queries) {
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog);
 
     std::string queryString =
-        "InputQuery::from(default_logical).filter(default_logical[\"value\"] < 42).print(std::cout); ";
+        "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
 
     const string queryId = queryCatalog->registerQuery(queryString,
                                                                   "BottomUp");

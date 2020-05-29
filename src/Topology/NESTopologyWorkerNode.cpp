@@ -39,8 +39,8 @@ std::string NESTopologyWorkerNode::getEntryTypeString() {
     return "Worker";
 }
 
-void NESTopologyWorkerNode::setQuery(InputQueryPtr pQuery) {
-    this->query = pQuery;
+void NESTopologyWorkerNode::setQuery(QueryPtr pQuery) {
+    this->queryPtr = pQuery;
 }
 
 }// namespace NES

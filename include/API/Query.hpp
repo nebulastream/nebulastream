@@ -15,6 +15,9 @@
 
 namespace NES {
 
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
@@ -36,6 +39,7 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
  */
 class Query {
   public:
+    Query(const Query&);
     ~Query() = default;
 
     /**
@@ -89,6 +93,7 @@ class Query {
      */
     const std::string getSourceStreamName() const;
 
+    static StreamCatalogPtr streamCatalog;
   private:
     // creates a new query object
     Query(std::string sourceStreamName, QueryPlanPtr queryPlan);

@@ -11,9 +11,11 @@ namespace NES {
 class UpdateTopologyRemoteTest : public testing::Test {
   public:
     std::string host = "localhost";
-    std::string queryString =
-        "InputQuery inputQueryPtr = InputQuery::from(default_logical).filter(default_logical[\"id\"] < 42).print(std::cout); "
-        "return inputQueryPtr;";
+    std::string queryString = 
+        "QueryPtr query = Query::from(\"default_logical\").filter(Attribute(\"id\") < 42).sink(PrintSinkDescriptor::create()); "
+        "return query;";
+
+
 
     static void SetUpTestCase() {
         NES::setupLogging("UpdateTopologyRemoteTest.log", NES::LOG_DEBUG);

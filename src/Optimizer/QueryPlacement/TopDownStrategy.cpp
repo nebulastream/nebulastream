@@ -6,6 +6,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionNode.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
@@ -16,16 +17,17 @@
 
 namespace NES {
 
-NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr inputQuery,
+NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr query,
                                                              NESTopologyPlanPtr nesTopologyPlanPtr,
                                                              StreamCatalogPtr streamCatalog) {
     this->nesTopologyPlan = nesTopologyPlanPtr;
-    const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
+    TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();
+    const QueryPlanPtr queryPlan = typeInferencePhasePtr->transform(query->getQueryPlan());
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     //find the source Node
-    const string streamName = inputQuery->getSourceStreamName();
+    const string streamName = query->getSourceStreamName();
 
     const vector<NESTopologyEntryPtr>& sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
 

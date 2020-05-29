@@ -1,18 +1,23 @@
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
-
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <API/Query.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
 namespace NES {
 
 OperatorJsonUtil::OperatorJsonUtil(){};
 
 OperatorJsonUtil::~OperatorJsonUtil(){};
 
-json::value OperatorJsonUtil::getBasePlan(InputQueryPtr inputQuery) {
+json::value OperatorJsonUtil::getBasePlan(QueryPtr queryPtr) {
 
     json::value result{};
     std::vector<json::value> nodes{};
     std::vector<json::value> edges{};
-    const OperatorPtr& root = inputQuery->getRoot();
+
+    TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
+    const OperatorNodePtr& root = queryPtr->getQueryPlan()->getRootOperator();
+    OperatorPtr rootLegacyOperator = translator->transform(root);
 
     if (!root) {
         auto node = json::value::object();
@@ -23,17 +28,17 @@ json::value OperatorJsonUtil::getBasePlan(InputQueryPtr inputQuery) {
 
         auto node = json::value::object();
         node["id"] = json::value::string(
-            operatorTypeToString[root->getOperatorType()] + "(OP-" + std::to_string(root->getOperatorId()) + ")");
+            operatorTypeToString[rootLegacyOperator->getOperatorType()] + "(OP-" + std::to_string(rootLegacyOperator->getOperatorId()) + ")");
         node["title"] =
             json::value::string(
-                operatorTypeToString[root->getOperatorType()] + +"(OP-" + std::to_string(root->getOperatorId()) + ")");
-        if (root->getOperatorType() == OperatorType::SOURCE_OP || root->getOperatorType() == OperatorType::SINK_OP) {
+                operatorTypeToString[rootLegacyOperator->getOperatorType()] + +"(OP-" + std::to_string(rootLegacyOperator->getOperatorId()) + ")");
+        if (rootLegacyOperator->getOperatorType() == OperatorType::SOURCE_OP || rootLegacyOperator->getOperatorType() == OperatorType::SINK_OP) {
             node["nodeType"] = json::value::string("Source");
         } else {
             node["nodeType"] = json::value::string("Processor");
         }
         nodes.push_back(node);
-        getChildren(root, nodes, edges);
+        getChildren(rootLegacyOperator, nodes, edges);
     }
 
     result["nodes"] = json::value::array(nodes);

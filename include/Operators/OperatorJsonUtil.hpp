@@ -1,7 +1,8 @@
 #ifndef QUERYPLANBUILDER_HPP
 #define QUERYPLANBUILDER_HPP
 
-#include <API/InputQuery.hpp>
+#include <API/Query.hpp>
+#include <Operators/Operator.hpp>
 #if defined(__APPLE__) || defined(__MACH__)
 #include <xlocale.h>
 #endif
@@ -16,7 +17,7 @@ class OperatorJsonUtil {
   public:
     OperatorJsonUtil();
     ~OperatorJsonUtil();
-    json::value getBasePlan(InputQueryPtr inputQuery);
+    json::value getBasePlan(QueryPtr queryPtr);
 
   private:
     void getChildren(const OperatorPtr& root, std::vector<json::value>& nodes, std::vector<json::value>& edges);

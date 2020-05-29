@@ -25,6 +25,7 @@
 #include <Topology/TopologyManager.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 
@@ -65,8 +66,9 @@ TEST_F(QueryTest, testQueryFilter) {
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
 
-    auto lessExpression = Attribute("field_1") <= 10;
+    Query::streamCatalog = streamCatalog;
 
+    auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
@@ -74,7 +76,7 @@ TEST_F(QueryTest, testQueryFilter) {
     EXPECT_EQ(sourceOperators.size(), 1);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<DefaultSourceDescriptor>());
 
     const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1);

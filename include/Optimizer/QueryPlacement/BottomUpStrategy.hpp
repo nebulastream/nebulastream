@@ -19,7 +19,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
   public:
     ~BottomUpStrategy(){};
 
-    NESExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
+    NESExecutionPlanPtr initializeExecutionPlan(QueryPtr query, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
 
     static std::unique_ptr<BottomUpStrategy> create() {
         return std::make_unique<BottomUpStrategy>(BottomUpStrategy());

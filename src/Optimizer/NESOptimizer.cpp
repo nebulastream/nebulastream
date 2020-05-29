@@ -13,29 +13,14 @@ NESOptimizer::NESOptimizer() {
     translateFromLegacyPlanPhase = TranslateFromLegacyPlanPhase::create();
 }
 
-NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, InputQueryPtr inputQuery,
+NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, QueryPtr queryPtr,
                                                         NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
 
     NES_INFO("NESOptimizer: Preparing execution graph for input query");
 
     NES_INFO("NESOptimizer: Initializing Placement strategy");
     auto placementStrategyPtr = BasePlacementStrategy::getStrategy(strategy);
-
-    NES_INFO("NESOptimizer: Converting Legacy InputQuery into new Query");
-    const OperatorPtr rootOperator = inputQuery->getRoot();
-    NES_INFO("NESOptimizer: Transforming old operator graph into new OperatorNode graph");
-    const OperatorNodePtr rootNodeOperator = translateFromLegacyPlanPhase->transform(rootOperator);
-    auto rootOperatorId = rootNodeOperator->getId();
-
-    NES_INFO("NESOptimizer: Creating QueryPlan");
-    auto queryPlan = QueryPlan::create(rootNodeOperator);
-    //FIXME: (TEMP) This is a temporary hack to reset the operator ID of root operator after building the QueryPlan
-    queryPlan->getRootOperator()->setId(rootOperatorId);
-    NES_INFO("NESOptimizer: Building Query");
-    const std::string sourceStreamName = inputQuery->getSourceStream()->getName();
-    Query query = Query::createFromQueryPlan(sourceStreamName, queryPlan);
-    QueryPtr queryPtr = std::make_shared<Query>(query);
-
+    
     NES_INFO("NESOptimizer: Building Execution plan for the input query");
     NESExecutionPlanPtr nesExecutionPlanPtr = placementStrategyPtr->initializeExecutionPlan(queryPtr, nesTopologyPlan, streamCatalog);
     return nesExecutionPlanPtr;

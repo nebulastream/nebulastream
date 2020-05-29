@@ -1,3 +1,4 @@
+#include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Operators/Operator.hpp>
@@ -24,49 +25,36 @@ std::string UtilityFunctions::trim(std::string s) {
     return s;
 }
 
-InputQueryPtr UtilityFunctions::createQueryFromCodeString(
+QueryPtr UtilityFunctions::createQueryFromCodeString(
     const std::string& query_code_snippet, StreamCatalogPtr streamCatalog) {
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
-        code << "#include <API/InputQuery.hpp>" << std::endl;
+        code << "#include <API/Query.hpp>" << std::endl;
         code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
+        code << "#include <API/Query.hpp>" << std::endl;
+        code << "#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
         code << "#include <SourceSink/DataSource.hpp>" << std::endl;
-        code << "#include <API/InputQuery.hpp>" << std::endl;
         code << "#include <API/UserAPIExpression.hpp>" << std::endl;
         code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
-        code << "InputQuery createQuery(StreamCatalogPtr streamCatalog){" << std::endl;
+        code << "Query createQuery(StreamCatalogPtr streamCatalog){" << std::endl;
 
         //we will get the schema from the catalog, if stream does not exists this will through an exception
         std::string streamName = query_code_snippet.substr(
             query_code_snippet.find("::from("));
         streamName = streamName.substr(7, streamName.find(")") - 7);
         std::cout << " stream name = " << streamName << std::endl;
-        code
-            << "StreamPtr sPtr = streamCatalog->getStreamForLogicalStreamOrThrowException(\""
-            << streamName << "\");";
         //code << "Stream& stream = *sPtr.get();" << std::endl;
         std::string newQuery = query_code_snippet;
 
-        //replace the stream "xyz" provided by the user with the reference to the generated stream for the from clause
-        boost::replace_all(newQuery, "from(" + streamName, "from(*sPtr.get()");
-
-        //please the stream "xyz" provided by the user with the variable name of the generated stream for the writeToZmQ
-        boost::replace_all(newQuery, "writeToZmq(" + streamName + ",",
-                           "writeToZmq(\"" + streamName + "\",");
-
-        //replace the stream "xyz" provided by the user with the variable name of the generated stream for the access inside the filter predicate
-        boost::replace_all(newQuery, "filter(" + streamName,
-                           "filter((*sPtr.get())");
-
-        //replace the stream "xyz" provided by the user with the variable name of the generated stream for the access inside the filter predicate
-        boost::replace_all(newQuery, "map(" + streamName, "map((*sPtr.get())");
-
         // add return statement in front of input query
         // NOTE: This will not work if you have created object of Input query and do further manipulation
-        boost::replace_all(newQuery, "InputQuery::from", "return InputQuery::from");
+        boost::replace_all(newQuery, "Query::from", "return Query::from");
 
         code << newQuery << std::endl;
         code << "}" << std::endl;
@@ -77,19 +65,18 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
             NES_ERROR("Compilation of query code failed! Code: " << code.str());
         }
 
-        //TODO: remove once the new API is in place
-        InputQuery::streamCatalog = streamCatalog;
+        Query::streamCatalog = streamCatalog;
 
-        typedef InputQuery (*CreateQueryFunctionPtr)(StreamCatalogPtr streamCatalog);
+        typedef Query (*CreateQueryFunctionPtr)(StreamCatalogPtr streamCatalog);
         CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>(
             "_ZN3NES11createQueryESt10shared_ptrINS_13StreamCatalogEE");
         if (!func) {
             NES_ERROR("Error retrieving function! Symbol not found!");
         }
         /* call loaded function to create query object */
-        InputQuery query((*func)(streamCatalog));
+        Query query((*func)(streamCatalog));
 
-        return std::make_shared<InputQuery>(query);
+        return std::make_shared<Query>(query);
     } catch (std::exception& exc) {
         NES_ERROR(
             "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet
@@ -111,7 +98,6 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
         code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
         code << "#include <SourceSink/DataSource.hpp>" << std::endl;
-        code << "#include <API/InputQuery.hpp>" << std::endl;
         code << "#include <API/UserAPIExpression.hpp>" << std::endl;
         code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;

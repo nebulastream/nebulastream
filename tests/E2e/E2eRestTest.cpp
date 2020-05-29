@@ -57,7 +57,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"InputQuery::from(default_logical).print(std::cout);\"";
+    ss << "\"Query::from(\\\"default_logical\\\").sink(PrintSinkDescriptor::create());\"";
     ss << R"(,"strategyName" : "BottomUp"})";
     ss << endl;
     cout << "string submit=" << ss.str();
@@ -116,9 +116,9 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"InputQuery::from(default_logical).writeToFile(\\\"";
+    ss << "\"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
-    ss << "\\\");\",\"strategyName\" : \"BottomUp\"}";
+    ss << "\\\",FILE_OVERWRITE, BINARY_TYPE));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
     cout << "string submit=" << ss.str();
     string body = ss.str();
@@ -206,9 +206,9 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"InputQuery::from(default_logical).filter(default_logical[\\\"id\\\"] > 3).writeToFile(\\\"";
+    ss << "\"Query::from(\\\"default_logical\\\").filter(Attribute(\\\"id\\\") > 3).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
-    ss << "\\\");\",\"strategyName\" : \"BottomUp\"}";
+    ss << "\\\", FILE_OVERWRITE, BINARY_TYPE));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
 
     cout << "query string submit=" << ss.str();
@@ -277,9 +277,9 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"InputQuery::from(default_logical).writeToFile(\\\"";
+    ss << "\"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
-    ss << "\\\");\",\"strategyName\" : \"BottomUp\"}";
+    ss << "\\\",FILE_OVERWRITE, BINARY_TYPE));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
     cout << "string submit=" << ss.str();
     string body = ss.str();
@@ -384,9 +384,9 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"InputQuery::from(default_logical).writeToFile(\\\"";
+    ss << "\"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
-    ss << "\\\");\",\"strategyName\" : \"BottomUp\"}";
+    ss << "\\\", FILE_OVERWRITE, BINARY_TYPE));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
     cout << "string submit=" << ss.str();
     string body = ss.str();
@@ -476,10 +476,10 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"InputQuery::from(exdra).writeToCSVFile(\\\"";
+    ss << "\"Query::from(\\\"exdra\\\").sink(FileSinkDescriptor::create(\\\"";
     ss << testFile;
-    ss << "\\\", \\\"truncate\\\"";
-    ss << ");\",\"strategyName\" : \"BottomUp\"}";
+    ss << "\\\", FILE_OVERWRITE, CSV_TYPE";
+    ss << "));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
     cout << "string submit=" << ss.str();
     string body = ss.str();
@@ -558,17 +558,17 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoQueries) {
 
     std::stringstream ssQuery1;
     ssQuery1
-        << "{\"userQuery\" : \"InputQuery::from(default_logical).writeToFile(\\\"";
+        << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery1 << pathQuery1;
-    ssQuery1 << "\\\");\",\"strategyName\" : \"BottomUp\"}" << endl;
+    ssQuery1 << "\\\", FILE_OVERWRITE, BINARY_TYPE));\",\"strategyName\" : \"BottomUp\"}" << endl;
     cout << "string submit for query1=" << ssQuery1.str();
 
     std::stringstream ssQuery2;
     ssQuery2
-        << "{\"userQuery\" : \"InputQuery::from(default_logical).writeToFile(\\\"";
+        << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery2 << pathQuery2;
-    ssQuery2 << "\\\");\",\"strategyName\" : \"BottomUp\"}" << endl;
-    cout << "string submit for query1=" << ssQuery2.str();
+    ssQuery2 << "\\\", FILE_OVERWRITE, BINARY_TYPE));\",\"strategyName\" : \"BottomUp\"}" << endl;
+    cout << "string submit for query2=" << ssQuery2.str();
 
     web::json::value jsonReturnQ1;
     web::http::client::http_client clientQ1(

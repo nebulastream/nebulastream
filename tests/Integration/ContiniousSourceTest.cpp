@@ -20,6 +20,7 @@ class ContiniousSourceTest : public testing::Test {
   public:
     void SetUp() {
         NES::setupLogging("ContiniousSourceTest.log", NES::LOG_DEBUG);
+        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
         NES_INFO("Setup ContiniousSourceTest test class.");
     }
     void TearDown() {
@@ -54,8 +55,8 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     remove(filePath.c_str());
 
     //register query
-    std::string queryString = "InputQuery::from(exdra).writeToCSVFile(\""
-        + filePath + "\" , \"truncate\");";
+    std::string queryString = "Query::from(\"exdra\").sink(FileSinkDescriptor::create(\""
+        + filePath + "\" , FILE_OVERWRITE, CSV_TYPE));";
 
     std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
@@ -128,7 +129,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 
     //register query
     std::string queryString =
-        "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] < 42).print(std::cout); ";
+        "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(PrintSinkDescriptor::create());";
 
     std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
@@ -180,8 +181,8 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 
     //register query
     std::string queryString =
-        "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] < 42).writeToFile(\""
-            + outputFilePath + "\"); ";
+        "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(FileSinkDescriptor::create(\""
+            + outputFilePath + "\", FILE_OVERWRITE, BINARY_TYPE)); ";
 
     std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
@@ -298,7 +299,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 
     //register query
     std::string queryString =
-        "InputQuery::from(testStream).filter(testStream[\"val1\"] < 2).print(std::cout); ";
+        "Query::from(\"testStream\").filter(Attribute(\"val1\") < 2).sink(PrintSinkDescriptor::create()); ";
 
     std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
@@ -362,8 +363,8 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
 
     //register query
     std::string queryString =
-        "InputQuery::from(testStream).filter(testStream[\"val1\"] < 10).writeToFile(\""
-            + outputFilePath + "\"); ";
+        "Query::from(\"testStream\").filter(Attribute(\"val1\") < 10).sink(FileSinkDescriptor::create(\""
+            + outputFilePath + "\", FILE_OVERWRITE, BINARY_TYPE)); ";
 
     std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
@@ -943,8 +944,8 @@ TEST_F(ContiniousSourceTest, testExdraUseCaseWithOutput) {
     remove(outputFilePath.c_str());
 
     //register query
-    std::string queryString = "InputQuery::from(exdra).writeToCSVFile(\""
-        + outputFilePath + "\" , \"truncate\");";
+    std::string queryString = "Query::from(\"exdra\").sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\" , FILE_OVERWRITE, CSV_TYPE));";
 
     cout << "deploy query" << endl;
     std::string queryId = crd->addQuery(queryString, "BottomUp");

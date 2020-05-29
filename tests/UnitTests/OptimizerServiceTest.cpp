@@ -45,13 +45,13 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bot
     QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
 
     std::stringstream code;
-    code << "InputQuery::from(temperature)" << ".filter(temperature[\"id\"]==5)"
-         << std::endl << ".writeToZmq(temperature, \"localhost\", 10);"
+    code << "Query::from(\"temperature\")" << ".filter(Attribute(\"id\")==5)"
+         << std::endl << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));"
          << std::endl;
 
-    const InputQueryPtr& inputQuery = queryService->getInputQueryFromQueryString(code.str());
+    const QueryPtr& queryPtr = queryService->getQueryFromQueryString(code.str());
     const json::value& plan = optimizerService->getExecutionPlanAsJson(
-        inputQuery, "BottomUp");
+        queryPtr, "BottomUp");
     EXPECT_TRUE(plan.size() != 0);
 }
 /* Test nes topology service create plan for valid query string for  */
@@ -63,12 +63,12 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_top
     QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
 
     std::stringstream code;
-    code << "InputQuery::from(temperature).filter(temperature[\"value\"]==5)"
-         << std::endl << ".writeToZmq(temperature, \"localhost\", 10);"
+    code << "Query::from(\"temperature\").filter(Attribute(\"value\")==5)"
+         << std::endl << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));"
          << std::endl;
-    const InputQueryPtr& inputQuery = queryService->getInputQueryFromQueryString(code.str());
+    const QueryPtr& queryPtr = queryService->getQueryFromQueryString(code.str());
     const json::value& plan = optimizerService->getExecutionPlanAsJson(
-        inputQuery, "BottomUp");
+        queryPtr, "BottomUp");
     EXPECT_TRUE(plan.size() != 0);
 }
 
@@ -83,7 +83,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_query) {
     try {
         std::stringstream code;
         code << "" << std::endl;
-        queryService->getInputQueryFromQueryString(code.str());
+        queryService->getQueryFromQueryString(code.str());
         FAIL();
     } catch (...) {
         //TODO: We need to look into exception handling soon enough
@@ -101,29 +101,12 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
 
     try {
         std::stringstream code;
-        code << "InputQuery::from(temperature134).filter(temperature134[\"id\"]==5)"
-             << ".writeToZmq(temperature134, \"localhost\", 10);" << std::endl;
+        code << "Query::from(\"temperature134\").filter(Attribute(\"id\")==5)"
+             << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));" << std::endl;
 
-        const InputQueryPtr& inputQuery = queryService->getInputQueryFromQueryString(code.str());
+        const QueryPtr& queryPtr = queryService->getQueryFromQueryString(code.str());
         const json::value& plan = optimizerService->getExecutionPlanAsJson(
-            inputQuery, "BottomUp");
-        FAIL();
-    } catch (...) {
-        //TODO: We need to look into exception handling soon enough
-        SUCCEED();
-    }
-
-    try {
-        //test wrong stream in filter
-        std::stringstream code;
-        code
-            << "InputQuery::from(temperature1).filter(testStream[\"wrong_field\"]==5)"
-            << std::endl << ".writeToZmq(temperature1, \"localhost\", 10);"
-            << std::endl;
-
-        const InputQueryPtr& inputQuery = queryService->getInputQueryFromQueryString(code.str());
-        const json::value& plan = optimizerService->getExecutionPlanAsJson(
-            inputQuery, "BottomUp");
+            queryPtr, "BottomUp");
         FAIL();
     } catch (...) {
         //TODO: We need to look into exception handling soon enough
@@ -134,32 +117,17 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
         //test wrong field in filter
         std::stringstream code;
         code
-            << "InputQuery::from(temperature1).filter(temperature1[\"wrong_field\"]==5)"
-            << std::endl << ".writeToZmq(temperature1, \"localhost\", 10);"
+            << "Query::from(temperature1).filter(Attribute(\"wrong_field\")==5)"
+            << std::endl << ".sink(ZmqSinkDescriptor(\"localhost\", 10));"
             << std::endl;
 
-        const InputQueryPtr& inputQuery = queryService->getInputQueryFromQueryString(code.str());
+        const QueryPtr& queryPtr = queryService->getQueryFromQueryString(code.str());
         const json::value& plan = optimizerService->getExecutionPlanAsJson(
-            inputQuery, "BottomUp");
+            queryPtr, "BottomUp");
         FAIL();
     } catch (...) {
         //TODO: We need to look into exception handling soon enough
         SUCCEED();
     }
 
-    try {
-        //test wrong stream in writeToZmq
-        std::stringstream code;
-        code << "InputQuery::from(temperature1).filter(temperature1[\"id\"]==5)"
-             << std::endl << ".writeToZmq(temperature331, \"localhost\", 10);"
-             << std::endl;
-
-        const InputQueryPtr& inputQuery = queryService->getInputQueryFromQueryString(code.str());
-        const json::value& plan = optimizerService->getExecutionPlanAsJson(
-            inputQuery, "BottomUp");
-        FAIL();
-    } catch (...) {
-        //TODO: We need to look into exception handling soon enough
-        SUCCEED();
-    }
 }

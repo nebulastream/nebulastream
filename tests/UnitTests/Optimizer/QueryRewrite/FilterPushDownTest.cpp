@@ -54,6 +54,7 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMap) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(topologyManager, streamCatalog);
 
+    Query::streamCatalog = streamCatalog;
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
