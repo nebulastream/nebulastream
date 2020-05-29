@@ -80,25 +80,30 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr operatorTree) {
+bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr queryOperators) {
 
-    NES_DEBUG(
-        "WorkerActor::running() queryId after " << queryId);
+    NES_DEBUG("WorkerActor::running() queryId after " << queryId);
 
     NES_INFO("*** Creating QueryExecutionPlan for " << queryId);
+
+    // Translate the query operators in their legacy representation
+    // todo this is not required if later the query compiler can handle it by it self.
     auto translationPhase = TranslateToLegacyPlanPhase::create();
-    auto legacyOperatorPlan = translationPhase->transform(operatorTree);
-    QueryExecutionPlanPtr qep = queryCompiler->compile(legacyOperatorPlan);
+    auto legacyOperatorPlan = translationPhase->transform(queryOperators);
+    // Compile legacy operators with query compiler.
+    auto qep = queryCompiler->compile(legacyOperatorPlan);
     qep->setQueryId(queryId);
 
-    for (const auto& sources : operatorTree->getNodesByType<SourceLogicalOperatorNode>()) {
+    // Translate all operator source to the physical sources and add them to the query plan
+    for (const auto& sources : queryOperators->getNodesByType<SourceLogicalOperatorNode>()) {
         auto sourceDescriptor = sources->getSourceDescriptor();
         auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
         qep->addDataSource(legacySource);
         NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
     }
 
-    for (const auto& sink : operatorTree->getNodesByType<SinkLogicalOperatorNode>()) {
+    // Translate all operator sink to the physical sink and add them to the query plan
+    for (const auto& sink : queryOperators->getNodesByType<SinkLogicalOperatorNode>()) {
         auto sinkDescriptor = sink->getSinkDescriptor();
         // todo use the correct schema
         auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(qep->getSources()[0]->getSchema(), sinkDescriptor);
