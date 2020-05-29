@@ -4,5 +4,5 @@ Our awesome new IoT data stream management system :-)
 
 # REST APIs
 
-The detailed documanetation on the REST APIs can be found [here](impl/REST/RestEndpoints.md).
+The detailed documanetation on the REST APIs can be found [here](src/REST/RestEndpoints.md).
 

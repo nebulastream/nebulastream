@@ -299,7 +299,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 ###########################################################################################
 
 # Add Source Code
-add_subdirectory(impl)
+add_subdirectory(src)
 
 # Add Library
 get_source_nes(nes_SOURCE_FILES)
