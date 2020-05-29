@@ -302,11 +302,11 @@ bool NesCoordinator::deployQuery(std::string queryId) {
 
         auto executionTransferObject = x->second;
 
-        // in the following code we translate the executable transfer object in the new logical node representations,
+        // In the following code we translate the executable transfer object in the new logical node representations,
         // because we want to use this for serialization.
         // Later we want to replace this if we we can store the right representation directly in the query deployment map.
         // This procedure follows three steps.
-        // 1. we find the have to find the root of the operator tree, as we always serialize from the parent to child.
+        // 1. we have to find the root of the operator tree, as we always serialize from the parent to child.
         auto rootOperator = executionTransferObject.getOperatorTree();
         while (rootOperator->getParent() != nullptr) {
             rootOperator = rootOperator->getParent();
