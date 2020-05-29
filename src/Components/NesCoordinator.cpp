@@ -1,5 +1,10 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
+#include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Topology/NESTopologyEntry.hpp>
@@ -289,25 +294,46 @@ bool NesCoordinator::deployQuery(std::string queryId) {
 
     QueryDeployment& deployments = currentDeployments[queryId];
     auto translationUnit = TranslateFromLegacyPlanPhase::create();
+
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
         NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId()
                                                                            << " eto="
                                                                            << x->second.toString());
 
         auto executionTransferObject = x->second;
-        // todo serialization assumes the get the plan root.
+
+        // in the following code we translate the executable transfer object in the new logical node representations,
+        // because we want to use this for serialization.
+        // Later we want to replace this if we we can store the right representation directly in the query deployment map.
+        // This procedure follows three steps.
+        // 1. we find the have to find the root of the operator tree, as we always serialize from the parent to child.
         auto rootOperator = executionTransferObject.getOperatorTree();
         while (rootOperator->getParent() != nullptr) {
             rootOperator = rootOperator->getParent();
         }
-        // transform plan to new representation
-        auto newOperatorTree = translationUnit->transform(rootOperator);
+        // 2. we translate the legacy operator into the new node representation
+        auto queryOperators = translationUnit->transform(rootOperator);
 
-        //string serEto = SerializationTools::ser_eto(x->second);
+        // 3. the operator plan contains the wrong source and sink descriptor, because the executionTransferObject
+        // is storing them separately because of very good reasons the current developer can't infer anymore ;)
+        // As a consequence we update the source and sink descriptors in the following
+
+        // Translate source descriptor and add to sink operator.
+        // todo we currently assume that we only have one sink per query plan.
+        auto sourceDescriptor = ConvertPhysicalToLogicalSource::createSourceDescriptor(executionTransferObject.getSources()[0]);
+        auto sourceOperator = queryOperators->getNodesByType<SourceLogicalOperatorNode>()[0];
+        sourceOperator->setSourceDescriptor(sourceDescriptor);
+
+        // Translate sink descriptor and add to sink operator.
+        // todo we currently assume that we only have one sink per query plan.
+        auto sinkDescriptor = ConvertPhysicalToLogicalSink::createSinkDescriptor(executionTransferObject.getDestinations()[0]);
+        auto sinkOperator = queryOperators->getNodesByType<SinkLogicalOperatorNode>()[0];
+        sinkOperator->setSinkDescriptor(sinkDescriptor);
+
         NES_DEBUG(
             "NesCoordinator:deployQuery: " << queryId << " to " << x->first->getIp());
 
-        bool success = workerRPCClient->registerQuery(x->first->getIp(), queryId, newOperatorTree);
+        bool success = workerRPCClient->registerQuery(x->first->getIp(), queryId, queryOperators);
         if (success) {
             NES_DEBUG("NesCoordinator:deployQuery: " << queryId << " to " << x->first->getIp() << " successful");
         } else {

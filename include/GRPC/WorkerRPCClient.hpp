@@ -45,7 +45,7 @@ class WorkerRPCClient {
     * @param query plan to register as eto
     * @return true if succeeded, else false
     */
-    bool registerQuery(std::string address, std::string queryId, OperatorNodePtr tree);
+    bool registerQuery(std::string address, std::string queryId, OperatorNodePtr queryOperators);
 
     /**
      * @brief ungregisters a query
