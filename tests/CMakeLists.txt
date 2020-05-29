@@ -57,130 +57,130 @@ message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 
 ### Node Engine Tests ###
 add_executable(node-engine-test "UnitTests/NodeEngineTest.cpp")
-target_link_libraries(node-engine-test  iotdb ${GTEST_LIBRARIES})
+target_link_libraries(node-engine-test  nes ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
 
 ### Code Generation Tests ###
 add_executable(code-generation-tests "UnitTests/CodeGenerationTest.cpp")
-target_link_libraries(code-generation-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(code-generation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
 ### NES Topology Tests ###
 add_executable(nes-topology-manager-tests "UnitTests/TopologyManagerTest.cpp")
-target_link_libraries(nes-topology-manager-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(nes-topology-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME nes-topology-manager-tests COMMAND nes-topology-manager-tests)
 
 ### Buffer Manager Test ###
 add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp" UnitTests/CoordinaotEngineTest.cpp)
-target_link_libraries(buffer-manager-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
 ### WindowHandler Manager Test ###
 add_executable(window-manager-tests "UnitTests/WindowManagerTest.cpp")
-target_link_libraries(window-manager-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(window-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME window-manager-tests COMMAND window-manager-tests)
 
 ### State Manager Test ###
 add_executable(state-manager-tests "UnitTests/StateTest.cpp")
-target_link_libraries(state-manager-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(state-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME state-manager-tests COMMAND state-manager-tests)
 
 ### ZMQ Data Source Sink Tests ###
 add_executable(zmq-tests "UnitTests/ZMQTest.cpp")
-target_link_libraries(zmq-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
+target_link_libraries(zmq-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME zmq-tests COMMAND zmq-tests)
 
 ### Source Tests ###
 add_executable(source-tests "UnitTests/SourceTest.cpp")
-target_link_libraries(source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
+target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME source-tests COMMAND source-tests)
 
 ### Kafka Tests ###
 if(NES_USE_KAFKA)
 add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
 message("libraies: ${LIBRARIES}")
-target_link_libraries(kafka-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
+target_link_libraries(kafka-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME kafka-tests COMMAND kafka-tests)
 endif(NES_USE_KAFKA)
 
 ### Predicate Tree Tests ###
 add_executable(predicate-tree-tests "UnitTests/PredicateTest.cpp")
-target_link_libraries(predicate-tree-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(predicate-tree-tests nes ${GTEST_LIBRARIES})
 add_test(NAME predicate-tree-tests COMMAND predicate-tree-tests)
 
 ###  Predicate Tree Tests ###
 add_executable(optimizer-service-tests "UnitTests/OptimizerServiceTest.cpp")
-target_link_libraries(optimizer-service-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(optimizer-service-tests nes ${GTEST_LIBRARIES})
 add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
 
 ### Serialization Tools Tree Tests ###
 add_executable(serialization-tools-tests "UnitTests/SerializationToolsTest.cpp")
-target_link_libraries(serialization-tools-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(serialization-tools-tests nes ${GTEST_LIBRARIES})
 add_test(NAME serialization-tools-tests COMMAND serialization-tools-tests)
 
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/MemoryLayoutTest.cpp")
-target_link_libraries(memory-layout-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})
 add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
 
 ### Stream Catalog Tests ###
 add_executable(stream-catalog-test "UnitTests/StreamCatalogTest.cpp")
-target_link_libraries(stream-catalog-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(stream-catalog-test nes ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
 
 ### QueryCatalog Tests ###
 add_executable(query-catalog-tests "UnitTests/QueryCatalogTest.cpp")
-target_link_libraries(query-catalog-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(query-catalog-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 
 ### Path Finder Tests ###
 add_executable(path-finder-test "UnitTests/Optimizer/Utils/PathFinderTest.cpp")
-target_link_libraries(path-finder-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(path-finder-test nes ${GTEST_LIBRARIES})
 add_test(NAME path-finder-test COMMAND path-finder-test)
 
 ### QueryCompilerTest ###
 add_executable(query-execution-test "UnitTests/QueryExecutionTest.cpp")
-target_link_libraries(query-execution-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(query-execution-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-execution-test COMMAND query-execution-test)
 
 ### TupleBufferTest ###
 add_executable(tuple-buffer-test "UnitTests/TupleBufferTest.cpp")
-target_link_libraries(tuple-buffer-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(tuple-buffer-test nes ${GTEST_LIBRARIES})
 add_test(NAME tuple-buffer-test COMMAND tuple-buffer-test)
 
 # LogicalOperatorPlanNodeTest
 add_executable(logical-operator-node-tests "UnitTests/LogicalOperatorNodeTest.cpp")
-target_link_libraries(logical-operator-node-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(logical-operator-node-tests nes ${GTEST_LIBRARIES})
 add_test(NAME logical-operator-node-tests COMMAND logical-operator-node-tests)
 
 # ExpressionNodeTest
 add_executable(predicate-node-tests "UnitTests/ExpressionNodeTest.cpp")
-target_link_libraries(predicate-node-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(predicate-node-tests nes ${GTEST_LIBRARIES})
 add_test(NAME predicate-node-tests COMMAND predicate-node-tests)
 
 # QueryTest
 add_executable(query-tests "UnitTests/QueryTest.cpp")
-target_link_libraries(query-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(query-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-tests COMMAND query-tests)
 
 # ConvertLogicalToPhysicalSinkTest
 add_executable(convert-logical-to-physical-sink-tests "UnitTests/ConvertLogicalToPhysicalSinkTest.cpp")
-target_link_libraries(convert-logical-to-physical-sink-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(convert-logical-to-physical-sink-tests nes ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-sink-tests COMMAND convert-logical-to-physical-sink-tests)
 
 # ConvertLogicalToPhysicalSourceTest
 add_executable(convert-logical-to-physical-source-tests "UnitTests/ConvertLogicalToPhysicalSourceTest.cpp")
-target_link_libraries(convert-logical-to-physical-source-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(convert-logical-to-physical-source-tests nes ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
 
 # Type inference test
 #add_executable(type-inference-tests "UnitTests/TypeInferencePhaseTest.cpp")
-#target_link_libraries(type-inference-tests iotdb ${GTEST_LIBRARIES})
+#target_link_libraries(type-inference-tests nes ${GTEST_LIBRARIES})
 #add_test(NAME type-inference-tests COMMAND type-inference-tests)
 
 # FilterPushDownTest
 add_executable(filter-push-down-test "UnitTests/Optimizer/QueryRewrite/FilterPushDownTest.cpp")
-target_link_libraries(filter-push-down-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(filter-push-down-test nes ${GTEST_LIBRARIES})
 add_test(NAME filter-push-down-test COMMAND filter-push-down-test)
 
 # TranslateFromLegacyPlanPhaseTest
