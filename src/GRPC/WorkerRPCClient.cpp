@@ -60,16 +60,16 @@ bool WorkerRPCClient::undeployQuery(std::string address, std::string queryId) {
     }
 }
 
-bool WorkerRPCClient::registerQuery(std::string address, std::string queryId, OperatorNodePtr operatorTree) {
-    NES_DEBUG(
-        "WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId);
+bool WorkerRPCClient::registerQuery(std::string address, std::string queryId, OperatorNodePtr queryOperators) {
+    NES_DEBUG("WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId);
 
+    // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
     request.set_queryid(queryId);
-    OperatorSerializationUtil::serializeOperator(operatorTree, request.mutable_operatortree());
+    // serialize query operators.
+    OperatorSerializationUtil::serializeOperator(queryOperators, request.mutable_operatortree());
 
-    NES_DEBUG(
-        "WorkerRPCClient:registerQuery -> " << request.DebugString());
+    NES_DEBUG("WorkerRPCClient:registerQuery -> " << request.DebugString());
     RegisterQueryReply reply;
     ClientContext context;
 
@@ -127,6 +127,7 @@ bool WorkerRPCClient::startQuery(std::string address, std::string queryId) {
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
     Status status = workerStub->StartQuery(&context, request, &reply);
 
     if (status.ok()) {

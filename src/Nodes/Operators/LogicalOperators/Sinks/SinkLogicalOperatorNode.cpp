@@ -1,5 +1,6 @@
 #include <API/Schema.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <utility>
 
 namespace NES {
 SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor) : sinkDescriptor(sinkDescriptor) {
@@ -7,6 +8,10 @@ SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDes
 
 SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() {
     return sinkDescriptor;
+}
+
+void SinkLogicalOperatorNode::setSinkDescriptor(SinkDescriptorPtr sinkDescriptor) {
+    this->sinkDescriptor = std::move(sinkDescriptor);
 }
 
 bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {

@@ -17,6 +17,7 @@ class SinkLogicalOperatorNode : public LogicalOperatorNode {
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
     SinkDescriptorPtr getSinkDescriptor();
+    void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
 
   private:
     SinkDescriptorPtr sinkDescriptor;
