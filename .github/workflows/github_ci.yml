@@ -7,7 +7,7 @@ on:
     tags-ignore:
       - '*'
     paths-ignore:
-      - iotdb/include/Version/version.hpp
+      - include/Version/version.hpp
   pull_request:
     branches:
       - '*'
@@ -26,7 +26,7 @@ jobs:
           git fetch --prune --unshallow --tags
       - name: Run tests
         run: |
-          docker run -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+          docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
@@ -54,7 +54,7 @@ jobs:
           CI_SECRET: ${{ secrets.CI_SECRET }}
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
-          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/IoTDB --entrypoint /IoTDB/iotdb/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
