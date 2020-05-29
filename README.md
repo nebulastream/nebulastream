@@ -1,4 +1,4 @@
-# NebulaStream ![NES CI](https://github.com/nebulastream/IoTDB/workflows/NES%20CI/badge.svg)
+# NebulaStream ![NES CI](https://github.com/nebulastream/nebulastream/workflows/NES%20CI/badge.svg)
 Our awesome new IoT data stream management system :-)
 
 

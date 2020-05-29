@@ -20,7 +20,7 @@ configure_file("Doxyfile.in"
                "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
                ESCAPE_QUOTES)
 
-add_custom_target(iotdb-doc ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+add_custom_target(nes-doc ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
                   DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
 
 
