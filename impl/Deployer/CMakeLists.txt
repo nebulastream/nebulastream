@@ -1,3 +1,3 @@
-add_source_iotdb(
+add_source_nes(
         QueryDeployer.cpp
 )

@@ -85,7 +85,7 @@ if (GRPC_AVAILABLE)
     else ()
         set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
     endif ()
-else()
+else ()
     message(STATUS "Installing gRPC from repository")
     ## Fetch and build source for grpc and protobuf and all dependencies
     include(FetchContent)
@@ -254,7 +254,7 @@ endif (NES_USE_KAFKA)
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
-get_property(dirs DIRECTORY iotdb PROPERTY INCLUDE_DIRECTORIES)
+get_property(dirs DIRECTORY . PROPERTY INCLUDE_DIRECTORIES)
 foreach (dir ${dirs})
     message(STATUS "  - ${dir}")
 endforeach ()
@@ -302,14 +302,14 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 add_subdirectory(impl)
 
 # Add Library
-get_source_iotdb(iotdb_SOURCE_FILES)
-get_header_iotdb(iotdb_HEADER_FILES)
-add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
-target_include_directories(iotdb PUBLIC "include")
-target_include_directories(iotdb PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(iotdb PUBLIC ${LIBRARIES} cppzmq ${PROTOBUF_LIBRARIES})
+get_source_nes(nes_SOURCE_FILES)
+get_header_nes(nes_HEADER_FILES)
+add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
+target_include_directories(nes PUBLIC "include")
+target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+target_link_libraries(nes PUBLIC ${LIBRARIES} cppzmq ${PROTOBUF_LIBRARIES})
 if (GRPC_LIBRARIES)
-    target_link_libraries(iotdb PRIVATE ${GRPC_LIBRARIES})
+    target_link_libraries(nes PRIVATE ${GRPC_LIBRARIES})
 endif ()
 # Documentation
 add_subdirectory(docs)
@@ -317,7 +317,7 @@ add_subdirectory(docs)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
 
 add_executable(nesCoordinator nesCoordinatorStarter.cpp)
-target_link_libraries(nesCoordinator PUBLIC ${LIBRARIES} iotdb)
+target_link_libraries(nesCoordinator PUBLIC ${LIBRARIES} nes)
 target_include_directories(nesCoordinator PUBLIC "include")
 target_include_directories(nesCoordinator PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 if (GRPC_LIBRARIES)
@@ -325,7 +325,7 @@ if (GRPC_LIBRARIES)
 endif ()
 
 add_executable(nesWorker nesWorkerStarter.cpp)
-target_link_libraries(nesWorker PUBLIC ${LIBRARIES} iotdb)
+target_link_libraries(nesWorker PUBLIC ${LIBRARIES} nes)
 target_include_directories(nesWorker PUBLIC "include")
 target_include_directories(nesWorker PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 if (GRPC_LIBRARIES)
@@ -339,14 +339,14 @@ add_subdirectory(tests)
 configure_file(include/QueryLib/WindowManagerLib.hpp ${CMAKE_CURRENT_BINARY_DIR}/tests)
 configure_file(include/QueryLib/WindowManagerLib.hpp ${CMAKE_CURRENT_BINARY_DIR})
 
-install(TARGETS nesCoordinator nesWorker iotdb
+install(TARGETS nesCoordinator nesWorker nes
         COMPONENT NebulaStream
         RUNTIME DESTINATION "/opt/local/nebula-stream"
         LIBRARY DESTINATION "/opt/local/nebula-stream"
         DESTINATION "/opt/local/nebula-stream"
         )
 
-install(DIRECTORY "include" DESTINATION "/iotdb" COMPONENT NebulaStream)
+install(DIRECTORY "include" DESTINATION "/nebulastream" COMPONENT NebulaStream)
 
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})

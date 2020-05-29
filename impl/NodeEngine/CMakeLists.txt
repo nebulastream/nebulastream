@@ -1,4 +1,4 @@
-add_source_iotdb(
+add_source_nes(
         NodeEngine.cpp
         NodeProperties.cpp
         QueryManager.cpp

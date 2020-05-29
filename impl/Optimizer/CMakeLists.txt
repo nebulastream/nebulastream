@@ -1,4 +1,4 @@
-add_source_iotdb(
+add_source_nes(
         NESOptimizer.cpp
         NESExecutionPlan.cpp
         ExecutionGraph.cpp
