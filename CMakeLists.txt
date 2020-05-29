@@ -10,7 +10,7 @@ include(cmake/GetSemanticVersion.cmake)
 
 # Update version
 if (IS_GIT_DIRECTORY)
-    configure_file(cmake/version.hpp.in include/Version/version.hpp)
+    configure_file(cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp)
 endif ()
 
 # Custome CMake find instructions and macros
@@ -254,7 +254,7 @@ endif (NES_USE_KAFKA)
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
-get_property(dirs DIRECTORY . PROPERTY INCLUDE_DIRECTORIES)
+get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 foreach (dir ${dirs})
     message(STATUS "  - ${dir}")
 endforeach ()
@@ -268,7 +268,7 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
 set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
-set(PATH_TO_NES_SOURCE_CODE .)
+set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 
 # Print definition values.
 message(STATUS "Clang Executable: ${CLANG_EXECUTABLE}")
