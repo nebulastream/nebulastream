@@ -49,14 +49,14 @@ class DataSource {
      * 1.) check if bool running is true, if true return if not start source
      * 2.) start new thread with runningRoutine
      */
-    bool start();
+    virtual bool start();
 
     /**
      * @brief method to stop the source.
      * 1.) check if bool running is false, if false return, if not stop source
      * 2.) stop thread by join
      */
-    bool stop();
+    virtual bool stop();
 
     /**
      * @brief running routine while source is active
@@ -65,7 +65,7 @@ class DataSource {
      * 3.) If not call receiveData in a blocking fashion
      * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    void runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
+    virtual void runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
 
     /**
      * @brief virtual function to receive a buffer

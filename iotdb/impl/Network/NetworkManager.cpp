@@ -28,6 +28,10 @@ NetworkManager::NetworkManager(const std::string& hostname,
     }
 }
 
+bool NetworkManager::isPartitionRegistered(NesPartition nesPartition) const {
+    return partitionManager->isRegistered(nesPartition);
+}
+
 uint64_t NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition) {
     NES_INFO("NetworkManager: Registering SubpartitionConsumer: " << nesPartition.toString());
     return partitionManager->registerSubpartition(nesPartition);

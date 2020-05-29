@@ -56,7 +56,7 @@ class PartitionManager {
 
   private:
     std::unordered_map<NesPartition, uint64_t> partitionCounter;
-    std::mutex partitionCounterMutex;
+    mutable std::mutex partitionCounterMutex;
 };
 typedef std::shared_ptr<PartitionManager> PartitionManagerPtr;
 

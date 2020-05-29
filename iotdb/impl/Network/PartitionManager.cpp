@@ -7,13 +7,13 @@ namespace NES::Network {
 uint64_t PartitionManager::registerSubpartition(NesPartition partition) {
     std::unique_lock<std::mutex> lock(partitionCounterMutex);
     //check if partition is present
-    if (isRegistered(partition)) {
+    if (partitionCounter.find(partition) != partitionCounter.end()) {
         // partition is contained
         partitionCounter[partition] = partitionCounter[partition] + 1;
     } else {
         partitionCounter[partition] = 0;
     }
-    NES_INFO("PartitionManager: Registering " << partition.toString() << "<<" << partitionCounter[partition]);
+    NES_INFO("PartitionManager: Registering " << partition.toString() << "=" << partitionCounter[partition]);
     return partitionCounter[partition];
 }
 
@@ -56,6 +56,7 @@ void PartitionManager::clear() {
 
 bool PartitionManager::isRegistered(NesPartition partition) const {
     //check if partition is present
+    std::unique_lock<std::mutex> lock(partitionCounterMutex);
     return partitionCounter.find(partition) != partitionCounter.end();
 }
 

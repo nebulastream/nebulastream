@@ -69,6 +69,11 @@ class NesPartition {
             + std::to_string(partitionId) + "::" + std::to_string(subpartitionId);
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const NesPartition& partition) {
+        os << partition.toString();
+        return os;
+    }
+
     /**
      * @brief The equals operator for the NesPartition. It is not comparing threadIds
      * @param lhs
