@@ -315,7 +315,7 @@ bool NesCoordinator::deployQuery(std::string queryId) {
         auto queryOperators = translationUnit->transform(rootOperator);
 
         // 3. the operator plan contains the wrong source and sink descriptor, because the executionTransferObject
-        // is storing them separately because of very good reasons the current developer can't infer anymore ;)
+        // is storing them separately.
         // As a consequence we update the source and sink descriptors in the following
 
         // Translate source descriptor and add to sink operator.
