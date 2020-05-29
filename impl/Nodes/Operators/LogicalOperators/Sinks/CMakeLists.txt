@@ -1,4 +1,4 @@
-add_source_iotdb(
+add_source_nes(
         FileSinkDescriptor.cpp
         SinkLogicalOperatorNode.cpp
         KafkaSinkDescriptor.cpp
