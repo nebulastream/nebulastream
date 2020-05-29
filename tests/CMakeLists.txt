@@ -185,60 +185,60 @@ add_test(NAME filter-push-down-test COMMAND filter-push-down-test)
 
 # TranslateFromLegacyPlanPhaseTest
 add_executable(translate-from-legacy-plan-phase-test "UnitTests/Nodes/Phases/TranslateFromLegacyPlanPhaseTest.cpp")
-target_link_libraries(translate-from-legacy-plan-phase-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(translate-from-legacy-plan-phase-test nes ${GTEST_LIBRARIES})
 add_test(NAME translate-from-legacy-plan-phase-test COMMAND translate-from-legacy-plan-phase-test)
 
 # SerializationUtilTest
 add_executable(serialize-operator-test "UnitTests/Nodes/SerializationUtilTest.cpp")
-target_link_libraries(serialize-operator-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(serialize-operator-test nes ${GTEST_LIBRARIES})
 add_test(NAME serialize-operator-test COMMAND serialize-operator-test)
 
 ### CoordinatorEngine Tests ###
 add_executable(coordinator-engine-tests "UnitTests/CoordinaotEngineTest.cpp")
-target_link_libraries(coordinator-engine-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(coordinator-engine-tests nes ${GTEST_LIBRARIES})
 add_test(NAME coordinator-engine-tests COMMAND coordinator-engine-tests)
 
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
-target_link_libraries(multi-worker-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(multi-worker-test nes ${GTEST_LIBRARIES})
 add_test(NAME multi-worker-test COMMAND multi-worker-test)
 
 ### QueryDeploymentTest ###
 add_executable(query-deployment-test "Integration/QueryDeploymentTest.cpp")
-target_link_libraries(query-deployment-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(query-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-deployment-test COMMAND query-deployment-test)
 
 ### ContiniousSourceTest ###
 add_executable(continious-source-test "Integration/ContiniousSourceTest.cpp")
-target_link_libraries(continious-source-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(continious-source-test nes ${GTEST_LIBRARIES})
 add_test(NAME continious-source-test COMMAND continious-source-test)
 
 ### Catalog Remote Tests ###
 add_executable(stream-catalog-remote-test "Integration/StreamCatalogRemoteTest.cpp")
-target_link_libraries(stream-catalog-remote-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(stream-catalog-remote-test nes ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-remote-test COMMAND stream-catalog-remote-test)
 
 ### WorkerCoordinatorStarter Tests ###
 add_executable(worker-coordinator-starter-tests "Integration/WorkerCoordinatorStarterTest.cpp")
-target_link_libraries(worker-coordinator-starter-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(worker-coordinator-starter-tests nes ${GTEST_LIBRARIES})
 add_test(NAME worker-coordinator-starter-tests COMMAND worker-coordinator-starter-tests)
 
 ### WorkerCoordinatorStarter Tests ###
 add_executable(update-topology-remote-test "Integration/UpdateTopologyRemoteTest.cpp")
-target_link_libraries(update-topology-remote-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(update-topology-remote-test nes ${GTEST_LIBRARIES})
 add_test(NAME update-topology-remote-test COMMAND update-topology-remote-test)
 
 # NetworkStackTest
 add_executable(network-stack-test "UnitTests/NetworkStackTest.cpp")
-target_link_libraries(network-stack-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(network-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME network-stack-test COMMAND network-stack-test)
 
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
 add_executable(e2e-rest-test "E2e/E2eRestTest.cpp")
-target_link_libraries(e2e-rest-test iotdb ${GTEST_LIBRARIES})
+target_link_libraries(e2e-rest-test nes ${GTEST_LIBRARIES})
 add_test(NAME e2e-rest-test COMMAND e2e-rest-test)
 set_tests_properties(e2e-rest-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
