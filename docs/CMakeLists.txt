@@ -16,7 +16,7 @@ execute_process(COMMAND ${DOXYGEN_EXECUTABLE} --version
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 message(STATUS "Doxygen version: ${DOXYGEN_VERSION}")
 
-configure_file("Doxyfile.in"
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in"
                "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
                ESCAPE_QUOTES)
 
