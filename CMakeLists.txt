@@ -10,7 +10,7 @@ include(cmake/GetSemanticVersion.cmake)
 
 # Update version
 if (IS_GIT_DIRECTORY)
-    configure_file(cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp)
+    configure_file(cmake/version.hpp.in include/Version/version.hpp)
 endif ()
 
 # Custome CMake find instructions and macros
@@ -224,7 +224,7 @@ set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
 
 # Backward
 
-include(./cmake/BackwardConfig.cmake)
+include(cmake/BackwardConfig.cmake)
 include_directories(${BACKWARD_INCLUDE_DIRS})
 add_compile_definitions(${BACKWARD_DEFINITIONS})
 link_directories(${BACKWARD_LIBRARIES})
@@ -254,7 +254,7 @@ endif (NES_USE_KAFKA)
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
-get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+get_property(dirs DIRECTORY iotdb PROPERTY INCLUDE_DIRECTORIES)
 foreach (dir ${dirs})
     message(STATUS "  - ${dir}")
 endforeach ()
@@ -268,7 +268,7 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
 set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
-set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
+set(PATH_TO_NES_SOURCE_CODE .)
 
 # Print definition values.
 message(STATUS "Clang Executable: ${CLANG_EXECUTABLE}")
@@ -346,7 +346,7 @@ install(TARGETS nesCoordinator nesWorker iotdb
         DESTINATION "/opt/local/nebula-stream"
         )
 
-install(DIRECTORY "include" DESTINATION "/iotdb/" COMPONENT NebulaStream)
+install(DIRECTORY "include" DESTINATION "/iotdb" COMPONENT NebulaStream)
 
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})

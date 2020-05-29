@@ -1,4 +1,7 @@
-# Idea files
+# IDE specific Files
 .idea
-cmake-build-debug
-.cproject 
+.settings
+
+# Build files
+build
+cmake-build*
