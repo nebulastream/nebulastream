@@ -51,7 +51,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
 
     auto source = createSourceLogicalOperatorNode(DefaultSourceDescriptor::create(inputSchema, 0, 0));
     auto map = createMapLogicalOperatorNode(Attribute("f3") = Attribute("f1")*42);
-    auto sink = createSinkLogicalOperatorNode(FileSinkDescriptor::create(inputSchema, "", FILE_APPEND, CSV_TYPE));
+    auto sink = createSinkLogicalOperatorNode(FileSinkDescriptor::create(inputSchema, "", FILE_APPEND));
 
     auto plan = QueryPlan::create(source);
     plan->appendOperator(map);
@@ -87,7 +87,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
 
     auto source = createSourceLogicalOperatorNode(DefaultSourceDescriptor::create(inputSchema, 0, 0));
     auto map = createMapLogicalOperatorNode(Attribute("f3") = Attribute("f3")*42);
-    auto sink = createSinkLogicalOperatorNode(FileSinkDescriptor::create(inputSchema, "", FILE_APPEND, CSV_TYPE));
+    auto sink = createSinkLogicalOperatorNode(FileSinkDescriptor::create(inputSchema, "", FILE_APPEND));
 
     auto plan = QueryPlan::create(source);
     plan->appendOperator(map);
@@ -122,7 +122,7 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
 
     auto query = Query::from("default_logical")
         .map(Attribute("f3") = Attribute("id")++)
-        .sink(FileSinkDescriptor::create(schema, "", FILE_APPEND, CSV_TYPE));
+        .sink(FileSinkDescriptor::create(schema, "", FILE_APPEND));
     auto plan = query.getQueryPlan();
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
