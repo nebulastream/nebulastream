@@ -18,6 +18,7 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
  */
 class GlobalExecutionPlan {
 
+  public:
     static GlobalExecutionPlanPtr create();
     ~GlobalExecutionPlan() = default;
 
