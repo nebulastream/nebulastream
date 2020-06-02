@@ -103,12 +103,7 @@ target_link_libraries(kafka-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME kafka-tests COMMAND kafka-tests)
 endif(NES_USE_KAFKA)
 
-### Predicate Tree Tests ###
-add_executable(predicate-tree-tests "UnitTests/PredicateTest.cpp")
-target_link_libraries(predicate-tree-tests nes ${GTEST_LIBRARIES})
-add_test(NAME predicate-tree-tests COMMAND predicate-tree-tests)
-
-###  Predicate Tree Tests ###
+###  Optimizer Service Tests ###
 add_executable(optimizer-service-tests "UnitTests/OptimizerServiceTest.cpp")
 target_link_libraries(optimizer-service-tests nes ${GTEST_LIBRARIES})
 add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
