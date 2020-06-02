@@ -76,7 +76,6 @@ class ExecutionNode : public Node {
     bool updateConfiguration(std::string configName, std::string updatedValue);
 
   private:
-
     /**
      * Execution node id
      */

@@ -26,7 +26,7 @@ class GlobalExecutionPlan {
      * @param id: id of the execution node to be removed
      * @return true if operation succeeds
      */
-     //TODO: what should we do about its children?
+    //TODO: what should we do about its children? Also, a good location to release the occupied resources.
     bool removeExecutionNode(uint64_t id);
 
     /**
@@ -34,7 +34,7 @@ class GlobalExecutionPlan {
      * @param id: id of the execution node
      * @return true if operation succeeds
      */
-    bool isExecutionNodeExists(uint64_t id);
+    bool executionNodeExists(uint64_t id);
 
     /**
      * Get the execution node
@@ -60,7 +60,11 @@ class GlobalExecutionPlan {
     bool addExecutionNodeAsParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode);
 
   private:
-    explicit GlobalExecutionPlan();
+    GlobalExecutionPlan() = default;
+
+    /**
+     * Index based on nodeId for faster access to the nodes
+     */
     std::map<uint64_t, ExecutionNodePtr> nodeIdIndex;
 };
 
