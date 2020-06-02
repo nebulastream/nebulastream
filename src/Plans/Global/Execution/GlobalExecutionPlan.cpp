@@ -1,5 +1,5 @@
-#include "Plans/Execution/GlobalExecutionPlan.hpp"
-#include "Plans/Execution/ExecutionNode.hpp"
+#include "Plans/Global/Execution/GlobalExecutionPlan.hpp"
+#include "Plans/Global/Execution/ExecutionNode.hpp"
 #include "Util/Logger.hpp"
 
 namespace NES {
