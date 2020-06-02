@@ -26,6 +26,7 @@ typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
  */
 class ExecutionNode : public Node {
 
+  public:
     explicit ExecutionNode(NESTopologyEntryPtr nesNode, uint64_t subPlanId, QueryPlanPtr querySubPlan);
     ~ExecutionNode() = default;
 
@@ -45,12 +46,11 @@ class ExecutionNode : public Node {
     bool addNewSubPlan(uint64_t subPlanId, QueryPlanPtr querySubPlan);
 
     /**
-     * append the logical operator to the query sub plan
+     * Get the query sub plan
      * @param subPlanId: id of the sub plan
-     * @param operatorNode: logical operator to be appended
-     * @return true if operation succeeds
+     * @return query sub plan
      */
-    bool appendOperatorToSubPlan(uint64_t subPlanId, OperatorNodePtr operatorNode);
+    QueryPlanPtr getSubPlan(uint64_t subPlanId);
 
     /**
      * Add configuration value to the execution node
@@ -75,6 +75,8 @@ class ExecutionNode : public Node {
      */
     bool updateConfiguration(std::string configName, std::string updatedValue);
 
+    const std::string toString() const override;
+
   private:
     /**
      * Execution node id
@@ -96,6 +98,8 @@ class ExecutionNode : public Node {
      */
     std::map<std::string, std::string> configurations;
 };
+
+static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode, uint64_t subPlanId, QueryPlanPtr querySubPlan);
 }// namespace NES
 
 #endif//NES_EXECUTIONNODE_H
