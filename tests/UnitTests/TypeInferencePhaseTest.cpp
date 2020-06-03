@@ -25,17 +25,26 @@ namespace NES {
 
 class TypeInferencePhaseTest : public testing::Test {
   public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        std::cout << "Setup TypeInferencePhaseTest test class." << std::endl;
+    }
+
+    /* Will be called before a  test is executed. */
     void SetUp() {
+        NES::setupLogging("TypeInferencePhaseTest.log", NES::LOG_DEBUG);
+        std::cout << "Setup TypeInferencePhaseTest test case." << std::endl;
     }
 
+    /* Will be called before a test is executed. */
     void TearDown() {
-        NES_DEBUG("Tear down TypeInferencePhase Test.");
+        std::cout << "Tear down TypeInferencePhaseTest test case." << std::endl;
     }
 
-  protected:
-    static void setupLogging() {
-        NES::setupLogging("TypeInferencePhase.log", NES::LOG_DEBUG);
-        NES_DEBUG("Setup TypeInferencePhase test class.");
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() {
+        std::cout << "Tear down TypeInferencePhaseTest test class." << std::endl;
+
     }
 };
 
