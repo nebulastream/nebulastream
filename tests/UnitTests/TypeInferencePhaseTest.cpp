@@ -60,7 +60,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     auto map = createMapLogicalOperatorNode(Attribute("f3") = Attribute("f1") * 42);
     auto sink = createSinkLogicalOperatorNode(FileSinkDescriptor::create(""));
 
-    auto plan = QueryPlan::create(source);
+    auto plan = QueryPlan::create("default_logical", source);
     plan->appendOperator(map);
     plan->appendOperator(sink);
 
@@ -107,7 +107,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     auto map = createMapLogicalOperatorNode(Attribute("f3") = Attribute("f3") * 42);
     auto sink = createSinkLogicalOperatorNode(FileSinkDescriptor::create(""));
 
-    auto plan = QueryPlan::create(source);
+    auto plan = QueryPlan::create("default_logical", source);
     plan->appendOperator(map);
     plan->appendOperator(sink);
 

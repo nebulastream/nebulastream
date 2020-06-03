@@ -116,7 +116,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\", FILE_OVERWRITE, BINARY_TYPE));";
+    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\"));";
 
     cout << "add query" << endl;
     std::string queryId = crd->addQuery(query, "BottomUp");
@@ -181,7 +181,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\", FILE_OVERWRITE, BINARY_TYPE));";
+    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\"));";
 
     string queryId = crd->addQuery(query, "BottomUp");
     ASSERT_NE(queryId, "");
@@ -222,7 +222,7 @@ TEST_F(QueryDeploymentTest, testDeployAndUndeployTwoWorkerFileOutput) {
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
 
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\", FILE_OVERWRITE, BINARY_TYPE));";
+    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\"));";
 
     string queryId = crd->addQuery(query, "BottomUp");
     ASSERT_NE(queryId, "");

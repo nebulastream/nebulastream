@@ -9,14 +9,14 @@ OperatorJsonUtil::OperatorJsonUtil(){};
 
 OperatorJsonUtil::~OperatorJsonUtil(){};
 
-json::value OperatorJsonUtil::getBasePlan(QueryPtr queryPtr) {
+json::value OperatorJsonUtil::getBasePlan(QueryPlanPtr queryPlan) {
 
     json::value result{};
     std::vector<json::value> nodes{};
     std::vector<json::value> edges{};
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
-    const OperatorNodePtr& root = queryPtr->getQueryPlan()->getRootOperator();
+    const OperatorNodePtr& root = queryPlan->getRootOperator();
     OperatorPtr rootLegacyOperator = translator->transform(root);
 
     if (!root) {

@@ -34,8 +34,8 @@ typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
 class ExecutionNode;
 typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 
-class Query;
-typedef std::shared_ptr<Query> QueryPtr;
+class QueryPlan;
+typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 class NESTopologyPlan;
 typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
@@ -75,7 +75,7 @@ class BasePlacementStrategy {
      * @param nesTopologyPlan
      * @return
      */
-    virtual NESExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) = 0;
+    virtual NESExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) = 0;
 
     /**
      * @brief This method will add system generated zmq source and sinks for each execution node.

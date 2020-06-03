@@ -12,6 +12,8 @@ class OptimizerService;
 typedef std::shared_ptr<OptimizerService> OptimizerServicePtr;
 class TopologyManager;
 typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 class OptimizerService {
   public:
@@ -24,7 +26,7 @@ class OptimizerService {
      * @param optimizationStrategyName
      * @return
      */
-    web::json::value getExecutionPlanAsJson(QueryPtr queryPtr, std::string optimizationStrategyName);
+    web::json::value getExecutionPlanAsJson(QueryPlanPtr queryPlan, std::string optimizationStrategyName, StreamCatalogPtr streamCatalog);
 
     /**
      * @brief: get execution plan for the input query using the specified strategy.
@@ -32,7 +34,7 @@ class OptimizerService {
      * @param optimizationStrategyName
      * @return pointer to nes execution plan
      */
-    NESExecutionPlanPtr getExecutionPlan(QueryPtr queryPtr, std::string optimizationStrategyName);
+    NESExecutionPlanPtr getExecutionPlan(QueryPlanPtr queryPlan, std::string optimizationStrategyName, StreamCatalogPtr streamCatalog);
 
     ~OptimizerService() = default;
 

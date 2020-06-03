@@ -20,7 +20,6 @@ class ContiniousSourceTest : public testing::Test {
   public:
     void SetUp() {
         NES::setupLogging("ContiniousSourceTest.log", NES::LOG_DEBUG);
-        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
         NES_INFO("Setup ContiniousSourceTest test class.");
     }
     void TearDown() {
@@ -55,8 +54,8 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     remove(filePath.c_str());
 
     //register query
-    std::string queryString = "Query::from(\"exdra\").sink(FileSinkDescriptor::create(\""
-        + filePath + "\" , FILE_OVERWRITE, CSV_TYPE));";
+    std::string queryString = "Query::from(\"exdra\").sink(CsvSinkDescriptor::create(\""
+        + filePath + "\" , CsvSinkDescriptor::OVERWRITE));";
 
     std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
@@ -182,7 +181,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     //register query
     std::string queryString =
         "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(FileSinkDescriptor::create(\""
-            + outputFilePath + "\", FILE_OVERWRITE, BINARY_TYPE)); ";
+            + outputFilePath + "\")); ";
 
     std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
@@ -364,7 +363,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     //register query
     std::string queryString =
         "Query::from(\"testStream\").filter(Attribute(\"val1\") < 10).sink(FileSinkDescriptor::create(\""
-            + outputFilePath + "\", FILE_OVERWRITE, BINARY_TYPE)); ";
+            + outputFilePath + "\")); ";
 
     std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
@@ -944,8 +943,8 @@ TEST_F(ContiniousSourceTest, testExdraUseCaseWithOutput) {
     remove(outputFilePath.c_str());
 
     //register query
-    std::string queryString = "Query::from(\"exdra\").sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\" , FILE_OVERWRITE, CSV_TYPE));";
+    std::string queryString = "Query::from(\"exdra\").sink(CsvSinkDescroptor::create(\""
+        + outputFilePath + "\" , CsvSinkDescroptor::OVERWRITE));";
 
     cout << "deploy query" << endl;
     std::string queryId = crd->addQuery(queryString, "BottomUp");

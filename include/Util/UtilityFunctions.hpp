@@ -23,7 +23,7 @@ class UtilityFunctions {
    *  @return Smart pointer to InputQuery object of the query
    *  */
     static QueryPtr createQueryFromCodeString(
-        const std::string& query_code_snippet, StreamCatalogPtr streamCatalog);
+        const std::string& query_code_snippet);
 
     /**
    *  @brief this function **executes** the code provided by the user and returns an schema Object

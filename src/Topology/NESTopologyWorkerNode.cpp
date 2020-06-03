@@ -40,7 +40,7 @@ std::string NESTopologyWorkerNode::getEntryTypeString() {
 }
 
 void NESTopologyWorkerNode::setQuery(QueryPtr pQuery) {
-    this->queryPtr = pQuery;
+    this->query = pQuery;
 }
 
 }// namespace NES

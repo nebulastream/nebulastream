@@ -6,6 +6,7 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
+#include <Nodes/Phases/TypeInferencePhase.hpp>
 
 using namespace NES;
 
@@ -13,7 +14,7 @@ NESOptimizer::NESOptimizer() {
     translateFromLegacyPlanPhase = TranslateFromLegacyPlanPhase::create();
 }
 
-NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, QueryPtr queryPtr,
+NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, QueryPlanPtr queryPlan,
                                                         NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
 
     NES_INFO("NESOptimizer: Preparing execution graph for input query");
@@ -22,6 +23,8 @@ NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, Qu
     auto placementStrategyPtr = BasePlacementStrategy::getStrategy(strategy);
     
     NES_INFO("NESOptimizer: Building Execution plan for the input query");
-    NESExecutionPlanPtr nesExecutionPlanPtr = placementStrategyPtr->initializeExecutionPlan(queryPtr, nesTopologyPlan, streamCatalog);
+    TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();
+    queryPlan = typeInferencePhasePtr->transform(queryPlan);
+    NESExecutionPlanPtr nesExecutionPlanPtr = placementStrategyPtr->initializeExecutionPlan(queryPlan, nesTopologyPlan, streamCatalog);
     return nesExecutionPlanPtr;
 };

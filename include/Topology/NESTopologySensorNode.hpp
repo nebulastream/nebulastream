@@ -97,7 +97,7 @@ class NESTopologySensorNode : public NESTopologyEntry {
     size_t cpuCapacity;
     size_t remainingCPUCapacity;
     std::string physicalStreamName;
-    QueryPtr queryPtr;
+    QueryPtr query;
 };
 
 typedef std::shared_ptr<NESTopologySensorNode> NESTopologySensorNodePtr;

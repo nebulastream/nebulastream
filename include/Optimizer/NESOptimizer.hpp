@@ -40,8 +40,9 @@ class NESOptimizer {
      * @return Execution plan for the input query
      */
     NESExecutionPlanPtr prepareExecutionGraph(std::string strategy,
-                                              QueryPtr queryPtr,
-                                              NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
+                                              QueryPlanPtr queryPlan,
+                                              NESTopologyPlanPtr nesTopologyPlan,
+                                              StreamCatalogPtr streamCatalog);
 
   private:
     TranslateFromLegacyPlanPhasePtr translateFromLegacyPlanPhase;
