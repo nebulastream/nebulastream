@@ -56,58 +56,33 @@ message("-- LLVM version ${LLVM_VERSION_STRING}")
 
 # GRPC and protobuf
 set(gRPC_RELEASE "v1.28.1")
-if (GRPC_AVAILABLE)
-    # This branch assumes that gRPC and all its dependencies are already installed
-    # on this system, so they can be located by find_package().
+# This assumes that gRPC and all its dependencies are already installed
+# on this system, so they can be located by find_package().
 
-    # Find Protobuf installation
-    # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
-    set(protobuf_MODULE_COMPATIBLE TRUE)
-    find_package(Protobuf CONFIG REQUIRED)
-    message(STATUS "Using protobuf ${protobuf_VERSION}")
+# Find Protobuf installation
+# Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
+set(protobuf_MODULE_COMPATIBLE TRUE)
+find_package(Protobuf CONFIG REQUIRED)
+message(STATUS "Using protobuf ${protobuf_VERSION}")
 
-    set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
-    set(_REFLECTION gRPC::grpc++_reflection)
-    if (CMAKE_CROSSCOMPILING)
-        find_program(_PROTOBUF_PROTOC protoc)
-    else ()
-        set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
-    endif ()
-
-    # Find gRPC installation
-    # Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
-    find_package(gRPC CONFIG REQUIRED)
-    message(STATUS "Using gRPC ${gRPC_VERSION}")
-
-    set(_GRPC_GRPCPP gRPC::grpc++)
-    if (CMAKE_CROSSCOMPILING)
-        find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
-    else ()
-        set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
-    endif ()
+set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
+set(_REFLECTION gRPC::grpc++_reflection)
+if (CMAKE_CROSSCOMPILING)
+    find_program(_PROTOBUF_PROTOC protoc)
 else ()
-    message(STATUS "Installing gRPC from repository")
-    ## Fetch and build source for grpc and protobuf and all dependencies
-    include(FetchContent)
-    FetchContent_Declare(
-            gRPC
-            GIT_REPOSITORY https://github.com/grpc/grpc
-            GIT_TAG ${gRPC_RELEASE}
-    )
-    FetchContent_MakeAvailable(gRPC)
+    set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
+endif ()
 
-    # Since FetchContent uses add_subdirectory under the hood, we can use
-    # the grpc targets directly from this build.
-    set(DgRPC_BUILD_TESTS:BOOL OFF)
-    set(_PROTOBUF_LIBPROTOBUF libprotobuf)
-    set(_REFLECTION grpc++_reflection)
-    set(_PROTOBUF_PROTOC $<TARGET_FILE:protoc>)
-    set(_GRPC_GRPCPP grpc++)
-    if (CMAKE_CROSSCOMPILING)
-        find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
-    else ()
-        set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
-    endif ()
+# Find gRPC installation
+# Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
+find_package(gRPC CONFIG REQUIRED)
+message(STATUS "Using gRPC ${gRPC_VERSION}")
+
+set(_GRPC_GRPCPP gRPC::grpc++)
+if (CMAKE_CROSSCOMPILING)
+    find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
+else ()
+    set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif ()
 set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
@@ -144,56 +119,13 @@ add_custom_command(
 # ------
 message(STATUS "Libzmq")
 set(ZMQ_RELEASE "4.3.2")
-if (ZMQ_AVAILABLE)
-    find_package(ZMQ ${ZMQ_RELEASE} REQUIRED)
-    set(LIBRARIES ${LIBRARIES} libzmq)
-else ()
-    message(STATUS "Installing libzqm from repository")
-    set(BUILD_SHARED ON CACHE BOOL "enable libzmq shared build" FORCE)
-    set(BUILD_STATIC ON CACHE BOOL "enable libzmq static build" FORCE)
-    set(WITH_DOC OFF CACHE BOOL "do not generate libzmq documentation" FORCE)
-    set(BUILD_TESTS OFF CACHE BOOL "do not build libzmq tests" FORCE)
-
-    if (WIN32)
-        set(WITH_LIBSODIUM OFF CACHE BOOL "do not use libsodium in zeromq" FORCE)
-    endif ()
-
-    FetchContent_Declare(
-            libzmq
-            GIT_REPOSITORY https://github.com/zeromq/libzmq
-            GIT_TAG v${ZMQ_RELEASE}
-    )
-    FetchContent_MakeAvailable(libzmq)
-    FetchContent_GetProperties(libzmq)
-
-    if (NOT libzmq_POPULATED)
-        FetchContent_Populate(libzmq)
-        add_subdirectory(${libzmq_SOURCE_DIR} ${libzmq_BINARY_DIR})
-    endif ()
-endif ()
+find_package(ZMQ ${ZMQ_RELEASE} REQUIRED)
+set(LIBRARIES ${LIBRARIES} libzmq)
 
 # CppZMQ
 message(STATUS "cppzmq")
 set(CPPZMQ_RELEASE "4.6.0")
-if (CPPZMQ_AVAILABLE)
-    find_package(cppzmq ${CPPZMQ_RELEASE} REQUIRED)
-else ()
-    message(STATUS "Installing cppzmq from repository")
-    set(CPPZMQ_BUILD_TESTS OFF CACHE BOOL "Don't build cppzmq tests" FORCE)
-
-    FetchContent_Declare(
-            cppzmq
-            GIT_REPOSITORY https://github.com/zeromq/cppzmq
-            GIT_TAG v${CPPZMQ_RELEASE}
-    )
-    FetchContent_MakeAvailable(cppzmq)
-    FetchContent_GetProperties(cppzmq)
-
-    if (NOT cppzmq_POPULATED)
-        FetchContent_Populate(cppzmq)
-        add_subdirectory(${cppzmq_SOURCE_DIR} ${cppzmq_BINARY_DIR})
-    endif ()
-endif ()
+find_package(cppzmq ${CPPZMQ_RELEASE} REQUIRED)
 
 # Log4cc
 find_package(Log4cxx REQUIRED)
