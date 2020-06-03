@@ -33,7 +33,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryP
         NES_THROW_RUNTIME_ERROR("Unable to find the source node to place the operator");
     }
 
-    const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlanPtr->getNESTopologyGraph();
+    const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
 
@@ -50,7 +50,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryP
     addForwardOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("TopDown: Generating complete execution Graph.");
-    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlanPtr);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
     SchemaPtr schema = sourceOperator->getSourceDescriptor()->getSchema();
@@ -61,10 +61,9 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryP
 
 vector<NESTopologyEntryPtr> TopDownStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                                       const NESTopologyEntryPtr rootNode) const {
-    PathFinder pathFinder(this->nesTopologyPlan);
     vector<NESTopologyEntryPtr> candidateNodes;
     for (NESTopologyEntryPtr targetSource : sourceNodes) {
-        vector<NESTopologyEntryPtr> nodesOnPath = pathFinder.findPathBetween(targetSource, rootNode);
+        vector<NESTopologyEntryPtr> nodesOnPath = pathFinder->findPathBetween(targetSource, rootNode);
         candidateNodes.insert(candidateNodes.end(), nodesOnPath.begin(), nodesOnPath.end());
     }
     return candidateNodes;
@@ -75,7 +74,6 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                                      vector<NESTopologyEntryPtr> nesSourceNodes,
                                      NESTopologyGraphPtr nesTopologyGraphPtr) {
 
-    PathFinder pathFinder(this->nesTopologyPlan);
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
 
     for (NESTopologyEntryPtr nesSourceNode : nesSourceNodes) {
@@ -84,8 +82,7 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
 
         // Find the nodes where we can place the operators. First node will be sink and last one will be the target
         // source.
-        std::vector<NESTopologyEntryPtr>
-            candidateNodes = pathFinder.findPathBetween(nesSourceNode, nesTopologyGraphPtr->getRoot());
+        auto candidateNodes = pathFinder->findPathBetween(nesSourceNode, nesTopologyGraphPtr->getRoot());
 
         if (candidateNodes.empty()) {
             NES_THROW_RUNTIME_ERROR("No path exists between sink and source");

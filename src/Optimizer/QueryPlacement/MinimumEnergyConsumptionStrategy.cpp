@@ -64,17 +64,11 @@ NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(Qu
 vector<NESTopologyEntryPtr> MinimumEnergyConsumptionStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<
                                                                                                            NESTopologyEntryPtr>& sourceNodes,
                                                                                                        const NES::NESTopologyEntryPtr rootNode) const {
-
-    PathFinder pathFinder(this->nesTopologyPlan);
+    auto pathMap = pathFinder->findUniquePathBetween(sourceNodes, rootNode);
     vector<NESTopologyEntryPtr> candidateNodes;
-
-    map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
-        pathMap = pathFinder.findUniquePathBetween(sourceNodes, rootNode);
-
     for (auto [key, value] : pathMap) {
         candidateNodes.insert(candidateNodes.end(), value.begin(), value.end());
     }
-
     return candidateNodes;
 }
 
@@ -89,9 +83,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
     NES_INFO(
         "MinimumEnergyConsumption: preparing common path between sources");
     vector<NESTopologyEntryPtr> commonPath;
-    PathFinder pathFinder(this->nesTopologyPlan);
-    map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
-        pathMap = pathFinder.findUniquePathBetween(sourceNodes, sinkNode);
+    auto pathMap = pathFinder->findUniquePathBetween(sourceNodes, sinkNode);
 
     //Prepare list of ordered common nodes
     vector<vector<NESTopologyEntryPtr>> listOfPaths;

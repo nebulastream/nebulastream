@@ -21,6 +21,9 @@ using namespace std;
 
 namespace NES {
 
+BottomUpStrategy::BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan): BasePlacementStrategy(nesTopologyPlan) {}
+
+
 NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
@@ -56,7 +59,7 @@ NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPlanPtr query
     addForwardOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("BottomUp: Generating complete execution Graph.");
-    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
     SchemaPtr schema = sourceOperator->getSourceDescriptor()->getSchema();
@@ -67,10 +70,10 @@ NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPlanPtr query
 
 vector<NESTopologyEntryPtr> BottomUpStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                                        const NESTopologyEntryPtr rootNode) const {
-    PathFinder pathFinder(this->nesTopologyPlan);
+
     vector<NESTopologyEntryPtr> candidateNodes;
     for (NESTopologyEntryPtr targetSource : sourceNodes) {
-        vector<NESTopologyEntryPtr> nodesOnPath = pathFinder.findPathBetween(targetSource, rootNode);
+        vector<NESTopologyEntryPtr> nodesOnPath = pathFinder->findPathBetween(targetSource, rootNode);
         candidateNodes.insert(candidateNodes.end(), nodesOnPath.begin(), nodesOnPath.end());
     }
     return candidateNodes;
@@ -81,13 +84,12 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
-    PathFinder pathFinder(this->nesTopologyPlan);
 
     NES_DEBUG("BottomUp: Place the operator chain from each source node");
     for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 
         NES_INFO("BottomUp: Find the path between source and sink node");
-        const vector<NESTopologyEntryPtr> path = pathFinder.findPathBetween(sourceNode, sinkNode);
+        const vector<NESTopologyEntryPtr> path = pathFinder->findPathBetween(sourceNode, sinkNode);
 
         LogicalOperatorNodePtr operatorToPlace = sourceOperator;
         auto pathItr = path.begin();

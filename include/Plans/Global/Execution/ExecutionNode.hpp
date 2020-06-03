@@ -27,6 +27,9 @@ typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 class ExecutionNode : public Node {
 
   public:
+
+    static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode, uint64_t subPlanId, QueryPlanPtr querySubPlan);
+
     explicit ExecutionNode(NESTopologyEntryPtr nesNode, uint64_t subPlanId, QueryPlanPtr querySubPlan);
     ~ExecutionNode() = default;
 
@@ -91,7 +94,8 @@ class ExecutionNode : public Node {
 
   private:
     /**
-     * Execution node id
+     * Execution node id.
+     * Same as physical node id.
      */
     uint64_t id;
 
@@ -115,8 +119,6 @@ class ExecutionNode : public Node {
      */
     bool scheduled = false;
 };
-
-static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode, uint64_t subPlanId, QueryPlanPtr querySubPlan);
 }// namespace NES
 
 #endif//NES_EXECUTIONNODE_H

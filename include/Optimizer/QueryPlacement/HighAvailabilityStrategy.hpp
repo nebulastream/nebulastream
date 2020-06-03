@@ -18,12 +18,12 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
     ~HighAvailabilityStrategy() = default;
     NESExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
 
-    static std::unique_ptr<HighAvailabilityStrategy> create() {
-        return std::make_unique<HighAvailabilityStrategy>(HighAvailabilityStrategy());
+    static std::unique_ptr<HighAvailabilityStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
+        return std::make_unique<HighAvailabilityStrategy>(HighAvailabilityStrategy(nesTopologyPlan));
     }
 
   private:
-    HighAvailabilityStrategy() = default;
+    HighAvailabilityStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.

@@ -15,12 +15,12 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     NESExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlanPtr, StreamCatalogPtr streamCatalog);
 
-    static std::unique_ptr<TopDownStrategy> create() {
-        return std::make_unique<TopDownStrategy>(TopDownStrategy());
+    static std::unique_ptr<TopDownStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
+        return std::make_unique<TopDownStrategy>(TopDownStrategy(nesTopologyPlan));
     }
 
   private:
-    TopDownStrategy() = default;
+    TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
     /**
      * @brief place query operators and prepare the nes execution plan

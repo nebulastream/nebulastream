@@ -17,6 +17,9 @@ typedef std::shared_ptr<NESTopologyLink> NESTopologyLinkPtr;
 class NESTopologyPlan;
 typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
 
+class PathFinder;
+typedef std::shared_ptr<PathFinder> PathFinderPtr;
+
 /**
  * @brief This class is used for finding the paths between any given nodes.
  */
@@ -86,9 +89,12 @@ class PathFinder {
      */
     std::vector<std::vector<NESTopologyEntryPtr>> findAllPathsBetween(NESTopologyEntryPtr source, NESTopologyEntryPtr destination);
 
-    PathFinder(NESTopologyPlanPtr nesTopologyPlan);
+    static PathFinderPtr create(NESTopologyPlanPtr nesTopologyPlan);
 
   private:
+
+    PathFinder(NESTopologyPlanPtr nesTopologyPlan);
+
     /**
      * @brief Backtrack the path to the point where nesNode was the destination
      * @param path : the path

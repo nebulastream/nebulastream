@@ -23,7 +23,7 @@ bool ExecutionNode::addNewSubPlan(uint64_t subPlanId, QueryPlanPtr querySubPlan)
         scheduled = false;
         return true;
     }
-    NES_WARNING("ExecutionNode: Not able to add query sub plan with id : " + std::to_string(subPlanId) + " and plan " + querySubPlan->toString());
+    NES_WARNING("ExecutionNode: Not able to add query sub plan with id : " + subPlanId);
     return false;
 }
 
@@ -69,7 +69,7 @@ void ExecutionNode::setScheduled(bool scheduled) {
     ExecutionNode::scheduled = scheduled;
 }
 
-ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode, uint64_t subPlanId, QueryPlanPtr querySubPlan) {
+ExecutionNodePtr ExecutionNode::createExecutionNode(NESTopologyEntryPtr nesNode, uint64_t subPlanId, QueryPlanPtr querySubPlan) {
     return std::make_shared<ExecutionNode>(nesNode, subPlanId, querySubPlan);
 }
 }// namespace NES

@@ -17,6 +17,8 @@
 
 namespace NES {
 
+LowLatencyStrategy::LowLatencyStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
+
 NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
                                                                 NESTopologyPlanPtr nesTopologyPlan,
                                                                 StreamCatalogPtr streamCatalog) {
@@ -53,7 +55,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr que
     addForwardOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("LowLatency: Generating complete execution Graph.");
-    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
     SchemaPtr schema = sourceOperator->getSourceDescriptor()->getSchema();
@@ -66,12 +68,11 @@ vector<NESTopologyEntryPtr> LowLatencyStrategy::getCandidateNodesForFwdOperatorP
                                                                                              NESTopologyEntryPtr>& sourceNodes,
                                                                                          const NESTopologyEntryPtr rootNode) const {
 
-    PathFinder pathFinder(this->nesTopologyPlan);
     vector<NESTopologyEntryPtr> candidateNodes;
     for (NESTopologyEntryPtr targetSource : sourceNodes) {
         //Find the list of nodes connecting the source and destination nodes
         std::vector<NESTopologyEntryPtr>
-            nodesOnPath = pathFinder.findPathWithMinLinkLatency(targetSource, rootNode);
+            nodesOnPath = pathFinder->findPathWithMinLinkLatency(targetSource, rootNode);
         candidateNodes.insert(candidateNodes.end(), nodesOnPath.begin(), nodesOnPath.end());
     }
 
@@ -82,13 +83,12 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
                                         LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
-    PathFinder pathFinder(this->nesTopologyPlan);
 
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 
         LogicalOperatorNodePtr targetOperator = sourceOperator;
-        const vector<NESTopologyEntryPtr> targetPath = pathFinder.findPathWithMinLinkLatency(sourceNode, sinkNode);
+        const vector<NESTopologyEntryPtr> targetPath = pathFinder->findPathWithMinLinkLatency(sourceNode, sinkNode);
 
         for (NESTopologyEntryPtr node : targetPath) {
             while (node->getRemainingCpuCapacity() > 0 && targetOperator) {

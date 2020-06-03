@@ -23,24 +23,27 @@
 
 namespace NES {
 
-std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::string placementStrategyName) {
+std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(NESTopologyPlanPtr nesTopologyPlan, std::string placementStrategyName) {
 
     if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
         throw std::invalid_argument("BasePlacementStrategy: Unknown placement strategy name " + placementStrategyName);
     }
 
     switch (stringToPlacementStrategyType[placementStrategyName]) {
-        case TopDown: return TopDownStrategy::create();
-        case BottomUp: return BottomUpStrategy::create();
-        case LowLatency: return LowLatencyStrategy::create();
-        case HighThroughput: return HighThroughputStrategy::create();
-        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create();
-        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create();
-        case HighAvailability: return HighAvailabilityStrategy::create();
+        case BottomUp: return BottomUpStrategy::create(nesTopologyPlan);
+        case TopDown: return TopDownStrategy::create(nesTopologyPlan);
+        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
+        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
+        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
+        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
+        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
     }
 }
 
-static const int zmqDefaultPort = 5555;
+BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan) : nesTopologyPlan(nesTopologyPlan) {
+    this->pathFinder = PathFinder::create(nesTopologyPlan);
+}
+
 // FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
 // that there could be more than one child. Once the code generator able to deal with it this logic need to be
 // fixed.
@@ -130,15 +133,14 @@ void BasePlacementStrategy::convertFwdOptr(SchemaPtr schema, ExecutionNodePtr ex
     executionNodePtr->setOperatorName("SOURCE(SYS)=>SINK(SYS)");
 }
 
-void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr,
-                                                                      NESTopologyPlanPtr nesTopologyPtr) {
+void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr) {
 
     NES_DEBUG("BasePlacementStrategy: Filling the execution graph with topology information.");
-    const vector<NESTopologyLinkPtr>& allEdges = nesTopologyPtr->getNESTopologyGraph()->getAllEdges();
+    const vector<NESTopologyLinkPtr>& allEdges = nesTopologyPlan->getNESTopologyGraph()->getAllEdges();
     NES_DEBUG("BasePlacementStrategy: Get all edges in the Topology and iterate over all edges to identify the nodes"
               " that are not part of the execution graph.");
 
-    NES_DEBUG("BasePlacementStrategy::fillExecutionGraphWithTopologyInformation=" << nesTopologyPtr->getTopologyPlanString());
+    NES_DEBUG("BasePlacementStrategy::fillExecutionGraphWithTopologyInformation=" << nesTopologyPlan->getTopologyPlanString());
     for (NESTopologyLinkPtr nesLink : allEdges) {
 
         size_t srcId = nesLink->getSourceNode()->getId();

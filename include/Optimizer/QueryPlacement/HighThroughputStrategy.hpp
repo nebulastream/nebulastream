@@ -15,12 +15,13 @@ class HighThroughputStrategy : public BasePlacementStrategy {
     ~HighThroughputStrategy() = default;
     NESExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
 
-    static std::unique_ptr<HighThroughputStrategy> create() {
-        return std::make_unique<HighThroughputStrategy>(HighThroughputStrategy());
+    static std::unique_ptr<HighThroughputStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
+        return std::make_unique<HighThroughputStrategy>(HighThroughputStrategy(nesTopologyPlan));
     }
 
   private:
-    HighThroughputStrategy() = default;
+
+    explicit HighThroughputStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         LogicalOperatorNodePtr operatorPtr, std::vector<NESTopologyEntryPtr> sourceNodes);

@@ -14,6 +14,8 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
+HighAvailabilityStrategy::HighAvailabilityStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
+
 NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
                                                                       NESTopologyPlanPtr nesTopologyPlan,
                                                                       StreamCatalogPtr streamCatalog) {
@@ -42,7 +44,7 @@ NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPlanP
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperator, sourceNodePtrs);
 
     NES_INFO("HighAvailabilityStrategy: Generating complete execution Graph.");
-    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
     SchemaPtr schema = sourceOperator->getSourceDescriptor()->getSchema();
@@ -58,7 +60,6 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
-    PathFinder pathFinder(this->nesTopologyPlan);
     size_t linkRedundency = 2;
 
     NES_INFO(
@@ -70,7 +71,7 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
     for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 
         NES_DEBUG("HighAvailabilityStrategy: For each source find all paths between source and sink nodes.");
-        const auto listOfPaths = pathFinder.findAllPathsBetween(sourceNode, sinkNode);
+        const auto listOfPaths = pathFinder->findAllPathsBetween(sourceNode, sinkNode);
 
         //Find the most common path among the list of paths
         vector<NESTopologyEntryPtr> pathForPlacement;
@@ -264,7 +265,6 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
 void HighAvailabilityStrategy::addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
                                                    NES::NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
-    PathFinder pathFinder(this->nesTopologyPlan);
     // We iterate over the nodes used for the placement in the path and find all paths between two consecutive nodes.
     // Since, we want to stop before the last node the loop terminates before last node.
     // This loop is done to avoid placing forward operators on a path not selected for the placement after being considered
@@ -273,8 +273,7 @@ void HighAvailabilityStrategy::addForwardOperators(vector<NESTopologyEntryPtr> p
 
         NES_DEBUG(
             "HighAvailabilityStrategy: Find all paths between two consecutive nodes of used for performing operator placement");
-        vector<vector<NESTopologyEntryPtr>>
-            paths = pathFinder.findAllPathsBetween(pathForPlacement[i], pathForPlacement[i + 1]);
+        auto paths = pathFinder->findAllPathsBetween(pathForPlacement[i], pathForPlacement[i + 1]);
 
         for (vector<NESTopologyEntryPtr> path : paths) {
             for (NESTopologyEntryPtr node : path) {

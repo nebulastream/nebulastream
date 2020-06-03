@@ -58,6 +58,9 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
+class PathFinder;
+typedef std::shared_ptr<PathFinder> PathFinderPtr;
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -65,9 +68,10 @@ class BasePlacementStrategy {
 
   private:
     const char* NO_OPERATOR = "NO-OPERATOR";
+    static const int zmqDefaultPort = 5555;
 
   public:
-    BasePlacementStrategy(){};
+    BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
@@ -95,17 +99,16 @@ class BasePlacementStrategy {
      * Note: This method is necessary for displaying the execution graph on NES-UI
      *
      * @param nesExecutionPlanPtr
-     * @param nesTopologyPtr
      */
-    void fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr,
-                                                   NESTopologyPlanPtr nesTopologyPtr);
+    void fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr);
 
     /**
      * @brief Factory method returning different kind of optimizer.
-     * @param placementStrategyName
+     * @param nesTopologyPlan topology information
+     * @param placementStrategyName name of the strategy
      * @return instance of type BaseOptimizer
      */
-    static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string placementStrategyName);
+    static std::unique_ptr<BasePlacementStrategy> getStrategy(NESTopologyPlanPtr nesTopologyPlan, std::string placementStrategyName);
 
     /**
      * @brief replace forward operator with system generated source and sink operator.
@@ -124,6 +127,7 @@ class BasePlacementStrategy {
 
   protected:
     NESTopologyPlanPtr nesTopologyPlan;
+    PathFinderPtr pathFinder;
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP
