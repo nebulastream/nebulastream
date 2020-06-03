@@ -9,12 +9,22 @@ ExecutionNode::ExecutionNode(NESTopologyEntryPtr nesNode, uint64_t subPlanId, Qu
 }
 
 bool ExecutionNode::removeSubPlan(uint64_t subPlanId) {
-    return mapOfQuerySubPlans.erase(subPlanId) == 1;
+    if (mapOfQuerySubPlans.erase(subPlanId) == 1) {
+        scheduled = false;
+        return true;
+    }
+    NES_WARNING("ExecutionNode: Not able to remove query sub plan with id : " + subPlanId);
+    return false;
 }
 
 bool ExecutionNode::addNewSubPlan(uint64_t subPlanId, QueryPlanPtr querySubPlan) {
     auto emplace = mapOfQuerySubPlans.emplace(subPlanId, querySubPlan);
-    return emplace.second;
+    if (emplace.second) {
+        scheduled = false;
+        return true;
+    }
+    NES_WARNING("ExecutionNode: Not able to add query sub plan with id : " + std::to_string(subPlanId) + " and plan " + querySubPlan->toString());
+    return false;
 }
 
 QueryPlanPtr ExecutionNode::getSubPlan(uint64_t subPlanId) {
@@ -28,13 +38,19 @@ QueryPlanPtr ExecutionNode::getSubPlan(uint64_t subPlanId) {
 
 bool ExecutionNode::addConfiguration(std::string configName, std::string configValue) {
     auto emplace = configurations.emplace(configName, configValue);
-    return emplace.second;
+    if (emplace.second) {
+        scheduled = false;
+        return true;
+    }
+    NES_WARNING("ExecutionNode: Not able to insert configuration: " + configName + "," + configValue);
+    return false;
 }
 
 bool ExecutionNode::updateConfiguration(std::string configName, std::string updatedValue) {
     auto itr = configurations.find(configName);
     if (itr != configurations.end()) {
         configurations[configName] = updatedValue;
+        scheduled = false;
         return true;
     }
     NES_WARNING("ExecutionNode: Unable to find the configuration to update in the map : " + configName);
@@ -43,6 +59,14 @@ bool ExecutionNode::updateConfiguration(std::string configName, std::string upda
 
 const std::string ExecutionNode::toString() const {
     return "ExecutionNode(" + std::to_string(id) + ")";
+}
+
+bool ExecutionNode::isScheduled() const {
+    return scheduled;
+}
+
+void ExecutionNode::setScheduled(bool scheduled) {
+    ExecutionNode::scheduled = scheduled;
 }
 
 ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode, uint64_t subPlanId, QueryPlanPtr querySubPlan) {
