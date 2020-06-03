@@ -15,9 +15,13 @@
 
 namespace NES {
 
+HighThroughputStrategy::HighThroughputStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
+
 NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
 
-    this->nesTopologyPlan = nesTopologyPlan;
+NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery, StreamCatalogPtr streamCatalog) {
+
+    const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
@@ -51,7 +55,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPlanPtr
     addForwardOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("HighThroughput: Generating complete execution Graph.");
-    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
     SchemaPtr schema = sourceOperator->getSourceDescriptor()->getSchema();
@@ -63,12 +67,11 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPlanPtr
 vector<NESTopologyEntryPtr> HighThroughputStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                                              const NES::NESTopologyEntryPtr rootNode) const {
 
-    PathFinder pathFinder(this->nesTopologyPlan);
     vector<NESTopologyEntryPtr> candidateNodes;
     for (NESTopologyEntryPtr targetSource : sourceNodes) {
         //Find the list of nodes connecting the source and destination nodes
         std::vector<NESTopologyEntryPtr>
-            nodesOnPath = pathFinder.findPathWithMaxBandwidth(targetSource, rootNode);
+            nodesOnPath = pathFinder->findPathWithMaxBandwidth(targetSource, rootNode);
         candidateNodes.insert(candidateNodes.end(), nodesOnPath.begin(), nodesOnPath.end());
     }
 
@@ -81,12 +84,11 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
                                             vector<NESTopologyEntryPtr> sourceNodes) {
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
-    PathFinder pathFinder(this->nesTopologyPlan);
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 
         LogicalOperatorNodePtr targetOperator = sourceOperator;
-        const vector<NESTopologyEntryPtr> targetPath = pathFinder.findPathWithMaxBandwidth(sourceNode, sinkNode);
+        const vector<NESTopologyEntryPtr> targetPath = pathFinder->findPathWithMaxBandwidth(sourceNode, sinkNode);
 
         for (NESTopologyEntryPtr node : targetPath) {
             while (node->getRemainingCpuCapacity() > 0 && targetOperator) {

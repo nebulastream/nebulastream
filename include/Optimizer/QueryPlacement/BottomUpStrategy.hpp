@@ -21,12 +21,13 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     NESExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
 
-    static std::unique_ptr<BottomUpStrategy> create() {
-        return std::make_unique<BottomUpStrategy>(BottomUpStrategy());
+    static std::unique_ptr<BottomUpStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
+        return std::make_unique<BottomUpStrategy>(BottomUpStrategy(nesTopologyPlan));
     }
 
   private:
-    BottomUpStrategy() = default;
+
+    explicit BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.

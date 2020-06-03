@@ -17,6 +17,8 @@
 
 namespace NES {
 
+MinimumResourceConsumptionStrategy::MinimumResourceConsumptionStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
+
 NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
                                                                                 NESTopologyPlanPtr nesTopologyPlan,
                                                                                 StreamCatalogPtr streamCatalog) {
@@ -52,7 +54,7 @@ NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(
     addForwardOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("MinimumResourceConsumption: Generating complete execution Graph.");
-    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
     SchemaPtr schema = sourceOperator->getSourceDescriptor()->getSchema();
@@ -61,16 +63,11 @@ NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(
     return nesExecutionPlanPtr;
 }
 
-vector<NESTopologyEntryPtr> MinimumResourceConsumptionStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<
-                                                                                                             NESTopologyEntryPtr>& sourceNodes,
+vector<NESTopologyEntryPtr> MinimumResourceConsumptionStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                                                          const NES::NESTopologyEntryPtr rootNode) const {
 
-    PathFinder pathFinder(this->nesTopologyPlan);
+    auto pathMap = pathFinder->findUniquePathBetween(sourceNodes, rootNode);
     vector<NESTopologyEntryPtr> candidateNodes;
-
-    map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
-        pathMap = pathFinder.findUniquePathBetween(sourceNodes, rootNode);
-
     for (auto [key, value] : pathMap) {
         candidateNodes.insert(candidateNodes.end(), value.begin(), value.end());
     }
@@ -84,11 +81,9 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
                                                         vector<NESTopologyEntryPtr> sourceNodes) {
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
-    PathFinder pathFinder(this->nesTopologyPlan);
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
 
-    map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
-        pathMap = pathFinder.findUniquePathBetween(sourceNodes, sinkNode);
+    auto pathMap = pathFinder->findUniquePathBetween(sourceNodes, sinkNode);
 
     //Prepare list of ordered common nodes
     vector<vector<NESTopologyEntryPtr>> listOfPaths;

@@ -7,8 +7,11 @@
 using namespace std;
 namespace NES {
 
-PathFinder::PathFinder(NESTopologyPlanPtr nesTopologyPlan)
-    : nesTopologyPlan(nesTopologyPlan) {
+PathFinderPtr PathFinder::create(NESTopologyPlanPtr nesTopologyPlan) {
+    return std::make_shared<PathFinder>(PathFinder(nesTopologyPlan));
+}
+
+PathFinder::PathFinder(NESTopologyPlanPtr nesTopologyPlan) : nesTopologyPlan(nesTopologyPlan) {
     NES_DEBUG("PathFinder()");
 }
 
