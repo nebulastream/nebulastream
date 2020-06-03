@@ -75,6 +75,18 @@ class ExecutionNode : public Node {
      */
     bool updateConfiguration(std::string configName, std::string updatedValue);
 
+    /**
+     * Is the execution node along with all its sub query plans scheduled on physical node
+     * @return true when the execution node is scheduled.
+     */
+    bool isScheduled() const;
+
+    /**
+     * Mark the node as scheduled
+     * @param scheduled: boolean indicating if the node is scheduled or not
+     */
+    void setScheduled(bool scheduled);
+
     const std::string toString() const override;
 
   private:
@@ -97,6 +109,11 @@ class ExecutionNode : public Node {
      * Map of additional configurations
      */
     std::map<std::string, std::string> configurations;
+
+    /**
+     * boolean value indicating that everything is scheduled
+     */
+    bool scheduled = false;
 };
 
 static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode, uint64_t subPlanId, QueryPlanPtr querySubPlan);
