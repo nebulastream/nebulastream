@@ -6,14 +6,15 @@
 #include <iostream>
 namespace NES {
 
-QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator) {
-    return std::make_shared<QueryPlan>(QueryPlan(rootOperator));
+QueryPlanPtr QueryPlan::create(std::string sourceStreamName, OperatorNodePtr rootOperator) {
+    return std::make_shared<QueryPlan>(QueryPlan(sourceStreamName, rootOperator));
 }
 
-QueryPlan::QueryPlan(OperatorNodePtr rootOperator)
+QueryPlan::QueryPlan(std::string sourceStreamName, OperatorNodePtr rootOperator)
     : rootOperator(rootOperator), currentOperatorId(0) {
     int operatorId = getNextOperatorId();
     rootOperator->setId(operatorId);
+    this->sourceStreamName = sourceStreamName;
 }
 
 std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
@@ -43,6 +44,10 @@ std::string QueryPlan::toString() {
 
 OperatorNodePtr QueryPlan::getRootOperator() const {
     return rootOperator;
+}
+
+const std::string QueryPlan::getSourceStreamName() const {
+    return sourceStreamName;
 }
 
 }// namespace NES

@@ -30,7 +30,7 @@ class QueryPlan {
      * @param rootOperator The root operator usually a source operator.
      * @return a pointer to the query plan.
      */
-    static QueryPlanPtr create(OperatorNodePtr rootOperator);
+    static QueryPlanPtr create(std::string sourceStreamName, OperatorNodePtr rootOperator);
 
     /**
      * @brief Get all source operators
@@ -61,18 +61,24 @@ class QueryPlan {
      */
     OperatorNodePtr getRootOperator() const;
 
+    /**
+     * @brief Get the source stream name
+     * @return sourceStreamName
+     */
+    const std::string getSourceStreamName() const;
   private:
     /**
      * @brief initialize query plan and set currentOperatorId to 1
      * @param rootOperator
      */
-    QueryPlan(OperatorNodePtr rootOperator);
+    QueryPlan(std::string sourceStreamName, OperatorNodePtr rootOperator);
     OperatorNodePtr rootOperator;
     uint64_t currentOperatorId;
     /**
      * @brief Get next free operator id
      */
     uint64_t getNextOperatorId();
+    std::string sourceStreamName;
 };
 }// namespace NES
 #endif//NES_INCLUDE_NODES_GRAPH_HPP_

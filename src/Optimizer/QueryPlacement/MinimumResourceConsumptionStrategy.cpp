@@ -17,17 +17,15 @@
 
 namespace NES {
 
-NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(QueryPtr query,
-                                                                                NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
+NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
+                                                                                NESTopologyPlanPtr nesTopologyPlan,
+                                                                                StreamCatalogPtr streamCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
-
-    TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();
-    const QueryPlanPtr queryPlan = typeInferencePhasePtr->transform(query->getQueryPlan());
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string streamName = query->getSourceStreamName();
+    const string streamName = queryPlan->getSourceStreamName();
 
     if (!sourceOperator) {
         NES_THROW_RUNTIME_ERROR("MinimumResourceConsumption: Unable to find the source operator.");

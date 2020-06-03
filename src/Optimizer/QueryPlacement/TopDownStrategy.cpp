@@ -17,17 +17,15 @@
 
 namespace NES {
 
-NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr query,
+NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
                                                              NESTopologyPlanPtr nesTopologyPlanPtr,
                                                              StreamCatalogPtr streamCatalog) {
     this->nesTopologyPlan = nesTopologyPlanPtr;
-    TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();
-    const QueryPlanPtr queryPlan = typeInferencePhasePtr->transform(query->getQueryPlan());
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     //find the source Node
-    const string streamName = query->getSourceStreamName();
+    const string streamName = queryPlan->getSourceStreamName();
 
     const vector<NESTopologyEntryPtr>& sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
 

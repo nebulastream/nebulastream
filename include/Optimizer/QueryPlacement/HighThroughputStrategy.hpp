@@ -13,7 +13,7 @@ class HighThroughputStrategy : public BasePlacementStrategy {
 
   public:
     ~HighThroughputStrategy() = default;
-    NESExecutionPlanPtr initializeExecutionPlan(QueryPtr query, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
+    NESExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
 
     static std::unique_ptr<HighThroughputStrategy> create() {
         return std::make_unique<HighThroughputStrategy>(HighThroughputStrategy());

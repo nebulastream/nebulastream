@@ -49,9 +49,9 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bot
          << std::endl << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));"
          << std::endl;
 
-    const QueryPtr& queryPtr = queryService->getQueryFromQueryString(code.str());
+    const QueryPtr query = queryService->getQueryFromQueryString(code.str());
     const json::value& plan = optimizerService->getExecutionPlanAsJson(
-        queryPtr, "BottomUp");
+        query->getQueryPlan(), "BottomUp", streamCatalog);
     EXPECT_TRUE(plan.size() != 0);
 }
 /* Test nes topology service create plan for valid query string for  */
@@ -66,9 +66,10 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_top
     code << "Query::from(\"temperature\").filter(Attribute(\"value\")==5)"
          << std::endl << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));"
          << std::endl;
-    const QueryPtr& queryPtr = queryService->getQueryFromQueryString(code.str());
+    const QueryPtr query = queryService->getQueryFromQueryString(code.str());
+
     const json::value& plan = optimizerService->getExecutionPlanAsJson(
-        queryPtr, "BottomUp");
+        query->getQueryPlan(), "BottomUp", streamCatalog);
     EXPECT_TRUE(plan.size() != 0);
 }
 
@@ -104,9 +105,9 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
         code << "Query::from(\"temperature134\").filter(Attribute(\"id\")==5)"
              << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));" << std::endl;
 
-        const QueryPtr& queryPtr = queryService->getQueryFromQueryString(code.str());
+        const QueryPtr query = queryService->getQueryFromQueryString(code.str());
         const json::value& plan = optimizerService->getExecutionPlanAsJson(
-            queryPtr, "BottomUp");
+            query->getQueryPlan(), "BottomUp", streamCatalog);
         FAIL();
     } catch (...) {
         //TODO: We need to look into exception handling soon enough
@@ -121,9 +122,9 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
             << std::endl << ".sink(ZmqSinkDescriptor(\"localhost\", 10));"
             << std::endl;
 
-        const QueryPtr& queryPtr = queryService->getQueryFromQueryString(code.str());
+        const QueryPtr query = queryService->getQueryFromQueryString(code.str());
         const json::value& plan = optimizerService->getExecutionPlanAsJson(
-            queryPtr, "BottomUp");
+            query->getQueryPlan(), "BottomUp", streamCatalog);
         FAIL();
     } catch (...) {
         //TODO: We need to look into exception handling soon enough

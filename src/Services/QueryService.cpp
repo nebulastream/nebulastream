@@ -16,11 +16,11 @@ json::value QueryService::generateBaseQueryPlanFromQueryString(std::string userQ
 
     //build the query plan
     OperatorJsonUtil queryPlanBuilder;
-    const json::value& basePlan = queryPlanBuilder.getBasePlan(query);
+    const json::value& basePlan = queryPlanBuilder.getBasePlan(query->getQueryPlan());
 
     return basePlan;
 }
 
 QueryPtr QueryService::getQueryFromQueryString(std::string userQuery) {
-    return UtilityFunctions::createQueryFromCodeString(userQuery, streamCatalog);
+    return UtilityFunctions::createQueryFromCodeString(userQuery);
 }

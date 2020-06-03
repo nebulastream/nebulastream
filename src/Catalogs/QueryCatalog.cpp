@@ -60,11 +60,11 @@ string QueryCatalog::registerQuery(const string& queryString,
         throw Exception("Queries are not allowed to define schemas anymore");
     }
     try {
-        QueryPtr queryPtr = UtilityFunctions::createQueryFromCodeString(queryString, streamCatalog);
+        QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
 
         OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
         NESExecutionPlanPtr nesExecutionPtr = optimizerService->getExecutionPlan(
-            queryPtr, optimizationStrategyName);
+            query->getQueryPlan(), optimizationStrategyName, streamCatalog);
 
         NES_DEBUG(
             "QueryCatalog: Final Execution Plan =" << nesExecutionPtr->getTopologyPlanString());
@@ -72,7 +72,7 @@ string QueryCatalog::registerQuery(const string& queryString,
         std::string queryId = UtilityFunctions::generateIdString();
 
         QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(
-            queryId, queryString, queryPtr, nesExecutionPtr, QueryStatus::Registered);
+            queryId, queryString, query, nesExecutionPtr, QueryStatus::Registered);
 
         queries[queryId] = entry;
         NES_DEBUG("number of queries after insert=" << queries.size());

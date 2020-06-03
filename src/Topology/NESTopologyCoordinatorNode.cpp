@@ -53,6 +53,6 @@ std::string NESTopologyCoordinatorNode::getEntryTypeString() {
 }
 
 void NESTopologyCoordinatorNode::setQuery(QueryPtr pQuery) {
-    this->queryPtr = pQuery;
+    this->query = pQuery;
 }
 }// namespace NES

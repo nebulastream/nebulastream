@@ -100,7 +100,7 @@ class NESTopologyCoordinatorNode : public NESTopologyEntry {
     size_t cpuCapacity;
     size_t remainingCPUCapacity;
     bool isASink;
-    QueryPtr queryPtr;
+    QueryPtr query;
 };
 
 typedef std::shared_ptr<NESTopologyCoordinatorNode> NESTopologyCoordinatorNodePtr;
