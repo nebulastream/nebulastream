@@ -44,7 +44,7 @@ set_target_properties(libgmock PROPERTIES
 include_directories("${source_dir}/googletest/include"
         "${source_dir}/googlemock/include")
 
-set(GTEST_LIBRARIES ${LIBRARIES} libgtest libgtest_main libgmock cpprestsdk::cpprest)
+set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} libgtest libgtest_main libgmock cpprestsdk::cpprest)
 
 # Copy Test Data --------------------------------------------------------------
 file(COPY test_data DESTINATION .)
