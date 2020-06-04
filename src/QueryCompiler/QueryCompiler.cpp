@@ -39,12 +39,9 @@ std::shared_ptr<PipelineStage> QueryCompiler::compilePipelineStages(QueryExecuti
 
     //if this stage has any children we need to set up the connection now
     std::vector<PipelineStagePtr> childStages;
-    auto pips = context->getNextPipelines();
-    for (auto pip : pips) {
-        if (pip == nullptr)
-            break;
-
-        childStages.push_back(this->compilePipelineStages(queryExecutionPlan, codeGenerator, pip));
+    auto nextPipelines = context->getNextPipelines();
+    for (auto nextPipeline : nextPipelines) {
+        childStages.push_back(this->compilePipelineStages(queryExecutionPlan, codeGenerator, nextPipeline));
     }
     auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
 
@@ -63,8 +60,8 @@ std::shared_ptr<PipelineStage> QueryCompiler::compilePipelineStages(QueryExecuti
         queryExecutionPlan->appendsPipelineStage(pipeStage);
     }
 
-    for (auto child_stage : childStages) {
-        child_stage->setNextStage(pipeStage);
+    for (auto childStage : childStages) {
+        childStage->setNextStage(pipeStage);
     }
 
     return pipeStage;
