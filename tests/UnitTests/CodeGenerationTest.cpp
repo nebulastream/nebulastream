@@ -695,7 +695,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* generate code for scanning input buffer */
     codeGenerator->generateCode(source->getSchema(), context, std::cout);
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCode(createPrintSinkWithSchema(Schema::create()->addField("campaign_id", UINT64), std::cout),
+    codeGenerator->generateCodeForSink(createPrintSinkWithSchema(Schema::create()->addField("campaign_id", UINT64), std::cout)->getSchema(),
                                 context, std::cout);
     /* compile code to pipeline stage */
     Compiler compiler;
@@ -742,8 +742,8 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     codeGenerator->generateCode(pred, context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCode(
-        createPrintSinkWithSchema(source->getSchema(), std::cout), context,
+    codeGenerator->generateCodeForSink(
+        createPrintSinkWithSchema(source->getSchema(), std::cout)->getSchema(), context,
         std::cout);
 
     /* compile code to pipeline stage */
@@ -845,7 +845,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
         context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCode(createPrintSinkWithSchema(inputSchema, std::cout),
+    codeGenerator->generateCodeForSink(createPrintSinkWithSchema(inputSchema, std::cout)->getSchema(),
                                 context, std::cout);
 
     /* compile code to pipeline stage */
@@ -904,8 +904,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     auto schemaSize = outputSchema->getSchemaSizeInBytes();
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCode(
-        createPrintSinkWithSchema(outputSchema, std::cout), context, std::cout);
+    codeGenerator->generateCodeForSink(createPrintSinkWithSchema(outputSchema, std::cout)->getSchema(), context, std::cout);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
