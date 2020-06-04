@@ -301,14 +301,16 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     plan->stop();
     //    sleep(1);
 
-    auto& resultBuffer = testSink->get(1);//1
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);
-    auto resultLayout = createRowLayout(ptr);
-    // Tony: two inputs are add up to P1 because of "chain pipeline". We need to rewrite the QEP.
-    auto v = resultLayout->getValueField<int64_t>(0, /*fieldIndex*/ 0)->read(resultBuffer);
-    EXPECT_EQ(v, 20);
-    v = resultLayout->getValueField<int64_t>(1, /*fieldIndex*/ 0)->read(resultBuffer);
-    EXPECT_EQ(v, 10);
+    auto& resultBuffer = testSink->get(0);
+    // The output buffer should contain 5 tuple;
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);// how to interpret this?
+
+    for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
+        EXPECT_EQ(
+            memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer),
+            recordIndex);
+    }
+
     testSink->shutdown();
     testSource1->stop();
     testSource2->stop();
