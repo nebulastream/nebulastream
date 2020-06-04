@@ -247,12 +247,15 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     mergeOperator->addChild(filter2);
     filter1->setParent(mergeOperator);
     filter2->setParent(mergeOperator);
+    auto windowScan = createWindowScanOperator(testSchema);
+    mergeOperator->setParent(windowScan);
+    windowScan->addChild(mergeOperator);
 
     auto testSink = std::make_shared<TestSink>();
     auto sink = createSinkOperator(testSink);
 
-    mergeOperator->setParent(sink);
-    sink->addChild(mergeOperator);
+    windowScan->setParent(sink);
+    sink->addChild(windowScan);
 
     //compile
     auto compiler = createDefaultQueryCompiler(

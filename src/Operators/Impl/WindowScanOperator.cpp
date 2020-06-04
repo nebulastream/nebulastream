@@ -20,9 +20,9 @@ WindowScanOperator& WindowScanOperator::operator=(const WindowScanOperator& othe
 
 void WindowScanOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
     this->consume(codegen, context, out);
-    auto newPipelineContext = createPipelineContext();
-    this->getChildren()[0]->produce(codegen, newPipelineContext, out);
-    context->addNextPipeline(newPipelineContext);
+    //auto newPipelineContext = createPipelineContext();
+    this->getChildren()[0]->produce(codegen, context, out);
+    //context->addNextPipeline(newPipelineContext);
 }
 
 void WindowScanOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
