@@ -43,6 +43,7 @@ std::shared_ptr<PipelineStage> QueryCompiler::compilePipelineStages(QueryExecuti
     for (auto pip : pips) {
         if (pip == nullptr)
             break;
+
         childStages.push_back(this->compilePipelineStages(queryExecutionPlan, codeGenerator, pip));
     }
     auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
@@ -50,16 +51,17 @@ std::shared_ptr<PipelineStage> QueryCompiler::compilePipelineStages(QueryExecuti
     if (context->hasWindow()) {
         auto windowHandler = createWindowHandler(context->getWindow(),
                                                  queryExecutionPlan->getQueryManager(), queryExecutionPlan->getBufferManager());
-        queryExecutionPlan->appendsPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
-                                                                     queryExecutionPlan,
-                                                                     executablePipeline,
-                                                                     windowHandler));
+        pipeStage = createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
+                                        queryExecutionPlan,
+                                        executablePipeline,
+                                        windowHandler);
+        queryExecutionPlan->appendsPipelineStage(pipeStage);
     } else {
-        queryExecutionPlan->appendsPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
-                                                                     queryExecutionPlan,
-                                                                     executablePipeline));
+        pipeStage = createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
+                                        queryExecutionPlan,
+                                        executablePipeline);
+        queryExecutionPlan->appendsPipelineStage(pipeStage);
     }
-
 
     for (auto child_stage : childStages) {
         child_stage->setNextStage(pipeStage);

@@ -302,7 +302,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     //    sleep(1);
 
     auto& resultBuffer = testSink->get(1);//1
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);
     auto resultLayout = createRowLayout(ptr);
     // Tony: two inputs are add up to P1 because of "chain pipeline". We need to rewrite the QEP.
     auto v = resultLayout->getValueField<int64_t>(0, /*fieldIndex*/ 0)->read(resultBuffer);
