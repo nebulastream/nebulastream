@@ -33,14 +33,13 @@ void MergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context
 
 /**
  * @brief
- * @param codegen generating the code for a source, same as the one used in window scan.
+ * @param codegen generating the emit function.
  * @param context
  * @param out
  */
 void MergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
 
     codegen->generateCodeForSink(schemaPtr, context, out);
-    //getParent()->consume(codegen, context, out);//ask the downstream operator to consume.
 }
 
 const OperatorPtr MergeOperator::copy() const { return std::make_shared<MergeOperator>(*this); }
