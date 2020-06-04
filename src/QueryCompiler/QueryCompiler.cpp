@@ -32,12 +32,10 @@ QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
     return qep;
 }
 
-void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan,
-                                          CodeGeneratorPtr codeGenerator,
-                                          PipelineContextPtr context) {
-    if (context->hasNextPipeline()) {
-        this->compilePipelineStages(queryExecutionPlan, codeGenerator, context->getNextPipeline());
-    }
+std::shared_ptr<PipelineStage> QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan,
+                                                                    CodeGeneratorPtr codeGenerator,
+                                                                    PipelineContextPtr context) {
+    PipelineStagePtr pipeStage;
     auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
     if (context->hasWindow()) {
         auto windowHandler = createWindowHandler(context->getWindow(),
@@ -51,6 +49,20 @@ void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPl
                                                                      queryExecutionPlan,
                                                                      executablePipeline));
     }
+    //if this stage has any children we need to set up the connection now
+    std::vector<PipelineStagePtr> childStages;
+    auto pips = context->getNextPipelines();
+    for (auto pip : pips) {
+        if (pip == nullptr)
+            break;
+        childStages.push_back(this->compilePipelineStages(queryExecutionPlan, codeGenerator, pip));
+    }
+
+    for (auto child_stage : childStages) {
+        child_stage->setNextStage(pipeStage);
+    }
+
+    return pipeStage;
 }
 
 QueryCompilerPtr createDefaultQueryCompiler(QueryManagerPtr queryManager) {

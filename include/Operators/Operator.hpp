@@ -139,7 +139,7 @@ const OperatorPtr createSourceOperator(const DataSourcePtr source);
 const OperatorPtr createWindowOperator(const WindowDefinitionPtr window_definition);
 const OperatorPtr createWindowScanOperator(const SchemaPtr schema);
 const OperatorPtr createSampleOperator(const std::string& udfs);
-
+const OperatorPtr createMergeOperator(const SchemaPtr schema);
 }// namespace NES
 
 #endif// OPERATOR_OPERATOR_H
