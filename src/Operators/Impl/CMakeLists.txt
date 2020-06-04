@@ -10,4 +10,5 @@ add_source_nes(
         AggregationOperator.cpp
         JoinOperator.cpp
         SampleOperator.cpp
+        MergeOperator.cpp
 )

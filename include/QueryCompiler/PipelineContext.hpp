@@ -35,12 +35,12 @@ class PipelineContext {
     SchemaPtr resultSchema;
     GeneratedCodePtr code;
 
-    PipelineContextPtr getNextPipeline() const;
-    void setNextPipeline(PipelineContextPtr nextPipeline);
+    std::vector<PipelineContextPtr> getNextPipelines() const;
+    void addNextPipeline(PipelineContextPtr nextPipeline);
     bool hasNextPipeline() const;
 
   private:
-    PipelineContextPtr nextPipeline;
+    std::vector<PipelineContextPtr> nextPipelines;
     WindowDefinitionPtr windowDefinition;
 };
 }// namespace NES

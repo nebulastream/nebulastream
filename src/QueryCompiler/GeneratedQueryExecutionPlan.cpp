@@ -31,7 +31,9 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipelineStageId, TupleBu
         // ignore the buffer if it is empty
         if (buffer.getNumberOfTuples() > 0) {
             // send the buffer to the next pipeline stage
-            executeStage(pipelineStageId + 1, buffer);
+            auto nextStage = this->stages.at(pipelineStageId)->getNextStage();
+            auto nextStageId = nextStage == nullptr ? pipelineStageId + 1 : nextStage->getPipeStageId();
+            executeStage(nextStageId, buffer);//this->stages.at(pipelineStageId).nextStage()
         }
     };
     // create execution context

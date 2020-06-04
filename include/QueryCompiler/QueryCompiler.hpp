@@ -54,7 +54,7 @@ class QueryCompiler {
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
 
-    void compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan,
+    std::shared_ptr<PipelineStage> compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan,
                                CodeGeneratorPtr codeGenerator,
                                PipelineContextPtr context);
     QueryCompiler();

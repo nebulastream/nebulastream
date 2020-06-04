@@ -24,15 +24,15 @@ bool PipelineContext::hasWindow() const {
 }
 
 bool PipelineContext::hasNextPipeline() const {
-    return this->nextPipeline != nullptr;
+    return this->nextPipelines.size()!=0;
 }
 
-PipelineContextPtr PipelineContext::getNextPipeline() const {
-    return this->nextPipeline;
+std::vector<PipelineContextPtr> PipelineContext::getNextPipelines() const {
+    return this->nextPipelines;
 }
 
-void PipelineContext::setNextPipeline(PipelineContextPtr nextPipeline) {
-    this->nextPipeline = nextPipeline;
+void PipelineContext::addNextPipeline(PipelineContextPtr nextPipeline) {
+    this->nextPipelines.push_back(nextPipeline);
 }
 
 SchemaPtr PipelineContext::getInputSchema() const { return inputSchema; }

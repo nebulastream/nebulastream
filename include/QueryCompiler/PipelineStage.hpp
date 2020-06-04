@@ -56,13 +56,16 @@ class PipelineStage {
     bool stop();
 
     ~PipelineStage();
+    PipelineStagePtr getNextStage();
+    void setNextStage(PipelineStagePtr ptr);
+    int getPipeStageId();
 
   private:
     uint32_t pipelineStageId;
     QueryExecutionPlanPtr queryExecutionPlan;
     ExecutablePipelinePtr executablePipeline;
     WindowHandlerPtr windowHandler;
-
+    PipelineStagePtr nextStage;
     bool hasWindowHandler();
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;

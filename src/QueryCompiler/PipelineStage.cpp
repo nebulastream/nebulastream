@@ -59,6 +59,16 @@ bool PipelineStage::stop() {
     return true;
 }
 
+PipelineStagePtr PipelineStage::getNextStage() {
+    return nextStage;
+}
+void PipelineStage::setNextStage(PipelineStagePtr ptr) {
+    this->nextStage = ptr;
+}
+int PipelineStage::getPipeStageId() {
+    return pipelineStageId;
+}
+
 bool PipelineStage::hasWindowHandler() {
     return windowHandler != nullptr;
 }
