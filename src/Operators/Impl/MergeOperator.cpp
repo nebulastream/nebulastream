@@ -21,7 +21,7 @@ MergeOperator& MergeOperator::operator=(const MergeOperator& other) {
 }
 
 void MergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    this->consume(codegen, context, out);// it is the leaf node of a pipeline.
+    //this->consume(codegen, context, out);// it is the leaf node of a pipeline.
     auto newPipelineContext1 = createPipelineContext();
     getChildren()[0]->produce(codegen, newPipelineContext1, out);
     auto newPipelineContext2 = createPipelineContext();
@@ -38,8 +38,9 @@ void MergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context
  * @param out
  */
 void MergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    codegen->generateCode(schemaPtr, context, out);
-    getParent()->consume(codegen, context, out);//ask the downstream operator to consume.
+
+    codegen->generateCodeForSink(schemaPtr, context, out);
+    //getParent()->consume(codegen, context, out);//ask the downstream operator to consume.
 }
 
 const OperatorPtr MergeOperator::copy() const { return std::make_shared<MergeOperator>(*this); }
