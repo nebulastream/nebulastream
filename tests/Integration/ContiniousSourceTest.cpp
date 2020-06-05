@@ -943,8 +943,8 @@ TEST_F(ContiniousSourceTest, testExdraUseCaseWithOutput) {
     remove(outputFilePath.c_str());
 
     //register query
-    std::string queryString = "Query::from(\"exdra\").sink(CsvSinkDescroptor::create(\""
-        + outputFilePath + "\" , CsvSinkDescroptor::OVERWRITE));";
+    std::string queryString = "Query::from(\"exdra\").sink(CsvSinkDescriptor::create(\""
+        + outputFilePath + "\" , CsvSinkDescriptor::OVERWRITE));";
 
     cout << "deploy query" << endl;
     std::string queryId = crd->addQuery(queryString, "BottomUp");
