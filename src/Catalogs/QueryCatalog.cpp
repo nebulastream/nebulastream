@@ -72,7 +72,7 @@ string QueryCatalog::registerQuery(const string& queryString,
         std::string queryId = UtilityFunctions::generateIdString();
 
         QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(
-            queryId, queryString, query, nesExecutionPtr, QueryStatus::Registered);
+            queryId, queryString, query->getQueryPlan(), nesExecutionPtr, QueryStatus::Registered);
 
         queries[queryId] = entry;
         NES_DEBUG("number of queries after insert=" << queries.size());
