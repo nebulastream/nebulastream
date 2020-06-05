@@ -51,7 +51,7 @@ NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(
     vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
     NES_INFO("MinimumResourceConsumption: Adding forward operators.");
-    addForwardOperators(candidateNodes, nesExecutionPlanPtr);
+    addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("MinimumResourceConsumption: Generating complete execution Graph.");
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);

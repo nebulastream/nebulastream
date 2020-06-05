@@ -11,7 +11,7 @@ using namespace web;
 using namespace std;
 using namespace std::chrono;
 
-OptimizerService::OptimizerService(TopologyManagerPtr topologyManager) : topologyManager(topologyManager) {
+OptimizerService::OptimizerService(TopologyManagerPtr topologyManager, GlobalExecutionPlan) : topologyManager(topologyManager) {
     NES_DEBUG("OptimizerService()");
 }
 
@@ -34,17 +34,6 @@ NESExecutionPlanPtr OptimizerService::getExecutionPlan(QueryPlanPtr queryPlan, s
     const json::value& basePlan = operatorJsonUtil.getBasePlan(queryPlan);
 
     NES_DEBUG("OptimizerService: query plan=" << basePlan);
-
-    auto start = high_resolution_clock::now();
-
-    const NESExecutionPlanPtr
-        executionGraph = queryOptimizer.prepareExecutionGraph(optimizationStrategyName, queryPlan, topologyPlan, streamCatalog);
-
-    auto stop = high_resolution_clock::now();
-    const auto duration = duration_cast<milliseconds>(stop - start);
-    long durationInMillis = duration.count();
-
-    executionGraph->setTotalComputeTimeInMillis(durationInMillis);
-
+    const GlobalExecutionPlanPtr executionGraph = queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan, inputQuery->streamCatalog);
     return executionGraph;
 }

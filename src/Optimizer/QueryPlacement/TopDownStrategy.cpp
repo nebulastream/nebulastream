@@ -47,7 +47,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryP
         candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
     NES_INFO("TopDown: Adding forward operators.");
-    addForwardOperators(candidateNodes, nesExecutionPlanPtr);
+    addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("TopDown: Generating complete execution Graph.");
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);

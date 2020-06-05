@@ -19,7 +19,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
   public:
     ~BottomUpStrategy(){};
 
-    NESExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog);
+    GlobalExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, StreamCatalogPtr streamCatalog);
 
     static std::unique_ptr<BottomUpStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
         return std::make_unique<BottomUpStrategy>(BottomUpStrategy(nesTopologyPlan));
@@ -31,21 +31,19 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
-     * @param executionPlanPtr : graph containing the information about the execution nodes.
-     * @param nesTopologyGraphPtr : nes Topology graph used for extracting information about the nes topology.
      * @param sourceOperator : sensor nodes which act as the source source.
      * @param sourceNodes : sensor nodes which act as the source source.
      *
+     * @return: Partially completed Execution plan for input query.
      * @throws exception if the operator can't be placed anywhere.
      */
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
+    GlobalExecutionPlanPtr placeOperators(std::string queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
      * @brief Finds all the nodes that can be used for performing FWD operator
      * @param sourceNodes
      * @param rootNode
-     * @return
+     * @return vector of worker nodes for placement of FWD operator
      */
     std::vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                               const NESTopologyEntryPtr rootNode) const;

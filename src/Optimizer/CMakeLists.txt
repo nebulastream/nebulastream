@@ -1,8 +1,5 @@
 add_source_nes(
         NESOptimizer.cpp
-        NESExecutionPlan.cpp
-        ExecutionGraph.cpp
-        ExecutionNode.cpp
 )
 add_subdirectory(QueryPlacement)
 add_subdirectory(QueryRewrite)

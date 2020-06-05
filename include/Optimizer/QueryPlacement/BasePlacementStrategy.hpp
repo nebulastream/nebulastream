@@ -61,6 +61,9 @@ typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 class PathFinder;
 typedef std::shared_ptr<PathFinder> PathFinderPtr;
 
+class GlobalExecutionPlan;
+typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -79,8 +82,9 @@ class BasePlacementStrategy {
      * @param nesTopologyPlan
      * @return
      */
-    virtual NESExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) = 0;
+    virtual GlobalExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, StreamCatalogPtr streamCatalog) = 0;
 
+  private:
     /**
      * @brief This method will add system generated zmq source and sinks for each execution node.
      * @note We use zmq for internal message transfer therefore the source and sink will be zmq based.
@@ -117,13 +121,19 @@ class BasePlacementStrategy {
      */
     void convertFwdOptr(SchemaPtr schema, ExecutionNodePtr executionNodePtr) const;
 
+    void createExecutionNodeWithForwardOperators();
+
     /**
-     * @brief This method will add the forward operator where ever necessary along the selected path.
+     * @brief This method will add the system generated operators where ever necessary along the selected path for operator placement.
      *
-     * @param candidateNodes vector of nodes where operators could be placed
-     * @param nesExecutionPlanPtr Pointer to the execution plan
+     * @param queryId query Id of the sub plan for which the operators have to be placed
+     * @param path vector of nodes where operators could be placed
+     * @param executionPlan Pointer to the execution plan
      */
-    void addForwardOperators(std::vector<NESTopologyEntryPtr> candidateNodes, NESExecutionPlanPtr nesExecutionPlanPtr);
+    void addSystemGeneratedOperators(std::string queryId, std::vector<NESTopologyEntryPtr> path, GlobalExecutionPlanPtr executionPlan);
+
+    OperatorNodePtr createSystemSinkOperator(NESTopologyEntryPtr nesNode);
+    OperatorNodePtr createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
 
   protected:
     NESTopologyPlanPtr nesTopologyPlan;

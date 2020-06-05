@@ -14,8 +14,7 @@ class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 /**\brief:
- *          This class is used for serving different requests related to user query.
- *
+ * This class is used for serving different requests related to user query.
  * Note: Please extend the header if new Input query related functionality needed to be added.
  *
  */
