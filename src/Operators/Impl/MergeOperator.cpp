@@ -7,10 +7,6 @@
 
 namespace NES {
 
-/**
- * @brief Merges two input streams and produce one output stream.
- * @param schemaPtr
- */
 MergeOperator::MergeOperator(SchemaPtr schemaPtr) : Operator(), schemaPtr(schemaPtr) {}
 MergeOperator::MergeOperator(const MergeOperator& other) : schemaPtr(other.schemaPtr) {}
 MergeOperator& MergeOperator::operator=(const MergeOperator& other) {
@@ -21,7 +17,6 @@ MergeOperator& MergeOperator::operator=(const MergeOperator& other) {
 }
 
 void MergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    //this->consume(codegen, context, out);// it is the leaf node of a pipeline.
     auto newPipelineContext1 = createPipelineContext();
     getChildren()[0]->produce(codegen, newPipelineContext1, out);
     auto newPipelineContext2 = createPipelineContext();
@@ -31,12 +26,7 @@ void MergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context
     context->addNextPipeline(newPipelineContext2);
 }
 
-/**
- * @brief
- * @param codegen generating the emit function.
- * @param context
- * @param out
- */
+
 void MergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
 
     codegen->generateCodeForEmit(schemaPtr, context, out);
