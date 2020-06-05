@@ -6,6 +6,7 @@
 #include <Optimizer/NESOptimizer.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Topology/NESTopologyPlan.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Util/Logger.hpp>
 
 using namespace NES;

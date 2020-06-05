@@ -52,7 +52,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr que
     vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
     NES_INFO("LowLatency: Adding forward operators.");
-    addForwardOperators(candidateNodes, nesExecutionPlanPtr);
+    addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("LowLatency: Generating complete execution Graph.");
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);

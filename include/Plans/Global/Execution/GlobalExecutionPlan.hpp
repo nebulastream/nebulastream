@@ -1,7 +1,7 @@
 #ifndef NES_GLOBALEXECUTIONPLAN_HPP
 #define NES_GLOBALEXECUTIONPLAN_HPP
 
-#include <list>
+#include <vector>
 #include <map>
 #include <memory>
 
@@ -21,6 +21,35 @@ class GlobalExecutionPlan {
   public:
     static GlobalExecutionPlanPtr create();
     ~GlobalExecutionPlan() = default;
+
+    /**
+     * Add execution node as child of another execution node. If the node already exists then simply update the node.
+     * @param parentId: id of the parent execution node
+     * @param childExecutionNode: the child execution node
+     * @return true if operation succeeds
+     */
+    bool addExecutionNodeAsChildTo(uint64_t parentId, ExecutionNodePtr childExecutionNode);
+
+    /**
+     * Add execution node as parent of another execution node. If the node already exists then simply update the node.
+     * @param childId: id of the child node
+     * @param parentExecutionNode: the parent execution node
+     * @return true if operation succeeds
+     */
+    bool addExecutionNodeAsParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode);
+
+    /**
+     * Add execution node as root node for the dag and as parent of another execution node. If the node already exists then simply update the node.
+     * @param childId: id of the child node
+     * @param parentExecutionNode: the parent execution node
+     * @return true if operation succeeds
+     */
+    bool addExecutionNodeAsRootAndParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode);
+
+    /**
+     * Add execution node without any connectivity
+     */
+    bool addExecutionNode(ExecutionNodePtr parentExecutionNode);
 
     /**
      * Remove the execution node from the graph
@@ -45,28 +74,34 @@ class GlobalExecutionPlan {
     ExecutionNodePtr getExecutionNode(uint64_t id);
 
     /**
-     * Add execution node as child of another execution node
-     * @param parentId: id of the parent execution node
-     * @param childExecutionNode: the child execution node
-     * @return true if operation succeeds
+     * Get the nodes to be scheduled/deployed
+     * @return vector of execution nodes to be scheduled
      */
-    bool addExecutionNodeAsChildTo(uint64_t parentId, ExecutionNodePtr childExecutionNode);
+    std::vector<ExecutionNodePtr> getExecutionNodesToSchedule();
 
     /**
-     * Add execution node as parent of another execution node
-     * @param childId: id of the child node
-     * @param parentExecutionNode: the parent execution node
-     * @return true if operation succeeds
+     * Get root nodes
+     * @return vector containing all root nodes
      */
-    bool addExecutionNodeAsParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode);
+    std::vector<ExecutionNodePtr> getRootNodes();
 
   private:
-    GlobalExecutionPlan() = default;
+    explicit GlobalExecutionPlan()=default;
 
     /**
      * Index based on nodeId for faster access to the nodes
      */
     std::map<uint64_t, ExecutionNodePtr> nodeIdIndex;
+
+    /**
+     * List Of ExecutionNodes to be deployed. This list contains all nodes with the scheduled flag as false.
+     */
+    std::vector<ExecutionNodePtr> executionNodesToBeScheduled;
+
+    /**
+     * List of root nodes
+     */
+    std::vector<ExecutionNodePtr> rootNodes;
 };
 
 }// namespace NES

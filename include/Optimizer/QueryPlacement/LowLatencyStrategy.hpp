@@ -24,7 +24,7 @@ class LowLatencyStrategy : public BasePlacementStrategy {
   public:
     ~LowLatencyStrategy(){};
 
-    NESExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalogs);
+    GlobalExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, StreamCatalogPtr streamCatalog);
 
     static std::unique_ptr<LowLatencyStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
         return std::make_unique<LowLatencyStrategy>(LowLatencyStrategy(nesTopologyPlan));

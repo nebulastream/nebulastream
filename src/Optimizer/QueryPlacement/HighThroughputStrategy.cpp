@@ -52,7 +52,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inp
     vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
     NES_INFO("HighThroughput: Adding forward operators.");
-    addForwardOperators(candidateNodes, nesExecutionPlanPtr);
+    addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("HighThroughput: Generating complete execution Graph.");
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);

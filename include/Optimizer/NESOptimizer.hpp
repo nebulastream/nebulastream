@@ -20,6 +20,9 @@ typedef std::shared_ptr<TranslateFromLegacyPlanPhase> TranslateFromLegacyPlanPha
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
+class GlobalExecutionPlan;
+typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+
 /**
  * @brief:
  *         This class is responsible for producing the execution graph for the queries on nes topology. We can have
