@@ -1,7 +1,6 @@
 #ifndef IMPL_SERVICES_OPTIMIZERSERVICE_H_
 #define IMPL_SERVICES_OPTIMIZERSERVICE_H_
 
-#include <API/Query.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
 #include <cpprest/json.h>
 #include <string>
@@ -14,6 +13,8 @@ class TopologyManager;
 typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+class QueryPlan;
+typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 class OptimizerService {
   public:

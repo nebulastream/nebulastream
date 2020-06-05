@@ -52,7 +52,4 @@ std::string NESTopologyCoordinatorNode::getEntryTypeString() {
     return "Coordinator";
 }
 
-void NESTopologyCoordinatorNode::setQuery(QueryPtr pQuery) {
-    this->query = pQuery;
-}
 }// namespace NES

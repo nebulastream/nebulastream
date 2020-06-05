@@ -89,17 +89,10 @@ class NESTopologyWorkerNode : public NESTopologyEntry {
    */
     std::string getEntryTypeString();
 
-    /**
-   * @brief method to deploy a query here
-   * @param InputQueryPtr to the query for this node
-   */
-    void setQuery(QueryPtr pQuery);
-
   private:
     size_t cpuCapacity;
     size_t remainingCPUCapacity;
     bool isASink;
-    QueryPtr query;
 };
 
 typedef std::shared_ptr<NESTopologyWorkerNode> NESTopologyWorkerNodePtr;
