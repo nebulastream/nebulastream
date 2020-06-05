@@ -12,8 +12,8 @@ namespace NES {
 
 class NESExecutionPlan;
 typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
-class Query;
-typedef std::shared_ptr<Query> QueryPtr;
+class QueryPlan;
+typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class TopologyManager;
 typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
 class StreamCatalog;
@@ -54,11 +54,11 @@ static std::map<std::string, QueryStatus> stringToQueryStatusMap{
  */
 class QueryCatalogEntry {
   public:
-    QueryCatalogEntry(string queryId, string queryString, QueryPtr queryPtr,
+    QueryCatalogEntry(string queryId, string queryString, QueryPlanPtr queryPlanPtr,
                       NESExecutionPlanPtr nesPlanPtr, QueryStatus queryStatus)
         : queryId(queryId),
           queryString(queryString),
-          queryPtr(queryPtr),
+          queryPlanPtr(queryPlanPtr),
           nesPlanPtr(nesPlanPtr),
           queryStatus(queryStatus) {
     }
@@ -71,8 +71,8 @@ class QueryCatalogEntry {
         return queryString;
     }
 
-    const QueryPtr getQueryPtr() const {
-        return queryPtr;
+    const QueryPlanPtr getQueryPlan() const {
+        return queryPlanPtr;
     }
 
     const NESExecutionPlanPtr getNesPlanPtr() const {
@@ -89,7 +89,7 @@ class QueryCatalogEntry {
   private:
     string queryId;
     string queryString;
-    QueryPtr queryPtr;
+    QueryPlanPtr queryPlanPtr;
     NESExecutionPlanPtr nesPlanPtr;
     QueryStatus queryStatus;
 };

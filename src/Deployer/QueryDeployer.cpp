@@ -33,7 +33,7 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployer::generateDeploy
         NES_INFO("QueryDeployer::generateDeployment for query " << queryId);
 
         NESExecutionPlanPtr execPlan = queryCatalog->getQuery(queryId)->getNesPlanPtr();
-        SchemaPtr schema = queryCatalog->getQuery(queryId)->getQueryPtr()->getQueryPlan()->getRootOperator()->getOutputSchema();
+        SchemaPtr schema = queryCatalog->getQuery(queryId)->getQueryPlan()->getRootOperator()->getOutputSchema();
 
         //iterate through all vertices in the topology
         for (const ExecutionVertex& v : execPlan->getExecutionGraph()->getAllVertex()) {
@@ -69,7 +69,7 @@ vector<DataSourcePtr> QueryDeployer::getSources(const string& queryId,
                                                 const ExecutionVertex& v) {
     NES_DEBUG("QueryDeployer::getSources: queryid=" << queryId << " vertex=" << v.id);
     vector<DataSourcePtr> sources = vector<DataSourcePtr>();
-    SchemaPtr schema = queryCatalog->getQuery(queryId)->getQueryPtr()->getQueryPlan()->getRootOperator()->getOutputSchema();
+    SchemaPtr schema = queryCatalog->getQuery(queryId)->getQueryPlan()->getRootOperator()->getOutputSchema();
 
     DataSourcePtr source = findDataSourcePointer(v.ptr->getRootOperator());
 
