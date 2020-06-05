@@ -35,7 +35,7 @@ QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
 std::shared_ptr<PipelineStage> QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan,
                                                                     CodeGeneratorPtr codeGenerator,
                                                                     PipelineContextPtr context) {
-    PipelineStagePtr pipeStage;
+    PipelineStagePtr pipelineStage;
 
     //if this stage has any children we need to set up the connection now
     std::vector<PipelineStagePtr> childStages;
@@ -48,23 +48,23 @@ std::shared_ptr<PipelineStage> QueryCompiler::compilePipelineStages(QueryExecuti
     if (context->hasWindow()) {
         auto windowHandler = createWindowHandler(context->getWindow(),
                                                  queryExecutionPlan->getQueryManager(), queryExecutionPlan->getBufferManager());
-        pipeStage = createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
+        pipelineStage = createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
                                         queryExecutionPlan,
                                         executablePipeline,
                                         windowHandler);
-        queryExecutionPlan->appendsPipelineStage(pipeStage);
+        queryExecutionPlan->appendPipelineStage(pipelineStage);
     } else {
-        pipeStage = createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
+        pipelineStage = createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
                                         queryExecutionPlan,
                                         executablePipeline);
-        queryExecutionPlan->appendsPipelineStage(pipeStage);
+        queryExecutionPlan->appendPipelineStage(pipelineStage);
     }
 
     for (auto childStage : childStages) {
-        childStage->setNextStage(pipeStage);
+        childStage->setNextStage(pipelineStage);
     }
 
-    return pipeStage;
+    return pipelineStage;
 }
 
 QueryCompilerPtr createDefaultQueryCompiler(QueryManagerPtr queryManager) {

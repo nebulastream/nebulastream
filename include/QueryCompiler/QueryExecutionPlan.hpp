@@ -76,7 +76,7 @@ class QueryExecutionPlan {
      * Appends a pipeline stage to the query plan.
      * @param pipelineStage
      */
-    void appendsPipelineStage(PipelineStagePtr pipelineStage);
+    void appendPipelineStage(PipelineStagePtr pipelineStage);
 
     /**
      * @brief Gets number of pipeline stages.

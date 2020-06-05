@@ -61,7 +61,7 @@ class CCodeGenerator : public CodeGenerator {
                               const PredicatePtr& pred,
                               const NES::PipelineContextPtr& context,
                               std::ostream& out) override;
-    virtual bool generateCodeForSink(const SchemaPtr sink, const PipelineContextPtr& context, std::ostream& out) override;
+    virtual bool generateCodeForEmit(const SchemaPtr sink, const PipelineContextPtr& context, std::ostream& out) override;
     virtual bool generateCode(const WindowDefinitionPtr& window,
                               const PipelineContextPtr& context,
                               std::ostream& out) override;
@@ -251,7 +251,7 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
     return true;
 }
 
-bool CCodeGenerator::generateCodeForSink(const SchemaPtr resultSchema, const PipelineContextPtr& context, std::ostream& out) {
+bool CCodeGenerator::generateCodeForEmit(const SchemaPtr resultSchema, const PipelineContextPtr& context, std::ostream& out) {
     NES_DEBUG("CCodeGenerator: Generate code for Sink.");
     auto code = context->code;
     // set result schema to context
