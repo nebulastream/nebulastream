@@ -16,7 +16,7 @@ json::value OperatorJsonUtil::getBasePlan(QueryPlanPtr queryPlan) {
     std::vector<json::value> edges{};
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
-    const OperatorNodePtr& root = queryPlan->getRootOperator();
+    const OperatorNodePtr root = queryPlan->getRootOperator();
     OperatorPtr rootLegacyOperator = translator->transform(root);
 
     if (!root) {
@@ -47,7 +47,7 @@ json::value OperatorJsonUtil::getBasePlan(QueryPlanPtr queryPlan) {
     return result;
 }
 
-void OperatorJsonUtil::getChildren(const OperatorPtr& root, std::vector<json::value>& nodes,
+void OperatorJsonUtil::getChildren(const OperatorPtr root, std::vector<json::value>& nodes,
                                    std::vector<json::value>& edges) {
 
     std::vector<json::value> childrenNode;
