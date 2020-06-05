@@ -26,7 +26,6 @@ void MergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context
     context->addNextPipeline(newPipelineContext2);
 }
 
-
 void MergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
 
     codegen->generateCodeForEmit(schemaPtr, context, out);
@@ -43,8 +42,6 @@ const std::string MergeOperator::toString() const {
 
 OperatorType MergeOperator::getOperatorType() const { return SOURCE_OP; }//TODO: seems every leaf node of a pipeline should be a source.
 
-MergeOperator::~MergeOperator() {}
-
-const OperatorPtr createMergeOperator(SchemaPtr sch) { return std::make_shared<MergeOperator>(sch); }
+const OperatorPtr createMergeOperator(SchemaPtr schemaPtr) { return std::make_shared<MergeOperator>(schemaPtr); }
 
 }// namespace NES
