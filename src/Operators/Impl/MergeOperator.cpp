@@ -2,8 +2,6 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <iostream>
-#include <sstream>
-#include <vector>
 
 namespace NES {
 
@@ -35,12 +33,11 @@ const OperatorPtr MergeOperator::copy() const { return std::make_shared<MergeOpe
 
 const std::string MergeOperator::toString() const {
     std::stringstream ss;
-    ss << "MERGE("
-       << ")";
+    ss << "MERGE()";
     return ss.str();
 }
 
-OperatorType MergeOperator::getOperatorType() const { return SOURCE_OP; }//TODO: seems every leaf node of a pipeline should be a source.
+OperatorType MergeOperator::getOperatorType() const { return Merge_OP; }
 
 const OperatorPtr createMergeOperator(SchemaPtr schemaPtr) { return std::make_shared<MergeOperator>(schemaPtr); }
 

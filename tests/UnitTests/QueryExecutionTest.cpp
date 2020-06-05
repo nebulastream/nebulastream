@@ -287,7 +287,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
 
         plan->executeStage(0, buffer);// P1
         plan->executeStage(1, buffer);// P2
-        // Context -> Context 1 and Context 2;
+        // Contfext -> Context 1 and Context 2;
         //
         // P1 -> P2 -> P3
         // P1 -> 10 tuples -> sum=10;
