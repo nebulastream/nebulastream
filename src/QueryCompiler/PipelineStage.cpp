@@ -62,10 +62,10 @@ bool PipelineStage::stop() {
 PipelineStagePtr PipelineStage::getNextStage() {
     return nextStage;
 }
-void PipelineStage::setNextStage(PipelineStagePtr ptr) {
-    this->nextStage = ptr;
+void PipelineStage::setNextStage(PipelineStagePtr pipelineStagePtr) {
+    this->nextStage = pipelineStagePtr;
 }
-int PipelineStage::getPipeStageId() {
+uint32_t PipelineStage::getPipeStageId() {
     return pipelineStageId;
 }
 

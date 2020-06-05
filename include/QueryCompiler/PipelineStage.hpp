@@ -56,9 +56,17 @@ class PipelineStage {
     bool stop();
 
     ~PipelineStage();
+    /**
+     * @brief Get next pipeline stage
+     * @return
+     */
     PipelineStagePtr getNextStage();
-    void setNextStage(PipelineStagePtr ptr);
-    int getPipeStageId();
+    /**
+    * @brief Set next pipeline stage, remember the next pipeline state is *not* necessary current stage ID +1
+    * @return
+    */
+    void setNextStage(PipelineStagePtr pipelineStagePtr);
+    uint32_t getPipeStageId();
 
   private:
     uint32_t pipelineStageId;

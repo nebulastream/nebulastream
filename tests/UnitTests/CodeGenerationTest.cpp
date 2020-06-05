@@ -695,8 +695,8 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* generate code for scanning input buffer */
     codeGenerator->generateCode(source->getSchema(), context, std::cout);
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForSink(createPrintSinkWithSchema(Schema::create()->addField("campaign_id", UINT64), std::cout)->getSchema(),
-                                context, std::cout);
+    codeGenerator->generateCodeForEmit(createPrintSinkWithSchema(Schema::create()->addField("campaign_id", UINT64), std::cout)->getSchema(),
+                                       context, std::cout);
     /* compile code to pipeline stage */
     Compiler compiler;
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
@@ -742,7 +742,7 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     codeGenerator->generateCode(pred, context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForSink(
+    codeGenerator->generateCodeForEmit(
         createPrintSinkWithSchema(source->getSchema(), std::cout)->getSchema(), context,
         std::cout);
 
@@ -845,8 +845,8 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
         context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForSink(createPrintSinkWithSchema(inputSchema, std::cout)->getSchema(),
-                                context, std::cout);
+    codeGenerator->generateCodeForEmit(createPrintSinkWithSchema(inputSchema, std::cout)->getSchema(),
+                                       context, std::cout);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
@@ -904,7 +904,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     auto schemaSize = outputSchema->getSchemaSizeInBytes();
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForSink(createPrintSinkWithSchema(outputSchema, std::cout)->getSchema(), context, std::cout);
+    codeGenerator->generateCodeForEmit(createPrintSinkWithSchema(outputSchema, std::cout)->getSchema(), context, std::cout);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);

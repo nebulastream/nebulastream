@@ -100,7 +100,7 @@ void QueryExecutionPlan::addDataSink(DataSinkPtr sink) {
 
 const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
 
-void QueryExecutionPlan::appendsPipelineStage(PipelineStagePtr pipelineStage) {
+void QueryExecutionPlan::appendPipelineStage(PipelineStagePtr pipelineStage) {
     stages.push_back(pipelineStage);
 }
 

@@ -52,7 +52,7 @@ class CodeGenerator {
                               const PredicatePtr& pred,
                               const NES::PipelineContextPtr& context,
                               std::ostream& out) = 0;
-    virtual bool generateCodeForSink(const SchemaPtr sink, const PipelineContextPtr& context, std::ostream& out) = 0;
+    virtual bool generateCodeForEmit(const SchemaPtr schema, const PipelineContextPtr& context, std::ostream& out) = 0;
     virtual bool generateCode(const WindowDefinitionPtr& window, const PipelineContextPtr& context, std::ostream& out) = 0;
     virtual ExecutablePipelinePtr compile(const CompilerArgs&, const GeneratedCodePtr& code) = 0;
     virtual ~CodeGenerator();

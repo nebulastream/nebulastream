@@ -7,6 +7,9 @@
 
 namespace NES {
 
+/**
+ * merge two input streams to one output stream
+ */
 class MergeOperator : public Operator {
   public:
     MergeOperator(SchemaPtr sch);
