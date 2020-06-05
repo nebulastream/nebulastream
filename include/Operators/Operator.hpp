@@ -52,6 +52,7 @@ enum OperatorType {
     SET_OP,
     WINDOW_OP,
     KEYBY_OP,
+    Merge_OP,
     MAP_OP,
     SINK_OP,
     SAMPLE_OP

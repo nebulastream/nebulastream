@@ -8,18 +8,30 @@
 namespace NES {
 
 /**
- * Merges two input streams and produce one output stream.
+ * @brief Merges Operator to merge two input streams to one output stream.
+ * This operator assumes that the output of both child operators is the same.
  */
 class MergeOperator : public Operator {
   public:
-    MergeOperator(SchemaPtr sch);
+    /**
+     * @brief Creates a new merge operator, which receives the output schema as a parameter.
+     * @param outputSchema
+     */
+    MergeOperator(SchemaPtr outputSchema);
     MergeOperator(const MergeOperator& other);
     MergeOperator& operator=(const MergeOperator& other);
 
-    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
     /**
-     * @brief
-     * @param codegen generating the emit function.
+     * @brief Produce function for the code generation.
+     * @param codegen
+     * @param context
+     * @param out
+     */
+    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+
+    /**
+     * @brief Consume function for the code generation.
+     * @param codegen
      * @param context
      * @param out
      */
@@ -27,7 +39,7 @@ class MergeOperator : public Operator {
     const OperatorPtr copy() const override;
     const std::string toString() const override;
     OperatorType getOperatorType() const override;
-    ~MergeOperator() override;
+    ~MergeOperator() override = default;
 
   private:
     SchemaPtr schemaPtr;
