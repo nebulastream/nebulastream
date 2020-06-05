@@ -20,12 +20,6 @@ Query Query::from(const std::string sourceStreamName) {
     return Query(queryPlan);
 }
 
-//FIXME: Temp method for porting code from operators to nes node implementation. We will remove the call once we have fixed
-// issue #512 and #511
-Query Query::createFromQueryPlan(QueryPlanPtr queryPlan) {
-    return Query(queryPlan);
-}
-
 Query& Query::filter(const ExpressionNodePtr filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
     OperatorNodePtr op = createFilterLogicalOperatorNode(filterExpression);

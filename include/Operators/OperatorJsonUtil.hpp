@@ -20,7 +20,7 @@ class OperatorJsonUtil {
     json::value getBasePlan(QueryPlanPtr queryPlan);
 
   private:
-    void getChildren(const OperatorPtr& root, std::vector<json::value>& nodes, std::vector<json::value>& edges);
+    void getChildren(const OperatorPtr root, std::vector<json::value>& nodes, std::vector<json::value>& edges);
 };
 }// namespace NES
 

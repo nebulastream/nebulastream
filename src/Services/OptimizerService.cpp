@@ -25,7 +25,7 @@ NESExecutionPlanPtr OptimizerService::getExecutionPlan(QueryPlanPtr queryPlan, s
     typeInferencePhasePtr->setStreamCatalog(streamCatalog);
     queryPlan = typeInferencePhasePtr->transform(queryPlan);
 
-    const NESTopologyPlanPtr& topologyPlan = topologyManager->getNESTopologyPlan();
+    const NESTopologyPlanPtr topologyPlan = topologyManager->getNESTopologyPlan();
     NES_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString());
 
     NESOptimizer queryOptimizer;
