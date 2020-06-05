@@ -55,12 +55,6 @@ class NESTopologyEntry {
     virtual std::string getEntryTypeString() = 0;
 
     /**
-   * @brief method to deploy a query here
-   * @param InputQueryPtr to the query for this node
-   */
-    virtual void setQuery(QueryPtr pQuery) = 0;
-
-    /**
    * @brief method to get the overall cpu capacity of the node
    * @return size_t cpu capacity
    */

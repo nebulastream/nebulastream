@@ -74,13 +74,6 @@ class NESTopologySensorNode : public NESTopologyEntry {
     std::string getEntryTypeString();
 
     /**
-   * @brief method to get the overall cpu capacity of the node
-   * @return size_t cpu capacity
-   * TODO: should this really be here?
-   */
-    void setQuery(QueryPtr pQuery);
-
-    /**
    * @brief method to get the physical stream name of this sensor
    * @return string containing the stream name
    * TODO: add vector mehtod because a node can contain more than one stream
@@ -97,7 +90,6 @@ class NESTopologySensorNode : public NESTopologyEntry {
     size_t cpuCapacity;
     size_t remainingCPUCapacity;
     std::string physicalStreamName;
-    QueryPtr query;
 };
 
 typedef std::shared_ptr<NESTopologySensorNode> NESTopologySensorNodePtr;

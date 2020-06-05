@@ -13,6 +13,7 @@
 #include <API/Query.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 
 namespace NES {
 
@@ -33,8 +34,7 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployer::generateDeploy
         NES_INFO("QueryDeployer::generateDeployment for query " << queryId);
 
         NESExecutionPlanPtr execPlan = queryCatalog->getQuery(queryId)->getNesPlanPtr();
-        SchemaPtr schema = queryCatalog->getQuery(queryId)->getQueryPlan()->getRootOperator()->getOutputSchema();
-
+        SchemaPtr schema = queryCatalog->getQuery(queryId)->getQueryPlan()->getRootOperator()->getNodesByType<SourceLogicalOperatorNode>()[0]->getOutputSchema();
         //iterate through all vertices in the topology
         for (const ExecutionVertex& v : execPlan->getExecutionGraph()->getAllVertex()) {
             OperatorPtr operators = v.ptr->getRootOperator();
