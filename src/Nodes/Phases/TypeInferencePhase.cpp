@@ -73,7 +73,7 @@ SourceDescriptorPtr TypeInferencePhase::createSourceDescriptor(std::string strea
 
     if (type == "DefaultSource") {
         NES_DEBUG("TypeInferencePhase: create default source for one buffer");
-        return DefaultSourceDescriptor::create(schema, /*bufferCnt*/ 1, /*frequency*/ 1);
+        return DefaultSourceDescriptor::create(schema, /*bufferCnt*/ numBuffers, /*frequency*/ frequency);
     } else if (type == "CSVSource") {
         NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, /**filePath*/
