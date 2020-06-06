@@ -46,19 +46,14 @@ GlobalExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPtr inputQ
     NES_INFO("BottomUp: Preparing execution plan for query with id : " << queryId);
     GlobalExecutionPlanPtr executionPlan = placeOperators(queryId, sourceOperator, sourceNodes);
 
-    NES_DEBUG("BottomUp: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
     NESTopologyEntryPtr rootNode = nesTopologyPlan->getRootNode();
-    vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
-    NES_INFO("BottomUp: Adding forward operators for query with id : " << queryId);
-    addSystemGeneratedOperators(queryId, sourceNodes, executionPlan);
-
-    NES_INFO("BottomUp: Generating complete execution Graph for query with id : " << queryId);
-    fillExecutionGraphWithTopologyInformation(executionPlan);
-
-    //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    SchemaPtr schema = sourceOperator->getSourceDescriptor()->getSchema();
-    addSystemGeneratedSourceSinkOperators(schema, executionPlan);
+    for (NESTopologyEntryPtr targetSource : sourceNodes) {
+        NES_DEBUG("BottomUp: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
+        vector<NESTopologyEntryPtr> path = pathFinder->findPathBetween(targetSource, rootNode);
+        NES_INFO("BottomUp: Adding system generated operators for query with id : " << queryId);
+        addSystemGeneratedOperators(queryId, path, executionPlan);
+    }
 
     return executionPlan;
 }

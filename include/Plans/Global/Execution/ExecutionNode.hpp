@@ -93,9 +93,12 @@ class ExecutionNode : public Node {
 
     const std::string toString() const override;
 
-  private:
+    bool createNewQuerySubPlan(std::string subPlanId, QueryPlanPtr querySubPlan);
+    bool updateQuerySubPlan(std::string subPlanId, QueryPlanPtr querySubPlan);
 
+  private:
     explicit ExecutionNode(NESTopologyEntryPtr nesNode, std::string subPlanId, OperatorNodePtr operatorNode);
+
     explicit ExecutionNode(NESTopologyEntryPtr nesNode);
 
     /**
@@ -108,7 +111,6 @@ class ExecutionNode : public Node {
      * Physical Node information
      */
     NESTopologyEntryPtr nesNode;
-
     /**
      * map of queryPlans
      */
