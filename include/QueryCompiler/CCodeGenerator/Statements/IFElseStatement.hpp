@@ -1,6 +1,6 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_IFELSESTATEMENT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_IFELSESTATEMENT_HPP_
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 namespace NES {
 class IfElseStatement : public Statement {
   public:

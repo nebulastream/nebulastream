@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RETURNSTATEMENT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RETURNSTATEMENT_HPP_
 
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
-#include <QueryCompiler/CCodeGenerator/VarRefStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
 namespace NES {
 
 class ReturnStatement : public Statement {

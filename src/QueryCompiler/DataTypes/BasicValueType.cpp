@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/DataTypes/BasicValueType.hpp>
 

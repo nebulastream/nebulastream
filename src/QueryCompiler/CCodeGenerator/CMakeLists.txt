@@ -1,23 +1,8 @@
 add_source_nes(
-        ConstantExpressionStatement.cpp
         FileBuilder.cpp
         FunctionBuilder.cpp
-        Statement.cpp
-        ExpressionStatment.cpp
-        BinaryOperatorStatement.cpp
-        ExpressionStatment.cpp
-        TypeCastExprStatement.cpp
-        UnaryOperatorStatement.cpp
-        BinaryOperatorStatement.cpp
-        ReturnStatement.cpp
-        IFStatement.cpp
-        IfElseStatement.cpp
-        ForLoopStatement.cpp
-        FunctionCallStatement.cpp
         UserDefinedDataType.cpp
-        CompoundStatement.cpp
         CCodeGenerator.cpp
-        VarRefStatement.cpp
-        VarDeclStatement.cpp
 )
-add_subdirectory(Declaration)
+add_subdirectory(Declarations)
+add_subdirectory(Statements)

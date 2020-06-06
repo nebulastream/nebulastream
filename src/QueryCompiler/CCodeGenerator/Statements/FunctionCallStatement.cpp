@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/CCodeGenerator/FunctionCallStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
 namespace NES {
 
 FunctionCallStatement::~FunctionCallStatement() {}

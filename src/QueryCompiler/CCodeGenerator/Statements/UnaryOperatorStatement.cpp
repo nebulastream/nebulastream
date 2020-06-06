@@ -2,8 +2,8 @@
 #include <memory>
 #include <string>
 
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
-#include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
 #include <API/Types/DataTypes.hpp>

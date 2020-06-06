@@ -6,7 +6,7 @@
 #include <string>
 
 #include <Operators/OperatorTypes.hpp>
-#include <QueryCompiler/CCodeGenerator/ExpressionStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ExpressionStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
 #include <API/Types/DataTypes.hpp>

@@ -2,7 +2,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATOR_HPP_
 
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/CCodeGenerator/TypeCastExprStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/TypeCastExprStatement.hpp>
 
 namespace NES{
 

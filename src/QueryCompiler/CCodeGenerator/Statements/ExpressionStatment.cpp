@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 
 
 namespace NES {

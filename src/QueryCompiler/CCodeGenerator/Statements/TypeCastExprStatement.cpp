@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/CCodeGenerator/TypeCastExprStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/TypeCastExprStatement.hpp>
 
 namespace NES {
 

@@ -1,6 +1,6 @@
 #include <API/Types/DataTypes.hpp>
-#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 
 namespace NES {
 
