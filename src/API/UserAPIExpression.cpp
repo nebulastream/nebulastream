@@ -2,6 +2,7 @@
 #include <string>
 
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
@@ -52,12 +53,12 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code) cons
         if (bracket)
             return BinaryOperatorStatement(expr,
                                            op,
-                                           (ConstantExprStatement((createBasicTypeValue(BasicType::UINT8, "0")))),
+                                           (ConstantExpressionStatement((createBasicTypeValue(BasicType::UINT8, "0")))),
                                            BRACKETS)
                 .copy();
         return BinaryOperatorStatement(expr,
                                        op,
-                                       (ConstantExprStatement((createBasicTypeValue(BasicType::UINT8, "0")))))
+                                       (ConstantExpressionStatement((createBasicTypeValue(BasicType::UINT8, "0")))))
             .copy();
     }
 }
@@ -73,7 +74,7 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr& code) 
             NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from StructDeclaration!");
         }
     } else if (value) {
-        return ConstantExprStatement(value).copy();
+        return ConstantExpressionStatement(value).copy();
     } else {
         NES_FATAL_ERROR("UserAPIExpression: PredicateItem has only NULL Pointers!");
     }

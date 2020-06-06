@@ -5,6 +5,8 @@
 #include <memory>
 
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/ForLoopStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/FunctionCallStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>

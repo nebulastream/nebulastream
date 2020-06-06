@@ -1,8 +1,15 @@
 
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
+
 
 namespace NES {
+
+const StatementPtr ExpressionStatment::createCopy() const {
+    return this->copy();
+}
+
+
+ExpressionStatment::~ExpressionStatment() {}
 
 BinaryOperatorStatement ExpressionStatment::operator[](const ExpressionStatment& ref) {
     return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);

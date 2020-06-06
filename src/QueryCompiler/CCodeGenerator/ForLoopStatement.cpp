@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/CCodeGenerator/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/ForLoopStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <memory>
@@ -19,7 +19,16 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration, ExpressionStat
     }
 }
 
+const StatementPtr ForLoopStatement::createCopy() const {
+    return std::make_shared<ForLoopStatement>(*this);
+}
+
+const CompoundStatementPtr ForLoopStatement::getCompoundStatement() {
+    return body;
+}
+
 StatementType ForLoopStatement::getStamentType() const { return StatementType::FOR_LOOP_STMT; }
+
 const CodeExpressionPtr ForLoopStatement::getCode() const {
     std::stringstream code;
     code << "for(" << varDeclaration->getCode() << ";" << condition->getCode()->code_ << ";" << advance->getCode()->code_
@@ -36,5 +45,7 @@ void ForLoopStatement::addStatement(StatementPtr stmt) {
     if (stmt)
         body->addStatement(stmt);
 }
+
+ForLoopStatement::~ForLoopStatement() {}
 
 }// namespace NES

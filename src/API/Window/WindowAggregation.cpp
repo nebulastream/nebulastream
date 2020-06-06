@@ -2,6 +2,7 @@
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
+#include <QueryCompiler/GeneratedCode.hpp>
 #include <iostream>
 
 namespace NES {

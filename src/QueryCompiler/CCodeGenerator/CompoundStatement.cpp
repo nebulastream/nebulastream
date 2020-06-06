@@ -1,16 +1,16 @@
 
-#include <memory>
-#include <string>
-
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CCodeGenerator/CompoundStatement.hpp>
 
 #include <API/Types/DataTypes.hpp>
 
 namespace NES {
 
 CompoundStatement::CompoundStatement()
-    : statements_() {
+    : statements() {
+}
+
+const StatementPtr CompoundStatement::createCopy() const {
+    return std::make_shared<CompoundStatement>(*this);
 }
 
 StatementType CompoundStatement::getStamentType() const { return StatementType::COMPOUND_STMT; }
@@ -18,7 +18,7 @@ StatementType CompoundStatement::getStamentType() const { return StatementType::
 const CodeExpressionPtr CompoundStatement::getCode() const {
     std::stringstream code;
     //code << "{" << std::endl;
-    for (const auto& stmt : statements_) {
+    for (const auto& stmt : statements) {
         code << stmt->getCode()->code_ << ";" << std::endl;
     }
     //code << "}" << std::endl;
@@ -27,7 +27,7 @@ const CodeExpressionPtr CompoundStatement::getCode() const {
 
 void CompoundStatement::addStatement(StatementPtr stmt) {
     if (stmt)
-        statements_.push_back(stmt);
+        statements.push_back(stmt);
 }
 
 CompoundStatement::~CompoundStatement() {

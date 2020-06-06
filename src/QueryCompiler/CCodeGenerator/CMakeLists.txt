@@ -1,5 +1,6 @@
 add_source_nes(
         Declaration.cpp
+        ConstantExpressionStatement.cpp
         FileBuilder.cpp
         FunctionBuilder.cpp
         Statement.cpp
@@ -10,11 +11,13 @@ add_source_nes(
         UnaryOperatorStatement.cpp
         BinaryOperatorStatement.cpp
         ReturnStatement.cpp
-        IfStatement.cpp
+        IFStatement.cpp
         IfElseStatement.cpp
         ForLoopStatement.cpp
         FunctionCallStatement.cpp
         UserDefinedDataType.cpp
         CompoundStatement.cpp
         CCodeGenerator.cpp
+        VarRefStatement.cpp
+        VarDeclStatement.cpp
 )

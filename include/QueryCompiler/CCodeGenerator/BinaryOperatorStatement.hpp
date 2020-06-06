@@ -7,6 +7,7 @@
 #include <API/Types/DataTypes.hpp>
 #include <Operators/OperatorTypes.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/VarRefStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
 namespace NES {

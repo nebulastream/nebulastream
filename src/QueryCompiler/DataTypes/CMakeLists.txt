@@ -6,4 +6,6 @@ add_source_nes(
         PointerDataType.cpp
         ReferenceDataType.cpp
         ValueType.cpp
+        UserDefinedDataType.cpp
+        AnonymousUserDefinedDataType.cpp
 )
