@@ -6,10 +6,10 @@
 #include <API/Schema.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <API/Window/WindowDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
@@ -38,7 +38,6 @@ class CompilerArgs;
 class CompilerArgs {
 };
 
-
 class CodeGenerator {
   public:
     CodeGenerator();
@@ -52,7 +51,6 @@ class CodeGenerator {
     virtual bool generateCode(const WindowDefinitionPtr& window, const PipelineContextPtr& context, std::ostream& out) = 0;
     virtual ExecutablePipelinePtr compile(const CompilerArgs&, const GeneratedCodePtr& code) = 0;
     virtual ~CodeGenerator();
-
 };
 
 const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, SchemaPtr schema);

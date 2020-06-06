@@ -1,10 +1,10 @@
+#include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Optimizer/NESOptimizer.hpp>
 #include <Services/OptimizerService.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
 #include <chrono>
-#include <Nodes/Phases/TypeInferencePhase.hpp>
 
 using namespace NES;
 using namespace web;

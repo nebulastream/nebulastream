@@ -20,6 +20,6 @@ class FunctionDeclaration : public Declaration {
     const Code getCode() const override;
     const DeclarationPtr copy() const override;
 };
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDECLARATION_HPP_

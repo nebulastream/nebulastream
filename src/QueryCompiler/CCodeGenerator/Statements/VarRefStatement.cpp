@@ -14,9 +14,9 @@ VarRefStatement::VarRefStatement(const VariableDeclaration& var_decl)
 }
 
 VarRefStatement::VarRefStatement(VariableDeclarationPtr varDeclaration)
-: varDeclaration(std::move(varDeclaration)) {
+    : varDeclaration(std::move(varDeclaration)) {
 }
 
 VarRefStatement::~VarRefStatement() {}
 
-}
+}// namespace NES

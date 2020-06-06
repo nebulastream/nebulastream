@@ -4,20 +4,19 @@
 
 #include <QueryCompiler/CCodeGenerator/Statements/ExpressionStatement.hpp>
 
-namespace NES{
+namespace NES {
 
 class ConstantExpressionStatement : public ExpressionStatment {
   public:
-
     virtual StatementType getStamentType() const;
 
     virtual const CodeExpressionPtr getCode() const;
 
     virtual const ExpressionStatmentPtr copy() const;
 
-    ConstantExpressionStatement(const ValueTypePtr& val) ;
+    ConstantExpressionStatement(const ValueTypePtr& val);
 
-    ConstantExpressionStatement(const BasicType& type, const std::string& value) ;
+    ConstantExpressionStatement(const BasicType& type, const std::string& value);
     ConstantExpressionStatement(int32_t value);
 
     virtual ~ConstantExpressionStatement();
@@ -28,6 +27,6 @@ class ConstantExpressionStatement : public ExpressionStatment {
 
 typedef ConstantExpressionStatement Constant;
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CONSTANTEXPRESSIONSTATEMENT_HPP_

@@ -21,8 +21,8 @@ using QueryId = uint64_t;
 class NesPartition {
   public:
     explicit NesPartition(QueryId queryId, OperatorId operatorId, PartitionId partitionId,
-                          SubpartitionId subpartitionId, size_t threadId=0) : queryId(queryId), operatorId(operatorId), partitionId(partitionId), subpartitionId(subpartitionId),
-                                                                            threadId(threadId) {}
+                          SubpartitionId subpartitionId, size_t threadId = 0) : queryId(queryId), operatorId(operatorId), partitionId(partitionId), subpartitionId(subpartitionId),
+                                                                                threadId(threadId) {}
 
     explicit NesPartition(NesPartition& nesPartition, size_t threadId) : queryId(nesPartition.getQueryId()), operatorId(nesPartition.getOperatorId()),
                                                                          partitionId(nesPartition.getPartitionId()), subpartitionId(nesPartition.getSubpartitionId()),

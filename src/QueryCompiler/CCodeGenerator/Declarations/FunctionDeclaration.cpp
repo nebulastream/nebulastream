@@ -13,4 +13,4 @@ const Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }
 const Code FunctionDeclaration::getCode() const { return function_code; }
 const DeclarationPtr FunctionDeclaration::copy() const { return std::make_shared<FunctionDeclaration>(*this); }
 
-}
+}// namespace NES

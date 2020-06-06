@@ -1,18 +1,18 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATEDCODE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATEDCODE_HPP_
 
-#include <vector>
 #include <memory>
+#include <vector>
 
+#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
+#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ForLoopStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
@@ -53,10 +53,6 @@ class GeneratedCode {
     std::vector<DeclarationPtr> override_fields;
 };
 
-
-
-}
-
-
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATEDCODE_HPP_

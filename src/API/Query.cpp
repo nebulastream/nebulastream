@@ -7,7 +7,7 @@
 
 namespace NES {
 
-Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan){}
+Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
 
 Query::Query(const Query& query)
     : queryPlan(query.queryPlan) {

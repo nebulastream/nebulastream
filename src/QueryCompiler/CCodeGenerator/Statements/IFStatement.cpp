@@ -23,12 +23,11 @@ const CodeExpressionPtr IFStatement::getCode() const {
     return std::make_shared<CodeExpression>(code.str());
 }
 const StatementPtr IFStatement::createCopy() const {
-return std::make_shared<IFStatement>(*this);
+    return std::make_shared<IFStatement>(*this);
 }
 
 const CompoundStatementPtr IFStatement::getCompoundStatement() {
     return trueCaseStatement;
 }
-
 
 }// namespace NES

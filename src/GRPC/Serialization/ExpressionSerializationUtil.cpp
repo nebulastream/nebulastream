@@ -55,7 +55,7 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(Express
         // serialize assignment expression
         serializeExpression(fieldAssignmentExpressionNode->getAssignment(), serializedFieldAssignmentExpression.mutable_assignment());
         serializedExpression->mutable_details()->PackFrom(serializedFieldAssignmentExpression);
-    }else {
+    } else {
         NES_FATAL_ERROR("ExpressionSerializationUtil: could not serialize this expression: " << expression->toString());
     }
     DataTypeSerializationUtil::serializeDataType(expression->getStamp(), serializedExpression->mutable_stamp());
@@ -97,12 +97,12 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             auto fieldAccessNode = FieldAccessExpressionNode::create(field->fieldname());
             auto fieldAssignmentExpression = deserializeExpression(serializedFieldAccessExpression.mutable_assignment());
             expressionNodePtr = FieldAssignmentExpressionNode::create(fieldAccessNode->as<FieldAccessExpressionNode>(), fieldAssignmentExpression);
-        }else{
+        } else {
             NES_FATAL_ERROR("ExpressionSerializationUtil: could not de-serialize this expression");
         }
     }
 
-    if(!expressionNodePtr){
+    if (!expressionNodePtr) {
         NES_FATAL_ERROR("ExpressionSerializationUtil:: fatal error during de-serialization. The expression node must not be null");
     }
     // deserialize expression stamp

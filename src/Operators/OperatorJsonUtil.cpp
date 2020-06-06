@@ -1,8 +1,8 @@
-#include <Operators/Operator.hpp>
-#include <Operators/OperatorJsonUtil.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <API/Query.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Operators/Operator.hpp>
+#include <Operators/OperatorJsonUtil.hpp>
 namespace NES {
 
 OperatorJsonUtil::OperatorJsonUtil(){};

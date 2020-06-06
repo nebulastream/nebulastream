@@ -38,4 +38,4 @@ class ExpressionStatment : public Statement {
     virtual ~ExpressionStatment();
 };
 
-}
+}// namespace NES

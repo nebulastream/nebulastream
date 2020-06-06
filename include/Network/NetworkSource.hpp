@@ -50,7 +50,6 @@ class NetworkSource : public DataSource {
      */
     bool stop();
 
-
     /**
      * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
      * @param bufferManager
