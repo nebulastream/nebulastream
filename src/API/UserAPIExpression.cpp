@@ -5,6 +5,7 @@
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/GeneratedCode.hpp>
 
 #include <API/Types/DataTypes.hpp>
 #include <API/UserAPIExpression.hpp>

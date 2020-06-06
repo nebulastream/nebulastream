@@ -22,6 +22,7 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 class PipelineContext {
   public:
     PipelineContext();
+    static PipelineContextPtr create();
     void addVariableDeclaration(const Declaration&);
     std::vector<DeclarationPtr> variable_declarations;
 

@@ -34,18 +34,14 @@ typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
 class CompilerArgs;
-class CodeGenArgs;
 
 class CompilerArgs {
 };
 
-class CodeGenArgs {
-};
 
 class CodeGenerator {
   public:
-    CodeGenerator(const CodeGenArgs& args);
-    // virtual bool addOperator(OperatorPtr) = 0;
+    CodeGenerator();
     virtual bool generateCode(SchemaPtr schema, const PipelineContextPtr& context, std::ostream& out) = 0;
     virtual bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) = 0;
     virtual bool generateCode(const AttributeFieldPtr field,
@@ -57,49 +53,7 @@ class CodeGenerator {
     virtual ExecutablePipelinePtr compile(const CompilerArgs&, const GeneratedCodePtr& code) = 0;
     virtual ~CodeGenerator();
 
-    CodeGenArgs args;
 };
 
-/** \brief factory method for creating a code generator */
-CodeGeneratorPtr createCodeGenerator();
-/** \brief factory method for creating a pipeline context */
-const PipelineContextPtr createPipelineContext();
-
-class GeneratedCode {
-  public:
-    GeneratedCode();
-    std::vector<VariableDeclaration> variableDeclarations;
-    std::vector<StatementPtr> variableInitStmts;
-    std::shared_ptr<FOR> forLoopStmt;
-    /* points to the current scope (compound statement)
-   * to insert the code of the next operation,
-   * important when multiple levels of nesting occur
-   * due to loops (for(){ <cursor> }) or
-   * if statements (if(..){ <cursor>}) */
-    CompoundStatementPtr currentCodeInsertionPoint;
-    std::vector<StatementPtr> cleanupStmts;
-    StatementPtr returnStmt;
-    std::shared_ptr<VariableDeclaration> varDeclarationRecordIndex;
-    std::shared_ptr<VariableDeclaration> varDeclarationReturnValue;
-    StructDeclaration structDeclaratonInputTuple;
-    StructDeclaration structDeclarationResultTuple;
-    VariableDeclaration varDeclarationInputBuffer;
-    VariableDeclaration varDeclarationWindowManager;
-    VariableDeclaration varDeclarationResultBuffer;
-    VariableDeclaration varDeclarationExecutionContext;
-    VariableDeclaration varDeclarationState;
-    FunctionCallStatement tupleBufferGetNumberOfTupleCall;
-    VariableDeclaration varDeclarationInputTuples;
-    VariableDeclaration varDeclarationNumberOfResultTuples;
-    std::vector<StructDeclaration> typeDeclarations;
-    std::vector<DeclarationPtr> override_fields;
-};
-
-typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
-
-//const StructDeclaration getStructDeclarationTupleBuffer();
-//const StructDeclaration getStructDeclarationWindowState();
-//const StructDeclaration getStructDeclarationTupleBuffer();
-//const StructDeclaration getStructDeclarationWindowState();
 const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, SchemaPtr schema);
 }// namespace NES

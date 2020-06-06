@@ -10,6 +10,7 @@
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
@@ -688,8 +689,8 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     nodeEngine->start();
 
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
-    auto codeGenerator = createCodeGenerator();
-    auto context = createPipelineContext();
+    auto codeGenerator = CCodeGenerator::create();
+    auto context = PipelineContext::create();
 
     NES_INFO("Generate Code");
     /* generate code for scanning input buffer */
@@ -727,8 +728,8 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     nodeEngine->start();
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
-    auto codeGenerator = createCodeGenerator();
-    auto context = createPipelineContext();
+    auto codeGenerator = CCodeGenerator::create();
+    auto context = PipelineContext::create();
 
     auto inputSchema = source->getSchema();
 
@@ -780,8 +781,8 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     nodeEngine->start();
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
-    auto codeGenerator = createCodeGenerator();
-    auto context = createPipelineContext();
+    auto codeGenerator = CCodeGenerator::create();
+    auto context = PipelineContext::create();
 
     auto input_schema = source->getSchema();
 
@@ -831,8 +832,8 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
-    auto codeGenerator = createCodeGenerator();
-    auto context = createPipelineContext();
+    auto codeGenerator = CCodeGenerator::create();
+    auto context = PipelineContext::create();
 
     auto inputSchema = source->getSchema();
     codeGenerator->generateCode(inputSchema, context, std::cout);
@@ -878,8 +879,8 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
-    auto codeGenerator = createCodeGenerator();
-    auto context = createPipelineContext();
+    auto codeGenerator = CCodeGenerator::create();
+    auto context = PipelineContext::create();
 
     auto inputSchema = source->getSchema();
 
