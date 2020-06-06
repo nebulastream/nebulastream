@@ -1,6 +1,7 @@
 
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/FunctionCallStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <QueryCompiler/DataTypes/BasicDataType.hpp>
@@ -70,7 +71,7 @@ const StatementPtr ArrayDataType::getStmtCopyAssignment(const AssignmentStatment
     FunctionCallStatement func_call("memcpy");
     func_call.addParameter(VarRef(aParam.lhs_tuple_var)[VarRef(aParam.lhs_index_var)].accessRef(VarRef(aParam.lhs_field_var)));
     func_call.addParameter(VarRef(aParam.rhs_tuple_var)[VarRef(aParam.rhs_index_var)].accessRef(VarRef(aParam.rhs_field_var)));
-    func_call.addParameter(ConstantExprStatement(createBasicTypeValue(UINT64, std::to_string(this->dimensions))));
+    func_call.addParameter(ConstantExpressionStatement(createBasicTypeValue(UINT64, std::to_string(this->dimensions))));
     return func_call.copy();
 }
 

@@ -2,17 +2,24 @@
 #include <API/Types/DataTypes.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
+#include <QueryCompiler/CCodeGenerator/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/IFStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/ReturnStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/VarDeclStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
-#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/PipelineContext.hpp>
+#include <QueryCompiler/DataTypes/AnonymousUserDefinedDataType.hpp>
+#include <QueryCompiler/DataTypes/UserDefinedDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <Util/Logger.hpp>
 
@@ -330,7 +337,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
                                   const PipelineContextPtr& context,
                                   std::ostream& out) {
     context->setWindow(window);
-    auto constStatement = ConstantExprStatement((createBasicTypeValue(BasicType::UINT64, "0")));
+    auto constStatement = ConstantExpressionStatement((createBasicTypeValue(BasicType::UINT64, "0")));
 
     auto stateVariableDeclaration = VariableDeclaration::create(
         createPointerDataType(createAnonymUserDefinedType(
@@ -367,7 +374,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     auto windowStateVariableDeclaration = VariableDeclaration::create(
         createAnonymUserDefinedType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
-    getValueFromKeyHandle.addParameter(ConstantExprStatement(INT64, "0"));
+    getValueFromKeyHandle.addParameter(ConstantExpressionStatement(INT64, "0"));
     auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
                                             .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(

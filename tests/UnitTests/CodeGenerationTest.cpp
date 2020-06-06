@@ -6,15 +6,23 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
+#include <QueryCompiler/CCodeGenerator/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/IFStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/ReturnStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
-#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/VarDeclStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
+#include <QueryCompiler/DataTypes/AnonymousUserDefinedDataType.hpp>
+#include <QueryCompiler/DataTypes/UserDefinedDataType.hpp>
+#include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
@@ -327,7 +335,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto negate =
             ((~VarRefStatement(varDeclI)
                 >= VarRefStatement(varDeclJ)
-                    << ConstantExprStatement(createBasicTypeValue(INT32, "0"))))[VarRefStatement(
+                    << ConstantExpressionStatement(createBasicTypeValue(INT32, "0"))))[VarRefStatement(
                 varDeclJ)];
         EXPECT_EQ(negate.getCode()->code_, "~i>=j<<0[j]");
 
@@ -347,14 +355,14 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
             assign(VarRef(varDeclI), VarRef(varDeclI)*VarRef(varDeclK)));
         EXPECT_EQ(ifStatement.getCode()->code_, "if(i<j){\ni=i*k;\n\n}\n");
 
-        auto ifStatementReturn = IfStatement(
+        auto ifStatementReturn = IFStatement(
             BinaryOperatorStatement(VarRefStatement(varDeclI), GREATER_THAN_OP,
                                     VarRefStatement(varDeclJ)),
             ReturnStatement(VarRefStatement(varDeclI)));
         EXPECT_EQ(ifStatementReturn.getCode()->code_,
                   "if(i>j){\nreturn i;;\n\n}\n");
 
-        auto compareWithOne = IfStatement(VarRefStatement(varDeclJ),
+        auto compareWithOne = IFStatement(VarRefStatement(varDeclJ),
                                           VarRefStatement(varDeclI));
         EXPECT_EQ(compareWithOne.getCode()->code_, "if(j){\ni;\n\n}\n");
     }
@@ -455,7 +463,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
             VarRefStatement(varDeclK),
             ASSIGNMENT_OP,
             BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THAN_OP,
-                                    ConstantExprStatement(INT32, "5")));
+                                    ConstantExpressionStatement(INT32, "5")));
 
         EXPECT_EQ(compareAssignment.getCode()->code_, "k=j>5");
     }

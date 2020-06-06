@@ -6,7 +6,7 @@
 #include <string>
 
 #include <Operators/OperatorTypes.hpp>
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/ExpressionStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
 #include <API/Types/DataTypes.hpp>
@@ -26,7 +26,7 @@ class UnaryOperatorStatement : public ExpressionStatment {
 
     const ExpressionStatmentPtr copy() const override;
 
-    virtual ~UnaryOperatorStatement();
+    ~UnaryOperatorStatement() override;
 
   private:
     ExpressionStatmentPtr expr_;
