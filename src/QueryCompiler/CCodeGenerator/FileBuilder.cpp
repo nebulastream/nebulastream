@@ -1,7 +1,7 @@
 
 #include <string>
 
-#include <QueryCompiler/CCodeGenerator/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 
 namespace NES {

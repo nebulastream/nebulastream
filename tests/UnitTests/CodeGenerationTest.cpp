@@ -1,14 +1,11 @@
 #include <API/Schema.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <API/UserAPIExpression.hpp>
-#include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/ConstantExpressionStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/IFStatement.hpp>

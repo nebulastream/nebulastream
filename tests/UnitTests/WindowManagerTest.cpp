@@ -20,6 +20,7 @@
 
 #include <API/Schema.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <Windows/WindowHandler.hpp>
 
 namespace NES {

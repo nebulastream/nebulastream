@@ -1,15 +1,9 @@
 
-#include <memory>
-#include <string>
-
-#include <QueryCompiler/CCodeGenerator/Declaration.hpp>
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
-
-Declaration::~Declaration() {}
+namespace NES{
 
 StructDeclaration StructDeclaration::create(const std::string& type_name, const std::string& variable_name) {
     return StructDeclaration(type_name, variable_name);
@@ -86,39 +80,6 @@ StructDeclaration::StructDeclaration(const std::string& type_name, const std::st
     : type_name_(type_name), variable_name_(variable_name), decls_(), packed_struct_(false) {
 }
 
-StructDeclaration::~StructDeclaration() {}
-
-// VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::string &identifier, ValueTypePtr value =
-// nullptr);
-
-const DataTypePtr VariableDeclaration::getType() const { return type_; }
-const std::string VariableDeclaration::getIdentifierName() const { return identifier_; }
-
-const Code VariableDeclaration::getTypeDefinitionCode() const {
-    CodeExpressionPtr code = type_->getTypeDefinitionCode();
-    if (code)
-        return code->code_;
-    else
-        return Code();
-}
-
-const Code VariableDeclaration::getCode() const {
-    std::stringstream str;
-    str << type_->getDeclCode(identifier_)->code_;
-    if (init_value_) {
-        str << " = " << init_value_->getCodeExpression()->code_;
-    }
-    return str.str();
-}
-
-const CodeExpressionPtr VariableDeclaration::getIdentifier() const {
-    return CodeExpressionPtr(new CodeExpression(identifier_));
-}
-
-const DataTypePtr VariableDeclaration::getDataType() const { return type_; }
-
-const DeclarationPtr VariableDeclaration::copy() const { return std::make_shared<VariableDeclaration>(*this); }
-
 VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string& field_name) const {
     DeclarationPtr decl = getField(field_name);
     if (!decl)
@@ -127,30 +88,8 @@ VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string&
     return VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
 }
 
-VariableDeclaration::~VariableDeclaration() {}
 
-VariableDeclaration::VariableDeclaration(DataTypePtr type, const std::string& identifier, ValueTypePtr value)
-    : type_(type), identifier_(identifier), init_value_(value) {
+StructDeclaration::~StructDeclaration() {}
+
+
 }
-
-VariableDeclaration::VariableDeclaration(const VariableDeclaration& var_decl)
-    : type_(var_decl.type_), identifier_(var_decl.identifier_), init_value_(var_decl.init_value_) {
-}
-
-VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::string& identifier, ValueTypePtr value) {
-    if (!type)
-        NES_ERROR("DataTypePtr type is nullptr!");
-    return VariableDeclaration(type, identifier, value);
-}
-
-FunctionDeclaration::FunctionDeclaration(Code code) : function_code(code) {}
-
-const DataTypePtr FunctionDeclaration::getType() const { return DataTypePtr(); }
-const std::string FunctionDeclaration::getIdentifierName() const { return ""; }
-
-const Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }
-
-const Code FunctionDeclaration::getCode() const { return function_code; }
-const DeclarationPtr FunctionDeclaration::copy() const { return std::make_shared<FunctionDeclaration>(*this); }
-
-}// namespace NES
