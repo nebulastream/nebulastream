@@ -1,8 +1,9 @@
 #include <NodeEngine/QueryManager.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
+
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 namespace NES {
 
 QueryCompiler::QueryCompiler(){};
@@ -22,8 +23,8 @@ void QueryCompiler::setBufferManager(BufferManagerPtr bufferManager) {
 
 QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
 
-    auto codeGenerator = createCodeGenerator();
-    auto context = createPipelineContext();
+    auto codeGenerator = CCodeGenerator::create();
+    auto context = PipelineContext::create();
     queryPlan->produce(codeGenerator, context, std::cout);
     QueryExecutionPlanPtr qep = GeneratedQueryExecutionPlan::create();
     qep->setQueryManager(queryManager);

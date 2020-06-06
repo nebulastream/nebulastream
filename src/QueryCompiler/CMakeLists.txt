@@ -1,12 +1,13 @@
 add_source_nes(
         CodeExpression.cpp
         CodeGenerator.cpp
+        GeneratedCode.cpp
         QueryExecutionPlan.cpp
         PipelineStage.cpp
         HandCodedQueryExecutionPlan.cpp
         GeneratedQueryExecutionPlan.cpp
         QueryCompiler.cpp
-        Compiler/PipelineContext.cpp
+        PipelineContext.cpp
         PipelineExecutionContext.cpp
 )
 add_subdirectory(CCodeGenerator)

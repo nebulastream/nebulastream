@@ -16,4 +16,5 @@ add_source_nes(
         FunctionCallStatement.cpp
         UserDefinedDataType.cpp
         CompoundStatement.cpp
+        CCodeGenerator.cpp
 )
