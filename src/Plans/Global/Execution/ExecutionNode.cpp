@@ -26,7 +26,7 @@ bool ExecutionNode::querySubPlanContainsOperator(std::string subPlanId, Operator
 }
 
 QueryPlanPtr ExecutionNode::getQuerySubPlan(std::string subPlanId) {
-    if(querySubPlanExists(subPlanId)){
+    if (querySubPlanExists(subPlanId)) {
         return mapOfQuerySubPlans[subPlanId];
     }
     return nullptr;
@@ -49,6 +49,28 @@ bool ExecutionNode::createNewQuerySubPlan(std::string subPlanId, OperatorNodePtr
         return true;
     }
     NES_WARNING("ExecutionNode: Not able to add query sub plan with id : " + subPlanId);
+    return false;
+}
+
+bool ExecutionNode::createNewQuerySubPlan(std::string subPlanId, QueryPlanPtr querySubPlan) {
+    querySubPlan->setQueryId(subPlanId);
+    NES_DEBUG("ExecutionNode: Adding the query sub plan with id : " << subPlanId << " to the collection of query sub plans");
+    auto emplace = mapOfQuerySubPlans.emplace(subPlanId, querySubPlan);
+    if (emplace.second) {
+        return true;
+    }
+    NES_WARNING("ExecutionNode: Not able to add query sub plan with id : " + subPlanId);
+    return false;
+}
+
+bool ExecutionNode::updateQuerySubPlan(std::string subPlanId, QueryPlanPtr querySubPlan) {
+    NES_DEBUG("ExecutionNode: Updating the query sub plan with id : " << subPlanId << " to the collection of query sub plans");
+    if (querySubPlanExists(subPlanId)) {
+        mapOfQuerySubPlans[subPlanId] = querySubPlan;
+        NES_DEBUG("ExecutionNode: Updated the query sub plan with id : " << subPlanId << " to the collection of query sub plans");
+        return true;
+    }
+    NES_WARNING("ExecutionNode: Not able to find " << querySubPlan->toString() << " in sub plan with id : " << subPlanId);
     return false;
 }
 

@@ -123,6 +123,11 @@ class BasePlacementStrategy {
 
     void createExecutionNodeWithForwardOperators();
 
+    OperatorNodePtr createSystemSinkOperator(NESTopologyEntryPtr nesNode);
+    OperatorNodePtr createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
+
+  protected:
+
     /**
      * @brief This method will add the system generated operators where ever necessary along the selected path for operator placement.
      *
@@ -132,10 +137,6 @@ class BasePlacementStrategy {
      */
     void addSystemGeneratedOperators(std::string queryId, std::vector<NESTopologyEntryPtr> path, GlobalExecutionPlanPtr executionPlan);
 
-    OperatorNodePtr createSystemSinkOperator(NESTopologyEntryPtr nesNode);
-    OperatorNodePtr createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
-
-  protected:
     NESTopologyPlanPtr nesTopologyPlan;
     PathFinderPtr pathFinder;
 };

@@ -65,6 +65,7 @@ class QueryPlan {
      * Note: this operation will add operator without Id.
      * @param bottom if true will append the operator at the bottom of the graph else at the top and make it as new root.
      * @param operatorNode
+     * FIXME: add methods to add system generated at different locations
      */
     void appendSystemGeneratedOperator(bool bottom, OperatorNodePtr operatorNode);
 
