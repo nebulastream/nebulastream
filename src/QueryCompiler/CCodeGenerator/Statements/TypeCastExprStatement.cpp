@@ -19,5 +19,4 @@ TypeCastExprStatement::TypeCastExprStatement(const ExpressionStatment& expr, con
 
 TypeCastExprStatement::~TypeCastExprStatement() {}
 
-
-}
+}// namespace NES

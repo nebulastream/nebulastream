@@ -3,7 +3,7 @@
 
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 
-namespace NES{
+namespace NES {
 
 class VariableDeclaration;
 typedef std::shared_ptr<VariableDeclaration> VariableDeclarationPtr;
@@ -35,6 +35,6 @@ class VariableDeclaration : public Declaration {
     ValueTypePtr init_value_;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_VARIABLEDECLARATION_HPP_

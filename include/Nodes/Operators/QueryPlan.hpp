@@ -66,6 +66,7 @@ class QueryPlan {
      * @return sourceStreamName
      */
     const std::string getSourceStreamName() const;
+
   private:
     /**
      * @brief initialize query plan and set currentOperatorId to 1

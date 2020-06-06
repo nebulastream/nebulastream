@@ -1,7 +1,7 @@
 
 #include <QueryCompiler/GeneratedCode.hpp>
 
-namespace NES{
+namespace NES {
 
 GeneratedCode::GeneratedCode()
     : variableDeclarations(),
@@ -26,6 +26,4 @@ GeneratedCode::GeneratedCode()
       typeDeclarations() {
 }
 
-
-
-}
+}// namespace NES

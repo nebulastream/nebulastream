@@ -5,12 +5,4 @@ namespace NES {
 
 Statement::~Statement() {}
 
-
-
-
-
-
-
-
-
 }// namespace NES

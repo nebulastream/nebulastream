@@ -31,7 +31,6 @@ const DataTypePtr VariableDeclaration::getDataType() const { return type_; }
 
 const DeclarationPtr VariableDeclaration::copy() const { return std::make_shared<VariableDeclaration>(*this); }
 
-
 VariableDeclaration::~VariableDeclaration() {}
 
 VariableDeclaration::VariableDeclaration(DataTypePtr type, const std::string& identifier, ValueTypePtr value)
@@ -48,4 +47,4 @@ VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::str
     return VariableDeclaration(type, identifier, value);
 }
 
-}
+}// namespace NES

@@ -1,10 +1,10 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATOR_HPP_
 
-#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/TypeCastExprStatement.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 
-namespace NES{
+namespace NES {
 
 class CCodeGenerator : public CodeGenerator {
   public:
@@ -38,7 +38,6 @@ class CCodeGenerator : public CodeGenerator {
                                        StructDeclaration structDeclarationResultTuple);
 };
 
-
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATOR_HPP_

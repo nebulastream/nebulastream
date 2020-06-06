@@ -1,9 +1,9 @@
 #include <NodeEngine/QueryManager.hpp>
 
+#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
-#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 namespace NES {
 
 QueryCompiler::QueryCompiler(){};

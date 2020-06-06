@@ -1,6 +1,10 @@
+#include <API/Query.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Deployer/QueryDeployer.hpp>
 #include <GRPC/ExecutableTransferObject.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
@@ -10,10 +14,6 @@
 #include <SourceSink/SourceCreator.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <string>
-#include <API/Query.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 
 namespace NES {
 

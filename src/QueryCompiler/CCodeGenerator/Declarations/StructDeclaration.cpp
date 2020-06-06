@@ -3,7 +3,7 @@
 #include <QueryCompiler/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES{
+namespace NES {
 
 StructDeclaration StructDeclaration::create(const std::string& type_name, const std::string& variable_name) {
     return StructDeclaration(type_name, variable_name);
@@ -88,8 +88,6 @@ VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string&
     return VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
 }
 
-
 StructDeclaration::~StructDeclaration() {}
 
-
-}
+}// namespace NES

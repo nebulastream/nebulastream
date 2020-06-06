@@ -2,11 +2,11 @@
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
+#include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/NESOptimizer.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
-#include <Nodes/Phases/TypeInferencePhase.hpp>
 
 using namespace NES;
 
@@ -21,7 +21,7 @@ NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, Qu
 
     NES_INFO("NESOptimizer: Initializing Placement strategy");
     auto placementStrategyPtr = BasePlacementStrategy::getStrategy(strategy);
-    
+
     NES_INFO("NESOptimizer: Building Execution plan for the input query");
     TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();
     queryPlan = typeInferencePhasePtr->transform(queryPlan);

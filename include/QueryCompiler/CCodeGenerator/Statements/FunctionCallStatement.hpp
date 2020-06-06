@@ -5,7 +5,6 @@ namespace NES {
 
 class FunctionCallStatement : public ExpressionStatment {
   public:
-
     FunctionCallStatement(const std::string functionname);
 
     virtual StatementType getStamentType() const;

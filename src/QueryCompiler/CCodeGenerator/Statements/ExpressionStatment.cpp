@@ -1,13 +1,11 @@
 
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 
-
 namespace NES {
 
 const StatementPtr ExpressionStatment::createCopy() const {
     return this->copy();
 }
-
 
 ExpressionStatment::~ExpressionStatment() {}
 

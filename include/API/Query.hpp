@@ -83,6 +83,7 @@ class Query {
      * @return QueryPlan
      */
     QueryPlanPtr getQueryPlan();
+
   private:
     // creates a new query object
     Query(QueryPlanPtr queryPlan);

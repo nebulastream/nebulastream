@@ -44,24 +44,24 @@ class UtilityFunctions {
   * @brief this function creates a hased ID as int
   * @return the ID as site_t
   */
-   static std::size_t generateIdInt();
+    static std::size_t generateIdInt();
 
-   /**
+    /**
    * @brief get the first substring between a unique first delimiter and a non-unique second delimiter
    * @param input
    * @param delimiter1
    * @param delimiter2
    * @return the substring
    */
-   static std::string getFirstStringBetweenTwoDelimiters(const std::string& input, std::string s1, std::string s2);
+    static std::string getFirstStringBetweenTwoDelimiters(const std::string& input, std::string s1, std::string s2);
 
-   /**
+    /**
      * @brief Outputs a tuple buffer accordingly to a specific schema
      * @param buffer the tuple buffer
      * @param schema  the schema
      * @return
      */
-   static std::string prettyPrintTupleBuffer(TupleBuffer& buffer, SchemaPtr schema);
+    static std::string prettyPrintTupleBuffer(TupleBuffer& buffer, SchemaPtr schema);
 };
 }// namespace NES
 

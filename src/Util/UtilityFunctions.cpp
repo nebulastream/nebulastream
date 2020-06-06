@@ -64,7 +64,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(
             NES_ERROR("Compilation of query code failed! Code: " << code.str());
         }
 
-        typedef Query(*CreateQueryFunctionPtr)();
+        typedef Query (*CreateQueryFunctionPtr)();
         CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>(
             "_ZN3NES11createQueryEv");
         if (!func) {

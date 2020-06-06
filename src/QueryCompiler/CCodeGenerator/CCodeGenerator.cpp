@@ -1,11 +1,11 @@
 #include <API/Schema.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>

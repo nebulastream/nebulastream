@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_STRUCTDECLARATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_STRUCTDECLARATION_HPP_
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
-namespace NES{
+namespace NES {
 
 class VariableDeclaration;
 
@@ -42,6 +42,6 @@ class StructDeclaration : public Declaration {
     bool packed_struct_;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_STRUCTDECLARATION_HPP_

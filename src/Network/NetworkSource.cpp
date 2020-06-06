@@ -1,6 +1,6 @@
+#include <Network/NetworkCommon.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Util/Logger.hpp>
-#include <Network/NetworkCommon.hpp>
 
 namespace NES {
 namespace Network {
