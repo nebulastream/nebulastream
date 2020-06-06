@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/CCodeGenerator/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 
 namespace NES {
 

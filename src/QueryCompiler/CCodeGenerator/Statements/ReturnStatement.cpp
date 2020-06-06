@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/CCodeGenerator/ReturnStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ReturnStatement.hpp>
 
 namespace NES {
 

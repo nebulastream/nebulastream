@@ -1,7 +1,7 @@
 
-#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/ConstantExpressionStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/FunctionCallStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <QueryCompiler/DataTypes/BasicDataType.hpp>

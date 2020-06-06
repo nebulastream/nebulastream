@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/CCodeGenerator/CompoundStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/CompoundStatement.hpp>
 
 #include <API/Types/DataTypes.hpp>
 

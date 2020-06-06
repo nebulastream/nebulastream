@@ -6,12 +6,12 @@
 #include <API/Schema.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <API/Window/WindowDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
-#include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <SourceSink/DataSink.hpp>

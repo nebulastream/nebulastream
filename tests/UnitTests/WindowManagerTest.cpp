@@ -19,7 +19,7 @@
 #include <thread>
 
 #include <API/Schema.hpp>
-#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <Windows/WindowHandler.hpp>
 

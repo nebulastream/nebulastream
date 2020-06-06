@@ -1,0 +1,18 @@
+add_source_nes(
+        ConstantExpressionStatement.cpp
+        Statement.cpp
+        ExpressionStatment.cpp
+        BinaryOperatorStatement.cpp
+        ExpressionStatment.cpp
+        TypeCastExprStatement.cpp
+        UnaryOperatorStatement.cpp
+        BinaryOperatorStatement.cpp
+        ReturnStatement.cpp
+        IFStatement.cpp
+        IfElseStatement.cpp
+        ForLoopStatement.cpp
+        FunctionCallStatement.cpp
+        CompoundStatement.cpp
+        VarRefStatement.cpp
+        VarDeclStatement.cpp
+)

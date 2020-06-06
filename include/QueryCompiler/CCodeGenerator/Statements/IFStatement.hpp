@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_IFSTATEMENT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_IFSTATEMENT_HPP_
-#include <QueryCompiler/CCodeGenerator/CompoundStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/CompoundStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 namespace NES {
 
 class IFStatement : public Statement {

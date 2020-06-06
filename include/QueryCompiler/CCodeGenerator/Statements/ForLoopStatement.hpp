@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_FORLOOPSTATEMENT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_FORLOOPSTATEMENT_HPP_
-#include <QueryCompiler/CCodeGenerator/CompoundStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/ExpressionStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/CompoundStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ExpressionStatement.hpp>
 namespace NES{
 
 class ForLoopStatement : public Statement {

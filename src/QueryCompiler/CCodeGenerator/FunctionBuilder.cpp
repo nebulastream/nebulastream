@@ -6,7 +6,7 @@
 #include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 
 namespace NES {
 

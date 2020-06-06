@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/CCodeGenerator/VarRefStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
 
 namespace NES {
 

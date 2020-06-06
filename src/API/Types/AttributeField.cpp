@@ -1,6 +1,6 @@
 
 #include <API/Types/AttributeField.hpp>
-#include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 namespace NES {
 

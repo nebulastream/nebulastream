@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_VARDECLSTATEMENT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_VARDECLSTATEMENT_HPP_
 
-#include <QueryCompiler/CCodeGenerator/ExpressionStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ExpressionStatement.hpp>
 
 namespace NES {
 

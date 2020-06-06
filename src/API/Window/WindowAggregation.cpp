@@ -1,6 +1,6 @@
 #include <API/Window/WindowAggregation.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <iostream>
