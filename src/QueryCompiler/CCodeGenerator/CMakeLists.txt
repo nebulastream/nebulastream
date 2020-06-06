@@ -1,5 +1,4 @@
 add_source_nes(
-        Declaration.cpp
         ConstantExpressionStatement.cpp
         FileBuilder.cpp
         FunctionBuilder.cpp
@@ -21,3 +20,4 @@ add_source_nes(
         VarRefStatement.cpp
         VarDeclStatement.cpp
 )
+add_subdirectory(Declaration)

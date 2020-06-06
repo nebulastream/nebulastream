@@ -5,7 +5,7 @@
 #include <string>
 
 #include <API/Types/DataTypes.hpp>
-#include <QueryCompiler/CCodeGenerator/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/DataTypes/ValueType.hpp>
 #include <utility>

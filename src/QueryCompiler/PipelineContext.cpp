@@ -1,6 +1,5 @@
-#include <QueryCompiler/CCodeGenerator/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <memory>
 #include <utility>

@@ -2,7 +2,7 @@
 #include <API/Types/DataTypes.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <QueryCompiler/CCodeGenerator/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <SourceSink/GeneratorSource.hpp>
 #include <Util/Logger.hpp>
