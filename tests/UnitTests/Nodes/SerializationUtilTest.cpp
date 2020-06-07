@@ -44,9 +44,9 @@
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <SerializableOperator.pb.h>
 #include <Topology/NESTopologySensorNode.hpp>

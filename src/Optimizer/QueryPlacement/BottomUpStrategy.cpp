@@ -4,7 +4,6 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Operators/Operator.hpp>
@@ -12,6 +11,7 @@
 #include <Optimizer/Utils/PathFinder.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
@@ -22,9 +22,8 @@ namespace NES {
 
 BottomUpStrategy::BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
 
-GlobalExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPtr inputQuery, StreamCatalogPtr streamCatalog) {
+GlobalExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
 
-    const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const string& queryId = queryPlan->getQueryId();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
@@ -33,14 +32,12 @@ GlobalExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPtr inputQ
     const string streamName = queryPlan->getSourceStreamName();
 
     if (!sourceOperator) {
-        NES_ERROR("BottomUp: Unable to find the source operator for query with id : " << queryId);
-        throw std::runtime_error("No source operator found in the query plan wih id: " + queryId);
+        NES_THROW_RUNTIME_ERROR("No source operator found in the query plan wih id: " + queryId);
     }
 
     const vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
     if (sourceNodes.empty()) {
-        NES_ERROR("BottomUp: Unable to find the target source: " << streamName << " for query with id : " << queryId);
-        throw std::runtime_error("No source found in the topology for stream " + streamName + "for query with id : " << queryId);
+        NES_THROW_RUNTIME_ERROR("No source found in the topology for stream " + streamName + "for query with id : " + queryId);
     }
 
     NES_INFO("BottomUp: Preparing execution plan for query with id : " << queryId);
@@ -150,5 +147,5 @@ GlobalExecutionPlanPtr BottomUpStrategy::placeOperators(std::string queryId, Log
             }
         }
     }
-}// namespace NES
+}
 }// namespace NES

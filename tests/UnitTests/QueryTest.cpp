@@ -1,12 +1,8 @@
 #include "gtest/gtest.h"
 
-#include <iostream>
-#include <Util/Logger.hpp>
-#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <API/Query.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -18,17 +14,19 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Topology/TopologyManager.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-
+#include <Topology/TopologyManager.hpp>
+#include <Util/Logger.hpp>
+#include <iostream>
 
 namespace NES {
 

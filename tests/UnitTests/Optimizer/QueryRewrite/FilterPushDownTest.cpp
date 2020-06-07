@@ -1,15 +1,15 @@
+#include <API/Query.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Topology/TopologyManager.hpp>
+#include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <Util/Logger.hpp>
-#include <API/Query.hpp>
-#include <Topology/TopologyManager.hpp>
-#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
 
 using namespace NES;
 

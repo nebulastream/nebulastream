@@ -4,7 +4,6 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
@@ -17,6 +16,7 @@
 #include <Optimizer/Utils/PathFinder.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
@@ -33,11 +33,12 @@ std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(NESTop
     switch (stringToPlacementStrategyType[placementStrategyName]) {
         case BottomUp: return BottomUpStrategy::create(nesTopologyPlan);
         case TopDown: return TopDownStrategy::create(nesTopologyPlan);
-        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
-        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
-        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
-        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
-        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
+            // FIXME: enable them with issue #755
+//        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
+//        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
+//        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
+//        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
+//        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
     }
 }
 
@@ -174,7 +175,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 NESTopologyEntryPtr parentNesNode = *(pathItr + 1);
                 const OperatorNodePtr sysSinkOperator = createSystemSinkOperator(parentNesNode);
 
-                querySubPlan->appendSystemGeneratedOperator(false, sysSinkOperator);
+                querySubPlan->appendPreExistingOperator(sysSinkOperator);
                 if (executionNode->updateQuerySubPlan(queryId, querySubPlan)) {
                     NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated sink operator.");
                 }

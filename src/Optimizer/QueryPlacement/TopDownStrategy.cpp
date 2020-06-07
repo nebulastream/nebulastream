@@ -4,23 +4,20 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Operators/Operator.hpp>
-#include <Optimizer/ExecutionNode.hpp>
-#include <Optimizer/NESExecutionPlan.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
-                                                             NESTopologyPlanPtr nesTopologyPlanPtr,
-                                                             StreamCatalogPtr streamCatalog) {
-    this->nesTopologyPlan = nesTopologyPlanPtr;
+TopDownStrategy::TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
+
+GlobalExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
+
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
@@ -35,7 +32,6 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryP
 
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
-    NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
 
     NES_INFO("TopDown: Placing operators on the nes topology.");
     placeOperators(nesExecutionPlanPtr, sinkOperator, sourceNodes, nesTopologyGraphPtr);
@@ -49,8 +45,6 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryP
     NES_INFO("TopDown: Adding forward operators.");
     addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
 
-    NES_INFO("TopDown: Generating complete execution Graph.");
-    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
     SchemaPtr schema = sourceOperator->getSourceDescriptor()->getSchema();

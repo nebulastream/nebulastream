@@ -2,7 +2,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <iostream>
 
 namespace NES {

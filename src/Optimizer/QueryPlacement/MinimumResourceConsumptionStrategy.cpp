@@ -4,7 +4,6 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Operators/Operator.hpp>
@@ -12,6 +11,7 @@
 #include <Optimizer/NESExecutionPlan.hpp>
 #include <Optimizer/QueryPlacement/MinimumResourceConsumptionStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 

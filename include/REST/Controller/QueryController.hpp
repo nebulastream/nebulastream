@@ -41,10 +41,10 @@ class QueryController : public BaseController {
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
-    TopologyManagerPtr topologyManager;
-    QueryCatalogPtr queryCatalog;
-    QueryServicePtr queryServicePtr;
     NesCoordinatorPtr coordinator;
+    QueryCatalogPtr queryCatalog;
+    TopologyManagerPtr topologyManager;
+    QueryServicePtr queryServicePtr;
     StreamCatalogPtr streamCatalog;
 };
 

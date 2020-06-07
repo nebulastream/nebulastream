@@ -105,12 +105,13 @@ class ExecutionNode : public Node {
      * Execution node id.
      * Same as physical node id.
      */
-    uint64_t id;
+    const uint64_t id;
 
     /**
      * Physical Node information
      */
-    NESTopologyEntryPtr nesNode;
+    const NESTopologyEntryPtr nesNode;
+
     /**
      * map of queryPlans
      */

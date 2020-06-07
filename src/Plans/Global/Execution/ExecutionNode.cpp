@@ -1,16 +1,19 @@
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-ExecutionNode::ExecutionNode(NESTopologyEntryPtr nesNode, std::string subPlanId, OperatorNodePtr operatorNode) : nesNode(nesNode), id(nesNode->getId()) {
-    QueryPlanPtr queryPlan = QueryPlan::create(operatorNode);
+ExecutionNode::ExecutionNode(NESTopologyEntryPtr nesNode, std::string subPlanId, OperatorNodePtr operatorNode) : id(nesNode->getId()), nesNode(nesNode) {
+    QueryPlanPtr queryPlan = QueryPlan::create();
+    queryPlan->appendPreExistingOperator(operatorNode);
     queryPlan->setQueryId(subPlanId);
     mapOfQuerySubPlans.emplace(subPlanId, queryPlan);
 }
+
+ExecutionNode::ExecutionNode(NESTopologyEntryPtr nesNode) : id(nesNode->getId()), nesNode(nesNode) {}
 
 bool ExecutionNode::querySubPlanExists(std::string subPlanId) {
     return mapOfQuerySubPlans.find(subPlanId) == mapOfQuerySubPlans.end();
@@ -41,7 +44,8 @@ bool ExecutionNode::removeQuerySubPlan(std::string subPlanId) {
 }
 
 bool ExecutionNode::createNewQuerySubPlan(std::string subPlanId, OperatorNodePtr operatorNode) {
-    QueryPlanPtr querySubPlan = QueryPlan::create(operatorNode);
+    QueryPlanPtr querySubPlan = QueryPlan::create();
+    querySubPlan->appendPreExistingOperator(operatorNode);
     querySubPlan->setQueryId(subPlanId);
     NES_DEBUG("ExecutionNode: Appending the query sub plan with id : " << subPlanId << " to the collection of query sub plans");
     auto emplace = mapOfQuerySubPlans.emplace(subPlanId, querySubPlan);

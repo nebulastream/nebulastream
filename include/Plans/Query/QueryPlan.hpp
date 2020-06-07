@@ -61,13 +61,18 @@ class QueryPlan {
     void appendOperator(OperatorNodePtr operatorNode);
 
     /**
-     * @brief Append the new system generated operator to the query plan.
-     * Note: this operation will add operator without Id.
-     * @param bottom if true will append the operator at the bottom of the graph else at the top and make it as new root.
+     * @brief Append the new pre-existing operator to the query plan.
+     * Note: this operation will add the pre-existing operator without assigning it a new Id.
      * @param operatorNode
-     * FIXME: add methods to add system generated at different locations
      */
-    void appendSystemGeneratedOperator(bool bottom, OperatorNodePtr operatorNode);
+    void appendPreExistingOperator(OperatorNodePtr operatorNode);
+
+    /**
+     * @brief Pre-pend the pre-existing operator to the leaf of the query plan.
+     * Note: this operation will add the pre-existing operator without assigning it a new Id.
+     * @param operatorNode
+     */
+    void prependPreExistingOperator(OperatorNodePtr operatorNode);
 
     /**
      * @brief Returns string representation of the query.
@@ -75,13 +80,18 @@ class QueryPlan {
     std::string toString();
 
     /**
-     * @brief Get the root operator of the query graph.
-     * NOTE: root operator of a query plan is usually a sink operator
-     * FIXME: We might have multiple root nodes or we might need a dummy root node otherwise.
+     * @brief Get the list of root operators for the query graph.
+     * NOTE: in certain stages the sink operators might not be the root operators
      * @return
      */
-    OperatorNodePtr getRootOperator() const;
+    std::vector<OperatorNodePtr> getRootOperators();
 
+    /**
+     * @brief Get all the leaf operators in the query plan
+     * Note: in certain stages the source operators might not be Leaf operators
+     * @return returns a vector of leaf operators
+     */
+    std::vector<OperatorNodePtr> getLeafOperators();
     /**
      * @brief Get the source stream name
      * @return sourceStreamName
@@ -113,6 +123,9 @@ class QueryPlan {
      */
     explicit QueryPlan(std::string sourceStreamName, OperatorNodePtr rootOperator);
 
+    /**
+     * @brief initialize an empty query plan
+     */
     explicit QueryPlan();
 
     /**
@@ -120,8 +133,7 @@ class QueryPlan {
      */
     uint64_t getNextOperatorId();
 
-    BreadthFirstNodeIteratorPtr bfsIterator;
-    OperatorNodePtr rootOperator;
+    std::vector<OperatorNodePtr> rootOperators;
     uint64_t currentOperatorId;
     std::string queryId;
     std::string sourceStreamName;

@@ -4,11 +4,11 @@
 #include <GRPC/ExecutableTransferObject.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/SinkCreator.hpp>

@@ -1,6 +1,7 @@
 #include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Optimizer/NESOptimizer.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Services/OptimizerService.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
@@ -8,18 +9,17 @@
 
 using namespace NES;
 using namespace web;
-using namespace std;
-using namespace std::chrono;
 
-OptimizerService::OptimizerService(TopologyManagerPtr topologyManager, GlobalExecutionPlan) : topologyManager(topologyManager) {
+OptimizerService::OptimizerService(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan)
+    : topologyManager(topologyManager), streamCatalog(streamCatalog), globalExecutionPlan(globalExecutionPlan) {
     NES_DEBUG("OptimizerService()");
 }
 
-json::value OptimizerService::getExecutionPlanAsJson(QueryPlanPtr queryPlan, string optimizationStrategyName, StreamCatalogPtr streamCatalog) {
-    return getExecutionPlan(queryPlan, optimizationStrategyName, streamCatalog)->getExecutionGraphAsJson();
+json::value OptimizerService::getExecutionPlanAsJson(QueryPlanPtr queryPlan, string optimizationStrategyName) {
+    return updateGlobalExecutionPlan(queryPlan, optimizationStrategyName)->getExecutionGraphAsJson();
 }
 
-NESExecutionPlanPtr OptimizerService::getExecutionPlan(QueryPlanPtr queryPlan, string optimizationStrategyName, StreamCatalogPtr streamCatalog) {
+GlobalExecutionPlanPtr OptimizerService::updateGlobalExecutionPlan(QueryPlanPtr queryPlan, string optimizationStrategyName) {
 
     TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();
     typeInferencePhasePtr->setStreamCatalog(streamCatalog);
@@ -34,6 +34,6 @@ NESExecutionPlanPtr OptimizerService::getExecutionPlan(QueryPlanPtr queryPlan, s
     const json::value& basePlan = operatorJsonUtil.getBasePlan(queryPlan);
 
     NES_DEBUG("OptimizerService: query plan=" << basePlan);
-    const GlobalExecutionPlanPtr executionGraph = queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan, inputQuery->streamCatalog);
+    const GlobalExecutionPlanPtr executionGraph = queryOptimizer.prepareExecutionGraph(optimizationStrategyName, queryPlan, topologyPlan, streamCatalog);
     return executionGraph;
 }

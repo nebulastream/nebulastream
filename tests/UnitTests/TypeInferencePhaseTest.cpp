@@ -1,4 +1,3 @@
-#include <gtest/gtest.h>
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
@@ -12,12 +11,13 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 
