@@ -7,7 +7,8 @@
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
-#include <Optimizer/NESExecutionPlan.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/SinkCreator.hpp>
@@ -66,7 +67,7 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployer::generateDeploy
 }
 
 vector<DataSourcePtr> QueryDeployer::getSources(const string& queryId,
-                                                const ExecutionVertex& v) {
+                                                const ExecutionNodePtr v) {
     NES_DEBUG("QueryDeployer::getSources: queryid=" << queryId << " vertex=" << v.id);
     vector<DataSourcePtr> sources = vector<DataSourcePtr>();
     SchemaPtr schema = queryCatalog->getQuery(queryId)->getQueryPlan()->getRootOperator()->getOutputSchema();
@@ -120,8 +121,7 @@ DataSinkPtr QueryDeployer::findDataSinkPointer(OperatorPtr operatorPtr) {
     }
 }
 
-DataSourcePtr QueryDeployer::findDataSourcePointer(
-    OperatorPtr operatorPtr) {
+DataSourcePtr QueryDeployer::findDataSourcePointer(OperatorPtr operatorPtr) {
     vector<OperatorPtr> children = operatorPtr->getChildren();
     if (children.empty() && operatorPtr->getOperatorType() == SOURCE_OP) {
         SourceOperator* sourceOperator = dynamic_cast<SourceOperator*>(operatorPtr

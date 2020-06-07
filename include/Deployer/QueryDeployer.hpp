@@ -3,15 +3,18 @@
 
 #include <Catalogs/QueryCatalog.hpp>
 #include <GRPC/ExecutableTransferObject.hpp>
-#include <Optimizer/ExecutionGraph.hpp>
 #include <SourceSink/DataSource.hpp>
 
 #include <map>
 #include <vector>
 using namespace std;
 namespace NES {
+
 class TopologyManager;
 typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+
+class ExecutionNode;
+typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 
 class QueryDeployer {
 
@@ -30,18 +33,18 @@ class QueryDeployer {
     /**
      * @brief helper method to get all sources in a serialized format from a specific node in the topology
      * @param schema the schema
-     * @param v the execution vertex
+     * @param executionNode the execution node
      * @param execPlan the execution plan
      */
-    vector<DataSourcePtr> getSources(const string& queryId, const ExecutionVertex& v);
+    vector<DataSourcePtr> getSources(const string& queryId, const ExecutionNodePtr executionNode);
 
     /**
      * @brief helper method to get all sinks in a serialized format from a specific node in the topology
      * @param queryId
-     * @param v execution vertex
+     * @param executionNode execution node
      * @return DataSinkPtr
      */
-    vector<DataSinkPtr> getSinks(const string& queryId, const ExecutionVertex& v);
+    vector<DataSinkPtr> getSinks(const string& queryId, const ExecutionNodePtr executionNode);
 
     /**
      * @brief find the sink operator starting from the child operator.
