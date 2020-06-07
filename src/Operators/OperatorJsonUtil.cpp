@@ -1,8 +1,8 @@
 #include <API/Query.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 namespace NES {
 
 OperatorJsonUtil::OperatorJsonUtil(){};
@@ -16,7 +16,8 @@ json::value OperatorJsonUtil::getBasePlan(QueryPlanPtr queryPlan) {
     std::vector<json::value> edges{};
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
-    const OperatorNodePtr root = queryPlan->getRootOperator();
+    //FIXME: this needs to be changed but should be covered in another issue
+    const OperatorNodePtr root = queryPlan->getRootOperators()[0];
     OperatorPtr rootLegacyOperator = translator->transform(root);
 
     if (!root) {

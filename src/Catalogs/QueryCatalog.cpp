@@ -7,8 +7,8 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog) : topologyManager(topologyManager),
-                                                                                                 streamCatalog(streamCatalog) {
+QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan)
+    : topologyManager(topologyManager), streamCatalog(streamCatalog), globalExecutionPlan(globalExecutionPlan) {
     NES_DEBUG("QueryCatalog()");
 }
 
@@ -62,21 +62,16 @@ string QueryCatalog::registerQuery(const string& queryString,
     try {
         QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
 
-        OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
-        NESExecutionPlanPtr nesExecutionPtr = optimizerService->getExecutionPlan(
-            query->getQueryPlan(), optimizationStrategyName, streamCatalog);
+        OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
+        GlobalExecutionPlanPtr executionPlan = optimizerService->updateGlobalExecutionPlan(query->getQueryPlan(), optimizationStrategyName);
 
-        NES_DEBUG(
-            "QueryCatalog: Final Execution Plan =" << nesExecutionPtr->getTopologyPlanString());
+        NES_DEBUG("QueryCatalog: Final Execution Plan =" << executionPlan->getTopologyPlanString());
 
         std::string queryId = UtilityFunctions::generateIdString();
-
-        QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(
-            queryId, queryString, query->getQueryPlan(), nesExecutionPtr, QueryStatus::Registered);
+        QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(queryId, queryString, query->getQueryPlan(), QueryStatus::Registered);
 
         queries[queryId] = entry;
         NES_DEBUG("number of queries after insert=" << queries.size());
-
         return queryId;
     } catch (const std::exception& exc) {
         NES_ERROR("QueryCatalog:_exception:" << exc.what());
@@ -99,8 +94,8 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
         return false;
     } else {
         NES_DEBUG("QueryCatalog: De-registering query ...");
-        NESExecutionPlanPtr execPlan = getQuery(queryId)->getNesPlanPtr();
-        execPlan->freeResources();
+        //        NESExecutionPlanPtr execPlan = getQuery(queryId)->getNesPlanPtr();
+        //        execPlan->freeResources();
         if (getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
             NES_DEBUG("QueryCatalog: query is running, stopping it");
             markQueryAs(queryId, QueryStatus::Stopped);
@@ -113,26 +108,26 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
     }
 }
 
-std::vector<NESTopologyEntryPtr> QueryCatalog::getExecutionNodesToQuery(string queryId) {
-    return queriesToExecNodeMap[queryId];
-}
-
-void QueryCatalog::addExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes) {
-    std::vector<NESTopologyEntryPtr>& vec = queriesToExecNodeMap[queryId];
-    std::copy(nodes.begin(), nodes.end(), std::back_inserter(vec));
-}
-
-void QueryCatalog::removeExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes) {
-    std::vector<NESTopologyEntryPtr>& vec = queriesToExecNodeMap[queryId];
-
-    std::unordered_multiset<NESTopologyEntryPtr> st;
-    st.insert(vec.begin(), vec.end());
-    st.insert(nodes.begin(), nodes.end());
-    auto predicate = [&st](const NESTopologyEntryPtr& k) {
-        return st.count(k) > 1;
-    };
-    vec.erase(std::remove_if(vec.begin(), vec.end(), predicate), vec.end());
-}
+//std::vector<NESTopologyEntryPtr> QueryCatalog::getExecutionNodesToQuery(string queryId) {
+//    return queriesToExecNodeMap[queryId];
+//}
+//
+//void QueryCatalog::addExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes) {
+//    std::vector<NESTopologyEntryPtr>& vec = queriesToExecNodeMap[queryId];
+//    std::copy(nodes.begin(), nodes.end(), std::back_inserter(vec));
+//}
+//
+//void QueryCatalog::removeExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes) {
+//    std::vector<NESTopologyEntryPtr>& vec = queriesToExecNodeMap[queryId];
+//
+//    std::unordered_multiset<NESTopologyEntryPtr> st;
+//    st.insert(vec.begin(), vec.end());
+//    st.insert(nodes.begin(), nodes.end());
+//    auto predicate = [&st](const NESTopologyEntryPtr& k) {
+//        return st.count(k) > 1;
+//    };
+//    vec.erase(std::remove_if(vec.begin(), vec.end(), predicate), vec.end());
+//}
 
 void QueryCatalog::markQueryAs(string queryId, QueryStatus queryStatus) {
     NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << queryStatus);

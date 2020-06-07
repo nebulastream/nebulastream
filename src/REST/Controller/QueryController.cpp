@@ -1,11 +1,9 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
-#include <Optimizer/NESExecutionPlan.hpp>
 #include <REST/Controller/QueryController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
-//#include <Topology/TestTopology.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>

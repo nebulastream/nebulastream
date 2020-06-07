@@ -11,6 +11,7 @@ namespace NES {
 enum NESPlacementStrategyType {
     TopDown,
     BottomUp,
+    // FIXME: enable them with issue #755
     LowLatency,
     HighThroughput,
     MinimumResourceConsumption,
@@ -21,11 +22,12 @@ enum NESPlacementStrategyType {
 static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategyType{
     {"BottomUp", BottomUp},
     {"TopDown", TopDown},
-    {"Latency", LowLatency},
-    {"HighThroughput", HighThroughput},
-    {"MinimumResourceConsumption", MinimumResourceConsumption},
-    {"MinimumEnergyConsumption", MinimumEnergyConsumption},
-    {"HighAvailability", HighAvailability},
+    // FIXME: enable them with issue #755
+//    {"Latency", LowLatency},
+//    {"HighThroughput", HighThroughput},
+//    {"MinimumResourceConsumption", MinimumResourceConsumption},
+//    {"MinimumEnergyConsumption", MinimumEnergyConsumption},
+//    {"HighAvailability", HighAvailability},
 };
 
 class NESExecutionPlan;
@@ -70,41 +72,11 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class BasePlacementStrategy {
 
   private:
-    const char* NO_OPERATOR = "NO-OPERATOR";
     static const int zmqDefaultPort = 5555;
 
   public:
-    BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
-    /**
-     * @brief Returns an execution graph based on the input query and nes topology.
-     * @param inputQuery
-     * @param nesTopologyPlan
-     * @return
-     */
-    virtual GlobalExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, StreamCatalogPtr streamCatalog) = 0;
-
-  private:
-    /**
-     * @brief This method will add system generated zmq source and sinks for each execution node.
-     * @note We use zmq for internal message transfer therefore the source and sink will be zmq based.
-     * @note This method will not append zmq source or sink if the operator chain in an execution node already contains
-     * user defined source or sink operator respectively.
-     *
-     * @param schema
-     * @param nesExecutionPlanPtr
-     */
-    void addSystemGeneratedSourceSinkOperators(SchemaPtr schema, NESExecutionPlanPtr nesExecutionPlanPtr);
-
-    /**
-     * @brief Fill the execution graph with complete topology information and assign No-Operators to the node which were
-     * not selected for operator placement by the placement strategy.
-     *
-     * Note: This method is necessary for displaying the execution graph on NES-UI
-     *
-     * @param nesExecutionPlanPtr
-     */
-    void fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr);
+    explicit BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
     /**
      * @brief Factory method returning different kind of optimizer.
@@ -115,11 +87,14 @@ class BasePlacementStrategy {
     static std::unique_ptr<BasePlacementStrategy> getStrategy(NESTopologyPlanPtr nesTopologyPlan, std::string placementStrategyName);
 
     /**
-     * @brief replace forward operator with system generated source and sink operator.
-     * @param schema schema of the incoming or outgoing data for source and sink operator.
-     * @param executionNodePtr information about the execution node
+     * @brief Returns an execution graph based on the input query and nes topology.
+     * @param queryPlan
+     * @param nesTopologyPlan
+     * @return
      */
-    void convertFwdOptr(SchemaPtr schema, ExecutionNodePtr executionNodePtr) const;
+    virtual GlobalExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) = 0;
+
+  private:
 
     void createExecutionNodeWithForwardOperators();
 

@@ -1,12 +1,12 @@
 #ifndef NES_INCLUDE_DEPLOYER_QUERYDEPLOYER_HPP_
 #define NES_INCLUDE_DEPLOYER_QUERYDEPLOYER_HPP_
 
-#include <Catalogs/QueryCatalog.hpp>
 #include <GRPC/ExecutableTransferObject.hpp>
 #include <SourceSink/DataSource.hpp>
 
 #include <map>
 #include <vector>
+
 using namespace std;
 namespace NES {
 
@@ -15,6 +15,9 @@ typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
 
 class ExecutionNode;
 typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
+
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
 class QueryDeployer {
 

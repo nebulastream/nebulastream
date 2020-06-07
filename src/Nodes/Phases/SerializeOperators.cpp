@@ -6,15 +6,17 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <google/protobuf/util/json_util.h>
 namespace NES {
 class SerializeOperators {
     void serialize(QueryPlanPtr plan) {
         auto ope = SerializableOperator();
-        auto rootOperator = plan->getRootOperator();
-        serializeOperator(rootOperator, &ope);
+        auto rootOperators = plan->getRootOperators();
+        for (auto rootOperator : rootOperators) {
+            serializeOperator(rootOperator, &ope);
+        }
 
         std::string json_string;
         google::protobuf::util::MessageToJsonString(ope, &json_string);

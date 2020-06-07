@@ -23,7 +23,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES {

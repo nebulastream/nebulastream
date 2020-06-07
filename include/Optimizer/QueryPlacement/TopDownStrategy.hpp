@@ -13,7 +13,7 @@ class TopDownStrategy : public BasePlacementStrategy {
   public:
     ~TopDownStrategy() = default;
 
-    NESExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlanPtr, StreamCatalogPtr streamCatalog);
+    GlobalExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
 
     static std::unique_ptr<TopDownStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
         return std::make_unique<TopDownStrategy>(TopDownStrategy(nesTopologyPlan));

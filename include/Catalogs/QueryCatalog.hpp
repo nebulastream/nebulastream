@@ -1,12 +1,35 @@
 #ifndef INCLUDE_CATALOGS_QUERYCATALOG_HPP_
 #define INCLUDE_CATALOGS_QUERYCATALOG_HPP_
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <Catalogs/QueryCatalogEntry.hpp>
 
 namespace NES {
 
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+class GlobalExecutionPlan;
+typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+
+/**
+ * @brief Represents various states the user query goes through.
+ *
+ * Registered : Query is registered to be scheduled to the worker nodes
+ * Scheduling: Coordinator node is transmitting the execution pipelines to worker nodes
+ * Running: Query is now running successfully
+ * Stopped: Query was explicitly stopped by system
+ * Failed: Query failed because of some reason
+ *
+ */
+enum QueryStatus { Registered,
+                   Scheduling,
+                   Running,
+                   Stopped,
+                   Failed };
 
 static std::map<std::string, QueryStatus> stringToQueryStatusMap{
     {"REGISTERED", Registered},
@@ -24,7 +47,7 @@ static std::map<std::string, QueryStatus> stringToQueryStatusMap{
  */
 class QueryCatalog {
   public:
-    QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog);
+    QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan);
     /**
      * @brief registers an RPC query into the NES topology to make it deployable
      * @param queryString a queryString of the query
@@ -48,26 +71,26 @@ class QueryCatalog {
      */
     void markQueryAs(string queryId, QueryStatus queryStatus);
 
-    /**
-     * @brief method to add which nodes participate in the query
-     * @param queryId
-     * @param nodes
-     */
-    void addExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes);
-
-    /**
-     * @brief method to remove nodes which are no longer participate in the query
-     * @param queryId
-     * @param nodes
-    */
-    void removeExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes);
-
-    /**
-    * @brief method to get nodes which participate in a query
-    * @param queryId
-    * @return  nodes
-   */
-    std::vector<NESTopologyEntryPtr> getExecutionNodesToQuery(string queryId);
+//    /**
+//     * @brief method to add which nodes participate in the query
+//     * @param queryId
+//     * @param nodes
+//     */
+//    void addExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes);
+//
+//    /**
+//     * @brief method to remove nodes which are no longer participate in the query
+//     * @param queryId
+//     * @param nodes
+//    */
+//    void removeExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes);
+//
+//    /**
+//    * @brief method to get nodes which participate in a query
+//    * @param queryId
+//    * @return  nodes
+//   */
+//    std::vector<NESTopologyEntryPtr> getExecutionNodesToQuery(string queryId);
 
     /**
      * @brief method to test if a query is started
@@ -130,11 +153,11 @@ class QueryCatalog {
     std::map<std::string, std::string> getAllRegisteredQueries();
 
   private:
+
     TopologyManagerPtr topologyManager;
     StreamCatalogPtr streamCatalog;
-
-    map<string, QueryCatalogEntryPtr> queries;
-    map<string, std::vector<NESTopologyEntryPtr>> queriesToExecNodeMap;
+    GlobalExecutionPlanPtr globalExecutionPlan;
+    std::map<string, QueryCatalogEntryPtr> queries;
 };
 
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;

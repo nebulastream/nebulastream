@@ -1,21 +1,21 @@
-#include <gtest/gtest.h>
-#include <iostream>
-#include <API/Schema.hpp>
-#include <Util/Logger.hpp>
-#include <Topology/NESTopologySensorNode.hpp>
-#include <Topology/TopologyManager.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 #include <API/InputQuery.hpp>
 #include <API/Query.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <API/Schema.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Node.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Nodes/Node.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Topology/NESTopologySensorNode.hpp>
+#include <Topology/TopologyManager.hpp>
+#include <Util/Logger.hpp>
+#include <gtest/gtest.h>
+#include <iostream>
 
 using namespace NES;
 

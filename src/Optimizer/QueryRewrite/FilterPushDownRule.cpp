@@ -6,9 +6,9 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <bits/stdc++.h>
 #include <queue>
 
@@ -17,8 +17,15 @@ namespace NES {
 QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
 
     NES_INFO("FilterPushDownRule: Get all filter nodes in the graph");
-    const auto rootOperator = queryPlanPtr->getRootOperator();
-    std::vector<FilterLogicalOperatorNodePtr> filterOperators = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
+    const auto rootOperators = queryPlanPtr->getRootOperators();
+    std::vector<FilterLogicalOperatorNodePtr> filterOperators;
+
+    for(auto rootOperator: rootOperators){
+        //FIXME: this will result in adding same filter operator twice in the vector
+        // remove the duplicate filters from the vector
+        auto filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
+        filterOperators.insert(filterOperators.end(), filters.begin(), filters.end());
+    }
 
     NES_INFO("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
 

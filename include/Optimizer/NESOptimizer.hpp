@@ -40,9 +40,9 @@ class NESOptimizer {
      * @param strategy : name of the placement strategy
      * @param inputQuery : the input query for which execution plan is to be prepared
      * @param nesTopologyPlan : The topology of the NEs infrastructure
-     * @return Execution plan for the input query
+     * @return Updated Global Execution plan
      */
-    NESExecutionPlanPtr prepareExecutionGraph(std::string strategy,
+    GlobalExecutionPlanPtr prepareExecutionGraph(std::string strategy,
                                               QueryPlanPtr queryPlan,
                                               NESTopologyPlanPtr nesTopologyPlan,
                                               StreamCatalogPtr streamCatalog);
