@@ -26,7 +26,7 @@ void MergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context
 
 void MergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
 
-    codegen->generateCodeForEmit(schemaPtr, context, out);
+    codegen->generateCodeForEmit(schemaPtr, context);
 }
 
 const OperatorPtr MergeOperator::copy() const { return std::make_shared<MergeOperator>(*this); }

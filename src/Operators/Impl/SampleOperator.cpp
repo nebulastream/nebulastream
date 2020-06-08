@@ -27,7 +27,7 @@ void SampleOperator::produce(CodeGeneratorPtr codegen,
 
 void SampleOperator::consume(CodeGeneratorPtr codegen,
                              PipelineContextPtr context, std::ostream& out) {
-    //  codegen->generateCode(udfs, context, out);
+    //  codegen->generateCodeForScan(udfs, context, out);
     getParent()->consume(codegen, context, out);
 }
 

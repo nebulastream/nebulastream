@@ -25,7 +25,7 @@ void WindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr contex
 }
 
 void WindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    codegen->generateCode(this->window_definition, context, out);
+    codegen->generateCodeForWindow(this->window_definition, context);
 }
 
 const OperatorPtr WindowOperator::copy() const {

@@ -21,7 +21,7 @@ void SourceOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr contex
 }
 
 void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    codegen->generateCode(source->getSchema(), context, out);
+    codegen->generateCodeForScan(source->getSchema(), context);
     getParent()->consume(codegen, context, out);
 }
 

@@ -10,23 +10,59 @@ class CCodeGenerator : public CodeGenerator {
   public:
     CCodeGenerator();
     static CodeGeneratorPtr create();
-    bool generateCode(SchemaPtr schema, const PipelineContextPtr& context,
-                      std::ostream& out) override;
-    bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) override;
-    bool generateCode(const AttributeFieldPtr field,
-                      const PredicatePtr& pred,
-                      const NES::PipelineContextPtr& context,
-                      std::ostream& out) override;
-    bool generateCodeForEmit(const SchemaPtr sinkSchema, const PipelineContextPtr& context, std::ostream& out) override;
-    bool generateCode(const WindowDefinitionPtr& window,
-                      const PipelineContextPtr& context,
-                      std::ostream& out) override;
-    ExecutablePipelinePtr compile(const CompilerArgs&, const GeneratedCodePtr& code) override;
+
+    /**
+     * @brief Code generation for a scan, which depends on a particular input schema.
+     * @param schema The input schema, in which we receive the input buffer.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    bool generateCodeForScan(SchemaPtr schema, PipelineContextPtr context) override;
+
+    /**
+    * @brief Code generation for a filter operator, which depends on a particular filter predicate.
+    * @param predicate The filter predicate, which selects input records.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForFilter(PredicatePtr pred, PipelineContextPtr context) override;
+
+    /**
+    * @brief Code generation for a map operator, which depends on a particular map predicate.
+    * @param field The field, which we want to manipulate with the map predicate.
+    * @param predicate The map predicate.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForMap(AttributeFieldPtr field, PredicatePtr pred, PipelineContextPtr context) override;
+
+    /**
+    * @brief Code generation for a emit, which depends on a particular output schema.
+    * @param schema The output schema.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPtr context) override;
+
+    /**
+    * @brief Code generation for a window operator, which depends on a particular window definition.
+    * @param window The window definition, which contains all properties of the window.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForWindow(WindowDefinitionPtr window, PipelineContextPtr context) override;
+
+    /**
+     * @brief Performs the actual compilation the generated code pipeline.
+     * @param code generated code.
+     * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
+     */
+    ExecutablePipelinePtr compile(GeneratedCodePtr code) override;
     ~CCodeGenerator() override;
 
   private:
     BinaryOperatorStatement getBuffer(VariableDeclaration tupleBufferVariable);
-    TypeCastExprStatement getTypedBuffer(VariableDeclaration tupleBufferVariable, StructDeclaration structDeclaraton);
+    TypeCastExprStatement getTypedBuffer(VariableDeclaration tupleBufferVariable, StructDeclaration structDeclaration);
     BinaryOperatorStatement getBufferSize(VariableDeclaration tupleBufferVariable);
     BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable,
                                               VariableDeclaration numberOfResultTuples);
@@ -36,6 +72,8 @@ class CCodeGenerator : public CodeGenerator {
     void generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
                                        VariableDeclaration varDeclResultTuple,
                                        StructDeclaration structDeclarationResultTuple);
+
+    StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, SchemaPtr schema);
 };
 
 }// namespace NES

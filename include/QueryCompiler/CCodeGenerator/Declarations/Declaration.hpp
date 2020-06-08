@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "API/Types/DataTypes.hpp"
+#include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
 namespace NES {

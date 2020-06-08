@@ -26,7 +26,7 @@ void MapOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, 
     getChildren()[0]->produce(codegen, context, out);
 }
 void MapOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    codegen->generateCode(field_, predicate_, context, out);
+    codegen->generateCodeForMap(field_, predicate_, context);
     getParent()->consume(codegen, context, out);
 }
 
