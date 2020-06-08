@@ -24,9 +24,9 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     /**
      * @brief place query operators and prepare the nes execution plan
-     * @param queryId : the id of the query whose operators need to be placed
-     * @param sinkOperator :  sink operator for the query
-     * @param nesSourceNodes : list of physical source nodes
+     * @param queryId: the id of the query whose operators need to be placed
+     * @param sinkOperator:  sink operator for the query
+     * @param nesSourceNodes: list of physical source nodes
      */
     void placeOperators(std::string queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes);
 };

@@ -26,4 +26,8 @@ bool ZmqSinkDescriptor::equal(SinkDescriptorPtr other) {
     return port == otherSinkDescriptor->port && host == otherSinkDescriptor->host;
 }
 
+void ZmqSinkDescriptor::setPort(uint16_t port) {
+    this->port = port;
+}
+
 }// namespace NES

@@ -1,4 +1,5 @@
 #include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -6,6 +7,7 @@
 #include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/TopologyManager.hpp>
@@ -32,9 +34,10 @@ NesCoordinator::NesCoordinator() {
 
     topologyManager = std::make_shared<TopologyManager>();
     streamCatalog = std::make_shared<StreamCatalog>();
-    queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog);
+    executionPlan = GlobalExecutionPlan::create();
+    queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, executionPlan);
     workerRPCClient = std::make_shared<WorkerRPCClient>();
-    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager);
+    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, executionPlan);
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 }
 
@@ -47,9 +50,10 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
 
     topologyManager = std::make_shared<TopologyManager>();
     streamCatalog = std::make_shared<StreamCatalog>();
-    queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog);
+    executionPlan = GlobalExecutionPlan::create();
+    queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, executionPlan);
     workerRPCClient = std::make_shared<WorkerRPCClient>();
-    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager);
+    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, executionPlan);
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 }
 

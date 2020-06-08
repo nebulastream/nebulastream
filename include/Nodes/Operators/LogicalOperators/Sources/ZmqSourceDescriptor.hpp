@@ -23,6 +23,12 @@ class ZmqSourceDescriptor : public SourceDescriptor {
      */
     uint16_t getPort() const;
 
+    /**
+     * Set the zmq port information
+     * @param port : zmq port number
+     */
+    void setPort(uint16_t port);
+
     bool equal(SourceDescriptorPtr other) override;
     std::string toString() override;
 
