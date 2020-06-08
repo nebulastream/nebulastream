@@ -29,4 +29,8 @@ std::string ZmqSourceDescriptor::toString() {
     return "ZmqSourceDescriptor()";
 }
 
+void ZmqSourceDescriptor::setPort(uint16_t port) {
+    this->port = port;
+}
+
 }// namespace NES

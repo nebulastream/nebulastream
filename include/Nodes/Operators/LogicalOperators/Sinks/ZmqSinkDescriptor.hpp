@@ -28,6 +28,13 @@ class ZmqSinkDescriptor : public SinkDescriptor {
      * @brief Get the zmq port used for connecting to the server
      */
     uint16_t getPort() const;
+
+    /**
+     * Set the zmq port information
+     * @param port : zmq port number
+     */
+    void setPort(uint16_t port);
+
     std::string toString() override;
     bool equal(SinkDescriptorPtr other) override;
 

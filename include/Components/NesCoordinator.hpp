@@ -1,8 +1,7 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
-#include "REST/RestServer.hpp"
-#include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+
+#include <REST/RestServer.hpp>
 #include <Components/NesWorker.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <Deployer/QueryDeployer.hpp>
@@ -12,7 +11,15 @@
 #include <string>
 
 namespace NES {
-typedef map<NESTopologyEntryPtr, ExecutableTransferObject> QueryDeployment;
+
+class GlobalExecutionPlan;
+typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
@@ -138,6 +145,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     WorkerRPCClientPtr workerRPCClient;
     CoordinatorEnginePtr coordinatorEngine;
     QueryDeployerPtr queryDeployer;
+    GlobalExecutionPlanPtr executionPlan;
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;
     TopologyManagerPtr topologyManager;

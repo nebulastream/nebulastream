@@ -22,10 +22,13 @@ typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
+class GlobalExecutionPlan;
+typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+
 class QueryDeployer {
 
   public:
-    QueryDeployer(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager);
+    QueryDeployer(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr executionPlan);
 
     ~QueryDeployer();
 
@@ -34,7 +37,7 @@ class QueryDeployer {
      * @param query a queryId of the query
      * @return map containing the deployment
      */
-    map<NESTopologyEntryPtr, ExecutableTransferObject> generateDeployment(const string& queryId);
+    std::vector<ExecutionNodePtr> generateDeployment(const string& queryId);
 
     /**
      * @brief helper method to get all sources in a serialized format from a specific node in the topology
@@ -83,12 +86,13 @@ class QueryDeployer {
      * Currently only server/client architecture, i.e., only one layer, is supported
      * @param query the descriptor of the query
      */
-    int assign_port(const string& queryId);
+    int assignPort(const string& queryId);
 
   private:
     unordered_map<string, int> queryToPort;
     QueryCatalogPtr queryCatalog;
     TopologyManagerPtr topologyManager;
+    GlobalExecutionPlanPtr executionPlan;
 };
 
 typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;

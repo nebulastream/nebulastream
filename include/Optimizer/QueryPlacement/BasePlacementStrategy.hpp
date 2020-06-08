@@ -54,9 +54,6 @@ typedef std::shared_ptr<NESTopologyGraph> NESTopologyGraphPtr;
 class LogicalOperatorNode;
 typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 
-class Operator;
-typedef std::shared_ptr<Operator> OperatorPtr;
-
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
@@ -96,7 +93,6 @@ class BasePlacementStrategy {
     virtual GlobalExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) = 0;
 
   private:
-    void createExecutionNodeWithForwardOperators();
 
     OperatorNodePtr createSystemSinkOperator(NESTopologyEntryPtr nesNode);
     OperatorNodePtr createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
