@@ -15,9 +15,9 @@ MergeOperator& MergeOperator::operator=(const MergeOperator& other) {
 }
 
 void MergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    auto newPipelineContext1 = createPipelineContext();
+    auto newPipelineContext1 = PipelineContext::create();
     getChildren()[0]->produce(codegen, newPipelineContext1, out);
-    auto newPipelineContext2 = createPipelineContext();
+    auto newPipelineContext2 = PipelineContext::create();
     getChildren()[1]->produce(codegen, newPipelineContext2, out);
 
     context->addNextPipeline(newPipelineContext1);
