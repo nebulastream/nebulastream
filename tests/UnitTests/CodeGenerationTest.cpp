@@ -3,11 +3,11 @@
 #include <API/UserAPIExpression.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
@@ -39,7 +39,6 @@ namespace NES {
 
 class CodeGenerationTest : public testing::Test {
   public:
-
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         std::cout << "Setup CodeGenerationTest test class." << std::endl;
@@ -62,10 +61,11 @@ class CodeGenerationTest : public testing::Test {
     }
 };
 
-class TestPipelineExecutionContext : public PipelineExecutionContext{
+class TestPipelineExecutionContext : public PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(BufferManagerPtr bufferManager):
-        PipelineExecutionContext(std::move(bufferManager), [this](TupleBuffer& buffer) { this->buffers.emplace_back(std::move(buffer));}){};
+    TestPipelineExecutionContext(BufferManagerPtr bufferManager) : PipelineExecutionContext(std::move(bufferManager), [this](TupleBuffer& buffer) {
+                                                                       this->buffers.emplace_back(std::move(buffer));
+                                                                   }){};
 
     std::vector<TupleBuffer> buffers;
 };
@@ -80,8 +80,7 @@ class SelectionDataGenSource : public GeneratorSource {
     SelectionDataGenSource(SchemaPtr schema,
                            BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                            const uint64_t pNum_buffers_to_process)
-        :
-        GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
     }
 
     ~SelectionDataGenSource() = default;
@@ -89,16 +88,16 @@ class SelectionDataGenSource : public GeneratorSource {
     std::optional<TupleBuffer> receiveData() override {
         // 10 tuples of size one
         TupleBuffer buf = bufferManager->getBufferBlocking();
-        uint64_t tupleCnt = buf.getBufferSize()/sizeof(InputTuple);
+        uint64_t tupleCnt = buf.getBufferSize() / sizeof(InputTuple);
 
         assert(buf.getBuffer() != NULL);
 
         InputTuple* tuples = (InputTuple*) buf.getBuffer();
         for (uint32_t i = 0; i < tupleCnt; i++) {
             tuples[i].id = i;
-            tuples[i].value = i*2;
+            tuples[i].value = i * 2;
             for (int j = 0; j < 11; ++j) {
-                tuples[i].text[j] = ((j + i)%(255 - 'a')) + 'a';
+                tuples[i].text[j] = ((j + i) % (255 - 'a')) + 'a';
             }
             tuples[i].text[12] = '\0';
         }
@@ -132,8 +131,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
   public:
     PredicateTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
-        :
-        GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
     }
 
     ~PredicateTestingDataGeneratorSource() = default;
@@ -150,7 +148,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
     std::optional<TupleBuffer> receiveData() override {
         // 10 tuples of size one
         TupleBuffer buf = bufferManager->getBufferBlocking();
-        uint64_t tupleCnt = buf.getBufferSize()/sizeof(InputTuple);
+        uint64_t tupleCnt = buf.getBufferSize() / sizeof(InputTuple);
 
         assert(buf.getBuffer() != NULL);
 
@@ -158,12 +156,12 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 
         for (uint32_t i = 0; i < tupleCnt; i++) {
             tuples[i].id = i;
-            tuples[i].valueSmall = -123 + (i*2);
-            tuples[i].valueFloat = i*M_PI;
-            tuples[i].valueDouble = i*M_PI*2;
-            tuples[i].singleChar = ((i + 1)%(127 - 'A')) + 'A';
+            tuples[i].valueSmall = -123 + (i * 2);
+            tuples[i].valueFloat = i * M_PI;
+            tuples[i].valueDouble = i * M_PI * 2;
+            tuples[i].singleChar = ((i + 1) % (127 - 'A')) + 'A';
             for (int j = 0; j < 11; ++j) {
-                tuples[i].text[j] = ((i + 1)%64) + 64;
+                tuples[i].text[j] = ((i + 1) % 64) + 64;
             }
             tuples[i].text[12] = '\0';
         }
@@ -195,8 +193,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
   public:
     WindowTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
-        :
-        GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
     }
 
     ~WindowTestingDataGeneratorSource() = default;
@@ -216,7 +213,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
         InputTuple* tuples = (InputTuple*) buf.getBuffer();
 
         for (uint32_t i = 0; i < tupleCnt; i++) {
-            tuples[i].key = i%2;
+            tuples[i].key = i % 2;
             tuples[i].value = 1;
         }
 
@@ -287,22 +284,29 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
         // String Array initialization
         auto stringValueType = createStringValueType(
-            "DiesIstEinZweiterTest\0dwqdwq")->getCodeExpression()->code_;
+                                   "DiesIstEinZweiterTest\0dwqdwq")
+                                   ->getCodeExpression()
+                                   ->code_;
         EXPECT_EQ(stringValueType, "\"DiesIstEinZweiterTest\"");
 
         auto charValueType = createBasicTypeValue(BasicType::CHAR,
                                                   "DiesIstEinDritterTest")
-            ->getCodeExpression()->code_;
+                                 ->getCodeExpression()
+                                 ->code_;
         EXPECT_EQ(charValueType, "DiesIstEinDritterTest");
     }
 
     {
         auto code = BinaryOperatorStatement(VarRefStatement(varDeclI), PLUS_OP,
-                                            VarRefStatement(varDeclJ)).addRight(
-            PLUS_OP, VarRefStatement(varDeclK)).addRight(MULTIPLY_OP,
-                                                         VarRefStatement(varDeclI),
-                                                         BRACKETS).addRight(
-                            GREATER_THAN_OP, VarRefStatement(varDeclL)).getCode();
+                                            VarRefStatement(varDeclJ))
+                        .addRight(
+                            PLUS_OP, VarRefStatement(varDeclK))
+                        .addRight(MULTIPLY_OP,
+                                  VarRefStatement(varDeclI),
+                                  BRACKETS)
+                        .addRight(
+                            GREATER_THAN_OP, VarRefStatement(varDeclL))
+                        .getCode();
 
         EXPECT_EQ(code->code_, "(i+j+k*i)>l");
 
@@ -310,9 +314,12 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto plusOperatorCode = BinaryOperatorStatement(VarRefStatement(varDeclI),
                                                         PLUS_OP,
                                                         VarRefStatement(varDeclJ))
-            .getCode()->code_;
+                                    .getCode()
+                                    ->code_;
         auto plusOperatorCodeOp = (VarRefStatement(varDeclI)
-            + VarRefStatement(varDeclJ)).getCode()->code_;
+                                   + VarRefStatement(varDeclJ))
+                                      .getCode()
+                                      ->code_;
         EXPECT_EQ(plusOperatorCode, plusOperatorCodeOp);
 
         // Prefix and postfix increment
@@ -331,9 +338,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         // Negation
         auto negate =
             ((~VarRefStatement(varDeclI)
-                >= VarRefStatement(varDeclJ)
-                    << ConstantExpressionStatement(createBasicTypeValue(INT32, "0"))))[VarRefStatement(
-                varDeclJ)];
+              >= VarRefStatement(varDeclJ)
+                  << ConstantExpressionStatement(createBasicTypeValue(INT32, "0"))))[VarRefStatement(varDeclJ)];
         EXPECT_EQ(negate.getCode()->code_, "~i>=j<<0[j]");
 
         auto addition = VarRefStatement(varDeclI).assign(
@@ -349,7 +355,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         // if statements
         auto ifStatement = IF(
             VarRef(varDeclI) < VarRef(varDeclJ),
-            assign(VarRef(varDeclI), VarRef(varDeclI)*VarRef(varDeclK)));
+            assign(VarRef(varDeclI), VarRef(varDeclI) * VarRef(varDeclK)));
         EXPECT_EQ(ifStatement.getCode()->code_, "if(i<j){\ni=i*k;\n\n}\n");
 
         auto ifStatementReturn = IFStatement(
@@ -381,39 +387,57 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
         EXPECT_EQ(
             UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   ADDRESS_OF_OP).getCode()->code_,
+                                   ADDRESS_OF_OP)
+                .getCode()
+                ->code_,
             "&num_tuples");
         EXPECT_EQ(
             UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   DEREFERENCE_POINTER_OP).getCode()->code_,
+                                   DEREFERENCE_POINTER_OP)
+                .getCode()
+                ->code_,
             "*num_tuples");
         EXPECT_EQ(
             UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   PREFIX_INCREMENT_OP).getCode()->code_,
+                                   PREFIX_INCREMENT_OP)
+                .getCode()
+                ->code_,
             "++num_tuples");
         EXPECT_EQ(
             UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   PREFIX_DECREMENT_OP).getCode()->code_,
+                                   PREFIX_DECREMENT_OP)
+                .getCode()
+                ->code_,
             "--num_tuples");
         EXPECT_EQ(
             UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   POSTFIX_INCREMENT_OP).getCode()->code_,
+                                   POSTFIX_INCREMENT_OP)
+                .getCode()
+                ->code_,
             "num_tuples++");
         EXPECT_EQ(
             UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   POSTFIX_DECREMENT_OP).getCode()->code_,
+                                   POSTFIX_DECREMENT_OP)
+                .getCode()
+                ->code_,
             "num_tuples--");
         EXPECT_EQ(
             UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   BITWISE_COMPLEMENT_OP).getCode()->code_,
+                                   BITWISE_COMPLEMENT_OP)
+                .getCode()
+                ->code_,
             "~num_tuples");
         EXPECT_EQ(
             UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   LOGICAL_NOT_OP).getCode()->code_,
+                                   LOGICAL_NOT_OP)
+                .getCode()
+                ->code_,
             "!num_tuples");
         EXPECT_EQ(
             UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   SIZE_OF_TYPE_OP).getCode()->code_,
+                                   SIZE_OF_TYPE_OP)
+                .getCode()
+                ->code_,
             "sizeof(num_tuples)");
     }
 
@@ -433,7 +457,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         ForLoopStatement loopStmt(
             varDeclQ.copy(),
             BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THAN_OP,
-                                    VarRefStatement(varDeclNumTuple)).copy(),
+                                    VarRefStatement(varDeclNumTuple))
+                .copy(),
             UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP).copy());
 
         loopStmt.addStatement(
@@ -441,7 +466,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                 VarRefStatement(varDeclSum),
                 ASSIGNMENT_OP,
                 BinaryOperatorStatement(VarRefStatement(varDeclSum), PLUS_OP,
-                                        VarRefStatement(varDeclQ))).copy());
+                                        VarRefStatement(varDeclQ)))
+                .copy());
 
         EXPECT_EQ(loopStmt.getCode()->code_,
                   "for(int32_t q = 0;q<num_tuples;++q){\nsum=sum+q;\n\n}\n");
@@ -449,9 +475,9 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto forLoop = ForLoopStatement(
             varDeclQ.copy(),
             BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THAN_OP,
-                                    VarRefStatement(varDeclNumTuple)).copy(),
-            UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP).copy()
-        );
+                                    VarRefStatement(varDeclNumTuple))
+                .copy(),
+            UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP).copy());
 
         EXPECT_EQ(forLoop.getCode()->code_,
                   "for(int32_t q = 0;q<num_tuples;++q){\n\n}\n");
@@ -482,11 +508,13 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(var_decl_temp.getCode(), "char* i = \"Hello World\"");
 
         auto tupleBufferStructDecl = StructDeclaration::create("TupleBuffer",
-                                                               "buffer").addField(
-            VariableDeclaration::create(
-                createDataType(BasicType(UINT64)), "num_tuples",
-                createBasicTypeValue(BasicType(UINT64), "0"))).addField(
-            variableDeclarationP);
+                                                               "buffer")
+                                         .addField(
+                                             VariableDeclaration::create(
+                                                 createDataType(BasicType(UINT64)), "num_tuples",
+                                                 createBasicTypeValue(BasicType(UINT64), "0")))
+                                         .addField(
+                                             variableDeclarationP);
 
         // check code generation for different assignment type
         auto varDeclTupleBuffer = VariableDeclaration::create(
@@ -503,12 +531,12 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(pointerDataType->getCode()->code_, "TupleBuffer*");
 
         auto typeDefinition = VariableDeclaration::create(
-            createPointerDataType(createUserDefinedType(tupleBufferStructDecl)),
-            "buffer").getTypeDefinitionCode();
+                                  createPointerDataType(createUserDefinedType(tupleBufferStructDecl)),
+                                  "buffer")
+                                  .getTypeDefinitionCode();
         EXPECT_EQ(
             typeDefinition,
             "struct TupleBuffer{\nuint64_t num_tuples = 0;\nint32_t* array;\n}buffer");
-
     }
 }
 
@@ -527,15 +555,13 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto getBufferOfTupleBuffer = FunctionCallStatement("getBuffer");
 
     /* struct definition for input tuples */
-    auto structDeclTuple = StructDeclaration::create("Tuple", "").addField(
-        VariableDeclaration::create(createDataType(BasicType(INT64)),
-                                    "campaign_id"));
+    auto structDeclTuple = StructDeclaration::create("Tuple", "").addField(VariableDeclaration::create(createDataType(BasicType(INT64)), "campaign_id"));
 
     /* struct definition for result tuples */
 
     auto structDeclResultTuple = StructDeclaration::create("ResultTuple", "")
-        .addField(
-            VariableDeclaration::create(createDataType(BasicType(INT64)), "sum"));
+                                     .addField(
+                                         VariableDeclaration::create(createDataType(BasicType(INT64)), "sum"));
 
     /* === declarations === */
     auto varDeclTupleBuffers = VariableDeclaration::create(createReferenceDataType(tupleBufferType),
@@ -584,75 +610,46 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /*  tuples = (Tuple *)tuple_buffer.getBuffer();*/
     BinaryOperatorStatement initTuplePtr(
-        VarRef(varDeclTuple).assign(
-            TypeCast(
-                VarRefStatement(varDeclTupleBuffers).accessRef(getBufferOfTupleBuffer),
-                createPointerDataType(createUserDefinedType(structDeclTuple)))));
+        VarRef(varDeclTuple).assign(TypeCast(VarRefStatement(varDeclTupleBuffers).accessRef(getBufferOfTupleBuffer), createPointerDataType(createUserDefinedType(structDeclTuple)))));
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
     auto resultTupleBufferDeclaration = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
-    BinaryOperatorStatement initResultTupleBufferPtr
-        (VarDeclStatement(resultTupleBufferDeclaration).assign(VarRef(varDeclPipelineExecutionContext).accessRef(
-            allocateTupleBuffer)));
+    BinaryOperatorStatement initResultTupleBufferPtr(VarDeclStatement(resultTupleBufferDeclaration).assign(VarRef(varDeclPipelineExecutionContext).accessRef(allocateTupleBuffer)));
 
     BinaryOperatorStatement initResultTuplePtr(
-        VarRef(varDeclResultTuple).assign(
-            TypeCast(
-                VarRef(resultTupleBufferDeclaration).accessRef(getBufferOfTupleBuffer),
-                createPointerDataType(
-                    createUserDefinedType(structDeclResultTuple)))));
+        VarRef(varDeclResultTuple).assign(TypeCast(VarRef(resultTupleBufferDeclaration).accessRef(getBufferOfTupleBuffer), createPointerDataType(createUserDefinedType(structDeclResultTuple)))));
 
     /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
     FOR loopStmt(
         varDeclId.copy(),
         (VarRef(varDeclId)
-            < (VarRef(varDeclTupleBuffers).accessRef(getNumberOfTupleBuffer))).copy(),
+         < (VarRef(varDeclTupleBuffers).accessRef(getNumberOfTupleBuffer)))
+            .copy(),
         (++VarRef(varDeclId)).copy());
 
     /* sum = sum + tuples[id].campaign_id; */
     loopStmt.addStatement(
-        VarRef(varDeclSum).assign(
-            VarRef(varDeclSum)
-                + VarRef(varDeclTuple)[VarRef(varDeclId)].accessRef(
-                    VarRef(declFieldCampaignId))).copy());
-
-
+        VarRef(varDeclSum).assign(VarRef(varDeclSum) + VarRef(varDeclTuple)[VarRef(varDeclId)].accessRef(VarRef(declFieldCampaignId))).copy());
 
     /* function signature:
      * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
      */
     auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
     emitTupleBuffer.addParameter(VarRef(resultTupleBufferDeclaration));
-    auto mainFunction = FunctionBuilder::create("compiled_query").returns(
-            createDataType(BasicType(UINT32)))
-        .addParameter(varDeclTupleBuffers)
-        .addParameter(varDeclWindow)
-        .addParameter(varDeclWindowManager)
-        .addParameter(varDeclPipelineExecutionContext)
-        .addVariableDeclaration(varDeclReturn)
-        .addVariableDeclaration(varDeclTuple)
-        .addVariableDeclaration(varDeclResultTuple)
-        .addVariableDeclaration(varDeclSum)
-        .addStatement(initTuplePtr.copy())
-        .addStatement(initResultTupleBufferPtr.copy())
-        .addStatement(initResultTuplePtr.copy()).addStatement(StatementPtr(new ForLoopStatement(loopStmt)))
-        .addStatement(
-            /*   result_tuples[0].sum = sum; */
-            VarRef(varDeclResultTuple)[Constant(INT32, "0")].accessRef(
-                    VarRef(varDeclFieldResultTupleSum)).assign(VarRef(varDeclSum))
-                .copy())
-                .addStatement(VarRef(varDeclPipelineExecutionContext).accessRef(emitTupleBuffer).copy())
-            /* return ret; */
+    auto mainFunction = FunctionBuilder::create("compiled_query").returns(createDataType(BasicType(UINT32))).addParameter(varDeclTupleBuffers).addParameter(varDeclWindow).addParameter(varDeclWindowManager).addParameter(varDeclPipelineExecutionContext).addVariableDeclaration(varDeclReturn).addVariableDeclaration(varDeclTuple).addVariableDeclaration(varDeclResultTuple).addVariableDeclaration(varDeclSum).addStatement(initTuplePtr.copy()).addStatement(initResultTupleBufferPtr.copy()).addStatement(initResultTuplePtr.copy()).addStatement(StatementPtr(new ForLoopStatement(loopStmt))).addStatement(
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           /*   result_tuples[0].sum = sum; */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           VarRef(varDeclResultTuple)[Constant(INT32, "0")].accessRef(VarRef(varDeclFieldResultTupleSum)).assign(VarRef(varDeclSum)).copy())
+                            .addStatement(VarRef(varDeclPipelineExecutionContext).accessRef(emitTupleBuffer).copy())
+                            /* return ret; */
 
-        .addStatement(
-            StatementPtr(new ReturnStatement(VarRefStatement(varDeclReturn))))
-        .build();
+                            .addStatement(StatementPtr(new ReturnStatement(VarRefStatement(varDeclReturn))))
+                            .build();
 
     auto file = FileBuilder::create("query.cpp")
-        .addDeclaration(structDeclTuple)
-        .addDeclaration(structDeclResultTuple)
-        .addDeclaration(mainFunction)
-        .build();
+                    .addDeclaration(structDeclTuple)
+                    .addDeclaration(structDeclResultTuple)
+                    .addDeclaration(mainFunction)
+                    .build();
 
     Compiler compiler;
     auto stage = CompiledExecutablePipeline::create(compiler.compile(file.code, true /** debugging **/));
@@ -699,13 +696,12 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
 
     NES_INFO("Generate Code");
     /* generate code for scanning input buffer */
-    codeGenerator->generateCode(source->getSchema(), context, std::cout);
+    codeGenerator->generateCodeForScan(source->getSchema(), context);
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(createPrintSinkWithSchema(Schema::create()->addField("campaign_id", UINT64), std::cout)->getSchema(),
-                                       context, std::cout);
+    codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", UINT64), context);
     /* compile code to pipeline stage */
     Compiler compiler;
-    auto stage = codeGenerator->compile(CompilerArgs(), context->code);
+    auto stage = codeGenerator->compile(context->code);
 
     /* prepare input and output tuple buffer */
     auto schema = Schema::create()->addField("i64", UINT64);
@@ -721,7 +717,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     auto layout = createRowLayout(schema);
     for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples();
          ++recordIndex) {
-        EXPECT_EQ(1, layout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/0)->read(buffer));
+        EXPECT_EQ(1, layout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 0)->read(buffer));
     }
 }
 /**
@@ -739,24 +735,24 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     auto inputSchema = source->getSchema();
 
     /* generate code for scanning input buffer */
-    codeGenerator->generateCode(source->getSchema(), context, std::cout);
+    codeGenerator->generateCodeForScan(source->getSchema(), context);
 
     auto pred = std::dynamic_pointer_cast<Predicate>(
         (PredicateItem(inputSchema->get(0))
-            < PredicateItem(createBasicTypeValue(BasicType::INT64, "5"))).copy());
+         < PredicateItem(createBasicTypeValue(BasicType::INT64, "5")))
+            .copy());
 
-    codeGenerator->generateCode(pred, context, std::cout);
+    codeGenerator->generateCodeForFilter(pred, context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(
-        createPrintSinkWithSchema(source->getSchema(), std::cout)->getSchema(), context,
-        std::cout);
+    codeGenerator->generateCodeForEmit(source->getSchema(), context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(CompilerArgs(), context->code);
+    auto stage = codeGenerator->compile(context->code);
 
     /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData().value();;
+    auto inputBuffer = source->receiveData().value();
+    ;
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
 
     auto sizeOfTuple = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char) * 12);
@@ -791,17 +787,17 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
 
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCode(source->getSchema(), context, std::cout);
+    codeGenerator->generateCodeForScan(source->getSchema(), context);
 
     auto sum = Sum::on(Field(input_schema->get("value")));
     auto windowDefinition = createWindowDefinition(
         input_schema->get("key"), sum,
         TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)));
 
-    codeGenerator->generateCode(windowDefinition, context, std::cout);
+    codeGenerator->generateCodeForWindow(windowDefinition, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(CompilerArgs(), context->code);
+    auto stage = codeGenerator->compile(context->code);
 
     // init window handler
     auto windowHandler =
@@ -841,21 +837,20 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto context = PipelineContext::create();
 
     auto inputSchema = source->getSchema();
-    codeGenerator->generateCode(inputSchema, context, std::cout);
+    codeGenerator->generateCodeForScan(inputSchema, context);
 
     //predicate definition
-    codeGenerator->generateCode(
+    codeGenerator->generateCodeForFilter(
         createPredicate(
             (inputSchema->get(2) > 30.4)
-                && (inputSchema->get(4) == 'F' || (inputSchema->get(5) == "HHHHHHHHHHH"))),
-        context, std::cout);
+            && (inputSchema->get(4) == 'F' || (inputSchema->get(5) == "HHHHHHHHHHH"))),
+        context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(createPrintSinkWithSchema(inputSchema, std::cout)->getSchema(),
-                                       context, std::cout);
+    codeGenerator->generateCodeForEmit(inputSchema, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(CompilerArgs(), context->code);
+    auto stage = codeGenerator->compile(context->code);
 
     /* prepare input tuple buffer */
     auto optVal = source->receiveData();
@@ -889,31 +884,29 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     auto inputSchema = source->getSchema();
 
-    codeGenerator->generateCode(inputSchema, context, std::cout);
+    codeGenerator->generateCodeForScan(inputSchema, context);
 
     //predicate definition
     auto mappedValue = AttributeField("mappedValue", BasicType::FLOAT64).copy();
-    codeGenerator->generateCode(
-        mappedValue, createPredicate((inputSchema->get(2)*inputSchema->get(3)) + 2),
-        context, std::cout);
+    codeGenerator->generateCodeForMap(mappedValue, createPredicate((inputSchema->get(2) * inputSchema->get(3)) + 2), context);
 
     /* generate code for writing result tuples to output buffer */
     auto outputSchema = Schema::create()
-        ->addField("id", BasicType::UINT32)
-        ->addField("valueSmall", BasicType::INT16)
-        ->addField("valueFloat", BasicType::FLOAT32)
-        ->addField("valueDouble", BasicType::FLOAT64)
-        ->addField(mappedValue)
-        ->addField("valueChar", BasicType::CHAR)
-        ->addField(
-          "text", createArrayDataType(BasicType::CHAR, 12));
+                            ->addField("id", BasicType::UINT32)
+                            ->addField("valueSmall", BasicType::INT16)
+                            ->addField("valueFloat", BasicType::FLOAT32)
+                            ->addField("valueDouble", BasicType::FLOAT64)
+                            ->addField(mappedValue)
+                            ->addField("valueChar", BasicType::CHAR)
+                            ->addField(
+                                "text", createArrayDataType(BasicType::CHAR, 12));
 
     auto schemaSize = outputSchema->getSchemaSizeInBytes();
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(createPrintSinkWithSchema(outputSchema, std::cout)->getSchema(), context, std::cout);
+    codeGenerator->generateCodeForEmit(outputSchema, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(CompilerArgs(), context->code);
+    auto stage = codeGenerator->compile(context->code);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
@@ -934,4 +927,4 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
         EXPECT_EQ(reference, mapedValue);
     }
 }
-}  // namespace NES
+}// namespace NES

@@ -4,6 +4,7 @@
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <Operators/Operator.hpp>
 namespace NES {
 
 QueryCompiler::QueryCompiler(){};
@@ -44,7 +45,7 @@ std::shared_ptr<PipelineStage> QueryCompiler::compilePipelineStages(QueryExecuti
     for (auto nextPipeline : nextPipelines) {
         childStages.push_back(this->compilePipelineStages(queryExecutionPlan, codeGenerator, nextPipeline));
     }
-    auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
+    auto executablePipeline = codeGenerator->compile(context->code);
 
     if (context->hasWindow()) {
         auto windowHandler = createWindowHandler(context->getWindow(),

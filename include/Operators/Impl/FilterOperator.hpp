@@ -26,14 +26,6 @@ class FilterOperator : public Operator {
 
   private:
     PredicatePtr predicate;
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
-            & BOOST_SERIALIZATION_NVP(predicate);
-    }
 };
 
 }// namespace NES

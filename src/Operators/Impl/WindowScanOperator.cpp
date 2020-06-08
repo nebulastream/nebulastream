@@ -24,7 +24,7 @@ void WindowScanOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr co
 }
 
 void WindowScanOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    codegen->generateCode(schemaPtr, context, out);
+    codegen->generateCodeForScan(schemaPtr, context);
     getParent()->consume(codegen, context, out);
 }
 

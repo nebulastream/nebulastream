@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Operators/Operator.hpp"
 #include <memory>
 
 #include <API/Schema.hpp>
@@ -15,7 +14,6 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <SourceSink/DataSink.hpp>
-
 namespace NES {
 
 class AttributeReference;
@@ -24,34 +22,85 @@ typedef std::shared_ptr<AttributeReference> AttributeReferencePtr;
 class CodeGenerator;
 typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
 
+class PipelineContext;
+typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
+
 class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
 class ExecutablePipeline;
 typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 
-// class Operator;
+class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
-class CompilerArgs;
+class Predicate;
+typedef std::shared_ptr<Predicate> PredicatePtr;
 
-class CompilerArgs {
-};
+class WindowDefinition;
+typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
+class GeneratedCode;
+typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
+/**
+ * @brief The code generator encapsulates the code generation for different operators.
+ */
 class CodeGenerator {
   public:
     CodeGenerator();
-    virtual bool generateCode(SchemaPtr schema, const PipelineContextPtr& context, std::ostream& out) = 0;
-    virtual bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) = 0;
-    virtual bool generateCode(const AttributeFieldPtr field,
-                              const PredicatePtr& pred,
-                              const NES::PipelineContextPtr& context,
-                              std::ostream& out) = 0;
-    virtual bool generateCodeForEmit(const SchemaPtr schema, const PipelineContextPtr& context, std::ostream& out) = 0;
-    virtual bool generateCode(const WindowDefinitionPtr& window, const PipelineContextPtr& context, std::ostream& out) = 0;
-    virtual ExecutablePipelinePtr compile(const CompilerArgs&, const GeneratedCodePtr& code) = 0;
+
+    /**
+     * @brief Code generation for a scan, which depends on a particular input schema.
+     * @param schema The input schema, in which we receive the input buffer.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    virtual bool generateCodeForScan(SchemaPtr schema, PipelineContextPtr context) = 0;
+
+    /**
+     * @brief Code generation for a filter operator, which depends on a particular filter predicate.
+     * @param predicate The filter predicate, which selects input records.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    virtual bool generateCodeForFilter(PredicatePtr predicate, PipelineContextPtr context) = 0;
+
+    /**
+     * @brief Code generation for a map operator, which depends on a particular map predicate.
+     * @param field The field, which we want to manipulate with the map predicate.
+     * @param predicate The map predicate.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    virtual bool generateCodeForMap(AttributeFieldPtr field, PredicatePtr pred, PipelineContextPtr context) = 0;
+
+    /**
+    * @brief Code generation for a emit, which depends on a particular output schema.
+    * @param schema The output schema.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    virtual bool generateCodeForEmit(SchemaPtr schema, PipelineContextPtr context) = 0;
+
+    /**
+    * @brief Code generation for a window operator, which depends on a particular window definition.
+    * @param window The window definition, which contains all properties of the window.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    virtual bool generateCodeForWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+
+    /**
+     * @brief Performs the actual compilation the generated code pipeline.
+     * @param code generated code.
+     * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
+     */
+    virtual ExecutablePipelinePtr compile(GeneratedCodePtr code) = 0;
+
     virtual ~CodeGenerator();
 };
-
-const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, SchemaPtr schema);
 }// namespace NES

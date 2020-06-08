@@ -20,7 +20,7 @@ void FilterOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr contex
 }
 
 void FilterOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    codegen->generateCode(predicate, context, out);
+    codegen->generateCodeForFilter(predicate, context);
     getParent()->consume(codegen, context, out);
 }
 

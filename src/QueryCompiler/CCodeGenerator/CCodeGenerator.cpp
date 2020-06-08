@@ -1,5 +1,8 @@
 #include <API/Schema.hpp>
 #include <API/Types/DataTypes.hpp>
+#include <API/UserAPIExpression.hpp>
+#include <API/Window/WindowDefinition.hpp>
+
 #include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
@@ -26,7 +29,7 @@ namespace NES {
 
 CCodeGenerator::CCodeGenerator() : CodeGenerator() {}
 
-const StructDeclaration getStructDeclarationFromSchema(const std::string structName, SchemaPtr schema) {
+StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::string structName, SchemaPtr schema) {
     /* struct definition for tuples */
     StructDeclaration structDeclarationTuple = StructDeclaration::create(structName, "");
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
@@ -41,14 +44,6 @@ const StructDeclaration getStructDeclarationFromSchema(const std::string structN
         NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->name);
     }
     return structDeclarationTuple;
-}
-
-const StructDeclaration getStructDeclarationInputTuple(SchemaPtr schema) {
-    return getStructDeclarationFromSchema("InputTuple", schema);
-}
-
-const StructDeclaration getStructDeclarationResultTuple(SchemaPtr schema) {
-    return getStructDeclarationFromSchema("ResultTuple", schema);
 }
 
 const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& structDeclaration,
@@ -69,15 +64,15 @@ CodeGeneratorPtr CCodeGenerator::create() {
     return std::make_shared<CCodeGenerator>();
 }
 
-bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& context, std::ostream& out) {
+bool CCodeGenerator::generateCodeForScan(SchemaPtr schema, PipelineContextPtr context) {
 
     context->inputSchema = schema->copy();
     auto code = context->code;
-    code->structDeclaratonInputTuple = getStructDeclarationInputTuple(context->inputSchema);
+    code->structDeclaratonInputTuple = getStructDeclarationFromSchema("InputTuple", schema);
 
     /** === set the result tuple depending on the input tuple===*/
     context->resultSchema = context->inputSchema;
-    code->structDeclarationResultTuple = getStructDeclarationResultTuple(context->resultSchema);
+    code->structDeclarationResultTuple = getStructDeclarationFromSchema("ResultTuple", schema);
 
     /* === declarations === */
     auto tupleBufferType = createAnonymUserDefinedType("NES::TupleBuffer");
@@ -148,7 +143,7 @@ bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& co
  * @param out - sending some other information if wanted
  * @return modified query-code
  */
-bool CCodeGenerator::generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) {
+bool CCodeGenerator::generateCodeForFilter(PredicatePtr pred, PipelineContextPtr context) {
 
     // create predicate expression from filter predicate
     auto predicateExpression = pred->generateCode(context->code);
@@ -169,10 +164,7 @@ bool CCodeGenerator::generateCode(const PredicatePtr& pred, const PipelineContex
  * @param out - sending some other information if wanted
  * @return modified query-code
  */
-bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
-                                  const PredicatePtr& pred,
-                                  const NES::PipelineContextPtr& context,
-                                  std::ostream& out) {
+bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, PredicatePtr pred, PipelineContextPtr context) {
 
     auto code = context->code;
     auto varDeclarationResultTuples = VariableDeclaration::create(
@@ -196,13 +188,13 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
     return true;
 }
 
-bool CCodeGenerator::generateCodeForEmit(const SchemaPtr sinkSchema, const PipelineContextPtr& context, std::ostream& out) {
+bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPtr context) {
     NES_DEBUG("CCodeGenerator: Generate code for Sink.");
     auto code = context->code;
     // set result schema to context
     context->resultSchema = sinkSchema;
     // generate result tuple struct
-    auto structDeclarationResultTuple = getStructDeclarationResultTuple(context->resultSchema);
+    auto structDeclarationResultTuple = getStructDeclarationFromSchema("ResultTuple", sinkSchema);
     // add type declaration for the result tuple
     code->typeDeclarations.push_back(structDeclarationResultTuple);
 
@@ -331,9 +323,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
  * @param out
  * @return
  */
-bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
-                                  const PipelineContextPtr& context,
-                                  std::ostream& out) {
+bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
     context->setWindow(window);
     auto constStatement = ConstantExpressionStatement((createBasicTypeValue(BasicType::UINT64, "0")));
 
@@ -431,7 +421,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     return true;
 }
 
-ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs&, const GeneratedCodePtr& code) {
+ExecutablePipelinePtr CCodeGenerator::compile(GeneratedCodePtr code) {
 
     /* function signature:
      * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
