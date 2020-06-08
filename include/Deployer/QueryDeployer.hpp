@@ -13,6 +13,9 @@ namespace NES {
 class TopologyManager;
 typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
 
+class NESTopologyEntry;
+typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
+
 class ExecutionNode;
 typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 
@@ -27,10 +30,10 @@ class QueryDeployer {
     ~QueryDeployer();
 
     /**
-    * @brief generates a deployment for a query
-    * @param query a queryId of the query
+     * @brief generates a deployment for a query
+     * @param query a queryId of the query
      * @return map containing the deployment
-   */
+     */
     map<NESTopologyEntryPtr, ExecutableTransferObject> generateDeployment(const string& queryId);
 
     /**

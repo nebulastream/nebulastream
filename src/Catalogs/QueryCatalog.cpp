@@ -1,5 +1,6 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Services/OptimizerService.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
@@ -65,7 +66,7 @@ string QueryCatalog::registerQuery(const string& queryString,
         OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
         GlobalExecutionPlanPtr executionPlan = optimizerService->updateGlobalExecutionPlan(query->getQueryPlan(), optimizationStrategyName);
 
-        NES_DEBUG("QueryCatalog: Final Execution Plan =" << executionPlan->getTopologyPlanString());
+        NES_DEBUG("QueryCatalog: Final Execution Plan =" << executionPlan->getAsString());
 
         std::string queryId = UtilityFunctions::generateIdString();
         QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(queryId, queryString, query->getQueryPlan(), QueryStatus::Registered);

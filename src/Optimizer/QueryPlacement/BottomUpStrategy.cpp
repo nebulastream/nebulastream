@@ -105,7 +105,7 @@ GlobalExecutionPlanPtr BottomUpStrategy::placeOperators(std::string queryId, Log
             if (executionPlan->executionNodeExists(candidateNesNode->getId())) {
 
                 NES_DEBUG("BottomUp: node " << candidateNesNode->toString() << " was already used by other deployment");
-                const ExecutionNodePtr candidateExecutionNode = executionPlan->getExecutionNode(candidateNesNode->getId());
+                const ExecutionNodePtr candidateExecutionNode = executionPlan->getExecutionNodeByNodeId(candidateNesNode->getId());
 
                 if (candidateExecutionNode->querySubPlanExists(queryId)) {
                     NES_DEBUG("BottomUp: node " << candidateNesNode->toString() << " already contains a query sub plan with the id" << queryId);
