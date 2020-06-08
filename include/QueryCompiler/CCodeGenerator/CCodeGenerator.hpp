@@ -6,6 +6,9 @@
 
 namespace NES {
 
+/**
+ * @brief A code generator that generates C++ code optimized for X86 architectures.
+ */
 class CCodeGenerator : public CodeGenerator {
   public:
     CCodeGenerator();
@@ -69,11 +72,11 @@ class CCodeGenerator : public CodeGenerator {
     BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
     BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,
                                             VariableDeclaration tupleBufferVariable);
-    void generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
+    void generateTupleBufferSpaceCheck(PipelineContextPtr context,
                                        VariableDeclaration varDeclResultTuple,
                                        StructDeclaration structDeclarationResultTuple);
 
-    StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, SchemaPtr schema);
+    StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
 };
 
 }// namespace NES

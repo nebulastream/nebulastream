@@ -29,7 +29,7 @@ namespace NES {
 
 CCodeGenerator::CCodeGenerator() : CodeGenerator() {}
 
-StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::string structName, SchemaPtr schema) {
+StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string structName, SchemaPtr schema) {
     /* struct definition for tuples */
     StructDeclaration structDeclarationTuple = StructDeclaration::create(structName, "");
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
@@ -272,7 +272,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
     return true;
 }
 
-void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
+void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
                                                    VariableDeclaration varDeclResultTuple,
                                                    StructDeclaration structDeclarationResultTuple) {
     NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check.");
