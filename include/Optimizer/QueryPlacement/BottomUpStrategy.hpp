@@ -21,32 +21,22 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     GlobalExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
 
-    static std::unique_ptr<BottomUpStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
-        return std::make_unique<BottomUpStrategy>(BottomUpStrategy(nesTopologyPlan));
+    static std::unique_ptr<BottomUpStrategy> create(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan) {
+        return std::make_unique<BottomUpStrategy>(BottomUpStrategy(nesTopologyPlan, executionPlan));
     }
 
   private:
 
-    explicit BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan);
+    explicit BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan);
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
      * @param sourceOperator : sensor nodes which act as the source source.
      * @param sourceNodes : sensor nodes which act as the source source.
      *
-     * @return: Partially completed Execution plan for input query.
      * @throws exception if the operator can't be placed anywhere.
      */
-    GlobalExecutionPlanPtr placeOperators(std::string queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
-
-    /**
-     * @brief Finds all the nodes that can be used for performing FWD operator
-     * @param sourceNodes
-     * @param rootNode
-     * @return vector of worker nodes for placement of FWD operator
-     */
-    std::vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
-                                                                              const NESTopologyEntryPtr rootNode) const;
+    void placeOperators(std::string queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
 };
 }// namespace NES
 

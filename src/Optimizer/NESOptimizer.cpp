@@ -15,13 +15,13 @@ NESOptimizer::NESOptimizer() {
     translateFromLegacyPlanPhase = TranslateFromLegacyPlanPhase::create();
 }
 
-GlobalExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, QueryPlanPtr queryPlan,
-                                                        NESTopologyPlanPtr nesTopologyPlan, StreamCatalogPtr streamCatalog) {
+GlobalExecutionPlanPtr NESOptimizer::updateExecutionGraph(std::string strategy, QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan,
+                                                          StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan) {
 
     NES_INFO("NESOptimizer: Preparing execution graph for input query");
 
     NES_INFO("NESOptimizer: Initializing Placement strategy");
-    auto placementStrategyPtr = BasePlacementStrategy::getStrategy(nesTopologyPlan, strategy);
+    auto placementStrategyPtr = BasePlacementStrategy::getStrategy(strategy, nesTopologyPlan, globalExecutionPlan);
 
     NES_INFO("NESOptimizer: Building Execution plan for the input query");
     TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();

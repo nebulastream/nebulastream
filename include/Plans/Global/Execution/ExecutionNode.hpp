@@ -79,13 +79,6 @@ class ExecutionNode : public Node {
     bool appendOperatorToQuerySubPlan(std::string subPlanId, OperatorNodePtr operatorNode);
 
     /**
-     * Get the query sub plan
-     * @param subPlanId: id of the sub plan
-     * @return query sub plan
-     */
-    QueryPlanPtr getSubPlan(std::string subPlanId);
-
-    /**
      * Get execution node id
      * @return id of the execution node
      */
