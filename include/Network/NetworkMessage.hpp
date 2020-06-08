@@ -49,50 +49,67 @@ class MessageHeader {
     const uint32_t msgLength;
 };
 
-class ClientAnnounceMessage {
+class ExchangeMessage {
+  public:
+    explicit ExchangeMessage(ChannelId channelId) : channelId(channelId) {}
+
+    const ChannelId& getChannelId() const {
+        return channelId;
+    }
+
+  private:
+    const ChannelId channelId;
+};
+
+class ClientAnnounceMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = ClientAnnouncement;
 
-    explicit ClientAnnounceMessage(NesPartition nesPartition)
-        : nesPartition(nesPartition) {}
-
-    /**
-     * @brief getter for the queryId
-     * @return the queryId
-     */
-    NesPartition getNesPartition() const {
-        return nesPartition;
+    explicit ClientAnnounceMessage(ChannelId channelId) : ExchangeMessage(channelId) {
     }
-
-  private:
-    NesPartition nesPartition;
 };
 
-class ServerReadyMessage {
+class ServerReadyMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = ServerReady;
 
-    explicit ServerReadyMessage(NesPartition nesPartition)
-        : nesPartition(nesPartition) {}
-
-    /**
-     * @brief getter for the queryId
-     * @return the queryId
-     */
-    NesPartition getNesPartition() const {
-        return nesPartition;
+    explicit ServerReadyMessage(ChannelId channelId) : ExchangeMessage(channelId) {
     }
+};
 
+class EndOfStreamMessage : public ExchangeMessage {
+  public:
+    static constexpr MessageType MESSAGE_TYPE = EndOfStream;
+
+    explicit EndOfStreamMessage(ChannelId channelId) : ExchangeMessage(channelId) {
+    }
+};
+
+class ErroMessage : public ExchangeMessage {
+  public:
+    static constexpr MessageType MESSAGE_TYPE = ErrorMessage;
+
+    explicit ErroMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), error(error) {};
+
+    const ErrorType getErrorType() const { return error; }
+
+    const std::string getErrorTypeAsString() const {
+        if (error == ErrorType::PartitionNotRegisteredError) {
+            return "PartitionNotRegisteredError";
+        } else {
+            return "UnknownError";
+        }
+    }
   private:
-    NesPartition nesPartition;
+    const ErrorType error;
 };
 
 class DataBufferMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = DataBuffer;
 
-    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords)
-        : payloadSize(payloadSize), numOfRecords(numOfRecords) {
+    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords) :
+        payloadSize(payloadSize), numOfRecords(numOfRecords) {
     }
 
     /**
@@ -116,41 +133,17 @@ class DataBufferMessage {
     const uint32_t numOfRecords;
 };
 
-class EndOfStreamMessage {
+class NesNetworkError : public std::runtime_error {
   public:
-    static constexpr MessageType MESSAGE_TYPE = EndOfStream;
-    explicit EndOfStreamMessage(NesPartition nesPartition)
-        : nesPartition(nesPartition) {}
+    explicit NesNetworkError(ErroMessage& msg): std::runtime_error(msg.getErrorTypeAsString()), msg(msg) {
+    }
 
-    /**
-     * @brief getter for the queryId
-     * @return the queryId
-     */
-    NesPartition getNesPartition() const {
-        return nesPartition;
+    const ErroMessage& getErrorMessage() const {
+        return msg;
     }
 
   private:
-    NesPartition nesPartition;
-};
-
-class ErroMessage {
-  public:
-    static constexpr MessageType MESSAGE_TYPE = ErrorMessage;
-    explicit ErroMessage(ErrorType error) : error(error){};
-
-    const ErrorType getErrorType() const { return error; }
-
-    const std::string getErrorTypeAsString() const {
-        if (error == ErrorType::PartitionNotRegisteredError) {
-            return "PartitionNotRegisteredError";
-        } else {
-            return "UnknownError";
-        }
-    }
-
-  private:
-    const ErrorType error;
+    const ErroMessage msg;
 };
 
 }// namespace Messages

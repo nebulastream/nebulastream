@@ -21,12 +21,9 @@ using QueryId = uint64_t;
 class NesPartition {
   public:
     explicit NesPartition(QueryId queryId, OperatorId operatorId, PartitionId partitionId,
-                          SubpartitionId subpartitionId, size_t threadId = 0) : queryId(queryId), operatorId(operatorId), partitionId(partitionId), subpartitionId(subpartitionId),
-                                                                                threadId(threadId) {}
-
-    explicit NesPartition(NesPartition& nesPartition, size_t threadId) : queryId(nesPartition.getQueryId()), operatorId(nesPartition.getOperatorId()),
-                                                                         partitionId(nesPartition.getPartitionId()), subpartitionId(nesPartition.getSubpartitionId()),
-                                                                         threadId(threadId) {}
+                          SubpartitionId subpartitionId)
+        : queryId(queryId), operatorId(operatorId), partitionId(partitionId), subpartitionId(subpartitionId) {
+    }
 
     /**
      * @brief getter for the queryId
@@ -60,11 +57,7 @@ class NesPartition {
         return subpartitionId;
     }
 
-    size_t getThreadId() const {
-        return threadId;
-    }
-
-    const std::string toString() const {
+    std::string toString() const {
         return std::to_string(queryId) + "::" + std::to_string(operatorId) + "::"
             + std::to_string(partitionId) + "::" + std::to_string(subpartitionId);
     }
@@ -90,7 +83,31 @@ class NesPartition {
     const OperatorId operatorId;
     const PartitionId partitionId;
     const SubpartitionId subpartitionId;
-    // the threadId for the zmq identifier
+};
+
+class ChannelId {
+  public:
+    ChannelId(NesPartition nesPartition, size_t threadId) : nesPartition(nesPartition), threadId(threadId) {
+    }
+
+    NesPartition getNesPartition() const {
+        return nesPartition;
+    }
+
+    size_t getThreadId() const {
+        return threadId;
+    }
+
+    std::string toString() const {
+        return nesPartition.toString() + "(threadId=" + std::to_string(threadId) + ")";
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const ChannelId& channelId) {
+        return os << channelId.toString();
+    }
+
+  private:
+    const NesPartition nesPartition;
     const size_t threadId;
 };
 
@@ -134,11 +151,11 @@ struct hash<NES::Network::NesPartition> {
         // Hash function for the NesPartition
         // Compute individual hash values of the Ints and combine them using XOR and bit shifting:
         return ((hash<uint64_t>()(k.getQueryId())
-                 ^ (hash<uint64_t>()(k.getOperatorId()) << 1))
-                >> 1)
+            ^ (hash<uint64_t>()(k.getOperatorId()) << 1))
+            >> 1)
             ^ ((hash<uint64_t>()(k.getPartitionId())
                 ^ (hash<uint64_t>()(k.getSubpartitionId()) << 1))
-               >> 1);
+                >> 1);
     }
 };
 

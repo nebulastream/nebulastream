@@ -22,7 +22,9 @@ class NetworkSink : public DataSink {
      * @param nesPartition
      */
     explicit NetworkSink(SchemaPtr schema, NetworkManager& networkManager, const NodeLocation& nodeLocation,
-                         NesPartition nesPartition, std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes = 5);
+                         NesPartition nesPartition, std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes=5);
+
+    ~NetworkSink();
 
     bool writeData(TupleBuffer& inputBuffer) override;
 

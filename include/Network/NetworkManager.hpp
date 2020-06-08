@@ -24,11 +24,7 @@ class OutputChannel;
  */
 class NetworkManager : public boost::noncopyable {
   public:
-    explicit NetworkManager(const std::string& hostname, uint16_t port,
-                            std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer,
-                            std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream,
-                            std::function<void(Messages::ErroMessage)>&& onError,
-                            BufferManagerPtr bufferManager, PartitionManagerPtr partitionManager,
+    explicit NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocolPtr exchangeProtocol,
                             uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
@@ -69,8 +65,7 @@ class NetworkManager : public boost::noncopyable {
 
   private:
     std::shared_ptr<ZmqServer> server;
-    ExchangeProtocol exchangeProtocol;
-    PartitionManagerPtr partitionManager;
+    ExchangeProtocolPtr exchangeProtocol;
 };
 }// namespace Network
 }// namespace NES

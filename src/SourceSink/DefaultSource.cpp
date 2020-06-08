@@ -2,6 +2,7 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <SourceSink/DefaultSource.hpp>
 #include <SourceSink/GeneratorSource.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -54,6 +55,8 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
     }
     buf.setTupleSizeInBytes(schema->getSchemaSizeInBytes());
     buf.setNumberOfTuples(tupleCnt);
+    NES_DEBUG("Source: Generated buffer with " << buf.getTupleSizeInBytes() << "/" << buf.getNumberOfTuples()
+                                               <<"\n" << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
     return buf;
 }
 

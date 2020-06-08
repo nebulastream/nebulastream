@@ -9,24 +9,25 @@
 namespace NES {
 namespace Network {
 
-OutputChannel::OutputChannel(std::shared_ptr<zmq::context_t> zmqContext,
-                             const std::string& address,
-                             NesPartition nesPartition,
-                             std::chrono::seconds waitTime, uint8_t retryTimes,
-                             std::function<void(Messages::ErroMessage)> onError) : socketAddr(address),
-                                                                                   zmqSocket(*zmqContext, ZMQ_DEALER),
-                                                                                   nesPartition(nesPartition),
-                                                                                   isClosed(false),
-                                                                                   connected(false),
-                                                                                   onErrorCb(std::move(onError)) {
+OutputChannel::OutputChannel(std::shared_ptr<zmq::context_t> zmqContext, const std::string& address,
+                             NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes,
+                             std::function<void(Messages::ErroMessage)> onError, size_t threadId) :
+    socketAddr(address),
+    zmqSocket(*zmqContext, ZMQ_DEALER),
+    channelId(ChannelId{nesPartition, threadId}),
+    isClosed(false),
+    connected(false),
+    onErrorCb(std::move(onError)) {
+    NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
     init(waitTime, retryTimes);
 }
 
 void OutputChannel::init(std::chrono::seconds waitTime, uint8_t retryTimes) {
     int linger = -1;
     try {
+        NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << linger << ", id=" << channelId);
         zmqSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
-        zmqSocket.setsockopt(ZMQ_IDENTITY, &nesPartition, sizeof(NesPartition));
+        zmqSocket.setsockopt(ZMQ_IDENTITY, &channelId, sizeof(ChannelId));
         zmqSocket.connect(socketAddr);
         int i = 0;
 
@@ -54,7 +55,7 @@ void OutputChannel::init(std::chrono::seconds waitTime, uint8_t retryTimes) {
 
 bool OutputChannel::registerAtServer() {
     // send announcement to server to register channel
-    sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, nesPartition);
+    sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId);
 
     zmq::message_t recvHeaderMsg;
     zmqSocket.recv(&recvHeaderMsg);
@@ -74,14 +75,14 @@ bool OutputChannel::registerAtServer() {
             auto serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
             // check if server responds with a ServerReadyMessage
             // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
-            if (!(serverReadyMsg->getNesPartition() == nesPartition)) {
+            if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
                 NES_ERROR("OutputChannel: Connection failed with server "
-                          << socketAddr << " for " << nesPartition.toString()
-                          << "->Wrong server ready message! Reason: Partitions are not matching");
+                              << socketAddr << " for " << channelId.getNesPartition().toString()
+                              << "->Wrong server ready message! Reason: Partitions are not matching");
                 return false;
             }
             NES_INFO("OutputChannel: Connection established with server " << socketAddr << " for "
-                                                                          << nesPartition.toString());
+                                                                          << channelId);
             return true;
         }
         case Messages::ErrorMessage: {
@@ -106,19 +107,20 @@ bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
     auto bufferSize = inputBuffer.getBufferSize();
     auto tupleSize = inputBuffer.getTupleSizeInBytes();
     auto numOfTuples = inputBuffer.getNumberOfTuples();
-    auto payloadSize = tupleSize * numOfTuples;
+    auto payloadSize = tupleSize*numOfTuples;
     auto ptr = inputBuffer.getBuffer<uint8_t>();
     auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize);// DON'T TRY THIS AT HOME :P
     sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples);
     inputBuffer.retain();
-    size_t sentBytes = zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer));
+    size_t sentBytes =
+        zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer));
     if (sentBytes > 0) {
         //NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
         //                                               << inputBuffer.getNumberOfTuples() << "/"
         //                                               << inputBuffer.getBufferSize());
         return true;
     }
-    NES_ERROR("OutputChannel: Error sending buffer for " << nesPartition.toString());
+    NES_ERROR("OutputChannel: Error sending buffer for " << channelId);
     return false;
 }
 
@@ -131,11 +133,11 @@ void OutputChannel::close() {
         return;
     }
     if (connected) {
-        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, nesPartition);
+        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId);
     }
 
     zmqSocket.close();
-    NES_DEBUG("OutputChannel: Socket closed for " << nesPartition.toString());
+    NES_DEBUG("OutputChannel: Socket closed for " << channelId);
     isClosed = true;
     connected = false;
 }

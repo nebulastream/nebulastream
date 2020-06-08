@@ -3,13 +3,15 @@
 
 #include <Network/NetworkCommon.hpp>
 #include <map>
-#include <mutex>
 #include <unordered_map>
+#include <shared_mutex>
 
 namespace NES::Network {
 
 class PartitionManager {
   public:
+    PartitionManager() = default;
+
     /**
      * @brief Registers a subpartition in the PartitionManager. If the subpartition does not exist a new entry is
      * added in the partition table, otherwise the counter is incremented.
@@ -56,7 +58,7 @@ class PartitionManager {
 
   private:
     std::unordered_map<NesPartition, uint64_t> partitionCounter;
-    mutable std::mutex partitionCounterMutex;
+    mutable std::shared_mutex partitionCounterMutex;
 };
 typedef std::shared_ptr<PartitionManager> PartitionManagerPtr;
 

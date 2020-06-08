@@ -22,7 +22,8 @@ class OutputChannel : public boost::noncopyable {
         const std::string& address,
         NesPartition nesPartition,
         std::chrono::seconds waitTime, uint8_t retryTimes,
-        std::function<void(Messages::ErroMessage)> onError);
+        std::function<void(Messages::ErroMessage)> onError,
+        size_t threadId = std::hash<std::thread::id>{}(std::this_thread::get_id()));
 
     ~OutputChannel() {
         close();
@@ -61,7 +62,7 @@ class OutputChannel : public boost::noncopyable {
     const std::string& socketAddr;
 
     zmq::socket_t zmqSocket;
-    const NesPartition nesPartition;
+    const ChannelId channelId;
 
     bool isClosed;
     bool connected;

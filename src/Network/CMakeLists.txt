@@ -5,4 +5,5 @@ add_source_nes(
         PartitionManager.cpp
         NetworkSink.cpp
         NetworkSource.cpp
+        ExchangeProtocol.cpp
 )

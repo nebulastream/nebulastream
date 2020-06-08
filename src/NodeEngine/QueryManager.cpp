@@ -113,12 +113,12 @@ bool QueryManager::deregisterQuery(QueryExecutionPlanPtr qep) {
     auto sources = qep->getSources();
 
     for (const auto& source : sources) {
-        NES_DEBUG("QueryManager: stop source " << source);
+        NES_DEBUG("QueryManager: stop source " << source->toString());
         if (sourceIdToQueryMap.find(source->getSourceId()) != sourceIdToQueryMap.end()) {
             // source exists, remove qep from source if there
             if (sourceIdToQueryMap[source->getSourceId()].find(qep) != sourceIdToQueryMap[source->getSourceId()].end()) {
                 // qep found, remove it
-                NES_DEBUG("QueryManager: Removing QEP " << qep << " from Source" << source->getSourceId());
+                NES_DEBUG("QueryManager: Removing QEP " << qep << " from source" << source->getSourceId());
                 if (sourceIdToQueryMap[source->getSourceId()].erase(qep) == 0) {
                     NES_FATAL_ERROR("QueryManager: Removing QEP " << qep << " for source " << source->getSourceId()
                                                                   << " failed!");
@@ -144,20 +144,20 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
 
     auto sources = qep->getSources();
     for (const auto& source : sources) {
-        NES_DEBUG("QueryManager: stop source " << source);
+        NES_DEBUG("QueryManager: stop source " << source->toString());
         // TODO what if two qeps use the same source
 
         if (sourceIdToQueryMap[source->getSourceId()].size() != 1) {
-            NES_WARNING("QueryManager: could not stop source " << source << " because other qeps are using it n="
+            NES_WARNING("QueryManager: could not stop source " << source->toString() << " because other qeps are using it n="
                                                                << sourceIdToQueryMap[source->getSourceId()].size());
         } else {
-            NES_DEBUG("QueryManager: stop source " << source << " because only " << qep << " is using it");
+            NES_DEBUG("QueryManager: stop source " << source->toString() << " because only " << qep << " is using it");
             bool success = source->stop();
             if (!success) {
-                NES_ERROR("QueryManager: could not stop source " << source);
+                NES_ERROR("QueryManager: could not stop source " << source->toString());
                 return false;
             } else {
-                NES_DEBUG("QueryManager: source " << source << " successfully stopped");
+                NES_DEBUG("QueryManager: source " << source->toString() << " successfully stopped");
             }
         }
     }
@@ -169,7 +169,7 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
 
     auto sinks = qep->getSinks();
     for (const auto& sink : sinks) {
-        NES_DEBUG("QueryManager: stop sink " << sink);
+        NES_DEBUG("QueryManager: stop sink " << sink->toString());
         // TODO: do we also have to prevent to shutdown sink that is still used by another qep
         sink->shutdown();
     }
@@ -183,7 +183,7 @@ TaskPtr QueryManager::getWork(std::atomic<bool>& threadPool_running) {
     NES_DEBUG("QueryManager:getWork wait got lock");
     // wait while queue is empty but thread pool is running
     while (taskQueue.empty() && threadPool_running) {
-        NES_DEBUG("QueryManager::getWork wait for work as queue is emtpy");
+        //NES_DEBUG("QueryManager::getWork wait for work as queue is emtpy");
         cv.wait(lock);
         if (!threadPool_running) {
             // return empty task if thread pool was shut down

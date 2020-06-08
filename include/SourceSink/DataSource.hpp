@@ -45,6 +45,14 @@ class DataSource {
     DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
 
     /**
+     * @brief public constructor for data source
+     * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
+     * by some test to produce a deterministic behavior
+     * @param schema of the data that this source produces
+     */
+    DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string sourceId);
+
+    /**
      * @brief method to start the source.
      * 1.) check if bool running is true, if true return if not start source
      * 2.) start new thread with runningRoutine
