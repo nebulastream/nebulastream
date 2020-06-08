@@ -4,7 +4,6 @@
 #include <REST/Controller/QueryController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
-#include <Catalogs/QueryCatalog.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
 
@@ -13,6 +12,16 @@ using namespace http;
 using namespace std;
 
 namespace NES {
+
+QueryController::QueryController(NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog,
+                                 TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog,
+                                 GlobalExecutionPlanPtr executionPlan) : coordinator(coordinator),
+                                                                         queryCatalog(queryCatalog),
+                                                                         topologyManager(topologyManager),
+                                                                         streamCatalog(streamCatalog),
+                                                                         executionPlan(executionPlan) {
+    queryServicePtr = std::make_shared<QueryService>(streamCatalog);
+}
 
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 
@@ -36,15 +45,11 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     // Call the service
                     string queryId = queryCatalog->registerQuery(userQuery, optimizationStrategyName);
 
-                    NESExecutionPlanPtr executionPlan = queryCatalog->getQuery(queryId)->getNesPlanPtr();
-
                     json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
                     json::value restResponse{};
                     restResponse["queryId"] = json::value::string(queryId);
                     restResponse["executionGraph"] = executionGraphPlan;
-                    restResponse["planComputeTime"] =
-                        json::value::string(std::to_string(executionPlan->getTotalComputeTimeInMillis()));
 
                     // Prepare the response
                     successMessageImpl(message, restResponse);

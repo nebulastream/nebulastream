@@ -71,7 +71,7 @@ class GlobalExecutionPlan {
      * @param id: id of the execution node
      * @return true if operation succeeds
      */
-    ExecutionNodePtr getExecutionNode(uint64_t id);
+    ExecutionNodePtr getExecutionNodeByNodeId(uint64_t id);
 
     /**
      * Get the nodes to be scheduled/deployed
@@ -85,18 +85,36 @@ class GlobalExecutionPlan {
      */
     std::vector<ExecutionNodePtr> getRootNodes();
 
+    /**
+     * Return list of Execution Nodes used for placing operators of the input query Id
+     * @param queryId : Id of the query
+     * @return vector containing execution nodes
+     */
+    std::vector<ExecutionNodePtr> getExecutionNodesByQueryId(std::string queryId);
+
+    /**
+     * Get the execution plan as string representation
+     * @return returns string representation of the plan
+     */
+    std::string getAsString();
+
   private:
     explicit GlobalExecutionPlan()=default;
 
     /**
-     * Index based on nodeId for faster access to the nodes
+     * Index based on nodeId for faster access to the execution nodes
      */
     std::map<uint64_t, ExecutionNodePtr> nodeIdIndex;
 
     /**
+     * Index based on query Id for faster access to the execution nodes
+     */
+    std::map<std::string, std::vector<ExecutionNodePtr>> queryIdIndex;
+
+    /**
      * List Of ExecutionNodes to be deployed. This list contains all nodes with the scheduled flag as false.
      */
-    std::vector<ExecutionNodePtr> executionNodesToBeScheduled;
+    std::vector<ExecutionNodePtr> executionNodesToSchedule;
 
     /**
      * List of root nodes

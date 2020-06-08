@@ -65,7 +65,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
     while (pathItr != path.end()) {
 
         NESTopologyEntryPtr currentNode = *pathItr;
-        const ExecutionNodePtr executionNode = executionPlan->getExecutionNode(currentNode->getId());
+        const ExecutionNodePtr executionNode = executionPlan->getExecutionNodeByNodeId(currentNode->getId());
         if (!executionNode) {
 
             if (pathItr == path.begin()) {
@@ -84,7 +84,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
             NESTopologyEntryPtr childNesNode = *(pathItr - 1);
             NESTopologyEntryPtr parentNesNode = *(pathItr + 1);
 
-            const ExecutionNodePtr childExecutionNode = executionPlan->getExecutionNode(childNesNode->getId());
+            const ExecutionNodePtr childExecutionNode = executionPlan->getExecutionNodeByNodeId(childNesNode->getId());
             if (!(childExecutionNode)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find child execution node");
             }
@@ -130,7 +130,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
             NESTopologyEntryPtr childNesNode = *(pathItr - 1);
             NESTopologyEntryPtr parentNesNode = *(pathItr + 1);
 
-            const ExecutionNodePtr childExecutionNode = executionPlan->getExecutionNode(childNesNode->getId());
+            const ExecutionNodePtr childExecutionNode = executionPlan->getExecutionNodeByNodeId(childNesNode->getId());
             if (!(childExecutionNode)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find child execution node");
             }
@@ -188,7 +188,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 }
 
                 NESTopologyEntryPtr childNesNode = *(pathItr - 1);
-                const ExecutionNodePtr childExecutionNode = executionPlan->getExecutionNode(childNesNode->getId());
+                const ExecutionNodePtr childExecutionNode = executionPlan->getExecutionNodeByNodeId(childNesNode->getId());
                 if (!(childExecutionNode)) {
                     NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find child execution node");
                 }
