@@ -104,4 +104,8 @@ ExecutionNodePtr ExecutionNode::createExecutionNode(NESTopologyEntryPtr nesNode)
 uint64_t ExecutionNode::getId() const {
     return id;
 }
+
+const NESTopologyEntryPtr ExecutionNode::getNesNode() const {
+    return nesNode;
+}
 }// namespace NES

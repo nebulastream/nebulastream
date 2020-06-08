@@ -84,6 +84,12 @@ class ExecutionNode : public Node {
      */
     uint64_t getId() const;
 
+    /**
+     * Get the nes node for the execution node.
+     * @return the nes node
+     */
+    const NESTopologyEntryPtr getNesNode() const;
+
     const std::string toString() const override;
 
     bool createNewQuerySubPlan(std::string subPlanId, QueryPlanPtr querySubPlan);

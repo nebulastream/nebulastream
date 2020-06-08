@@ -1,11 +1,11 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
-#include <REST/RestServer.hpp>
 #include <Components/NesWorker.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <Deployer/QueryDeployer.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <REST/RestServer.hpp>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
@@ -158,7 +158,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
 
     std::atomic<bool> stopped;
 
-    std::map<std::string, QueryDeployment> currentDeployments;
+    std::map<std::string, std::vector<ExecutionNodePtr>> currentDeployments;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 

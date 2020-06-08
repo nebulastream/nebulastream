@@ -7,7 +7,9 @@
 #include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/TopologyManager.hpp>
@@ -217,17 +219,16 @@ string NesCoordinator::addQuery(const string queryString, const string strategy)
     }
 
     NES_DEBUG("NesCoordinator:addQuery: create Deployment");
-    QueryDeployment deployments = queryDeployer->generateDeployment(queryId);
-    NES_DEBUG("NESCoordinator::addQuery" << deployments.size() << " objects topology before"
+    std::vector<ExecutionNodePtr> executionNodesToDeploy = queryDeployer->generateDeployment(queryId);
+    NES_DEBUG("CoordinatorActor::addQuery" << executionNodesToDeploy.size() << " objects topology before"
                                            << topologyManager->getNESTopologyPlanString());
     stringstream ss;
-    for (auto element : deployments) {
-        ss << "nodeID=" << element.first->getId();
-        ss << " nodeIP=" << element.first->getIp();
-        ss << " eto=" << element.second.toString() << endl;
+    for (auto executionNodes : executionNodesToDeploy) {
+        ss << "nodeID=" << executionNodes->getId();
+        ss << " nodeIP=" << executionNodes->getNesNode()->getIp();
     }
     NES_DEBUG("NesCoordinator:addQuery: deployments =" << ss.str());
-    currentDeployments[queryId] = deployments;
+    currentDeployments[queryId] = executionNodesToDeploy;
 
     NES_DEBUG("NesCoordinator:addQuery: deploy query");
     bool successDeploy = deployQuery(queryId);
@@ -296,52 +297,22 @@ bool NesCoordinator::unregisterQuery(const string queryId) {
 bool NesCoordinator::deployQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator:deployQuery queryId=" << queryId);
 
-    QueryDeployment& deployments = currentDeployments[queryId];
-    auto translationUnit = TranslateFromLegacyPlanPhase::create();
+    std::vector<ExecutionNodePtr> executionNodes = currentDeployments[queryId];
 
-    for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("NESCoordinator::registerQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId()
-                                                                           << " eto="
-                                                                           << x->second.toString());
+    for (ExecutionNodePtr executionNode : executionNodes) {
+        NES_DEBUG("NesCoordinator::registerQueryInNodeEngine serialize id=" << executionNode->getId());
+        QueryPlanPtr querySubPlan = executionNode->getQuerySubPlan(queryId);
+        //FIXME: we are considering only one root operator
+        OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
 
-        auto executionTransferObject = x->second;
+        string nesNodeIp = executionNode->getNesNode()->getIp();
 
-        // In the following code we translate the executable transfer object in the new logical node representations,
-        // because we want to use this for serialization.
-        // Later we want to replace this if we we can store the right representation directly in the query deployment map.
-        // This procedure follows three steps.
-        // 1. we have to find the root of the operator tree, as we always serialize from the parent to child.
-        auto rootOperator = executionTransferObject.getOperatorTree();
-        while (rootOperator->getParent() != nullptr) {
-            rootOperator = rootOperator->getParent();
-        }
-        // 2. we translate the legacy operator into the new node representation
-        auto queryOperators = translationUnit->transform(rootOperator);
-
-        // 3. the operator plan contains the wrong source and sink descriptor, because the executionTransferObject
-        // is storing them separately.
-        // As a consequence we update the source and sink descriptors in the following
-
-        // Translate source descriptor and add to sink operator.
-        // todo we currently assume that we only have one sink per query plan.
-        auto sourceDescriptor = ConvertPhysicalToLogicalSource::createSourceDescriptor(executionTransferObject.getSources()[0]);
-        auto sourceOperator = queryOperators->getNodesByType<SourceLogicalOperatorNode>()[0];
-        sourceOperator->setSourceDescriptor(sourceDescriptor);
-
-        // Translate sink descriptor and add to sink operator.
-        // todo we currently assume that we only have one sink per query plan.
-        auto sinkDescriptor = ConvertPhysicalToLogicalSink::createSinkDescriptor(executionTransferObject.getDestinations()[0]);
-        auto sinkOperator = queryOperators->getNodesByType<SinkLogicalOperatorNode>()[0];
-        sinkOperator->setSinkDescriptor(sinkDescriptor);
-
-        NES_DEBUG(
-            "NesCoordinator:deployQuery: " << queryId << " to " << x->first->getIp());
-
-        bool success = workerRPCClient->registerQuery(x->first->getIp(), queryId, queryOperators);
+        NES_DEBUG("NesCoordinator:deployQuery: " << queryId << " to " << nesNodeIp);
+        bool success = workerRPCClient->registerQuery(nesNodeIp, queryId, rootOperator);
         if (success) {
-            NES_DEBUG("NesCoordinator:deployQuery: " << queryId << " to " << x->first->getIp() << " successful");
+            NES_DEBUG("NesCoordinator:deployQuery: " << queryId << " to " << nesNodeIp << " successful");
         } else {
-            NES_ERROR("NesCoordinator:deployQuery: " << queryId << " to " << x->first->getIp() << "  failed");
+            NES_ERROR("NesCoordinator:deployQuery: " << queryId << " to " << nesNodeIp << "  failed");
             return false;
         }
     }
@@ -350,20 +321,17 @@ bool NesCoordinator::deployQuery(std::string queryId) {
 }
 
 bool NesCoordinator::undeployQuery(std::string queryId) {
-    NES_DEBUG("NesCoordinator:undeployQuery queryId=" << queryId);
+    NES_DEBUG("NesCoordinator::undeployQuery queryId=" << queryId);
 
-    QueryDeployment& deployments = currentDeployments[queryId];
-    for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("NESCoordinator::undeployQuery serialize " << x->first << " id=" << x->first->getId() << " eto="
-                                                               << x->second.toString());
-        NES_DEBUG(
-            "NESCoordinator::undeployQuery " << queryId << " to " << x->first->getIp());
-
-        bool success = workerRPCClient->unregisterQuery(x->first->getIp(), queryId);
+    std::vector<ExecutionNodePtr> executionNodes = currentDeployments[queryId];
+    for (ExecutionNodePtr executionNode : executionNodes) {
+        string nesNodeIp = executionNode->getNesNode()->getIp();
+        NES_DEBUG("NESCoordinator::undeployQuery query at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
+        bool success = workerRPCClient->unregisterQuery(nesNodeIp, queryId);
         if (success) {
-            NES_DEBUG("NesCoordinator:undeployQuery: " << queryId << " to " << x->first->getIp() << " successful");
+            NES_DEBUG("NESCoordinator::undeployQuery  query " << queryId << " to " << nesNodeIp << " successful");
         } else {
-            NES_ERROR("NesCoordinator:undeployQuery: " << queryId << " to " << x->first->getIp() << "  failed");
+            NES_ERROR("NESCoordinator::undeployQuery  " << queryId << " to " << nesNodeIp << "  failed");
             return false;
         }
     }
@@ -371,48 +339,36 @@ bool NesCoordinator::undeployQuery(std::string queryId) {
 }
 
 bool NesCoordinator::startQuery(std::string queryId) {
-    NES_DEBUG("NesCoordinator:startQuery queryId=" << queryId);
-
-    QueryDeployment& deployments = currentDeployments[queryId];
-    for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("NESCoordinator::startQuery serialize " << x->first << " id=" << x->first->getId()
-                                                            << " eto="
-                                                            << x->second.toString());
-        NES_DEBUG(
-            "NESCoordinator::startQuery " << queryId << " to " << x->first->getIp());
-
-        bool success = workerRPCClient->startQuery(x->first->getIp(), queryId);
+    NES_DEBUG("NesCoordinator::startQuery  queryId=" << queryId);
+    std::vector<ExecutionNodePtr> executionNodes = currentDeployments[queryId];
+    for (ExecutionNodePtr executionNode : executionNodes) {
+        string nesNodeIp = executionNode->getNesNode()->getIp();
+        NES_DEBUG("NesCoordinator::startQuery at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
+        bool success = workerRPCClient->startQuery(nesNodeIp, queryId);
         if (success) {
-            NES_DEBUG("NesCoordinator:startQuery: " << queryId << " to " << x->first->getIp() << " successful");
+            NES_DEBUG("NesCoordinator::startQuery " << queryId << " to " << nesNodeIp << " successful");
         } else {
-            NES_ERROR("NesCoordinator:startQuery: " << queryId << " to " << x->first->getIp() << "  failed");
+            NES_ERROR("NesCoordinator::startQuery " << queryId << " to " << nesNodeIp << "  failed");
             return false;
         }
     }
-
     return true;
 }
 
 bool NesCoordinator::stopQuery(std::string queryId) {
-    NES_DEBUG("NesCoordinator:stopQuery queryId=" << queryId);
-
-    QueryDeployment& deployments = currentDeployments[queryId];
-    for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("NESCoordinator::stopQuery serialize " << x->first << " id=" << x->first->getId()
-                                                           << " eto="
-                                                           << x->second.toString());
-        NES_DEBUG(
-            "NESCoordinator::stopQuery " << queryId << " to " << x->first->getIp());
-
-        bool success = workerRPCClient->stopQuery(x->first->getIp(), queryId);
+    NES_DEBUG("NESCoordinator::stopQuery queryId=" << queryId);
+    std::vector<ExecutionNodePtr> executionNodes = currentDeployments[queryId];
+    for (ExecutionNodePtr executionNode : executionNodes) {
+        string nesNodeIp = executionNode->getNesNode()->getIp();
+        NES_DEBUG("NESCoordinator::stopQuery at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
+        bool success = workerRPCClient->stopQuery(nesNodeIp, queryId);
         if (success) {
-            NES_DEBUG("NesCoordinator:stopQuery: " << queryId << " to " << x->first->getIp() << " successful");
+            NES_DEBUG("NESCoordinator::stopQuery " << queryId << " to " << nesNodeIp << " successful");
         } else {
-            NES_ERROR("NesCoordinator:stopQuery: " << queryId << " to " << x->first->getIp() << "  failed");
+            NES_ERROR("NESCoordinator::stopQuery " << queryId << " to " << nesNodeIp << "  failed");
             return false;
         }
     }
-
     return true;
 }
 
