@@ -34,6 +34,6 @@ GlobalExecutionPlanPtr OptimizerService::updateGlobalExecutionPlan(QueryPlanPtr 
     const json::value& basePlan = operatorJsonUtil.getBasePlan(queryPlan);
 
     NES_DEBUG("OptimizerService: query plan=" << basePlan);
-    const GlobalExecutionPlanPtr executionGraph = queryOptimizer.prepareExecutionGraph(optimizationStrategyName, queryPlan, topologyPlan, streamCatalog);
+    const GlobalExecutionPlanPtr executionGraph = queryOptimizer.updateExecutionGraph(optimizationStrategyName, queryPlan, topologyPlan, streamCatalog);
     return executionGraph;
 }

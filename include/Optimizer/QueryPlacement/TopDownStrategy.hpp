@@ -15,47 +15,20 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     GlobalExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
 
-    static std::unique_ptr<TopDownStrategy> create(NESTopologyPlanPtr nesTopologyPlan) {
-        return std::make_unique<TopDownStrategy>(TopDownStrategy(nesTopologyPlan));
+    static std::unique_ptr<TopDownStrategy> create(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan) {
+        return std::make_unique<TopDownStrategy>(TopDownStrategy(nesTopologyPlan, executionPlan));
     }
 
   private:
-    TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan);
+    TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan);
 
     /**
      * @brief place query operators and prepare the nes execution plan
-     * @param executionPlanPtr : the execution plan that need to be prepared
+     * @param queryId : the id of the query whose operators need to be placed
      * @param sinkOperator :  sink operator for the query
      * @param nesSourceNodes : list of physical source nodes
-     * @param nesTopologyGraphPtr :  nes topology graph
      */
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, LogicalOperatorNodePtr sinkOperator,
-                        vector<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr);
-
-    /**
-     * @brief add query operator to existing execution node
-     * @param operatorPtr : operator to add
-     * @param executionNode : execution node to which operator need to be added
-     */
-    void addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePtr executionNode) const;
-
-    /**
-     * @brief create new execution nesNode for the query operator.
-     * @param executionPlanPtr : execution plan where new execution node will be created
-     * @param operatorPtr : operator to be added
-     * @param nesNode : physical node used for creating the execution node
-     */
-    void createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr operatorPtr,
-                                NESTopologyEntryPtr nesNode) const;
-
-    /**
-     * @brief Finds all the nodes that can be used for performing FWD operator
-     * @param sourceNodes
-     * @param rootNode
-     * @return
-     */
-    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
-                                                                         const NESTopologyEntryPtr rootNode) const;
+    void placeOperators(std::string queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes);
 };
 
 }// namespace NES

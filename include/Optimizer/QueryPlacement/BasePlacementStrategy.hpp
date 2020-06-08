@@ -23,11 +23,11 @@ static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategy
     {"BottomUp", BottomUp},
     {"TopDown", TopDown},
     // FIXME: enable them with issue #755
-//    {"Latency", LowLatency},
-//    {"HighThroughput", HighThroughput},
-//    {"MinimumResourceConsumption", MinimumResourceConsumption},
-//    {"MinimumEnergyConsumption", MinimumEnergyConsumption},
-//    {"HighAvailability", HighAvailability},
+    //    {"Latency", LowLatency},
+    //    {"HighThroughput", HighThroughput},
+    //    {"MinimumResourceConsumption", MinimumResourceConsumption},
+    //    {"MinimumEnergyConsumption", MinimumEnergyConsumption},
+    //    {"HighAvailability", HighAvailability},
 };
 
 class NESExecutionPlan;
@@ -75,16 +75,17 @@ class BasePlacementStrategy {
     static const int zmqDefaultPort = 5555;
 
   public:
-
-    explicit BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan);
+    explicit BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan);
 
     /**
      * @brief Factory method returning different kind of optimizer.
-     * @param nesTopologyPlan topology information
-     * @param placementStrategyName name of the strategy
+     * @param strategyName : name of the strategy
+     * @param nesTopologyPlan : topology information
+     * @param executionPlan : execution plan to be updated
      * @return instance of type BaseOptimizer
      */
-    static std::unique_ptr<BasePlacementStrategy> getStrategy(NESTopologyPlanPtr nesTopologyPlan, std::string placementStrategyName);
+    static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string strategyName, NESTopologyPlanPtr nesTopologyPlan,
+                                                              GlobalExecutionPlanPtr executionPlan);
 
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
@@ -95,24 +96,22 @@ class BasePlacementStrategy {
     virtual GlobalExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) = 0;
 
   private:
-
     void createExecutionNodeWithForwardOperators();
 
     OperatorNodePtr createSystemSinkOperator(NESTopologyEntryPtr nesNode);
     OperatorNodePtr createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
 
   protected:
-
     /**
      * @brief This method will add the system generated operators where ever necessary along the selected path for operator placement.
      *
      * @param queryId query Id of the sub plan for which the operators have to be placed
      * @param path vector of nodes where operators could be placed
-     * @param executionPlan Pointer to the execution plan
      */
-    void addSystemGeneratedOperators(std::string queryId, std::vector<NESTopologyEntryPtr> path, GlobalExecutionPlanPtr executionPlan);
+    void addSystemGeneratedOperators(std::string queryId, std::vector<NESTopologyEntryPtr> path);
 
     NESTopologyPlanPtr nesTopologyPlan;
+    GlobalExecutionPlanPtr executionPlan;
     PathFinderPtr pathFinder;
 };
 }// namespace NES

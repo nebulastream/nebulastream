@@ -89,15 +89,6 @@ bool ExecutionNode::appendOperatorToQuerySubPlan(std::string subPlanId, Operator
     return false;
 }
 
-QueryPlanPtr ExecutionNode::getSubPlan(std::string subPlanId) {
-    auto itr = mapOfQuerySubPlans.find(subPlanId);
-    if (itr != mapOfQuerySubPlans.end()) {
-        return itr->second;
-    }
-    NES_WARNING("ExecutionNode: Not able to find a query sub plan with id: " + subPlanId);
-    return nullptr;
-}
-
 const std::string ExecutionNode::toString() const {
     return "ExecutionNode(" + std::to_string(id) + ")";
 }

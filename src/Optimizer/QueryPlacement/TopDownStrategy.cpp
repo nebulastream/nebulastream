@@ -8,184 +8,138 @@
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-TopDownStrategy::TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
+TopDownStrategy::TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan)
+    : BasePlacementStrategy(nesTopologyPlan, executionPlan) {}
 
 GlobalExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
 
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
-    //find the source Node
     const string streamName = queryPlan->getSourceStreamName();
-
     const vector<NESTopologyEntryPtr>& sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
-        NES_THROW_RUNTIME_ERROR("Unable to find the source node to place the operator");
+        NES_THROW_RUNTIME_ERROR("TopDownStrategy: Unable to find the source node to place the operator");
     }
 
-    const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
+    NES_INFO("TopDownStrategy: Placing operators on the nes topology.");
+    const string& queryId = queryPlan->getQueryId();
+    placeOperators(queryId, sinkOperator, sourceNodes);
 
+    NESTopologyEntryPtr rootNode = nesTopologyPlan->getRootNode();
 
-    NES_INFO("TopDown: Placing operators on the nes topology.");
-    placeOperators(nesExecutionPlanPtr, sinkOperator, sourceNodes, nesTopologyGraphPtr);
-
-    NESTopologyEntryPtr rootNode = nesTopologyGraphPtr->getRoot();
-
-    NES_DEBUG("TopDown: Find the path used for performing the placement based on the strategy type");
-    vector<NESTopologyEntryPtr>
-        candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
-
-    NES_INFO("TopDown: Adding forward operators.");
-    addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
-
-
-    //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    SchemaPtr schema = sourceOperator->getSourceDescriptor()->getSchema();
-    addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
-
-    return nesExecutionPlanPtr;
-}
-
-vector<NESTopologyEntryPtr> TopDownStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
-                                                                                      const NESTopologyEntryPtr rootNode) const {
-    vector<NESTopologyEntryPtr> candidateNodes;
     for (NESTopologyEntryPtr targetSource : sourceNodes) {
-        vector<NESTopologyEntryPtr> nodesOnPath = pathFinder->findPathBetween(targetSource, rootNode);
-        candidateNodes.insert(candidateNodes.end(), nodesOnPath.begin(), nodesOnPath.end());
+        NES_DEBUG("TopDownStrategy: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
+        vector<NESTopologyEntryPtr> path = pathFinder->findPathBetween(targetSource, rootNode);
+        NES_INFO("TopDownStrategy: Adding system generated operators for query with id : " << queryId);
+        addSystemGeneratedOperators(queryId, path);
     }
-    return candidateNodes;
+
+    return executionPlan;
 }
 
-void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
-                                     LogicalOperatorNodePtr sinkOperator,
-                                     vector<NESTopologyEntryPtr> nesSourceNodes,
-                                     NESTopologyGraphPtr nesTopologyGraphPtr) {
+void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes) {
 
-    TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
+    const NESTopologyEntryPtr sinkNode = nesTopologyPlan->getRootNode();
 
     for (NESTopologyEntryPtr nesSourceNode : nesSourceNodes) {
 
-        deque<LogicalOperatorNodePtr> operatorsToProcess = {sinkOperator};
-
-        // Find the nodes where we can place the operators. First node will be sink and last one will be the target
-        // source.
-        auto candidateNodes = pathFinder->findPathBetween(nesSourceNode, nesTopologyGraphPtr->getRoot());
-
-        if (candidateNodes.empty()) {
-            NES_THROW_RUNTIME_ERROR("No path exists between sink and source");
+        LogicalOperatorNodePtr candidateOperator = sinkOperator;
+        auto path = pathFinder->findPathBetween(nesSourceNode, sinkNode);
+        if (path.empty()) {
+            NES_THROW_RUNTIME_ERROR("TopDownStrategy: No path exists between sink and source");
         }
 
+        auto pathItr = path.rbegin();
+        NESTopologyEntryPtr candidateNesNode = (*pathItr);
+
         // Loop till all operators are not placed.
-        while (!operatorsToProcess.empty()) {
-            LogicalOperatorNodePtr targetOperator = operatorsToProcess.front();
-            operatorsToProcess.pop_front();
+        while (candidateOperator) {
 
-            if (targetOperator->instanceOf<SourceLogicalOperatorNode>()) {
-
-                string newOperatorName = "(OP-" + std::to_string(targetOperator->getId()) + ")";
-
-                for (auto node = candidateNodes.rbegin(); node != candidateNodes.rend(); node++) {
-
-                    if (executionPlanPtr->hasVertex(node.operator*()->getId())) {
-
-                        const ExecutionNodePtr existingExecutionNode = executionPlanPtr
-                                                                           ->getExecutionNode(node.operator*()->getId());
-
-                        size_t operatorId = targetOperator->getId();
-
-                        vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
-                        const auto
-                            exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
-
-                        if (exists != residentOperatorIds.end()) {
-                            NES_DEBUG("TopDown: Add child operators for next placement");
-                            vector<NodePtr> nextOperatorsToProcess = targetOperator->getChildren();
-                            for (NodePtr nodePtr : nextOperatorsToProcess) {
-                                operatorsToProcess.emplace_back(nodePtr->as<LogicalOperatorNode>());
-                            }
-                            break;
-                        }
-                    }
-
-                    if (node.operator*()->getRemainingCpuCapacity() > 0) {
-
-                        NES_DEBUG("TopDown: Transforming New Operator into legacy operator");
-                        OperatorPtr legacyOperator = translator->transform(targetOperator);
-
-                        if (executionPlanPtr->hasVertex(node.operator*()->getId())) {
-
-                            const ExecutionNodePtr
-                                executionNode = executionPlanPtr->getExecutionNode(node.operator*()->getId());
-                            addOperatorToExistingNode(legacyOperator, executionNode);
-                        } else {
-                            createNewExecutionNode(executionPlanPtr, legacyOperator, node.operator*());
-                        }
-
-                        NES_DEBUG("TopDown: Add child operators for next placement");
-                        vector<NodePtr> nextOperatorsToProcess = targetOperator->getChildren();
-                        for (NodePtr nodePtr : nextOperatorsToProcess) {
-                            operatorsToProcess.emplace_back(nodePtr->as<LogicalOperatorNode>());
-                        }
+            if (candidateOperator->instanceOf<SourceLogicalOperatorNode>()) {
+                NES_DEBUG("TopDownStrategy: Placing source operator on the source node");
+                candidateNesNode = nesSourceNode;
+            } else if (candidateNesNode->getRemainingCpuCapacity() == 0) {
+                NES_DEBUG("TopDownStrategy: Find the next NES node in the path where operator can be placed");
+                while (pathItr != path.rend()) {
+                    --pathItr;
+                    if ((*pathItr)->getRemainingCpuCapacity() > 0) {
+                        candidateNesNode = (*pathItr);
+                        NES_DEBUG("TopDownStrategy: Found NES node for placing the operators with id : " + candidateNesNode->getId());
                         break;
                     }
                 }
+            }
 
-                if (operatorsToProcess.empty()) {
-                    NES_THROW_RUNTIME_ERROR("Unable to schedule operator on the node");
+            if ((pathItr == path.rend()) || (candidateNesNode->getRemainingCpuCapacity() == 0)) {
+                NES_THROW_RUNTIME_ERROR("TopDownStrategy: No node available for further placement of operators");
+            }
+
+            NES_DEBUG("TopDownStrategy: Checking if execution node for the target worker node already present.");
+
+            if (executionPlan->executionNodeExists(candidateNesNode->getId())) {
+
+                NES_DEBUG("TopDownStrategy: node " << candidateNesNode->toString() << " was already used by other deployment");
+                const ExecutionNodePtr candidateExecutionNode = executionPlan->getExecutionNodeByNodeId(candidateNesNode->getId());
+
+                if (candidateExecutionNode->querySubPlanExists(queryId)) {
+                    NES_DEBUG("TopDownStrategy: node " << candidateNesNode->toString() << " already contains a query sub plan with the id" << queryId);
+                    if (candidateExecutionNode->querySubPlanContainsOperator(queryId, candidateOperator)) {
+                        NES_DEBUG("TopDownStrategy: skip to next upstream operator as the target operator is already placed.");
+                        vector<NodePtr> children = candidateOperator->getChildren();
+                        if (children.empty()) {
+                            candidateOperator = children[0]->as<LogicalOperatorNode>();
+                        } else {
+                            candidateOperator = nullptr;
+                        }
+                        continue;
+                    } else {
+                        NES_DEBUG("TopDownStrategy: Adding the operator to an existing query sub plan on the Execution node");
+
+                        QueryPlanPtr querySubPlan = candidateExecutionNode->getQuerySubPlan(queryId);
+                        querySubPlan->prependPreExistingOperator(candidateOperator);
+                        if (!candidateExecutionNode->updateQuerySubPlan(queryId, querySubPlan)) {
+                            NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + queryId);
+                        }
+                    }
+                } else {
+                    NES_DEBUG("TopDownStrategy: Adding the operator to an existing execution node");
+                    if (!candidateExecutionNode->createNewQuerySubPlan(queryId, candidateOperator)) {
+                        NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
+                    }
                 }
             } else {
-                // if operator is of source type then find the sensor node and schedule it there directly.
 
-                if (nesSourceNode->getRemainingCpuCapacity() <= 0) {
-                    throw std::runtime_error("Unable to schedule source operator" + targetOperator->toString());
+                NES_DEBUG("TopDownStrategy: create new execution node with id: " << candidateNesNode->getId());
+                ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, candidateOperator);
+                NES_DEBUG("TopDownStrategy: Adding new execution node with id: " << candidateNesNode->getId());
+                if (!executionPlan->addExecutionNode(newExecutionNode)) {
+                    NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to add execution node for query " + queryId);
                 }
+            }
 
-                NES_DEBUG("TopDown: Transforming New Operator into legacy operator");
-                OperatorPtr legacyOperator = translator->transform(targetOperator);
-
-                if (executionPlanPtr->hasVertex(nesSourceNode->getId())) {
-
-                    const ExecutionNodePtr
-                        executionNode = executionPlanPtr->getExecutionNode(nesSourceNode->getId());
-                    addOperatorToExistingNode(legacyOperator, executionNode);
-                } else {
-                    createNewExecutionNode(executionPlanPtr, legacyOperator, nesSourceNode);
-                }
-                nesSourceNode->reduceCpuCapacity(1);
+            NES_DEBUG("TopDownStrategy: Reducing the node remaining CPU capacity by 1");
+            // Reduce the processing capacity by 1
+            // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
+            candidateNesNode->reduceCpuCapacity(1);
+            if (!candidateOperator->getParents().empty()) {
+                //FIXME: currently we are not considering split operators
+                NES_DEBUG("TopDownStrategy: Finding next operator for placement");
+                candidateOperator = candidateOperator->getChildren()[0]->as<LogicalOperatorNode>();
+            } else {
+                NES_DEBUG("TopDownStrategy: No operator found for placement");
+                candidateOperator = nullptr;
             }
         }
     }
 }
-
-void TopDownStrategy::createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr operatorPtr,
-                                             NESTopologyEntryPtr nesNode) const {
-
-    stringstream operatorName;
-    operatorName << operatorPtr->toString()
-                 << "(OP-" << to_string(operatorPtr->getOperatorType()) << ")";
-    const ExecutionNodePtr
-        executionNode = executionPlanPtr->createExecutionNode(operatorName.str(), to_string(nesNode->getId()),
-                                                              nesNode, operatorPtr->copy());
-    executionNode->addOperatorId(operatorPtr->getOperatorId());
-}
-
-void TopDownStrategy::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePtr executionNode) const {
-
-    stringstream operatorName;
-    operatorName << operatorPtr->toString()
-                 << "(OP-" << to_string(operatorPtr->getOperatorType()) << ")"
-                 << "=>"
-                 << executionNode->getOperatorName();
-    executionNode->setOperatorName(operatorName.str());
-    executionNode->addChild(operatorPtr->copy());
-    executionNode->addOperatorId(operatorPtr->getOperatorId());
-}
-
 }// namespace NES

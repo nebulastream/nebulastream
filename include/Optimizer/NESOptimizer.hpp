@@ -38,14 +38,17 @@ class NESOptimizer {
     /**
      * @brief This method prepares the execution graph for the input user query
      * @param strategy : name of the placement strategy
-     * @param inputQuery : the input query for which execution plan is to be prepared
+     * @param queryPlan : the input query plan for which execution plan is to be updated is to be prepared
      * @param nesTopologyPlan : The topology of the NEs infrastructure
+     * @param streamCatalog : The stream catalog with information about different source operators
+     * @param globalExecutionPlan : The global execution plan that need to be updated
      * @return Updated Global Execution plan
      */
-    GlobalExecutionPlanPtr prepareExecutionGraph(std::string strategy,
-                                              QueryPlanPtr queryPlan,
-                                              NESTopologyPlanPtr nesTopologyPlan,
-                                              StreamCatalogPtr streamCatalog);
+    GlobalExecutionPlanPtr updateExecutionGraph(std::string strategy,
+                                                 QueryPlanPtr queryPlan,
+                                                 NESTopologyPlanPtr nesTopologyPlan,
+                                                 StreamCatalogPtr streamCatalog,
+                                                 GlobalExecutionPlanPtr globalExecutionPlan);
 
   private:
     TranslateFromLegacyPlanPhasePtr translateFromLegacyPlanPhase;
