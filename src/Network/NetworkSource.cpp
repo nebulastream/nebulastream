@@ -6,18 +6,18 @@ namespace NES {
 namespace Network {
 
 NetworkSource::NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                             NetworkManager& networkManager,
-                             NesPartition nesPartition) : DataSource(schema, bufferManager, queryManager),
-                                                          networkManager(networkManager), nesPartition(nesPartition) {
-    // nop
+                             NetworkManager& networkManager, NesPartition nesPartition) :
+    DataSource(schema, bufferManager, queryManager, std::to_string(nesPartition.getQueryId())),
+    networkManager(networkManager),
+    nesPartition(nesPartition) {
+    NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
 }
 
 NetworkSource::~NetworkSource() {
-    // nop
     if (networkManager.isPartitionRegistered(nesPartition)) {
-        NES_ERROR("Partition is still registered " << nesPartition);
         NES_THROW_RUNTIME_ERROR("NetworkSource: ~NetworkSource() called, but partition still in use.");
     }
+    NES_DEBUG("NetworkSink: Destroying NetworkSource " << nesPartition.toString());
 }
 
 std::optional<TupleBuffer> NetworkSource::receiveData() {

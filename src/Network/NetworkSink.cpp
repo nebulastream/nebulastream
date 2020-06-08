@@ -1,4 +1,5 @@
 #include "Network/NetworkSink.hpp"
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -10,28 +11,37 @@ NetworkSink::NetworkSink(SchemaPtr schema, NetworkManager& networkManager, const
       waitTime(waitTime), retryTimes(retryTimes) {
 }
 
+NetworkSink::~NetworkSink() {
+    NES_INFO("NetworkSink: Destructor called");
+}
+
 bool NetworkSink::writeData(TupleBuffer& inputBuffer) {
     if (!outputChannel.get()) {
-        auto threadId = std::hash<std::thread::id>{}(std::this_thread::get_id());
-        NES_DEBUG("NetworkSink: Initializing thread specific OutputChannel " << threadId);
-        auto channel = networkManager.registerSubpartitionProducer(
-            nodeLocation, NesPartition{nesPartition, threadId},
-            [](Messages::ErroMessage ex) {
-                NES_ERROR("NetworkSink: Error in RegisterSubpartitionProducer " << ex.getErrorTypeAsString());
-            },
-            waitTime, retryTimes);
+        NES_DEBUG("NetworkSink: Initializing thread specific OutputChannel");
+        auto channel = networkManager.registerSubpartitionProducer(nodeLocation, nesPartition,
+                                                                   [](Messages::ErroMessage ex) {
+                                                                     NES_ERROR("NetworkSink: Error in RegisterSubpartitionProducer " << ex.getErrorTypeAsString());
+                                                                   },
+                                                                   waitTime, retryTimes);
         outputChannel.reset(channel);
     }
-
+    inputBuffer.setTupleSizeInBytes(schema->getSchemaSizeInBytes());
+    //NES_DEBUG("NetworkSink: Sending buffer \n" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, schema));
     return outputChannel->sendBuffer(inputBuffer);
 }
 
 void NetworkSink::setup() {
-    NES_DEBUG("NetworkSink: Creating NetworkSink " << nesPartition.toString());
+    NES_DEBUG("NetworkSink: Empty method setup() called " << nesPartition.toString());
 }
 
 void NetworkSink::shutdown() {
-    NES_DEBUG("NetworkSink: Destroying NetworkSink " << nesPartition.toString());
+    if (outputChannel.get()) {
+        NES_DEBUG("NetworkSink: Shutdown called for thread specific OutputChannel.");
+        outputChannel.reset();
+    }
+    else {
+        NES_DEBUG("NetworkSink: Shutdown called, but no OutputChannel has been initialized.");
+    }
 }
 
 SinkType NetworkSink::getType() const { return NETWORK_SINK; }

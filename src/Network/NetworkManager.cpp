@@ -8,18 +8,10 @@ namespace NES {
 
 namespace Network {
 
-NetworkManager::NetworkManager(const std::string& hostname,
-                               uint16_t port,
-                               std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer,
-                               std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream,
-                               std::function<void(Messages::ErroMessage)>&& onError,
-                               BufferManagerPtr bufferManager,
-                               PartitionManagerPtr partitionManager,
+NetworkManager::NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocolPtr exchangeProtocol,
                                uint16_t numServerThread)
-    : server(std::make_shared<ZmqServer>(hostname, port, numServerThread, exchangeProtocol, bufferManager,
-                                         partitionManager)),
-      exchangeProtocol(std::move(onDataBuffer), std::move(onEndOfStream), std::move(onError)),
-      partitionManager(partitionManager) {
+    : server(std::make_shared<ZmqServer>(hostname, port, numServerThread, exchangeProtocol)),
+      exchangeProtocol(exchangeProtocol) {
     bool success = server->start();
     if (success) {
         NES_INFO("NetworkManager: Server started successfully");
@@ -29,17 +21,17 @@ NetworkManager::NetworkManager(const std::string& hostname,
 }
 
 bool NetworkManager::isPartitionRegistered(NesPartition nesPartition) const {
-    return partitionManager->isRegistered(nesPartition);
+    return exchangeProtocol->getPartitionManager()->isRegistered(nesPartition);
 }
 
 uint64_t NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition) {
     NES_INFO("NetworkManager: Registering SubpartitionConsumer: " << nesPartition.toString());
-    return partitionManager->registerSubpartition(nesPartition);
+    return exchangeProtocol->getPartitionManager()->registerSubpartition(nesPartition);
 }
 
 uint64_t NetworkManager::unregisterSubpartitionConsumer(NesPartition nesPartition) {
     NES_INFO("NetworkManager: Unregistering SubpartitionConsumer: " << nesPartition.toString());
-    return partitionManager->unregisterSubpartition(nesPartition);
+    return exchangeProtocol->getPartitionManager()->unregisterSubpartition(nesPartition);
 }
 
 OutputChannel* NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,

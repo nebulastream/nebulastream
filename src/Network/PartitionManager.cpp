@@ -5,7 +5,7 @@
 namespace NES::Network {
 
 uint64_t PartitionManager::registerSubpartition(NesPartition partition) {
-    std::unique_lock<std::mutex> lock(partitionCounterMutex);
+    std::unique_lock lock(partitionCounterMutex);
     //check if partition is present
     if (partitionCounter.find(partition) != partitionCounter.end()) {
         // partition is contained
@@ -18,7 +18,7 @@ uint64_t PartitionManager::registerSubpartition(NesPartition partition) {
 }
 
 uint64_t PartitionManager::unregisterSubpartition(NesPartition partition) {
-    std::unique_lock<std::mutex> lock(partitionCounterMutex);
+    std::unique_lock lock(partitionCounterMutex);
 
     // if partition is contained, decrement counter
     auto counter = partitionCounter.at(partition);
@@ -38,25 +38,25 @@ uint64_t PartitionManager::unregisterSubpartition(NesPartition partition) {
 }
 
 uint64_t PartitionManager::getSubpartitionCounter(NesPartition partition) {
-    std::unique_lock<std::mutex> lock(partitionCounterMutex);
+    std::shared_lock lock(partitionCounterMutex);
     return partitionCounter.at(partition);
 }
 
 uint64_t PartitionManager::deletePartition(NesPartition partition) {
-    std::unique_lock<std::mutex> lock(partitionCounterMutex);
+    std::unique_lock lock(partitionCounterMutex);
     NES_INFO("PartitionManager: Deleting " << partition.toString());
     return partitionCounter.erase(partition);
 }
 
 void PartitionManager::clear() {
-    std::unique_lock<std::mutex> lock(partitionCounterMutex);
+    std::unique_lock lock(partitionCounterMutex);
     NES_INFO("PartitionManager: Clearing registered partitions");
     partitionCounter.clear();
 }
 
 bool PartitionManager::isRegistered(NesPartition partition) const {
     //check if partition is present
-    std::unique_lock<std::mutex> lock(partitionCounterMutex);
+    std::shared_lock lock(partitionCounterMutex);
     return partitionCounter.find(partition) != partitionCounter.end();
 }
 
