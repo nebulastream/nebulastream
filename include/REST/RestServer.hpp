@@ -23,7 +23,8 @@ class RestServer {
         NesCoordinatorPtr coordinator,
         QueryCatalogPtr queryCatalog,
         StreamCatalogPtr streamCatalog,
-        TopologyManagerPtr topologyManager);
+        TopologyManagerPtr topologyManager,
+        GlobalExecutionPlanPtr executionPlan);
 
     ~RestServer();
     /**
