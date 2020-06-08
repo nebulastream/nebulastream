@@ -10,15 +10,15 @@ class CCodeGenerator : public CodeGenerator {
   public:
     CCodeGenerator();
     static CodeGeneratorPtr create();
-    virtual bool generateCode(SchemaPtr schema, const PipelineContextPtr& context,
+    bool generateCode(SchemaPtr schema, const PipelineContextPtr& context,
                               std::ostream& out) override;
-    virtual bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) override;
-    virtual bool generateCode(const AttributeFieldPtr field,
+    bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) override;
+    bool generateCode(const AttributeFieldPtr field,
                               const PredicatePtr& pred,
                               const NES::PipelineContextPtr& context,
                               std::ostream& out) override;
-    virtual bool generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) override;
-    virtual bool generateCode(const WindowDefinitionPtr& window,
+    bool generateCodeForEmit(const SchemaPtr sinkSchema, const PipelineContextPtr& context, std::ostream& out) override;
+    bool generateCode(const WindowDefinitionPtr& window,
                               const PipelineContextPtr& context,
                               std::ostream& out) override;
     ExecutablePipelinePtr compile(const CompilerArgs&, const GeneratedCodePtr& code) override;

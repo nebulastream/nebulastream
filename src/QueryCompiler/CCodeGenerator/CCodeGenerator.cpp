@@ -196,12 +196,11 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
     return true;
 }
 
-bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) {
+bool CCodeGenerator::generateCodeForEmit(const SchemaPtr sinkSchema, const PipelineContextPtr& context, std::ostream& out) {
     NES_DEBUG("CCodeGenerator: Generate code for Sink.");
     auto code = context->code;
     // set result schema to context
-    // todo replace to result schema of last operator instead of sink
-    context->resultSchema = sink->getSchema();
+    context->resultSchema = sinkSchema;
     // generate result tuple struct
     auto structDeclarationResultTuple = getStructDeclarationResultTuple(context->resultSchema);
     // add type declaration for the result tuple
