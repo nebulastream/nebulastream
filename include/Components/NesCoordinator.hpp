@@ -137,11 +137,12 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     bool undeployQuery(std::string queryId);
 
   private:
-    std::shared_ptr<grpc::Server> rpcServer;
+    std::string serverIp;
+    uint16_t restPort;
     uint16_t rpcPort;
+    std::shared_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     NesWorkerPtr worker;
-
     WorkerRPCClientPtr workerRPCClient;
     CoordinatorEnginePtr coordinatorEngine;
     QueryDeployerPtr queryDeployer;
@@ -149,15 +150,9 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;
     TopologyManagerPtr topologyManager;
-
     std::shared_ptr<RestServer> restServer;
-    uint16_t restPort;
-    std::string serverIp;
-
     std::shared_ptr<std::thread> restThread;
-
     std::atomic<bool> stopped;
-
     std::map<std::string, std::vector<ExecutionNodePtr>> currentDeployments;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;

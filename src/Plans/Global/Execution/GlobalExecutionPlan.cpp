@@ -1,7 +1,7 @@
-#include "Plans/Global/Execution/GlobalExecutionPlan.hpp"
-#include "Plans/Global/Execution/ExecutionNode.hpp"
-#include "Util/Logger.hpp"
 #include <Nodes/Util/DumpContext.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -109,5 +109,4 @@ std::string GlobalExecutionPlan::getAsString() {
     }
     return ss.str();
 }
-
 }// namespace NES

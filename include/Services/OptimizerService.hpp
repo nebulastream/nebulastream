@@ -27,13 +27,13 @@ class OptimizerService {
     OptimizerService(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan);
 
     /**
-     * @brief: get execution plan as json.
+     * @brief: get execution plan as string.
      *
-     * @param userQuery
-     * @param optimizationStrategyName
-     * @return
+     * @param queryPlan : the logical plan of the query
+     * @param optimizationStrategyName : name of the strategy used for preparing the execution plan
+     * @return execution plan as string representation
      */
-    web::json::value getExecutionPlanAsJson(QueryPlanPtr queryPlan, std::string optimizationStrategyName);
+    std::string getExecutionPlanAsString(QueryPlanPtr queryPlan, std::string optimizationStrategyName);
 
     /**
      * @brief: get execution plan for the input query using the specified strategy.
