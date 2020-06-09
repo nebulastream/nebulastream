@@ -4,6 +4,8 @@
 #include <SourceSink/PrintSink.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/ZmqSink.hpp>
+#include <SourceSink/BinarySink.hpp>
+#include <SourceSink/CSVSink.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -15,21 +17,21 @@ const DataSinkPtr createTestSink() {
 
 const DataSinkPtr createBinaryFileSinkWithSchema(SchemaPtr schema,
                                                  const std::string& filePath) {
-    return std::make_shared<FileOutputSink>(schema, filePath);
+    return std::make_shared<BinarySink>(schema, filePath);
 }
 
 const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath) {
-    return std::make_shared<FileOutputSink>(filePath);
+    return std::make_shared<BinarySink>(filePath);
 }
 
 const DataSinkPtr createCSVFileSinkWithSchemaAppend(SchemaPtr schema,
                                                     const std::string& filePath) {
-    return std::make_shared<FileOutputSink>(schema, filePath, FileOutputSink::CSV_TYPE, FileOutputSink::FILE_APPEND);
+    return std::make_shared<CSVSink>(schema, filePath, FileOutputSink::FILE_APPEND);
 }
 
 const DataSinkPtr createCSVFileSinkWithSchemaOverwrite(SchemaPtr schema,
                                                        const std::string& filePath) {
-    return std::make_shared<FileOutputSink>(schema, filePath, FileOutputSink::CSV_TYPE, FileOutputSink::FILE_OVERWRITE);
+    return std::make_shared<CSVSink>(schema, filePath, FileOutputSink::FILE_OVERWRITE);
 }
 
 const DataSinkPtr createPrintSinkWithoutSchema(std::ostream& out) {
