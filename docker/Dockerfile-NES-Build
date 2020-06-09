@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
+RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   clang \
   cmake \
   libdwarf-dev \
