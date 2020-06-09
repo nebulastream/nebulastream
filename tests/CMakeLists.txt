@@ -95,6 +95,11 @@ add_executable(source-tests "UnitTests/SourceTest.cpp")
 target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME source-tests COMMAND source-tests)
 
+### Sink Tests ###
+add_executable(sink-tests "UnitTests/SinkTest.cpp" UnitTests/SinkTest.cpp)
+target_link_libraries(sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+add_test(NAME sink-tests COMMAND sink-tests)
+
 ### Kafka Tests ###
 if(NES_USE_KAFKA)
 add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
