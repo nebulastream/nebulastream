@@ -15,12 +15,16 @@ namespace Network {
  */
 class ExchangeProtocol {
   public:
-    explicit ExchangeProtocol(BufferManagerPtr bufferManager, PartitionManagerPtr partitionManager,
-                              QueryManagerPtr queryManager,
-                              std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer = [](NesPartition id,
-                                                                                                  TupleBuffer& buf) {},
-                              std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream = [](Messages::EndOfStreamMessage p) {},
-                              std::function<void(Messages::ErroMessage)>&& onException = [](Messages::ErroMessage ex) {});
+    explicit ExchangeProtocol(
+        BufferManagerPtr bufferManager, PartitionManagerPtr partitionManager,
+        QueryManagerPtr queryManager,
+        std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer = [](NesPartition id,
+                                                                            TupleBuffer& buf) {
+        },
+        std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream = [](Messages::EndOfStreamMessage p) {
+        },
+        std::function<void(Messages::ErroMessage)>&& onException = [](Messages::ErroMessage ex) {
+        });
 
     /**
      * @brief Reaction of the zmqServer after a ClientAnnounceMessage is received.

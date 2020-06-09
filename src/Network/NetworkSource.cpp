@@ -6,10 +6,9 @@ namespace NES {
 namespace Network {
 
 NetworkSource::NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                             NetworkManager& networkManager, NesPartition nesPartition) :
-    DataSource(schema, bufferManager, queryManager, std::to_string(nesPartition.getQueryId())),
-    networkManager(networkManager),
-    nesPartition(nesPartition) {
+                             NetworkManager& networkManager, NesPartition nesPartition) : DataSource(schema, bufferManager, queryManager, std::to_string(nesPartition.getQueryId())),
+                                                                                          networkManager(networkManager),
+                                                                                          nesPartition(nesPartition) {
     NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
 }
 

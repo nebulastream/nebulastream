@@ -18,11 +18,12 @@ NetworkSink::~NetworkSink() {
 bool NetworkSink::writeData(TupleBuffer& inputBuffer) {
     if (!outputChannel.get()) {
         NES_DEBUG("NetworkSink: Initializing thread specific OutputChannel");
-        auto channel = networkManager.registerSubpartitionProducer(nodeLocation, nesPartition,
-                                                                   [](Messages::ErroMessage ex) {
-                                                                     NES_ERROR("NetworkSink: Error in RegisterSubpartitionProducer " << ex.getErrorTypeAsString());
-                                                                   },
-                                                                   waitTime, retryTimes);
+        auto channel = networkManager.registerSubpartitionProducer(
+            nodeLocation, nesPartition,
+            [](Messages::ErroMessage ex) {
+                NES_ERROR("NetworkSink: Error in RegisterSubpartitionProducer " << ex.getErrorTypeAsString());
+            },
+            waitTime, retryTimes);
         outputChannel.reset(channel);
     }
     inputBuffer.setTupleSizeInBytes(schema->getSchemaSizeInBytes());
@@ -38,8 +39,7 @@ void NetworkSink::shutdown() {
     if (outputChannel.get()) {
         NES_DEBUG("NetworkSink: Shutdown called for thread specific OutputChannel.");
         outputChannel.reset();
-    }
-    else {
+    } else {
         NES_DEBUG("NetworkSink: Shutdown called, but no OutputChannel has been initialized.");
     }
 }

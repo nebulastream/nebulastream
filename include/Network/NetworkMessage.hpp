@@ -89,7 +89,7 @@ class ErroMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = ErrorMessage;
 
-    explicit ErroMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), error(error) {};
+    explicit ErroMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), error(error){};
 
     const ErrorType getErrorType() const { return error; }
 
@@ -100,6 +100,7 @@ class ErroMessage : public ExchangeMessage {
             return "UnknownError";
         }
     }
+
   private:
     const ErrorType error;
 };
@@ -108,8 +109,7 @@ class DataBufferMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = DataBuffer;
 
-    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords) :
-        payloadSize(payloadSize), numOfRecords(numOfRecords) {
+    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords) : payloadSize(payloadSize), numOfRecords(numOfRecords) {
     }
 
     /**
@@ -135,7 +135,7 @@ class DataBufferMessage {
 
 class NesNetworkError : public std::runtime_error {
   public:
-    explicit NesNetworkError(ErroMessage& msg): std::runtime_error(msg.getErrorTypeAsString()), msg(msg) {
+    explicit NesNetworkError(ErroMessage& msg) : std::runtime_error(msg.getErrorTypeAsString()), msg(msg) {
     }
 
     const ErroMessage& getErrorMessage() const {

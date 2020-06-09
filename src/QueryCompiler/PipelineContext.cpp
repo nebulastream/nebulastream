@@ -24,7 +24,7 @@ bool PipelineContext::hasWindow() const {
 }
 
 bool PipelineContext::hasNextPipeline() const {
-    return this->nextPipelines.size()!=0;
+    return this->nextPipelines.size() != 0;
 }
 
 std::vector<PipelineContextPtr> PipelineContext::getNextPipelines() const {

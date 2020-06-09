@@ -50,14 +50,14 @@ std::shared_ptr<PipelineStage> QueryCompiler::compilePipelineStages(QueryExecuti
         auto windowHandler = createWindowHandler(context->getWindow(),
                                                  queryExecutionPlan->getQueryManager(), queryExecutionPlan->getBufferManager());
         pipelineStage = createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
-                                        queryExecutionPlan,
-                                        executablePipeline,
-                                        windowHandler);
+                                            queryExecutionPlan,
+                                            executablePipeline,
+                                            windowHandler);
         queryExecutionPlan->appendPipelineStage(pipelineStage);
     } else {
         pipelineStage = createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
-                                        queryExecutionPlan,
-                                        executablePipeline);
+                                            queryExecutionPlan,
+                                            executablePipeline);
         queryExecutionPlan->appendPipelineStage(pipelineStage);
     }
 

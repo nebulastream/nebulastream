@@ -55,7 +55,6 @@ class PipelineStage {
      */
     bool stop();
 
-
     /**
      * @brief Get next pipeline stage
      * @return

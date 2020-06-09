@@ -11,13 +11,12 @@ namespace Network {
 
 OutputChannel::OutputChannel(std::shared_ptr<zmq::context_t> zmqContext, const std::string& address,
                              NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes,
-                             std::function<void(Messages::ErroMessage)> onError, size_t threadId) :
-    socketAddr(address),
-    zmqSocket(*zmqContext, ZMQ_DEALER),
-    channelId(ChannelId{nesPartition, threadId}),
-    isClosed(false),
-    connected(false),
-    onErrorCb(std::move(onError)) {
+                             std::function<void(Messages::ErroMessage)> onError, size_t threadId) : socketAddr(address),
+                                                                                                    zmqSocket(*zmqContext, ZMQ_DEALER),
+                                                                                                    channelId(ChannelId{nesPartition, threadId}),
+                                                                                                    isClosed(false),
+                                                                                                    connected(false),
+                                                                                                    onErrorCb(std::move(onError)) {
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
     init(waitTime, retryTimes);
 }
@@ -77,8 +76,8 @@ bool OutputChannel::registerAtServer() {
             // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
             if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
                 NES_ERROR("OutputChannel: Connection failed with server "
-                              << socketAddr << " for " << channelId.getNesPartition().toString()
-                              << "->Wrong server ready message! Reason: Partitions are not matching");
+                          << socketAddr << " for " << channelId.getNesPartition().toString()
+                          << "->Wrong server ready message! Reason: Partitions are not matching");
                 return false;
             }
             NES_INFO("OutputChannel: Connection established with server " << socketAddr << " for "
@@ -107,7 +106,7 @@ bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
     auto bufferSize = inputBuffer.getBufferSize();
     auto tupleSize = inputBuffer.getTupleSizeInBytes();
     auto numOfTuples = inputBuffer.getNumberOfTuples();
-    auto payloadSize = tupleSize*numOfTuples;
+    auto payloadSize = tupleSize * numOfTuples;
     auto ptr = inputBuffer.getBuffer<uint8_t>();
     auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize);// DON'T TRY THIS AT HOME :P
     sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples);

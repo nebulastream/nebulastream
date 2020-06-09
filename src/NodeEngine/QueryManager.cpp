@@ -183,7 +183,6 @@ TaskPtr QueryManager::getWork(std::atomic<bool>& threadPool_running) {
     NES_DEBUG("QueryManager:getWork wait got lock");
     // wait while queue is empty but thread pool is running
     while (taskQueue.empty() && threadPool_running) {
-        //NES_DEBUG("QueryManager::getWork wait for work as queue is emtpy");
         cv.wait(lock);
         if (!threadPool_running) {
             // return empty task if thread pool was shut down

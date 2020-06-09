@@ -151,11 +151,11 @@ struct hash<NES::Network::NesPartition> {
         // Hash function for the NesPartition
         // Compute individual hash values of the Ints and combine them using XOR and bit shifting:
         return ((hash<uint64_t>()(k.getQueryId())
-            ^ (hash<uint64_t>()(k.getOperatorId()) << 1))
-            >> 1)
+                 ^ (hash<uint64_t>()(k.getOperatorId()) << 1))
+                >> 1)
             ^ ((hash<uint64_t>()(k.getPartitionId())
                 ^ (hash<uint64_t>()(k.getSubpartitionId()) << 1))
-                >> 1);
+               >> 1);
     }
 };
 
