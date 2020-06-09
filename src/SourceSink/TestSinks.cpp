@@ -1,11 +1,11 @@
+#include <SourceSink/BinarySink.hpp>
+#include <SourceSink/CSVSink.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/FileOutputSink.hpp>
 #include <SourceSink/KafkaSink.hpp>
 #include <SourceSink/PrintSink.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/ZmqSink.hpp>
-#include <SourceSink/BinarySink.hpp>
-#include <SourceSink/CSVSink.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
