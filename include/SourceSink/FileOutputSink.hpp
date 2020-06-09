@@ -76,14 +76,6 @@ class FileOutputSink : public DataSink {
     void shutdown() override;
 
     /**
-     * @brief method to override virtual write data function
-     * @Note currently not implemented
-     * @param tuple buffer pointer to be filled
-     * @return bool indicating write success
-     */
-    bool writeData(TupleBuffer& input_buffer) override;
-
-    /**
      * @brief override the toString method for the file output sink
      * @return returns string describing the file output sink
      */
@@ -109,7 +101,7 @@ class FileOutputSink : public DataSink {
      */
     SinkType getType() const override;
 
-  private:
+  protected:
     std::string filePath;
 
     friend class boost::serialization::access;
@@ -124,6 +116,14 @@ class FileOutputSink : public DataSink {
         ar& outputMode;
         ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
     }
+
+    /**
+     * @brief Manipulate a tupleBuffer with a schema as specific output.
+     * @param tupleBuffer
+     * @param schema
+     * @return formatted output according to the derived class
+     */
+    virtual std::string outputBufferWithSchema(TupleBuffer& tupleBuffer, SchemaPtr schema) const = 0;
 };
 typedef std::shared_ptr<FileOutputSink> FileOutputSinkPtr;
 }// namespace NES

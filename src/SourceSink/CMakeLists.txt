@@ -2,11 +2,13 @@ add_source_nes(
         DataSource.cpp
         DataSink.cpp
         GeneratorSource.cpp
+        BinarySink.cpp
         BinarySource.cpp
         ZmqSink.cpp
         ZmqSource.cpp
         FileOutputSink.cpp
         PrintSink.cpp
+        CSVSink.cpp
         CSVSource.cpp
         TestSources.cpp
         TestSinks.cpp

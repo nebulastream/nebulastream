@@ -1,10 +1,6 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/FileOutputSink.hpp>
-#include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <cstring>
-#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -40,29 +36,6 @@ FileOutputSink::FileOutputSink(SchemaPtr schema, const std::string filePath,
     outputMode = mode;
 }
 
-bool FileOutputSink::writeData(TupleBuffer& input_buffer) {
-
-    NES_DEBUG("FileOutputSink::writeData: write bufffer tuples " << input_buffer.getNumberOfTuples());
-
-    if (outputType == BINARY_TYPE) {
-        std::fstream outputFile(filePath, std::fstream::in | std::fstream::out | std::fstream::app);
-        outputFile << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, this->getSchema());
-        outputFile.close();
-    } else if (outputType == CSV_TYPE) {
-        std::ofstream outputFile;
-        if (outputMode == FILE_APPEND) {
-            outputFile.open(filePath, std::ofstream::out | std::ofstream::app);
-        } else if (outputMode == FILE_OVERWRITE) {
-            outputFile.open(filePath, std::ofstream::out | std::ofstream::trunc);
-        } else {
-            NES_ERROR("FileOutputSink::writeData: write mode not supported=" << outputMode);
-        }
-        outputFile << input_buffer.printTupleBuffer(schema);
-        outputFile.close();
-    }
-    return true;
-}
-
 const std::string FileOutputSink::toString() const {
     std::stringstream ss;
     ss << "PRINT_SINK(";
@@ -71,9 +44,13 @@ const std::string FileOutputSink::toString() const {
 }
 
 void FileOutputSink::setup() {
+    NES_DEBUG("FileOutputSink: Creating FileOutputSink of type " << this->getOutputType()
+                                                                   << " and mode " << this->getOutputMode());
 }
 
 void FileOutputSink::shutdown() {
+    NES_DEBUG("FileOutputSink: Destroying FileOutputSink of type " << this->getOutputType()
+                                                                   << " and mode " << this->getOutputMode());
 }
 
 SinkType FileOutputSink::getType() const {
