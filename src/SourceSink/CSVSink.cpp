@@ -27,8 +27,6 @@ bool CSVSink::writeData(TupleBuffer& input_buffer) {
         return false;
     }
     outputFile << this->outputBufferWithSchema(input_buffer, schema);
-    outputFile << "test" << std::endl;
-    outputFile.flush();
     outputFile.close();
 
     return true;
