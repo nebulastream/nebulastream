@@ -45,7 +45,7 @@ const std::string FileOutputSink::toString() const {
 
 void FileOutputSink::setup() {
     NES_DEBUG("FileOutputSink: Creating FileOutputSink of type " << this->getOutputType()
-                                                                   << " and mode " << this->getOutputMode());
+                                                                 << " and mode " << this->getOutputMode());
 }
 
 void FileOutputSink::shutdown() {
