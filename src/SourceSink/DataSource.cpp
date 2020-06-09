@@ -23,14 +23,14 @@ DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, 
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0),
       lastGatheringTimeStamp(0), sourceId(UtilityFunctions::generateIdString()) { NES_DEBUG(
-        "DataSource " << this->getSourceId() << ": Init Data Source with schema"); };
+                                     "DataSource " << this->getSourceId() << ": Init Data Source with schema"); };
 
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                        std::string sourceId)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0),
       lastGatheringTimeStamp(0), sourceId(sourceId) { NES_DEBUG(
-        "DataSource " << this->getSourceId() << ": Init Data Source with schema"); };
+                                     "DataSource " << this->getSourceId() << ": Init Data Source with schema"); };
 
 DataSource::DataSource() {
     NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source Default w/o schema");
@@ -56,8 +56,8 @@ bool DataSource::start() {
     type = getType();
     NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread");
     thread = std::make_shared<std::thread>([this, barrier]() {
-      barrier->wait();
-      runningRoutine(bufferManager, queryManager);
+        barrier->wait();
+        runningRoutine(bufferManager, queryManager);
     });
     barrier->wait();
     return true;
@@ -149,8 +149,8 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                     }
                 } else {
                     NES_DEBUG("DataSource "
-                                  << this->getSourceId() << ": Receiving thread terminated ... stopping because cnt=" << cnt
-                                  << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
+                              << this->getSourceId() << ": Receiving thread terminated ... stopping because cnt=" << cnt
+                              << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
                     return;// TODO: check if this really has to be done of if we just continue looping
                     // TODO: maybe set running false
                 }

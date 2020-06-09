@@ -14,7 +14,7 @@ namespace Network {
 ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads,
                      ExchangeProtocolPtr exchangeProtocol)
     : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), isRunning(false), keepRunning(true),
-      exchangeProtocol(exchangeProtocol){
+      exchangeProtocol(exchangeProtocol) {
     if (numNetworkThreads < DEFAULT_NUM_SERVER_THREADS) {
         NES_THROW_RUNTIME_ERROR("ZmqServer: numNetworkThreads is greater than DEFAULT_NUM_SERVER_THREADS");
     }
@@ -26,7 +26,7 @@ bool ZmqServer::start() {
     uint16_t numHandlerThreads = numNetworkThreads / 2;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
     routerThread = std::make_unique<std::thread>([this, numHandlerThreads, &startPromise]() {
-      routerLoop(numHandlerThreads, startPromise);
+        routerLoop(numHandlerThreads, startPromise);
     });
     return startPromise.get_future().get();
 }
@@ -66,7 +66,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
         NES_DEBUG("Created Zmq Server socket on " << hostname << ":" << port);
         for (int i = 0; i < numHandlerThreads; ++i) {
             handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
-              messageHandlerEventLoop(barrier, i);
+                messageHandlerEventLoop(barrier, i);
             }));
         }
     } catch (...) {
@@ -147,8 +147,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     try {
                         auto returnMessage = exchangeProtocol->onClientAnnouncement(receivedMsg);
                         sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket, outIdentityEnvelope, returnMessage);
-                    }
-                    catch (Messages::NesNetworkError& ex) {
+                    } catch (Messages::NesNetworkError& ex) {
                         auto returnMessage = exchangeProtocol->onError(ex.getErrorMessage());
                         sendMessageWithIdentity<Messages::ErroMessage>(dispatcherSocket, outIdentityEnvelope, returnMessage);
                     }

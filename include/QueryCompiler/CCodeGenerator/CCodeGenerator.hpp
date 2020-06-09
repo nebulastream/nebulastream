@@ -11,16 +11,16 @@ class CCodeGenerator : public CodeGenerator {
     CCodeGenerator();
     static CodeGeneratorPtr create();
     bool generateCode(SchemaPtr schema, const PipelineContextPtr& context,
-                              std::ostream& out) override;
+                      std::ostream& out) override;
     bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) override;
     bool generateCode(const AttributeFieldPtr field,
-                              const PredicatePtr& pred,
-                              const NES::PipelineContextPtr& context,
-                              std::ostream& out) override;
+                      const PredicatePtr& pred,
+                      const NES::PipelineContextPtr& context,
+                      std::ostream& out) override;
     bool generateCodeForEmit(const SchemaPtr sinkSchema, const PipelineContextPtr& context, std::ostream& out) override;
     bool generateCode(const WindowDefinitionPtr& window,
-                              const PipelineContextPtr& context,
-                              std::ostream& out) override;
+                      const PipelineContextPtr& context,
+                      std::ostream& out) override;
     ExecutablePipelinePtr compile(const CompilerArgs&, const GeneratedCodePtr& code) override;
     ~CCodeGenerator() override;
 

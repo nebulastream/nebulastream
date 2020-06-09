@@ -8,11 +8,10 @@ ExchangeProtocol::ExchangeProtocol(BufferManagerPtr bufferManager,
                                    QueryManagerPtr queryManager,
                                    std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer,
                                    std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream,
-                                   std::function<void(Messages::ErroMessage)>&& onException) :
-    bufferManager(bufferManager), partitionManager(partitionManager), queryManager(queryManager),
-    onDataBufferCallback(std::move(onDataBuffer)),
-    onEndOfStreamCallback(std::move(onEndOfStream)),
-    onExceptionCallback(std::move(onException)) {
+                                   std::function<void(Messages::ErroMessage)>&& onException) : bufferManager(bufferManager), partitionManager(partitionManager), queryManager(queryManager),
+                                                                                               onDataBufferCallback(std::move(onDataBuffer)),
+                                                                                               onEndOfStreamCallback(std::move(onEndOfStream)),
+                                                                                               onExceptionCallback(std::move(onException)) {
     NES_DEBUG("ExchangeProtocol: Initializing ExchangeProtocol()");
     if (!onDataBufferCallback) {
         NES_THROW_RUNTIME_ERROR("ExchangeProtocol: OnDataBuffer not initialized.");
@@ -53,8 +52,9 @@ void ExchangeProtocol::onBuffer(NesPartition nesPartition, TupleBuffer& buffer) 
     } else {
         // partition is not registered, discard the buffer
         buffer.release();
-        NES_ERROR("ExchangeProtocol: " << "DataBuffer for " + nesPartition.toString()
-            + " is not registered and was discarded!");
+        NES_ERROR("ExchangeProtocol: "
+                  << "DataBuffer for " + nesPartition.toString()
+                      + " is not registered and was discarded!");
     }
     onDataBufferCallback(nesPartition, buffer);
 }
@@ -84,5 +84,5 @@ QueryManagerPtr ExchangeProtocol::getQueryManager() const {
     return queryManager;
 }
 
-}
-}
+}// namespace Network
+}// namespace NES
