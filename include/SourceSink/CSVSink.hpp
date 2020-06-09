@@ -9,33 +9,33 @@ class TupleBuffer;
 class CSVSink : public FileOutputSink {
   public:
     /**
-     * @brief
-     * @param schema
-     * @param filepath
+     * @brief schema and path constructor
+     * @param schema the scema to expect as output
+     * @param filepath the path to perform outout
      */
     explicit CSVSink(SchemaPtr schema, std::string filepath);
 
     /**
-     * @brief
-     * @param schema
-     * @param filePath
-     * @param mode
+     * @brief schema, path, and output mode constructor
+     * @param schema the scema to expect as output
+     * @param filepath the path to perform outout
+     * @param mode enum between APPEND and OVERWRITE
      */
     explicit CSVSink(SchemaPtr schema, std::string filePath, FileOutputMode mode);
 
     /**
-     * @brief
+     * @brief implementation of data output
      * @param input_buffer
-     * @return
+     * @return true if the tuples have been written, false otherwise
      */
     bool writeData(TupleBuffer& input_buffer);
 
   private:
     /**
-     * @brief
+     * @brief creates string lines of output
      * @param tupleBuffer
      * @param schema
-     * @return
+     * @return the file output, as string lines with comma separation
      */
     std::string outputBufferWithSchema(TupleBuffer& tupleBuffer, SchemaPtr schema) const override;
 };
