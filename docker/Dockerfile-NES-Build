@@ -1,7 +1,8 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
-RUN apt-get update -qq && apt-get install -qq \
+RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
   clang \
+  cmake \
   libdwarf-dev \
   libdwarf1 \
   llvm-dev \
@@ -20,11 +21,7 @@ RUN apt-get update -qq && apt-get install -qq \
   tar \
   && apt-get clean -qq
 
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2.tar.gz && \
-  tar -zxvf cmake-3.17.2.tar.gz && \
-  cd cmake-3.17.2 && ./bootstrap && make -j3 && make install && \
-  cd ${HOME} && rm -rf cmake-3.17.2 cmake-3.17.2.tar.gz && \
-  cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
+RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && \
   make -j2 && make install && cd ${HOME} && rm -rf grpc && \
   cd ${HOME} && git clone --single-branch --branch v0.3.1 https://github.com/mfontanini/cppkafka.git && \
