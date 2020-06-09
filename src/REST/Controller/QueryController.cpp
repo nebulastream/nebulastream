@@ -1,6 +1,7 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <REST/Controller/QueryController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
@@ -36,22 +37,18 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                 try {
                     // Prepare Input query from user string
                     string userRequest(body.begin(), body.end());
-
                     json::value req = json::value::parse(userRequest);
-
                     string userQuery = req.at("userQuery").as_string();
                     string optimizationStrategyName = req.at("strategyName").as_string();
 
                     // Call the service
                     string queryId = queryCatalog->registerQuery(userQuery, optimizationStrategyName);
-
-                    json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
-
-                    json::value restResponse{};
-                    restResponse["queryId"] = json::value::string(queryId);
-                    restResponse["executionGraph"] = executionGraphPlan;
+                    std::string executionPlanAsString = executionPlan->getAsString();
 
                     // Prepare the response
+                    json::value restResponse{};
+                    restResponse["queryId"] = json::value::string(queryId);
+                    restResponse["executionPlan"] = json::value::string(executionPlanAsString);
                     successMessageImpl(message, restResponse);
                     return;
                 } catch (const std::exception& exc) {
@@ -76,8 +73,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string userQuery = req.at("userQuery").as_string();
 
                     //Call the service
-                    const auto& basePlan = queryServicePtr->generateBaseQueryPlanFromQueryString(
-                        userQuery);
+                    auto basePlan = queryServicePtr->generateBaseQueryPlanFromQueryString(userQuery);
 
                     //Prepare the response
                     successMessageImpl(message, basePlan);

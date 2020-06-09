@@ -1,9 +1,12 @@
 #ifndef NES_GLOBALEXECUTIONPLAN_HPP
 #define NES_GLOBALEXECUTIONPLAN_HPP
 
-#include <vector>
+#include <cpprest/json.h>
 #include <map>
 #include <memory>
+#include <vector>
+
+using namespace web;
 
 namespace NES {
 

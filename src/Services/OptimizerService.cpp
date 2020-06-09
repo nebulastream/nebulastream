@@ -15,8 +15,8 @@ OptimizerService::OptimizerService(TopologyManagerPtr topologyManager, StreamCat
     NES_DEBUG("OptimizerService()");
 }
 
-json::value OptimizerService::getExecutionPlanAsJson(QueryPlanPtr queryPlan, string optimizationStrategyName) {
-    return updateGlobalExecutionPlan(queryPlan, optimizationStrategyName)->getExecutionGraphAsJson();
+std::string OptimizerService::getExecutionPlanAsString(QueryPlanPtr queryPlan, string optimizationStrategyName) {
+    return updateGlobalExecutionPlan(queryPlan, optimizationStrategyName)->getAsString();
 }
 
 GlobalExecutionPlanPtr OptimizerService::updateGlobalExecutionPlan(QueryPlanPtr queryPlan, string optimizationStrategyName) {

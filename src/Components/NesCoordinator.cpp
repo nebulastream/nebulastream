@@ -130,7 +130,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator starting rest server");
     std::promise<bool> promRest;
     std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(),
-                                                                          queryCatalog, streamCatalog, topologyManager);
+                                                                          queryCatalog, streamCatalog, topologyManager, executionPlan);
 
     restThread = std::make_shared<std::thread>(([&]() {
         startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);

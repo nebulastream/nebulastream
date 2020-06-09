@@ -50,7 +50,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bot
          << std::endl;
 
     const QueryPtr query = queryService->getQueryFromQueryString(code.str());
-    const json::value& plan = optimizerService->getExecutionPlanAsJson(
+    const json::value& plan = optimizerService->getExecutionPlanAsString(
         query->getQueryPlan(), "BottomUp", streamCatalog);
     EXPECT_TRUE(plan.size() != 0);
 }
@@ -68,7 +68,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_top
          << std::endl;
     const QueryPtr query = queryService->getQueryFromQueryString(code.str());
 
-    const json::value& plan = optimizerService->getExecutionPlanAsJson(
+    const json::value& plan = optimizerService->getExecutionPlanAsString(
         query->getQueryPlan(), "BottomUp", streamCatalog);
     EXPECT_TRUE(plan.size() != 0);
 }
@@ -106,7 +106,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
              << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));" << std::endl;
 
         const QueryPtr query = queryService->getQueryFromQueryString(code.str());
-        const json::value& plan = optimizerService->getExecutionPlanAsJson(
+        const json::value& plan = optimizerService->getExecutionPlanAsString(
             query->getQueryPlan(), "BottomUp", streamCatalog);
         FAIL();
     } catch (...) {
@@ -123,7 +123,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
             << std::endl;
 
         const QueryPtr query = queryService->getQueryFromQueryString(code.str());
-        const json::value& plan = optimizerService->getExecutionPlanAsJson(
+        const json::value& plan = optimizerService->getExecutionPlanAsString(
             query->getQueryPlan(), "BottomUp", streamCatalog);
         FAIL();
     } catch (...) {
