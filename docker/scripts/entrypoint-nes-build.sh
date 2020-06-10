@@ -6,6 +6,8 @@ if [ $# -eq 0 ]
 then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
     cmake -DCMAKE_BUILD_TYPE=Release -DGRPC_AVAILABLE=1 -DZMQ_AVAILABLE=1 -DCPPZMQ_AVAILABLE=1 -DNES_BUILDING_ON_CI=1 -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/x86_64-linux-gnu" -DCPPRESTSDK_DIR="/usr/lib/x86_64-linux-gnu/cmake/" -DCMAKE_CXX_FLAGS_RELEASE:STRING="-w -Wno-unused-variable -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-sign-compare " ..
     make -j4
     cd /nebulastream/build/tests
