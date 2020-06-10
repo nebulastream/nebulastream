@@ -168,7 +168,6 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 
         //buf->setBufferSizeInBytes(sizeof(InputTuple));
         buf.setNumberOfTuples(tupleCnt);
-        buf.setTupleSizeInBytes(sizeof(InputTuple));
         return buf;
     }
 };
@@ -656,7 +655,6 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /* setup input and output for test */
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    inputBuffer.setTupleSizeInBytes(8);
     auto recordSchema = Schema::create()->addField("id", BasicType::INT64);
     auto layout = createRowLayout(recordSchema);
 

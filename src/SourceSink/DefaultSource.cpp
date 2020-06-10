@@ -53,9 +53,9 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
             }
         }
     }
-    buf.setTupleSizeInBytes(schema->getSchemaSizeInBytes());
     buf.setNumberOfTuples(tupleCnt);
-    NES_DEBUG("Source: Generated buffer with " << buf.getTupleSizeInBytes() << "/" << buf.getNumberOfTuples()
+    // TODO move this to trace
+    NES_DEBUG("Source: Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes()
                                                << "\n"
                                                << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
     return buf;

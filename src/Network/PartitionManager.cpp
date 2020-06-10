@@ -20,8 +20,13 @@ uint64_t PartitionManager::registerSubpartition(NesPartition partition) {
 uint64_t PartitionManager::unregisterSubpartition(NesPartition partition) {
     std::unique_lock lock(partitionCounterMutex);
 
+    if (partitionCounter.find(partition) == partitionCounter.end()) {
+        NES_FATAL_ERROR("PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
+        NES_THROW_RUNTIME_ERROR("PartitionManager: error while unregistering partition");
+    }
+
     // if partition is contained, decrement counter
-    auto counter = partitionCounter.at(partition);
+    auto counter = partitionCounter[partition];
 
     if (counter == 0) {
         //if counter reaches 0, log error
@@ -29,7 +34,7 @@ uint64_t PartitionManager::unregisterSubpartition(NesPartition partition) {
         partitionCounter.erase(partition);
     } else {
         //else decrement counter
-        partitionCounter[partition] = --counter;
+        partitionCounter[partition]--;
         NES_INFO("PartitionManager: Unregistering " << partition.toString() << "; newCnt(" << counter << ")");
     }
 

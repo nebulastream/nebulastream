@@ -121,7 +121,6 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
         auto arr = outputBuffer.getBufferAs<uint32_t>();
         arr[0] = static_cast<uint32_t>(sum.load());
         outputBuffer.setNumberOfTuples(1);
-        outputBuffer.setTupleSizeInBytes(4);
         NES_DEBUG("TEST: written " << arr[0]);
         sink->writeData(outputBuffer);
 

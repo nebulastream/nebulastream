@@ -70,7 +70,6 @@ TEST_F(SinkTest, testCSVSink) {
               buffer.getBuffer<uint64_t>()[j] = j;
           }
           buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
-          buffer.setTupleSizeInBytes(sizeof(uint64_t));
       }
       write_result = csvSink->writeData(buffer);
     });
@@ -92,7 +91,6 @@ TEST_F(SinkTest, testBinSink) {
               buffer.getBuffer<uint64_t>()[j] = j;
           }
           buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
-          buffer.setTupleSizeInBytes(sizeof(uint64_t));
       }
       write_result = binSink->writeData(buffer);
     });
