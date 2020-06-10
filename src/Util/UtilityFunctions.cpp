@@ -212,4 +212,33 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, Schema
     return str.str();
 }
 
+/**
+ * @brief create CSV lines from the tuples
+ * @param tbuffer the tuple buffer
+ * @param schema how to read the tuples from the buffer
+ * @return a full string stream as string
+ */
+std::string UtilityFunctions::printTupleBuffer(TupleBuffer& tbuffer, SchemaPtr schema) {
+    std::stringstream ss;
+    auto numberOfTuples = tbuffer.getNumberOfTuples();
+    auto buffer = tbuffer.getBufferAs<char>();
+    for (size_t i = 0; i < numberOfTuples; i++) {
+        size_t offset = 0;
+        for (size_t j = 0; j < schema->getSize(); j++) {
+            auto field = schema->get(j);
+            size_t fieldSize = field->getFieldSize();
+            DataTypePtr ptr = field->getDataType();
+            std::string str = ptr->convertRawToString(
+                buffer + offset + i * schema->getSchemaSizeInBytes());
+            ss << str.c_str();
+            if (j < schema->getSize() - 1) {
+                ss << ",";
+            }
+            offset += fieldSize;
+        }
+        ss << std::endl;
+    }
+    return ss.str();
+}
+
 }// namespace NES

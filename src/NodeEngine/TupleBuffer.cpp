@@ -92,10 +92,6 @@ void TupleBuffer::setNumberOfTuples(size_t numberOfTuples) {
     controlBlock->setNumberOfTuples(numberOfTuples);
 }
 
-std::string TupleBuffer::printTupleBuffer(SchemaPtr schema) {
-    return detail::printTupleBuffer(*this, schema);
-}
-
 void TupleBuffer::revertEndianness(SchemaPtr schema) {
     detail::revertEndianness(*this, schema);
 }

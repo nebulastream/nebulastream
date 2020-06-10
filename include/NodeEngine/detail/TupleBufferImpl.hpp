@@ -17,7 +17,6 @@ namespace detail {
 
 class MemorySegment;
 
-std::string printTupleBuffer(TupleBuffer& buffer, SchemaPtr schema);
 void revertEndianness(TupleBuffer& buffer, SchemaPtr schema);
 
 /**

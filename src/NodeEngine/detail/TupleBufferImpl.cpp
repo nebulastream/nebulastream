@@ -195,29 +195,6 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo()
 // ------------------ Utility functions for TupleBuffer ------------------------
 // -----------------------------------------------------------------------------
 
-std::string printTupleBuffer(TupleBuffer& tbuffer, SchemaPtr schema) {
-    std::stringstream ss;
-    auto numberOfTuples = tbuffer.getNumberOfTuples();
-    auto buffer = tbuffer.getBufferAs<char>();
-    for (size_t i = 0; i < numberOfTuples; i++) {
-        size_t offset = 0;
-        for (size_t j = 0; j < schema->getSize(); j++) {
-            auto field = schema->get(j);
-            size_t fieldSize = field->getFieldSize();
-            DataTypePtr ptr = field->getDataType();
-            std::string str = ptr->convertRawToString(
-                buffer + offset + i * schema->getSchemaSizeInBytes());
-            ss << str.c_str();
-            if (j < schema->getSize() - 1) {
-                ss << ",";
-            }
-            offset += fieldSize;
-        }
-        ss << std::endl;
-    }
-    return ss.str();
-}
-
 /** possible types are:
  *  INT8,UINT8,INT16,UINT16,INT32,UINT32,INT64,FLOAT32,UINT64,FLOAT64,BOOLEAN,CHAR,DATE,VOID_TYPE
  *  Code for debugging:
