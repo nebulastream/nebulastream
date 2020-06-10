@@ -14,5 +14,6 @@ Learn more about Nebula Stream at https://www.nebula.stream/
     - [How to contribute](https://github.com/nebulastream/nebulastream/wiki/How-to-contribute-to-NES)
     - [Building from Source](https://github.com/nebulastream/nebulastream/wiki/How-to-Build-and-Test) 
     - [Code Style](https://github.com/nebulastream/code-style) 
+    - [Glossary](https://github.com/nebulastream/nebulastream/wiki/Glossary) 
 
 
