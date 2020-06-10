@@ -11,14 +11,21 @@
 #include <SourceSink/SourceCreator.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 
-#include <gtest/gtest.h>
 #include <NodeEngine/BufferManager.hpp>
+#include <gtest/gtest.h>
+#include <random>
 
 using namespace std;
 
 namespace NES {
 const size_t buffersManaged = 8*1024;
 const size_t bufferSize = 4*1024;
+
+struct TestStruct {
+    int64_t id;
+    int64_t one;
+    int64_t value;
+};
 
 namespace Network {
 class NetworkStackTest : public testing::Test {
@@ -67,12 +74,10 @@ class TestSink : public DataSink {
 
         uint64_t sum = 0;
         for (size_t i = 0; i < input_buffer.getNumberOfTuples(); ++i) {
-            for (size_t j = 0; j < schema->getSchemaSizeInBytes()/sizeof(uint64_t); ++j) {
-                sum += input_buffer.getBuffer<uint64_t>()[j];
-            }
+            sum += input_buffer.getBuffer<TestStruct>()[i].value;
         }
-        assert(sum==30);
-        completed.set_value(true);
+
+        completed.set_value(sum);
         return true;
     }
 
@@ -95,7 +100,7 @@ class TestSink : public DataSink {
 
   public:
     std::mutex m;
-    std::promise<bool> completed;
+    std::promise<uint64_t> completed;
 };
 
 void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
@@ -230,8 +235,7 @@ TEST_F(NetworkStackTest, testSendData) {
             auto buffer = bufferManager->getBufferBlocking();
             buffer.getBuffer<uint64_t>()[0] = 0;
             buffer.setNumberOfTuples(1);
-            buffer.setTupleSizeInBytes(sizeof(uint64_t));
-            senderChannel->sendBuffer(buffer);
+            senderChannel->sendBuffer(buffer, sizeof(uint64_t));
             delete senderChannel;
         }
 
@@ -287,14 +291,13 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
             completedProm.set_value(false);
         } else {
-            auto buffer = bufferManager->getBufferBlocking();
             for (size_t i = 0; i < totalNumBuffer; ++i) {
+                auto buffer = bufferManager->getBufferBlocking();
                 for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
                     buffer.getBuffer<uint64_t>()[j] = j;
                 }
                 buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
-                buffer.setTupleSizeInBytes(sizeof(uint64_t));
-                senderChannel->sendBuffer(buffer);
+                senderChannel->sendBuffer(buffer, sizeof(uint64_t));
             }
             delete senderChannel;
         }
@@ -375,19 +378,20 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
 }
 
 TEST_F(NetworkStackTest, testMassiveMultiSending) {
-    size_t totalNumBuffer = 100;
-    size_t numSendingThreads = 10;
+    size_t totalNumBuffer = 1'000;
+    constexpr size_t numSendingThreads = 4;
 
     // create a couple of NesPartitions
     auto sendingThreads = std::vector<std::thread>();
     auto nesPartitions = std::vector<NesPartition>();
     auto completedPromises = std::vector<std::promise<bool>>();
-    auto bufferCounter = std::vector<std::size_t>();
+    std::array<std::atomic<std::size_t>, numSendingThreads> bufferCounter;
+
 
     for (int i = 0; i < numSendingThreads; i++) {
         nesPartitions.emplace_back(i, i + 10, i + 20, i + 30);
         completedPromises.emplace_back(std::promise<bool>());
-        bufferCounter.emplace_back(0);
+        bufferCounter[i].store(0);
     }
 
     try {
@@ -397,7 +401,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
               ASSERT_EQ(buffer.getBuffer<uint64_t>()[j], j);
           }
           bufferCounter[id.getQueryId()]++;
-          usleep(rand()%10000 + 1000);
+          usleep(1000);
         };
 
         auto onError = [](Messages::ErroMessage ex) {};
@@ -437,14 +441,16 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
                   NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
                   completedPromises[i].set_value(false);
               } else {
-                  auto buffer = bufferManager->getBufferBlocking();
+                  std::mt19937 rnd;
+                  std::uniform_int_distribution gen(50'000, 100'000);
                   for (size_t i = 0; i < totalNumBuffer; ++i) {
+                      auto buffer = bufferManager->getBufferBlocking();
                       for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
                           buffer.getBuffer<uint64_t>()[j] = j;
                       }
                       buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
-                      buffer.setTupleSizeInBytes(sizeof(uint64_t));
-                      senderChannel->sendBuffer(buffer);
+                      senderChannel->sendBuffer(buffer, sizeof(uint64_t));
+                      usleep(gen(rnd));
                   }
                   delete senderChannel;
               }
@@ -521,21 +527,17 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([this, &networkSink, &totalNumBuffer, threadNr] {
               // register the incoming channel
-              auto buffer = bufferManager->getBufferBlocking();
+              std::mt19937 rnd;
+              std::uniform_int_distribution gen(50'000, 100'000);
               for (size_t i = 0; i < totalNumBuffer; ++i) {
+                  auto buffer = bufferManager->getBufferBlocking();
                   for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
                       buffer.getBuffer<uint64_t>()[j] = j;
                   }
                   buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
-                  buffer.setTupleSizeInBytes(sizeof(uint64_t));
+                  usleep(gen(rnd));
+                  networkSink.writeData(buffer);
               }
-
-              // artificially intended creation latency
-              sleep(rand()%10);
-              NES_DEBUG("NetworkStackTest: Thread " << to_string(threadNr) << " sending data over NetworkSink.");
-              networkSink.writeData(buffer);
-              // artificially intended write latency
-              sleep(rand()%10);
             });
             sendingThreads.emplace_back(std::move(sendingThread));
         }
@@ -550,7 +552,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
     catch (...) {
         ASSERT_EQ(true, false);
     }
-    ASSERT_EQ(bufferCnt, numSendingThreads);
+    ASSERT_EQ(bufferCnt, numSendingThreads * totalNumBuffer);
 }
 
 TEST_F(NetworkStackTest, testNetworkSource) {
@@ -641,21 +643,15 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([this, &networkSink, &totalNumBuffer, threadNr] {
               // register the incoming channel
-              auto buffer = bufferManager->getBufferBlocking();
               for (size_t i = 0; i < totalNumBuffer; ++i) {
+                  auto buffer = bufferManager->getBufferBlocking();
                   for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
                       buffer.getBuffer<uint64_t>()[j] = j;
                   }
                   buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
-                  buffer.setTupleSizeInBytes(sizeof(uint64_t));
+                  networkSink.writeData(buffer);
+                  usleep(rand()%10000 + 1000);
               }
-
-              NES_DEBUG("NetworkStackTest: Thread " << to_string(threadNr) << " sending data over NetworkSink.");
-              // artificially intended creation latency
-              sleep(rand()%10);
-              networkSink.writeData(buffer);
-              // artificially intended write latency
-              sleep(rand()%10);
             });
             sendingThreads.emplace_back(std::move(sendingThread));
         }
@@ -670,7 +666,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
     catch (...) {
         ASSERT_EQ(true, false);
     }
-    ASSERT_EQ(bufferCnt, numSendingThreads);
+    ASSERT_EQ(bufferCnt, numSendingThreads * totalNumBuffer);
     ASSERT_FALSE(this->partitionManager->isRegistered(nesPartition));
 }
 
@@ -689,11 +685,9 @@ TEST_F(NetworkStackTest, testQEPNetworkSink) {
       ASSERT_EQ(buf.getNumberOfTuples(), 10);
       uint64_t sum = 0;
       for (size_t i = 0; i < buf.getNumberOfTuples(); ++i) {
-          for (size_t j = 0; j < buf.getTupleSizeInBytes()/sizeof(uint64_t); ++j) {
-              sum += buf.getBuffer<uint64_t>()[j];
-          }
+          sum += buf.getBuffer<TestStruct>()[i].value;
       }
-      ASSERT_EQ(sum, 30);
+      ASSERT_EQ(sum, 10);
       bufferReceived.set_value(true);
     };
 
@@ -742,6 +736,11 @@ TEST_F(NetworkStackTest, testQEPNetworkSource) {
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
 
+    auto nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->createBufferManager(bufferSize, buffersManaged);
+    nodeEngine->startQueryManager();
+    auto bufferManager = nodeEngine->getBufferManager();
+    auto partitionManager = std::make_shared<PartitionManager>();
     auto onError = [](Messages::ErroMessage ex) {};
     auto onEndOfStream = [](Messages::EndOfStreamMessage p) {};
     auto onBuffer = [this, &completed](NesPartition id, TupleBuffer& buf) {
@@ -749,11 +748,9 @@ TEST_F(NetworkStackTest, testQEPNetworkSource) {
       ASSERT_EQ(buf.getNumberOfTuples(), 10);
       uint64_t sum = 0;
       for (size_t i = 0; i < buf.getNumberOfTuples(); ++i) {
-          for (size_t j = 0; j < schema->getSchemaSizeInBytes()/sizeof(uint64_t); ++j) {
-              sum += buf.getBuffer<uint64_t>()[j];
-          }
+          sum += buf.getBuffer<TestStruct>()[i].value;
       }
-      ASSERT_EQ(sum, 30);
+      ASSERT_EQ(sum, 10);
       completed.set_value(true);
     };
 
@@ -780,7 +777,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSource) {
     receiveQep->setQueryId("1");
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema,nodeEngine->getBufferManager(),
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
                                                                     nodeEngine->getQueryManager());
     auto networkSink = std::make_shared<NetworkSink>(schema, netManager, nodeLocation, nesPartition);
 
@@ -809,9 +806,9 @@ TEST_F(NetworkStackTest, testQEPNetworkSource) {
     ASSERT_TRUE(completed.get_future().get());
     nodeEngine->undeployQuery("1");
     nodeEngine->undeployQuery("2");
-    nodeEngine->stop(false);
-    networkSource1->stop();
-    ASSERT_TRUE(testSink->completed.get_future().get());
+//    networkSource1->stop();
+    nodeEngine->stop(true);
+    ASSERT_EQ(10, testSink->completed.get_future().get());
 }
 
 } // namespace Network

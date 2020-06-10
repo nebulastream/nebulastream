@@ -59,7 +59,6 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer)
                   << std::string(my_array[i].s, 12) << std::endl;
     }
     buf.setNumberOfTuples(5);
-    buf.setTupleSizeInBytes(sizeof(MyTuple));
 
     SchemaPtr s = Schema::create()
                       ->addField("i64", UINT64)
@@ -131,7 +130,6 @@ TEST_F(TupleBufferTest, testEndianessOneItem)
                       ->addField("v10", FLOAT64);
 
     testBuf.getBufferAs<TestStruct>()[0] = ts;
-    testBuf.setTupleSizeInBytes(sizeof(decltype(ts)));
     testBuf.setNumberOfTuples(1);
     cout << "to string=" << endl;
     std::string result = UtilityFunctions::prettyPrintTupleBuffer(testBuf, s);
@@ -182,7 +180,6 @@ TEST_F(TupleBufferTest, testEndianessTwoItems)
     }
 
     testBuf.setNumberOfTuples(5);
-    testBuf.setTupleSizeInBytes(sizeof(TestStruct));
 
     SchemaPtr s = Schema::create()
                    ->addField("v1", UINT8)

@@ -63,13 +63,6 @@ class BufferControlBlock {
     bool release();
 
     /**
-     * @brief returns the tuple size stored in the companion buffer
-     * Note that this is going to be deprecated in future NES versions
-     * @return the tuple size stored in the companion buffer
-     */
-    size_t getTupleSizeInBytes() const;
-
-    /**
     * @brief returns the number of tuples stored in the companion buffer
     * Note that this is going to be deprecated in future NES versions
     * @return the tuple size stored in the companion buffer
@@ -81,19 +74,12 @@ class BufferControlBlock {
      */
     void setNumberOfTuples(size_t);
 
-    /**
-     * @brief set the number of tuples stored in the companion buffer
-     */
-    void setTupleSizeInBytes(size_t);
-
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
 #endif
 
   private:
     std::atomic<uint32_t> referenceCounter;
-    // TODO check whether to remove them
-    std::atomic<uint32_t> tupleSizeInBytes;
     std::atomic<uint32_t> numberOfTuples;
     MemorySegment* owner;
     std::function<void(MemorySegment*)> recycleCallback;
@@ -179,7 +165,7 @@ class MemorySegment {
      |    pointer to data  (8b)   |  size (4b)     |  pointer to control block (8b)    |
      +------------+---------------+----------------+-----------------------------------+
                   |                                          |
-     -------------+                                          |
+     +------------+                                          |
      |                                                       |
      v                                                       v
      +----------------------------+-------------------------+----------------------------+

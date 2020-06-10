@@ -84,20 +84,12 @@ size_t TupleBuffer::getBufferSize() const {
     return size;
 }
 
-size_t TupleBuffer::getTupleSizeInBytes() const {
-    return controlBlock->getTupleSizeInBytes();
-}
-
 size_t TupleBuffer::getNumberOfTuples() const {
     return controlBlock->getNumberOfTuples();
 }
 
 void TupleBuffer::setNumberOfTuples(size_t numberOfTuples) {
     controlBlock->setNumberOfTuples(numberOfTuples);
-}
-
-void TupleBuffer::setTupleSizeInBytes(size_t tupleSizeInBytes) {
-    controlBlock->setTupleSizeInBytes(tupleSizeInBytes);
 }
 
 std::string TupleBuffer::printTupleBuffer(SchemaPtr schema) {

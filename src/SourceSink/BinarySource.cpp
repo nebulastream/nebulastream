@@ -59,7 +59,6 @@ void BinarySource::fillBuffer(TupleBuffer& buf) {
         buf.getBufferSize() < (uint64_t) file_size ? buf.getBufferSize() : file_size;
     input.read(buf.getBufferAs<char>(), size_to_read);
     uint64_t generated_tuples_this_pass = size_to_read / tuple_size;
-    buf.setTupleSizeInBytes(tuple_size);
     buf.setNumberOfTuples(generated_tuples_this_pass);
 
     generatedTuples += generated_tuples_this_pass;

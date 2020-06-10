@@ -35,11 +35,13 @@ class OutputChannel : public boost::noncopyable {
 
   public:
     /**
-     * @brief Send buffer to the destination zmqContext defined in the constructor.
-     * @param the inputBuffer
-     * @return true if send was successfull, else false
+     * @brief Send buffer to the destination defined in the constructor. Note that this method will internally
+     * compute the payloadSize as tupleSizeInBytes*buffer.getNumberOfTuples()
+     * @param the inputBuffer to send
+     * @param the tupleSize represents the size in bytes of one tuple in the buffer
+     * @return true if send was successful, else false
      */
-    bool sendBuffer(TupleBuffer& inputBuffer);
+    bool sendBuffer(TupleBuffer& inputBuffer, size_t tupleSizeInBytes);
 
     /**
      * @brief Method to handle the error

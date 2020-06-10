@@ -36,7 +36,6 @@ void WindowHandler::trigger() {
         // create the output tuple buffer
         // TODO can we make it get the buffer only once?
         auto tupleBuffer = bufferManager->getBufferBlocking();
-        tupleBuffer.setTupleSizeInBytes(8);
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
             // write all window aggregates to the tuple buffer

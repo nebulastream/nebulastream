@@ -71,7 +71,6 @@ std::optional<TupleBuffer> ZmqSource::receiveData() {
             // TODO: If possible only copy the content not the empty part
             std::memcpy(buffer.getBuffer(), new_data2.data(), buffer.getBufferSize());
             buffer.setNumberOfTuples(tupleCnt);
-            buffer.setTupleSizeInBytes(tuple_size);
 
             if (buffer.getBufferSize() == new_data2.size()) {
                 NES_WARNING("ZMQSource  " << this << ": return buffer ");

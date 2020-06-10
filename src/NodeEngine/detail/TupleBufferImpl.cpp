@@ -56,13 +56,12 @@ MemorySegment::~MemorySegment() {
     }
 }
 
-BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback) : referenceCounter(0), tupleSizeInBytes(0), numberOfTuples(0), owner(owner),
+BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback) : referenceCounter(0), numberOfTuples(0), owner(owner),
                                                                                                                       recycleCallback(recycleCallback) {
 }
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
-    tupleSizeInBytes.store(that.tupleSizeInBytes.load());
     numberOfTuples.store(that.numberOfTuples.load());
     recycleCallback = that.recycleCallback;
     owner = that.owner;
@@ -70,7 +69,6 @@ BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
 
 BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
-    tupleSizeInBytes.store(that.tupleSizeInBytes.load());
     numberOfTuples.store(that.numberOfTuples.load());
     recycleCallback = that.recycleCallback;
     owner = that.owner;
@@ -149,7 +147,6 @@ uint32_t BufferControlBlock::getReferenceCount() {
 bool BufferControlBlock::release() {
     uint32_t prevRefCnt;
     if ((prevRefCnt = referenceCounter.fetch_sub(1)) == 1) {
-        tupleSizeInBytes.store(0);
         numberOfTuples.store(0);
         recycleCallback(owner);
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -174,10 +171,6 @@ bool BufferControlBlock::release() {
     return false;
 }
 
-size_t BufferControlBlock::getTupleSizeInBytes() const {
-    return tupleSizeInBytes;
-}
-
 size_t BufferControlBlock::getNumberOfTuples() const {
     return numberOfTuples;
 }
@@ -186,9 +179,6 @@ void BufferControlBlock::setNumberOfTuples(size_t numberOfTuples) {
     this->numberOfTuples = numberOfTuples;
 }
 
-void BufferControlBlock::setTupleSizeInBytes(size_t tupleSizeInBytes) {
-    this->tupleSizeInBytes = tupleSizeInBytes;
-}
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack)
     : threadName(threadName), callstack(callstack) {

@@ -36,7 +36,6 @@ class SelectionDataGenFunctor {
             tuples[i].id = i;
             tuples[i].value = i*2;
         }
-        buf->setTupleSizeInBytes(sizeof(InputTuple));
         buf->setNumberOfTuples(tupleCnt);
         return buf.value();
     }

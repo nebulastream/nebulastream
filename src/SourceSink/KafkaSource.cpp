@@ -51,7 +51,6 @@ std::optional<TupleBuffer> KafkaSource::receiveData() {
 
             std::memcpy(buffer.getBuffer(), msg.get_payload().get_data(), msg.get_payload().get_size());
             buffer.setNumberOfTuples(tupleCnt);
-            buffer.setTupleSizeInBytes(tupleSize);
 
             // XXX: maybe commit message every N times
             if (!autoCommit)

@@ -102,9 +102,8 @@ bool OutputChannel::registerAtServer() {
     }
 }
 
-bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
+bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, size_t tupleSize) {
     auto bufferSize = inputBuffer.getBufferSize();
-    auto tupleSize = inputBuffer.getTupleSizeInBytes();
     auto numOfTuples = inputBuffer.getNumberOfTuples();
     auto payloadSize = tupleSize * numOfTuples;
     auto ptr = inputBuffer.getBuffer<uint8_t>();

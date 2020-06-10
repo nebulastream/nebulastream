@@ -26,9 +26,7 @@ bool NetworkSink::writeData(TupleBuffer& inputBuffer) {
             waitTime, retryTimes);
         outputChannel.reset(channel);
     }
-    inputBuffer.setTupleSizeInBytes(schema->getSchemaSizeInBytes());
-    //NES_DEBUG("NetworkSink: Sending buffer \n" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, schema));
-    return outputChannel->sendBuffer(inputBuffer);
+    return outputChannel->sendBuffer(inputBuffer, schema->getSchemaSizeInBytes());
 }
 
 void NetworkSink::setup() {

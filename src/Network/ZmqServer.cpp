@@ -165,7 +165,6 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     TupleBuffer buffer = exchangeProtocol->getBufferManager()->getBufferBlocking();
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize());
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
-                    buffer.setTupleSizeInBytes(bufferHeader->getPayloadSize() / bufferHeader->getNumOfRecords());
 
                     exchangeProtocol->onBuffer(nesPartition, buffer);
                     break;
