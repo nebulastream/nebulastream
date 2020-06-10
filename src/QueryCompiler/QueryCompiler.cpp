@@ -1,10 +1,10 @@
 #include <NodeEngine/QueryManager.hpp>
 
+#include <Operators/Operator.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
-#include <Operators/Operator.hpp>
 namespace NES {
 
 QueryCompiler::QueryCompiler(){};
