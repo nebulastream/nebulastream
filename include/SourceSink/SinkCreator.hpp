@@ -2,7 +2,9 @@
 #define INCLUDE_SOURCESINK_SINKCREATOR_HPP_
 
 #include <SourceSink/DataSink.hpp>
+#ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
+#endif// KAFKASINK_HPP
 
 namespace NES {
 

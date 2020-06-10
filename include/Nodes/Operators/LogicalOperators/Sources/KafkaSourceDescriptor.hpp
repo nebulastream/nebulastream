@@ -2,7 +2,6 @@
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
 
 #include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <cppkafka/configuration.h>
 
 namespace NES {
 
