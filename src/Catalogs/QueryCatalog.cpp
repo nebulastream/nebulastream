@@ -1,6 +1,7 @@
 #include <Catalogs/QueryCatalog.hpp>
-#include <Services/OptimizerService.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Services/OptimizerService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
@@ -50,8 +51,7 @@ std::map<std::string, std::string> QueryCatalog::getAllRegisteredQueries() {
     return result;
 }
 
-string QueryCatalog::registerQuery(const string& queryString,
-                                   const string& optimizationStrategyName) {
+string QueryCatalog::registerQuery(const string& queryString, const string& optimizationStrategyName) {
     NES_DEBUG(
         "QueryCatalog: Registering query " << queryString << " with strategy " << optimizationStrategyName);
 
@@ -62,13 +62,13 @@ string QueryCatalog::registerQuery(const string& queryString,
     }
     try {
         QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-
+        std::string queryId = UtilityFunctions::generateIdString();
+        query->getQueryPlan()->setQueryId(queryId);
         OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
         GlobalExecutionPlanPtr executionPlan = optimizerService->updateGlobalExecutionPlan(query->getQueryPlan(), optimizationStrategyName);
 
         NES_DEBUG("QueryCatalog: Final Execution Plan =" << executionPlan->getAsString());
 
-        std::string queryId = UtilityFunctions::generateIdString();
         QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(queryId, queryString, query->getQueryPlan(), QueryStatus::Registered);
 
         queries[queryId] = entry;

@@ -14,7 +14,7 @@ bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
     }
     if (rhs->instanceOf<MapLogicalOperatorNode>()) {
         auto mapOperator = rhs->as<MapLogicalOperatorNode>();
-        return mapExpression->equal(mapOperator->mapExpression);
+        return mapExpression->equal(mapOperator->mapExpression) && mapOperator->getId() == id;
     }
     return false;
 };

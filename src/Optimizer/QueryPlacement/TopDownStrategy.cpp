@@ -91,7 +91,7 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
                 NES_DEBUG("TopDownStrategy: node " << candidateNesNode->toString() << " was already used by other deployment");
                 const ExecutionNodePtr candidateExecutionNode = executionPlan->getExecutionNodeByNodeId(candidateNesNode->getId());
 
-                if (candidateExecutionNode->querySubPlanExists(queryId)) {
+                if (candidateExecutionNode->hasQuerySubPlan(queryId)) {
                     NES_DEBUG("TopDownStrategy: node " << candidateNesNode->toString() << " already contains a query sub plan with the id" << queryId);
                     if (candidateExecutionNode->querySubPlanContainsOperator(queryId, candidateOperator)) {
                         NES_DEBUG("TopDownStrategy: skip to next upstream operator as the target operator is already placed.");

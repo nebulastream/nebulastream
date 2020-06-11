@@ -63,8 +63,10 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
         if (path.empty()) {
             NES_THROW_RUNTIME_ERROR("BottomUpStrategy: No path exists between sink and source");
         }
+
         LogicalOperatorNodePtr operatorToPlace = sourceOperator;
         auto pathItr = path.begin();
+        NESTopologyEntryPtr previousCandidateNesNode = nullptr;
         NESTopologyEntryPtr candidateNesNode = (*pathItr);
         while (operatorToPlace) {
 
@@ -80,6 +82,7 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                         NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : " + candidateNesNode->getId());
                         break;
                     }
+                    previousCandidateNesNode = (*pathItr);
                 }
             }
 
@@ -94,10 +97,18 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                 NES_DEBUG("BottomUpStrategy: node " << candidateNesNode->toString() << " was already used by other deployment");
                 const ExecutionNodePtr candidateExecutionNode = executionPlan->getExecutionNodeByNodeId(candidateNesNode->getId());
 
-                if (candidateExecutionNode->querySubPlanExists(queryId)) {
+                if (candidateExecutionNode->hasQuerySubPlan(queryId)) {
                     NES_DEBUG("BottomUpStrategy: node " << candidateNesNode->toString() << " already contains a query sub plan with the id" << queryId);
                     if (candidateExecutionNode->querySubPlanContainsOperator(queryId, operatorToPlace)) {
                         NES_DEBUG("BottomUpStrategy: skip adding rest of the operator chains as they already exists.");
+                        if (previousCandidateNesNode) {
+                            NES_DEBUG("BottomUpStrategy: Add link between previous and current execution node.");
+                            ExecutionNodePtr previousExecutionNode = executionPlan->getExecutionNodeByNodeId(previousCandidateNesNode->getId());
+                            if (!previousExecutionNode && !previousExecutionNode->hasQuerySubPlan(queryId)) {
+                                NES_THROW_RUNTIME_ERROR("BottomUpStrategy: failed to find child execution node for query " + queryId);
+                            }
+                            executionPlan->addExecutionNodeAsParentTo(previousExecutionNode->getId(), candidateExecutionNode);
+                        }
                         break;
                     } else {
                         NES_DEBUG("BottomUpStrategy: Adding the operator to an existing query sub plan on the Execution node");
@@ -116,8 +127,17 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                 NES_DEBUG("BottomUpStrategy: create new execution node with id: " << candidateNesNode->getId());
                 ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, operatorToPlace);
                 NES_DEBUG("BottomUpStrategy: Adding new execution node with id: " << candidateNesNode->getId());
-                if (!executionPlan->addExecutionNode(newExecutionNode)) {
-                    NES_THROW_RUNTIME_ERROR("BottomUpStrategy: failed to add execution node for query " + queryId);
+                if (previousCandidateNesNode) {
+                    NES_DEBUG("BottomUpStrategy: Found previous execution node with id: " << previousCandidateNesNode->getId());
+                    NES_DEBUG("BottomUpStrategy: Creating new execution node with id " << newExecutionNode->getId() << " as parent to previous execution node");
+                    if (!executionPlan->addExecutionNodeAsParentTo(previousCandidateNesNode->getId(), newExecutionNode)) {
+                        NES_THROW_RUNTIME_ERROR("BottomUpStrategy: failed to add execution node for query " + queryId);
+                    }
+                } else {
+                    NES_DEBUG("BottomUpStrategy: No previous execution node present adding standalone new execution node");
+                    if (!executionPlan->addExecutionNode(newExecutionNode)) {
+                        NES_THROW_RUNTIME_ERROR("BottomUpStrategy: failed to add execution node for query " + queryId);
+                    }
                 }
             }
 
@@ -133,6 +153,7 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                 NES_DEBUG("BottomUpStrategy: No operator found for placement");
                 operatorToPlace = nullptr;
             }
+            previousCandidateNesNode = candidateNesNode;
         }
     }
 }

@@ -38,7 +38,7 @@ class ExecutionNode : public Node {
      * @param subPlanId : Id of the sub plan
      * @return true if the plan exists else false
      */
-    bool querySubPlanExists(std::string subPlanId);
+    bool hasQuerySubPlan(std::string subPlanId);
 
     /**
      * Check if the query sub plan consists of operator node or not.
