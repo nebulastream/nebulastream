@@ -21,7 +21,7 @@ class NetworkSink : public DataSink {
      * @param nodeLocation
      * @param nesPartition
      */
-    explicit NetworkSink(SchemaPtr schema, NetworkManager& networkManager, const NodeLocation& nodeLocation,
+    explicit NetworkSink(SchemaPtr schema, NetworkManagerPtr networkManager, const NodeLocation nodeLocation,
                          NesPartition nesPartition, std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes = 5);
 
     ~NetworkSink();
@@ -37,8 +37,8 @@ class NetworkSink : public DataSink {
   private:
     boost::thread_specific_ptr<OutputChannel> outputChannel;
 
-    NetworkManager& networkManager;
-    const NodeLocation& nodeLocation;
+    NetworkManagerPtr networkManager;
+    const NodeLocation nodeLocation;
     NesPartition nesPartition;
 
     const std::chrono::seconds waitTime;

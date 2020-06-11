@@ -4,13 +4,18 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <Util/Logger.hpp>
+#include <Network/NetworkSink.hpp>
+#include <Network/NetworkManager.hpp>
 
 namespace NES {
 
 DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkDescriptorPtr sinkDescriptor) {
+    //TODO: this needs to be changed as in ConvertLogicalToPhysicalSource
+    Network::NetworkManagerPtr networkManager;
 
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating print sink");
@@ -44,6 +49,13 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
             NES_ERROR("ConvertLogicalToPhysicalSink: Unknown File Mode");
             throw std::invalid_argument("Unknown File Mode");
         }
+    }
+    else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating network sink");
+        auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
+        return createNetworkSink(schema, networkManager, networkSinkDescriptor->getNodeLocation(),
+                                 networkSinkDescriptor->getNesPartition(), networkSinkDescriptor->getWaitTime(),
+                                 networkSinkDescriptor->getRetryTimes());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

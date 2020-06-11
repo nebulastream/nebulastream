@@ -4,6 +4,8 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+
 #include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Util/Logger.hpp>
 
@@ -53,6 +55,16 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSin
     SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create();
     DataSinkPtr printSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
     EXPECT_EQ(printSink->getType(), PRINT_SINK);
+}
+
+TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalSink) {
+
+    SchemaPtr schema = Schema::create();
+    Network::NodeLocation nodeLocation{1, "localhost", 31337};
+    Network::NesPartition nesPartition{1, 22, 33, 44};
+    SinkDescriptorPtr sinkDescriptor = Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition,std::chrono::seconds(1), 1);
+    DataSinkPtr networkSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
+    EXPECT_EQ(networkSink->getType(), NETWORK_SINK);
 }
 
 }// namespace NES

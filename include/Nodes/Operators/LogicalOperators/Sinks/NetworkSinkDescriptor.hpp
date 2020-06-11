@@ -23,8 +23,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @param retryTimes
      * @return SinkDescriptorPtr
      */
-    static SinkDescriptorPtr create(SchemaPtr schema,
-                                    NodeLocation nodeLocation,
+    static SinkDescriptorPtr create(NodeLocation nodeLocation,
                                     NesPartition nesPartition,
                                     std::chrono::seconds waitTime,
                                     uint8_t retryTimes);
@@ -35,15 +34,13 @@ class NetworkSinkDescriptor : public SinkDescriptor {
 
     NodeLocation getNodeLocation() const;
     NesPartition getNesPartition() const;
-    SchemaPtr getSchema() const;
     std::chrono::seconds getWaitTime() const;
     uint8_t getRetryTimes() const;
 
   private:
-    explicit NetworkSinkDescriptor(SchemaPtr schema, NodeLocation nodeLocation, NesPartition nesPartition,
+    explicit NetworkSinkDescriptor(NodeLocation nodeLocation, NesPartition nesPartition,
                                    std::chrono::seconds waitTime, uint8_t retryTimes = 5);
 
-    SchemaPtr schema;
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::seconds waitTime;

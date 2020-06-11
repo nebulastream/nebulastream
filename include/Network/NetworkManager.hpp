@@ -67,6 +67,8 @@ class NetworkManager : public boost::noncopyable {
     std::shared_ptr<ZmqServer> server;
     ExchangeProtocolPtr exchangeProtocol;
 };
+
+typedef std::shared_ptr<NetworkManager> NetworkManagerPtr;
 }// namespace Network
 }// namespace NES
 
