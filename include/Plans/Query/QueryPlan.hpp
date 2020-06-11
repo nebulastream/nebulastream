@@ -20,9 +20,6 @@ typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 class SinkLogicalOperatorNode;
 typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 
-class BreadthFirstNodeIterator;
-typedef std::shared_ptr<BreadthFirstNodeIterator> BreadthFirstNodeIteratorPtr;
-
 /**
  * @brief The query plan encapsulates a set of operators and provides a set of utility functions.
  */

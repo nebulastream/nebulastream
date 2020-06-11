@@ -15,12 +15,12 @@ ExecutionNode::ExecutionNode(NESTopologyEntryPtr nesNode, std::string subPlanId,
 
 ExecutionNode::ExecutionNode(NESTopologyEntryPtr nesNode) : id(nesNode->getId()), nesNode(nesNode) {}
 
-bool ExecutionNode::querySubPlanExists(std::string subPlanId) {
-    return mapOfQuerySubPlans.find(subPlanId) == mapOfQuerySubPlans.end();
+bool ExecutionNode::hasQuerySubPlan(std::string subPlanId) {
+    return mapOfQuerySubPlans.find(subPlanId) != mapOfQuerySubPlans.end();
 }
 
 bool ExecutionNode::querySubPlanContainsOperator(std::string subPlanId, OperatorNodePtr operatorNode) {
-    if (querySubPlanExists(subPlanId)) {
+    if (hasQuerySubPlan(subPlanId)) {
         QueryPlanPtr querySubPlan = mapOfQuerySubPlans[subPlanId];
         return querySubPlan->hasOperator(operatorNode);
     }
@@ -29,7 +29,7 @@ bool ExecutionNode::querySubPlanContainsOperator(std::string subPlanId, Operator
 }
 
 QueryPlanPtr ExecutionNode::getQuerySubPlan(std::string subPlanId) {
-    if (querySubPlanExists(subPlanId)) {
+    if (hasQuerySubPlan(subPlanId)) {
         return mapOfQuerySubPlans[subPlanId];
     }
     return nullptr;
@@ -69,7 +69,7 @@ bool ExecutionNode::createNewQuerySubPlan(std::string subPlanId, QueryPlanPtr qu
 
 bool ExecutionNode::updateQuerySubPlan(std::string subPlanId, QueryPlanPtr querySubPlan) {
     NES_DEBUG("ExecutionNode: Updating the query sub plan with id : " << subPlanId << " to the collection of query sub plans");
-    if (querySubPlanExists(subPlanId)) {
+    if (hasQuerySubPlan(subPlanId)) {
         mapOfQuerySubPlans[subPlanId] = querySubPlan;
         NES_DEBUG("ExecutionNode: Updated the query sub plan with id : " << subPlanId << " to the collection of query sub plans");
         return true;
@@ -79,7 +79,7 @@ bool ExecutionNode::updateQuerySubPlan(std::string subPlanId, QueryPlanPtr query
 }
 
 bool ExecutionNode::appendOperatorToQuerySubPlan(std::string subPlanId, OperatorNodePtr operatorNode) {
-    if (querySubPlanExists(subPlanId)) {
+    if (hasQuerySubPlan(subPlanId)) {
         QueryPlanPtr querySubPlan = mapOfQuerySubPlans[subPlanId];
         NES_DEBUG("ExecutionNode: Appending operator " << operatorNode->toString() << " in the query sub plan with id : " << subPlanId);
         querySubPlan->appendOperator(operatorNode);

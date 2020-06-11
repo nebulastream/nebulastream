@@ -19,9 +19,11 @@ GlobalExecutionPlanPtr NESOptimizer::updateExecutionGraph(std::string strategy, 
                                                           StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan) {
 
     NES_INFO("NESOptimizer: Preparing execution graph for input query");
-
     NES_INFO("NESOptimizer: Initializing Placement strategy");
     auto placementStrategyPtr = BasePlacementStrategy::getStrategy(strategy, nesTopologyPlan, globalExecutionPlan);
+    if (!placementStrategyPtr) {
+        NES_THROW_RUNTIME_ERROR("NESOptimizer: unable to find placement strategy for " + strategy);
+    }
 
     NES_INFO("NESOptimizer: Building Execution plan for the input query");
     TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();

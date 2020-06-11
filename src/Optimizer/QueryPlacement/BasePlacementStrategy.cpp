@@ -42,6 +42,8 @@ std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::s
             //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
             //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
             //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
+        default:
+            return nullptr;
     }
 }
 
@@ -51,11 +53,15 @@ BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan,
 }
 
 OperatorNodePtr BasePlacementStrategy::createSystemSinkOperator(NESTopologyEntryPtr nesNode) {
-    return createSinkLogicalOperatorNode(ZmqSinkDescriptor::create(nesNode->getIp(), zmqDefaultPort));
+    auto sinkOperator = createSinkLogicalOperatorNode(ZmqSinkDescriptor::create(nesNode->getIp(), zmqDefaultPort));
+    sinkOperator->setId(UINT64_MAX-1); // all sink operators will have MAX64-1 as Id
+    return sinkOperator;
 }
 
 OperatorNodePtr BasePlacementStrategy::createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema) {
-    return createSourceLogicalOperatorNode(ZmqSourceDescriptor::create(schema, nesNode->getIp(), zmqDefaultPort));
+    auto sourceOperator = createSourceLogicalOperatorNode(ZmqSourceDescriptor::create(schema, nesNode->getIp(), zmqDefaultPort));
+    sourceOperator->setId(UINT64_MAX-2); // all source operators will have MAX64-2 as Id
+    return sourceOperator;
 }
 
 // FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
@@ -93,7 +99,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find child execution node");
             }
 
-            if (!childExecutionNode->querySubPlanExists(queryId)) {
+            if (!childExecutionNode->hasQuerySubPlan(queryId)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find query sub plan in child execution node");
             }
 
@@ -120,7 +126,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add execution node with forward operators");
             }
 
-        } else if (!executionNode->querySubPlanExists(queryId)) {
+        } else if (!executionNode->hasQuerySubPlan(queryId)) {
             //create a new query sub plan with forward operators
             if (pathItr == path.begin()) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find execution node for source node!"
@@ -140,7 +146,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find child execution node");
             }
 
-            if (!childExecutionNode->querySubPlanExists(queryId)) {
+            if (!childExecutionNode->hasQuerySubPlan(queryId)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find query sub plan in child execution node");
             }
 
@@ -198,7 +204,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                     NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find child execution node");
                 }
 
-                if (!childExecutionNode->querySubPlanExists(queryId)) {
+                if (!childExecutionNode->hasQuerySubPlan(queryId)) {
                     NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find query sub plan in child execution node");
                 }
 

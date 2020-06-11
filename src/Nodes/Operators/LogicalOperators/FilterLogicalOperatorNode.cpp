@@ -20,7 +20,7 @@ bool FilterLogicalOperatorNode::equal(const NodePtr rhs) const {
 
     if (rhs->instanceOf<FilterLogicalOperatorNode>()) {
         auto filterOperator = rhs->as<FilterLogicalOperatorNode>();
-        return predicate->equal(filterOperator->predicate);
+        return predicate->equal(filterOperator->predicate) && filterOperator->getId() == id;
     }
     return false;
 };

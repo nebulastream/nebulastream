@@ -20,7 +20,7 @@ bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
     }
     if (rhs->instanceOf<SinkLogicalOperatorNode>()) {
         auto sinkOperator = rhs->as<SinkLogicalOperatorNode>();
-        return true;
+        return sinkOperator->getSinkDescriptor()->equal(sinkDescriptor) && sinkOperator->getId() == id;
     }
     return false;
 };

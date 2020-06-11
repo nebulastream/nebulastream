@@ -25,7 +25,7 @@ bool WindowLogicalOperatorNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<WindowLogicalOperatorNode>()) {
         auto windowOperator = rhs->as<WindowLogicalOperatorNode>();
         // todo check if the window definition is the same
-        return true;
+        return windowOperator->getId() == id;
     }
     return false;
 }

@@ -57,7 +57,9 @@ void QueryPlan::appendOperator(OperatorNodePtr operatorNode) {
 
 void QueryPlan::appendPreExistingOperator(OperatorNodePtr operatorNode) {
     for (auto rootOperator : rootOperators) {
-        rootOperator->addParent(operatorNode);
+        if (!rootOperator->addParent(operatorNode)) {
+            NES_THROW_RUNTIME_ERROR("QueryPlan: Enable to add operator " + operatorNode->toString() + " as parent to " + rootOperator->toString());
+        }
     }
     rootOperators.clear();
     rootOperators.push_back(operatorNode);
