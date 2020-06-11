@@ -1,7 +1,8 @@
 #ifndef INCLUDE_SOURCESINK_SINKCREATOR_HPP_
 #define INCLUDE_SOURCESINK_SINKCREATOR_HPP_
-
+#include <Network/NetworkManager.hpp>
 #include <SourceSink/DataSink.hpp>
+
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
@@ -63,6 +64,20 @@ const DataSinkPtr createBinaryFileSinkWithSchema(SchemaPtr schema,
  */
 const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
                                 const uint16_t port);
+
+
+/**
+ * @brief create a network data sink
+ * @param schema
+ * @param networkManager
+ * @param nodeLocation
+ * @param nesPartition
+ * @param waitTime
+ * @param retryTimes
+ * @return a data sink pointer
+ */
+const DataSinkPtr createNetworkSink(SchemaPtr schema, Network::NetworkManagerPtr networkManager, Network::NodeLocation nodeLocation,
+                                    Network::NesPartition nesPartition, std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes = 5);
 
 /**
  * @brief create test sink of YSB benchmark

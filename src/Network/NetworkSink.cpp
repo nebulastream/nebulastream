@@ -5,7 +5,7 @@ namespace NES {
 
 namespace Network {
 
-NetworkSink::NetworkSink(SchemaPtr schema, NetworkManager& networkManager, const NodeLocation& nodeLocation,
+NetworkSink::NetworkSink(SchemaPtr schema, NetworkManagerPtr networkManager, const NodeLocation nodeLocation,
                          NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes)
     : DataSink(schema), networkManager(networkManager), nodeLocation(nodeLocation), nesPartition(nesPartition),
       waitTime(waitTime), retryTimes(retryTimes) {
@@ -18,7 +18,7 @@ NetworkSink::~NetworkSink() {
 bool NetworkSink::writeData(TupleBuffer& inputBuffer) {
     if (!outputChannel.get()) {
         NES_DEBUG("NetworkSink: Initializing thread specific OutputChannel");
-        auto channel = networkManager.registerSubpartitionProducer(
+        auto channel = networkManager->registerSubpartitionProducer(
             nodeLocation, nesPartition,
             [](Messages::ErroMessage ex) {
                 NES_ERROR("NetworkSink: Error in RegisterSubpartitionProducer " << ex.getErrorTypeAsString());

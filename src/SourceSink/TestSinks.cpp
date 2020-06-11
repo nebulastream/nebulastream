@@ -7,6 +7,7 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/ZmqSink.hpp>
 #include <Util/Logger.hpp>
+#include <Network/NetworkSink.hpp>
 
 namespace NES {
 
@@ -46,6 +47,12 @@ const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
                                 const uint16_t port) {
     return std::make_shared<ZmqSink>(schema, host, port);
 }
+
+const DataSinkPtr createNetworkSink(SchemaPtr schema, Network::NetworkManagerPtr networkManager, Network::NodeLocation nodeLocation,
+    Network::NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes) {
+    return std::make_shared<Network::NetworkSink>(schema, networkManager, nodeLocation, nesPartition, waitTime, retryTimes);
+}
+
 #ifdef ENABLE_KAFKA_BUILD
 const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
                                             const size_t kafkaProducerTimeout) {
