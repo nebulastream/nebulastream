@@ -51,6 +51,14 @@ FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() {
     return mapExpression;
 }
 
+OperatorNodePtr MapLogicalOperatorNode::copy() {
+    auto copy = std::make_shared<MapLogicalOperatorNode>(mapExpression);
+    copy->setId(id);
+    copy->setInputSchema(inputSchema);
+    copy->setOutputSchema(outputSchema);
+    return copy;
+}
+
 LogicalOperatorNodePtr createMapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression) {
     return std::make_shared<MapLogicalOperatorNode>(mapExpression);
 }

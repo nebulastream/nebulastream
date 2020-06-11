@@ -36,6 +36,8 @@ class SourceLogicalOperatorNode : public LogicalOperatorNode {
 
     const std::string toString() const override;
 
+    OperatorNodePtr copy() override;
+
   private:
     SourceDescriptorPtr sourceDescriptor;
 };
