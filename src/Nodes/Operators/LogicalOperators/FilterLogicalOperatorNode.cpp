@@ -31,7 +31,7 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::makeACopy() {
+FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::deepCopy() {
 
     NES_INFO("FilterLogicalOperatorNode: Create copy of the filter operator");
     const FilterLogicalOperatorNodePtr copiedOptr = std::make_shared<FilterLogicalOperatorNode>(this->getPredicate());
@@ -67,6 +67,14 @@ bool FilterLogicalOperatorNode::inferSchema() {
         return false;
     }
     return true;
+}
+
+OperatorNodePtr FilterLogicalOperatorNode::copy() {
+    auto copy = std::make_shared<FilterLogicalOperatorNode>(predicate);
+    copy->setId(id);
+    copy->setInputSchema(inputSchema);
+    copy->setOutputSchema(outputSchema);
+    return copy;
 }
 
 }// namespace NES

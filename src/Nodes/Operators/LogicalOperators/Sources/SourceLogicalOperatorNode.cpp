@@ -39,4 +39,12 @@ void SourceLogicalOperatorNode::setSourceDescriptor(SourceDescriptorPtr sourceDe
     this->sourceDescriptor = sourceDescriptor;
 }
 
+OperatorNodePtr SourceLogicalOperatorNode::copy() {
+    auto copy = std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor);
+    copy->setId(id);
+    copy->setInputSchema(inputSchema);
+    copy->setOutputSchema(outputSchema);
+    return copy;
+}
+
 }// namespace NES

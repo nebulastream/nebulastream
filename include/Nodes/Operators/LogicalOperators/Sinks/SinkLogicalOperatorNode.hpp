@@ -18,6 +18,7 @@ class SinkLogicalOperatorNode : public LogicalOperatorNode {
     const std::string toString() const override;
     SinkDescriptorPtr getSinkDescriptor();
     void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
+    OperatorNodePtr copy() override;
 
   private:
     SinkDescriptorPtr sinkDescriptor;

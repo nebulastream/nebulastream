@@ -31,6 +31,14 @@ const std::string SinkLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+OperatorNodePtr SinkLogicalOperatorNode::copy() {
+    auto copy = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor);
+    copy->setId(id);
+    copy->setInputSchema(inputSchema);
+    copy->setOutputSchema(outputSchema);
+    return copy;
+}
+
 LogicalOperatorNodePtr createSinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor) {
     return std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor);
 }

@@ -46,7 +46,9 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
      * @brief Create copy of this filter operator
      * @return copy of the filter operator
      */
-    FilterLogicalOperatorNodePtr makeACopy();
+    FilterLogicalOperatorNodePtr deepCopy();
+
+    OperatorNodePtr copy() override;
 
   private:
     ExpressionNodePtr predicate;

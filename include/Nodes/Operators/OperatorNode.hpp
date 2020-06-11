@@ -50,6 +50,12 @@ class OperatorNode : public Node {
      */
     void setId(u_int64_t id);
 
+    /**
+     * Create a copy of the
+     * @return
+     */
+    virtual OperatorNodePtr copy()=0;
+
   protected:
     /**
      * @brief Unique Identifier of the operator within a query.

@@ -32,6 +32,8 @@ class MapLogicalOperatorNode : public LogicalOperatorNode {
 
     const std::string toString() const override;
 
+    OperatorNodePtr copy() override;
+
   private:
     FieldAssignmentExpressionNodePtr mapExpression;
 };
