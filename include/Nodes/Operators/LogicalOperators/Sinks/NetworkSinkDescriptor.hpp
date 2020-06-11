@@ -4,6 +4,7 @@
 #include <string>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Network/NetworkCommon.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 
 namespace NES {
 namespace Network {
@@ -22,8 +23,11 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @param retryTimes
      * @return SinkDescriptorPtr
      */
-    static SinkDescriptorPtr create(NodeLocation nodeLocation, NesPartition nesPartition, std::chrono::seconds waitTime,
-        uint8_t retryTimes);
+    static SinkDescriptorPtr create(SchemaPtr schema,
+                                    NodeLocation nodeLocation,
+                                    NesPartition nesPartition,
+                                    std::chrono::seconds waitTime,
+                                    uint8_t retryTimes);
 
     std::string toString() override;
 
@@ -31,13 +35,15 @@ class NetworkSinkDescriptor : public SinkDescriptor {
 
     NodeLocation getNodeLocation() const;
     NesPartition getNesPartition() const;
+    SchemaPtr getSchema() const;
     std::chrono::seconds getWaitTime() const;
     uint8_t getRetryTimes() const;
 
   private:
-    explicit NetworkSinkDescriptor(NodeLocation nodeLocation, NesPartition nesPartition, std::chrono::seconds waitTime,
-                                   uint8_t retryTimes = 5);
+    explicit NetworkSinkDescriptor(SchemaPtr schema, NodeLocation nodeLocation, NesPartition nesPartition,
+                                   std::chrono::seconds waitTime, uint8_t retryTimes = 5);
 
+    SchemaPtr schema;
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::seconds waitTime;
