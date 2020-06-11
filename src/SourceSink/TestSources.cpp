@@ -11,6 +11,7 @@
 #include <SourceSink/SenseSource.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/ZmqSource.hpp>
+#include <Network/NetworkSource.hpp>
 
 namespace NES {
 
@@ -52,6 +53,11 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
                                         size_t frequency) {
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
                                        numbersOfBufferToProduce, frequency);
+}
+
+const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                        Network::NetworkManagerPtr networkManager, Network::NesPartition nesPartition) {
+    return std::make_shared<Network::NetworkSource>(schema, bufferManager, queryManager, networkManager, nesPartition);
 }
 #ifdef ENABLE_KAFKA_BUILD
 const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string brokers, std::string topic, std::string groupId,

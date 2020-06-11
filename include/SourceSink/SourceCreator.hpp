@@ -3,6 +3,9 @@
 
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/GeneratorSource.hpp>
+#include <Network/NetworkManager.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
@@ -65,6 +68,19 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
                                         const std::string& delimiter,
                                         size_t numBuffersToProcess,
                                         size_t frequency);
+
+/**
+ * @brief function to create a network source
+ * @param schema
+ * @param bufferManager
+ * @param queryManager
+ * @param networkManager
+ * @param nesPartition
+ * @return a const data source pointer
+ */
+const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                        Network::NetworkManagerPtr networkManager, Network::NesPartition nesPartition);
+
 #ifdef ENABLE_KAFKA_BUILD
 /**
  * @brief Create kafka source
