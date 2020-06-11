@@ -1,0 +1,8 @@
+//
+// Created by pgrulich on 10.06.20.
+//
+
+#ifndef NES_INCLUDE_DATATYPES_ARRAY_HPP_
+#define NES_INCLUDE_DATATYPES_ARRAY_HPP_
+
+#endif//NES_INCLUDE_DATATYPES_ARRAY_HPP_

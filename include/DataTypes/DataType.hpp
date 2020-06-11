@@ -1,0 +1,9 @@
+#ifndef NES_INCLUDE_TYPES_TYPE_HPP_
+#define NES_INCLUDE_TYPES_TYPE_HPP_
+
+
+class Type{
+    
+};
+
+#endif//NES_INCLUDE_TYPES_TYPE_HPP_
