@@ -112,11 +112,6 @@ class ChannelId {
 };
 
 class NodeLocation {
-  private:
-    const NodeId nodeId;
-    const std::string hostname;
-    const uint16_t port;
-
   public:
     explicit NodeLocation(NodeId nodeId, const std::string& hostname, uint16_t port)
         : nodeId(nodeId), hostname(hostname), port(port) {
@@ -137,6 +132,21 @@ class NodeLocation {
     const uint16_t getPort() const {
         return port;
     }
+
+    /**
+     * @brief The equals operator for the NodeLocation.
+     * @param lhs
+     * @param rhs
+     * @return
+     */
+    friend bool operator==(const NodeLocation& lhs, const NodeLocation& rhs) {
+        return lhs.nodeId == rhs.nodeId && lhs.hostname == rhs.hostname && lhs.port == rhs.port;
+    }
+
+  private:
+    const NodeId nodeId;
+    const std::string hostname;
+    const uint16_t port;
 };
 }// namespace Network
 }// namespace NES

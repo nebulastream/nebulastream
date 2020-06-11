@@ -7,4 +7,5 @@ add_source_nes(
         CsvSourceDescriptor.cpp
         DefaultSourceDescriptor.cpp
         LogicalStreamSourceDescriptor.cpp
+        NetworkSourceDescriptor.cpp
 )
