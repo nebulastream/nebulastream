@@ -129,7 +129,7 @@ bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
                 continue;
             }
             visitedOpIds.insert(visitingOp->getId());
-            if (operatorNode == visitingOp) {
+            if (operatorNode->equal(visitingOp)) {
                 return true;
             }
         }
