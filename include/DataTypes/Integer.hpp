@@ -1,7 +1,3 @@
-//
-// Created by pgrulich on 10.06.20.
-//
-
 #ifndef NES_INCLUDE_DATATYPES_INTEGER_HPP_
 #define NES_INCLUDE_DATATYPES_INTEGER_HPP_
 
