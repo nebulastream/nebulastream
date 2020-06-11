@@ -27,7 +27,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
     NesPartition nesPartition;
 };
 
-typedef std::shared_ptr<NetworkSourceDescriptor> networkSourceDescriptor;
+typedef std::shared_ptr<NetworkSourceDescriptor> networkSourceDescriptorPtr;
 
 }
 }

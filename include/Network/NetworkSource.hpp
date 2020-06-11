@@ -15,7 +15,7 @@ class NetworkSource : public DataSource {
 
   public:
     NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                  NetworkManager& networkManager, NesPartition nesPartition);
+                  NetworkManagerPtr networkManager, NesPartition nesPartition);
 
     ~NetworkSource();
 
@@ -58,7 +58,7 @@ class NetworkSource : public DataSource {
     void runningRoutine(BufferManagerPtr, QueryManagerPtr);
 
   private:
-    NetworkManager& networkManager;
+    NetworkManagerPtr networkManager;
     NesPartition nesPartition;
 };
 
