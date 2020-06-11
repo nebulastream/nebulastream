@@ -112,20 +112,20 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                         break;
                     } else {
                         NES_DEBUG("BottomUpStrategy: Adding the operator to an existing query sub plan on the Execution node");
-                        if (!candidateExecutionNode->appendOperatorToQuerySubPlan(queryId, operatorToPlace)) {
+                        if (!candidateExecutionNode->appendOperatorToQuerySubPlan(queryId, operatorToPlace->copy())) {
                             NES_THROW_RUNTIME_ERROR("BottomUpStrategy: failed to add operator" + operatorToPlace->toString() + "node for query " + queryId);
                         }
                     }
                 } else {
                     NES_DEBUG("BottomUpStrategy: Adding the operator to an existing execution node");
-                    if (!candidateExecutionNode->createNewQuerySubPlan(queryId, operatorToPlace)) {
+                    if (!candidateExecutionNode->createNewQuerySubPlan(queryId, operatorToPlace->copy())) {
                         NES_THROW_RUNTIME_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
                     }
                 }
             } else {
 
                 NES_DEBUG("BottomUpStrategy: create new execution node with id: " << candidateNesNode->getId());
-                ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, operatorToPlace);
+                ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, operatorToPlace->copy());
                 NES_DEBUG("BottomUpStrategy: Adding new execution node with id: " << candidateNesNode->getId());
                 if (previousCandidateNesNode) {
                     NES_DEBUG("BottomUpStrategy: Found previous execution node with id: " << previousCandidateNesNode->getId());

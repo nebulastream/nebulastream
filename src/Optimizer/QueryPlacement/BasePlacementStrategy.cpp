@@ -187,7 +187,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 const OperatorNodePtr sysSinkOperator = createSystemSinkOperator(parentNesNode);
 
                 querySubPlan->appendPreExistingOperator(sysSinkOperator);
-                if (executionNode->updateQuerySubPlan(queryId, querySubPlan)) {
+                if (!executionNode->updateQuerySubPlan(queryId, querySubPlan)) {
                     NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated sink operator.");
                 }
             }
@@ -219,8 +219,8 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 const OperatorNodePtr sysSourceOperator = createSystemSourceOperator(currentNode, sourceSchema);
 
                 querySubPlan->prependPreExistingOperator(sysSourceOperator);
-                if (executionNode->updateQuerySubPlan(queryId, querySubPlan)) {
-                    NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated sink operator.");
+                if (!executionNode->updateQuerySubPlan(queryId, querySubPlan)) {
+                    NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated source operator.");
                 }
             }
         }
