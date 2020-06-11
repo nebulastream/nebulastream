@@ -11,8 +11,6 @@
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 
-using namespace std;
-
 namespace NES {
 
 BottomUpStrategy::BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan)
@@ -73,6 +71,11 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
             if (operatorToPlace->instanceOf<SinkLogicalOperatorNode>()) {
                 NES_DEBUG("BottomUpStrategy: Placing sink operator on the sink node");
                 candidateNesNode = sinkNode;
+                if(!executionPlan->getExecutionNodeByNodeId(candidateNesNode->getId())){
+                    NES_DEBUG("BottomUpStrategy: Creating a new root execution node for placing sink operator");
+                    const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode);
+                    executionPlan->addExecutionNodeAsRoot(rootExecutionNode);
+                }
             } else if (candidateNesNode->getRemainingCpuCapacity() == 0) {
                 NES_DEBUG("BottomUpStrategy: Find the next NES node in the path where operator can be placed");
                 while (pathItr != path.end()) {

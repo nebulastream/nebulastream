@@ -1,9 +1,11 @@
 #ifndef INCLUDE_TOPOLOGY_TESTTOPOLOGY_HPP_
 #define INCLUDE_TOPOLOGY_TESTTOPOLOGY_HPP_
 
-namespace NES {
 #include <Catalogs/StreamCatalog.hpp>
+#include <Topology/NESTopologyEntry.hpp>
 #include <Topology/TopologyManager.hpp>
+
+namespace NES {
 
 /**\brief:
    *          This is a temporary method used for simulating an example topology.
@@ -12,46 +14,46 @@ namespace NES {
 void createExampleTopology(StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager) {
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr& sinkNode =
+    const NESTopologyWorkerNodePtr sinkNode =
         topologyManager->createNESWorkerNode(/**Node Id**/ 0, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr& workerNode1 =
+    const NESTopologyWorkerNodePtr workerNode1 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 1, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode2 =
+    const NESTopologyWorkerNodePtr workerNode2 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 2, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode3 =
+    const NESTopologyWorkerNodePtr workerNode3 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 3, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode4 =
+    const NESTopologyWorkerNodePtr workerNode4 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 4, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode5 =
+    const NESTopologyWorkerNodePtr workerNode5 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 5, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode6 =
+    const NESTopologyWorkerNodePtr workerNode6 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 6, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode7 =
+    const NESTopologyWorkerNodePtr workerNode7 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 7, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr& workerNode8 =
+    const NESTopologyWorkerNodePtr workerNode8 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 8, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode9 =
+    const NESTopologyWorkerNodePtr workerNode9 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 9, "localhost", CPUCapacity::LOW);
-    const NESTopologyWorkerNodePtr& workerNode10 =
+    const NESTopologyWorkerNodePtr workerNode10 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 10, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode11 =
+    const NESTopologyWorkerNodePtr workerNode11 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 11, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr& workerNode12 =
+    const NESTopologyWorkerNodePtr workerNode12 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 12, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode13 =
+    const NESTopologyWorkerNodePtr workerNode13 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 13, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode14 =
+    const NESTopologyWorkerNodePtr workerNode14 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 14, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode15 =
+    const NESTopologyWorkerNodePtr workerNode15 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 15, "localhost", CPUCapacity::LOW);
-    const NESTopologyWorkerNodePtr& workerNode16 =
+    const NESTopologyWorkerNodePtr workerNode16 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 16, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode17 =
+    const NESTopologyWorkerNodePtr workerNode17 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 17, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr& workerNode18 =
+    const NESTopologyWorkerNodePtr workerNode18 =
         topologyManager->createNESWorkerNode(/**Node Id**/ 18, "localhost", CPUCapacity::MEDIUM);
 
-    const NESTopologySensorNodePtr& sensorNode1 =
+    const NESTopologySensorNodePtr sensorNode1 =
         topologyManager->createNESSensorNode(/**Node Id**/ 19, "localhost", CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature", schema);
@@ -60,7 +62,7 @@ void createExampleTopology(StreamCatalogPtr streamCatalog, TopologyManagerPtr to
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode1);
     assert(streamCatalog->addPhysicalStream("temperature", e1));
 
-    const NESTopologySensorNodePtr& sensorNode2 =
+    const NESTopologySensorNodePtr sensorNode2 =
         topologyManager->createNESSensorNode(/**Node Id**/ 20, "localhost", CPUCapacity::LOW);
     sensorNode2->setPhysicalStreamName("humidity1");
     streamCatalog->addLogicalStream("humidity", schema);
@@ -68,14 +70,14 @@ void createExampleTopology(StreamCatalogPtr streamCatalog, TopologyManagerPtr to
     StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode2);
     assert(streamCatalog->addPhysicalStream("humidity", e2));
 
-    const NESTopologySensorNodePtr& sensorNode3 =
+    const NESTopologySensorNodePtr sensorNode3 =
         topologyManager->createNESSensorNode(/**Node Id**/ 21, "localhost", CPUCapacity::LOW);
     sensorNode3->setPhysicalStreamName("temperature2");
     streamConf.physicalStreamName = "temperature2";
     StreamCatalogEntryPtr e3 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode3);
     assert(streamCatalog->addPhysicalStream("temperature", e3));
 
-    const NESTopologySensorNodePtr& sensorNode4 =
+    const NESTopologySensorNodePtr sensorNode4 =
         topologyManager->createNESSensorNode(/**Node Id**/ 22, "localhost", CPUCapacity::MEDIUM);
     sensorNode4->setPhysicalStreamName("humidity2");
     streamConf.physicalStreamName = "humidity2";

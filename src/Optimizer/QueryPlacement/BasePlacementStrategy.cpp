@@ -54,13 +54,13 @@ BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan,
 
 OperatorNodePtr BasePlacementStrategy::createSystemSinkOperator(NESTopologyEntryPtr nesNode) {
     auto sinkOperator = createSinkLogicalOperatorNode(ZmqSinkDescriptor::create(nesNode->getIp(), zmqDefaultPort));
-    sinkOperator->setId(UINT64_MAX-1); // all sink operators will have MAX64-1 as Id
+    sinkOperator->setId(UINT64_MAX - 1);// all sink operators will have MAX64-1 as Id
     return sinkOperator;
 }
 
 OperatorNodePtr BasePlacementStrategy::createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema) {
     auto sourceOperator = createSourceLogicalOperatorNode(ZmqSourceDescriptor::create(schema, nesNode->getIp(), zmqDefaultPort));
-    sourceOperator->setId(UINT64_MAX-2); // all source operators will have MAX64-2 as Id
+    sourceOperator->setId(UINT64_MAX - 2);// all source operators will have MAX64-2 as Id
     return sourceOperator;
 }
 
@@ -118,7 +118,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
             querySubPlan->appendPreExistingOperator(sysSourceOperator);
             querySubPlan->appendPreExistingOperator(sysSinkOperator);
 
-            if (executionNode->createNewQuerySubPlan(queryId, querySubPlan)) {
+            if (!executionNode->createNewQuerySubPlan(queryId, querySubPlan)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated query sub plan.");
             }
 
@@ -166,7 +166,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
             querySubPlan->appendPreExistingOperator(sysSourceOperator);
             querySubPlan->appendPreExistingOperator(sysSinkOperator);
 
-            if (executionNode->createNewQuerySubPlan(queryId, querySubPlan)) {
+            if (!executionNode->createNewQuerySubPlan(queryId, querySubPlan)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated query sub plan.");
             }
 

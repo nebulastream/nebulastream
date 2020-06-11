@@ -1,6 +1,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Util/DumpContext.hpp>
+#include <Nodes/Util/DumpHandler.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <set>
@@ -74,7 +75,7 @@ void QueryPlan::prependPreExistingOperator(OperatorNodePtr operatorNode) {
 
 std::string QueryPlan::toString() {
     std::stringstream ss;
-    DumpContextPtr dumpContext;
+    DumpContextPtr dumpContext = DumpContext::create();
 
     // FIXME: I am not sure what this will result in or if this is correct
     for (auto rootOperator : rootOperators) {

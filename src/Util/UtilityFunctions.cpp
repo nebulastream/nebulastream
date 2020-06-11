@@ -2,6 +2,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Operators/Operator.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <Util/Logger.hpp>
@@ -25,8 +26,7 @@ std::string UtilityFunctions::trim(std::string s) {
     return s;
 }
 
-QueryPtr UtilityFunctions::createQueryFromCodeString(
-    const std::string& query_code_snippet) {
+QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& query_code_snippet) {
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
@@ -73,7 +73,10 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(
         /* call loaded function to create query object */
         Query query((*func)());
 
-        return std::make_shared<Query>(query);
+        auto queryPtr = std::make_shared<Query>(query);
+        std::string queryId = UtilityFunctions::generateIdString();
+        queryPtr->getQueryPlan()->setQueryId(queryId);
+        return queryPtr;
     } catch (std::exception& exc) {
         NES_ERROR(
             "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet
