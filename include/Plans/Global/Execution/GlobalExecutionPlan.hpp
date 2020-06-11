@@ -26,14 +26,6 @@ class GlobalExecutionPlan {
     ~GlobalExecutionPlan() = default;
 
     /**
-     * Add execution node as child of another execution node. If the node already exists then simply update the node.
-     * @param parentId: id of the parent execution node
-     * @param childExecutionNode: the child execution node
-     * @return true if operation succeeds
-     */
-    bool addExecutionNodeAsChildTo(uint64_t parentId, ExecutionNodePtr childExecutionNode);
-
-    /**
      * Add execution node as parent of another execution node. If the node already exists then simply update the node.
      * @param childId: id of the child node
      * @param parentExecutionNode: the parent execution node
@@ -53,6 +45,13 @@ class GlobalExecutionPlan {
      * Add execution node without any connectivity
      */
     bool addExecutionNode(ExecutionNodePtr parentExecutionNode);
+
+    /**
+     * Add execution node as root of the execution graph
+     * @param executionNode : Node to be added
+     * @return true if operation succeeds
+     */
+    bool addExecutionNodeAsRoot(ExecutionNodePtr executionNode);
 
     /**
      * Remove the execution node from the graph

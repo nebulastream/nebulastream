@@ -1,4 +1,5 @@
 #include <Nodes/Util/DumpContext.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Util/Logger.hpp>
@@ -19,24 +20,6 @@ ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeByNodeId(uint64_t id) {
     }
     NES_WARNING("GlobalExecutionPlan: Execution node doesn't exists with the id " << id);
     return nullptr;
-}
-
-bool GlobalExecutionPlan::addExecutionNodeAsChildTo(uint64_t parentId, ExecutionNodePtr childExecutionNode) {
-    ExecutionNodePtr parentNode = getExecutionNodeByNodeId(parentId);
-    if (parentNode) {
-        NES_DEBUG("GlobalExecutionPlan: Adding Execution node as child to the execution node with id " << parentId);
-        if (parentNode->addChild(childExecutionNode)) {
-            NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << childExecutionNode->getId());
-            nodeIdIndex[childExecutionNode->getId()] = childExecutionNode;
-            NES_DEBUG("GlobalExecutionPlan: Execution node marked as to be scheduled");
-            executionNodesToSchedule.push_back(childExecutionNode);
-            return true;
-        }
-        NES_WARNING("GlobalExecutionPlan: Failed to add Execution node as child to the execution node with id " << parentId);
-        return false;
-    }
-    NES_WARNING("GlobalExecutionPlan: Parent node doesn't exists with the id " << parentId);
-    return false;
 }
 
 bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode) {
@@ -61,10 +44,34 @@ bool GlobalExecutionPlan::addExecutionNodeAsRootAndParentTo(uint64_t childId, Ex
 
     if (addExecutionNodeAsParentTo(childId, parentExecutionNode)) {
         NES_DEBUG("GlobalExecutionPlan: Added Execution node as root node");
-        rootNodes.push_back(parentExecutionNode);
+        auto found = std::find(rootNodes.begin(), rootNodes.end(), parentExecutionNode);
+        if (found == rootNodes.end()) {
+            rootNodes.push_back(parentExecutionNode);
+            NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << parentExecutionNode->getId());
+            nodeIdIndex[parentExecutionNode->getId()] = parentExecutionNode;
+            NES_DEBUG("GlobalExecutionPlan: Execution node marked as to be scheduled");
+            executionNodesToSchedule.push_back(parentExecutionNode);
+        } else {
+            NES_WARNING("GlobalExecutionPlan: Execution node already present in the root node list");
+        }
         return true;
     }
     return false;
+}
+
+bool GlobalExecutionPlan::addExecutionNodeAsRoot(ExecutionNodePtr executionNode) {
+    NES_DEBUG("GlobalExecutionPlan: Added Execution node as root node");
+    auto found = std::find(rootNodes.begin(), rootNodes.end(), executionNode);
+    if (found == rootNodes.end()) {
+        rootNodes.push_back(executionNode);
+        NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << executionNode->getId());
+        nodeIdIndex[executionNode->getId()] = executionNode;
+        NES_DEBUG("GlobalExecutionPlan: Execution node marked as to be scheduled");
+        executionNodesToSchedule.push_back(executionNode);
+    } else {
+        NES_WARNING("GlobalExecutionPlan: Execution node already present in the root node list");
+    }
+    return true;
 }
 
 bool GlobalExecutionPlan::addExecutionNode(ExecutionNodePtr parentExecutionNode) {
@@ -103,9 +110,9 @@ std::vector<ExecutionNodePtr> GlobalExecutionPlan::getRootNodes() {
 
 std::string GlobalExecutionPlan::getAsString() {
     std::stringstream ss;
-    DumpContextPtr dumpContext;
+    auto dumpHandler = ConsoleDumpHandler::create();
     for (auto rootNode : rootNodes) {
-        dumpContext->dump(rootNode, ss);
+        dumpHandler->dump(rootNode, ss);
     }
     return ss.str();
 }

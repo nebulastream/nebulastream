@@ -62,15 +62,14 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
     }
     try {
         QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-        std::string queryId = UtilityFunctions::generateIdString();
-        query->getQueryPlan()->setQueryId(queryId);
         OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
-        GlobalExecutionPlanPtr executionPlan = optimizerService->updateGlobalExecutionPlan(query->getQueryPlan(), optimizationStrategyName);
+        auto queryPlan = query->getQueryPlan();
+        GlobalExecutionPlanPtr executionPlan = optimizerService->updateGlobalExecutionPlan(queryPlan, optimizationStrategyName);
 
         NES_DEBUG("QueryCatalog: Final Execution Plan =" << executionPlan->getAsString());
 
-        QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(queryId, queryString, query->getQueryPlan(), QueryStatus::Registered);
-
+        string queryId = queryPlan->getQueryId();
+        QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(queryId, queryString, queryPlan, QueryStatus::Registered);
         queries[queryId] = entry;
         NES_DEBUG("number of queries after insert=" << queries.size());
         return queryId;

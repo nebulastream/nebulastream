@@ -1,3 +1,6 @@
+// clang-format off
+#include <gtest/gtest.h>
+// clang-format on
 #include <API/Query.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -8,7 +11,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>
 #include <iostream>
 
 using namespace NES;
@@ -22,8 +24,7 @@ class FilterPushDownTest : public testing::Test {
     void SetUp() {
         NES::setupLogging("FilterPushDownTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup FilterPushDownTest test case.");
-        schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-            "value", BasicType::UINT64);
+        schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 
     /* Will be called before a test is executed. */
@@ -37,7 +38,7 @@ class FilterPushDownTest : public testing::Test {
     }
 };
 
-void setupSensorNodeAndStreamCatalog(TopologyManagerPtr topologyManager , StreamCatalogPtr streamCatalog) {
+void setupSensorNodeAndStreamCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog) {
     NES_INFO("Setup FilterPushDownTest test case.");
     NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 
@@ -57,12 +58,12 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMap) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45)
-        .sink(printSinkDescriptor);
+                      .map(Attribute("value") = 40)
+                      .filter(Attribute("id") < 45)
+                      .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperator());
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
     auto itr = queryPlanNodeIterator.begin();
 
     const NodePtr sinkOperator = (*itr);
@@ -78,7 +79,7 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMap) {
     const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
 
     // Validate
-    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
@@ -97,13 +98,13 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMapAndBeforeFilter) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .filter(Attribute("id") > 45)
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45)
-        .sink(printSinkDescriptor);
+                      .filter(Attribute("id") > 45)
+                      .map(Attribute("value") = 40)
+                      .filter(Attribute("id") < 45)
+                      .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperator());
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
     auto itr = queryPlanNodeIterator.begin();
 
     const NodePtr sinkOperator = (*itr);
@@ -121,7 +122,7 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMapAndBeforeFilter) {
     const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
 
     // Validate
-    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
@@ -142,14 +143,14 @@ TEST_F(FilterPushDownTest, testPushingFiltersBelowAllMapOperators) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .map(Attribute("value") = 80)
-        .filter(Attribute("id") > 45)
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45)
-        .sink(printSinkDescriptor);
+                      .map(Attribute("value") = 80)
+                      .filter(Attribute("id") > 45)
+                      .map(Attribute("value") = 40)
+                      .filter(Attribute("id") < 45)
+                      .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperator());
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
     auto itr = queryPlanNodeIterator.begin();
 
     const NodePtr sinkOperator = (*itr);
@@ -169,7 +170,7 @@ TEST_F(FilterPushDownTest, testPushingFiltersBelowAllMapOperators) {
     const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
 
     // Validate
-    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
@@ -192,13 +193,13 @@ TEST_F(FilterPushDownTest, testPushingTwoFilterBelowMap) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") > 45)
-        .filter(Attribute("id") < 45)
-        .sink(printSinkDescriptor);
+                      .map(Attribute("value") = 40)
+                      .filter(Attribute("id") > 45)
+                      .filter(Attribute("id") < 45)
+                      .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperator());
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
     auto itr = queryPlanNodeIterator.begin();
 
     const NodePtr sinkOperator = (*itr);
@@ -216,7 +217,7 @@ TEST_F(FilterPushDownTest, testPushingTwoFilterBelowMap) {
     const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
 
     // Validate
-    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
@@ -237,12 +238,12 @@ TEST_F(FilterPushDownTest, testPushingFilterAlreadyAtBottom) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .filter(Attribute("id") > 45)
-        .map(Attribute("value") = 40)
-        .sink(printSinkDescriptor);
+                      .filter(Attribute("id") > 45)
+                      .map(Attribute("value") = 40)
+                      .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperator());
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
     auto itr = queryPlanNodeIterator.begin();
 
     const NodePtr sinkOperator = (*itr);
@@ -258,7 +259,7 @@ TEST_F(FilterPushDownTest, testPushingFilterAlreadyAtBottom) {
     const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
 
     // Validate
-    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;

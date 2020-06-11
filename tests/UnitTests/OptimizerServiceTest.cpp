@@ -1,12 +1,12 @@
-#include <gtest/gtest.h>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Services/OptimizerService.hpp>
 #include <Services/QueryService.hpp>
-#include <Topology/TopologyManager.hpp>
 #include <Topology/TestTopology.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Services/OptimizerService.hpp>
+#include <gtest/gtest.h>
 
 using namespace NES;
 using namespace web;
@@ -39,45 +39,46 @@ class OptimizerServiceTest : public testing::Test {
 /* Test nes topology service create plan for valid query string for  */
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bottomup) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
     createExampleTopology(streamCatalog, topologyManager);
     QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
 
     std::stringstream code;
-    code << "Query::from(\"temperature\")" << ".filter(Attribute(\"id\")==5)"
-         << std::endl << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));"
-         << std::endl;
+    code << "Query::from(\"temperature\")"
+         << ".filter(Attribute(\"id\")==5)" << std::endl
+         << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));";
 
     const QueryPtr query = queryService->getQueryFromQueryString(code.str());
-    const json::value& plan = optimizerService->getExecutionPlanAsString(
-        query->getQueryPlan(), "BottomUp", streamCatalog);
+    const std::string plan = optimizerService->getExecutionPlanAsString(query->getQueryPlan(), "BottomUp");
     EXPECT_TRUE(plan.size() != 0);
 }
+
 /* Test nes topology service create plan for valid query string for  */
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_topdown) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
     createExampleTopology(streamCatalog, topologyManager);
     QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
 
     std::stringstream code;
-    code << "Query::from(\"temperature\").filter(Attribute(\"value\")==5)"
-         << std::endl << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));"
-         << std::endl;
+    code << "Query::from(\"temperature\").filter(Attribute(\"value\")==5)" << std::endl
+         << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));";
     const QueryPtr query = queryService->getQueryFromQueryString(code.str());
 
-    const json::value& plan = optimizerService->getExecutionPlanAsString(
-        query->getQueryPlan(), "BottomUp", streamCatalog);
+    const std::string plan = optimizerService->getExecutionPlanAsString(query->getQueryPlan(), "BottomUp");
     EXPECT_TRUE(plan.size() != 0);
 }
 
 /* Test nes topology service create plan for invalid query string for  */
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_query) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
     createExampleTopology(streamCatalog, topologyManager);
     QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
 
@@ -95,8 +96,9 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_query) {
 /* Test nes topology service create plan for invalid optimization strategy */
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_strategy) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
     createExampleTopology(streamCatalog, topologyManager);
     QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
 
@@ -106,8 +108,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
              << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));" << std::endl;
 
         const QueryPtr query = queryService->getQueryFromQueryString(code.str());
-        const json::value& plan = optimizerService->getExecutionPlanAsString(
-            query->getQueryPlan(), "BottomUp", streamCatalog);
+        const std::string plan = optimizerService->getExecutionPlanAsString(query->getQueryPlan(), "BottomUp");
         FAIL();
     } catch (...) {
         //TODO: We need to look into exception handling soon enough
@@ -119,16 +120,15 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
         std::stringstream code;
         code
             << "Query::from(temperature1).filter(Attribute(\"wrong_field\")==5)"
-            << std::endl << ".sink(ZmqSinkDescriptor(\"localhost\", 10));"
+            << std::endl
+            << ".sink(ZmqSinkDescriptor(\"localhost\", 10));"
             << std::endl;
 
         const QueryPtr query = queryService->getQueryFromQueryString(code.str());
-        const json::value& plan = optimizerService->getExecutionPlanAsString(
-            query->getQueryPlan(), "BottomUp", streamCatalog);
+        const std::string plan = optimizerService->getExecutionPlanAsString(query->getQueryPlan(), "BottomUp");
         FAIL();
     } catch (...) {
         //TODO: We need to look into exception handling soon enough
         SUCCEED();
     }
-
 }

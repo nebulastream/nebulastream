@@ -13,6 +13,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include <cpprest/json.h>
+#undef U
 
 /**
  * TODO: add return of create

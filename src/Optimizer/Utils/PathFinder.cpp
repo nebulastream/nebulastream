@@ -4,7 +4,6 @@
 #include <Util/Logger.hpp>
 #include <vector>
 
-using namespace std;
 namespace NES {
 
 PathFinderPtr PathFinder::create(NESTopologyPlanPtr nesTopologyPlan) {
@@ -110,7 +109,7 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEnt
     NES_INFO("PathFinder: finding a random path between " << source->toString() << " and "
                                                           << destination->toString());
 
-    const vector<NESTopologyLinkPtr>& startLinks = nesTopologyPlan->getNESTopologyGraph()->getAllEdgesFromNode(source);
+    const std::vector<NESTopologyLinkPtr>& startLinks = nesTopologyPlan->getNESTopologyGraph()->getAllEdgesFromNode(source);
 
     if (startLinks.empty()) {
         throw std::runtime_error(
@@ -119,7 +118,7 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEnt
 
     NESTopologyLinkPtr candidateLink = startLinks[0];
 
-    vector<NESTopologyLinkPtr> traversedPath;
+    std::vector<NESTopologyLinkPtr> traversedPath;
 
     while (candidateLink) {
 
@@ -127,7 +126,7 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEnt
         if (candidateLink->getDestNode()->getId() == destination->getId()) {
             break;
         } else {
-            vector<NESTopologyLinkPtr>
+            std::vector<NESTopologyLinkPtr>
                 nextCandidatesLinks = nesTopologyPlan->getNESTopologyGraph()->getAllEdgesFromNode(candidateLink->getDestNode());
             if (nextCandidatesLinks.empty()) {
                 return std::vector<NESTopologyEntryPtr>{};
@@ -263,7 +262,7 @@ std::vector<std::vector<NESTopologyEntryPtr>> PathFinder::findAllPathsBetween(NE
     NES_INFO("PathFinder: finding all paths between source" << source->toString() << " and destination "
                                                             << destination->toString());
 
-    const vector<std::vector<NESTopologyLinkPtr>>& allPaths = findAllPathLinksBetween(source, destination);
+    const std::vector<std::vector<NESTopologyLinkPtr>>& allPaths = findAllPathLinksBetween(source, destination);
 
     std::vector<std::vector<NESTopologyEntryPtr>> result;
 
@@ -277,14 +276,14 @@ std::vector<std::vector<NESTopologyEntryPtr>> PathFinder::findAllPathsBetween(NE
 std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween(NESTopologyEntryPtr source,
                                                                                  NESTopologyEntryPtr destination) {
 
-    const vector<NESTopologyLinkPtr>& startLinks = nesTopologyPlan->getNESTopologyGraph()->getAllEdgesFromNode(source);
+    const std::vector<NESTopologyLinkPtr>& startLinks = nesTopologyPlan->getNESTopologyGraph()->getAllEdgesFromNode(source);
 
-    deque<NESTopologyLinkPtr> candidateLinks;
+    std::deque<NESTopologyLinkPtr> candidateLinks;
     copy(startLinks.begin(), startLinks.end(), front_inserter(candidateLinks));
 
-    vector<vector<NESTopologyLinkPtr>> setOfVisitedPaths;
+    std::vector<std::vector<NESTopologyLinkPtr>> setOfVisitedPaths;
 
-    vector<NESTopologyLinkPtr> traversedPath;
+    std::vector<NESTopologyLinkPtr> traversedPath;
 
     while (!candidateLinks.empty()) {
 
@@ -301,7 +300,7 @@ std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween
                 traversedPath = backTrackTraversedPathTill(traversedPath, candidateLinks.front()->getSourceNode());
             }
         } else {
-            const vector<NESTopologyLinkPtr>& nextCandidateLinks = nesTopologyPlan->getNESTopologyGraph()->getAllEdgesFromNode(link->getDestNode());
+            const std::vector<NESTopologyLinkPtr>& nextCandidateLinks = nesTopologyPlan->getNESTopologyGraph()->getAllEdgesFromNode(link->getDestNode());
             copy(nextCandidateLinks.begin(), nextCandidateLinks.end(), front_inserter(candidateLinks));
         }
     }
@@ -309,13 +308,13 @@ std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween
     return setOfVisitedPaths;
 }
 
-vector<NESTopologyEntryPtr> PathFinder::convertLinkPathIntoNodePath(const NESTopologyEntryPtr source,
-                                                                    const vector<NESTopologyLinkPtr>& selectedPath) {
+std::vector<NESTopologyEntryPtr> PathFinder::convertLinkPathIntoNodePath(const NESTopologyEntryPtr source,
+                                                                    const std::vector<NESTopologyLinkPtr>& selectedPath) {
 
     NES_INFO("PathFinder: convert a path with ege information to a path containing vertex information");
 
     //adding the source node
-    vector<NESTopologyEntryPtr> result = {source};
+    std::vector<NESTopologyEntryPtr> result = {source};
 
     //Build an array with nodes on the selected path
     for (NESTopologyLinkPtr link : selectedPath) {
