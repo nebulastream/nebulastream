@@ -16,18 +16,18 @@ using namespace std;
 #define DEBUG_OUTPUT
 namespace NES {
 
-class ContiniousSourceTest : public testing::Test {
+class ContinuousSourceTest : public testing::Test {
   public:
     void SetUp() {
-        NES::setupLogging("ContiniousSourceTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup ContiniousSourceTest test class.");
+        NES::setupLogging("ContinuousSourceTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup ContinuousSourceTest test class.");
     }
     void TearDown() {
-        std::cout << "Tear down ContiniousSourceTest class." << std::endl;
+        std::cout << "Tear down ContinuousSourceTest class." << std::endl;
     }
 };
 
-TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
+TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -93,7 +93,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
+TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -143,7 +143,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
+TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -254,7 +254,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
+TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -314,7 +314,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
+TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -917,7 +917,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
  * Once we fixed this we can activate this tests
  * */
 
-TEST_F(ContiniousSourceTest, testExdraUseCaseWithOutput) {
+TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);

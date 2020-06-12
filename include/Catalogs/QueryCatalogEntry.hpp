@@ -41,18 +41,15 @@ enum QueryStatus { Registered,
  * @param queryId: id of the query (is also the key in the queries map)
  * @param queryString: string representation of the query
  * @param QueryPtr: a pointer to the query
- * @param nesPlanPtr: a pointer to the generated nes execution plan
  * @param schema: the schema of this query
  * @param running: bool indicating if the query is running (has been deployed)
  */
 class QueryCatalogEntry {
   public:
-    QueryCatalogEntry(string queryId, string queryString, QueryPlanPtr queryPlanPtr,
-                      NESExecutionPlanPtr nesPlanPtr, QueryStatus queryStatus)
+    QueryCatalogEntry(string queryId, string queryString, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus)
         : queryId(queryId),
           queryString(queryString),
           queryPlanPtr(queryPlanPtr),
-          nesPlanPtr(nesPlanPtr),
           queryStatus(queryStatus) {
     }
 
@@ -81,14 +78,6 @@ class QueryCatalogEntry {
     }
 
     /**
-    * @brief method to get the execution plan of the query
-    * @return pointer to the nes execution plan
-    */
-    const NESExecutionPlanPtr getNesPlanPtr() const {
-        return nesPlanPtr;
-    }
-
-    /**
     * @brief method to get the status of the query
     * @return query status
     */
@@ -108,7 +97,6 @@ class QueryCatalogEntry {
     string queryId;
     string queryString;
     QueryPlanPtr queryPlanPtr;
-    NESExecutionPlanPtr nesPlanPtr;
     QueryStatus queryStatus;
 };
 

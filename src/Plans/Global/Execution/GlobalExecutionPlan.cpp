@@ -59,7 +59,7 @@ bool GlobalExecutionPlan::addExecutionNode(ExecutionNodePtr executionNode) {
 
 bool GlobalExecutionPlan::removeExecutionNode(uint64_t id) {
     if (executionNodeExists(id)) {
-        NES_DEBUG("GlobalExecutionPlan: Removed execution node with id " + id);
+        NES_DEBUG("GlobalExecutionPlan: Removed execution node with id " << id);
         return nodeIdIndex.erase(id) == 1;
     }
     return false;
