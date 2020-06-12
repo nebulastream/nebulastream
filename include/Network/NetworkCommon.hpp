@@ -113,7 +113,7 @@ class ChannelId {
 
 class NodeLocation {
   public:
-    explicit NodeLocation(NodeId nodeId, const std::string& hostname, uint16_t port)
+    explicit NodeLocation(NodeId nodeId, const std::string& hostname, uint32_t port)
         : nodeId(nodeId), hostname(hostname), port(port) {
     }
 
@@ -129,7 +129,7 @@ class NodeLocation {
         return hostname;
     }
 
-    const uint16_t getPort() const {
+    const uint32_t getPort() const {
         return port;
     }
 
@@ -146,7 +146,7 @@ class NodeLocation {
   private:
     const NodeId nodeId;
     const std::string hostname;
-    const uint16_t port;
+    const uint32_t port;
 };
 }// namespace Network
 }// namespace NES
