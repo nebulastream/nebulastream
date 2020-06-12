@@ -134,6 +134,13 @@ class ExecutionNode : public Node {
      * map of queryPlans
      */
     std::map<std::string, QueryPlanPtr> mapOfQuerySubPlans;
+
+    /**
+     * Free the resources occupied by the query sub plan.
+     * @param querySubPlan : the input query sub plan
+     */
+    void freeOccupiedResources(QueryPlanPtr querySubPlan);
+
 };
 }// namespace NES
 

@@ -1,8 +1,11 @@
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Util/Logger.hpp>
+#include <set>
 
 namespace NES {
 
@@ -36,11 +39,39 @@ QueryPlanPtr ExecutionNode::getQuerySubPlan(std::string subPlanId) {
 }
 
 bool ExecutionNode::removeQuerySubPlan(std::string subPlanId) {
+    QueryPlanPtr querySubPlan = mapOfQuerySubPlans[subPlanId];
     if (mapOfQuerySubPlans.erase(subPlanId) == 1) {
+        NES_INFO("ExecutionNode: Releasing resources occupied by the query sub plan with id  " + subPlanId << " from node with id " << id);
+        freeOccupiedResources(querySubPlan);
         return true;
     }
     NES_WARNING("ExecutionNode: Not able to remove query sub plan with id : " + subPlanId);
     return false;
+}
+
+void ExecutionNode::freeOccupiedResources(QueryPlanPtr querySubPlan) {
+    int32_t resourceToFree = 0;
+    auto roots = querySubPlan->getRootOperators();
+    std::set<u_int64_t> visitedOpIds;
+    for (auto root : roots) {
+        auto bfsIterator = BreadthFirstNodeIterator(root);
+        auto itr = bfsIterator.begin();
+        while (itr != bfsIterator.end()) {
+            auto visitingOp = (*itr)->as<OperatorNode>();
+            ++itr;
+
+            if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
+                continue;
+            }
+
+            if (visitingOp->getId() != SYS_SOURCE_OPERATOR_ID && visitingOp->getId() != SYS_SINK_OPERATOR_ID) {
+                resourceToFree++;
+            }
+            visitedOpIds.insert(visitingOp->getId());
+        }
+    }
+    NES_INFO("ExecutionNode: Releasing " << resourceToFree << " CPU resources from the node with id " << id);
+    nesNode->increaseCpuCapacity(resourceToFree);
 }
 
 bool ExecutionNode::createNewQuerySubPlan(std::string subPlanId, OperatorNodePtr operatorNode) {
