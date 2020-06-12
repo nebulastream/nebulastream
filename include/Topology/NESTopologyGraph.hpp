@@ -3,9 +3,11 @@
 
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/NESTopologyLink.hpp>
+#undef U
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/graphviz.hpp>
+
 
 namespace NES {
 

@@ -5,8 +5,6 @@
 #include <cassert>
 #include <iostream>
 #include <memory>
-BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSink)
-
 #include <Util/Logger.hpp>
 
 namespace NES {

@@ -3,9 +3,6 @@
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/DataTypes/BasicValueType.hpp>
 
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/export.hpp>
-
 namespace NES {
 
 BasicValueType::BasicValueType(const BasicType& type, std::string value) : type(type), value(std::move(value)){};
@@ -47,4 +44,3 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
 };
 
 }// namespace NES
-BOOST_CLASS_EXPORT(NES::BasicValueType);

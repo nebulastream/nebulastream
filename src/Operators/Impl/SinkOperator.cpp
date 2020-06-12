@@ -55,4 +55,3 @@ SinkOperator::SinkOperator() = default;
 const OperatorPtr createSinkOperator(const DataSinkPtr sink) { return std::make_shared<SinkOperator>(sink); }
 
 }// namespace NES
-BOOST_CLASS_EXPORT(NES::SinkOperator);

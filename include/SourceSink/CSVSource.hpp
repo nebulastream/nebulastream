@@ -5,10 +5,6 @@
 #include <fstream>
 #include <string>
 
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/vector.hpp>
-
 namespace NES {
 class TupleBuffer;
 
@@ -68,27 +64,10 @@ class CSVSource : public DataSource {
     size_t tupleSize;
     std::string delimiter;
     size_t currentPosInFile;
-    /**
-     * @brief method for serialization, all listed variable below are added to the
-     * serialization/deserialization process
-     */
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive& ar,
-                   const unsigned int version) {
-        ar& boost::serialization::base_object<DataSource>(*this);
-        ar& filePath;
-        ar& tupleSize;
-        ar& delimiter;
-        ar& generatedTuples;
-        ar& generatedBuffers;
-    }
+
 };
 
 typedef std::shared_ptr<CSVSource> CSVSourcePtr;
 }// namespace NES
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(NES::CSVSource)
+
 #endif /* INCLUDE_CSVSOURCE_H_ */

@@ -4,10 +4,6 @@
 #include <fstream>
 #include <string>
 
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/vector.hpp>
-
 namespace NES {
 class TupleBuffer;
 /**
@@ -57,23 +53,8 @@ class SenseSource : public DataSource {
     SenseSource();
 
     std::string udsf;
-    /**
-     * @brief method for serialization, all listed variable below are added to the
-     * serialization/deserialization process
-     */
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive& ar,
-                   const unsigned int version) {
-        ar& boost::serialization::base_object<DataSource>(*this);
-        ar& udsf;
-    }
 };
 
 typedef std::shared_ptr<SenseSource> SenseSourcePtr;
 
 }// namespace NES
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(NES::SenseSource)

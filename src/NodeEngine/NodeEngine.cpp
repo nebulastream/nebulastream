@@ -1,3 +1,4 @@
+#include <GRPC/ExecutableTransferObject.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeProperties.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -51,9 +52,8 @@ NodeEngine::~NodeEngine() {
 
 bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject) {
     NES_DEBUG("NodeEngine::deployQueryInNodeEngine eto " << executableTransferObject);
-
-    ExecutableTransferObject eto = SerializationTools::parse_eto(
-        executableTransferObject);
+    assert(0);
+    ExecutableTransferObject eto = ExecutableTransferObject();
     NES_DEBUG(
         "WorkerActor::running() eto after parse=" << eto.toString());
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(queryCompiler);

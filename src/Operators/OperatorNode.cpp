@@ -4,6 +4,7 @@
 #include <SourceSink/DataSource.hpp>
 #include <set>
 #include <sstream>
+#include <assert.h>
 
 namespace NES {
 

@@ -5,12 +5,6 @@
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <QueryCompiler/DataTypes/BasicDataType.hpp>
-#include <Util/Logger.hpp>
-
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT(NES::ArrayDataType);
 
 namespace NES {
 

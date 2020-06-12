@@ -7,7 +7,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-BOOST_CLASS_EXPORT_IMPLEMENT(NES::CSVSource);
 
 namespace NES {
 

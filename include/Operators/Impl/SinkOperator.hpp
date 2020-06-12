@@ -27,14 +27,6 @@ class SinkOperator : public Operator {
 
   private:
     DataSinkPtr sink_;
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
-            & BOOST_SERIALIZATION_NVP(sink_);
-    }
 };
 
 typedef std::shared_ptr<SinkOperator> SinkOperatorPtr;

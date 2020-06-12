@@ -25,14 +25,6 @@ class SourceOperator : public Operator {
 
   private:
     DataSourcePtr source;
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
-            & BOOST_SERIALIZATION_NVP(source);
-    }
 };
 
 typedef std::shared_ptr<SourceOperator> SourceOperatorPtr;

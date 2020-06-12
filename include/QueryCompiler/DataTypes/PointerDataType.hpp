@@ -37,14 +37,6 @@ class PointerDataType : public DataType {
 
   private:
     DataTypePtr base_type_;
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
-            & BOOST_SERIALIZATION_NVP(base_type_);
-    }
 };
 }// namespace NES
 #endif//INCLUDE_POINTERDATATYPE_HPP_

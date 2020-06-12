@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -36,12 +34,6 @@ class ValueType {
     ValueType() = default;
     ValueType(const ValueType&);
     ValueType& operator=(const ValueType&);
-
-  private:
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-    }
 };
 }// namespace NES
 

@@ -7,9 +7,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#undef U
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 
 namespace NES {
 
@@ -79,13 +76,6 @@ class DataType {
     DataType() = default;
     DataType(const DataType&);
     DataType& operator=(const DataType&);
-
-  private:
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-    }
 };
 
 const AttributeFieldPtr createField(const std::string name, const BasicType& type);
@@ -107,6 +97,8 @@ const DataTypePtr createArrayDataType(const DataTypePtr type, uint32_t dimension
 const ValueTypePtr createStringValueType(const std::string& value);
 const ValueTypePtr createStringValueType(const char* value, u_int16_t dimension = 0);
 const ValueTypePtr createArrayValueType(const BasicType& type, const std::vector<std::string>& value);
+
+
 
 }// namespace NES
 #endif

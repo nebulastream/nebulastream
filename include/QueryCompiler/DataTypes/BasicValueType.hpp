@@ -31,15 +31,6 @@ class BasicValueType : public ValueType {
   private:
     BasicType type;
     std::string value;
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(ValueType)
-            & BOOST_SERIALIZATION_NVP(type)
-            & BOOST_SERIALIZATION_NVP(value);
-    }
 };
 typedef std::shared_ptr<BasicValueType> BasicValueTypePtr;
 }// namespace NES

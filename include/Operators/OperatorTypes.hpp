@@ -1,7 +1,3 @@
-//
-// Created by pgrulich on 17.07.19.
-//
-
 #ifndef OPERATORTYPES_HPP
 #define OPERATORTYPES_HPP
 

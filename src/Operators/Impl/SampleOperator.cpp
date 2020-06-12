@@ -64,4 +64,3 @@ const OperatorPtr createSampleOperator(const std::string& udfs) {
 }
 
 }// namespace NES
-BOOST_CLASS_EXPORT(NES::SampleOperator);

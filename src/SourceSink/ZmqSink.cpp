@@ -10,11 +10,8 @@
 
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
-
 #include <Util/Logger.hpp>
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 
 namespace NES {
 
@@ -152,4 +149,3 @@ const std::string ZmqSink::getHost() const {
 }
 
 }// namespace NES
-BOOST_CLASS_EXPORT(NES::ZmqSink);

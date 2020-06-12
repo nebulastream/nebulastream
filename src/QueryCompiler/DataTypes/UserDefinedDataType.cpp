@@ -1,6 +1,6 @@
 
 #include <QueryCompiler/DataTypes/UserDefinedDataType.hpp>
-
+#include <assert.h>
 namespace NES {
 
 UserDefinedDataType::UserDefinedDataType(const StructDeclaration& decl) : declaration(decl) {}

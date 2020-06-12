@@ -1,7 +1,4 @@
 #include <API/Config.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(NES::Config)
-
-#include "../../include/SourceSink/DataSink.hpp"
 #include <Util/Logger.hpp>
 #include <string>
 

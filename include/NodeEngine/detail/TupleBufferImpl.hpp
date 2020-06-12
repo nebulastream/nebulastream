@@ -2,6 +2,8 @@
 #define NES_INCLUDE_NODEENGINE_DETAIL_TUPLEBUFFERIMPL_HPP_
 
 #include <Util/Logger.hpp>
+#include <functional>
+#include <atomic>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <deque>

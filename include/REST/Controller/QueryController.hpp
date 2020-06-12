@@ -4,6 +4,15 @@
 #include <Services/QueryService.hpp>
 #include <cpprest/http_msg.h>
 
+/*
+- * The above undef ensures that NES will compile.
+- * There is a 3rd-party library that defines U as a macro for some internal stuff.
+- * U is also a template argument of a template function in boost.
+- * When the compiler sees them both, it goes crazy.
+- * Do not remove the above undef.
+- */
+#undef U
+
 namespace NES {
 class NesCoordinator;
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;

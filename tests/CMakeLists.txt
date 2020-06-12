@@ -113,11 +113,6 @@ add_executable(optimizer-service-tests "UnitTests/OptimizerServiceTest.cpp")
 target_link_libraries(optimizer-service-tests nes ${GTEST_LIBRARIES})
 add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
 
-### Serialization Tools Tree Tests ###
-add_executable(serialization-tools-tests "UnitTests/SerializationToolsTest.cpp")
-target_link_libraries(serialization-tools-tests nes ${GTEST_LIBRARIES})
-add_test(NAME serialization-tools-tests COMMAND serialization-tools-tests)
-
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/MemoryLayoutTest.cpp")
 target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})

@@ -58,4 +58,3 @@ const OperatorPtr createFilterOperator(const PredicatePtr predicate) {
 }
 
 }// namespace NES
-BOOST_CLASS_EXPORT(NES::FilterOperator);

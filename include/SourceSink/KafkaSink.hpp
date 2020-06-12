@@ -49,14 +49,6 @@ class KafkaSink : public DataSink {
 
   private:
     void _connect();
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& boost::serialization::base_object<DataSink>(*this);
-        ar& brokers;
-        ar& topic;
-        ar& partition;
-    }
 
     std::string brokers;
     std::string topic;

@@ -6,7 +6,6 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-#include <Util/SerializationTools.hpp>
 #include <iostream>
 #include <pthread.h>
 #include <string>

@@ -2,13 +2,10 @@
 #define INCLUDE_DATASOURCE_H_
 
 #include <API/Schema.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/vector.hpp>
 #include <mutex>
 #include <thread>
-
+#include <atomic>
+#include <optional>
 //#include <NodeEngine/QueryManager.hpp>
 namespace NES {
 class BufferManager;
@@ -187,21 +184,10 @@ class DataSource {
     QueryManagerPtr queryManager;
 
   private:
-    friend class boost::serialization::access;
     //bool indicating if the source is currently running'
     std::mutex startStopMutex;
     std::atomic_bool running;
     std::shared_ptr<std::thread> thread;
-
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& numBuffersToProcess;
-        ar& gatheringInterval;
-        ar& schema;
-        ar& generatedTuples;
-        ar& generatedBuffers;
-        ar& sourceId;
-    }
 };
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;

@@ -456,5 +456,3 @@ Predicate operator>>(const PredicateItem& lhs, const PredicateItem& rhs) {
     return operator>>(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
 }
 }//end namespace NES
-BOOST_CLASS_EXPORT(NES::Predicate);
-BOOST_CLASS_EXPORT(NES::PredicateItem);

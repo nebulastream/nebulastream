@@ -5,6 +5,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
+#include <Operators/Operator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <future>
