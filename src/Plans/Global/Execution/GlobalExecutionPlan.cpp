@@ -115,7 +115,7 @@ void GlobalExecutionPlan::scheduleExecutionNode(ExecutionNodePtr executionNode) 
         NES_DEBUG("GlobalExecutionPlan: Execution node " << executionNode->getId() << " marked as to be scheduled");
         executionNodesToSchedule.push_back(executionNode);
     } else {
-        NES_WARNING("GlobalExecutionPlan: Execution node " << executionNode->getId() << "already scheduled");
+        NES_WARNING("GlobalExecutionPlan: Execution node " << executionNode->getId() << " already scheduled");
     }
     mapExecutionNodeToQueryId(executionNode);
 }
