@@ -8,6 +8,14 @@ namespace NES {
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
+static std::map<std::string, QueryStatus> stringToQueryStatusMap{
+    {"REGISTERED", Registered},
+    {"SCHEDULING", Scheduling},
+    {"RUNNING", Running},
+    {"STOPPED", Stopped},
+    {"FAILED", Failed},
+};
+
 /**
  * @brief catalog class to handle the queries in the system
  * @limitations:
