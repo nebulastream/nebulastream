@@ -31,10 +31,10 @@ typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
  *
  */
 enum QueryStatus { Registered,
-                   Scheduling,
-                   Running,
-                   Stopped,
-                   Failed };
+    Scheduling,
+    Running,
+    Stopped,
+    Failed };
 
 /**
  * @brief class to handle the entry in the query catalog
