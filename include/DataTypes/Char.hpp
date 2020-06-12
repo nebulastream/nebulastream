@@ -30,6 +30,14 @@ class Char : public DataType {
     bool isEquals(DataTypePtr otherDataType) override;
 
     /**
+     * @brief Calculates the joined data type between this data type and the other.
+     * If they have no possible joined data type, the coined type is Undefined.
+     * @param other data type
+     * @return DataTypePtr joined data type
+     */
+    DataTypePtr join(DataTypePtr otherDataType) override;
+
+    /**
     * @brief Returns the length of the char.
     */
     [[nodiscard]] uint64_t getLength() const;
