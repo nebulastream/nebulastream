@@ -63,6 +63,9 @@ typedef std::shared_ptr<PathFinder> PathFinderPtr;
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
+class TypeInferencePhase;
+typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -109,6 +112,7 @@ class BasePlacementStrategy {
     NESTopologyPlanPtr nesTopologyPlan;
     GlobalExecutionPlanPtr executionPlan;
     PathFinderPtr pathFinder;
+    TypeInferencePhasePtr typeInferencePhase;
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP

@@ -14,8 +14,8 @@ typedef std::shared_ptr<Query> QueryPtr;
 class NESTopologyPlan;
 typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
 
-class TranslateFromLegacyPlanPhase;
-typedef std::shared_ptr<TranslateFromLegacyPlanPhase> TranslateFromLegacyPlanPhasePtr;
+class TypeInferencePhase;
+typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
@@ -51,7 +51,7 @@ class NESOptimizer {
                                                  GlobalExecutionPlanPtr globalExecutionPlan);
 
   private:
-    TranslateFromLegacyPlanPhasePtr translateFromLegacyPlanPhase;
+    TypeInferencePhasePtr typeInferencePhasePtr;
 };
 }// namespace NES
 
