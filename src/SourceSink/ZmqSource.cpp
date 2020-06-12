@@ -6,13 +6,9 @@
 #include <sstream>
 #include <string>
 #include <zmq.hpp>
-
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
-
 #include <Util/Logger.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 
 namespace NES {
 
@@ -159,4 +155,3 @@ uint16_t ZmqSource::getPort() const {
 
 }// namespace NES
 
-BOOST_CLASS_EXPORT(NES::ZmqSource);

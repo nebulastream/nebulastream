@@ -51,4 +51,3 @@ SourceOperator::SourceOperator() {
 const OperatorPtr createSourceOperator(const DataSourcePtr source) { return std::make_shared<SourceOperator>(source); }
 
 }// namespace NES
-BOOST_CLASS_EXPORT(NES::SourceOperator);

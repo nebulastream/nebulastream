@@ -4,7 +4,6 @@
 #include <Util/Logger.hpp>
 #include <sstream>
 #include <string>
-
 #include <chrono>
 using namespace std::chrono_literals;
 
@@ -95,6 +94,4 @@ const uint64_t KafkaSink::getKafkaProducerTimeout() const {
 }
 
 }// namespace NES
-
-BOOST_CLASS_EXPORT(NES::KafkaSink);
 #endif

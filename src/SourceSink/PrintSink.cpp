@@ -45,4 +45,3 @@ SinkType PrintSink::getType() const {
 }
 
 }// namespace NES
-BOOST_CLASS_EXPORT(NES::PrintSink);

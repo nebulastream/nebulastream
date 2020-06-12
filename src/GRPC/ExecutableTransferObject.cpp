@@ -7,7 +7,6 @@
 using std::string;
 using std::vector;
 
-BOOST_CLASS_EXPORT(NES::ExecutableTransferObject);
 
 namespace NES {
 ExecutableTransferObject::ExecutableTransferObject(string queryId,

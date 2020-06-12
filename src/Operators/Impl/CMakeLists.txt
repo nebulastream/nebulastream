@@ -2,7 +2,6 @@ add_source_nes(
         SourceOperator.cpp
         SinkOperator.cpp
         FilterOperator.cpp
-        SortOperator.cpp
         WindowOperator.cpp
         WindowScanOperator.cpp
         KeyByOperator.cpp

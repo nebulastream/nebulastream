@@ -4,11 +4,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/vector.hpp>
-
 #include <SourceSink/DataSink.hpp>
 
 namespace NES {
@@ -104,18 +99,9 @@ class FileOutputSink : public DataSink {
   protected:
     std::string filePath;
 
-    friend class boost::serialization::access;
-
     FileOutputType outputType;
     FileOutputMode outputMode;
 
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& filePath;
-        ar& outputType;
-        ar& outputMode;
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
-    }
 
     /**
      * @brief Manipulate a tupleBuffer with a schema as specific output.
@@ -127,11 +113,5 @@ class FileOutputSink : public DataSink {
 };
 typedef std::shared_ptr<FileOutputSink> FileOutputSinkPtr;
 }// namespace NES
-
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-
-BOOST_CLASS_EXPORT_KEY(NES::FileOutputSink)
 
 #endif// FILEOUTPUTSINK_HPP

@@ -33,15 +33,6 @@ class AttributeField {
     bool operator==(const AttributeField& rhs) const {
         return name == rhs.name && *data_type.get() == *rhs.data_type.get();
     }
-
-  private:
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_NVP(name)
-            & BOOST_SERIALIZATION_NVP(data_type);
-    }
 };
 
 }// namespace NES

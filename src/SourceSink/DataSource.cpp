@@ -8,14 +8,10 @@
 #include <Util/UtilityFunctions.hpp>
 
 #include <SourceSink/ZmqSource.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
 
 #include <Util/ThreadBarrier.hpp>
 
 #include <SourceSink/DataSource.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSource);
 
 namespace NES {
 

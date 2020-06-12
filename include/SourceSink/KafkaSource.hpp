@@ -70,16 +70,6 @@ class KafkaSource : public DataSource {
     KafkaSource() = default;
 
     void _connect();
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive& ar,
-                   const unsigned int) {
-        ar& boost::serialization::base_object<DataSource>(*this);
-        ar& brokers;
-        ar& topic;
-        ar& groupId;
-        ar& autoCommit;
-    }
 
     std::string brokers;
     std::string topic;

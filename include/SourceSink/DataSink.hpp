@@ -2,9 +2,6 @@
 #define INCLUDE_DATASINK_H_
 
 #include <API/Schema.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/vector.hpp>
 
 namespace NES {
 class TupleBuffer;
@@ -103,16 +100,6 @@ class DataSink {
     SchemaPtr schema;
     size_t sentBuffer;
     size_t sentTuples;
-
-  private:
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& schema;
-        ar& sentBuffer;
-        ar& sentTuples;
-    }
 };
 
 typedef std::shared_ptr<DataSink> DataSinkPtr;

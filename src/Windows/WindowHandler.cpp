@@ -4,11 +4,9 @@
 #include <Util/Logger.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <atomic>
-#include <boost/serialization/export.hpp>
 #include <iostream>
 #include <memory>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(NES::WindowHandler)
 namespace NES {
 
 WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)

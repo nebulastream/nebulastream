@@ -1,12 +1,8 @@
 #include <iostream>
-#include <sstream>
 #include <stdexcept>
 
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
 
 namespace NES {
 

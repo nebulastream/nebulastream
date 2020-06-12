@@ -12,19 +12,6 @@
 #include <API/Types/DataTypes.hpp>
 #include <Operators/OperatorTypes.hpp>
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/ptr_container/serialize_ptr_vector.hpp>
-
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/export.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
-
 namespace NES {
 
 class GeneratedCode;
@@ -54,13 +41,6 @@ class UserAPIExpression {
     virtual const std::string toString() const = 0;
     virtual UserAPIExpressionPtr copy() const = 0;
     virtual bool equals(const UserAPIExpression& rhs) const = 0;
-
-  private:
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-    }
 };
 
 class Predicate : public UserAPIExpression {
@@ -90,18 +70,6 @@ class Predicate : public UserAPIExpression {
     UserAPIExpressionPtr right;
     bool bracket;
     std::string functionCallOverload;
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(UserAPIExpression)
-            & BOOST_SERIALIZATION_NVP(op)
-            & BOOST_SERIALIZATION_NVP(left)
-            & BOOST_SERIALIZATION_NVP(right)
-            & BOOST_SERIALIZATION_NVP(bracket)
-            & BOOST_SERIALIZATION_NVP(functionCallOverload);
-    }
 };
 
 class PredicateItem : public UserAPIExpression {
@@ -141,16 +109,6 @@ class PredicateItem : public UserAPIExpression {
     PredicateItemMutation mutation;
     AttributeFieldPtr attribute = nullptr;
     ValueTypePtr value = nullptr;
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(UserAPIExpression)
-            & BOOST_SERIALIZATION_NVP(mutation)
-            & BOOST_SERIALIZATION_NVP(attribute)
-            & BOOST_SERIALIZATION_NVP(value);
-    }
 };
 
 typedef std::shared_ptr<PredicateItem> PredicateItemPtr;

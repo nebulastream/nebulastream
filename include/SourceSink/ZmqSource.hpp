@@ -7,8 +7,6 @@
 #include <zmq.hpp>
 
 #include <SourceSink/DataSource.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 
 namespace NES {
 class TupleBuffer;
@@ -89,15 +87,7 @@ class ZmqSource : public DataSource {
      * @brief method for serialization, all listed variable below are added to the
      * serialization/deserialization process
      */
-    friend class boost::serialization::access;
     friend class DataSource;
-    template<class Archive>
-    void serialize(Archive& ar,
-                   const unsigned int version) {
-        ar& boost::serialization::base_object<DataSource>(*this);
-        ar& host;
-        ar& port;
-    }
     std::string host;
     uint16_t port;
     bool connected;

@@ -13,8 +13,6 @@
 #include <vector>
 
 #include <QueryCompiler/QueryCompiler.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 
 using std::string;
 using std::vector;
@@ -54,22 +52,6 @@ class ExecutableTransferObject {
     vector<DataSinkPtr> destinations;
     OperatorPtr operatorTree;
     bool compiled = false;
-
-    /**
-   * @brief method for serialization, all listed variable below are added to the
-   * serialization/deserialization process
-   */
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive& ar,
-                   const unsigned int version) {
-        ar& queryId;
-        ar& schema;
-        ar& sources;
-        ar& destinations;
-        ar& operatorTree;
-        ar& compiled;
-    }
 };
 
 }// namespace NES

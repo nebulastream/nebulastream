@@ -2,8 +2,6 @@
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/DataTypes/BasicDataType.hpp>
 
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/export.hpp>
 
 namespace NES {
 
@@ -189,4 +187,3 @@ const DataTypePtr createDataTypeVarChar(const uint32_t& size) {
 }
 
 }// namespace NES
-BOOST_CLASS_EXPORT(NES::BasicDataType);

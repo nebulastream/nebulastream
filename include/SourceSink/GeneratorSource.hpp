@@ -5,8 +5,6 @@
 #include <sstream>
 
 #include <SourceSink/DataSource.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 
 namespace NES {
 
@@ -31,7 +29,7 @@ class GeneratorSource : public DataSource {
    * @brief override function to create one buffer
    * @return pointer to a buffer containing the created tuples
    */
-    std::optional<TupleBuffer> receiveData() override = 0;
+    virtual std::optional<TupleBuffer> receiveData()  = 0;
 
     /**
      * @brief override the toString method for the generator source
@@ -43,12 +41,6 @@ class GeneratorSource : public DataSource {
   protected:
     GeneratorSource() = default;
 
-  private:
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& boost::serialization::base_object<DataSource>(*this);
-    }
 };
 
 }// namespace NES

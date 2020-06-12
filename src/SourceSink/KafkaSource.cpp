@@ -7,9 +7,7 @@
 #include <cstring>
 #include <sstream>
 #include <string>
-
 #include <Util/Logger.hpp>
-#include <boost/archive/text_oarchive.hpp>
 
 namespace NES {
 
@@ -126,5 +124,4 @@ const std::unique_ptr<cppkafka::Consumer>& KafkaSource::getConsumer() const {
 }
 
 }// namespace NES
-BOOST_CLASS_EXPORT(NES::KafkaSource);
 #endif

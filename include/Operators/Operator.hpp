@@ -7,19 +7,9 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <map>
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/ptr_container/serialize_ptr_vector.hpp>
-
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/export.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
 
 namespace NES {
 
@@ -117,16 +107,6 @@ class Operator {
     std::vector<OperatorPtr> children;
     OperatorPtr parent;
     std::set<OperatorType> traverseOpTree(bool traverse_children);
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_NVP(cost)
-            & BOOST_SERIALIZATION_NVP(operatorId)
-            & BOOST_SERIALIZATION_NVP(children)
-            & BOOST_SERIALIZATION_NVP(parent);
-    }
 };
 
 const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec);

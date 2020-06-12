@@ -3,6 +3,7 @@
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <Util/Logger.hpp>
+#include <assert.h>
 
 namespace NES {
 

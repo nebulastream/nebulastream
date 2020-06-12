@@ -43,4 +43,3 @@ WindowScanOperator::~WindowScanOperator() {}
 const OperatorPtr createWindowScanOperator(const SchemaPtr schema) { return std::make_shared<WindowScanOperator>(schema); }
 
 }// namespace NES
-BOOST_CLASS_EXPORT(NES::WindowScanOperator);

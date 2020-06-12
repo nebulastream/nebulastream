@@ -10,6 +10,7 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <Operators/Operator.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <gtest/gtest.h>

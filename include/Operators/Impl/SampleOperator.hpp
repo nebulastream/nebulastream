@@ -31,15 +31,6 @@ class SampleOperator : public Operator {
 
   private:
     std::string udfs;
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(
-            Operator)
-            & BOOST_SERIALIZATION_NVP(udfs);
-    }
 };
 
 }// namespace NES

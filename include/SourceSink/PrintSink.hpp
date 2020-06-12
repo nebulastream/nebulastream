@@ -68,12 +68,6 @@ class PrintSink : public DataSink {
 
   private:
     std::ostream& outputStream;
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
-    }
 };
 typedef std::shared_ptr<PrintSink> PrintSinkPtr;
 }// namespace NES

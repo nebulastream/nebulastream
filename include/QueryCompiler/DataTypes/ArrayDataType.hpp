@@ -6,8 +6,6 @@
 #include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/DataTypes/BasicDataType.hpp>
 
-#include <boost/serialization/shared_ptr.hpp>
-
 namespace NES {
 
 class ArrayDataType;
@@ -46,15 +44,6 @@ class ArrayDataType : public DataType {
   private:
     DataTypePtr componentDataType;
     u_int32_t dimensions;
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType);
-        ar& componentDataType;
-        ar& BOOST_SERIALIZATION_NVP(dimensions);
-    }
 };
 }// namespace NES
 

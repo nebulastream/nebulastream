@@ -1,6 +1,4 @@
 #include <SourceSink/GeneratorSource.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT(NES::GeneratorSource);
 #include <NodeEngine/BufferManager.hpp>
 
 #include <iostream>

@@ -1,15 +1,10 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <assert.h>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-#include <fstream>
 #include <sstream>
 
 #include <SourceSink/BinarySource.hpp>
 #include <SourceSink/DataSource.hpp>
 #include <Util/Logger.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(NES::BinarySource);
 
 namespace NES {
 

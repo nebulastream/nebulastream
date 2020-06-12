@@ -3,8 +3,6 @@
 
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/GeneratorSource.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP

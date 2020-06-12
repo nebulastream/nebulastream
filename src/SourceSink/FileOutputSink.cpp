@@ -4,8 +4,6 @@
 #include <iostream>
 #include <string>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(NES::FileOutputSink);
-
 namespace NES {
 
 FileOutputSink::FileOutputSink()

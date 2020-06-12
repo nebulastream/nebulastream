@@ -2,12 +2,7 @@
 #define INCLUDE_BINARYSOURCE_H_
 
 #include <SourceSink/DataSource.hpp>
-#include <boost/archive/text_oarchive.hpp>
 #include <fstream>
-
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/vector.hpp>
 
 namespace NES {
 
@@ -53,29 +48,9 @@ class BinarySource : public DataSource {
 
     int file_size;
     size_t tuple_size;
-
-    /**
-       * @brief method for serialization, all listed variable below are added to the
-       * serialization/deserialization process
-       */
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive& ar,
-                   const unsigned int version) {
-        ar& boost::serialization::base_object<DataSource>(*this);
-        ar& file_path;
-        ar& file_size;
-        ar& tuple_size;
-        ar& generatedTuples;
-        ar& generatedBuffers;
-    }
 };
 
 typedef std::shared_ptr<BinarySource> BinarySourcePtr;
 
 }// namespace NES
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(NES::BinarySource)
 #endif /* INCLUDE_BINARYSOURCE_H_ */

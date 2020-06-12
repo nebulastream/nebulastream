@@ -34,11 +34,3 @@ const DataTypePtr DataType::join(DataTypePtr other) const {
 DataType::~DataType() {}
 
 }// namespace NES
-
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT(NES::DataType);
-//BOOST_CLASS_EXPORT(NES::ArrayDataType);
-//BOOST_CLASS_EXPORT(NES::ArrayValueType);

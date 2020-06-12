@@ -42,15 +42,6 @@ class BasicDataType : public DataType {
   private:
     BasicType type;
     uint32_t dataSize;
-
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
-            & BOOST_SERIALIZATION_NVP(type)
-            & BOOST_SERIALIZATION_NVP(dataSize);
-    }
 };
 }// namespace NES
 #endif//INCLUDE_BASICDATATYPE_HPP_
