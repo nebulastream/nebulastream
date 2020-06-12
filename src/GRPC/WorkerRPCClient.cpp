@@ -87,8 +87,7 @@ bool WorkerRPCClient::registerQuery(std::string address, std::string queryId, Op
 }
 
 bool WorkerRPCClient::unregisterQuery(std::string address, std::string queryId) {
-    NES_DEBUG(
-        "WorkerRPCClient::unregisterQuery address=" << address << " queryId=" << queryId);
+    NES_DEBUG("WorkerRPCClient::unregisterQuery address=" << address << " queryId=" << queryId);
 
     UnregisterQueryRequest request;
     request.set_queryid(queryId);

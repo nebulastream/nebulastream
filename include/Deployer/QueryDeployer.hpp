@@ -32,11 +32,10 @@ class QueryDeployer {
     ~QueryDeployer();
 
     /**
-     * @brief generates a deployment for a query
+     * @brief prepare for a query deployment
      * @param query a queryId of the query
-     * @return map containing the deployment
      */
-    std::vector<ExecutionNodePtr> generateDeployment(const string& queryId);
+    void prepareForDeployment(const string& queryId);
 
     /**
      * @brief helper method to get all sources in a serialized format from a specific node in the topology

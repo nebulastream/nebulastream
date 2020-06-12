@@ -62,8 +62,6 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
 NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator()");
     stopCoordinator(true);
-    NES_DEBUG("NesCoordinator::~NesCoordinator() clear map");
-    currentDeployments.clear();
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     streamCatalog->reset();
     queryCatalog->clearQueries();
@@ -218,18 +216,6 @@ string NesCoordinator::addQuery(const string queryString, const string strategy)
         return "";
     }
 
-    NES_DEBUG("NesCoordinator:addQuery: create Deployment");
-    std::vector<ExecutionNodePtr> executionNodesToDeploy = queryDeployer->generateDeployment(queryId);
-    NES_DEBUG("CoordinatorActor::addQuery" << executionNodesToDeploy.size() << " objects topology before"
-                                           << topologyManager->getNESTopologyPlanString());
-    stringstream ss;
-    for (auto executionNodes : executionNodesToDeploy) {
-        ss << "nodeID=" << executionNodes->getId();
-        ss << " nodeIP=" << executionNodes->getNesNode()->getIp();
-    }
-    NES_DEBUG("NesCoordinator:addQuery: deployments =" << ss.str());
-    currentDeployments[queryId] = executionNodesToDeploy;
-
     NES_DEBUG("NesCoordinator:addQuery: deploy query");
     bool successDeploy = deployQuery(queryId);
     if (successDeploy) {
@@ -295,9 +281,11 @@ bool NesCoordinator::unregisterQuery(const string queryId) {
 }
 
 bool NesCoordinator::deployQuery(std::string queryId) {
-    NES_DEBUG("NesCoordinator:deployQuery queryId=" << queryId);
+    NES_DEBUG("NesCoordinator::deployQuery queryId=" << queryId);
 
-    std::vector<ExecutionNodePtr> executionNodes = currentDeployments[queryId];
+    NES_DEBUG("NesCoordinator::addQuery: preparing for Deployment");
+    queryDeployer->prepareForDeployment(queryId);
+    std::vector<ExecutionNodePtr> executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
 
     for (ExecutionNodePtr executionNode : executionNodes) {
         NES_DEBUG("NesCoordinator::registerQueryInNodeEngine serialize id=" << executionNode->getId());
@@ -323,7 +311,7 @@ bool NesCoordinator::deployQuery(std::string queryId) {
 bool NesCoordinator::undeployQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator::undeployQuery queryId=" << queryId);
 
-    std::vector<ExecutionNodePtr> executionNodes = currentDeployments[queryId];
+    std::vector<ExecutionNodePtr> executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
         NES_DEBUG("NESCoordinator::undeployQuery query at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
@@ -339,8 +327,8 @@ bool NesCoordinator::undeployQuery(std::string queryId) {
 }
 
 bool NesCoordinator::startQuery(std::string queryId) {
-    NES_DEBUG("NesCoordinator::startQuery  queryId=" << queryId);
-    std::vector<ExecutionNodePtr> executionNodes = currentDeployments[queryId];
+    NES_DEBUG("NesCoordinator::startQuery queryId=" << queryId);
+    std::vector<ExecutionNodePtr> executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
         NES_DEBUG("NesCoordinator::startQuery at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
@@ -356,8 +344,8 @@ bool NesCoordinator::startQuery(std::string queryId) {
 }
 
 bool NesCoordinator::stopQuery(std::string queryId) {
-    NES_DEBUG("NESCoordinator::stopQuery queryId=" << queryId);
-    std::vector<ExecutionNodePtr> executionNodes = currentDeployments[queryId];
+    NES_DEBUG("NesCoordinator::stopQuery queryId=" << queryId);
+    std::vector<ExecutionNodePtr> executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
         NES_DEBUG("NESCoordinator::stopQuery at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);

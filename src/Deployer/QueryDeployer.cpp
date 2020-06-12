@@ -23,14 +23,14 @@ QueryDeployer::~QueryDeployer() {
     queryToPort.clear();
 }
 
-std::vector<ExecutionNodePtr> QueryDeployer::generateDeployment(const string& queryId) {
+void QueryDeployer::prepareForDeployment(const string& queryId) {
     if (queryCatalog->queryExists(queryId) && !queryCatalog->isQueryRunning(queryId)) {
-        NES_INFO("QueryDeployer:: generateDeployment for query " << queryId);
-
+        NES_INFO("QueryDeployer:: prepareForDeployment for query " << queryId);
         const auto executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
         //iterate through all vertices in the topology
         for (ExecutionNodePtr executionNode : executionNodes) {
             QueryPlanPtr querySubPlan = executionNode->getQuerySubPlan(queryId);
+            NES_DEBUG("QueryDeployer: Update port for system generated source operators for query " << queryId);
             //Update port information for the system generated source and sink operators
             const auto sourceOperators = querySubPlan->getSourceOperators();
             for (auto sourceOperator : sourceOperators) {
@@ -40,6 +40,7 @@ std::vector<ExecutionNodePtr> QueryDeployer::generateDeployment(const string& qu
                 }
             }
 
+            NES_DEBUG("QueryDeployer: Update port for system generated sink operators for query " << queryId);
             const auto sinkOperators = querySubPlan->getSinkOperators();
             for (auto sinkOperator : sinkOperators) {
                 if (sinkOperator->getId() == SYS_SINK_OPERATOR_ID) {
@@ -48,17 +49,13 @@ std::vector<ExecutionNodePtr> QueryDeployer::generateDeployment(const string& qu
                 }
             }
         }
-
         queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
-        NES_INFO("QueryDeployer::generateDeployment: prepareExecutableTransferObject successfully " << queryId);
-        return executionNodes;
+        NES_INFO("QueryDeployer::prepareForDeployment: prepareExecutableTransferObject successfully " << queryId);
     } else if (queryCatalog->getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
-        NES_WARNING("QueryDeployer::generateDeployment: Query is already running -> " << queryId);
+        NES_WARNING("QueryDeployer::prepareForDeployment: Query is already running -> " << queryId);
     } else {
-        NES_WARNING("QueryDeployer::generateDeployment: Query is not registered -> " << queryId);
+        NES_WARNING("QueryDeployer::prepareForDeployment: Query is not registered -> " << queryId);
     }
-
-    return {};
 }
 
 int QueryDeployer::assignPort(const string& queryId) {

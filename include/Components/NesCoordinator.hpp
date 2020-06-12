@@ -153,7 +153,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     std::shared_ptr<RestServer> restServer;
     std::shared_ptr<std::thread> restThread;
     std::atomic<bool> stopped;
-    std::map<std::string, std::vector<ExecutionNodePtr>> currentDeployments;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 
