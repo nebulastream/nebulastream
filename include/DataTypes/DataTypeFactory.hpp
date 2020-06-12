@@ -121,7 +121,6 @@ class DataTypeFactory{
     * @return DataTypePtr
     */
     static DataTypePtr createChar(uint64_t length);
-
 };
 
 }
