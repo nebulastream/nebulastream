@@ -1,15 +1,14 @@
-#include <gtest/gtest.h>
-#include <Optimizer/Utils/PathFinder.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <gtest/gtest.h>
 
 using namespace NES;
 
 class PathFinderTest : public testing::Test {
   public:
-
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         std::cout << "Setup PathFinderTest test class." << std::endl;
@@ -35,36 +34,28 @@ class PathFinderTest : public testing::Test {
 TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
+    PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-        "value", BasicType::UINT64);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(
-            0, "localhost", CPUCapacity::HIGH);
+        0, "localhost", CPUCapacity::HIGH);
     const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
     const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", CPUCapacity::MEDIUM);
 
     const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
-    streamCatalog->addLogicalStream("temperature",
-                                               schema);
+    streamCatalog->addLogicalStream("temperature", schema);
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
-    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf,
-                                                                    sensorNode1);
+    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
     assert(streamCatalog->addPhysicalStream("temperature", e1));
 
-    topologyManager->createNESTopologyLink(workerNode1, sinkNode,
-                                                            3, 1);
-    topologyManager->createNESTopologyLink(workerNode2, sinkNode,
-                                                            3, 1);
+    topologyManager->createNESTopologyLink(workerNode1, sinkNode, 3, 1);
+    topologyManager->createNESTopologyLink(workerNode2, sinkNode, 3, 1);
+    topologyManager->createNESTopologyLink(sensorNode1, workerNode1, 1, 3);
+    topologyManager->createNESTopologyLink(sensorNode1, workerNode2, 3, 1);
 
-    topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode1, 1, 3);
-    topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode2, 3, 1);
-
-    auto path = pathFinder.findPathWithMaxBandwidth(sensorNode1, sinkNode);
+    auto path = pathFinder->findPathWithMaxBandwidth(sensorNode1, sinkNode);
 
     EXPECT_FALSE(path.empty());
 
@@ -75,11 +66,10 @@ TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
         auto result = std::find_if(
             path.begin(), path.end(),
             [expectedNode](NESTopologyEntryPtr actualNode) {
-              return actualNode->getId() == expectedNode->getId();
+                return actualNode->getId() == expectedNode->getId();
             });
 
         EXPECT_TRUE(result != path.end());
-
     }
 }
 
@@ -87,10 +77,9 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
+    PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-        "value", BasicType::UINT64);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     const NESTopologyWorkerNodePtr sinkNode =
         topologyManager->createNESWorkerNode(
             0, "localhost", CPUCapacity::HIGH);
@@ -102,7 +91,7 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
     const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(5, "localhost", CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature",
-                                               schema);
+                                    schema);
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf,
@@ -110,19 +99,19 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
     assert(streamCatalog->addPhysicalStream("temperature", e1));
 
     topologyManager->createNESTopologyLink(workerNode1, sinkNode,
-                                                            3, 1);
+                                           3, 1);
     topologyManager->createNESTopologyLink(workerNode2, sinkNode,
-                                                            3, 1);
+                                           3, 1);
     topologyManager->createNESTopologyLink(workerNode3,
-                                                            workerNode1, 2, 1);
+                                           workerNode1, 2, 1);
     topologyManager->createNESTopologyLink(workerNode4,
-                                                            workerNode2, 1, 1);
+                                           workerNode2, 1, 1);
     topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode3, 2, 3);
+                                           workerNode3, 2, 3);
     topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode4, 3, 1);
+                                           workerNode4, 3, 1);
 
-    auto path = pathFinder.findPathWithMaxBandwidth(sensorNode1, sinkNode);
+    auto path = pathFinder->findPathWithMaxBandwidth(sensorNode1, sinkNode);
 
     EXPECT_FALSE(path.empty());
 
@@ -133,21 +122,19 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
         auto result = std::find_if(
             path.begin(), path.end(),
             [expectedNode](NESTopologyEntryPtr actualNode) {
-              return actualNode->getId() == expectedNode->getId();
+                return actualNode->getId() == expectedNode->getId();
             });
 
         EXPECT_TRUE(result != path.end());
-
     }
 }
 
 TEST_F(PathFinderTest, find_path_with_min_latency) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
+    PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-        "value", BasicType::UINT64);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     const NESTopologyWorkerNodePtr sinkNode =
         topologyManager->createNESWorkerNode(
             0, "localhost", CPUCapacity::HIGH);
@@ -157,7 +144,7 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
     const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature",
-                                               schema);
+                                    schema);
 
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
@@ -166,16 +153,16 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
     assert(streamCatalog->addPhysicalStream("temperature", e1));
 
     topologyManager->createNESTopologyLink(workerNode1, sinkNode,
-                                                            3, 3);
+                                           3, 3);
     topologyManager->createNESTopologyLink(workerNode2, sinkNode,
-                                                            3, 1);
+                                           3, 1);
 
     topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode1, 1, 1);
+                                           workerNode1, 1, 1);
     topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode2, 1, 1);
+                                           workerNode2, 1, 1);
 
-    auto path = pathFinder.findPathWithMinLinkLatency(sensorNode1, sinkNode);
+    auto path = pathFinder->findPathWithMinLinkLatency(sensorNode1, sinkNode);
 
     EXPECT_FALSE(path.empty());
 
@@ -186,22 +173,21 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
         auto result = std::find_if(
             path.begin(), path.end(),
             [expectedNode](NESTopologyEntryPtr actualNode) {
-              return actualNode->getId() == expectedNode->getId();
+                return actualNode->getId() == expectedNode->getId();
             });
 
         EXPECT_TRUE(result != path.end());
-
     }
 }
 
 TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
+    PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()
-        ->addField("id", BasicType::UINT32)
-        ->addField("value", BasicType::UINT64);
+                           ->addField("id", BasicType::UINT32)
+                           ->addField("value", BasicType::UINT64);
     const NESTopologyWorkerNodePtr sinkNode =
         topologyManager->createNESWorkerNode(
             0, "localhost", CPUCapacity::HIGH);
@@ -220,19 +206,19 @@ TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
     assert(streamCatalog->addPhysicalStream("temperature", e1));
 
     topologyManager->createNESTopologyLink(workerNode1, sinkNode,
-                                                            3, 1);
+                                           3, 1);
     topologyManager->createNESTopologyLink(workerNode2, sinkNode,
-                                                            3, 1);
+                                           3, 1);
     topologyManager->createNESTopologyLink(workerNode3,
-                                                            workerNode1, 3, 1);
+                                           workerNode1, 3, 1);
     topologyManager->createNESTopologyLink(workerNode4,
-                                                            workerNode2, 3, 2);
+                                           workerNode2, 3, 2);
     topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode3, 1, 1);
+                                           workerNode3, 1, 1);
     topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode4, 1, 1);
+                                           workerNode4, 1, 1);
 
-    auto path = pathFinder.findPathWithMinLinkLatency(sensorNode1, sinkNode);
+    auto path = pathFinder->findPathWithMinLinkLatency(sensorNode1, sinkNode);
 
     EXPECT_FALSE(path.empty());
 
@@ -243,22 +229,20 @@ TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
         auto result = std::find_if(
             path.begin(), path.end(),
             [expectedNode](NESTopologyEntryPtr actualNode) {
-              return actualNode->getId() == expectedNode->getId();
+                return actualNode->getId() == expectedNode->getId();
             });
 
         EXPECT_TRUE(result != path.end());
-
     }
 }
 
 TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
+    PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
     //prepare
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-        "value", BasicType::UINT64);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     const NESTopologyWorkerNodePtr sinkNode =
         topologyManager->createNESWorkerNode(
             0, "localhost", CPUCapacity::HIGH);
@@ -275,17 +259,17 @@ TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
     assert(streamCatalog->addPhysicalStream("temperature", e1));
 
     topologyManager->createNESTopologyLink(workerNode1, sinkNode,
-                                                            3, 1);
+                                           3, 1);
     topologyManager->createNESTopologyLink(workerNode2, sinkNode,
-                                                            3, 1);
+                                           3, 1);
 
     topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode1, 1, 3);
+                                           workerNode1, 1, 3);
     topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode2, 1, 3);
+                                           workerNode2, 1, 3);
 
     //execute
-    auto paths = pathFinder.findAllPathsBetween(sensorNode1, sinkNode);
+    auto paths = pathFinder->findAllPathsBetween(sensorNode1, sinkNode);
 
     //assert
     EXPECT_TRUE(paths.size() == 2);
@@ -294,11 +278,10 @@ TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
 TEST_F(PathFinderTest, find_common_path_between_source_destination) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
+    PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
     //prepare
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-        "value", BasicType::UINT64);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     const NESTopologyWorkerNodePtr sinkNode =
         topologyManager->createNESWorkerNode(
             0, "localhost", CPUCapacity::HIGH);
@@ -345,68 +328,40 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
                                                                     sensorNode4);
     assert(streamCatalog->addPhysicalStream("humidity2", e4));
 
-    topologyManager->createNESTopologyLink(workerNode1, sinkNode,
-                                                            3, 1);
-    topologyManager->createNESTopologyLink(workerNode2, sinkNode,
-                                                            3, 1);
-    topologyManager->createNESTopologyLink(workerNode3, sinkNode,
-                                                            3, 1);
-    topologyManager->createNESTopologyLink(workerNode4,
-                                                            workerNode1, 2, 2);
-    topologyManager->createNESTopologyLink(workerNode4,
-                                                            workerNode2, 2, 2);
-    topologyManager->createNESTopologyLink(workerNode5,
-                                                            workerNode2, 2, 2);
-    topologyManager->createNESTopologyLink(workerNode5,
-                                                            workerNode3, 2, 2);
-    topologyManager->createNESTopologyLink(workerNode6,
-                                                            workerNode4, 2, 2);
-    topologyManager->createNESTopologyLink(workerNode7,
-                                                            workerNode5, 2, 2);
+    topologyManager->createNESTopologyLink(workerNode1, sinkNode, 3, 1);
+    topologyManager->createNESTopologyLink(workerNode2, sinkNode, 3, 1);
+    topologyManager->createNESTopologyLink(workerNode3, sinkNode, 3, 1);
+    topologyManager->createNESTopologyLink(workerNode4, workerNode1, 2, 2);
+    topologyManager->createNESTopologyLink(workerNode4, workerNode2, 2, 2);
+    topologyManager->createNESTopologyLink(workerNode5, workerNode2, 2, 2);
+    topologyManager->createNESTopologyLink(workerNode5, workerNode3, 2, 2);
+    topologyManager->createNESTopologyLink(workerNode6, workerNode4, 2, 2);
+    topologyManager->createNESTopologyLink(workerNode7, workerNode5, 2, 2);
 
-    topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode6, 1, 3);
-    topologyManager->createNESTopologyLink(sensorNode2,
-                                                            workerNode6, 1, 3);
-    topologyManager->createNESTopologyLink(sensorNode3,
-                                                            workerNode7, 1, 3);
-    topologyManager->createNESTopologyLink(sensorNode4,
-                                                            workerNode7, 1, 3);
+    topologyManager->createNESTopologyLink(sensorNode1, workerNode6, 1, 3);
+    topologyManager->createNESTopologyLink(sensorNode2, workerNode6, 1, 3);
+    topologyManager->createNESTopologyLink(sensorNode3, workerNode7, 1, 3);
+    topologyManager->createNESTopologyLink(sensorNode4, workerNode7, 1, 3);
 
+    const vector<NESTopologyEntryPtr>& pathFromSensor1 = std::vector<NESTopologyEntryPtr>{sensorNode1, workerNode6, workerNode4, workerNode2, sinkNode};
+    const vector<NESTopologyEntryPtr>& pathFromSensor2 = std::vector<NESTopologyEntryPtr>{sensorNode2, workerNode6, workerNode4, workerNode2, sinkNode};
+    const vector<NESTopologyEntryPtr>& pathFromSensor3 = std::vector<NESTopologyEntryPtr>{sensorNode3, workerNode7, workerNode5, workerNode2, sinkNode};
+    const vector<NESTopologyEntryPtr>& PathFromSensor4 = std::vector<NESTopologyEntryPtr>{sensorNode4, workerNode7, workerNode5, workerNode2, sinkNode};
     std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> expectedMap =
-        {{sensorNode1, std::vector<NESTopologyEntryPtr>{sensorNode1,
-                                                        workerNode6, workerNode4, workerNode2, sinkNode}}, {sensorNode2,
-                                                                                                            std::vector<
-                                                                                                                NESTopologyEntryPtr>{
-                                                                                                                sensorNode2,
-                                                                                                                workerNode6,
-                                                                                                                workerNode4,
-                                                                                                                workerNode2,
-                                                                                                                sinkNode}},
-         {sensorNode3,
-          std::vector<NESTopologyEntryPtr>{sensorNode3, workerNode7,
-                                           workerNode5, workerNode2, sinkNode}}, {sensorNode4,
-                                                                                  std::vector<NESTopologyEntryPtr>{
-                                                                                      sensorNode4, workerNode7,
-                                                                                      workerNode5, workerNode2,
-                                                                                      sinkNode}}};
+        {{sensorNode1, pathFromSensor1}, {sensorNode2, pathFromSensor2}, {sensorNode3, pathFromSensor3}, {sensorNode4, PathFromSensor4}};
 
     // execute
-    auto actualMap = pathFinder.findUniquePathBetween(
-        std::vector<NESTopologyEntryPtr>{sensorNode1, sensorNode2, sensorNode3,
-                                         sensorNode4},
-        sinkNode);
+    const vector<NESTopologyEntryPtr>& sources = std::vector<NESTopologyEntryPtr>{sensorNode1, sensorNode2, sensorNode3, sensorNode4};
+    auto actualMap = pathFinder->findUniquePathBetween(sources, sinkNode);
 
     // assert
     EXPECT_TRUE(actualMap.size() == 4);
     for (auto pair : actualMap) {
         vector<NESTopologyEntryPtr>& expectedPath = expectedMap[pair.first];
         for (NESTopologyEntryPtr expectedNode : expectedPath) {
-            auto result = std::find_if(
-                pair.second.begin(), pair.second.end(),
-                [expectedNode](NESTopologyEntryPtr actualNode) {
-                  return actualNode->getId() == expectedNode->getId();
-                });
+            auto result = std::find_if(pair.second.begin(), pair.second.end(), [expectedNode](NESTopologyEntryPtr actualNode) {
+                return actualNode->getId() == expectedNode->getId();
+            });
 
             EXPECT_TRUE(result != pair.second.end());
         }
@@ -414,78 +369,61 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
 }
 
 TEST_F(PathFinderTest, find_path_from_non_linked_source) {
+
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
-
+    PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
     try {
-        SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-            "value", BasicType::UINT64);
-        const NESTopologyWorkerNodePtr sinkNode =
-            topologyManager->createNESWorkerNode(
-                0, "localhost", CPUCapacity::HIGH);
+        SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+        const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", CPUCapacity::HIGH);
 
-        const NESTopologySensorNodePtr sensorNode1 =
-            topologyManager->createNESSensorNode(
-                1, "localhost", CPUCapacity::HIGH);
+        const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
         sensorNode1->setPhysicalStreamName("temperature1");
-        streamCatalog->addLogicalStream(
-            "temperature", schema);
+        streamCatalog->addLogicalStream("temperature", schema);
 
         PhysicalStreamConfig conf;
         conf.physicalStreamName = "temperature1";
-        StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(
-            conf, sensorNode1);
+        StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
         assert(streamCatalog->addPhysicalStream("temperature", e1));
 
-        const auto& pathList = pathFinder.findPathBetween(sensorNode1, sinkNode);
+        const auto& pathList = pathFinder->findPathBetween(sensorNode1, sinkNode);
 
         FAIL();
     } catch (...) {
         SUCCEED();
     }
-
 }
 
 TEST_F(PathFinderTest, find_path_between_non_linked_source_and_destination) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
+    PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-        "value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr sinkNode =
-        topologyManager->createNESWorkerNode(
-            0, "localhost", CPUCapacity::HIGH);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", CPUCapacity::HIGH);
     const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::HIGH);
-
     const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(2, "localhost", CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature", schema);
 
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
-    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf,
-                                                                    sensorNode1);
+    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
     assert(streamCatalog->addPhysicalStream("temperature", e1));
 
-    topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode1, 1, 3);
+    topologyManager->createNESTopologyLink(sensorNode1, workerNode1, 1, 3);
 
-    const auto& pathList = pathFinder.findPathBetween(sensorNode1, sinkNode);
+    const auto& pathList = pathFinder->findPathBetween(sensorNode1, sinkNode);
     EXPECT_TRUE(pathList.empty());
 }
 
 TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    PathFinder pathFinder(topologyManager->getNESTopologyPlan());
+    PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-        "value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr sinkNode =
-        topologyManager->createNESWorkerNode(
-            0, "localhost", CPUCapacity::HIGH);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", CPUCapacity::HIGH);
     const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::HIGH);
     const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", CPUCapacity::HIGH);
 
@@ -494,29 +432,22 @@ TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
     streamCatalog->addLogicalStream("temperature", schema);
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
-    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf,
-                                                                    sensorNode1);
+    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
     assert(streamCatalog->addPhysicalStream("temperature", e1));
 
-    topologyManager->createNESTopologyLink(workerNode2, sinkNode,
-                                                            1, 3);
-    topologyManager->createNESTopologyLink(workerNode1,
-                                                            workerNode2, 1, 3);
-    topologyManager->createNESTopologyLink(sensorNode1,
-                                                            workerNode1, 1, 3);
+    topologyManager->createNESTopologyLink(workerNode2, sinkNode, 1, 3);
+    topologyManager->createNESTopologyLink(workerNode1, workerNode2, 1, 3);
+    topologyManager->createNESTopologyLink(sensorNode1, workerNode1, 1, 3);
 
-    const auto& actualPath = pathFinder.findPathBetween(sensorNode1, sinkNode);
+    const auto& actualPath = pathFinder->findPathBetween(sensorNode1, sinkNode);
     EXPECT_TRUE(!actualPath.empty());
 
-    std::vector<NESTopologyEntryPtr> expectedPath = {sensorNode1, workerNode1,
-                                                     workerNode2, sinkNode};
+    std::vector<NESTopologyEntryPtr> expectedPath = {sensorNode1, workerNode1, workerNode2, sinkNode};
 
     for (NESTopologyEntryPtr expectedNode : expectedPath) {
-        auto result = std::find_if(
-            actualPath.begin(), actualPath.end(),
-            [expectedNode](NESTopologyEntryPtr actualNode) {
-              return actualNode->getId() == expectedNode->getId();
-            });
+        auto result = std::find_if(actualPath.begin(), actualPath.end(), [expectedNode](NESTopologyEntryPtr actualNode) {
+            return actualNode->getId() == expectedNode->getId();
+        });
 
         EXPECT_TRUE(result != actualPath.end());
     }
