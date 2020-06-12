@@ -7,7 +7,6 @@
 #include <map>
 #include <vector>
 
-using namespace std;
 namespace NES {
 
 class TopologyManager;
@@ -45,7 +44,7 @@ class QueryDeployer {
      * @param executionNode the execution node
      * @param execPlan the execution plan
      */
-    vector<DataSourcePtr> getSources(const string& queryId, const ExecutionNodePtr executionNode);
+    std::vector<DataSourcePtr> getSources(const std::string& queryId, const ExecutionNodePtr executionNode);
 
     /**
      * @brief helper method to get all sinks in a serialized format from a specific node in the topology
@@ -53,7 +52,7 @@ class QueryDeployer {
      * @param executionNode execution node
      * @return DataSinkPtr
      */
-    vector<DataSinkPtr> getSinks(const string& queryId, const ExecutionNodePtr executionNode);
+    std::vector<DataSinkPtr> getSinks(const std::string& queryId, const ExecutionNodePtr executionNode);
 
     /**
      * @brief find the sink operator starting from the child operator.

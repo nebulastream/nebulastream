@@ -1,7 +1,6 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Util/DumpContext.hpp>
-#include <Nodes/Util/DumpHandler.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <set>
@@ -68,18 +67,22 @@ void QueryPlan::appendPreExistingOperator(OperatorNodePtr operatorNode) {
 
 void QueryPlan::prependPreExistingOperator(OperatorNodePtr operatorNode) {
     auto leafOperators = getLeafOperators();
-    for (auto leafOperator : leafOperators) {
-        leafOperator->addChild(operatorNode);
+    if (leafOperators.empty()) {
+        NES_DEBUG("QueryPlan: Found empty query plan. Adding operator as root.");
+        rootOperators.push_back(operatorNode);
+    } else {
+        NES_DEBUG("QueryPlan: Adding operator as child to all the leaf nodes.");
+        for (auto leafOperator : leafOperators) {
+            leafOperator->addChild(operatorNode);
+        }
     }
 }
 
 std::string QueryPlan::toString() {
     std::stringstream ss;
-    DumpContextPtr dumpContext = DumpContext::create();
-
-    // FIXME: I am not sure what this will result in or if this is correct
+    auto dumpHandler = ConsoleDumpHandler::create();
     for (auto rootOperator : rootOperators) {
-        dumpContext->dump(rootOperator, ss);
+        dumpHandler->dump(rootOperator, ss);
     }
     return ss.str();
 }

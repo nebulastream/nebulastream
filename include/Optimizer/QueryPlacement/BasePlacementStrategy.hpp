@@ -96,10 +96,28 @@ class BasePlacementStrategy {
     virtual GlobalExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) = 0;
 
   private:
+
+    /**
+     * Create a new system sink operator
+     * @param nesNode
+     * @return A logical system generated sink operator
+     */
     OperatorNodePtr createSystemSinkOperator(NESTopologyEntryPtr nesNode);
+
+    /**
+     * Create a new system source operator
+     * @param nesNode
+     * @param schema
+     * @return A logical system generated source operator
+     */
     OperatorNodePtr createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
 
+    void addSystemGeneratedSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode);
+
+    void addSystemGeneratedSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr currentNesNode, NESTopologyEntryPtr childNesNode);
+
   protected:
+
     /**
      * @brief This method will add the system generated operators where ever necessary along the selected path for operator placement.
      *
@@ -107,7 +125,6 @@ class BasePlacementStrategy {
      * @param path vector of nodes where operators could be placed
      */
     void addSystemGeneratedOperators(std::string queryId, std::vector<NESTopologyEntryPtr> path);
-
     NESTopologyPlanPtr nesTopologyPlan;
     GlobalExecutionPlanPtr executionPlan;
     PathFinderPtr pathFinder;

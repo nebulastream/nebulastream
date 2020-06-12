@@ -51,7 +51,7 @@ class OperatorNode : public Node {
     void setId(u_int64_t id);
 
     /**
-     * Create a copy of the
+     * Create a shallow copy of the operator
      * @return
      */
     virtual OperatorNodePtr copy() = 0;
