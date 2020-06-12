@@ -1,0 +1,46 @@
+#include <DataTypes/DataTypeFactory.hpp>
+#include <DataTypes/Float.hpp>
+#include <DataTypes/Integer.hpp>
+#include <algorithm>
+
+namespace NES {
+
+bool Float::isFloat() {
+    return true;
+}
+Float::Float(int8_t bits, double lowerBound, double upperBound) : Numeric(bits),
+                                                                  lowerBound(lowerBound),
+                                                                  upperBound(upperBound) {
+}
+
+bool Float::isEquals(DataTypePtr otherDataType) {
+    if (otherDataType->isFloat()) {
+        auto otherFloat = as<Float>(otherDataType);
+        return bits == otherFloat->bits && lowerBound == otherFloat->lowerBound && upperBound == otherFloat->upperBound;
+    }
+    return false;
+}
+double Float::getLowerBound() const {
+    return lowerBound;
+}
+double Float::getUpperBound() const {
+    return upperBound;
+}
+DataTypePtr Float::join(DataTypePtr otherDataType) {
+    if (otherDataType->isFloat()) {
+        auto otherFloat = as<Float>(otherDataType);
+        auto newBits = std::max(bits, otherFloat->getBits());
+        auto newUpperBound = std::min(upperBound, otherFloat->getUpperBound());
+        auto newLowerBound = std::max(lowerBound, otherFloat->getLowerBound());
+        return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
+    } else if (otherDataType->isInteger()) {
+        auto otherInteger = as<Integer>(otherDataType);
+        auto newBits = std::max(bits, otherInteger->getBits());
+        auto newUpperBound = std::min(upperBound, (double) otherInteger->getUpperBound());
+        auto newLowerBound = std::max(lowerBound, (double) otherInteger->getLowerBound());
+        return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
+    }
+    return DataTypeFactory::createUndefined();
+}
+
+}// namespace NES
