@@ -34,14 +34,6 @@ class GlobalExecutionPlan {
     bool addExecutionNodeAsParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode);
 
     /**
-     * Add execution node as root node for the dag and as parent of another execution node. If the node already exists then simply update the node.
-     * @param childId: id of the child node
-     * @param parentExecutionNode: the parent execution node
-     * @return true if operation succeeds
-     */
-    bool addExecutionNodeAsRootAndParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode);
-
-    /**
      * Add execution node without any connectivity
      */
     bool addExecutionNode(ExecutionNodePtr executionNode);
@@ -60,6 +52,13 @@ class GlobalExecutionPlan {
      */
     //TODO: what should we do about its children? Also, a good location to release the occupied resources.
     bool removeExecutionNode(uint64_t id);
+
+    /**
+     * Remove all the query sub plans for the input query
+     * @param queryId : the query id used for removing the input query
+     * @return true if successful else false
+     */
+    bool removeQuerySubPlans(std::string queryId);
 
     /**
      * Find is execution node exists.

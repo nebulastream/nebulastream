@@ -38,23 +38,6 @@ bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, Execution
     return false;
 }
 
-bool GlobalExecutionPlan::addExecutionNodeAsRootAndParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode) {
-
-    if (addExecutionNodeAsParentTo(childId, parentExecutionNode)) {
-        NES_DEBUG("GlobalExecutionPlan: Added Execution node as root node");
-        auto found = std::find(rootNodes.begin(), rootNodes.end(), parentExecutionNode);
-        if (found == rootNodes.end()) {
-            rootNodes.push_back(parentExecutionNode);
-            NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << parentExecutionNode->getId());
-            nodeIdIndex[parentExecutionNode->getId()] = parentExecutionNode;
-        } else {
-            NES_WARNING("GlobalExecutionPlan: Execution node already present in the root node list");
-        }
-        return true;
-    }
-    return false;
-}
-
 bool GlobalExecutionPlan::addExecutionNodeAsRoot(ExecutionNodePtr executionNode) {
     NES_DEBUG("GlobalExecutionPlan: Added Execution node as root node");
     auto found = std::find(rootNodes.begin(), rootNodes.end(), executionNode);
@@ -80,6 +63,28 @@ bool GlobalExecutionPlan::removeExecutionNode(uint64_t id) {
         return nodeIdIndex.erase(id) == 1;
     }
     return false;
+}
+
+bool GlobalExecutionPlan::removeQuerySubPlans(std::string queryId) {
+    auto itr = queryIdIndex.find(queryId);
+    if (itr == queryIdIndex.end()) {
+        NES_WARNING("GlobalExecutionPlan: No query with id " << queryId << " exists in the system");
+        return false;
+    }
+
+    std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[queryId];
+    for (auto executionNode : executionNodes) {
+
+        uint64_t executionNodeId = executionNode->getId();
+        if (!executionNode->removeQuerySubPlan(queryId)) {
+            NES_ERROR("GlobalExecutionPlan: Unable to remove query sub plan with id " << queryId << " from execution node with id " << executionNodeId);
+            return false;
+        }
+        if (executionNode->getAllQuerySubPlans().empty()) {
+            removeExecutionNode(executionNodeId);
+        }
+    }
+    return true;
 }
 
 std::vector<ExecutionNodePtr> GlobalExecutionPlan::getExecutionNodesByQueryId(std::string queryId) {
