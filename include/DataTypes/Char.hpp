@@ -4,19 +4,40 @@
 #include <DataTypes/DataType.hpp>
 namespace NES {
 
+/**
+ * @brief Char(n), where n is a positive integer.
+ * Char can store strings up to n characters (not bytes) in length.
+ * If the string to be stored is shorter than the declared length, values of type Char will be space-padded.
+ */
 class Char : public DataType {
   public:
+    /**
+     * @brief Constructs a new Char(n)
+     * @param length length of the char
+     */
     explicit Char(uint64_t length);
+
+    /**
+    * @brief Checks if this data type is Char.
+    */
     bool isChar() override;
-    uint64_t getLength() const;
+
+    /**
+    * @brief Checks if two data types are equal.
+    * @param otherDataType
+    * @return
+    */
     bool isEquals(DataTypePtr otherDataType) override;
+
+    /**
+    * @brief Returns the length of the char.
+    */
+    [[nodiscard]] uint64_t getLength() const;
 
   private:
     const uint64_t length;
-
 };
 
 }// namespace NES
-
 
 #endif//NES_INCLUDE_DATATYPES_CHAR_HPP_

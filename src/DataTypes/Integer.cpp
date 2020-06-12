@@ -20,13 +20,16 @@ bool Integer::isEquals(DataTypePtr otherDataType) {
 }
 
 DataTypePtr Integer::join(DataTypePtr otherDataType) {
+    // An integer can be joined with integer types and float types.
     if (otherDataType->isFloat()) {
+        // The other type is an float, thus we return a large enough float as a jointed type.
         auto otherFloat = as<Float>(otherDataType);
         auto newBits = std::max(bits, otherFloat->getBits());
         auto newUpperBound = std::min((double) upperBound, otherFloat->getUpperBound());
         auto newLowerBound = std::max((double) lowerBound, otherFloat->getLowerBound());
         return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
     } else if (otherDataType->isInteger()) {
+        // The other type is an Integer, thus we return a large enough integer.
         auto otherInteger = as<Integer>(otherDataType);
         auto newBits = std::max(bits, otherInteger->getBits());
         auto newUpperBound = std::min(upperBound, otherInteger->getUpperBound());

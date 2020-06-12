@@ -3,10 +3,22 @@
 #include <DataTypes/DataType.hpp>
 namespace NES {
 
+/**
+ * @brief The Numeric type represents integers and floats.
+ */
 class Numeric : public DataType {
   public:
     explicit Numeric(int8_t bits);
+
+    /**
+    * @brief Checks if this data type is Numeric.
+    */
     bool isNumeric() override;
+
+    /**
+     * @brief Gets the bit size of this type.
+     * @return
+     */
     [[nodiscard]] int8_t getBits() const;
 
   protected:
