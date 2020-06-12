@@ -13,7 +13,6 @@ namespace NES {
  */
 class BaseController {
   public:
-
     /**
      * @brief Handle the get request from the user
      * @param path : the resource path the user wanted to get

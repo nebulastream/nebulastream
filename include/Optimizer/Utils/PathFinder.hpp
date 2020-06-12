@@ -92,7 +92,6 @@ class PathFinder {
     static PathFinderPtr create(NESTopologyPlanPtr nesTopologyPlan);
 
   private:
-
     PathFinder(NESTopologyPlanPtr nesTopologyPlan);
 
     /**

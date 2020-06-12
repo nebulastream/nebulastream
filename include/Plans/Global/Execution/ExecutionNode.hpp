@@ -27,7 +27,6 @@ typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 class ExecutionNode : public Node {
 
   public:
-
     static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode, std::string subPlanId, OperatorNodePtr operatorNode);
     static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode);
 
@@ -140,7 +139,6 @@ class ExecutionNode : public Node {
      * @param querySubPlan : the input query sub plan
      */
     void freeOccupiedResources(QueryPlanPtr querySubPlan);
-
 };
 }// namespace NES
 

@@ -309,7 +309,7 @@ std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween
 }
 
 std::vector<NESTopologyEntryPtr> PathFinder::convertLinkPathIntoNodePath(const NESTopologyEntryPtr source,
-                                                                    const std::vector<NESTopologyLinkPtr>& selectedPath) {
+                                                                         const std::vector<NESTopologyLinkPtr>& selectedPath) {
 
     NES_INFO("PathFinder: convert a path with ege information to a path containing vertex information");
 

@@ -20,7 +20,7 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
     const auto rootOperators = queryPlanPtr->getRootOperators();
     std::vector<FilterLogicalOperatorNodePtr> filterOperators;
 
-    for(auto rootOperator: rootOperators){
+    for (auto rootOperator : rootOperators) {
         //FIXME: this will result in adding same filter operator twice in the vector
         // remove the duplicate filters from the vector
         auto filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
