@@ -1,5 +1,6 @@
 
 #include <DataTypes/Char.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 
 namespace NES {
 
@@ -18,6 +19,10 @@ bool Char::isEquals(DataTypePtr otherDataType) {
         return length == otherChar->getLength();
     }
     return false;
+}
+
+DataTypePtr Char::join(DataTypePtr otherDataType) {
+    return DataTypeFactory::createUndefined();
 }
 
 }// namespace NES
