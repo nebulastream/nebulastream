@@ -12,12 +12,13 @@ class Numeric : public DataType {
 
     /**
     * @brief Checks if this data type is Numeric.
+    * @return bool
     */
     bool isNumeric() override;
 
     /**
      * @brief Gets the bit size of this type.
-     * @return
+     * @return int8_t
      */
     [[nodiscard]] int8_t getBits() const;
 
