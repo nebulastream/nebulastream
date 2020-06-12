@@ -26,7 +26,6 @@ class BottomUpStrategy : public BasePlacementStrategy {
     }
 
   private:
-
     explicit BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan);
 
     /**

@@ -45,10 +45,10 @@ class NESOptimizer {
      * @return Updated Global Execution plan
      */
     GlobalExecutionPlanPtr updateExecutionGraph(std::string strategy,
-                                                 QueryPlanPtr queryPlan,
-                                                 NESTopologyPlanPtr nesTopologyPlan,
-                                                 StreamCatalogPtr streamCatalog,
-                                                 GlobalExecutionPlanPtr globalExecutionPlan);
+                                                QueryPlanPtr queryPlan,
+                                                NESTopologyPlanPtr nesTopologyPlan,
+                                                StreamCatalogPtr streamCatalog,
+                                                GlobalExecutionPlanPtr globalExecutionPlan);
 
   private:
     TypeInferencePhasePtr typeInferencePhasePtr;

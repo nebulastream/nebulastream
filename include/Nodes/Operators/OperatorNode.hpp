@@ -54,7 +54,7 @@ class OperatorNode : public Node {
      * Create a copy of the
      * @return
      */
-    virtual OperatorNodePtr copy()=0;
+    virtual OperatorNodePtr copy() = 0;
 
   protected:
     /**

@@ -71,26 +71,26 @@ class QueryCatalog {
      */
     void markQueryAs(string queryId, QueryStatus queryStatus);
 
-//    /**
-//     * @brief method to add which nodes participate in the query
-//     * @param queryId
-//     * @param nodes
-//     */
-//    void addExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes);
-//
-//    /**
-//     * @brief method to remove nodes which are no longer participate in the query
-//     * @param queryId
-//     * @param nodes
-//    */
-//    void removeExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes);
-//
-//    /**
-//    * @brief method to get nodes which participate in a query
-//    * @param queryId
-//    * @return  nodes
-//   */
-//    std::vector<NESTopologyEntryPtr> getExecutionNodesToQuery(string queryId);
+    //    /**
+    //     * @brief method to add which nodes participate in the query
+    //     * @param queryId
+    //     * @param nodes
+    //     */
+    //    void addExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes);
+    //
+    //    /**
+    //     * @brief method to remove nodes which are no longer participate in the query
+    //     * @param queryId
+    //     * @param nodes
+    //    */
+    //    void removeExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes);
+    //
+    //    /**
+    //    * @brief method to get nodes which participate in a query
+    //    * @param queryId
+    //    * @return  nodes
+    //   */
+    //    std::vector<NESTopologyEntryPtr> getExecutionNodesToQuery(string queryId);
 
     /**
      * @brief method to test if a query is started
@@ -153,7 +153,6 @@ class QueryCatalog {
     std::map<std::string, std::string> getAllRegisteredQueries();
 
   private:
-
     TopologyManagerPtr topologyManager;
     StreamCatalogPtr streamCatalog;
     GlobalExecutionPlanPtr globalExecutionPlan;

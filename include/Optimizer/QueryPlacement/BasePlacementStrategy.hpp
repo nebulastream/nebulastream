@@ -96,7 +96,6 @@ class BasePlacementStrategy {
     virtual GlobalExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) = 0;
 
   private:
-
     OperatorNodePtr createSystemSinkOperator(NESTopologyEntryPtr nesNode);
     OperatorNodePtr createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
 
