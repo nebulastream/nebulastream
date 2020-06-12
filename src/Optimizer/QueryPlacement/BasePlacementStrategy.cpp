@@ -4,6 +4,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
@@ -49,18 +50,19 @@ std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::s
 
 BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan)
     : nesTopologyPlan(nesTopologyPlan), executionPlan(executionPlan) {
-    this->pathFinder = PathFinder::create(nesTopologyPlan);
+    pathFinder = PathFinder::create(nesTopologyPlan);
+    typeInferencePhase = TypeInferencePhase::create();
 }
 
 OperatorNodePtr BasePlacementStrategy::createSystemSinkOperator(NESTopologyEntryPtr nesNode) {
     auto sinkOperator = createSinkLogicalOperatorNode(ZmqSinkDescriptor::create(nesNode->getIp(), zmqDefaultPort));
-    sinkOperator->setId(UINT64_MAX - 1);// all sink operators will have MAX64-1 as Id
+    sinkOperator->setId(SYS_SINK_OPERATOR_ID);// all sink operators will have MAX64-1 as Id
     return sinkOperator;
 }
 
 OperatorNodePtr BasePlacementStrategy::createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema) {
     auto sourceOperator = createSourceLogicalOperatorNode(ZmqSourceDescriptor::create(schema, nesNode->getIp(), zmqDefaultPort));
-    sourceOperator->setId(UINT64_MAX - 2);// all source operators will have MAX64-2 as Id
+    sourceOperator->setId(SYS_SOURCE_OPERATOR_ID);// all source operators will have MAX64-2 as Id
     return sourceOperator;
 }
 
@@ -117,6 +119,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
             QueryPlanPtr querySubPlan = QueryPlan::create();
             querySubPlan->appendPreExistingOperator(sysSourceOperator);
             querySubPlan->appendPreExistingOperator(sysSinkOperator);
+            typeInferencePhase->transform(querySubPlan);
 
             if (!executionNode->createNewQuerySubPlan(queryId, querySubPlan)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated query sub plan.");
@@ -165,11 +168,11 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
             QueryPlanPtr querySubPlan = QueryPlan::create();
             querySubPlan->appendPreExistingOperator(sysSourceOperator);
             querySubPlan->appendPreExistingOperator(sysSinkOperator);
+            typeInferencePhase->transform(querySubPlan);
 
             if (!executionNode->createNewQuerySubPlan(queryId, querySubPlan)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated query sub plan.");
             }
-
             if (!executionPlan->addExecutionNodeAsParentTo(childExecutionNode->getId(), executionNode)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add execution node with forward operators");
             }
@@ -187,6 +190,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 const OperatorNodePtr sysSinkOperator = createSystemSinkOperator(parentNesNode);
 
                 querySubPlan->appendPreExistingOperator(sysSinkOperator);
+                typeInferencePhase->transform(querySubPlan);
                 if (!executionNode->updateQuerySubPlan(queryId, querySubPlan)) {
                     NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated sink operator.");
                 }
@@ -219,18 +223,21 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 const OperatorNodePtr sysSourceOperator = createSystemSourceOperator(currentNode, sourceSchema);
 
                 querySubPlan->prependPreExistingOperator(sysSourceOperator);
+                typeInferencePhase->transform(querySubPlan);
                 if (!executionNode->updateQuerySubPlan(queryId, querySubPlan)) {
                     NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated source operator.");
                 }
             }
         }
 
-        if(previousNode){
+        if (previousNode) {
             NES_DEBUG("BasePlacementStrategy: adding link between previous and current execution node");
             if (!executionPlan->addExecutionNodeAsParentTo(previousNode->getId(), executionNode)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add link between previous and current executionNode");
             }
         }
+        NES_DEBUG("BasePlacementStrategy: scheduling execution node");
+        executionPlan->scheduleExecutionNode(executionNode);
         previousNode = (*pathItr);
         ++pathItr;
     }

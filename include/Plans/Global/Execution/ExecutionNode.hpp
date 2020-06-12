@@ -82,18 +82,37 @@ class ExecutionNode : public Node {
      * Get execution node id
      * @return id of the execution node
      */
-    uint64_t getId() const;
+    uint64_t getId();
 
     /**
      * Get the nes node for the execution node.
      * @return the nes node
      */
-    const NESTopologyEntryPtr getNesNode() const;
+    NESTopologyEntryPtr getNesNode();
+
+    /**
+     * Create a new entry for query sub plan
+     * @param subPlanId : the query ID
+     * @param querySubPlan : the query sub plan
+     * @return true if operation is successful
+     */
+    bool createNewQuerySubPlan(std::string subPlanId, QueryPlanPtr querySubPlan);
+
+    /**
+     * Update an existing query sub plan
+     * @param subPlanId : query id
+     * @param querySubPlan : the new query sub plan
+     * @return true if successful
+     */
+    bool updateQuerySubPlan(std::string subPlanId, QueryPlanPtr querySubPlan);
+
+    /**
+     * Get the map of all query sub plans
+     * @return
+     */
+    std::map<std::string, QueryPlanPtr> getAllQuerySubPlans();
 
     const std::string toString() const override;
-
-    bool createNewQuerySubPlan(std::string subPlanId, QueryPlanPtr querySubPlan);
-    bool updateQuerySubPlan(std::string subPlanId, QueryPlanPtr querySubPlan);
 
   private:
     explicit ExecutionNode(NESTopologyEntryPtr nesNode, std::string subPlanId, OperatorNodePtr operatorNode);

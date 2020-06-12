@@ -44,7 +44,7 @@ class GlobalExecutionPlan {
     /**
      * Add execution node without any connectivity
      */
-    bool addExecutionNode(ExecutionNodePtr parentExecutionNode);
+    bool addExecutionNode(ExecutionNodePtr executionNode);
 
     /**
      * Add execution node as root of the execution graph
@@ -100,8 +100,20 @@ class GlobalExecutionPlan {
      */
     std::string getAsString();
 
+    /**
+     * Add execution node to the collection of execution nodes to schedule
+     * @param executionNode : execution node to schedule
+     */
+    void scheduleExecutionNode(ExecutionNodePtr executionNode);
+
   private:
-    explicit GlobalExecutionPlan()=default;
+    explicit GlobalExecutionPlan() = default;
+
+    /**
+     * Map the input execution node with different sub query plans it has
+     * @param executionNode : the input execution node
+     */
+    void mapExecutionNodeToQueryId(ExecutionNodePtr executionNode);
 
     /**
      * Index based on nodeId for faster access to the execution nodes

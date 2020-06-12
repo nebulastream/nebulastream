@@ -64,7 +64,6 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
 
         LogicalOperatorNodePtr operatorToPlace = sourceOperator;
         auto pathItr = path.begin();
-        NESTopologyEntryPtr previousCandidateNesNode = nullptr;
         NESTopologyEntryPtr candidateNesNode = (*pathItr);
         while (operatorToPlace) {
 
@@ -85,7 +84,6 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                         NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : " << candidateNesNode->getId());
                         break;
                     }
-                    previousCandidateNesNode = (*pathItr);
                 }
             }
 
@@ -139,7 +137,6 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                 NES_DEBUG("BottomUpStrategy: No operator found for placement");
                 operatorToPlace = nullptr;
             }
-            previousCandidateNesNode = candidateNesNode;
         }
     }
 }

@@ -101,11 +101,16 @@ ExecutionNodePtr ExecutionNode::createExecutionNode(NESTopologyEntryPtr nesNode)
     return std::make_shared<ExecutionNode>(ExecutionNode(nesNode));
 }
 
-uint64_t ExecutionNode::getId() const {
+uint64_t ExecutionNode::getId() {
     return id;
 }
 
-const NESTopologyEntryPtr ExecutionNode::getNesNode() const {
+NESTopologyEntryPtr ExecutionNode::getNesNode() {
     return nesNode;
 }
+
+std::map<std::string, QueryPlanPtr> ExecutionNode::getAllQuerySubPlans() {
+    return mapOfQuerySubPlans;
+}
+
 }// namespace NES

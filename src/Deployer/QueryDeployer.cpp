@@ -24,8 +24,7 @@ QueryDeployer::~QueryDeployer() {
 }
 
 std::vector<ExecutionNodePtr> QueryDeployer::generateDeployment(const string& queryId) {
-    if (queryCatalog->queryExists(queryId)
-        && !queryCatalog->isQueryRunning(queryId)) {
+    if (queryCatalog->queryExists(queryId) && !queryCatalog->isQueryRunning(queryId)) {
         NES_INFO("QueryDeployer:: generateDeployment for query " << queryId);
 
         const auto executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
@@ -35,7 +34,7 @@ std::vector<ExecutionNodePtr> QueryDeployer::generateDeployment(const string& qu
             //Update port information for the system generated source and sink operators
             const auto sourceOperators = querySubPlan->getSourceOperators();
             for (auto sourceOperator : sourceOperators) {
-                if (sourceOperator->getId()) {
+                if (sourceOperator->getId() == SYS_SOURCE_OPERATOR_ID) {
                     auto zmqDescriptor = sourceOperator->getSourceDescriptor()->as<ZmqSourceDescriptor>();
                     zmqDescriptor->setPort(assignPort(queryId));
                 }
@@ -43,7 +42,7 @@ std::vector<ExecutionNodePtr> QueryDeployer::generateDeployment(const string& qu
 
             const auto sinkOperators = querySubPlan->getSinkOperators();
             for (auto sinkOperator : sinkOperators) {
-                if (sinkOperator->getId()) {
+                if (sinkOperator->getId() == SYS_SINK_OPERATOR_ID) {
                     auto zmqDescriptor = sinkOperator->getSinkDescriptor()->as<ZmqSinkDescriptor>();
                     zmqDescriptor->setPort(assignPort(queryId));
                 }

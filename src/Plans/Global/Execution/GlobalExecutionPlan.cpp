@@ -1,5 +1,5 @@
-#include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Nodes/Util/DumpContext.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Util/Logger.hpp>
@@ -29,8 +29,6 @@ bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, Execution
         if (childNode->addParent(parentExecutionNode)) {
             NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << parentExecutionNode->getId());
             nodeIdIndex[parentExecutionNode->getId()] = parentExecutionNode;
-            NES_DEBUG("GlobalExecutionPlan: Execution node marked as to be scheduled");
-            executionNodesToSchedule.push_back(parentExecutionNode);
             return true;
         }
         NES_WARNING("GlobalExecutionPlan: Failed to add Execution node as parent to the execution node with id " << childId);
@@ -49,8 +47,6 @@ bool GlobalExecutionPlan::addExecutionNodeAsRootAndParentTo(uint64_t childId, Ex
             rootNodes.push_back(parentExecutionNode);
             NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << parentExecutionNode->getId());
             nodeIdIndex[parentExecutionNode->getId()] = parentExecutionNode;
-            NES_DEBUG("GlobalExecutionPlan: Execution node marked as to be scheduled");
-            executionNodesToSchedule.push_back(parentExecutionNode);
         } else {
             NES_WARNING("GlobalExecutionPlan: Execution node already present in the root node list");
         }
@@ -66,19 +62,15 @@ bool GlobalExecutionPlan::addExecutionNodeAsRoot(ExecutionNodePtr executionNode)
         rootNodes.push_back(executionNode);
         NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << executionNode->getId());
         nodeIdIndex[executionNode->getId()] = executionNode;
-        NES_DEBUG("GlobalExecutionPlan: Execution node marked as to be scheduled");
-        executionNodesToSchedule.push_back(executionNode);
     } else {
         NES_WARNING("GlobalExecutionPlan: Execution node already present in the root node list");
     }
     return true;
 }
 
-bool GlobalExecutionPlan::addExecutionNode(ExecutionNodePtr parentExecutionNode) {
-    NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << parentExecutionNode->getId());
-    nodeIdIndex[parentExecutionNode->getId()] = parentExecutionNode;
-    NES_DEBUG("GlobalExecutionPlan: Execution node marked as to be scheduled");
-    executionNodesToSchedule.push_back(parentExecutionNode);
+bool GlobalExecutionPlan::addExecutionNode(ExecutionNodePtr executionNode) {
+    NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << executionNode->getId());
+    nodeIdIndex[executionNode->getId()] = executionNode;
     return true;
 }
 
@@ -116,4 +108,38 @@ std::string GlobalExecutionPlan::getAsString() {
     }
     return ss.str();
 }
+
+void GlobalExecutionPlan::scheduleExecutionNode(ExecutionNodePtr executionNode) {
+    auto found = std::find(executionNodesToSchedule.begin(), executionNodesToSchedule.end(), executionNode);
+    if (found != executionNodesToSchedule.end()) {
+        NES_DEBUG("GlobalExecutionPlan: Execution node " << executionNode->getId() << " marked as to be scheduled");
+        executionNodesToSchedule.push_back(executionNode);
+    } else {
+        NES_WARNING("GlobalExecutionPlan: Execution node " << executionNode->getId() << "already scheduled");
+    }
+    mapExecutionNodeToQueryId(executionNode);
+}
+
+void GlobalExecutionPlan::mapExecutionNodeToQueryId(ExecutionNodePtr executionNode) {
+    NES_DEBUG("GlobalExecutionPlan: Mapping execution node " << executionNode->getId() << " to the query Id index.");
+    auto querySubPlans = executionNode->getAllQuerySubPlans();
+    for (auto pair : querySubPlans) {
+        std::string queryId = pair.first;
+        if (queryIdIndex.find(queryId) == queryIdIndex.end()) {
+            NES_DEBUG("GlobalExecutionPlan: Query Id " << queryId << " does not exists adding a new entry with execution node " << executionNode->getId());
+            queryIdIndex[queryId] = {executionNode};
+        } else {
+            std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[queryId];
+            auto found = std::find(executionNodes.begin(), executionNodes.end(), executionNode);
+            if (found == executionNodes.end()) {
+                NES_DEBUG("GlobalExecutionPlan: Adding execution node " << executionNode->getId() << " to the query Id " << queryId);
+                executionNodes.push_back(executionNode);
+                queryIdIndex[queryId] = executionNodes;
+            } else {
+                NES_DEBUG("GlobalExecutionPlan: Skipping as execution node " << executionNode->getId() << " already mapped to the query Id " << queryId);
+            }
+        }
+    }
+}
+
 }// namespace NES

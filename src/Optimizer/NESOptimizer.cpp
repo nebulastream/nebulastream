@@ -1,6 +1,5 @@
 #include <API/Query.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/NESOptimizer.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
@@ -12,7 +11,7 @@
 using namespace NES;
 
 NESOptimizer::NESOptimizer() {
-    translateFromLegacyPlanPhase = TranslateFromLegacyPlanPhase::create();
+    typeInferencePhasePtr = TypeInferencePhase::create();
 }
 
 GlobalExecutionPlanPtr NESOptimizer::updateExecutionGraph(std::string strategy, QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan,
@@ -26,7 +25,6 @@ GlobalExecutionPlanPtr NESOptimizer::updateExecutionGraph(std::string strategy, 
     }
 
     NES_INFO("NESOptimizer: Building Execution plan for the input query");
-    TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();
     queryPlan = typeInferencePhasePtr->transform(queryPlan);
     GlobalExecutionPlanPtr globalExecution = placementStrategyPtr->initializeExecutionPlan(queryPlan, streamCatalog);
     return globalExecution;
