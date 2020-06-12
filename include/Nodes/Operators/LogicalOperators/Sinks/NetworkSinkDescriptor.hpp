@@ -26,7 +26,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     static SinkDescriptorPtr create(NodeLocation nodeLocation,
                                     NesPartition nesPartition,
                                     std::chrono::seconds waitTime,
-                                    uint8_t retryTimes);
+                                    uint32_t retryTimes);
 
     std::string toString() override;
 
@@ -39,12 +39,12 @@ class NetworkSinkDescriptor : public SinkDescriptor {
 
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation, NesPartition nesPartition,
-                                   std::chrono::seconds waitTime, uint8_t retryTimes = 5);
+                                   std::chrono::seconds waitTime, uint32_t retryTimes = 5);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::seconds waitTime;
-    uint8_t retryTimes;
+    uint32_t retryTimes;
 };
 
 typedef std::shared_ptr<NetworkSinkDescriptor> NetworkSinkDescriptorPtr;

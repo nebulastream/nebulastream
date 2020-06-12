@@ -11,6 +11,25 @@ message SerializableSchema{
   repeated SerializableField fields = 1;
 }
 
+/**
+The serializable wrapper for the nes partition object
+ */
+message NesPartition {
+    uint64 queryId = 1;
+    uint64 operatorId = 2;
+    uint64 partitionId = 3;
+    uint64 subpartitionId = 4;
+}
+
+/**
+The serializable wrapper for the node location object
+ */
+message NodeLocation {
+    uint64 nodeId = 1;
+    string hostname = 2;
+    uint32 port = 3;
+}
+
 /*
 The serializable wrapper definition for operator nodes
  */
@@ -62,6 +81,12 @@ message SerializableOperator{
       uint32 port = 2;
       SerializableSchema sourceSchema = 3;
     }
+
+    message SerializableNetworkSourceDescriptor {
+      SerializableSchema sourceSchema = 1;
+      NesPartition nesPartition = 2;
+    }
+
     google.protobuf.Any sourceDescriptor = 1;
   }
 
@@ -95,6 +120,14 @@ message SerializableOperator{
       string host = 1;
       uint32 port = 2;
     }
+
+    message SerializableNetworkSinkDescriptor {
+          NodeLocation nodeLocation = 1;
+          NesPartition nesPartition = 2;
+          uint64 waitTime = 3;
+          uint32 retryTimes = 4;
+    }
+
     google.protobuf.Any sinkDescriptor = 1;
   }
 

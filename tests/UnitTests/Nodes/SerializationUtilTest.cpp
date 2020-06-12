@@ -33,6 +33,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -41,6 +42,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
@@ -211,6 +213,14 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
+
+    {
+        Network::NesPartition nesPartition{1, 22, 33, 44};
+        auto source = Network::NetworkSourceDescriptor::create(schema, nesPartition);
+        auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+    }
 }
 
 TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
@@ -242,6 +252,16 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
+
+    {
+        Network::NodeLocation nodeLocation{1, "localhost", 31337};
+        Network::NesPartition nesPartition{1, 22, 33, 44};
+        auto sink = Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
+        auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+    }
+
 }
 
 TEST_F(SerializationUtilTest, expressionSerialization) {
