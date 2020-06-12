@@ -15,12 +15,14 @@ ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNet
                      ExchangeProtocolPtr exchangeProtocol)
     : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), isRunning(false), keepRunning(true),
       exchangeProtocol(exchangeProtocol) {
+    NES_DEBUG("ZmqServer: Creating ZmqServer()");
     if (numNetworkThreads < DEFAULT_NUM_SERVER_THREADS) {
         NES_THROW_RUNTIME_ERROR("ZmqServer: numNetworkThreads is greater than DEFAULT_NUM_SERVER_THREADS");
     }
 }
 
 bool ZmqServer::start() {
+    NES_DEBUG("ZmqServer: Starting server..");
     std::promise<bool> startPromise;
     uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
     uint16_t numHandlerThreads = numNetworkThreads / 2;
@@ -39,14 +41,14 @@ ZmqServer::~ZmqServer() {
     }
     keepRunning = false;
     zmqContext.reset();
-    routerThread->join();
     auto future = errorPromise.get_future();
+    routerThread->join();
     if (future.valid()) {
         // we have an error
         try {
             future.get();
         } catch (std::exception& e) {
-            NES_ERROR("ZmqServer: Destructor " << e.what());
+            NES_ERROR("ZmqServer: Server failed to start due to " << e.what());
             throw e;
         }
     }
@@ -60,18 +62,24 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
     auto barrier = std::make_shared<ThreadBarrier>(1 + numHandlerThreads);
 
     try {
+        NES_DEBUG("ZmqServer: Trying to bind on " << "tcp://" + hostname + ":" + std::to_string(port));
         frontendSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
         frontendSocket.bind("tcp://" + hostname + ":" + std::to_string(port));
         dispatcherSocket.bind(dispatcherPipe);
-        NES_DEBUG("Created Zmq Server socket on " << hostname << ":" << port);
-        for (int i = 0; i < numHandlerThreads; ++i) {
-            handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
-                messageHandlerEventLoop(barrier, i);
-            }));
-        }
-    } catch (...) {
-        startPromise.set_exception(std::current_exception());
+        NES_DEBUG("ZmqServer: Created socket on " << hostname << ":" << port);
+    } catch (std::exception& ex) {
+        NES_ERROR("ZmqServer: Error in routerLoop() " << ex.what());
+        startPromise.set_value(false);
+        errorPromise.set_exception(std::make_exception_ptr(ex));
+        return;
     }
+
+    for (int i = 0; i < numHandlerThreads; ++i) {
+        handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
+          messageHandlerEventLoop(barrier, i);
+        }));
+    }
+
     isRunning = true;
     // wait for the handlers to start
     barrier->wait();

@@ -46,7 +46,7 @@ class NetworkStackTest : public testing::Test {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        std::cout << "Setup BufferManagerTest test case." << std::endl;
+        std::cout << "Setup NetworkStackTest test case." << std::endl;
         nodeEngine = std::make_shared<NodeEngine>();
         nodeEngine->createBufferManager(bufferSize, buffersManaged);
         nodeEngine->startQueryManager();
@@ -61,7 +61,7 @@ class NetworkStackTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        std::cout << "Tear down BufferManagerTest test case." << std::endl;
+        std::cout << "Tear down NetworkStackTest test case." << std::endl;
     }
 };
 
@@ -733,7 +733,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSink) {
 
 TEST_F(NetworkStackTest, testQEPNetworkSource) {
     std::promise<bool> completed;
-    NodeLocation nodeLocation{0, "127.0.0.1", 31337};
+    NodeLocation nodeLocation{0, "127.0.0.1", 31338};
     NesPartition nesPartition{1, 22, 33, 44};
 
     auto nodeEngine = std::make_shared<NodeEngine>();
@@ -756,7 +756,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSource) {
 
     auto exchangeProtocol = std::make_shared<ExchangeProtocol>(bufferManager, partitionManager, nodeEngine->getQueryManager(),
                                                                onBuffer, onEndOfStream, onError);
-    auto netManager = std::make_shared<NetworkManager>("127.0.0.1", 31337, exchangeProtocol);
+    auto netManager = std::make_shared<NetworkManager>(nodeLocation.getHostname(), nodeLocation.getPort(), exchangeProtocol);
 
     auto compiler = createDefaultQueryCompiler(nodeEngine->getQueryManager());
 
