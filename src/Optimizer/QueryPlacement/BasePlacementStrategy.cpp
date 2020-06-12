@@ -75,7 +75,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
     while (pathItr != path.end()) {
 
         NESTopologyEntryPtr currentNode = *pathItr;
-        const ExecutionNodePtr executionNode = executionPlan->getExecutionNodeByNodeId(currentNode->getId());
+        ExecutionNodePtr executionNode = executionPlan->getExecutionNodeByNodeId(currentNode->getId());
         if (!executionNode) {
 
             if (pathItr == path.begin()) {
@@ -89,7 +89,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
             }
 
             //create a new execution node for the nes node with forward operators
-            const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(currentNode);
+            executionNode = ExecutionNode::createExecutionNode(currentNode);
 
             NESTopologyEntryPtr childNesNode = *(pathItr - 1);
             NESTopologyEntryPtr parentNesNode = *(pathItr + 1);
@@ -222,6 +222,13 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 if (!executionNode->updateQuerySubPlan(queryId, querySubPlan)) {
                     NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated source operator.");
                 }
+            }
+        }
+
+        if(previousNode){
+            NES_DEBUG("BasePlacementStrategy: adding link between previous and current execution node");
+            if (!executionPlan->addExecutionNodeAsParentTo(previousNode->getId(), executionNode)) {
+                NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add link between previous and current executionNode");
             }
         }
         previousNode = (*pathItr);
