@@ -98,7 +98,5 @@ const ValueTypePtr createStringValueType(const std::string& value);
 const ValueTypePtr createStringValueType(const char* value, u_int16_t dimension = 0);
 const ValueTypePtr createArrayValueType(const BasicType& type, const std::vector<std::string>& value);
 
-
-
 }// namespace NES
 #endif
