@@ -206,7 +206,7 @@ target_link_libraries(query-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-deployment-test COMMAND query-deployment-test)
 
 ### ContiniousSourceTest ###
-add_executable(continious-source-test "Integration/ContiniousSourceTest.cpp")
+add_executable(continious-source-test "Integration/ContinuousSourceTest.cpp")
 target_link_libraries(continious-source-test nes ${GTEST_LIBRARIES})
 add_test(NAME continious-source-test COMMAND continious-source-test)
 
