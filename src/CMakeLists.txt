@@ -1,7 +1,6 @@
 add_subdirectory(API)
 add_subdirectory(Catalogs)
 add_subdirectory(Components)
-add_subdirectory(DataTypes)
 add_subdirectory(CoordinatorEngine)
 add_subdirectory(QueryCompiler)
 add_subdirectory(Deployer)
