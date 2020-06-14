@@ -53,7 +53,7 @@ NodeEngine::~NodeEngine() {
 bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject) {
     NES_DEBUG("NodeEngine::deployQueryInNodeEngine eto " << executableTransferObject);
     // TODO currently this method is not called. We should evaluate the purpose of this method.
-    assert(0);
+    NES_FATAL_ERROR("NODE ENGINE: Deploy Quer in Node is currently not implemented");
     ExecutableTransferObject eto = ExecutableTransferObject();
     NES_DEBUG(
         "WorkerActor::running() eto after parse=" << eto.toString());
