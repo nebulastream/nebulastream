@@ -72,7 +72,7 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 class BasePlacementStrategy {
 
   private:
-    static const int zmqDefaultPort = 5555;
+    static const int ZMQ_DEFAULT_PORT = 5555;
 
   public:
     explicit BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan);

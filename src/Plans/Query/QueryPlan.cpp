@@ -1,3 +1,4 @@
+#include <Nodes/Node.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
@@ -93,8 +94,11 @@ std::vector<OperatorNodePtr> QueryPlan::getRootOperators() {
 
 std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
 
+    NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
     std::vector<OperatorNodePtr> leafOperators;
+    // Maintain a list of visited nodes as there are multiple root nodes
     std::set<u_int64_t> visitedOpIds;
+    NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (auto rootOperator : rootOperators) {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
         auto itr = bfsIterator.begin();
@@ -102,10 +106,12 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
             auto visitingOp = (*itr)->as<OperatorNode>();
             ++itr;
             if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
+                // skip rest of the steps as the node found in already visited node list
                 continue;
             }
             visitedOpIds.insert(visitingOp->getId());
             if (visitingOp->getChildren().empty()) {
+                NES_DEBUG("QueryPlan: Found leaf node. Adding to the collection of leaf nodes.");
                 leafOperators.push_back(visitingOp);
             }
         }
@@ -119,10 +125,14 @@ const std::string QueryPlan::getSourceStreamName() const {
 
 bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
 
-    //FIXME: its a very inefficient way of doing it as we have to check the
-    // traversed Operator list for each iterated operator and also store the
-    // information about the operator in the vector.
+    NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
+    if (operatorNode->getId() == SYS_SOURCE_OPERATOR_ID || operatorNode->getId() == SYS_SINK_OPERATOR_ID) {
+        NES_DEBUG("QueryPlan: If the operator is a system generated one then we ignore this check");
+        return false;
+    }
+    // Maintain a list of visited nodes as there are multiple root nodes
     std::set<u_int64_t> visitedOpIds;
+    NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator");
     for (auto rootOperator : rootOperators) {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
         auto itr = bfsIterator.begin();
@@ -130,14 +140,21 @@ bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
             auto visitingOp = (*itr)->as<OperatorNode>();
             ++itr;
             if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
-                continue;
+                NES_TRACE("QueryPlan : Found already visited operator skipping rest of the path traverse.");
+                break;
             }
-            visitedOpIds.insert(visitingOp->getId());
+            if (visitingOp->getId() != SYS_SOURCE_OPERATOR_ID && visitingOp->getId() != SYS_SINK_OPERATOR_ID) {
+                // add operator id to the already visited operator id collection
+                NES_TRACE("QueryPlan : Adding traversed node to the collection of visited nodes.");
+                visitedOpIds.insert(visitingOp->getId());
+            }
             if (operatorNode->equal(visitingOp)) {
+                NES_DEBUG("QueryPlan: Found operator with matching Id");
                 return true;
             }
         }
     }
+    NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
     return false;
 }
 
