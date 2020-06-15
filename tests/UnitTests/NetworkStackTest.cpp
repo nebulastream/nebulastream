@@ -133,7 +133,7 @@ TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
     try {
         auto exchangeProtocol =
             std::make_shared<ExchangeProtocol>(bufferManager, partitionManager, nodeEngine->getQueryManager());
-        NetworkManager netManager("127.0.0.1", 31337, exchangeProtocol);
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, exchangeProtocol);
     }
     catch (...) {
         ASSERT_EQ(true, false);
@@ -158,13 +158,13 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         auto exchangeProtocol =
             std::make_shared<ExchangeProtocol>(bufferManager, partitionManager, nodeEngine->getQueryManager(),
                                                onBuffer, onEndOfStream, onError);
-        NetworkManager netManager("127.0.0.1", 31337, exchangeProtocol);
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, exchangeProtocol);
 
         auto nesPartition = NesPartition(0, 0, 0, 0);
 
         std::thread t([&netManager, &completed, &nesPartition] {
           // register the incoming channel
-          auto cnt = netManager.registerSubpartitionConsumer(nesPartition);
+          auto cnt = netManager->registerSubpartitionConsumer(nesPartition);
           NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt" << cnt);
           auto v = completed.get_future().get();
           ASSERT_EQ(v, true);
@@ -172,7 +172,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         auto senderChannel =
-            netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, std::chrono::seconds(1), 3);
+            netManager->registerSubpartitionProducer(nodeLocation, nesPartition, onError, std::chrono::seconds(1), 3);
         senderChannel->close();
         delete senderChannel;
 
@@ -208,12 +208,12 @@ TEST_F(NetworkStackTest, testSendData) {
         auto exchangeProtocol =
             std::make_shared<ExchangeProtocol>(bufferManager, partitionManager, nodeEngine->getQueryManager(),
                                                onBuffer, onEndOfStream, onError);
-        NetworkManager netManager("127.0.0.1", 31337, exchangeProtocol);
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, exchangeProtocol);
 
         std::thread t([&netManager, &nesPartition, &completedProm, &completed] {
           // register the incoming channel
           sleep(3); // intended stalling to simulate latency
-          netManager.registerSubpartitionConsumer(nesPartition);
+          netManager->registerSubpartitionConsumer(nesPartition);
           auto future = completedProm.get_future();
           if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
               completed = future.get();
@@ -225,7 +225,7 @@ TEST_F(NetworkStackTest, testSendData) {
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         OutputChannel* senderChannel;
         senderChannel =
-            netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, std::chrono::seconds(1), 5);
+            netManager->registerSubpartitionProducer(nodeLocation, nesPartition, onError, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
             NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
@@ -275,17 +275,17 @@ TEST_F(NetworkStackTest, testMassiveSending) {
         auto exchangeProtocol =
             std::make_shared<ExchangeProtocol>(bufferManager, partitionManager, nodeEngine->getQueryManager(),
                                                onBuffer, onEndOfStream, onError);
-        NetworkManager netManager("127.0.0.1", 31337, exchangeProtocol);
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, exchangeProtocol);
 
         std::thread t([&netManager, &nesPartition, &completedProm] {
           // register the incoming channel
-          netManager.registerSubpartitionConsumer(nesPartition);
+          netManager->registerSubpartitionConsumer(nesPartition);
           ASSERT_TRUE(completedProm.get_future().get());
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         auto senderChannel =
-            netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError, std::chrono::seconds(1), 5);
+            netManager->registerSubpartitionProducer(nodeLocation, nesPartition, onError, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
             NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
@@ -360,10 +360,10 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
         auto exchangeProtocol =
             std::make_shared<ExchangeProtocol>(bufferManager, partitionManager, nodeEngine->getQueryManager(),
                                                onBuffer, onEndOfStream, onErrorServer);
-        NetworkManager netManager("127.0.0.1", 31337, exchangeProtocol);
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, exchangeProtocol);
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto channel = netManager.registerSubpartitionProducer(nodeLocation,
+        auto channel = netManager->registerSubpartitionProducer(nodeLocation,
                                                                NesPartition(1, 22, 333, 4445),
                                                                onErrorChannel,
                                                                std::chrono::seconds(1),
@@ -413,14 +413,14 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
         auto exchangeProtocol =
             std::make_shared<ExchangeProtocol>(bufferManager, partitionManager, nodeEngine->getQueryManager(),
                                                onBuffer, onEndOfStream, onError);
-        NetworkManager netManager("127.0.0.1", 31337, exchangeProtocol);
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, exchangeProtocol);
 
         std::thread receivingThread([&netManager, &nesPartitions, &completedPromises] {
           // register the incoming channel
           for (NesPartition p: nesPartitions) {
               //add random latency
               sleep(rand()%3);
-              netManager.registerSubpartitionConsumer(p);
+              netManager->registerSubpartitionConsumer(p);
           }
 
           for (std::promise<bool>& p: completedPromises) {
@@ -434,7 +434,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             std::thread sendingThread([&, i] {
               // register the incoming channel
               NesPartition nesPartition(i, i + 10, i + 20, i + 30);
-              auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, nesPartition, onError,
+              auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, onError,
                                                                            std::chrono::seconds(2), 10);
 
               if (senderChannel == nullptr) {
@@ -511,7 +511,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         auto exchangeProtocol =
             std::make_shared<ExchangeProtocol>(bufferManager, partitionManager, nodeEngine->getQueryManager(),
                                                onBuffer, onEndOfStream, onError);
-        auto netManager = std::make_shared<NetworkManager>("127.0.0.1", 31337, exchangeProtocol);
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, exchangeProtocol);
 
         std::thread receivingThread([this, &netManager, &nesPartition, &completed] {
           // register the incoming channel
@@ -558,7 +558,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 TEST_F(NetworkStackTest, testNetworkSource) {
     auto exchangeProtocol = std::make_shared<ExchangeProtocol>(bufferManager, partitionManager,
                                                                nodeEngine->getQueryManager());
-    auto netManager = std::make_shared<NetworkManager>("127.0.0.1", 31337, exchangeProtocol);
+    auto netManager = NetworkManager::create("127.0.0.1", 31337, exchangeProtocol);
 
     NesPartition nesPartition{1, 22, 33, 44};
 
@@ -579,7 +579,7 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
     // create NetworkSink
     auto exchangeProtocol = std::make_shared<ExchangeProtocol>(bufferManager, partitionManager,
                                                                nodeEngine->getQueryManager());
-    auto netManager = std::make_shared<NetworkManager>("127.0.0.1", 31337, exchangeProtocol);
+    auto netManager = NetworkManager::create("127.0.0.1", 31337, exchangeProtocol);
 
     auto networkSource = std::make_shared<NetworkSource>(schema, bufferManager, nodeEngine->getQueryManager(),
                                                          netManager, nesPartition);
@@ -627,7 +627,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
         auto exchangeProtocol = std::make_shared<ExchangeProtocol>(bufferManager, partitionManager,
                                                                    nodeEngine->getQueryManager(), onBuffer, onEndOfStream, onError);
-        auto netManager = std::make_shared<NetworkManager>("127.0.0.1", 31337, exchangeProtocol);
+        auto netManager = NetworkManager::create("127.0.0.1", 31337, exchangeProtocol);
 
         std::thread receivingThread([=, &netManager, &nesPartition, &completed] {
           // register the incoming channel
@@ -693,7 +693,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSink) {
 
     auto exchangeProtocol = std::make_shared<ExchangeProtocol>(bufferManager, partitionManager, nodeEngine->getQueryManager(),
                                                                onBuffer, onEndOfStream, onError);
-    auto netManager = std::make_shared<NetworkManager>("127.0.0.1", 31337, exchangeProtocol);
+    auto netManager = NetworkManager::create("127.0.0.1", nodeLocation.getPort(), exchangeProtocol);
 
     auto networkSource = std::make_shared<NetworkSource>(schema, bufferManager, nodeEngine->getQueryManager(),
                                                          netManager, nesPartition);
@@ -756,7 +756,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSource) {
 
     auto exchangeProtocol = std::make_shared<ExchangeProtocol>(bufferManager, partitionManager, nodeEngine->getQueryManager(),
                                                                onBuffer, onEndOfStream, onError);
-    auto netManager = std::make_shared<NetworkManager>(nodeLocation.getHostname(), nodeLocation.getPort(), exchangeProtocol);
+    auto netManager = NetworkManager::create("127.0.0.1", nodeLocation.getPort(), exchangeProtocol);
 
     auto compiler = createDefaultQueryCompiler(nodeEngine->getQueryManager());
 

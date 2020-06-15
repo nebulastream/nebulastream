@@ -26,7 +26,6 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 };
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink) {
-
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create("file.log");
     DataSinkPtr fileOutputSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
@@ -34,7 +33,6 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink
 }
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink) {
-
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = ZmqSinkDescriptor::create("loclahost", 2000);
     DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
@@ -50,7 +48,6 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSin
 }
 #endif
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
-
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create();
     DataSinkPtr printSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
@@ -58,7 +55,6 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSin
 }
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalSink) {
-
     SchemaPtr schema = Schema::create();
     Network::NodeLocation nodeLocation{1, "localhost", 31337};
     Network::NesPartition nesPartition{1, 22, 33, 44};

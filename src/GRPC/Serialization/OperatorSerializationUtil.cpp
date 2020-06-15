@@ -325,14 +325,18 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor();
         //set details of NesPartition
-        serializedSinkDescriptor.mutable_nespartition()->set_queryid(networkSinkDescriptor->getNesPartition().getQueryId());
-        serializedSinkDescriptor.mutable_nespartition()->set_operatorid(networkSinkDescriptor->getNesPartition().getOperatorId());
-        serializedSinkDescriptor.mutable_nespartition()->set_partitionid(networkSinkDescriptor->getNesPartition().getPartitionId());
-        serializedSinkDescriptor.mutable_nespartition()->set_subpartitionid(networkSinkDescriptor->getNesPartition().getSubpartitionId());
+        auto serializedNesPartition = serializedSinkDescriptor.mutable_nespartition();
+        auto nesPartition = networkSinkDescriptor->getNesPartition();
+        serializedNesPartition->set_queryid(nesPartition.getQueryId());
+        serializedNesPartition->set_operatorid(nesPartition.getOperatorId());
+        serializedNesPartition->set_partitionid(nesPartition.getPartitionId());
+        serializedNesPartition->set_subpartitionid(nesPartition.getSubpartitionId());
         //set details of NodeLocation
-        serializedSinkDescriptor.mutable_nodelocation()->set_nodeid(networkSinkDescriptor->getNodeLocation().getNodeId());
-        serializedSinkDescriptor.mutable_nodelocation()->set_hostname(networkSinkDescriptor->getNodeLocation().getHostname());
-        serializedSinkDescriptor.mutable_nodelocation()->set_port(networkSinkDescriptor->getNodeLocation().getPort());
+        auto serializedNodeLocation = serializedSinkDescriptor.mutable_nodelocation();
+        auto nodeLocation = networkSinkDescriptor->getNodeLocation();
+        serializedNodeLocation->set_nodeid(nodeLocation.getNodeId());
+        serializedNodeLocation->set_hostname(nodeLocation.getHostname());
+        serializedNodeLocation->set_port(nodeLocation.getPort());
         // set reconnection details
         auto s = std::chrono::duration_cast<std::chrono::seconds> (networkSinkDescriptor->getWaitTime());
         serializedSinkDescriptor.set_waittime(s.count());
