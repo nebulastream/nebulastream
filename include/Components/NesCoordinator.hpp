@@ -161,7 +161,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     WorkerRPCClientPtr workerRPCClient;
     CoordinatorEnginePtr coordinatorEngine;
     QueryDeployerPtr queryDeployer;
-    GlobalExecutionPlanPtr executionPlan;
+    GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;
     TopologyManagerPtr topologyManager;

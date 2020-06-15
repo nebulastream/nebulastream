@@ -26,7 +26,7 @@ std::string UtilityFunctions::trim(std::string s) {
     return s;
 }
 
-QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& query_code_snippet) {
+QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCodeSnippet) {
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
@@ -45,11 +45,11 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& query_co
         code << "namespace NES{" << std::endl;
         code << "Query createQuery(){" << std::endl;
 
-        std::string streamName = query_code_snippet.substr(
-            query_code_snippet.find("::from("));
+        std::string streamName = queryCodeSnippet.substr(
+            queryCodeSnippet.find("::from("));
         streamName = streamName.substr(7, streamName.find(")") - 7);
         std::cout << " stream name = " << streamName << std::endl;
-        std::string newQuery = query_code_snippet;
+        std::string newQuery = queryCodeSnippet;
 
         // add return statement in front of input query
         // NOTE: This will not work if you have created object of Input query and do further manipulation
@@ -79,18 +79,17 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& query_co
         return queryPtr;
     } catch (std::exception& exc) {
         NES_ERROR(
-            "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet
+            "UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet
                                                                                     << exc.what());
         throw;
     } catch (...) {
         NES_ERROR(
-            "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet);
+            "UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet);
         throw "Failed to create the query from input code string";
     }
 }
 
-SchemaPtr UtilityFunctions::createSchemaFromCode(
-    const std::string& query_code_snippet) {
+SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSnippet) {
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
@@ -103,7 +102,7 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
         code << "namespace NES{" << std::endl;
 
         code << "Schema createSchema(){" << std::endl;
-        code << "return " << query_code_snippet << ";";
+        code << "return " << queryCodeSnippet << ";";
         code << "}" << std::endl;
         code << "}" << std::endl;
         Compiler compiler;
@@ -125,11 +124,11 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
 
     } catch (std::exception& exc) {
         NES_ERROR(
-            "Failed to create the query from input code string: " << query_code_snippet);
+            "Failed to create the query from input code string: " << queryCodeSnippet);
         throw;
     } catch (...) {
         NES_ERROR(
-            "Failed to create the query from input code string: " << query_code_snippet);
+            "Failed to create the query from input code string: " << queryCodeSnippet);
         throw "Failed to create the query from input code string";
     }
 }
@@ -161,8 +160,7 @@ std::size_t UtilityFunctions::generateIdInt() {
     return hash_fn(linkID_string);
 }
 
-std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(
-    const std::string& input, std::string s1, std::string s2) {
+std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::string& input, std::string s1, std::string s2) {
     unsigned firstDelimPos = input.find(s1);
     unsigned endPosOfFirstDelim = firstDelimPos + s1.length();
 

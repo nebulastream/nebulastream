@@ -39,7 +39,7 @@ class RestEngine : public BaseController {
 
   public:
     RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordinator,
-               QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr executionPlan);
+               QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~RestEngine();
 

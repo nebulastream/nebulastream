@@ -26,7 +26,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
     }
 
   private:
-    explicit BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan);
+    explicit BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan);
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.

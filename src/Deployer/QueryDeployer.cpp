@@ -13,8 +13,8 @@
 
 namespace NES {
 
-QueryDeployer::QueryDeployer(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr executionPlan)
-    : queryCatalog(queryCatalog), topologyManager(topologyManager), executionPlan(executionPlan) {
+QueryDeployer::QueryDeployer(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan)
+    : queryCatalog(queryCatalog), topologyManager(topologyManager), globalExecutionPlan(globalExecutionPlan) {
     NES_INFO("QueryDeployer()");
 }
 
@@ -26,7 +26,7 @@ QueryDeployer::~QueryDeployer() {
 void QueryDeployer::prepareForDeployment(const string& queryId) {
     if (queryCatalog->queryExists(queryId) && !queryCatalog->isQueryRunning(queryId)) {
         NES_INFO("QueryDeployer:: prepareForDeployment for query " << queryId);
-        const auto executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
+        const auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
         //iterate through all vertices in the topology
         for (ExecutionNodePtr executionNode : executionNodes) {
             QueryPlanPtr querySubPlan = executionNode->getQuerySubPlan(queryId);

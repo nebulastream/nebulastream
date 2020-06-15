@@ -51,8 +51,8 @@ class OperatorNode : public Node {
     void setId(u_int64_t id);
 
     /**
-     * Create a shallow copy of the operator
-     * @return
+     * Create a shallow copy of the operator by copying its operator properties but not its children or parent operator tree.
+     * @return shallow copy of the operator
      */
     virtual OperatorNodePtr copy() = 0;
 

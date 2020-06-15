@@ -27,7 +27,7 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class QueryDeployer {
 
   public:
-    QueryDeployer(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr executionPlan);
+    QueryDeployer(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~QueryDeployer();
 
@@ -90,7 +90,7 @@ class QueryDeployer {
     unordered_map<string, int> queryToPort;
     QueryCatalogPtr queryCatalog;
     TopologyManagerPtr topologyManager;
-    GlobalExecutionPlanPtr executionPlan;
+    GlobalExecutionPlanPtr globalExecutionPlan;
 };
 
 typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;

@@ -24,7 +24,7 @@ class RestServer {
         QueryCatalogPtr queryCatalog,
         StreamCatalogPtr streamCatalog,
         TopologyManagerPtr topologyManager,
-        GlobalExecutionPlanPtr executionPlan);
+        GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~RestServer();
     /**

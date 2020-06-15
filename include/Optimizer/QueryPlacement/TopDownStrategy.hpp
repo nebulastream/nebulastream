@@ -20,7 +20,7 @@ class TopDownStrategy : public BasePlacementStrategy {
     }
 
   private:
-    TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan);
+    TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan);
 
     /**
      * @brief place query operators and prepare the nes execution plan

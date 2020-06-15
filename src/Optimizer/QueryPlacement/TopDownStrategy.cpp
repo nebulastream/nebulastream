@@ -16,8 +16,8 @@
 
 namespace NES {
 
-TopDownStrategy::TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan)
-    : BasePlacementStrategy(nesTopologyPlan, executionPlan) {}
+TopDownStrategy::TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan)
+    : BasePlacementStrategy(nesTopologyPlan, globalExecutionPlan) {}
 
 GlobalExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
 
@@ -44,7 +44,7 @@ GlobalExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr que
         addSystemGeneratedOperators(queryId, path);
     }
 
-    return executionPlan;
+    return globalExecutionPlan;
 }
 
 void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes) {
@@ -86,10 +86,10 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
 
             NES_DEBUG("TopDownStrategy: Checking if execution node for the target worker node already present.");
 
-            if (executionPlan->executionNodeExists(candidateNesNode->getId())) {
+            if (globalExecutionPlan->checkIfExecutionNodeExists(candidateNesNode->getId())) {
 
                 NES_DEBUG("TopDownStrategy: node " << candidateNesNode->toString() << " was already used by other deployment");
-                const ExecutionNodePtr candidateExecutionNode = executionPlan->getExecutionNodeByNodeId(candidateNesNode->getId());
+                const ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateNesNode->getId());
 
                 if (candidateExecutionNode->hasQuerySubPlan(queryId)) {
                     NES_DEBUG("TopDownStrategy: node " << candidateNesNode->toString() << " already contains a query sub plan with the id" << queryId);
@@ -122,7 +122,7 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
                 NES_DEBUG("TopDownStrategy: create new execution node with id: " << candidateNesNode->getId());
                 ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, candidateOperator);
                 NES_DEBUG("TopDownStrategy: Adding new execution node with id: " << candidateNesNode->getId());
-                if (!executionPlan->addExecutionNode(newExecutionNode)) {
+                if (!globalExecutionPlan->addExecutionNode(newExecutionNode)) {
                     NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to add execution node for query " + queryId);
                 }
             }

@@ -13,8 +13,8 @@
 
 namespace NES {
 
-BottomUpStrategy::BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan)
-    : BasePlacementStrategy(nesTopologyPlan, executionPlan) {}
+BottomUpStrategy::BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan)
+    : BasePlacementStrategy(nesTopologyPlan, globalExecutionPlan) {}
 
 GlobalExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
 
@@ -46,7 +46,7 @@ GlobalExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPlanPtr qu
         addSystemGeneratedOperators(queryId, path);
     }
 
-    return executionPlan;
+    return globalExecutionPlan;
 }
 
 void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
@@ -70,10 +70,10 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
             if (operatorToPlace->instanceOf<SinkLogicalOperatorNode>()) {
                 NES_DEBUG("BottomUpStrategy: Placing sink operator on the sink node");
                 candidateNesNode = sinkNode;
-                if (!executionPlan->getExecutionNodeByNodeId(candidateNesNode->getId())) {
+                if (!globalExecutionPlan->getExecutionNodeByNodeId(candidateNesNode->getId())) {
                     NES_DEBUG("BottomUpStrategy: Creating a new root execution node for placing sink operator");
                     const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode);
-                    executionPlan->addExecutionNodeAsRoot(rootExecutionNode);
+                    globalExecutionPlan->addExecutionNodeAsRoot(rootExecutionNode);
                 }
             } else if (candidateNesNode->getRemainingCpuCapacity() == 0) {
                 NES_DEBUG("BottomUpStrategy: Find the next NES node in the path where operator can be placed");
@@ -93,10 +93,10 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
 
             NES_DEBUG("BottomUpStrategy: Checking if execution node for the target worker node already present.");
 
-            if (executionPlan->executionNodeExists(candidateNesNode->getId())) {
+            if (globalExecutionPlan->checkIfExecutionNodeExists(candidateNesNode->getId())) {
 
                 NES_DEBUG("BottomUpStrategy: node " << candidateNesNode->toString() << " was already used by other deployment");
-                const ExecutionNodePtr candidateExecutionNode = executionPlan->getExecutionNodeByNodeId(candidateNesNode->getId());
+                const ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateNesNode->getId());
 
                 if (candidateExecutionNode->hasQuerySubPlan(queryId)) {
                     NES_DEBUG("BottomUpStrategy: node " << candidateNesNode->toString() << " already contains a query sub plan with the id" << queryId);
@@ -120,7 +120,7 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                 NES_DEBUG("BottomUpStrategy: create new execution node with id: " << candidateNesNode->getId());
                 ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, operatorToPlace->copy());
                 NES_DEBUG("BottomUpStrategy: Adding new execution node with id: " << candidateNesNode->getId());
-                if (!executionPlan->addExecutionNode(newExecutionNode)) {
+                if (!globalExecutionPlan->addExecutionNode(newExecutionNode)) {
                     NES_THROW_RUNTIME_ERROR("BottomUpStrategy: failed to add execution node for query " + queryId);
                 }
             }

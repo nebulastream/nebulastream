@@ -65,7 +65,7 @@ class GlobalExecutionPlan {
      * @param id: id of the execution node
      * @return true if operation succeeds
      */
-    bool executionNodeExists(uint64_t id);
+    bool checkIfExecutionNodeExists(uint64_t id);
 
     /**
      * Get the execution node

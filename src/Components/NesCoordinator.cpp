@@ -37,10 +37,10 @@ NesCoordinator::NesCoordinator() {
 
     topologyManager = std::make_shared<TopologyManager>();
     streamCatalog = std::make_shared<StreamCatalog>();
-    executionPlan = GlobalExecutionPlan::create();
-    queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, executionPlan);
+    globalExecutionPlan = GlobalExecutionPlan::create();
+    queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
     workerRPCClient = std::make_shared<WorkerRPCClient>();
-    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, executionPlan);
+    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, globalExecutionPlan);
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 }
 
@@ -53,10 +53,10 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
 
     topologyManager = std::make_shared<TopologyManager>();
     streamCatalog = std::make_shared<StreamCatalog>();
-    executionPlan = GlobalExecutionPlan::create();
-    queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, executionPlan);
+    globalExecutionPlan = GlobalExecutionPlan::create();
+    queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
     workerRPCClient = std::make_shared<WorkerRPCClient>();
-    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, executionPlan);
+    queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, globalExecutionPlan);
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 }
 
@@ -129,7 +129,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator starting rest server");
     std::promise<bool> promRest;
     std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(),
-                                                                          queryCatalog, streamCatalog, topologyManager, executionPlan);
+                                                                          queryCatalog, streamCatalog, topologyManager, globalExecutionPlan);
 
     restThread = std::make_shared<std::thread>(([&]() {
         startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
@@ -286,7 +286,7 @@ bool NesCoordinator::deployQuery(std::string queryId) {
 
     NES_DEBUG("NesCoordinator::addQuery: preparing for Deployment");
     queryDeployer->prepareForDeployment(queryId);
-    std::vector<ExecutionNodePtr> executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     for (ExecutionNodePtr executionNode : executionNodes) {
         NES_DEBUG("NesCoordinator::registerQueryInNodeEngine serialize id=" << executionNode->getId());
@@ -312,7 +312,7 @@ bool NesCoordinator::deployQuery(std::string queryId) {
 bool NesCoordinator::undeployQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator::undeployQuery queryId=" << queryId);
 
-    std::vector<ExecutionNodePtr> executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
         NES_DEBUG("NESCoordinator::undeployQuery query at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
@@ -329,7 +329,7 @@ bool NesCoordinator::undeployQuery(std::string queryId) {
 
 bool NesCoordinator::startQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator::startQuery queryId=" << queryId);
-    std::vector<ExecutionNodePtr> executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
         NES_DEBUG("NesCoordinator::startQuery at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
@@ -345,8 +345,8 @@ bool NesCoordinator::startQuery(std::string queryId) {
 }
 
 bool NesCoordinator::stopQuery(std::string queryId) {
-    NES_DEBUG("NesCoordinator::stopQuery queryId=" << queryId);
-    std::vector<ExecutionNodePtr> executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
+    NES_DEBUG("NesCoordinator:stopQuery queryId=" << queryId);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
         NES_DEBUG("NESCoordinator::stopQuery at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);

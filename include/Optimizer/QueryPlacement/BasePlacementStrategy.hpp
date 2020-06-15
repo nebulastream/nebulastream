@@ -75,17 +75,17 @@ class BasePlacementStrategy {
     static const int ZMQ_DEFAULT_PORT = 5555;
 
   public:
-    explicit BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan);
+    explicit BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan);
 
     /**
      * @brief Factory method returning different kind of optimizer.
      * @param strategyName : name of the strategy
      * @param nesTopologyPlan : topology information
-     * @param executionPlan : execution plan to be updated
+     * @param globalExecutionPlan : execution plan to be updated
      * @return instance of type BaseOptimizer
      */
     static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string strategyName, NESTopologyPlanPtr nesTopologyPlan,
-                                                              GlobalExecutionPlanPtr executionPlan);
+                                                              GlobalExecutionPlanPtr globalExecutionPlan);
 
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
@@ -126,7 +126,7 @@ class BasePlacementStrategy {
      */
     void addSystemGeneratedOperators(std::string queryId, std::vector<NESTopologyEntryPtr> path);
     NESTopologyPlanPtr nesTopologyPlan;
-    GlobalExecutionPlanPtr executionPlan;
+    GlobalExecutionPlanPtr globalExecutionPlan;
     PathFinderPtr pathFinder;
     TypeInferencePhasePtr typeInferencePhase;
 };

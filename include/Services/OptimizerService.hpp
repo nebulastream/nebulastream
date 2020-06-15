@@ -1,7 +1,6 @@
 #ifndef IMPL_SERVICES_OPTIMIZERSERVICE_H_
 #define IMPL_SERVICES_OPTIMIZERSERVICE_H_
 
-#include <API/InputQuery.hpp>
 #include <cpprest/json.h>
 #include <string>
 
