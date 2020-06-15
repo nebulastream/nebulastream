@@ -9,6 +9,9 @@
 
 namespace NES {
 
+class TopologyManager;
+typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 

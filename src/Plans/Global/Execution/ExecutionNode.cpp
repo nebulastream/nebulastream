@@ -61,10 +61,8 @@ void ExecutionNode::freeOccupiedResources(QueryPlanPtr querySubPlan) {
     NES_DEBUG("ExecutionNode : Iterate over all root nodes in the query sub graph to calculate occupied resources");
     for (auto root : roots) {
         auto bfsIterator = BreadthFirstNodeIterator(root);
-        auto itr = bfsIterator.begin();
-        while (itr != bfsIterator.end()) {
+        for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
             auto visitingOp = (*itr)->as<OperatorNode>();
-            ++itr;
             if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
                 NES_TRACE("ExecutionNode : Found already visited operator skipping rest of the path traverse.");
                 break;

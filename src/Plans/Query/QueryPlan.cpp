@@ -101,10 +101,8 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (auto rootOperator : rootOperators) {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-        auto itr = bfsIterator.begin();
-        while (itr != bfsIterator.end()) {
+        for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
             auto visitingOp = (*itr)->as<OperatorNode>();
-            ++itr;
             if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
                 // skip rest of the steps as the node found in already visited node list
                 continue;
@@ -135,10 +133,8 @@ bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator");
     for (auto rootOperator : rootOperators) {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-        auto itr = bfsIterator.begin();
-        while (itr != bfsIterator.end()) {
+        for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
             auto visitingOp = (*itr)->as<OperatorNode>();
-            ++itr;
             if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
                 NES_TRACE("QueryPlan : Found already visited operator skipping rest of the path traverse.");
                 break;
@@ -156,7 +152,7 @@ bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
     }
     NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
     return false;
-}
+}// namespace NES
 
 const std::string& QueryPlan::getQueryId() const {
     return queryId;

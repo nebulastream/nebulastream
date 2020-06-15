@@ -1,18 +1,16 @@
-#include <API/Query.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Nodes/Phases/TypeInferencePhase.hpp>
-#include <Operators/Operator.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
-#include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
-#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
-#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
-#include <Optimizer/QueryPlacement/MinimumEnergyConsumptionStrategy.hpp>
-#include <Optimizer/QueryPlacement/MinimumResourceConsumptionStrategy.hpp>
+//#include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
+//#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
+//#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
+//#include <Optimizer/QueryPlacement/MinimumEnergyConsumptionStrategy.hpp>
+//#include <Optimizer/QueryPlacement/MinimumResourceConsumptionStrategy.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -54,24 +52,24 @@ BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan,
     typeInferencePhase = TypeInferencePhase::create();
 }
 
-OperatorNodePtr BasePlacementStrategy::createSystemSinkOperator(NESTopologyEntryPtr nesNode) {
+OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(NESTopologyEntryPtr nesNode) {
     auto sinkOperator = createSinkLogicalOperatorNode(ZmqSinkDescriptor::create(nesNode->getIp(), ZMQ_DEFAULT_PORT));
     sinkOperator->setId(SYS_SINK_OPERATOR_ID);// all sink operators will have MAX64-1 as Id
     return sinkOperator;
 }
 
-OperatorNodePtr BasePlacementStrategy::createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema) {
+OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema) {
     auto sourceOperator = createSourceLogicalOperatorNode(ZmqSourceDescriptor::create(schema, nesNode->getIp(), ZMQ_DEFAULT_PORT));
     sourceOperator->setId(SYS_SOURCE_OPERATOR_ID);// all source operators will have MAX64-2 as Id
     return sourceOperator;
 }
 
-void BasePlacementStrategy::addSystemGeneratedSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode) {
-    const OperatorNodePtr sysSinkOperator = createSystemSinkOperator(parentNesNode);
+void BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode) {
+    const OperatorNodePtr sysSinkOperator = createNetworkSinkOperator(parentNesNode);
     queryPlan->appendPreExistingOperator(sysSinkOperator);
 }
 
-void BasePlacementStrategy::addSystemGeneratedSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr currentNesNode, NESTopologyEntryPtr childNesNode) {
+void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr currentNesNode, NESTopologyEntryPtr childNesNode) {
     std::string queryId = queryPlan->getQueryId();
     const ExecutionNodePtr childExecutionNode = executionPlan->getExecutionNodeByNodeId(childNesNode->getId());
     if (!(childExecutionNode)) {
@@ -88,7 +86,7 @@ void BasePlacementStrategy::addSystemGeneratedSourceOperator(QueryPlanPtr queryP
         NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Found a query sub plan without sink operator");
     }
     SchemaPtr sourceSchema = sinkOperators[0]->getOutputSchema();
-    const OperatorNodePtr sysSourceOperator = createSystemSourceOperator(currentNesNode, sourceSchema);
+    const OperatorNodePtr sysSourceOperator = createNetworkSourceOperator(currentNesNode, sourceSchema);
     queryPlan->prependPreExistingOperator(sysSourceOperator);
 }
 
@@ -125,9 +123,9 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
             QueryPlanPtr querySubPlan = QueryPlan::create();
             querySubPlan->setQueryId(queryId);
             NESTopologyEntryPtr childNesNode = *(pathItr - 1);
-            addSystemGeneratedSourceOperator(querySubPlan, currentNode, childNesNode);
+            addNetworkSourceOperator(querySubPlan, currentNode, childNesNode);
             NESTopologyEntryPtr parentNesNode = *(pathItr + 1);
-            addSystemGeneratedSinkOperator(querySubPlan, parentNesNode);
+            addNetworkSinkOperator(querySubPlan, parentNesNode);
 
             NES_DEBUG("BasePlacementStrategy: Infer the output and input schema for the updated query plan");
             typeInferencePhase->transform(querySubPlan);
@@ -150,7 +148,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                                             " This should not happen as placement at sink node is necessary.");
                 }
                 NESTopologyEntryPtr parentNesNode = *(pathItr + 1);
-                addSystemGeneratedSinkOperator(querySubPlan, parentNesNode);
+                addNetworkSinkOperator(querySubPlan, parentNesNode);
             }
 
             if (querySubPlan->getSourceOperators().empty()) {
@@ -159,7 +157,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                                             " This should not happen as placement at source node is necessary.");
                 }
                 NESTopologyEntryPtr childNesNode = *(pathItr - 1);
-                addSystemGeneratedSourceOperator(querySubPlan, currentNode, childNesNode);
+                addNetworkSourceOperator(querySubPlan, currentNode, childNesNode);
             }
 
             NES_DEBUG("BasePlacementStrategy: Infer the output and input schema for the updated query plan");
