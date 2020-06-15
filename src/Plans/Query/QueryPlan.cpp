@@ -123,7 +123,6 @@ const std::string QueryPlan::getSourceStreamName() const {
 
 bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
 
-    //TODO: add more content
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
     if (operatorNode->getId() == SYS_SOURCE_OPERATOR_ID || operatorNode->getId() == SYS_SINK_OPERATOR_ID) {
         NES_DEBUG("QueryPlan: If the operator is a system generated one then we ignore this check");

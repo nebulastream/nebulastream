@@ -117,7 +117,7 @@ class QueryPlan {
 
     /**
      * Get the queryId for the plan
-     * @return
+     * @return query Id of the plan
      */
     const std::string& getQueryId() const;
 

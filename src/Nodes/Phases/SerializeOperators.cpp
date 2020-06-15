@@ -12,14 +12,14 @@
 namespace NES {
 class SerializeOperators {
     void serialize(QueryPlanPtr plan) {
-        auto ope = SerializableOperator();
+        auto serializableOperator = SerializableOperator();
         auto rootOperators = plan->getRootOperators();
         for (auto rootOperator : rootOperators) {
-            serializeOperator(rootOperator, &ope);
+            serializeOperator(rootOperator, &serializableOperator);
         }
 
         std::string json_string;
-        google::protobuf::util::MessageToJsonString(ope, &json_string);
+        google::protobuf::util::MessageToJsonString(serializableOperator, &json_string);
     }
 
     void serializeNode(NodePtr node, SerializableOperator* serializedOperator) {

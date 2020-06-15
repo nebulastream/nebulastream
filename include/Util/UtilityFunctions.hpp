@@ -22,15 +22,14 @@ class UtilityFunctions {
    *  @param query as a string
    *  @return Smart pointer to InputQuery object of the query
    *  */
-    static QueryPtr createQueryFromCodeString(
-        const std::string& query_code_snippet);
+    static QueryPtr createQueryFromCodeString(const std::string& queryCodeSnippet);
 
     /**
    *  @brief this function **executes** the code provided by the user and returns an schema Object
    *  @param query as a string
    *  @return Smart pointer to InputQuery object of the query
    *  */
-    static SchemaPtr createSchemaFromCode(const std::string& query_code_snippet);
+    static SchemaPtr createSchemaFromCode(const std::string& queryCodeSnippet);
 
     /**
    * @brief this function creates an ID string

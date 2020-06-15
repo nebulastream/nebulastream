@@ -24,7 +24,7 @@
 namespace NES {
 
 std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::string placementStrategyName, NESTopologyPlanPtr nesTopologyPlan,
-                                                                          GlobalExecutionPlanPtr executionPlan) {
+                                                                          GlobalExecutionPlanPtr globalExecutionPlan) {
 
     if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
         throw std::invalid_argument("BasePlacementStrategy: Unknown placement strategy name " + placementStrategyName);
@@ -32,9 +32,9 @@ std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::s
 
     switch (stringToPlacementStrategyType[placementStrategyName]) {
         case BottomUp:
-            return BottomUpStrategy::create(nesTopologyPlan, executionPlan);
+            return BottomUpStrategy::create(nesTopologyPlan, globalExecutionPlan);
         case TopDown:
-            return TopDownStrategy::create(nesTopologyPlan, executionPlan);
+            return TopDownStrategy::create(nesTopologyPlan, globalExecutionPlan);
             // FIXME: enable them with issue #755
             //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
             //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
@@ -46,8 +46,8 @@ std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::s
     }
 }
 
-BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan)
-    : nesTopologyPlan(nesTopologyPlan), executionPlan(executionPlan) {
+BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan)
+    : nesTopologyPlan(nesTopologyPlan), globalExecutionPlan(globalExecutionPlan) {
     pathFinder = PathFinder::create(nesTopologyPlan);
     typeInferencePhase = TypeInferencePhase::create();
 }
@@ -71,7 +71,7 @@ void BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTo
 
 void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr currentNesNode, NESTopologyEntryPtr childNesNode) {
     std::string queryId = queryPlan->getQueryId();
-    const ExecutionNodePtr childExecutionNode = executionPlan->getExecutionNodeByNodeId(childNesNode->getId());
+    const ExecutionNodePtr childExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(childNesNode->getId());
     if (!(childExecutionNode)) {
         NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to find child execution node");
     }
@@ -101,7 +101,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
     while (pathItr != path.end()) {
 
         NESTopologyEntryPtr currentNode = *pathItr;
-        ExecutionNodePtr executionNode = executionPlan->getExecutionNodeByNodeId(currentNode->getId());
+        ExecutionNodePtr executionNode = globalExecutionPlan->getExecutionNodeByNodeId(currentNode->getId());
         if (!executionNode || !executionNode->hasQuerySubPlan(queryId)) {
 
             if (pathItr == path.begin()) {
@@ -134,7 +134,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated query sub plan.");
             }
 
-            if (!executionPlan->addExecutionNodeAsParentTo(childNesNode->getId(), executionNode)) {
+            if (!globalExecutionPlan->addExecutionNodeAsParentTo(childNesNode->getId(), executionNode)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add execution node with forward operators");
             }
 
@@ -170,12 +170,12 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
 
         if (previousNode) {
             NES_DEBUG("BasePlacementStrategy: adding link between previous and current execution node");
-            if (!executionPlan->addExecutionNodeAsParentTo(previousNode->getId(), executionNode)) {
+            if (!globalExecutionPlan->addExecutionNodeAsParentTo(previousNode->getId(), executionNode)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add link between previous and current executionNode");
             }
         }
         NES_DEBUG("BasePlacementStrategy: scheduling execution node");
-        executionPlan->scheduleExecutionNode(executionNode);
+        globalExecutionPlan->scheduleExecutionNode(executionNode);
         previousNode = (*pathItr);
         ++pathItr;
     }

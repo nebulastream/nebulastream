@@ -15,11 +15,11 @@ namespace NES {
 
 QueryController::QueryController(NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog,
                                  TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog,
-                                 GlobalExecutionPlanPtr executionPlan) : coordinator(coordinator),
+                                 GlobalExecutionPlanPtr globalExecutionPlan) : coordinator(coordinator),
                                                                          queryCatalog(queryCatalog),
                                                                          topologyManager(topologyManager),
                                                                          streamCatalog(streamCatalog),
-                                                                         executionPlan(executionPlan) {
+                                                                         globalExecutionPlan(globalExecutionPlan) {
     queryServicePtr = std::make_shared<QueryService>(streamCatalog);
 }
 
@@ -42,7 +42,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
 
                     // Call the service
                     string queryId = queryCatalog->registerQuery(userQuery, optimizationStrategyName);
-                    std::string executionPlanAsString = executionPlan->getAsString();
+                    std::string executionPlanAsString = globalExecutionPlan->getAsString();
 
                     // Prepare the response
                     json::value restResponse{};

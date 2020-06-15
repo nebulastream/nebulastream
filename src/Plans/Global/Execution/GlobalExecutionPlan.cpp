@@ -10,12 +10,12 @@ GlobalExecutionPlanPtr GlobalExecutionPlan::create() {
     return std::make_shared<GlobalExecutionPlan>(GlobalExecutionPlan());
 }
 
-bool GlobalExecutionPlan::executionNodeExists(uint64_t id) {
+bool GlobalExecutionPlan::checkIfExecutionNodeExists(uint64_t id) {
     return nodeIdIndex.find(id) != nodeIdIndex.end();
 }
 
 ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeByNodeId(uint64_t id) {
-    if (executionNodeExists(id)) {
+    if (checkIfExecutionNodeExists(id)) {
         return nodeIdIndex[id];
     }
     NES_WARNING("GlobalExecutionPlan: Execution node doesn't exists with the id " << id);
@@ -58,7 +58,7 @@ bool GlobalExecutionPlan::addExecutionNode(ExecutionNodePtr executionNode) {
 }
 
 bool GlobalExecutionPlan::removeExecutionNode(uint64_t id) {
-    if (executionNodeExists(id)) {
+    if (checkIfExecutionNodeExists(id)) {
         NES_DEBUG("GlobalExecutionPlan: Removed execution node with id " << id);
         return nodeIdIndex.erase(id) == 1;
     }
