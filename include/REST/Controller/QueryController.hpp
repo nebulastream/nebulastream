@@ -37,7 +37,18 @@ class QueryController : public BaseController {
 
     ~QueryController() = default;
 
+    /**
+     * Handling the Get requests for 
+     * @param path
+     * @param message
+     */
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
+
+    /**
+     *
+     * @param path
+     * @param message
+     */
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:

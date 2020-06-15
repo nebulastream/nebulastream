@@ -87,6 +87,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
     cout << "REMOVE NEW PARENT" << endl;
     bool successRemoveParent = wrk->removeParent(secIdInt);
+    EXPECT_TRUE(successRemoveParent);
     EXPECT_TRUE(successAddPar);
 
     std::string retString3 = topologyManger->getNESTopologyPlanString();

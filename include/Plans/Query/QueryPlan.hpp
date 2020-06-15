@@ -89,13 +89,17 @@ class QueryPlan {
      * @return returns a vector of leaf operators
      */
     std::vector<OperatorNodePtr> getLeafOperators();
+
     /**
      * @brief Get the source stream name
      * @return sourceStreamName
      */
     const std::string getSourceStreamName() const;
+
     /**
-     * Find if the operator exists in the plan
+     * Find if the operator with same Id exists in the plan.
+     * Note: This method only check if there exists another operator with same Id or not.
+     * Note: The system generated operators are ignored from this check.
      * @param operatorNode
      * @return true if the operator exists else false
      */

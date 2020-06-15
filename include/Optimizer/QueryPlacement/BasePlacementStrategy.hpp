@@ -102,7 +102,7 @@ class BasePlacementStrategy {
      * @param nesNode
      * @return A logical system generated sink operator
      */
-    OperatorNodePtr createSystemSinkOperator(NESTopologyEntryPtr nesNode);
+    OperatorNodePtr createNetworkSinkOperator(NESTopologyEntryPtr nesNode);
 
     /**
      * Create a new system source operator
@@ -110,11 +110,11 @@ class BasePlacementStrategy {
      * @param schema
      * @return A logical system generated source operator
      */
-    OperatorNodePtr createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
+    OperatorNodePtr createNetworkSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
 
-    void addSystemGeneratedSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode);
+    void addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode);
 
-    void addSystemGeneratedSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr currentNesNode, NESTopologyEntryPtr childNesNode);
+    void addNetworkSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr currentNesNode, NESTopologyEntryPtr childNesNode);
 
   protected:
 
