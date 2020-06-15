@@ -15,6 +15,7 @@ class WindowLogicalOperatorNode : public LogicalOperatorNode {
     const std::string toString() const override;
     const WindowDefinitionPtr& getWindowDefinition() const;
     OperatorNodePtr copy() override;
+    bool isIdentical(NodePtr rhs) const override;
 
   private:
     WindowDefinitionPtr windowDefinition;

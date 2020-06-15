@@ -30,6 +30,8 @@ class MapLogicalOperatorNode : public LogicalOperatorNode {
 
     bool equal(const NodePtr rhs) const override;
 
+    bool isIdentical(NodePtr rhs) const override;
+
     const std::string toString() const override;
 
     OperatorNodePtr copy() override;

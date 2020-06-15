@@ -18,20 +18,16 @@ const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() cons
     return windowDefinition;
 }
 
+bool WindowLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+    return equal(rhs) && rhs->as<WindowLogicalOperatorNode>()->getId() == id;
+}
+
 bool WindowLogicalOperatorNode::equal(const NodePtr rhs) const {
-    if (this->isIdentical(rhs)) {
-        return true;
-    }
-    if (rhs->instanceOf<WindowLogicalOperatorNode>()) {
-        auto windowOperator = rhs->as<WindowLogicalOperatorNode>();
-        // todo check if the window definition is the same
-        return windowOperator->getId() == id;
-    }
-    return false;
+    return rhs->instanceOf<WindowLogicalOperatorNode>();
 }
 
 OperatorNodePtr WindowLogicalOperatorNode::copy() {
-    auto copy = std::make_shared<WindowLogicalOperatorNode>(windowDefinition);
+    auto copy = createWindowLogicalOperatorNode(windowDefinition);
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

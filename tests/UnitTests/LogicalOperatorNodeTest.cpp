@@ -1,10 +1,12 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Util/Logger.hpp>
@@ -31,8 +33,8 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 
-#include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 
@@ -58,22 +60,36 @@ class LogicalOperatorNodeTest : public testing::Test {
         pred7 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "7"));
 
         sourceOp = createSourceLogicalOperatorNode(sourceDescriptor);
+        sourceOp->setId(0);
         filterOp1 = createFilterLogicalOperatorNode(pred1);
-        filterOp3 = createFilterLogicalOperatorNode(pred3);
+        filterOp1->setId(1);
         filterOp2 = createFilterLogicalOperatorNode(pred2);
-
+        filterOp2->setId(2);
+        filterOp3 = createFilterLogicalOperatorNode(pred3);
+        filterOp3->setId(3);
         filterOp4 = createFilterLogicalOperatorNode(pred4);
+        filterOp4->setId(4);
         filterOp5 = createFilterLogicalOperatorNode(pred5);
+        filterOp5->setId(5);
         filterOp6 = createFilterLogicalOperatorNode(pred6);
+        filterOp6->setId(6);
         filterOp7 = createFilterLogicalOperatorNode(pred7);
+        filterOp7->setId(7);
 
         filterOp1Copy = createFilterLogicalOperatorNode(pred1);
+        filterOp1Copy->setId(8);
         filterOp2Copy = createFilterLogicalOperatorNode(pred2);
+        filterOp2Copy->setId(9);
         filterOp3Copy = createFilterLogicalOperatorNode(pred3);
+        filterOp3Copy->setId(10);
         filterOp4Copy = createFilterLogicalOperatorNode(pred4);
+        filterOp4Copy->setId(11);
         filterOp5Copy = createFilterLogicalOperatorNode(pred5);
+        filterOp5Copy->setId(12);
         filterOp6Copy = createFilterLogicalOperatorNode(pred6);
+        filterOp6Copy->setId(13);
         filterOp7Copy = createFilterLogicalOperatorNode(pred7);
+        filterOp7Copy->setId(14);
 
         removed = false;
         replaced = false;
@@ -92,10 +108,10 @@ class LogicalOperatorNodeTest : public testing::Test {
     DumpContextPtr dumpContext;
 
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
-    NodePtr sourceOp;
+    LogicalOperatorNodePtr sourceOp;
 
-    NodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
-    NodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy, filterOp7Copy;
+    LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
+    LogicalOperatorNodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy, filterOp7Copy;
 
     std::vector<NodePtr> children{};
     std::vector<NodePtr> parents{};

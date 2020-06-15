@@ -14,13 +14,14 @@ void SinkLogicalOperatorNode::setSinkDescriptor(SinkDescriptorPtr sinkDescriptor
     this->sinkDescriptor = std::move(sinkDescriptor);
 }
 
+bool SinkLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+    return equal(rhs) && rhs->as<SinkLogicalOperatorNode>()->getId() == id;
+}
+
 bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
-    if (this->isIdentical(rhs)) {
-        return true;
-    }
     if (rhs->instanceOf<SinkLogicalOperatorNode>()) {
         auto sinkOperator = rhs->as<SinkLogicalOperatorNode>();
-        return sinkOperator->getSinkDescriptor()->equal(sinkDescriptor) && sinkOperator->getId() == id;
+        return sinkOperator->getSinkDescriptor()->equal(sinkDescriptor);
     }
     return false;
 };
@@ -32,7 +33,7 @@ const std::string SinkLogicalOperatorNode::toString() const {
 }
 
 OperatorNodePtr SinkLogicalOperatorNode::copy() {
-    auto copy = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor);
+    auto copy = createSinkLogicalOperatorNode(sinkDescriptor);
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
