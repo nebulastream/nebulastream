@@ -15,5 +15,8 @@ bool Undefined::isEquals(DataTypePtr otherDataType) {
 DataTypePtr Undefined::join(DataTypePtr otherDataType) {
     return DataTypeFactory::createUndefined();
 }
+std::string Undefined::toString() {
+    return "Undefined";
+}
 
 }// namespace NES

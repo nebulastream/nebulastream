@@ -49,6 +49,7 @@ class Array : public DataType {
      * @return DataTypePtr joined data type
      */
     DataTypePtr join(DataTypePtr otherDataType) override;
+    std::string toString() override;
 
   private:
     const uint64_t length;

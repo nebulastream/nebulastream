@@ -13,4 +13,8 @@ int8_t Numeric::getBits() const {
     return bits;
 }
 
+std::string Numeric::toString() {
+    return "Numeric";
+}
+
 }// namespace NES

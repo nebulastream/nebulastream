@@ -41,6 +41,7 @@ class Char : public DataType {
     * @brief Returns the length of the char.
     */
     [[nodiscard]] uint64_t getLength() const;
+    std::string toString() override;
 
   private:
     const uint64_t length;

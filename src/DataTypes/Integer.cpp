@@ -45,4 +45,5 @@ int64_t Integer::getUpperBound() const {
     return upperBound;
 }
 
+
 }// namespace NES
