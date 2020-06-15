@@ -67,6 +67,12 @@ class DataType {
      * @return DataTypePtr joined data type
      */
     virtual DataTypePtr join(DataTypePtr otherDataType) = 0;
+
+    /**
+     * @brief Returns a string representation of the data type.
+     * @return string
+     */
+    virtual std::string toString() = 0;
 };
 
 }// namespace NES

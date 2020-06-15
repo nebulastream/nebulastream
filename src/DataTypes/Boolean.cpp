@@ -18,4 +18,8 @@ DataTypePtr Boolean::join(DataTypePtr otherDataType) {
     return DataTypeFactory::createUndefined();
 }
 
+std::string Boolean::toString() {
+    return "Boolean";
+}
+
 }// namespace NES

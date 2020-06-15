@@ -25,4 +25,8 @@ DataTypePtr Char::join(DataTypePtr otherDataType) {
     return DataTypeFactory::createUndefined();
 }
 
+std::string Char::toString() {
+    return "Char";
+}
+
 }// namespace NES

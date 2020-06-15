@@ -30,4 +30,8 @@ DataTypePtr Array::join(DataTypePtr otherDataType) {
     return DataTypeFactory::createUndefined();
 }
 
+std::string Array::toString() {
+    return "Array";
+}
+
 }// namespace NES

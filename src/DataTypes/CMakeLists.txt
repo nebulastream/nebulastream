@@ -9,3 +9,5 @@ add_source_nes(
         Float.cpp
         DataTypeFactory.cpp
 )
+
+add_subdirectory(ValueTypes)

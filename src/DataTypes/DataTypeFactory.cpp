@@ -26,7 +26,7 @@ DataTypePtr DataTypeFactory::createFloat() {
 
 DataTypePtr DataTypeFactory::createFloat(double lowerBound, double upperBound) {
     auto bits = lowerBound >= std::numeric_limits<float>::min()  && upperBound <= std::numeric_limits<float>::min() ? 32 : 64;
-    createFloat(bits, lowerBound, upperBound);
+    return createFloat(bits, lowerBound, upperBound);
 }
 
 DataTypePtr DataTypeFactory::createDouble() {
