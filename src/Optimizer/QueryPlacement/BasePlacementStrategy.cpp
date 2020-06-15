@@ -55,13 +55,13 @@ BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan,
 }
 
 OperatorNodePtr BasePlacementStrategy::createSystemSinkOperator(NESTopologyEntryPtr nesNode) {
-    auto sinkOperator = createSinkLogicalOperatorNode(ZmqSinkDescriptor::create(nesNode->getIp(), zmqDefaultPort));
+    auto sinkOperator = createSinkLogicalOperatorNode(ZmqSinkDescriptor::create(nesNode->getIp(), ZMQ_DEFAULT_PORT));
     sinkOperator->setId(SYS_SINK_OPERATOR_ID);// all sink operators will have MAX64-1 as Id
     return sinkOperator;
 }
 
 OperatorNodePtr BasePlacementStrategy::createSystemSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema) {
-    auto sourceOperator = createSourceLogicalOperatorNode(ZmqSourceDescriptor::create(schema, nesNode->getIp(), zmqDefaultPort));
+    auto sourceOperator = createSourceLogicalOperatorNode(ZmqSourceDescriptor::create(schema, nesNode->getIp(), ZMQ_DEFAULT_PORT));
     sourceOperator->setId(SYS_SOURCE_OPERATOR_ID);// all source operators will have MAX64-2 as Id
     return sourceOperator;
 }

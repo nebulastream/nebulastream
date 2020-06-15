@@ -3,7 +3,6 @@
 #include <API/Query.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -17,12 +16,10 @@
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
@@ -83,7 +80,6 @@ TEST_F(QueryTest, testQueryFilter) {
     EXPECT_EQ(sinkOperators.size(), 1);
 }
 
-
 TEST_F(QueryTest, testQueryExpression) {
     auto andExpression = Attribute("f1") && 10;
     ASSERT_TRUE(andExpression->instanceOf<AndExpressionNode>());
@@ -114,10 +110,7 @@ TEST_F(QueryTest, testQueryExpression) {
     auto assignmentExpression = Attribute("f1") = --Attribute("f1")+++10;
     ConsoleDumpHandler::create()->dump(assignmentExpression, std::cout);
     ASSERT_TRUE(assignmentExpression->instanceOf<FieldAssignmentExpressionNode>());
-
 }
-
-
 
 }  // namespace NES
 

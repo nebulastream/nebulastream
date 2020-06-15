@@ -1,14 +1,11 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
-#include <Components/NesWorker.hpp>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
-#include <Deployer/QueryDeployer.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <REST/RestServer.hpp>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
+#include <thread>
 
 namespace NES {
 
@@ -20,6 +17,21 @@ typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
+class RestServer;
+typedef std::shared_ptr<RestServer> RestServerPtr;
+
+class CoordinatorEngine;
+typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;
+
+class QueryDeployer;
+typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
+
+class NesWorker;
+typedef std::shared_ptr<NesWorker> NesWorkerPtr;
+
+class QueryStatistics;
+typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
@@ -141,7 +153,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     uint16_t restPort;
     uint16_t rpcPort;
     std::shared_ptr<grpc::Server> rpcServer;
-    std::shared_ptr<std::thread> rpcThread;
+    shared_ptr<std::thread> rpcThread;
     NesWorkerPtr worker;
     WorkerRPCClientPtr workerRPCClient;
     CoordinatorEnginePtr coordinatorEngine;
@@ -150,8 +162,8 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;
     TopologyManagerPtr topologyManager;
-    std::shared_ptr<RestServer> restServer;
-    std::shared_ptr<std::thread> restThread;
+    RestServerPtr restServer;
+    shared_ptr<std::thread> restThread;
     std::atomic<bool> stopped;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;

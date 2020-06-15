@@ -1,3 +1,6 @@
+#include <Components/NesWorker.hpp>
+#include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <Deployer/QueryDeployer.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
@@ -50,24 +53,28 @@ bool ExecutionNode::removeQuerySubPlan(std::string subPlanId) {
 }
 
 void ExecutionNode::freeOccupiedResources(QueryPlanPtr querySubPlan) {
+    NES_DEBUG("ExecutionNode : calculate the number of resources occupied by the query sub plan and release them");
     int32_t resourceToFree = 0;
     auto roots = querySubPlan->getRootOperators();
+    // vector keeping track of already visited nodes.
     std::set<u_int64_t> visitedOpIds;
+    NES_DEBUG("ExecutionNode : Iterate over all root nodes in the query sub graph to calculate occupied resources");
     for (auto root : roots) {
         auto bfsIterator = BreadthFirstNodeIterator(root);
         auto itr = bfsIterator.begin();
         while (itr != bfsIterator.end()) {
             auto visitingOp = (*itr)->as<OperatorNode>();
             ++itr;
-
             if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
-                continue;
+                NES_TRACE("ExecutionNode : Found already visited operator skipping rest of the path traverse.");
+                break;
             }
-
             if (visitingOp->getId() != SYS_SOURCE_OPERATOR_ID && visitingOp->getId() != SYS_SINK_OPERATOR_ID) {
+                // increase the resource count
                 resourceToFree++;
+                // add operator id to the already visited operator id collection
+                visitedOpIds.insert(visitingOp->getId());
             }
-            visitedOpIds.insert(visitingOp->getId());
         }
     }
     NES_INFO("ExecutionNode: Releasing " << resourceToFree << " CPU resources from the node with id " << id);

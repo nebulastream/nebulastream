@@ -193,6 +193,10 @@ add_executable(coordinator-engine-tests "UnitTests/CoordinatorEngineTest.cpp")
 target_link_libraries(coordinator-engine-tests nes ${GTEST_LIBRARIES})
 add_test(NAME coordinator-engine-tests COMMAND coordinator-engine-tests)
 
+### Query Plan Tests ###
+add_executable(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
+target_link_libraries(query-plan-tests nes ${GTEST_LIBRARIES})
+add_test(NAME query-plan-tests COMMAND query-plan-tests)
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
