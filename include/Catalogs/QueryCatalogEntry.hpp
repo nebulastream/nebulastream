@@ -56,25 +56,50 @@ class QueryCatalogEntry {
           queryStatus(queryStatus) {
     }
 
+    /**
+    * @brief method to get the id of the query
+    * @return query id
+    */
     const string& getQueryId() const {
         return queryId;
     }
 
+    /**
+    * @brief method to get the string of the query
+    * @return query string
+    */
     const string& getQueryString() const {
         return queryString;
     }
 
+    /**
+    * @brief method to get the query plan
+    * @return pointer to the query plan
+    */
     const QueryPlanPtr getQueryPlan() const {
         return queryPlanPtr;
     }
 
+    /**
+    * @brief method to get the execution plan of the query
+    * @return pointer to the nes execution plan
+    */
     const NESExecutionPlanPtr getNesPlanPtr() const {
         return nesPlanPtr;
     }
 
+    /**
+    * @brief method to get the status of the query
+    * @return query status
+    */
     QueryStatus getQueryStatus() const {
         return queryStatus;
     }
+
+    /**
+    * @brief method to set the status of the query
+    * @param query status
+    */
     void setQueryStatus(QueryStatus queryStatus) {
         QueryCatalogEntry::queryStatus = queryStatus;
     }
