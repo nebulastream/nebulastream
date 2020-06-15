@@ -9,6 +9,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Network/NetworkSource.hpp>
 
 namespace NES {
 class ConvertLogicalToPhysicalSourceTest : public testing::Test {
@@ -28,7 +29,6 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
 };
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysicalSource) {
-
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, "csv.log", ",", 10, 10);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
@@ -36,7 +36,6 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysica
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingBinaryFileLogicalToPhysicalSource) {
-
     std::string filePath =
         "../tests/test_data/ysb-tuples-100-campaign-100.bin";
     SchemaPtr schema = Schema::create();
@@ -46,7 +45,6 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingBinaryFileLogicalToPhys
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingZMQLogicalToPhysicalSource) {
-
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = ZmqSourceDescriptor::create(schema, "localhost", 10000);
     DataSourcePtr zqmSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
@@ -62,7 +60,6 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingKafkaLogiclaToPhysicalS
 }
 #endif
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogicalToPhysicalSource) {
-
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = SenseSourceDescriptor::create(schema, "some_udf");
     DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
@@ -70,7 +67,6 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogicalToPhysicalS
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingDefaultLogicalToPhysicalSource) {
-
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/1);
     DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
@@ -78,7 +74,6 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingDefaultLogicalToPhysica
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingNetworkLogicalToPhysicalSource) {
-
     SchemaPtr schema = Schema::create();
     Network::NesPartition nesPartition{1, 22, 33, 44};
     SourceDescriptorPtr sourceDescriptor = Network::NetworkSourceDescriptor::create(schema, nesPartition);

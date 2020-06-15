@@ -28,13 +28,41 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     std::chrono::seconds waitTime,
                                     uint32_t retryTimes);
 
+    /**
+     * @brief returns the string representation of the network sink
+     * @return the string representation
+     */
     std::string toString() override;
 
+    /**
+     * @brief equal method for the NetworkSinkDescriptor
+     * @param other
+     * @return true if equal, else false
+     */
     bool equal(SinkDescriptorPtr other) override;
 
+    /**
+     * @brief getter for the node location
+     * @return the node location
+     */
     NodeLocation getNodeLocation() const;
+
+    /**
+     * @brief getter for the nes partition
+     * @return the nes partition
+     */
     NesPartition getNesPartition() const;
+
+    /**
+     * @brief getter for the wait time
+     * @return the wait time
+     */
     std::chrono::seconds getWaitTime() const;
+
+    /**
+     * @brief getter for the retry times
+     * @return the retry times
+     */
     uint8_t getRetryTimes() const;
 
   private:

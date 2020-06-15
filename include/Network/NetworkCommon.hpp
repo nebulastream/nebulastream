@@ -129,7 +129,7 @@ class NodeLocation {
         return hostname;
     }
 
-    const uint32_t getPort() const {
+    uint32_t getPort() const {
         return port;
     }
 
@@ -137,7 +137,7 @@ class NodeLocation {
      * @brief The equals operator for the NodeLocation.
      * @param lhs
      * @param rhs
-     * @return
+     * @return true, if they are equal, else false
      */
     friend bool operator==(const NodeLocation& lhs, const NodeLocation& rhs) {
         return lhs.nodeId == rhs.nodeId && lhs.hostname == rhs.hostname && lhs.port == rhs.port;
