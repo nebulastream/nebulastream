@@ -33,7 +33,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
+    cout << "worker started connected successfully" << endl;
 
     cout << "wakeup" << endl;
 
@@ -57,7 +57,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
+    cout << "worker started connected successfully" << endl;
 
     cout << "wakeup" << endl;
 
@@ -85,7 +85,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
 
     bool retConWrk = wrk->connect();
     EXPECT_TRUE(retConWrk);
-    cout << "worker started connected " << endl;
+    cout << "worker got connected " << endl;
 
     bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
@@ -109,7 +109,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
 
     bool retConWrk = wrk->connect();
     EXPECT_TRUE(retConWrk);
-    cout << "worker started connected " << endl;
+    cout << "worker got connected " << endl;
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -133,11 +133,11 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
 
     bool retConWrk = wrk->connect();
     EXPECT_TRUE(retConWrk);
-    cout << "worker started connected " << endl;
+    cout << "worker got connected " << endl;
 
     bool retDisWrk = wrk->disconnect();
     EXPECT_TRUE(retDisWrk);
-    cout << "worker started connected " << endl;
+    cout << "worker got disconnected " << endl;
 
     bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
@@ -161,19 +161,19 @@ TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
 
     bool retConWrk = wrk->connect();
     EXPECT_TRUE(retConWrk);
-    cout << "worker started connected " << endl;
+    cout << "worker got connected " << endl;
 
     bool retDisWrk = wrk->disconnect();
     EXPECT_TRUE(retDisWrk);
-    cout << "worker started connected " << endl;
+    cout << "worker got disconnected " << endl;
 
     bool retConWrk2 = wrk->connect();
     EXPECT_TRUE(retConWrk2);
-    cout << "worker started connected " << endl;
+    cout << "worker got connected " << endl;
 
     bool retDisWrk2 = wrk->disconnect();
     EXPECT_TRUE(retDisWrk2);
-    cout << "worker started connected " << endl;
+    cout << "worker got disconnected " << endl;
     bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 

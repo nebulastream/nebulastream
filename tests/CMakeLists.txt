@@ -71,7 +71,7 @@ target_link_libraries(nes-topology-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME nes-topology-manager-tests COMMAND nes-topology-manager-tests)
 
 ### Buffer Manager Test ###
-add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp" UnitTests/CoordinaotEngineTest.cpp)
+add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp" UnitTests/CoordinatorEngineTest.cpp)
 target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
@@ -189,7 +189,7 @@ target_link_libraries(serialize-operator-test nes ${GTEST_LIBRARIES})
 add_test(NAME serialize-operator-test COMMAND serialize-operator-test)
 
 ### CoordinatorEngine Tests ###
-add_executable(coordinator-engine-tests "UnitTests/CoordinaotEngineTest.cpp")
+add_executable(coordinator-engine-tests "UnitTests/CoordinatorEngineTest.cpp")
 target_link_libraries(coordinator-engine-tests nes ${GTEST_LIBRARIES})
 add_test(NAME coordinator-engine-tests COMMAND coordinator-engine-tests)
 

@@ -26,9 +26,9 @@ class QueryCatalog {
   public:
     QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog);
     /**
-     * @brief registers a CAF query into the NES topology to make it deployable
+     * @brief registers an RPC query into the NES topology to make it deployable
      * @param queryString a queryString of the query
-     * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
+     * @param optimizationStrategyName the optimization strategy (bottomUp or topDown)
      * @return query id
      */
     string registerQuery(const string& queryString,
@@ -91,7 +91,7 @@ class QueryCatalog {
     QueryCatalogEntryPtr getQuery(std::string queryID);
 
     /**
-     * @brief method to thest if a query exists
+     * @brief method to test if a query exists
      * @param query id
      * @return bool indicating if query exists (true) or not (false)
      */

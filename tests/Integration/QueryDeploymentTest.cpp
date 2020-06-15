@@ -201,7 +201,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployAndUndeployTwoWorkerFileOutput) {
+TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     remove("test.out");
 
     cout << "start coordinator" << endl;

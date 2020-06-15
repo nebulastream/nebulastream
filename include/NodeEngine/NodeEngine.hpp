@@ -24,7 +24,7 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality
- * such as deploying, undeploying, starting, and stoping.
+ * such as deploying, undeploying, starting, and stopping.
  *
  */
 class NodeEngine {
@@ -65,14 +65,14 @@ class NodeEngine {
     bool undeployQuery(std::string queryId);
 
     /**
-     * @brief gregisters a query
+     * @brief registers a query
      * @param query plan to register
      * @return true if succeeded, else false
      */
     bool registerQueryInNodeEngine(QueryExecutionPlanPtr qep);
 
     /**
-    * @brief gregisters a query
+    * @brief registers a query
     * @param queryId
     * @param query plan to register as eto
     * @return true if succeeded, else false

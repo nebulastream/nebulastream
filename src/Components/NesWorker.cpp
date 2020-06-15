@@ -178,7 +178,7 @@ bool NesWorker::disconnect() {
 
 bool NesWorker::registerLogicalStream(std::string name, std::string path) {
     bool success = coordinatorRpcClient->registerLogicalStream(name, path);
-    NES_DEBUG("NesWorker::disconnect success=" << success);
+    NES_DEBUG("NesWorker::registerLogicalStream success=" << success);
     return success;
 }
 

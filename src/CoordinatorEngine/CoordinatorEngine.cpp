@@ -369,7 +369,7 @@ bool CoordinatorEngine::removeParent(size_t childId, size_t parentId) {
                                                                     << " could not be removed");
         return false;
     }
-    NES_DEBUG("CoordinatorEngine::removeParent: successfull");
+    NES_DEBUG("CoordinatorEngine::removeParent: successful");
     return true;
 }
 }// namespace NES
