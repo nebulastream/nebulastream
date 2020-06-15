@@ -8,13 +8,14 @@ namespace NES {
 MapLogicalOperatorNode::MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression) : mapExpression(
     mapExpression) {}
 
+bool MapLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+    return equal(rhs) && rhs->as<MapLogicalOperatorNode>()->getId() == id;
+}
+
 bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
-    if (this->isIdentical(rhs)) {
-        return true;
-    }
     if (rhs->instanceOf<MapLogicalOperatorNode>()) {
         auto mapOperator = rhs->as<MapLogicalOperatorNode>();
-        return mapExpression->equal(mapOperator->mapExpression) && mapOperator->getId() == id;
+        return mapExpression->equal(mapOperator->mapExpression);
     }
     return false;
 };
@@ -52,7 +53,7 @@ FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() {
 }
 
 OperatorNodePtr MapLogicalOperatorNode::copy() {
-    auto copy = std::make_shared<MapLogicalOperatorNode>(mapExpression);
+    auto copy = createMapLogicalOperatorNode(mapExpression);
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

@@ -170,8 +170,7 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
         }
     }
     // update children and parents of new nodes.
-    bool success = false;
-    success = removeChild(oldNode);
+    bool success = removeChild(oldNode);
     if (success) {
         children.push_back(newNode);
         for (auto&& currentNode : oldNode->children) {

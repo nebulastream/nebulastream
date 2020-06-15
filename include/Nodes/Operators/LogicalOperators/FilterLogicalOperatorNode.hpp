@@ -33,6 +33,9 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
      * @return bool true if they are the same otherwise false
      */
     bool equal(const NodePtr rhs) const override;
+
+    bool isIdentical(NodePtr rhs) const override;
+
     const std::string toString() const override;
 
     /**
@@ -46,7 +49,7 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
      * @brief Create copy of this filter operator
      * @return copy of the filter operator
      */
-    FilterLogicalOperatorNodePtr deepCopy();
+    FilterLogicalOperatorNodePtr duplicate();
 
     OperatorNodePtr copy() override;
 

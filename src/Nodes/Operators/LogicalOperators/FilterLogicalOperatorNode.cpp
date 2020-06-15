@@ -12,15 +12,15 @@ ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() {
     return predicate;
 }
 
-bool FilterLogicalOperatorNode::equal(const NodePtr rhs) const {
+bool FilterLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+    return equal(rhs) && rhs->as<FilterLogicalOperatorNode>()->getId() == id;
+}
 
-    if (this->isIdentical(rhs)) {
-        return true;
-    }
+bool FilterLogicalOperatorNode::equal(const NodePtr rhs) const {
 
     if (rhs->instanceOf<FilterLogicalOperatorNode>()) {
         auto filterOperator = rhs->as<FilterLogicalOperatorNode>();
-        return predicate->equal(filterOperator->predicate) && filterOperator->getId() == id;
+        return predicate->equal(filterOperator->predicate);
     }
     return false;
 };
@@ -31,7 +31,7 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::deepCopy() {
+FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::duplicate() {
 
     NES_INFO("FilterLogicalOperatorNode: Create copy of the filter operator");
     const FilterLogicalOperatorNodePtr copiedOptr = std::make_shared<FilterLogicalOperatorNode>(this->getPredicate());
@@ -70,7 +70,7 @@ bool FilterLogicalOperatorNode::inferSchema() {
 }
 
 OperatorNodePtr FilterLogicalOperatorNode::copy() {
-    auto copy = std::make_shared<FilterLogicalOperatorNode>(predicate);
+    auto copy = createFilterLogicalOperatorNode(predicate);
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

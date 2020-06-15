@@ -123,31 +123,17 @@ const std::string QueryPlan::getSourceStreamName() const {
 
 bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
 
+    //TODO: add more content
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
     if (operatorNode->getId() == SYS_SOURCE_OPERATOR_ID || operatorNode->getId() == SYS_SINK_OPERATOR_ID) {
         NES_DEBUG("QueryPlan: If the operator is a system generated one then we ignore this check");
         return false;
     }
-    // Maintain a list of visited nodes as there are multiple root nodes
-    std::set<u_int64_t> visitedOpIds;
+
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator");
     for (auto rootOperator : rootOperators) {
-        auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-        for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
-            auto visitingOp = (*itr)->as<OperatorNode>();
-            if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
-                NES_TRACE("QueryPlan : Found already visited operator skipping rest of the path traverse.");
-                break;
-            }
-            if (visitingOp->getId() != SYS_SOURCE_OPERATOR_ID && visitingOp->getId() != SYS_SINK_OPERATOR_ID) {
-                // add operator id to the already visited operator id collection
-                NES_TRACE("QueryPlan : Adding traversed node to the collection of visited nodes.");
-                visitedOpIds.insert(visitingOp->getId());
-            }
-            if (operatorNode->equal(visitingOp)) {
-                NES_DEBUG("QueryPlan: Found operator with matching Id");
-                return true;
-            }
+        if(rootOperator->findRecursively(rootOperator, operatorNode)) {
+            return true;
         }
     }
     NES_DEBUG("QueryPlan: Unable to find operator with matching Id");

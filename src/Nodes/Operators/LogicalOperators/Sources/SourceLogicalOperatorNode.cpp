@@ -6,13 +6,14 @@ namespace NES {
 SourceLogicalOperatorNode::SourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor)
     : sourceDescriptor(sourceDescriptor) {}
 
+bool SourceLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+    return equal(rhs) && rhs->as<SourceLogicalOperatorNode>()->getId() == id;
+}
+
 bool SourceLogicalOperatorNode::equal(const NodePtr rhs) const {
-    if (this->isIdentical(rhs)) {
-        return true;
-    }
     if (rhs->instanceOf<SourceLogicalOperatorNode>()) {
         auto sourceOperator = rhs->as<SourceLogicalOperatorNode>();
-        return sourceOperator->getSourceDescriptor()->equal(sourceDescriptor) && sourceOperator->getId() == id;
+        return sourceOperator->getSourceDescriptor()->equal(sourceDescriptor);
     }
     return false;
 }
@@ -40,7 +41,7 @@ void SourceLogicalOperatorNode::setSourceDescriptor(SourceDescriptorPtr sourceDe
 }
 
 OperatorNodePtr SourceLogicalOperatorNode::copy() {
-    auto copy = std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor);
+    auto copy = createSourceLogicalOperatorNode(sourceDescriptor);
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

@@ -14,6 +14,7 @@ class SinkLogicalOperatorNode : public LogicalOperatorNode {
     SinkLogicalOperatorNode();
     SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor);
     SinkLogicalOperatorNode& operator=(const SinkLogicalOperatorNode& other);
+    bool isIdentical(NodePtr rhs) const override;
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
     SinkDescriptorPtr getSinkDescriptor();

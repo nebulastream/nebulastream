@@ -63,7 +63,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             if (node != filterOperator) {
 
                 NES_INFO("FilterPushDownRule: Adding Filter operator between current operator and its parents");
-                FilterLogicalOperatorNodePtr copyOptr = filterOperator->deepCopy();
+                FilterLogicalOperatorNodePtr copyOptr = filterOperator->duplicate();
                 if (!(copyOptr->removeAndJoinParentAndChildren()
                       && node->insertBetweenThisAndParentNodes(copyOptr))) {
 
@@ -78,7 +78,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
 
             if (predicateFieldManipulated) {
-                FilterLogicalOperatorNodePtr copyOptr = filterOperator->deepCopy();
+                FilterLogicalOperatorNodePtr copyOptr = filterOperator->duplicate();
                 if (!(copyOptr->removeAndJoinParentAndChildren()
                       && node->insertBetweenThisAndParentNodes(copyOptr))) {
 
