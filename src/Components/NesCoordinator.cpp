@@ -109,7 +109,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
         startCoordinatorRPCServer(rpcServer, address, promRPC, coordinatorEngine);
     }));
     promRPC.get_future().get();
-    NES_DEBUG("WorkerActor::startCoordinatorRPCServer: ready");
+    NES_DEBUG("NESWorker::startCoordinatorRPCServer: ready");
 
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
@@ -131,7 +131,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     }));
 
     promRest.get_future().get();//promise to make sure we wait until the server is started
-    NES_DEBUG("WorkerActor::startCoordinatorRPCServer: ready");
+    NES_DEBUG("NESWorker::startCoordinatorRPCServer: ready");
 
     stopped = false;
     if (blocking) {//blocking is for the starter to wait here for user to send query
@@ -214,7 +214,7 @@ string NesCoordinator::addQuery(const string queryString, const string strategy)
 
     NES_DEBUG("NesCoordinator:addQuery: create Deployment");
     QueryDeployment deployments = queryDeployer->generateDeployment(queryId);
-    NES_DEBUG("CoordinatorActor::addQuery" << deployments.size() << " objects topology before"
+    NES_DEBUG("NESCoordinator::addQuery" << deployments.size() << " objects topology before"
                                            << topologyManager->getNESTopologyPlanString());
     stringstream ss;
     for (auto element : deployments) {
@@ -296,7 +296,7 @@ bool NesCoordinator::deployQuery(std::string queryId) {
     auto translationUnit = TranslateFromLegacyPlanPhase::create();
 
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId()
+        NES_DEBUG("NESCoordinator::registerQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId()
                                                                            << " eto="
                                                                            << x->second.toString());
 
@@ -350,10 +350,10 @@ bool NesCoordinator::undeployQuery(std::string queryId) {
 
     QueryDeployment& deployments = currentDeployments[queryId];
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("CoordinatorActor::undeployQuery serialize " << x->first << " id=" << x->first->getId() << " eto="
+        NES_DEBUG("NESCoordinator::undeployQuery serialize " << x->first << " id=" << x->first->getId() << " eto="
                                                                << x->second.toString());
         NES_DEBUG(
-            "CoordinatorActor::undeployQuery " << queryId << " to " << x->first->getIp());
+            "NESCoordinator::undeployQuery " << queryId << " to " << x->first->getIp());
 
         bool success = workerRPCClient->unregisterQuery(x->first->getIp(), queryId);
         if (success) {
@@ -371,11 +371,11 @@ bool NesCoordinator::startQuery(std::string queryId) {
 
     QueryDeployment& deployments = currentDeployments[queryId];
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("CoordinatorActor::startQuery serialize " << x->first << " id=" << x->first->getId()
+        NES_DEBUG("NESCoordinator::startQuery serialize " << x->first << " id=" << x->first->getId()
                                                             << " eto="
                                                             << x->second.toString());
         NES_DEBUG(
-            "CoordinatorActor::startQuery " << queryId << " to " << x->first->getIp());
+            "NESCoordinator::startQuery " << queryId << " to " << x->first->getIp());
 
         bool success = workerRPCClient->startQuery(x->first->getIp(), queryId);
         if (success) {
@@ -394,11 +394,11 @@ bool NesCoordinator::stopQuery(std::string queryId) {
 
     QueryDeployment& deployments = currentDeployments[queryId];
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("CoordinatorActor::stopQuery serialize " << x->first << " id=" << x->first->getId()
+        NES_DEBUG("NESCoordinator::stopQuery serialize " << x->first << " id=" << x->first->getId()
                                                            << " eto="
                                                            << x->second.toString());
         NES_DEBUG(
-            "CoordinatorActor::stopQuery " << queryId << " to " << x->first->getIp());
+            "NESCoordinator::stopQuery " << queryId << " to " << x->first->getIp());
 
         bool success = workerRPCClient->stopQuery(x->first->getIp(), queryId);
         if (success) {

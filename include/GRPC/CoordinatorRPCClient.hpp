@@ -51,14 +51,14 @@ class CoordinatorRPCClient {
                                   std::string physicalStreamName);
 
     /**
-     * @brief @brief method to add a new parent to an existing node
+     * @brief method to add a new parent to an existing node
      * @param newParentId
      * @return bool indicating success
      */
     bool addParent(size_t parentId);
 
     /**
-     * @brief method to remove a parrent from a node
+     * @brief method to remove a parent from a node
      * @param newParentId
      * @return bool indicating success
      */
