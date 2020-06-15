@@ -6,8 +6,6 @@
 #include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
-#include <API/Types/DataTypes.hpp>
-
 namespace NES {
 
 const std::string toString(const UnaryOperatorType& type) {

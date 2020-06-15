@@ -2,37 +2,34 @@
 #define INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
 
 #pragma once
-
-#include <API/Types/DataTypes.hpp>
+#include <memory>
 
 namespace NES {
+
+class DataType;
+typedef std::shared_ptr<DataType> DataTypePtr;
+
+class AttributeField;
+typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
 class AttributeField {
   public:
     AttributeField() = default;
     AttributeField(const std::string& name, DataTypePtr data_type);
-    AttributeField(const std::string& name, const BasicType&);
     AttributeField(const std::string& name);
-    AttributeField(const std::string& name, uint32_t dataTypeSize);
+
+    static AttributeFieldPtr create(std::string name, DataTypePtr dataType);
 
     std::string name;
-    DataTypePtr data_type;
+    DataTypePtr dataType;
     uint32_t getFieldSize() const;
     DataTypePtr getDataType() const;
     bool hasType() const;
     const std::string toString() const;
 
-    const AttributeFieldPtr copy() const;
 
-    bool isEqual(const AttributeField& attr);
+
     bool isEqual(AttributeFieldPtr attr);
-
-    AttributeField(const AttributeField&);
-    AttributeField& operator=(const AttributeField&);
-
-    bool operator==(const AttributeField& rhs) const {
-        return name == rhs.name && *data_type.get() == *rhs.data_type.get();
-    }
 };
 
 }// namespace NES

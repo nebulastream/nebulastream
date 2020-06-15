@@ -6,6 +6,8 @@
 #include <DataTypes/Float.hpp>
 #include <DataTypes/Integer.hpp>
 #include <DataTypes/Undefined.hpp>
+#include <DataTypes/ValueTypes/ArrayValueType.hpp>
+#include <DataTypes/ValueTypes/BasicValue.hpp>
 namespace NES {
 
 DataTypePtr DataTypeFactory::createUndefined() {
@@ -25,7 +27,7 @@ DataTypePtr DataTypeFactory::createFloat() {
 }
 
 DataTypePtr DataTypeFactory::createFloat(double lowerBound, double upperBound) {
-    auto bits = lowerBound >= std::numeric_limits<float>::min()  && upperBound <= std::numeric_limits<float>::min() ? 32 : 64;
+    auto bits = lowerBound >= std::numeric_limits<float>::min() && upperBound <= std::numeric_limits<float>::min() ? 32 : 64;
     return createFloat(bits, lowerBound, upperBound);
 }
 
@@ -72,6 +74,14 @@ DataTypePtr DataTypeFactory::createArray(uint64_t length, DataTypePtr component)
 
 DataTypePtr DataTypeFactory::createChar(uint64_t length) {
     return std::make_shared<Char>(length);
+}
+
+ValueTypePtr DataTypeFactory::createBasicValue(DataTypePtr type, std::string value) {
+    return std::make_shared<BasicValue>(type, value);
+}
+
+ValueTypePtr DataTypeFactory::createArrayValue(DataTypePtr type, std::vector<std::string> values) {
+    return std::make_shared<ArrayValue>(type, values);
 }
 
 }// namespace NES

@@ -2,7 +2,6 @@
 #define NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSION_HPP_
 #include <Nodes/Expressions/ExpressionNode.hpp>
 namespace NES {
-
 /**
  * @brief A binary expression is represents expressions with two children.
  */

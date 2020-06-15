@@ -3,7 +3,6 @@
 #include <memory>
 
 #include <API/Schema.hpp>
-#include <API/Types/DataTypes.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>

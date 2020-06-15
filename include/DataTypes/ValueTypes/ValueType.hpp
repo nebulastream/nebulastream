@@ -6,6 +6,9 @@ namespace NES{
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
+class ValueType;
+typedef std::shared_ptr<ValueType> ValueTypePtr;
+
 class ValueType{
   public:
     ValueType(DataTypePtr type);
@@ -14,6 +17,7 @@ class ValueType{
 
     virtual bool isArrayValue();
     virtual bool isBasicValue();
+    virtual bool isEquals(ValueTypePtr valueType) = 0;
 
     virtual std::string toString() = 0;
 

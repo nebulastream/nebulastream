@@ -1,7 +1,7 @@
 
 #include <QueryCompiler/CCodeGenerator/Statements/CompoundStatement.hpp>
 
-#include <API/Types/DataTypes.hpp>
+#include <sstream>
 
 namespace NES {
 
@@ -17,11 +17,9 @@ StatementType CompoundStatement::getStamentType() const { return StatementType::
 
 const CodeExpressionPtr CompoundStatement::getCode() const {
     std::stringstream code;
-    //code << "{" << std::endl;
     for (const auto& stmt : statements) {
         code << stmt->getCode()->code_ << ";" << std::endl;
     }
-    //code << "}" << std::endl;
     return std::make_shared<CodeExpression>(code.str());
 }
 

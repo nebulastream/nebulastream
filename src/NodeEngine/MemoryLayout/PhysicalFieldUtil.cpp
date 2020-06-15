@@ -1,8 +1,7 @@
-#include <API/Types/DataTypes.hpp>
+#include <DataTypes/DataType.hpp>
 #include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
-#include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

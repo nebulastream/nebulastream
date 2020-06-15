@@ -4,8 +4,9 @@
 #include <QueryCompiler/CodeExpression.hpp>
 #include <memory>
 #include <string>
+#include <sstream>
 
-#include <API/Types/DataTypes.hpp>
+#include <DataTypes/DataType.hpp>
 #include <utility>
 
 namespace NES {

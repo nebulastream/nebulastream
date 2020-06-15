@@ -3,6 +3,10 @@
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 namespace NES {
+
+class ValueType;
+typedef std::shared_ptr<ValueType> ValueTypePtr;
+
 /**
  * @brief This expression node represents a constant value and a fixed data type.
  * Thus the samp of this expression is always fixed.

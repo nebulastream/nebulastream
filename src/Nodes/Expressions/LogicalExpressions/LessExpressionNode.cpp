@@ -1,5 +1,6 @@
 
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <DataTypes/DataType.hpp>
 namespace NES {
 LessExpressionNode::LessExpressionNode() : LogicalBinaryExpressionNode(){};
 ExpressionNodePtr LessExpressionNode::create(const ExpressionNodePtr left,

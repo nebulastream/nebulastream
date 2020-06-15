@@ -1,6 +1,6 @@
 #ifndef INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
 #define INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
-#include <API/Types/DataTypes.hpp>
+#include <DataTypes/DataType.hpp>
 #include <memory>
 #include <vector>
 namespace NES {

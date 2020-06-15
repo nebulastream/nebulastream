@@ -1,11 +1,12 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
-
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 namespace NES {
 ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(stamp) {
 }
 
 bool ExpressionNode::isPredicate() {
-    return stamp->isEqual(createDataType(BasicType::BOOLEAN));
+    return stamp->isBoolean();
 }
 
 const DataTypePtr ExpressionNode::getStamp() const {

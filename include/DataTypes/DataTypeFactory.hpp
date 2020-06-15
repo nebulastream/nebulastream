@@ -1,10 +1,14 @@
 #ifndef NES_INCLUDE_DATATYPES_DATATYPEFACTORY_HPP_
 #define NES_INCLUDE_DATATYPES_DATATYPEFACTORY_HPP_
 #include <memory>
-namespace NES {
+#include <vector>
+namespace NES{
 
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
+
+class ValueType;
+typedef std::shared_ptr<ValueType> ValueTypePtr;
 
 /**
  * @brief The data type factory offers multiple methods to construct data types
@@ -120,6 +124,10 @@ class DataTypeFactory {
     * @return DataTypePtr
     */
     static DataTypePtr createChar(uint64_t length);
+
+
+    static ValueTypePtr createBasicValue(DataTypePtr type, std::string value);
+    static ValueTypePtr createArrayValue(DataTypePtr type, std::vector<std::string> values);
 };
 
 }// namespace NES

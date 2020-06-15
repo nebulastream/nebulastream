@@ -10,19 +10,11 @@ message SerializableDataType{
   // Enum do identify the data type
   enum Type{
     UNDEFINED = 0;
-    INT8 = 1;
-    INT16 = 2;
-    INT32 = 3;
-    INT64 = 4;
-    UINT8 = 5;
-    UINT16 = 6;
-    UINT32 = 7;
-    UINT64 = 8;
-    FLOAT32 = 9;
-    FLOAT64 = 10;
-    CHAR = 11;
-    ARRAY = 12;
-    BOOLEAN = 13;
+    INTEGER = 1;
+    FLOAT = 2;
+    CHAR = 3;
+    ARRAY = 4;
+    BOOLEAN = 5;
   }
 
   /**
@@ -30,6 +22,31 @@ message SerializableDataType{
    */
   message ArrayDetails{
     SerializableDataType componentType = 1;
+    uint64 dimensions = 2;
+  }
+
+  /**
+  Details for integer data types
+   */
+  message IntegerDetails{
+    uint64 bits = 1;
+    int64 upperBound = 2;
+    int64 lowerBound = 3;
+  }
+
+  /**
+ Details for Float data types
+  */
+  message FloatDetails{
+    uint64 bits = 1;
+    double upperBound = 2;
+    double lowerBound = 3;
+  }
+
+  /**
+  Details for array data types
+   */
+  message CharDetails{
     uint64 dimensions = 2;
   }
 

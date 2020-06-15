@@ -1,5 +1,6 @@
 
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <DataTypes/DataType.hpp>
 #include <memory>
 #include <utility>
 namespace NES {
@@ -45,7 +46,7 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
         field->setStamp(getAssignment()->getStamp());
     } else {
         // the field already has a type, check if it is compatible with the assignment
-        field->getStamp()->isEqual(getAssignment()->getStamp());
+        field->getStamp()->isEquals(getAssignment()->getStamp());
     }
 }
 
