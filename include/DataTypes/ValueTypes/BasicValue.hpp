@@ -12,6 +12,7 @@ class BasicValue : public ValueType{
     bool isBasicValue() override;
     std::string toString() override;
     std::string getValue();
+    bool isEquals(ValueTypePtr valueType) override;
   private:
     std::string value;
 

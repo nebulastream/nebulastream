@@ -1,12 +1,14 @@
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSION_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSION_HPP_
-#include <API/Types/DataTypes.hpp>
 #include <Nodes/Node.hpp>
 #include <memory>
 namespace NES {
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
+
+class DataType;
+typedef std::shared_ptr<DataType> DataTypePtr;
 
 /**
  * @brief this indicates an expression, which is a parameter for a FilterOperator or a MapOperator.

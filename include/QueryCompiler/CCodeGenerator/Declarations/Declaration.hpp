@@ -2,12 +2,8 @@
 #pragma once
 
 #include <memory>
-#include <sstream>
 #include <string>
-#include <vector>
 
-#include <API/Types/DataTypes.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
 
 namespace NES {
 
@@ -15,6 +11,9 @@ typedef std::string Code;
 
 class Declaration;
 typedef std::shared_ptr<Declaration> DeclarationPtr;
+
+class DataType;
+typedef std::shared_ptr<DataType> DataTypePtr;
 
 class Declaration {
   public:

@@ -16,7 +16,6 @@
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <QueryCompiler/DataTypes/ValueType.hpp>
 #include <SerializableExpression.pb.h>
 namespace NES {
 

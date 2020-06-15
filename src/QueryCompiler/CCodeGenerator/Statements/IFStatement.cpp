@@ -1,6 +1,7 @@
 
 
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
+#include <sstream>
 
 namespace NES {
 

@@ -1,5 +1,6 @@
 
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <DataTypes/DataType.hpp>
 namespace NES {
 ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto equals = std::make_shared<EqualsExpressionNode>();

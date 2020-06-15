@@ -9,10 +9,14 @@
 #include <memory>
 #include <string>
 
-#include <API/Types/DataTypes.hpp>
+#include <DataTypes/DataType.hpp>
+#include <API/Types/AttributeField.hpp>
 #include <Operators/OperatorTypes.hpp>
 
 namespace NES {
+
+class ValueType;
+typedef std::shared_ptr<ValueType> ValueTypePtr;
 
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;

@@ -1,5 +1,5 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
-#include <QueryCompiler/DataTypes/BasicDataType.hpp>
+#include <DataTypes/DataType.hpp>
 namespace NES {
 
 ArithmeticalExpressionNode::ArithmeticalExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(stamp) {}
@@ -19,7 +19,7 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
     right->inferStamp(schema);
 
     // both sub expressions have to be numerical
-    if (!left->getStamp()->isNumerical() || !right->getStamp()->isNumerical()) {
+    if (!left->getStamp()->isNumeric() || !right->getStamp()->isNumeric()) {
         NES_THROW_RUNTIME_ERROR(
             "ArithmeticalExpressionNode: Error during stamp inference. Types need to be Numerical but Left was:" + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
     }

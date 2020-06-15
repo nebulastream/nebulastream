@@ -1,9 +1,11 @@
-#include <API/Types/DataTypes.hpp>
+#include <DataTypes/Array.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
+#include <DataTypes/Float.hpp>
+#include <DataTypes/Integer.hpp>
+#include <DataTypes/ValueTypes/ArrayValueType.hpp>
+#include <DataTypes/ValueTypes/BasicValue.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
-#include <QueryCompiler/DataTypes/ArrayDataType.hpp>
-#include <QueryCompiler/DataTypes/ArrayValueType.hpp>
-#include <QueryCompiler/DataTypes/BasicValueType.hpp>
-#include <QueryCompiler/DataTypes/ValueType.hpp>
 #include <SerializableDataType.pb.h>
 #include <Util/Logger.hpp>
 #include <vector>
@@ -13,40 +15,39 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
     // serialize data type to the serializedDataType
     if (dataType->isUndefined()) {
         serializedDataType->set_type(SerializableDataType_Type_UNDEFINED);
-    } else if (dataType->isEqual(createDataType(CHAR))) {
-        serializedDataType->set_type(SerializableDataType_Type_CHAR);
-    } else if (dataType->isEqual(createDataType(INT8))) {
-        serializedDataType->set_type(SerializableDataType_Type_INT8);
-    } else if (dataType->isEqual(createDataType(INT16))) {
-        serializedDataType->set_type(SerializableDataType_Type_INT16);
-    } else if (dataType->isEqual(createDataType(INT32))) {
-        serializedDataType->set_type(SerializableDataType_Type_INT32);
-    } else if (dataType->isEqual(createDataType(INT64))) {
-        serializedDataType->set_type(SerializableDataType_Type_INT64);
-    } else if (dataType->isEqual(createDataType(UINT8))) {
-        serializedDataType->set_type(SerializableDataType_Type_UINT8);
-    } else if (dataType->isEqual(createDataType(UINT16))) {
-        serializedDataType->set_type(SerializableDataType_Type_UINT16);
-    } else if (dataType->isEqual(createDataType(UINT32))) {
-        serializedDataType->set_type(SerializableDataType_Type_UINT32);
-    } else if (dataType->isEqual(createDataType(UINT64))) {
-        serializedDataType->set_type(SerializableDataType_Type_UINT64);
-    } else if (dataType->isEqual(createDataType(FLOAT32))) {
-        serializedDataType->set_type(SerializableDataType_Type_FLOAT32);
-    } else if (dataType->isEqual(createDataType(FLOAT64))) {
-        serializedDataType->set_type(SerializableDataType_Type_FLOAT64);
-    } else if (dataType->isEqual(createDataType(BOOLEAN))) {
+    } else if (dataType->isInteger()) {
+        auto intDataType = DataType::as<Integer>(dataType);
+        auto serializedInteger = SerializableDataType_IntegerDetails();
+        serializedInteger.set_bits(intDataType->getBits());
+        serializedInteger.set_lowerbound(intDataType->getLowerBound());
+        serializedInteger.set_upperbound(intDataType->getUpperBound());
+        serializedDataType->mutable_details()->PackFrom(serializedInteger);
+        serializedDataType->set_type(SerializableDataType_Type_INTEGER);
+    } else if (dataType->isFloat()) {
+        auto floatDataType = DataType::as<Float>(dataType);
+        auto serializableFloat = SerializableDataType_IntegerDetails();
+        serializableFloat.set_bits(floatDataType->getBits());
+        serializableFloat.set_lowerbound(floatDataType->getLowerBound());
+        serializableFloat.set_upperbound(floatDataType->getUpperBound());
+        serializedDataType->mutable_details()->PackFrom(serializableFloat);
+        serializedDataType->set_type(SerializableDataType_Type_FLOAT);
+    } else if (dataType->isBoolean()) {
         serializedDataType->set_type(SerializableDataType_Type_BOOLEAN);
-    } else if (dataType->isArrayDataType()) {
+    } else if (dataType->isChar()) {
+        auto serializableChar = SerializableDataType_CharDetails();
+        serializableChar.set_dimensions(DataType::as<Array>(dataType)->getLength());
+        serializedDataType->mutable_details()->PackFrom(serializableChar);
+        serializedDataType->set_type(SerializableDataType_Type_CHAR);
+    } else if (dataType->isArray()) {
         // for arrays we store additional information in the SerializableDataType_ArrayDetails
         // 1. cast to array data type
-        auto arrayType = std::dynamic_pointer_cast<ArrayDataType>(dataType);
+        auto arrayType = DataType::as<Array>(dataType);
         serializedDataType->set_type(SerializableDataType_Type_ARRAY);
         // 2. create details
         auto serializedArray = SerializableDataType_ArrayDetails();
-        serializedArray.set_dimensions(arrayType->getDimensions());
+        serializedArray.set_dimensions(arrayType->getLength());
         // 3. serialize the array component type
-        serializeDataType(arrayType->getComponentDataType(), serializedArray.mutable_componenttype());
+        serializeDataType(arrayType->getComponent(), serializedArray.mutable_componenttype());
         // 4. store details in serialized object.
         serializedDataType->mutable_details()->PackFrom(serializedArray);
     } else {
@@ -60,52 +61,42 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     // de-serialize data type to the DataTypePtr
     NES_DEBUG("DataTypeSerializationUtil:: de-serialized " << serializedDataType->DebugString());
     if (serializedDataType->type() == SerializableDataType_Type_UNDEFINED) {
-        return createUndefinedDataType();
+        return DataTypeFactory::createUndefined();
     } else if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
-        return createDataType(CHAR);
-    } else if (serializedDataType->type() == SerializableDataType_Type_INT8) {
-        return createDataType(INT8);
-    } else if (serializedDataType->type() == SerializableDataType_Type_INT16) {
-        return createDataType(INT16);
-    } else if (serializedDataType->type() == SerializableDataType_Type_INT32) {
-        return createDataType(INT32);
-    } else if (serializedDataType->type() == SerializableDataType_Type_INT64) {
-        return createDataType(INT64);
-    } else if (serializedDataType->type() == SerializableDataType_Type_UINT8) {
-        return createDataType(UINT8);
-    } else if (serializedDataType->type() == SerializableDataType_Type_UINT16) {
-        return createDataType(UINT16);
-    } else if (serializedDataType->type() == SerializableDataType_Type_UINT32) {
-        return createDataType(UINT32);
-    } else if (serializedDataType->type() == SerializableDataType_Type_UINT64) {
-        return createDataType(UINT64);
-    } else if (serializedDataType->type() == SerializableDataType_Type_FLOAT32) {
-        return createDataType(FLOAT32);
-    } else if (serializedDataType->type() == SerializableDataType_Type_FLOAT64) {
-        return createDataType(FLOAT64);
+        auto charDetails = SerializableDataType_CharDetails();
+        serializedDataType->details().UnpackTo(&charDetails);
+        return DataTypeFactory::createChar(charDetails.dimensions());
+    } else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
+        auto integerDetails = SerializableDataType_IntegerDetails();
+        serializedDataType->details().UnpackTo(&integerDetails);
+        return DataTypeFactory::createInteger(integerDetails.bits(), integerDetails.lowerbound(), integerDetails.lowerbound());
+    } else if (serializedDataType->type() == SerializableDataType_Type_FLOAT) {
+        auto floatDetails = SerializableDataType_FloatDetails();
+        serializedDataType->details().UnpackTo(&floatDetails);
+        return DataTypeFactory::createFloat(floatDetails.bits(), floatDetails.lowerbound(), floatDetails.lowerbound());
     } else if (serializedDataType->type() == SerializableDataType_Type_BOOLEAN) {
-        return createDataType(BOOLEAN);
+        return DataTypeFactory::createBoolean();
     } else if (serializedDataType->type() == SerializableDataType_Type_ARRAY) {
         // for arrays get additional information from the SerializableDataType_ArrayDetails
         auto arrayDetails = SerializableDataType_ArrayDetails();
         serializedDataType->details().UnpackTo(&arrayDetails);
         // get component data type
         auto componentType = deserializeDataType(arrayDetails.release_componenttype());
-        return createArrayDataType(componentType, arrayDetails.dimensions());
+        return DataTypeFactory::createArray(arrayDetails.dimensions(), componentType);
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization is not possible");
 }
 
 SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(ValueTypePtr valueType, SerializableDataValue* serializedDataValue) {
     // serialize data value
-    if (valueType->isArrayValueType()) {
+    if (valueType->isArrayValue()) {
         // serialize all information for array value types
         // 1. cast to ArrayValueType
-        auto arrayValueType = std::dynamic_pointer_cast<ArrayValueType>(valueType);
+        auto arrayValueType = std::dynamic_pointer_cast<ArrayValue>(valueType);
         // 2. create array value details
         auto serializedArrayValue = SerializableDataValue_ArrayValue();
         // 3. copy array values
-        for (const auto& value : serializedArrayValue.values()) {
+        for (const auto& value : arrayValueType->getValues()) {
             serializedArrayValue.add_values(value);
         }
         // 4. serialize array type
@@ -114,7 +105,7 @@ SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(ValueTypePt
     } else {
         // serialize all information for basic value types
         // 1. cast to BasicValueType
-        auto basicValueType = std::dynamic_pointer_cast<BasicValueType>(valueType);
+        auto basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
         // 2. create basic value details
         auto serializedBasicValue = SerializableDataValue_BasicValue();
         // 3. copy value
@@ -135,21 +126,17 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataVal
         auto serializedBasicValue = SerializableDataValue_BasicValue();
         dataValue.UnpackTo(&serializedBasicValue);
         auto dataTypePtr = deserializeDataType(serializedBasicValue.release_type());
-        // todo replace after reworking the type system
-        auto basicDataType = std::dynamic_pointer_cast<BasicDataType>(dataTypePtr)->getType();
-        return createBasicTypeValue(basicDataType, serializedBasicValue.value());
+        return DataTypeFactory::createBasicValue(dataTypePtr, serializedBasicValue.value());
     } else if (dataValue.Is<SerializableDataValue_ArrayValue>()) {
         auto serializedArrayValue = SerializableDataValue_ArrayValue();
         dataValue.UnpackTo(&serializedArrayValue);
         auto dataTypePtr = deserializeDataType(serializedArrayValue.release_type());
-        // todo replace after reworking the type system
-        auto basicDataType = std::dynamic_pointer_cast<BasicDataType>(dataTypePtr)->getType();
         // copy values from serializedArrayValue to array values
         std::vector<std::string> values;
         for (const auto& value : serializedArrayValue.values()) {
             values.emplace_back(value);
         }
-        return createArrayValueType(basicDataType, values);
+        return DataTypeFactory::createArrayValue(dataTypePtr, values);
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization of value type is not possible: " + serializedDataValue->DebugString());
 }

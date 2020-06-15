@@ -1,6 +1,6 @@
 
 #include <QueryCompiler/CCodeGenerator/Statements/ReturnStatement.hpp>
-
+#include <sstream>
 namespace NES {
 
 ReturnStatement::ReturnStatement(VarRefStatement var_ref) : var_ref_(var_ref) {}

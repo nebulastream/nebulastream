@@ -173,7 +173,7 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, PredicatePtr pr
     auto declaredMapVar = getVariableDeclarationForField(code->structDeclarationResultTuple, field);
     if (!declaredMapVar) {
         context->resultSchema->addField(field);
-        context->code->structDeclarationResultTuple.addField(VariableDeclaration::create(field->data_type,
+        context->code->structDeclarationResultTuple.addField(VariableDeclaration::create(field->dataType,
                                                                                          field->name));
         declaredMapVar = getVariableDeclarationForField(code->structDeclarationResultTuple, field);
     }

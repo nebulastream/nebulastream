@@ -1,4 +1,5 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <DataTypes/DataType.hpp>
 namespace NES {
 AddExpressionNode::AddExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(stamp){};
 ExpressionNodePtr AddExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {

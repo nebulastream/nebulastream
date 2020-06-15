@@ -118,7 +118,7 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformExpression(ExpressionN
         auto fieldReadExpression = expression->as<FieldAccessExpressionNode>();
         auto fieldName = fieldReadExpression->getFieldName();
         auto value = fieldReadExpression->getStamp();
-        return Field(AttributeField(fieldName, value).copy()).copy();
+        return Field(AttributeField::create(fieldName, value)).copy();
     }
     NES_FATAL_ERROR(
         "TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());

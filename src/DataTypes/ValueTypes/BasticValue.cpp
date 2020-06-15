@@ -1,4 +1,5 @@
 
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/ValueTypes/BasicValue.hpp>
 namespace NES{
 
@@ -14,6 +15,13 @@ std::string BasicValue::toString() {
 
 std::string BasicValue::getValue() {
     return value;
+}
+
+bool BasicValue::isEquals(ValueTypePtr valueType) {
+    if(!valueType->isBasicValue())
+        return false;
+    auto otherBasicValue = std::dynamic_pointer_cast<BasicValue>(valueType);
+    return otherBasicValue->getType()->isEquals(getType()) && value == otherBasicValue->value;
 }
 
 

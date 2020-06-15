@@ -70,7 +70,7 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformToExpression(UserAPIExp
         NES_DEBUG("TranslateFromLegacyPlanPhase: translate expression into field access expression");
         const AttributeFieldPtr attributeField = field->getAttributeField();
         auto name = attributeField->name;
-        auto dataType = attributeField->data_type;
+        auto dataType = attributeField->dataType;
         return FieldAccessExpressionNode::create(dataType, name);
     } else if (PredicateItemPtr predicateItem = std::dynamic_pointer_cast<PredicateItem>(expression)) {
         NES_DEBUG("TranslateFromLegacyPlanPhase: translate expression into constant value expression or field access expression");
@@ -78,7 +78,7 @@ ExpressionNodePtr TranslateFromLegacyPlanPhase::transformToExpression(UserAPIExp
             return ConstantValueExpressionNode::create(predicateItem->getValue());
         } else if (predicateItem->getAttributeField()) {
             const AttributeFieldPtr attributeField = predicateItem->getAttributeField();
-            return FieldAccessExpressionNode::create(attributeField->data_type, attributeField->name);
+            return FieldAccessExpressionNode::create(attributeField->dataType, attributeField->name);
         }
         NES_FATAL_ERROR("TranslateFromLegacyPlanPhase: No transformation possible for input PredicateItem");
     }
@@ -119,7 +119,7 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
         }
         AttributeFieldPtr field = mapOperator->getField();
         ExpressionNodePtr
-            fieldAccessExpressionNodePtr = FieldAccessExpressionNode::create(field->data_type, field->name);
+            fieldAccessExpressionNodePtr = FieldAccessExpressionNode::create(field->dataType, field->name);
         FieldAssignmentExpressionNodePtr fieldAssignmentExpression =
             FieldAssignmentExpressionNode::create(fieldAccessExpressionNodePtr->as<FieldAccessExpressionNode>(),
                                                   expression);

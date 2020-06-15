@@ -1,6 +1,6 @@
 
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <QueryCompiler/DataTypes/ValueType.hpp>
+#include <DataTypes/ValueTypes/ValueType.hpp>
 namespace NES {
 ConstantValueExpressionNode::ConstantValueExpressionNode(const ValueTypePtr constantValue) : ExpressionNode(constantValue->getType()),
                                                                                              constantValue(constantValue){};
@@ -8,7 +8,7 @@ ConstantValueExpressionNode::ConstantValueExpressionNode(const ValueTypePtr cons
 bool ConstantValueExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<ConstantValueExpressionNode>()) {
         auto otherConstantValueNode = rhs->as<ConstantValueExpressionNode>();
-        return otherConstantValueNode->constantValue->equals(constantValue);
+        return otherConstantValueNode->constantValue->isEquals(constantValue);
     }
     return false;
 }

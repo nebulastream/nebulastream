@@ -36,7 +36,7 @@ size_t Schema::getSchemaSizeInBytes() const {
 
 SchemaPtr Schema::copyFields(SchemaPtr otherSchema) {
     for (AttributeFieldPtr attr : otherSchema->fields) {
-        this->fields.push_back(attr->copy());
+        this->fields.push_back(attr);
     }
     return copy();
 }
@@ -48,21 +48,19 @@ SchemaPtr Schema::addField(AttributeFieldPtr field) {
 }
 
 SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
-    return addField(createField(name, type));
+    NES_FATAL_ERROR("Not Implemented");
+    return nullptr;
 }
 
-SchemaPtr Schema::addField(const std::string& name, uint32_t size) {
-    return addField(createField(name, size));
-}
 
 SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
-    return addField(createField(name, data));
+    return addField(AttributeField::create(name, data));
 }
 
 void Schema::replaceField(const std::string& name, DataTypePtr type) {
     for (auto i = 0; i < fields.size(); i++) {
         if (fields[i]->name == name) {
-            fields[i] = createField(name, type);
+            fields[i] = AttributeField::create(name, type);
             return;
         }
     }

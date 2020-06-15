@@ -4,11 +4,11 @@ namespace NES{
 ValueType::ValueType(DataTypePtr type) : dataType(type){
 }
 
-int ValueType::isArrayValue() {
+bool ValueType::isArrayValue() {
     return false;
 }
 
-int ValueType::isBasicValue() {
+bool ValueType::isBasicValue() {
     return false;
 }
 

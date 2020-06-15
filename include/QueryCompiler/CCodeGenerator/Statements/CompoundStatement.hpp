@@ -2,7 +2,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_COMPOUNDSTATEMENT_HPP_
 
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
-
+#include <vector>
 namespace NES {
 
 class CompoundStatement : public Statement {

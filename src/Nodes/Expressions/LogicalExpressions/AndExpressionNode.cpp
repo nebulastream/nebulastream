@@ -1,5 +1,6 @@
 
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <DataTypes/DataType.hpp>
 namespace NES {
 AndExpressionNode::AndExpressionNode() : LogicalBinaryExpressionNode(){};
 ExpressionNodePtr AndExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {

@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_FUNCTIONCALLSTATEMENT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_FUNCTIONCALLSTATEMENT_HPP_
 #include <QueryCompiler/CCodeGenerator/Statements/ExpressionStatement.hpp>
+#include <vector>
 namespace NES {
 
 class FunctionCallStatement : public ExpressionStatment {

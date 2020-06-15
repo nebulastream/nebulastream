@@ -11,6 +11,7 @@ class ArrayValue : public ValueType {
     std::vector<std::string> getValues();
     bool isArrayValue() override;
     std::string toString() override;
+    bool isEquals(ValueTypePtr valueType) override;
   private:
     std::vector<std::string> values;
 

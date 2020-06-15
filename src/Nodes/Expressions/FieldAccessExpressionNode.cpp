@@ -1,6 +1,8 @@
 
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
+#include <DataTypes/DataType.hpp>
 #include <utility>
 namespace NES {
 FieldAccessExpressionNode::FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName)
@@ -11,13 +13,13 @@ ExpressionNodePtr FieldAccessExpressionNode::create(DataTypePtr stamp, std::stri
 }
 
 ExpressionNodePtr FieldAccessExpressionNode::create(std::string fieldName) {
-    return create(createUndefinedDataType(), fieldName);
+    return create(DataTypeFactory::createUndefined(), fieldName);
 }
 
 bool FieldAccessExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<FieldAccessExpressionNode>()) {
         auto otherFieldRead = rhs->as<FieldAccessExpressionNode>();
-        return otherFieldRead->fieldName == fieldName && otherFieldRead->stamp->isEqual(stamp);
+        return otherFieldRead->fieldName == fieldName && otherFieldRead->stamp->isEquals(stamp);
     }
     return false;
 }

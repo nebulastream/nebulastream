@@ -2,6 +2,7 @@
 #define API_SCHEMA_H
 
 #include <API/Types/AttributeField.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -56,12 +57,7 @@ class Schema {
     */
     SchemaPtr addField(const std::string& name, DataTypePtr data);
 
-    /**
-    * @brief appends a field with a field size to the schema and returns a copy of this schema.
-    * @param field
-    * @return a copy of this schema.
-    */
-    SchemaPtr addField(const std::string& name, uint32_t size);
+
 
     /**
      * @brief Replaces a field, which is already part of the schema.
@@ -97,6 +93,7 @@ class Schema {
      * @return size_t
      */
     size_t getSize() const;
+
     /**
      * @brief Returns the number of bytes all fields in this schema occupy.
      * @return size_t
