@@ -1,5 +1,5 @@
-#ifndef NES_INCLUDE_NODES_GRAPH_HPP_
-#define NES_INCLUDE_NODES_GRAPH_HPP_
+#ifndef NES_INCLUDE_PLANS_QUERY_HPP_
+#define NES_INCLUDE_PLANS_QUERY_HPP_
 #include <memory>
 #include <vector>
 
@@ -140,4 +140,4 @@ class QueryPlan {
     std::string sourceStreamName;
 };
 }// namespace NES
-#endif//NES_INCLUDE_NODES_GRAPH_HPP_
+#endif//NES_INCLUDE_PLANS_QUERY_HPP_
