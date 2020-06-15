@@ -1,8 +1,6 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -14,15 +12,12 @@
 #include <iostream>
 
 #include <API/InputQuery.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <SourceSink/DefaultSource.hpp>
 #include <memory>
 
-#include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -31,12 +26,7 @@
 #include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <SourceSink/SinkCreator.hpp>
 
-#include <API/Expressions/ArithmeticalExpressions.hpp>
-#include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 
 namespace NES {
 
