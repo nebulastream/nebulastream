@@ -34,6 +34,7 @@ void QueryDeployer::prepareForDeployment(const string& queryId) {
             //Update port information for the system generated source and sink operators
             const auto sourceOperators = querySubPlan->getSourceOperators();
             for (auto sourceOperator : sourceOperators) {
+                //The operator Id is used to identify the system generated source operator
                 if (sourceOperator->getId() == SYS_SOURCE_OPERATOR_ID) {
                     auto zmqDescriptor = sourceOperator->getSourceDescriptor()->as<ZmqSourceDescriptor>();
                     zmqDescriptor->setPort(assignPort(queryId));
@@ -43,6 +44,7 @@ void QueryDeployer::prepareForDeployment(const string& queryId) {
             NES_DEBUG("QueryDeployer: Update port for system generated sink operators for query " << queryId);
             const auto sinkOperators = querySubPlan->getSinkOperators();
             for (auto sinkOperator : sinkOperators) {
+                //The operator Id is used to identify the system generated sink operator
                 if (sinkOperator->getId() == SYS_SINK_OPERATOR_ID) {
                     auto zmqDescriptor = sinkOperator->getSinkDescriptor()->as<ZmqSinkDescriptor>();
                     zmqDescriptor->setPort(assignPort(queryId));
