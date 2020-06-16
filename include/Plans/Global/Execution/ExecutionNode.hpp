@@ -111,6 +111,8 @@ class ExecutionNode : public Node {
      */
     std::map<std::string, QueryPlanPtr> getAllQuerySubPlans();
 
+    bool equal(NodePtr rhs) const override;
+
     const std::string toString() const override;
 
   private:

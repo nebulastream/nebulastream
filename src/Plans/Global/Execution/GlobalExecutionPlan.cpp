@@ -26,8 +26,13 @@ ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeByNodeId(uint64_t id) {
 
 bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, ExecutionNodePtr parentExecutionNode) {
     ExecutionNodePtr childNode = getExecutionNodeByNodeId(childId);
-    if (childId) {
-        NES_DEBUG("GlobalExecutionPlan: Execution node added as parent to the execution node with id " << childId);
+    if (childNode) {
+        NES_DEBUG("GlobalExecutionPlan: Adding Execution node as parent to the execution node with id " << childId);
+        if (childNode->containAsParent(parentExecutionNode)){
+            NES_DEBUG("GlobalExecutionPlan: Execution node is already a parent to the node with id " << childId);
+            return true;
+        }
+
         if (childNode->addParent(parentExecutionNode)) {
             NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << parentExecutionNode->getId());
             nodeIdIndex[parentExecutionNode->getId()] = parentExecutionNode;
