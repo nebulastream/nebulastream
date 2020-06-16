@@ -1,3 +1,7 @@
+#include <DataTypes/DataTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
+#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <SourceSink/DefaultSource.hpp>
@@ -28,26 +32,32 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
         for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
             auto value = 1;
             auto dataType = fields[fieldIndex]->getDataType();
-            if (dataType->isEqual(createDataType(UINT8))) {
-                layout->getValueField<uint8_t>(recordIndex, fieldIndex)->write(buf, value);
-            } else if (dataType->isEqual(createDataType(UINT16))) {
-                layout->getValueField<uint16_t>(recordIndex, fieldIndex)->write(buf, value);
-            } else if (dataType->isEqual(createDataType(UINT32))) {
-                layout->getValueField<uint32_t>(recordIndex, fieldIndex)->write(buf, value);
-            } else if (dataType->isEqual(createDataType(UINT64))) {
-                layout->getValueField<uint64_t>(recordIndex, fieldIndex)->write(buf, value);
-            } else if (dataType->isEqual(createDataType(INT8))) {
-                layout->getValueField<int8_t>(recordIndex, fieldIndex)->write(buf, value);
-            } else if (dataType->isEqual(createDataType(INT16))) {
-                layout->getValueField<int16_t>(recordIndex, fieldIndex)->write(buf, value);
-            } else if (dataType->isEqual(createDataType(INT32))) {
-                layout->getValueField<int32_t>(recordIndex, fieldIndex)->write(buf, value);
-            } else if (dataType->isEqual(createDataType(INT64))) {
-                layout->getValueField<int64_t>(recordIndex, fieldIndex)->write(buf, value);
-            } else if (dataType->isEqual(createDataType(FLOAT32))) {
-                layout->getValueField<float>(recordIndex, fieldIndex)->write(buf, value);
-            } else if (dataType->isEqual(createDataType(FLOAT64))) {
-                layout->getValueField<double>(recordIndex, fieldIndex)->write(buf, value);
+            auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+            if (physicalType->isBasicType()) {
+                auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+                if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                    layout->getValueField<uint8_t>(recordIndex, fieldIndex)->write(buf, value);
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                    layout->getValueField<uint16_t>(recordIndex, fieldIndex)->write(buf, value);
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                    layout->getValueField<uint32_t>(recordIndex, fieldIndex)->write(buf, value);
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                    layout->getValueField<uint64_t>(recordIndex, fieldIndex)->write(buf, value);
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                    layout->getValueField<int8_t>(recordIndex, fieldIndex)->write(buf, value);
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                    layout->getValueField<int16_t>(recordIndex, fieldIndex)->write(buf, value);
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                    layout->getValueField<int32_t>(recordIndex, fieldIndex)->write(buf, value);
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                    layout->getValueField<int64_t>(recordIndex, fieldIndex)->write(buf, value);
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                    layout->getValueField<float>(recordIndex, fieldIndex)->write(buf, value);
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                    layout->getValueField<double>(recordIndex, fieldIndex)->write(buf, value);
+                } else {
+                    NES_DEBUG("This data source only generates data for numeric fields");
+                }
             } else {
                 NES_DEBUG("This data source only generates data for numeric fields");
             }

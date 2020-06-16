@@ -6,5 +6,4 @@ add_source_nes(
         ConvertPhysicalToLogicalSource.cpp
         ConvertPhysicalToLogicalSink.cpp
         TypeInferencePhase.cpp
-        SerializeOperators.cpp
 )

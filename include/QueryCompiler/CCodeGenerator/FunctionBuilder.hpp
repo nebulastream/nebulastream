@@ -9,9 +9,10 @@
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
-#include <API/Types/DataTypes.hpp>
-
 namespace NES {
+
+class DataType;
+typedef std::shared_ptr<DataType> DataTypePtr;
 
 class FunctionBuilder {
   private:

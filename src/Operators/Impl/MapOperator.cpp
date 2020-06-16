@@ -17,7 +17,7 @@ MapOperator::MapOperator(const MapOperator& other) : predicate_(other.predicate_
 MapOperator& MapOperator::operator=(const MapOperator& other) {
     if (this != &other) {
         predicate_ = NES::copy(other.predicate_);
-        field_ = other.field_->copy();
+        field_ = other.field_;
     }
     return *this;
 }

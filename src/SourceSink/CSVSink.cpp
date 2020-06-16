@@ -1,3 +1,5 @@
+#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <SourceSink/CSVSink.hpp>
 #include <Util/Logger.hpp>
@@ -40,13 +42,16 @@ std::string CSVSink::outputBufferWithSchema(TupleBuffer& tupleBuffer, SchemaPtr 
     std::stringstream ss;
     auto numberOfTuples = tupleBuffer.getNumberOfTuples();
     auto buffer = tupleBuffer.getBufferAs<char>();
+
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
     for (size_t i = 0; i < numberOfTuples; i++) {
         size_t offset = 0;
         for (size_t j = 0; j < schema->getSize(); j++) {
             auto field = schema->get(j);
             size_t fieldSize = field->getFieldSize();
             DataTypePtr ptr = field->getDataType();
-            std::string str = ptr->convertRawToString(
+            std::string str = physicalDataTypeFactory.getPhysicalType(ptr)->convertRawToString(
                 buffer + offset + i * schema->getSchemaSizeInBytes());
             ss << str.c_str();
             if (j < schema->getSize() - 1) {

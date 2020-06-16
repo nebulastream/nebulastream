@@ -1,5 +1,7 @@
 
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CodeExpression.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 
 namespace NES {
 
@@ -19,8 +21,9 @@ const ExpressionStatmentPtr ConstantExpressionStatement::copy() const {
 
 ConstantExpressionStatement::ConstantExpressionStatement(const ValueTypePtr& val) : constantValue(val) {}
 
-ConstantExpressionStatement::ConstantExpressionStatement(const BasicType& type, const std::string& value) : constantValue(createBasicTypeValue(type, value)) {}
+//ConstantExpressionStatement::ConstantExpressionStatement(const BasicType& type, const std::string& value) : constantValue(createBasicTypeValue(type, value)) {}
 
-ConstantExpressionStatement::ConstantExpressionStatement(int32_t value) : ConstantExpressionStatement(INT32, std::to_string(value)) {}
+ConstantExpressionStatement::ConstantExpressionStatement(int32_t value) : ConstantExpressionStatement(
+    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(value))) {}
 
 }// namespace NES

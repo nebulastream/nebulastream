@@ -1,9 +1,10 @@
 
 #include <NodeEngine/MemoryLayout/ArrayPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <memory>
 namespace NES {
-ArrayPhysicalField::ArrayPhysicalField(DataTypePtr componentField, uint64_t bufferOffset)
+ArrayPhysicalField::ArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset)
     : PhysicalField(bufferOffset), componentField(componentField) {}
 
 ArrayPhysicalField::ArrayPhysicalField(ArrayPhysicalField* physicalField) : PhysicalField(physicalField), componentField(physicalField->componentField){};
@@ -17,11 +18,11 @@ std::shared_ptr<ArrayPhysicalField> ArrayPhysicalField::asArrayField() {
 }
 
 std::shared_ptr<PhysicalField> ArrayPhysicalField::operator[](uint64_t arrayIndex) {
-    auto offsetInArray = componentField->getSizeBytes() * arrayIndex;
+    auto offsetInArray = componentField->size() * arrayIndex;
     return PhysicalFieldUtil::createPhysicalField(componentField, bufferOffset + offsetInArray);
 }
 
-PhysicalFieldPtr createArrayPhysicalField(DataTypePtr componentField, uint64_t bufferOffset) {
+PhysicalFieldPtr createArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset) {
     return std::make_shared<ArrayPhysicalField>(componentField, bufferOffset);
 }
 }// namespace NES

@@ -3,12 +3,10 @@
 
 #include <memory>
 #include <string>
-
+#include <sstream>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-
-#include <API/Types/DataTypes.hpp>
 
 namespace NES {
 
