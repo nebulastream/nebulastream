@@ -1,6 +1,6 @@
 #include <API/Schema.hpp>
-#include <API/Types/DataTypes.hpp>
 #include <API/UserAPIExpression.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
@@ -17,6 +17,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
+#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
@@ -70,7 +71,7 @@ class TestPipelineExecutionContext : public PipelineExecutionContext {
 
 const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
     return std::make_shared<DefaultSource>(
-        Schema::create()->addField(createField("campaign_id", UINT64)), bPtr, dPtr, 1, 1);
+        Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()), bPtr, dPtr, 1, 1);
 }
 
 class SelectionDataGenSource : public GeneratorSource {
@@ -116,9 +117,9 @@ const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, QueryMa
     DataSourcePtr source(
         std::make_shared<SelectionDataGenSource>(
             Schema::create()
-                ->addField("id", BasicType::UINT32)
-                ->addField("value", BasicType::UINT32)
-                ->addField("text", createArrayDataType(BasicType::CHAR, 12)),
+                ->addField("id", DataTypeFactory::createUInt32())
+                ->addField("value", DataTypeFactory::createUInt32())
+                ->addField("text", DataTypeFactory::createChar(12)),
             bPtr, dPtr,
             1));
 
@@ -174,12 +175,12 @@ const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, Quer
     DataSourcePtr source(
         std::make_shared<PredicateTestingDataGeneratorSource>(
             Schema::create()
-                ->addField("id", BasicType::UINT32)
-                ->addField("valueSmall", BasicType::INT16)
-                ->addField("valueFloat", BasicType::FLOAT32)
-                ->addField("valueDouble", BasicType::FLOAT64)
-                ->addField("valueChar", BasicType::CHAR)
-                ->addField("text", createArrayDataType(BasicType::CHAR, 12)),
+                ->addField("id", DataTypeFactory::createUInt32())
+                ->addField("valueSmall", DataTypeFactory::createInt16())
+                ->addField("valueFloat", DataTypeFactory::createFloat())
+                ->addField("valueDouble", DataTypeFactory::createDouble())
+                ->addField("valueChar", DataTypeFactory::createInt8())
+                ->addField("text", DataTypeFactory::createChar(12)),
             bPtr, dPtr,
             1));
 
@@ -235,19 +236,14 @@ const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, QueryManag
  * @brief This test checks the behavior of the code generation API
  */
 TEST_F(CodeGenerationTest, codeGenerationApiTest) {
+    auto tf = CompilerTypesFactory();
+    auto varDeclI = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "i", DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
+    auto varDeclJ =
+        VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "j", DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "5"));
+    auto varDeclK = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "",
+                                                DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "7"));
 
-    auto varDeclI = VariableDeclaration::create(
-        createDataType(BasicType(INT32)), "i",
-        createBasicTypeValue(BasicType(INT32), "0"));
-    auto varDeclJ = VariableDeclaration::create(
-        createDataType(BasicType(INT32)), "j",
-        createBasicTypeValue(BasicType(INT32), "5"));
-    auto varDeclK = VariableDeclaration::create(
-        createDataType(BasicType(INT32)), "k",
-        createBasicTypeValue(BasicType(INT32), "7"));
-    auto varDeclL = VariableDeclaration::create(
-        createDataType(BasicType(INT32)), "l",
-        createBasicTypeValue(BasicType(INT32), "2"));
+    auto varDeclL = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "l", DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "2"));
 
     {
         // Generate Arithmetic Operation
@@ -262,23 +258,25 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         // Generate Array Operation
         std::vector<std::string> vals = {"a", "b", "c"};
         auto varDeclM = VariableDeclaration::create(
-            createArrayDataType(BasicType(CHAR), 12), "m",
-            createArrayValueType(BasicType(CHAR), vals));
+            tf.createDataType(DataTypeFactory::createChar(12)), "m",
+            DataTypeFactory::createCharValue(vals));
         // declaration of m
         EXPECT_EQ(VarRefStatement(varDeclM).getCode()->code_, "m");
 
         // Char Array initialization
         auto varDeclN = VariableDeclaration::create(
-            createArrayDataType(BasicType(CHAR), 12), "n",
-            createArrayValueType(BasicType(CHAR), vals));
+            tf.createDataType(DataTypeFactory::createChar(12)), "n",
+            DataTypeFactory::createCharValue(vals));
         EXPECT_EQ(varDeclN.getCode(), "char n[12] = {'a', 'b', 'c'}");
 
         // Int Array initialization
         auto varDeclO = VariableDeclaration::create(
-            createArrayDataType(BasicType(UINT8), 4), "o",
-            createArrayValueType(BasicType(UINT8), {"2", "3", "4"}));
+            tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())), "o",
+            DataTypeFactory::createArrayValue(DataTypeFactory::createUInt8(), {"2", "3", "4"}));
         EXPECT_EQ(varDeclO.getCode(), "uint8_t o[4] = {2, 3, 4}");
 
+        /**
+         todo currently no support for strings
         // String Array initialization
         auto stringValueType = createStringValueType(
                                    "DiesIstEinZweiterTest\0dwqdwq")
@@ -291,6 +289,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                                  ->getCodeExpression()
                                  ->code_;
         EXPECT_EQ(charValueType, "DiesIstEinDritterTest");
+         */
     }
 
     {
@@ -336,7 +335,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto negate =
             ((~VarRefStatement(varDeclI)
               >= VarRefStatement(varDeclJ)
-                  << ConstantExpressionStatement(createBasicTypeValue(INT32, "0"))))[VarRefStatement(varDeclJ)];
+                  << ConstantExpressionStatement(tf.createValueType(
+                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))))[VarRefStatement(varDeclJ)]);
         EXPECT_EQ(negate.getCode()->code_, "~i>=j<<0[j]");
 
         auto addition = VarRefStatement(varDeclI).assign(
@@ -379,8 +379,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
     {
         // check declaration types
         auto variableDeclaration = VariableDeclaration::create(
-            createDataType(BasicType(INT32)), "num_tuples",
-            createBasicTypeValue(BasicType(INT32), "0"));
+            tf.createDataType(DataTypeFactory::createInt32()), "num_tuples",
+            DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
         EXPECT_EQ(
             UnaryOperatorStatement(VarRefStatement(variableDeclaration),
@@ -441,15 +441,15 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
     {
         // check code generation for loops
         auto varDeclQ = VariableDeclaration::create(
-            createDataType(BasicType(INT32)), "q",
-            createBasicTypeValue(BasicType(INT32), "0"));
+            tf.createDataType(DataTypeFactory::createInt32()), "q",
+            DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
         auto varDeclNumTuple = VariableDeclaration::create(
-            createDataType(BasicType(INT32)), "num_tuples",
-            createBasicTypeValue(BasicType(INT32), "0"));
+            tf.createDataType(DataTypeFactory::createInt32()), "num_tuples",
+            DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
         auto varDeclSum = VariableDeclaration::create(
-            createDataType(BasicType(INT32)), "sum",
-            createBasicTypeValue(BasicType(INT32), "0"));
+            tf.createDataType(DataTypeFactory::createInt32()), "sum",
+            DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
         ForLoopStatement loopStmt(
             varDeclQ.copy(),
@@ -483,33 +483,36 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
             VarRefStatement(varDeclK),
             ASSIGNMENT_OP,
             BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THAN_OP,
-                                    ConstantExpressionStatement(INT32, "5")));
+                                    ConstantExpressionStatement(tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "5")))));
 
         EXPECT_EQ(compareAssignment.getCode()->code_, "k=j>5");
     }
 
     {
         /* check code generation of pointers */
-        auto val = createPointerDataType(BasicType(INT32));
+        auto val = tf.createPointer(tf.createDataType(DataTypeFactory::createInt32()));
         assert(val != nullptr);
         auto variableDeclarationI = VariableDeclaration::create(
-            createDataType(BasicType(INT32)), "i",
-            createBasicTypeValue(BasicType(INT32), "0"));
+            tf.createDataType(DataTypeFactory::createInt32()), "i",
+            DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
         auto variableDeclarationP = VariableDeclaration::create(val, "array");
         EXPECT_EQ(variableDeclarationP.getCode(), "int32_t* array");
 
         /* new String Type */
-        auto charPointerDataType = createPointerDataType(BasicType(CHAR));
+        /**
+         * @brief Todo add string
+
+        auto charPointerDataType = tf.createPointer(tf.createDataType(DataBasicType(CHAR));
         auto var_decl_temp = VariableDeclaration::create(
             charPointerDataType, "i", createStringValueType("Hello World"));
         EXPECT_EQ(var_decl_temp.getCode(), "char* i = \"Hello World\"");
-
+   */
         auto tupleBufferStructDecl = StructDeclaration::create("TupleBuffer",
                                                                "buffer")
                                          .addField(
                                              VariableDeclaration::create(
-                                                 createDataType(BasicType(UINT64)), "num_tuples",
-                                                 createBasicTypeValue(BasicType(UINT64), "0")))
+                                                 tf.createDataType(DataTypeFactory::createInt32()), "num_tuples",
+                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0")))
                                          .addField(
                                              variableDeclarationP);
 
@@ -519,16 +522,15 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(varDeclTupleBuffer.getCode(), "TupleBuffer");
 
         auto varDeclTupleBufferPointer = VariableDeclaration::create(
-            createPointerDataType(createUserDefinedType(tupleBufferStructDecl)),
+            tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl)),
             "buffer");
         EXPECT_EQ(varDeclTupleBufferPointer.getCode(), "TupleBuffer* buffer");
 
-        auto pointerDataType = createPointerDataType(
-            createUserDefinedType(tupleBufferStructDecl));
-        EXPECT_EQ(pointerDataType->getCode()->code_, "TupleBuffer*");
+        auto pointerDataType = tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl));
+        EXPECT_EQ(pointerDataType->generateCode()->code_, "TupleBuffer*");
 
         auto typeDefinition = VariableDeclaration::create(
-                                  createPointerDataType(createUserDefinedType(tupleBufferStructDecl)),
+                                  tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl)),
                                   "buffer")
                                   .getTypeDefinitionCode();
         EXPECT_EQ(
@@ -543,41 +545,41 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
-
-    auto tupleBufferType = createAnonymUserDefinedType("NES::TupleBuffer");
-    auto pipelineExecutionContextType = createAnonymUserDefinedType("NES::PipelineExecutionContext");
+    auto tf = CompilerTypesFactory();
+    auto tupleBufferType = tf.createAnonymusDataType("NES::TupleBuffer");
+    auto pipelineExecutionContextType = tf.createAnonymusDataType("NES::PipelineExecutionContext");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
     auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
 
     auto getBufferOfTupleBuffer = FunctionCallStatement("getBuffer");
 
     /* struct definition for input tuples */
-    auto structDeclTuple = StructDeclaration::create("Tuple", "").addField(VariableDeclaration::create(createDataType(BasicType(INT64)), "campaign_id"));
+    auto structDeclTuple = StructDeclaration::create("Tuple", "").addField(VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "campaign_id"));
 
     /* struct definition for result tuples */
 
     auto structDeclResultTuple = StructDeclaration::create("ResultTuple", "")
                                      .addField(
-                                         VariableDeclaration::create(createDataType(BasicType(INT64)), "sum"));
+                                         VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "sum"));
 
     /* === declarations === */
-    auto varDeclTupleBuffers = VariableDeclaration::create(createReferenceDataType(tupleBufferType),
+    auto varDeclTupleBuffers = VariableDeclaration::create(tf.createReference(tupleBufferType),
                                                            "input_buffer");
     auto varDeclPipelineExecutionContext =
-        VariableDeclaration::create(createReferenceDataType(pipelineExecutionContextType),
+        VariableDeclaration::create(tf.createReference(pipelineExecutionContextType),
                                     "pipelineExecutionContext");
     auto varDeclWindow = VariableDeclaration::create(
-        createPointerDataType(createAnonymUserDefinedType("void")), "stateVar");
+        tf.createPointer(tf.createAnonymusDataType("void")), "stateVar");
     VariableDeclaration varDeclWindowManager = VariableDeclaration::create(
-        createPointerDataType(createAnonymUserDefinedType("NES::WindowManager")),
+        tf.createPointer(tf.createAnonymusDataType("NES::WindowManager")),
         "window_manager");
 
     /* Tuple *tuples; */
     auto varDeclTuple = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(structDeclTuple)), "tuples");
+        tf.createPointer(tf.createUserDefinedType(structDeclTuple)), "tuples");
 
     auto varDeclResultTuple = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(structDeclResultTuple)),
+        tf.createPointer(tf.createUserDefinedType(structDeclResultTuple)),
         "resultTuples");
 
     /* variable declarations for fields inside structs */
@@ -592,29 +594,29 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /* uint64_t id = 0; */
     auto varDeclId = VariableDeclaration::create(
-        createDataType(BasicType(UINT64)), "id",
-        createBasicTypeValue(BasicType(INT32), "0"));
+        tf.createDataType(DataTypeFactory::createInt64()), "id",
+        DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"));
     /* int32_t ret = 0; */
     auto varDeclReturn = VariableDeclaration::create(
-        createDataType(BasicType(INT32)), "ret",
-        createBasicTypeValue(BasicType(INT32), "0"));
+        tf.createDataType(DataTypeFactory::createInt32()), "ret",
+        DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
     /* int32_t sum = 0;*/
     auto varDeclSum = VariableDeclaration::create(
-        createDataType(BasicType(INT64)), "sum",
-        createBasicTypeValue(BasicType(INT64), "0"));
+        tf.createDataType(DataTypeFactory::createInt64()), "sum",
+        DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"));
 
     /* init statements before for loop */
 
     /*  tuples = (Tuple *)tuple_buffer.getBuffer();*/
     BinaryOperatorStatement initTuplePtr(
-        VarRef(varDeclTuple).assign(TypeCast(VarRefStatement(varDeclTupleBuffers).accessRef(getBufferOfTupleBuffer), createPointerDataType(createUserDefinedType(structDeclTuple)))));
+        VarRef(varDeclTuple).assign(TypeCast(VarRefStatement(varDeclTupleBuffers).accessRef(getBufferOfTupleBuffer), tf.createPointer(tf.createUserDefinedType(structDeclTuple)))));
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
     auto resultTupleBufferDeclaration = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
     BinaryOperatorStatement initResultTupleBufferPtr(VarDeclStatement(resultTupleBufferDeclaration).assign(VarRef(varDeclPipelineExecutionContext).accessRef(allocateTupleBuffer)));
 
     BinaryOperatorStatement initResultTuplePtr(
-        VarRef(varDeclResultTuple).assign(TypeCast(VarRef(resultTupleBufferDeclaration).accessRef(getBufferOfTupleBuffer), createPointerDataType(createUserDefinedType(structDeclResultTuple)))));
+        VarRef(varDeclResultTuple).assign(TypeCast(VarRef(resultTupleBufferDeclaration).accessRef(getBufferOfTupleBuffer), tf.createPointer(tf.createUserDefinedType(structDeclResultTuple)))));
 
     /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
     FOR loopStmt(
@@ -633,9 +635,27 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
      */
     auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
     emitTupleBuffer.addParameter(VarRef(resultTupleBufferDeclaration));
-    auto mainFunction = FunctionBuilder::create("compiled_query").returns(createDataType(BasicType(UINT32))).addParameter(varDeclTupleBuffers).addParameter(varDeclWindow).addParameter(varDeclWindowManager).addParameter(varDeclPipelineExecutionContext).addVariableDeclaration(varDeclReturn).addVariableDeclaration(varDeclTuple).addVariableDeclaration(varDeclResultTuple).addVariableDeclaration(varDeclSum).addStatement(initTuplePtr.copy()).addStatement(initResultTupleBufferPtr.copy()).addStatement(initResultTuplePtr.copy()).addStatement(StatementPtr(new ForLoopStatement(loopStmt))).addStatement(
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           /*   result_tuples[0].sum = sum; */
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           VarRef(varDeclResultTuple)[Constant(INT32, "0")].accessRef(VarRef(varDeclFieldResultTupleSum)).assign(VarRef(varDeclSum)).copy())
+    auto mainFunction = FunctionBuilder::create("compiled_query")
+                            .returns(tf.createDataType(DataTypeFactory::createInt32()))
+                            .addParameter(varDeclTupleBuffers)
+                            .addParameter(varDeclWindow)
+                            .addParameter(varDeclWindowManager)
+                            .addParameter(varDeclPipelineExecutionContext)
+                            .addVariableDeclaration(varDeclReturn)
+                            .addVariableDeclaration(varDeclTuple)
+                            .addVariableDeclaration(varDeclResultTuple)
+                            .addVariableDeclaration(varDeclSum)
+                            .addStatement(initTuplePtr.copy())
+                            .addStatement(initResultTupleBufferPtr.copy())
+                            .addStatement(initResultTuplePtr.copy())
+                            .addStatement(StatementPtr(new ForLoopStatement(loopStmt)))
+                            .addStatement(
+                                /*   result_tuples[0].sum = sum; */
+                                VarRef(varDeclResultTuple)[Constant(tf.createValueType(DataTypeFactory::createBasicValue(
+                                                               DataTypeFactory::createInt32(), "0")))]
+                                    .accessRef(VarRef(varDeclFieldResultTupleSum))
+                                    .assign(VarRef(varDeclSum))
+                                    .copy())
                             .addStatement(VarRef(varDeclPipelineExecutionContext).accessRef(emitTupleBuffer).copy())
                             /* return ret; */
 
@@ -735,7 +755,7 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
 
     auto pred = std::dynamic_pointer_cast<Predicate>(
         (PredicateItem(inputSchema->get(0))
-         < PredicateItem(createBasicTypeValue(BasicType::INT64, "5")))
+         < PredicateItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "5")))
             .copy());
 
     codeGenerator->generateCodeForFilter(pred, context);
@@ -883,19 +903,19 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     codeGenerator->generateCodeForScan(inputSchema, context);
 
     //predicate definition
-    auto mappedValue = AttributeField("mappedValue", BasicType::FLOAT64).copy();
+    auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
     codeGenerator->generateCodeForMap(mappedValue, createPredicate((inputSchema->get(2) * inputSchema->get(3)) + 2), context);
 
     /* generate code for writing result tuples to output buffer */
     auto outputSchema = Schema::create()
-                            ->addField("id", BasicType::UINT32)
-                            ->addField("valueSmall", BasicType::INT16)
-                            ->addField("valueFloat", BasicType::FLOAT32)
-                            ->addField("valueDouble", BasicType::FLOAT64)
+                            ->addField("id",DataTypeFactory::createInt32())
+                            ->addField("valueSmall", DataTypeFactory::createInt16())
+                            ->addField("valueFloat", DataTypeFactory::createFloat())
+                            ->addField("valueDouble", DataTypeFactory::createDouble())
                             ->addField(mappedValue)
-                            ->addField("valueChar", BasicType::CHAR)
+                            ->addField("valueChar", DataTypeFactory::createChar(1))
                             ->addField(
-                                "text", createArrayDataType(BasicType::CHAR, 12));
+                                "text", DataTypeFactory::createChar(12));
 
     auto schemaSize = outputSchema->getSchemaSizeInBytes();
     /* generate code for writing result tuples to output buffer */
