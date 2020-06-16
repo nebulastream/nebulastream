@@ -81,7 +81,7 @@ class BasePlacementStrategy {
      * @brief Factory method returning different kind of optimizer.
      * @param strategyName : name of the strategy
      * @param nesTopologyPlan : topology information
-     * @param globalExecutionPlan : execution plan to be updated
+     * @param globalExecutionPlan : global execution plan to be updated
      * @return instance of type BaseOptimizer
      */
     static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string strategyName, NESTopologyPlanPtr nesTopologyPlan,
@@ -89,11 +89,11 @@ class BasePlacementStrategy {
 
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
-     * @param queryPlan
-     * @param nesTopologyPlan
-     * @return
+     * @param queryPlan: the query plan
+     * @param streamCatalog: the stream catalog
+     * @return updated global execution plan
      */
-    virtual GlobalExecutionPlanPtr initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) = 0;
+    virtual GlobalExecutionPlanPtr updateGlobalExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) = 0;
 
   private:
 

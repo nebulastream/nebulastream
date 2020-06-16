@@ -13,10 +13,14 @@
 
 namespace NES {
 
+std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan) {
+    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(nesTopologyPlan, executionPlan));
+}
+
 BottomUpStrategy::BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan)
     : BasePlacementStrategy(nesTopologyPlan, globalExecutionPlan) {}
 
-GlobalExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
+GlobalExecutionPlanPtr BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
 
     const string& queryId = queryPlan->getQueryId();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
@@ -100,7 +104,7 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
 
                 if (candidateExecutionNode->hasQuerySubPlan(queryId)) {
                     NES_DEBUG("BottomUpStrategy: node " << candidateNesNode->toString() << " already contains a query sub plan with the id" << queryId);
-                    if (candidateExecutionNode->querySubPlanContainsOperator(queryId, operatorToPlace)) {
+                    if (candidateExecutionNode->checkIfQuerySubPlanContainsOperator(queryId, operatorToPlace)) {
                         NES_DEBUG("BottomUpStrategy: skip adding rest of the operator chains as they already exists.");
                         break;
                     } else {
@@ -139,5 +143,6 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
             }
         }
     }
+    NES_DEBUG("BottomUpStrategy: Finished placing query operators into the global execution plan");
 }
 }// namespace NES

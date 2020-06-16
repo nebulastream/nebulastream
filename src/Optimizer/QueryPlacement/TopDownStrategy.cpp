@@ -16,10 +16,14 @@
 
 namespace NES {
 
+std::unique_ptr<TopDownStrategy> TopDownStrategy::create(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan) {
+    return std::make_unique<TopDownStrategy>(TopDownStrategy(nesTopologyPlan, executionPlan));
+}
+
 TopDownStrategy::TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan)
     : BasePlacementStrategy(nesTopologyPlan, globalExecutionPlan) {}
 
-GlobalExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
+GlobalExecutionPlanPtr TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
 
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
@@ -93,7 +97,7 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
 
                 if (candidateExecutionNode->hasQuerySubPlan(queryId)) {
                     NES_DEBUG("TopDownStrategy: node " << candidateNesNode->toString() << " already contains a query sub plan with the id" << queryId);
-                    if (candidateExecutionNode->querySubPlanContainsOperator(queryId, candidateOperator)) {
+                    if (candidateExecutionNode->checkIfQuerySubPlanContainsOperator(queryId, candidateOperator)) {
                         NES_DEBUG("TopDownStrategy: skip to next upstream operator as the target operator is already placed.");
                         vector<NodePtr> children = candidateOperator->getChildren();
                         if (children.empty()) {
@@ -106,6 +110,9 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
                         NES_DEBUG("TopDownStrategy: Adding the operator to an existing query sub plan on the Execution node");
 
                         QueryPlanPtr querySubPlan = candidateExecutionNode->getQuerySubPlan(queryId);
+                        if (!querySubPlan) {
+                            NES_THROW_RUNTIME_ERROR("TopDownStrategy : unable to find query sub plan with id " + queryId);
+                        }
                         querySubPlan->prependPreExistingOperator(candidateOperator);
                         if (!candidateExecutionNode->updateQuerySubPlan(queryId, querySubPlan)) {
                             NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + queryId);
@@ -141,5 +148,6 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
             }
         }
     }
+    NES_DEBUG("TopDownStrategy: Finished placing query operators into the global execution plan");
 }
 }// namespace NES

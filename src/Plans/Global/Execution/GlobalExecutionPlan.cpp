@@ -11,11 +11,13 @@ GlobalExecutionPlanPtr GlobalExecutionPlan::create() {
 }
 
 bool GlobalExecutionPlan::checkIfExecutionNodeExists(uint64_t id) {
+    NES_DEBUG("GlobalExecutionPlan: Checking if Execution node with id " << id << " exists");
     return nodeIdIndex.find(id) != nodeIdIndex.end();
 }
 
 ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeByNodeId(uint64_t id) {
     if (checkIfExecutionNodeExists(id)) {
+        NES_DEBUG("GlobalExecutionPlan: Returning execution node with id " << id);
         return nodeIdIndex[id];
     }
     NES_WARNING("GlobalExecutionPlan: Execution node doesn't exists with the id " << id);
@@ -58,10 +60,12 @@ bool GlobalExecutionPlan::addExecutionNode(ExecutionNodePtr executionNode) {
 }
 
 bool GlobalExecutionPlan::removeExecutionNode(uint64_t id) {
+    NES_DEBUG("GlobalExecutionPlan: Removing Execution node with id " << id);
     if (checkIfExecutionNodeExists(id)) {
         NES_DEBUG("GlobalExecutionPlan: Removed execution node with id " << id);
         return nodeIdIndex.erase(id) == 1;
     }
+    NES_DEBUG("GlobalExecutionPlan: Failed to remove Execution node with id " << id);
     return false;
 }
 
@@ -73,8 +77,8 @@ bool GlobalExecutionPlan::removeQuerySubPlans(std::string queryId) {
     }
 
     std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[queryId];
+    NES_DEBUG("GlobalExecutionPlan: Found " << executionNodes.size() << " Execution node for query with id " << queryId);
     for (auto executionNode : executionNodes) {
-
         uint64_t executionNodeId = executionNode->getId();
         if (!executionNode->removeQuerySubPlan(queryId)) {
             NES_ERROR("GlobalExecutionPlan: Unable to remove query sub plan with id " << queryId << " from execution node with id " << executionNodeId);
@@ -84,6 +88,7 @@ bool GlobalExecutionPlan::removeQuerySubPlans(std::string queryId) {
             removeExecutionNode(executionNodeId);
         }
     }
+    NES_DEBUG("GlobalExecutionPlan: Removed all Execution node with id " << queryId);
     return true;
 }
 
@@ -98,14 +103,17 @@ std::vector<ExecutionNodePtr> GlobalExecutionPlan::getExecutionNodesByQueryId(st
 }
 
 std::vector<ExecutionNodePtr> GlobalExecutionPlan::getExecutionNodesToSchedule() {
+    NES_DEBUG("GlobalExecutionPlan: Returning vector of Execution nodes to be scheduled");
     return executionNodesToSchedule;
 }
 
 std::vector<ExecutionNodePtr> GlobalExecutionPlan::getRootNodes() {
+    NES_DEBUG("GlobalExecutionPlan: Get root nodes of the execution plan");
     return rootNodes;
 }
 
 std::string GlobalExecutionPlan::getAsString() {
+    NES_DEBUG("GlobalExecutionPlan: Get Execution plan as string");
     std::stringstream ss;
     auto dumpHandler = ConsoleDumpHandler::create();
     for (auto rootNode : rootNodes) {
@@ -115,6 +123,7 @@ std::string GlobalExecutionPlan::getAsString() {
 }
 
 void GlobalExecutionPlan::scheduleExecutionNode(ExecutionNodePtr executionNode) {
+    NES_DEBUG("GlobalExecutionPlan: Schedule execution node for deployment");
     auto found = std::find(executionNodesToSchedule.begin(), executionNodesToSchedule.end(), executionNode);
     if (found != executionNodesToSchedule.end()) {
         NES_DEBUG("GlobalExecutionPlan: Execution node " << executionNode->getId() << " marked as to be scheduled");

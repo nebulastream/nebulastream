@@ -35,7 +35,7 @@ class QueryDeployer {
      * @brief prepare for a query deployment
      * @param query a queryId of the query
      */
-    void prepareForDeployment(const string& queryId);
+    bool prepareForDeployment(const string& queryId);
 
     /**
      * @brief helper method to get all sources in a serialized format from a specific node in the topology

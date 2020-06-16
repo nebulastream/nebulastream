@@ -23,13 +23,17 @@ QueryDeployer::~QueryDeployer() {
     queryToPort.clear();
 }
 
-void QueryDeployer::prepareForDeployment(const string& queryId) {
+bool QueryDeployer::prepareForDeployment(const string& queryId) {
     if (queryCatalog->queryExists(queryId) && !queryCatalog->isQueryRunning(queryId)) {
         NES_INFO("QueryDeployer:: prepareForDeployment for query " << queryId);
         const auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
         //iterate through all vertices in the topology
         for (ExecutionNodePtr executionNode : executionNodes) {
             QueryPlanPtr querySubPlan = executionNode->getQuerySubPlan(queryId);
+            if (!querySubPlan) {
+                NES_WARNING("NesCoordinator : unable to find query sub plan with id " << queryId);
+                return false;
+            }
             NES_DEBUG("QueryDeployer: Update port for system generated source operators for query " << queryId);
             //Update port information for the system generated source and sink operators
             const auto sourceOperators = querySubPlan->getSourceOperators();
@@ -53,10 +57,13 @@ void QueryDeployer::prepareForDeployment(const string& queryId) {
         }
         queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
         NES_INFO("QueryDeployer::prepareForDeployment: prepareExecutableTransferObject successfully " << queryId);
+        return true;
     } else if (queryCatalog->getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
         NES_WARNING("QueryDeployer::prepareForDeployment: Query is already running -> " << queryId);
+        return false;
     } else {
         NES_WARNING("QueryDeployer::prepareForDeployment: Query is not registered -> " << queryId);
+        return false;
     }
 }
 

@@ -45,7 +45,7 @@ class ExecutionNode : public Node {
      * @param operatorNode : operator node
      * @return true if the operator exists else false
      */
-    bool querySubPlanContainsOperator(std::string queryId, OperatorNodePtr operatorNode);
+    bool checkIfQuerySubPlanContainsOperator(std::string queryId, OperatorNodePtr operatorNode);
 
     /**
      * Get Query subPlan for the given Id

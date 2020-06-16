@@ -284,6 +284,26 @@ const std::vector<NodePtr>& Node::getParents() const {
     return parents;
 }
 
+std::vector<NodePtr>& Node::getAllLeafNodes() {
+    NES_DEBUG("Node: Get all leaf nodes for this node");
+    std::vector<NodePtr> leafNodes;
+    for (auto child : children) {
+        if (child->getChildren().empty()) {
+            NES_DEBUG("Node: Inserting leaf node to the collection");
+            leafNodes.push_back(child);
+        } else {
+            NES_DEBUG("Node: Iterating over all children to find more leaf nodes");
+            for (auto childOfChild : child->getChildren()) {
+                std::vector<NodePtr> childrenLeafNodes = childOfChild->getChildren();
+                NES_DEBUG("Node: inserting leaf nodes into the collection of leaf nodes");
+                leafNodes.insert(leafNodes.end(), childrenLeafNodes.begin(), childrenLeafNodes.end());
+            }
+        }
+    }
+    NES_DEBUG("Node: Found " << leafNodes.size() << " leaf nodes");
+    return leafNodes;
+}
+
 bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::NodePtr nodeToFind) {
     return find(nodes, nodeToFind) != nullptr;
 }

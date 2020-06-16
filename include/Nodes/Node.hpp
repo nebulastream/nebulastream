@@ -222,6 +222,12 @@ class Node : public std::enable_shared_from_this<Node> {
     const std::vector<NodePtr>& getParents() const;
 
     /**
+     * Get all the leaf nodes
+     * @return vector of leaf nodes
+     */
+    std::vector<NodePtr>& getAllLeafNodes();
+
+    /**
      * @brief Add input node as parent to the current node and move the parents of current node as parent to the input node.
      * If the node is already exists as parent then skip the operation
      * @return true if operation succeeded else false
