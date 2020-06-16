@@ -1,8 +1,8 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/CSVSink.hpp>
 #include <SourceSink/BinarySink.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger.hpp>
-#include <API/Types/DataTypes.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 
@@ -42,8 +42,8 @@ class SinkTest : public testing::Test {
         nodeEngine = std::make_shared<NodeEngine>();
         nodeEngine->createBufferManager(bufferSize, buffersManaged);
         bufferManager = nodeEngine->getBufferManager();
-        test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
-                                                                          UINT32);
+        test_schema = Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE",
+                                                                                                  DataTypeFactory::createUInt32());
         write_result = false;
         path_to_csv_file = "../tests/test_data/sink.csv";
         path_to_bin_file = "../tests/test_data/sink.bin";
