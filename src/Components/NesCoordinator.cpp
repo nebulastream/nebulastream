@@ -284,13 +284,25 @@ bool NesCoordinator::unregisterQuery(const string queryId) {
 bool NesCoordinator::deployQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator::deployQuery queryId=" << queryId);
 
-    NES_DEBUG("NesCoordinator::addQuery: preparing for Deployment");
-    queryDeployer->prepareForDeployment(queryId);
+    NES_DEBUG("NesCoordinator: preparing for Deployment by adding port information");
+    if(!queryDeployer->prepareForDeployment(queryId)){
+        NES_ERROR("NesCoordinator: Failed to prepare for Deployment by adding port information");
+        return false;
+    }
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    if (executionNodes.empty()) {
+        NES_ERROR("NesCoordinator: Unable to find execution plan for the query with id " << queryId);
+        return false;
+    }
 
     for (ExecutionNodePtr executionNode : executionNodes) {
         NES_DEBUG("NesCoordinator::registerQueryInNodeEngine serialize id=" << executionNode->getId());
         QueryPlanPtr querySubPlan = executionNode->getQuerySubPlan(queryId);
+        if (!querySubPlan) {
+            NES_WARNING("NesCoordinator : unable to find query sub plan with id " << queryId);
+            return false;
+        }
         //FIXME: we are considering only one root operator
         OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
 
@@ -305,7 +317,7 @@ bool NesCoordinator::deployQuery(std::string queryId) {
             return false;
         }
     }
-
+    NES_INFO("NesCoordinator: Finished deploying execution plan for query with Id " << queryId);
     return true;
 }
 
@@ -313,6 +325,11 @@ bool NesCoordinator::undeployQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator::undeployQuery queryId=" << queryId);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    if (executionNodes.empty()) {
+        NES_ERROR("NesCoordinator: Unable to find execution plan for the query with id " << queryId);
+        return false;
+    }
+
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
         NES_DEBUG("NESCoordinator::undeployQuery query at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
@@ -330,6 +347,11 @@ bool NesCoordinator::undeployQuery(std::string queryId) {
 bool NesCoordinator::startQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator::startQuery queryId=" << queryId);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    if (executionNodes.empty()) {
+        NES_ERROR("NesCoordinator: Unable to find execution plan for the query with id " << queryId);
+        return false;
+    }
+
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
         NES_DEBUG("NesCoordinator::startQuery at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
@@ -347,6 +369,11 @@ bool NesCoordinator::startQuery(std::string queryId) {
 bool NesCoordinator::stopQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator:stopQuery queryId=" << queryId);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    if (executionNodes.empty()) {
+        NES_ERROR("NesCoordinator: Unable to find execution plan for the query with id " << queryId);
+        return false;
+    }
+
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
         NES_DEBUG("NESCoordinator::stopQuery at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);

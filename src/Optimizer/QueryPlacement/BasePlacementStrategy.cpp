@@ -81,6 +81,9 @@ void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, NES
     }
 
     QueryPlanPtr childQuerySubPlan = childExecutionNode->getQuerySubPlan(queryId);
+    if (!childQuerySubPlan) {
+        NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
+    }
     vector<SinkLogicalOperatorNodePtr> sinkOperators = childQuerySubPlan->getSinkOperators();
     if (sinkOperators.empty()) {
         NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Found a query sub plan without sink operator");
@@ -140,6 +143,10 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
 
         } else {
             const QueryPlanPtr querySubPlan = executionNode->getQuerySubPlan(queryId);
+            if (!querySubPlan) {
+                NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
+            }
+
             querySubPlan->setQueryId(queryId);
 
             if (querySubPlan->getSinkOperators().empty()) {
@@ -179,6 +186,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
         previousNode = (*pathItr);
         ++pathItr;
     }
+    NES_DEBUG("BasePlacementStrategy: Finished added system generated operators");
 }
 
 }// namespace NES

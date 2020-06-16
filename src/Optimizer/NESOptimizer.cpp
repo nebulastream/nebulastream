@@ -26,6 +26,6 @@ GlobalExecutionPlanPtr NESOptimizer::updateExecutionGraph(std::string strategy, 
 
     NES_INFO("NESOptimizer: Building Execution plan for the input query");
     queryPlan = typeInferencePhasePtr->transform(queryPlan);
-    GlobalExecutionPlanPtr globalExecution = placementStrategyPtr->initializeExecutionPlan(queryPlan, streamCatalog);
+    GlobalExecutionPlanPtr globalExecution = placementStrategyPtr->updateGlobalExecutionPlan(queryPlan, streamCatalog);
     return globalExecution;
 };

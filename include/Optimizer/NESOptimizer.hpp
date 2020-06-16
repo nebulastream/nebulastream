@@ -36,7 +36,7 @@ class NESOptimizer {
     NESOptimizer();
 
     /**
-     * @brief This method prepares the execution graph for the input user query
+     * @brief This method updates the global execution graph for the input user query
      * @param strategy : name of the placement strategy
      * @param queryPlan : the input query plan for which execution plan is to be updated is to be prepared
      * @param nesTopologyPlan : The topology of the NEs infrastructure
