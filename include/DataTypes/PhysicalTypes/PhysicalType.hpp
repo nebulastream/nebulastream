@@ -16,7 +16,7 @@ class PhysicalType {
     virtual bool isBasicType();
     virtual bool isArrayType();
     virtual u_int8_t size() const = 0;
-    virtual std::string convertRawToString(void* rawData);
+    virtual std::string convertRawToString(void* rawData) = 0;
     DataTypePtr getType();
 
   private:

@@ -3,6 +3,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES {
@@ -10,5 +11,9 @@ namespace NES {
 CodeGenerator::CodeGenerator() = default;
 
 CodeGenerator::~CodeGenerator() = default;
+
+CompilerTypesFactoryPtr CodeGenerator::getTypeFactory() {
+    return std::make_shared<CompilerTypesFactory>();
+}
 
 }// namespace NES

@@ -16,6 +16,7 @@ typedef std::shared_ptr<Float> FloatPtr;
 
 class DefaultPhysicalTypeFactory: public PhysicalTypeFactory{
   public:
+    DefaultPhysicalTypeFactory();
     PhysicalTypePtr getPhysicalType(DataTypePtr dataType) override;
 
   private:

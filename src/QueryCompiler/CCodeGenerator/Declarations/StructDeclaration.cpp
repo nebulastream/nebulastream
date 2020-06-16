@@ -1,6 +1,7 @@
 
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/VariableDeclaration.hpp>
+#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -9,7 +10,7 @@ StructDeclaration StructDeclaration::create(const std::string& type_name, const 
     return StructDeclaration(type_name, variable_name);
 }
 
-const DataTypePtr StructDeclaration::getType() const { return createUserDefinedType(*this); }
+const GeneratableDataTypePtr StructDeclaration::getType() const { return CompilerTypesFactory().createUserDefinedType(*this); }
 
 const std::string StructDeclaration::getIdentifierName() const { return variable_name_; }
 
@@ -57,7 +58,8 @@ DeclarationPtr StructDeclaration::getField(const std::string& field_name) const 
 
 const bool StructDeclaration::containsField(const std::string& field_name, const DataTypePtr dataType) const {
     for (auto& decl : decls_) {
-        if (decl->getIdentifierName() == field_name && decl->getType()->isEqual(dataType)) {
+        // todo fix equals && decl->getType()->isEqual(dataType)
+        if (decl->getIdentifierName() == field_name ) {
             return true;
         }
     }

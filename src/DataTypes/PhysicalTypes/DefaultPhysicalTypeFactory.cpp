@@ -9,6 +9,8 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
+DefaultPhysicalTypeFactory::DefaultPhysicalTypeFactory() : PhysicalTypeFactory() {}
+
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType) {
     if (dataType->isBoolean()) {
         return BasicPhysicalType::create(dataType, BasicPhysicalType::BOOLEAN);

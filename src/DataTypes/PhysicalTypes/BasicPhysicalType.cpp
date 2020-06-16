@@ -2,8 +2,14 @@
 #include <API/Expressions/Expressions.hpp>
 #include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
 #include <sstream>
-
 namespace NES {
+
+BasicPhysicalType::BasicPhysicalType(DataTypePtr type, NativeType nativeType) : PhysicalType(type), nativeType(nativeType) {}
+
+PhysicalTypePtr BasicPhysicalType::create(DataTypePtr type, NativeType nativeType) {
+    return std::make_shared<BasicPhysicalType>(type, nativeType);
+}
+
 bool BasicPhysicalType::isBasicType() {
     return true;
 }
@@ -42,5 +48,9 @@ std::string BasicPhysicalType::convertRawToString(void* data) {
         case BOOLEAN: return std::to_string(*reinterpret_cast<bool*>(data));
         case CHAR: return std::to_string(*reinterpret_cast<char*>(data));
     }
+}
+
+BasicPhysicalType::NativeType BasicPhysicalType::getNativeType() {
+    return nativeType;
 }
 }// namespace NES

@@ -75,6 +75,18 @@ class DataTypeFactory {
     static DataTypePtr createInteger(int64_t lowerBound, int64_t upperBound);
 
     /**
+    * @brief Creates a 16bit Integer data type, which corresponds to a C++ int16_t type.
+    * @return DataTypePtr
+    */
+    static DataTypePtr createInt8();
+
+    /**
+    * @brief Creates a 16bit Integer data type, which corresponds to a C++ int16_t type.
+    * @return DataTypePtr
+    */
+    static DataTypePtr createUInt8();
+
+    /**
      * @brief Creates a 16bit Integer data type, which corresponds to a C++ int16_t type.
      * @return DataTypePtr
      */

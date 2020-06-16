@@ -11,7 +11,8 @@ typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
 
 class PhysicalTypeFactory {
   public:
-   virtual PhysicalTypePtr getPhysicalType(DataTypePtr dataType);
+    PhysicalTypeFactory() = default;
+    virtual PhysicalTypePtr getPhysicalType(DataTypePtr dataType) = 0;
 };
 
 }// namespace NES

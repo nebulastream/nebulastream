@@ -4,33 +4,34 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 
 #include <utility>
 namespace NES {
 
-ExpressionItem::ExpressionItem(int8_t value) : ExpressionItem(createBasicTypeValue(BasicType::INT8, std::to_string(value))) {}
+ExpressionItem::ExpressionItem(int8_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(uint8_t value) : ExpressionItem(createBasicTypeValue(BasicType::UINT8, std::to_string(value))) {}
+ExpressionItem::ExpressionItem(uint8_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(int16_t value) : ExpressionItem(createBasicTypeValue(BasicType::INT16, std::to_string(value))) {}
+ExpressionItem::ExpressionItem(int16_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(uint16_t value) : ExpressionItem(createBasicTypeValue(BasicType::UINT16, std::to_string(value))) {}
+ExpressionItem::ExpressionItem(uint16_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(int32_t value) : ExpressionItem(createBasicTypeValue(BasicType::INT32, std::to_string(value))) {}
+ExpressionItem::ExpressionItem(int32_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(uint32_t value) : ExpressionItem(createBasicTypeValue(BasicType::UINT32, std::to_string(value))) {}
+ExpressionItem::ExpressionItem(uint32_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt32(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(int64_t value) : ExpressionItem(createBasicTypeValue(BasicType::INT64, std::to_string(value))) {}
+ExpressionItem::ExpressionItem(int64_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(uint64_t value) : ExpressionItem(createBasicTypeValue(BasicType::UINT64, std::to_string(value))) {}
+ExpressionItem::ExpressionItem(uint64_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(float value) : ExpressionItem(createBasicTypeValue(BasicType::FLOAT32, std::to_string(value))) {}
+ExpressionItem::ExpressionItem(float value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createFloat(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(double value) : ExpressionItem(createBasicTypeValue(BasicType::FLOAT64, std::to_string(value))) {}
+ExpressionItem::ExpressionItem(double value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createDouble(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(bool value) : ExpressionItem(createBasicTypeValue(BasicType::BOOLEAN, std::to_string(value))) {}
-
-ExpressionItem::ExpressionItem(const char* value) : ExpressionItem(createStringValueType(value)) {}
+ExpressionItem::ExpressionItem(bool value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createBoolean(), std::to_string(value))) {}
+// TODO Fix;
+ExpressionItem::ExpressionItem(const char* value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUndefined(), "")) {}
 
 ExpressionItem::ExpressionItem(ValueTypePtr value) : ExpressionItem(ConstantValueExpressionNode::create(std::move(value))) {}
 
@@ -53,7 +54,8 @@ ExpressionItem Attribute(std::string fieldName) {
 }
 
 ExpressionItem Attribute(std::string fieldName, BasicType type) {
-    return ExpressionItem(FieldAccessExpressionNode::create(createDataType(type), std::move(fieldName)));
+    // TODO fix input
+    return ExpressionItem(FieldAccessExpressionNode::create(DataTypeFactory::createInt16(), std::move(fieldName)));
 }
 
 ExpressionNodePtr ExpressionItem::getExpressionNode() {

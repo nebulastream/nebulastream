@@ -3,11 +3,11 @@
 #include <string>
 #include <vector>
 
-#include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
-
+#include <API/Types/AttributeField.hpp>
+#include <sstream>
 namespace NES {
 
 class StructBuilder {
@@ -31,7 +31,7 @@ FunctionDeclaration FunctionBuilder::build() {
     if (!returnType) {
         function << "void";
     } else {
-        function << returnType->getCode()->code_;
+        function << returnType->generateCode()->code_;
     }
     function << " " << name << "(";
     for (size_t i = 0; i < parameters.size(); ++i) {
@@ -56,7 +56,7 @@ FunctionDeclaration FunctionBuilder::build() {
     return FunctionDeclaration(function.str());
 }
 
-FunctionBuilder& FunctionBuilder::returns(DataTypePtr type) {
+FunctionBuilder& FunctionBuilder::returns(GeneratableDataTypePtr type) {
     returnType = type;
     return *this;
 }

@@ -1,11 +1,12 @@
 
 #include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
+#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
 
 namespace NES {
 
 FunctionDeclaration::FunctionDeclaration(Code code) : function_code(code) {}
 
-const DataTypePtr FunctionDeclaration::getType() const { return DataTypePtr(); }
+const GeneratableDataTypePtr FunctionDeclaration::getType() const { return GeneratableDataTypePtr(); }
 const std::string FunctionDeclaration::getIdentifierName() const { return ""; }
 
 const Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }

@@ -44,6 +44,14 @@ DataTypePtr DataTypeFactory::createInteger(int64_t lowerBound, int64_t upperBoun
     return createInteger(bits, lowerBound, upperBound);
 }
 
+DataTypePtr DataTypeFactory::createInt8() {
+    return createInteger(8, INT8_MIN, INT8_MAX);
+}
+
+DataTypePtr DataTypeFactory::createUInt8() {
+    return createInteger(8, 0, UINT8_MAX);
+};
+
 DataTypePtr DataTypeFactory::createInt16() {
     return createInteger(16, INT16_MIN, INT16_MAX);
 };
@@ -83,5 +91,7 @@ ValueTypePtr DataTypeFactory::createBasicValue(DataTypePtr type, std::string val
 ValueTypePtr DataTypeFactory::createArrayValue(DataTypePtr type, std::vector<std::string> values) {
     return std::make_shared<ArrayValue>(type, values);
 }
+
+
 
 }// namespace NES

@@ -1,11 +1,9 @@
 add_source_nes(
-        ArrayDataType.cpp
-        ArrayValueType.cpp
-        BasicDataType.cpp
-        BasicValueType.cpp
+        GeneratableDataType.cpp
+        GeneratableValueType.cpp
+        AnonymousUserDefinedDataType.cpp
         PointerDataType.cpp
         ReferenceDataType.cpp
-        ValueType.cpp
+        BasicGeneratableType.cpp
         UserDefinedDataType.cpp
-        AnonymousUserDefinedDataType.cpp
 )

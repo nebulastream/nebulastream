@@ -1,7 +1,7 @@
 
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
-#include <API/Types/DataTypes.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
@@ -26,19 +26,19 @@ ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp) {
-    return leftExp + ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
+    return leftExp + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), "1"));
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp) {
-    return leftExp - ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
+    return leftExp - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), "1"));
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp, int) {
-    return leftExp + ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
+    return leftExp + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), "1"));
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp, int) {
-    return leftExp - ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
+    return leftExp - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), "1"));
 }
 
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp) {

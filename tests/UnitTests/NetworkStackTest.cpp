@@ -10,6 +10,7 @@
 #include <SourceSink/SourceCreator.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <Operators/Operator.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <gtest/gtest.h>
@@ -54,9 +55,9 @@ class NetworkStackTest : public testing::Test {
         partitionManager = std::make_shared<PartitionManager>();
 
         schema = Schema::create()
-            ->addField(createField("id", BasicType::INT64))
-            ->addField(createField("one", BasicType::INT64))
-            ->addField(createField("value", BasicType::INT64));
+            ->addField("id", DataTypeFactory::createInt64())
+            ->addField("one", DataTypeFactory::createInt64())
+            ->addField("value", DataTypeFactory::createInt64());
     }
 
     /* Will be called before a test is executed. */
@@ -481,7 +482,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
     int numSendingThreads = 10;
     auto sendingThreads = std::vector<std::thread>();
-    auto schema = Schema::create()->addField(createField("id", BasicType::INT64));
+    auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
 
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
@@ -598,7 +599,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
     int numSendingThreads = 10;
     auto sendingThreads = std::vector<std::thread>();
-    auto schema = Schema::create()->addField(createField("id", BasicType::INT64));
+    auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
 
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};

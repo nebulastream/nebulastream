@@ -34,9 +34,6 @@ const std::string AttributeField::toString() const {
     return ss.str();
 }
 
-const AttributeFieldPtr AttributeField::copy() const {
-    return std::make_shared<AttributeField>(*this);
-}
 
 bool AttributeField::isEqual(AttributeFieldPtr attr) {
     if (!attr)
