@@ -9,7 +9,7 @@ Learn more about Nebula Stream at https://www.nebula.stream/
 ## Documentation
 - API:
     - [Query API](https://github.com/nebulastream/nebulastream/wiki/Query-API) 
-    - [REST API](src/REST/RestEndpoints.md)     
+    - [REST API](https://github.com/nebulastream/nebulastream/wiki/REST-API)     
 - Development:
     - [How to contribute](https://github.com/nebulastream/nebulastream/wiki/How-to-contribute-to-NES)
     - [Building from Source](https://github.com/nebulastream/nebulastream/wiki/How-to-Build-and-Test) 
