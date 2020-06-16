@@ -12,6 +12,9 @@ template<class ValueType>
 class BasicPhysicalField;
 class ArrayPhysicalField;
 
+class PhysicalType;
+typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+
 /**
  * @brief This is the base class to represent a physical field.
  * It can be a BasicPhysicalField for value types or a ArrayPhyiscalField for arrays.
@@ -65,7 +68,7 @@ class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
     uint64_t bufferOffset;
 };
 
-PhysicalFieldPtr createArrayPhysicalField(DataTypePtr componentField, uint64_t bufferOffset);
+PhysicalFieldPtr createArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset);
 
 }// namespace NES
 #endif//INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_

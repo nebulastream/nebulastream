@@ -1,3 +1,7 @@
+#include <DataTypes/DataTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
+#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <SourceSink/CSVSource.hpp>
 #include <SourceSink/DataSource.hpp>
@@ -64,6 +68,12 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
 
     std::string line;
     uint64_t i = 0;
+    std::vector<BasicPhysicalTypePtr> physicalTypes;
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    for (auto field : schema->fields) {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(std::dynamic_pointer_cast<BasicPhysicalType>(physicalField));
+    }
     while (i < generated_tuples_this_pass) {
         if (input.tellg() >= file_size || input.tellg() == -1) {
             NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << file_size);
@@ -77,55 +87,55 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
         boost::algorithm::split(tokens, line, boost::is_any_of(this->delimiter));
         size_t offset = 0;
         for (size_t j = 0; j < schema->getSize(); j++) {
-            auto field = schema->get(j);
-            size_t fieldSize = field->getFieldSize();
+            auto field = physicalTypes[j];
+            size_t fieldSize = field->size();
 
             /*
              * TODO: this requires proper MIN / MAX size checks, numeric_limits<T>-like
              * TODO: this requires underflow/overflow checks
              * TODO: our types need their own sto/strto methods
              */
-            if (field->getDataType()->isEqual(createDataType(BasicType::UINT64))) {
+            if (field->getNativeType() == BasicPhysicalType::UINT_64) {
                 uint64_t val = std::stoull(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->isEqual(createDataType(BasicType::INT64))) {
+            } else if (field->getNativeType() == BasicPhysicalType::INT_64) {
                 int64_t val = std::stoll(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->isEqual(createDataType(BasicType::UINT32))) {
+            } else if (field->getNativeType() == BasicPhysicalType::UINT_32) {
                 uint32_t val = std::stoul(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->isEqual(createDataType(BasicType::INT32))) {
+            } else if (field->getNativeType() == BasicPhysicalType::INT_32) {
                 int32_t val = std::stol(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->isEqual(createDataType(BasicType::UINT16))) {
+            } else if (field->getNativeType() == BasicPhysicalType::UINT_16) {
                 uint16_t val = std::stol(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->isEqual(createDataType(BasicType::INT16))) {
+            } else if (field->getNativeType() == BasicPhysicalType::INT_16) {
                 int16_t val = std::stol(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->isEqual(createDataType(BasicType::UINT8))) {
+            } else if (field->getNativeType() == BasicPhysicalType::UINT_16) {
                 uint8_t val = std::stoi(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->isEqual(createDataType(BasicType::INT8))) {
+            } else if (field->getNativeType() == BasicPhysicalType::INT_8) {
                 int8_t val = std::stoi(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->isEqual(createDataType(BasicType::FLOAT64))) {
+            } else if (field->getNativeType() == BasicPhysicalType::DOUBLE) {
                 double val = std::stod(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->isEqual(createDataType(BasicType::FLOAT32))) {
+            } else if (field->getNativeType() == BasicPhysicalType::FLOAT) {
                 float val = std::stof(tokens[j].c_str());
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);
-            } else if (field->getDataType()->isEqual(createDataType(BasicType::BOOLEAN))) {
+            } else if (field->getNativeType() == BasicPhysicalType::BOOLEAN) {
                 bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 || atoi(tokens[j].c_str()) != 0);
                 memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                        fieldSize);

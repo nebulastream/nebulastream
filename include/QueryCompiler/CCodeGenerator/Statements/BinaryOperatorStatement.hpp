@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 
-#include <API/Types/DataTypes.hpp>
 #include <Operators/OperatorTypes.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>

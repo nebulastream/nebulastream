@@ -1,5 +1,8 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <SourceSink/BinarySink.hpp>
+#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
+#include <SourceSink/BinarySink.hpp>
 #include <Util/Logger.hpp>
 #include <fstream>
 #include <iostream>
@@ -31,11 +34,12 @@ std::string BinarySink::outputBufferWithSchema(TupleBuffer& tupleBuffer, SchemaP
 
     std::stringstream str;
     std::vector<uint32_t> offsets;
-    std::vector<DataTypePtr> types;
+    std::vector<PhysicalTypePtr> types;
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
         offsets.push_back(schema->get(i)->getFieldSize());
         NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") + std::to_string(schema->get(i)->getFieldSize()));
-        types.push_back(schema->get(i)->getDataType());
+        types.push_back(physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType()));
     }
 
     uint32_t prefix_sum = 0;

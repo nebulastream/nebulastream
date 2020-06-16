@@ -2,12 +2,16 @@
 #define NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_ARRAYPHYSICALFIELD_HPP_
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 namespace NES {
+
+class PhysicalType;
+typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+
 /**
  * @brief Represents an array field at a specific position in a memory buffer.
  */
 class ArrayPhysicalField : public PhysicalField {
   public:
-    ArrayPhysicalField(DataTypePtr componentField, uint64_t bufferOffset);
+    ArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset);
     ~ArrayPhysicalField() = default;
     ArrayPhysicalField(ArrayPhysicalField* physicalField);
     /**
@@ -23,7 +27,7 @@ class ArrayPhysicalField : public PhysicalField {
     std::shared_ptr<PhysicalField> operator[](uint64_t arrayIndex);
 
   private:
-    DataTypePtr componentField;
+    PhysicalTypePtr componentField;
 };
 }// namespace NES
 

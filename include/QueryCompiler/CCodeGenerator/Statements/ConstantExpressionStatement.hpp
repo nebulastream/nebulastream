@@ -16,7 +16,6 @@ class ConstantExpressionStatement : public ExpressionStatment {
 
     ConstantExpressionStatement(const ValueTypePtr& val);
 
-    ConstantExpressionStatement(const BasicType& type, const std::string& value);
     ConstantExpressionStatement(int32_t value);
 
     virtual ~ConstantExpressionStatement();

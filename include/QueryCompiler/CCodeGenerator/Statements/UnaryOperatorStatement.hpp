@@ -9,8 +9,6 @@
 #include <QueryCompiler/CCodeGenerator/Statements/ExpressionStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
-#include <API/Types/DataTypes.hpp>
-
 namespace NES {
 
 const CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type);

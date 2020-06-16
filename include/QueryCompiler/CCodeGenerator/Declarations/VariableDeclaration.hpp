@@ -1,12 +1,19 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_VARIABLEDECLARATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_VARIABLEDECLARATION_HPP_
 
+#include <DataTypes/ValueTypes/ValueType.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 
 namespace NES {
 
 class VariableDeclaration;
 typedef std::shared_ptr<VariableDeclaration> VariableDeclarationPtr;
+
+class CodeExpression;
+typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
+
+class ValueType;
+typedef std::shared_ptr<ValueType> ValueTypePtr ;
 
 class VariableDeclaration : public Declaration {
   public:

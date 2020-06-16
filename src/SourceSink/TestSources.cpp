@@ -12,6 +12,7 @@
 #include <SourceSink/SenseSource.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/ZmqSource.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 
 namespace NES {
 
@@ -27,7 +28,7 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
 
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
     return std::make_shared<DefaultSource>(
-        Schema::create()->addField(createField("id", UINT64)), bufferManager, queryManager, /**bufferCnt*/ 1, /*frequency*/ 1);
+        Schema::create()->addField("id", DataTypeFactory::createInt32()), bufferManager, queryManager, /**bufferCnt*/ 1, /*frequency*/ 1);
 }
 
 const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,

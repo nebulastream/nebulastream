@@ -1,4 +1,9 @@
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/Array.hpp>
+#include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
+#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
@@ -8,39 +13,32 @@ namespace NES {
 
 class ArrayDataType;
 
-std::shared_ptr<PhysicalField> PhysicalFieldUtil::createPhysicalField(const DataTypePtr dataType,
+std::shared_ptr<PhysicalField> PhysicalFieldUtil::createPhysicalField(const PhysicalTypePtr physicalType,
                                                                       uint64_t bufferOffset) {
-    if (dataType->isEqual(createDataType(UINT8))) {
-        return createBasicPhysicalField<uint8_t>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(UINT16))) {
-        return createBasicPhysicalField<uint16_t>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(UINT32))) {
-        return createBasicPhysicalField<uint32_t>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(UINT64))) {
-        return createBasicPhysicalField<uint64_t>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(INT8))) {
-        return createBasicPhysicalField<int8_t>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(INT16))) {
-        return createBasicPhysicalField<int16_t>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(INT32))) {
-        return createBasicPhysicalField<int32_t>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(INT64))) {
-        return createBasicPhysicalField<int64_t>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(FLOAT32))) {
-        return createBasicPhysicalField<float>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(FLOAT64))) {
-        return createBasicPhysicalField<double>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(BOOLEAN))) {
-        return createBasicPhysicalField<bool>(bufferOffset);
-    } else if (dataType->isEqual(createDataType(CHAR))) {
-        return createBasicPhysicalField<char>(bufferOffset);
-    } else if (dataType->isArrayDataType()) {
-        auto arrayType = std::dynamic_pointer_cast<ArrayDataType>(dataType);
-        return createArrayPhysicalField(arrayType->getComponentDataType(), bufferOffset);
+    if (physicalType->isBasicType()) {
+        auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+        switch (basicPhysicalType->getNativeType()) {
+            case BasicPhysicalType::INT_8: return createBasicPhysicalField<int8_t>(bufferOffset);
+            case BasicPhysicalType::INT_16: return createBasicPhysicalField<int16_t>(bufferOffset);
+            case BasicPhysicalType::INT_32: return createBasicPhysicalField<int32_t>(bufferOffset);
+            case BasicPhysicalType::INT_64: return createBasicPhysicalField<int64_t>(bufferOffset);
+            case BasicPhysicalType::UINT_8: return createBasicPhysicalField<uint8_t>(bufferOffset);
+            case BasicPhysicalType::UINT_16: return createBasicPhysicalField<uint16_t>(bufferOffset);
+            case BasicPhysicalType::UINT_32: return createBasicPhysicalField<uint32_t>(bufferOffset);
+            case BasicPhysicalType::UINT_64: return createBasicPhysicalField<uint64_t>(bufferOffset);
+            case BasicPhysicalType::FLOAT: return createBasicPhysicalField<float>(bufferOffset);
+            case BasicPhysicalType::DOUBLE: return createBasicPhysicalField<double>(bufferOffset);
+            case BasicPhysicalType::CHAR: return createBasicPhysicalField<char>(bufferOffset);
+            case BasicPhysicalType::BOOLEAN: return createBasicPhysicalField<bool>(bufferOffset);
+        }
+    } else if (physicalType->isArrayType()) {
+        auto arrayPhysicalType = std::dynamic_pointer_cast<ArrayPhysicalType>(physicalType);
+        return createArrayPhysicalField(arrayPhysicalType->getPhysicalComponentType(), bufferOffset);
     } else {
-        NES_FATAL_ERROR("No physical field mapping for " << dataType->toString() << " available");
+        // TODO FIXME
+        NES_FATAL_ERROR("No physical field mapping for " << "test" << " available");
         NES_NOT_IMPLEMENTED();
         ;
     }
-}
+}// namespace NES
 }// namespace NES

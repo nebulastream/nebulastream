@@ -12,4 +12,3 @@ add_source_nes(
 )
 add_subdirectory(CCodeGenerator)
 add_subdirectory(Compiler)
-add_subdirectory(DataTypes)

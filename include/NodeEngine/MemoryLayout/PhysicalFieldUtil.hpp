@@ -10,6 +10,9 @@ typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
+class PhysicalType;
+typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+
 /**
  * @brief Util class to create a PhysicalField for a specific data type and a offset in a buffer.
  */
@@ -20,7 +23,7 @@ class PhysicalFieldUtil {
      * @param dataType
      * @param bufferOffset offset in the underling buffer
      */
-    static PhysicalFieldPtr createPhysicalField(const DataTypePtr dataType, uint64_t bufferOffset);
+    static PhysicalFieldPtr createPhysicalField(const PhysicalTypePtr dataType, uint64_t bufferOffset);
 };
 }// namespace NES
 

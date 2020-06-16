@@ -2,6 +2,7 @@
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
+#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Util/Logger.hpp>
 #include <assert.h>
 
@@ -17,7 +18,8 @@ PhysicalFieldPtr PhysicalSchema::createPhysicalField(uint64_t fieldIndex, uint64
     assert(validFieldIndex(fieldIndex));
     auto logicalFieldsInSchema = schema->fields;
     auto logicalField = logicalFieldsInSchema[fieldIndex];
-    return PhysicalFieldUtil::createPhysicalField(logicalField->getDataType(), bufferOffset);
+    auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(logicalField->getDataType());
+    return PhysicalFieldUtil::createPhysicalField(physicalType, bufferOffset);
 }
 
 uint64_t PhysicalSchema::getFieldOffset(uint64_t fieldIndex) {

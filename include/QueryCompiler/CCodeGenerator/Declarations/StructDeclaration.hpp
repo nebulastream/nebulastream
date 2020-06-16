@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_STRUCTDECLARATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_STRUCTDECLARATION_HPP_
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
+#include <vector>
 namespace NES {
 
 class VariableDeclaration;
