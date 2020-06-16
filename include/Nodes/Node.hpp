@@ -216,6 +216,18 @@ class Node : public std::enable_shared_from_this<Node> {
     const std::vector<NodePtr>& getChildren() const;
 
     /**
+     * Check if input node is present as parent to this
+     * @return true if input node is in parent list
+     */
+    bool containAsParent(NodePtr);
+
+    /**
+     * Check if input node is present as children to this
+     * @return true if input node is in children list
+     */
+    bool containAsChild(NodePtr);
+
+    /**
      * @brief get direct parents.
      * @return vector of parents.
      */

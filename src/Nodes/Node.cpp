@@ -67,13 +67,13 @@ bool Node::removeChild(const NodePtr node) {
 bool Node::addParent(const NodePtr newNode) {
     if (newNode.get() == this) {
         NES_WARNING("Node: Adding node to its self so will skip add parent operation.");
-        return true;
+        return false;
     }
 
     // checks if current new node is not part of parents
     if (vectorContainsTheNode(parents, newNode)) {
         NES_WARNING("Node: the node is already part of its parents so ignore add parent operation.");
-        return true;
+        return false;
     }
     // add the node to the parents
     parents.push_back(newNode);
@@ -278,6 +278,16 @@ void Node::clear() {
 
 const std::vector<NodePtr>& Node::getChildren() const {
     return children;
+}
+
+bool Node::containAsChild(NodePtr node) {
+    NES_DEBUG("Node: Checking if the input node is contained in the children list");
+    return vectorContainsTheNode(children, node);
+}
+
+bool Node::containAsParent(NodePtr node) {
+    NES_DEBUG("Node: Checking if the input node is contained in the parent list");
+    return vectorContainsTheNode(parents, node);
 }
 
 const std::vector<NodePtr>& Node::getParents() const {

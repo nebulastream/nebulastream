@@ -166,4 +166,8 @@ std::map<std::string, QueryPlanPtr> ExecutionNode::getAllQuerySubPlans() {
     return mapOfQuerySubPlans;
 }
 
+bool ExecutionNode::equal(NodePtr rhs) const {
+    return rhs->as<ExecutionNode>()->getId() == id;
+}
+
 }// namespace NES
