@@ -1,8 +1,7 @@
 #include <API/Schema.hpp>
-#include <API/Types/DataTypes.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <API/Window/WindowDefinition.hpp>
-
+#include <DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
@@ -18,8 +17,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
-#include <QueryCompiler/DataTypes/AnonymousUserDefinedDataType.hpp>
-#include <QueryCompiler/DataTypes/UserDefinedDataType.hpp>
+#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <SourceSink/DataSink.hpp>
@@ -73,18 +71,18 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr schema, PipelineContextPtr co
     /** === set the result tuple depending on the input tuple===*/
     context->resultSchema = context->inputSchema;
     code->structDeclarationResultTuple = getStructDeclarationFromSchema("ResultTuple", schema);
-
+    auto tf = getTypeFactory();
     /* === declarations === */
-    auto tupleBufferType = createAnonymUserDefinedType("NES::TupleBuffer");
-    auto pipelineExecutionContextType = createAnonymUserDefinedType("NES::PipelineExecutionContext");
+    auto tupleBufferType = tf->createAnonymusDataType("NES::TupleBuffer");
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("NES::PipelineExecutionContext");
     VariableDeclaration varDeclarationInputBuffer = VariableDeclaration::create(
-        createReferenceDataType(tupleBufferType), "inputTupleBuffer");
+        tf->createReference(tupleBufferType), "inputTupleBuffer");
     VariableDeclaration varDeclarationPipelineExecutionContext = VariableDeclaration::create(
-        createReferenceDataType(pipelineExecutionContextType), "pipelineExecutionContext");
+        tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
     VariableDeclaration varDeclarationState =
-        VariableDeclaration::create(createPointerDataType(createAnonymUserDefinedType("void")), "state_var");
+        VariableDeclaration::create(tf->createPointer(tf->createAnonymusDataType("void")), "state_var");
     VariableDeclaration varDeclarationWindowManager =
-        VariableDeclaration::create(createPointerDataType(createAnonymUserDefinedType("NES::WindowManager")),
+        VariableDeclaration::create(tf->createPointer(tf->createAnonymusDataType("NES::WindowManager")),
                                     "windowManager");
     auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
     code->varDeclarationInputBuffer = varDeclarationInputBuffer;
@@ -95,20 +93,19 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr schema, PipelineContextPtr co
 
     /* declaration of record index; */
     code->varDeclarationRecordIndex = std::dynamic_pointer_cast<VariableDeclaration>(
-        VariableDeclaration::create(createDataType(BasicType(UINT64)), "recordIndex",
-                                    createBasicTypeValue(BasicType(INT32), "0"))
+        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()), "recordIndex",
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
             .copy());
     /* int32_t ret = 0; */
     code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
-        VariableDeclaration::create(createDataType(BasicType(INT32)), "ret",
-                                    createBasicTypeValue(BasicType(INT32), "0"))
+        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt32()),
+                                    "ret",
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
             .copy());
 
     code->varDeclarationInputTuples = VariableDeclaration::create(
-        createPointerDataType(
-            createUserDefinedType(code->structDeclaratonInputTuple)),
+        tf->createPointer(tf->createUserDefinedType(code->structDeclaratonInputTuple)),
         "inputTuples");
-    ;
 
     code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
 
@@ -167,8 +164,9 @@ bool CCodeGenerator::generateCodeForFilter(PredicatePtr pred, PipelineContextPtr
 bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, PredicatePtr pred, PipelineContextPtr context) {
 
     auto code = context->code;
+    auto tf = getTypeFactory();
     auto varDeclarationResultTuples = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(code->structDeclarationResultTuple)), "resultTuples");
+        tf->createPointer(tf->createUserDefinedType(code->structDeclarationResultTuple)), "resultTuples");
 
     auto declaredMapVar = getVariableDeclarationForField(code->structDeclarationResultTuple, field);
     if (!declaredMapVar) {
@@ -189,6 +187,7 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, PredicatePtr pr
 }
 
 bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPtr context) {
+    auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for Sink.");
     auto code = context->code;
     // set result schema to context
@@ -199,7 +198,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
     code->typeDeclarations.push_back(structDeclarationResultTuple);
 
     auto varDeclResultTuple =
-        VariableDeclaration::create(createPointerDataType(createUserDefinedType(structDeclarationResultTuple)),
+        VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(structDeclarationResultTuple)),
                                     "resultTuples");
 
     /* ResultTuple* resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();*/
@@ -247,8 +246,9 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
                                          code->varDeclarationInputTuples,
                                          *(varDeclarationField),
                                          *(code->varDeclarationRecordIndex)};
-                auto copyFieldStatement = varDeclarationField->getDataType()->getStmtCopyAssignment(as);
-                code->currentCodeInsertionPoint->addStatement(copyFieldStatement);
+                // TODO FIX HERE
+                // auto copyFieldStatement = varDeclarationField->getDataType()->getStmtCopyAssignment(as);
+                //code->currentCodeInsertionPoint->addStatement(copyFieldStatement);
             }
         }
     }
@@ -278,16 +278,17 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
     NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check.");
 
     auto code = context->code;
+    auto tf = getTypeFactory();
 
     // calculate of the maximal number of tuples per buffer -> (buffer size / tuple size) - 1
     // int64_t maxTuple = (resultTupleBuffer.getBufferSize() / 39) - 1;
     // 1. get the size of one result tuple
     auto resultTupleSize = context->getResultSchema()->getSchemaSizeInBytes();
     // 2. initialize max tuple
-    auto maxTupleDeclaration = VariableDeclaration::create(createDataType(INT64), "maxTuple");
+    auto maxTupleDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "maxTuple");
     // 3. create calculation statement
     auto calculateMaxTupleStatement =
-        getBufferSize(code->varDeclarationResultBuffer) / Constant(resultTupleSize);
+        getBufferSize(code->varDeclarationResultBuffer) / Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(resultTupleSize))));
     auto calculateMaxTupleAssignment = VarDeclStatement(maxTupleDeclaration).assign(calculateMaxTupleStatement);
     // 4. add statement
     code->currentCodeInsertionPoint->addStatement(calculateMaxTupleAssignment.copy());
@@ -325,10 +326,11 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
  */
 bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
     context->setWindow(window);
-    auto constStatement = ConstantExpressionStatement((createBasicTypeValue(BasicType::UINT64, "0")));
+    auto tf = getTypeFactory();
+    auto constStatement = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0")));
 
     auto stateVariableDeclaration = VariableDeclaration::create(
-        createPointerDataType(createAnonymUserDefinedType(
+        tf->createPointer(tf->createAnonymusDataType(
             "NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>")),
         "state_variable");
 
@@ -338,7 +340,7 @@ bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineC
         stateVarDeclarationStatement));
 
     // Read key value from record
-    auto keyVariableDeclaration = VariableDeclaration::create(createDataType(BasicType::INT64), "key");
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
     auto keyVariableAttributeDeclaration =
         context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
     auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
@@ -350,19 +352,18 @@ bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineC
 
     // get key handle for current key
     auto keyHandlerVariableDeclaration = VariableDeclaration::create(
-        createAnonymUserDefinedType("auto"), "key_value_handle");
+        tf->createAnonymusDataType("auto"), "key_value_handle");
     auto getKeyStateVariable = FunctionCallStatement("get");
     getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
     auto keyHandlerVariableStatement = VarDeclStatement(keyHandlerVariableDeclaration)
                                            .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         keyHandlerVariableStatement));
-
     // access window slice state from state variable via key
     auto windowStateVariableDeclaration = VariableDeclaration::create(
-        createAnonymUserDefinedType("auto"), "windowState");
+        tf->createAnonymusDataType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
-    getValueFromKeyHandle.addParameter(ConstantExpressionStatement(INT64, "0"));
+    getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
     auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
                                             .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
@@ -371,7 +372,7 @@ bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineC
     // get current timestamp
     // TODO add support for event time
     auto currentTimeVariableDeclaration = VariableDeclaration::create(
-        createAnonymUserDefinedType("auto"), "current_ts");
+        tf->createAnonymusDataType("auto"), "current_ts");
     auto getCurrentTs = FunctionCallStatement("NES::getTsFromClock");
     auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration)
                                      .assign(getCurrentTs);
@@ -391,7 +392,7 @@ bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineC
     getSliceIndexByTs.addParameter(VarRef(currentTimeVariableDeclaration));
     auto getSliceIndexByTsCall = VarRef(windowStateVariableDeclaration).accessPtr(getSliceIndexByTs);
     auto currentSliceIndexVariableDeclaration = VariableDeclaration::create(
-        createDataType(BasicType(UINT64)), "current_slice_index");
+        tf->createDataType(DataTypeFactory::createUInt64()), "current_slice_index");
     auto current_slice_ref = VarRef(currentSliceIndexVariableDeclaration);
     auto currentSliceIndexVariableStatement = VarDeclStatement(currentSliceIndexVariableDeclaration)
                                                   .assign(getSliceIndexByTsCall);
@@ -402,7 +403,7 @@ bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineC
     auto getPartialAggregates = FunctionCallStatement("getPartialAggregates");
     auto getPartialAggregatesCall = VarRef(windowStateVariableDeclaration).accessPtr(getPartialAggregates);
     VariableDeclaration partialAggregatesVarDeclaration = VariableDeclaration::create(
-        createAnonymUserDefinedType("std::vector<int64_t>&"), "partialAggregates");
+        tf->createAnonymusDataType("std::vector<int64_t>&"), "partialAggregates");
     auto assignment = VarDeclStatement(partialAggregatesVarDeclaration)
                           .assign(getPartialAggregatesCall);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
@@ -428,8 +429,9 @@ ExecutablePipelinePtr CCodeGenerator::compile(GeneratedCodePtr code) {
      */
 
     // FunctionDeclaration main_function =
+    auto tf = getTypeFactory();
     FunctionBuilder functionBuilder = FunctionBuilder::create("compiled_query")
-                                          .returns(createDataType(BasicType(UINT32)))
+                                          .returns(tf->createDataType(DataTypeFactory::createUInt32()))
                                           .addParameter(code->varDeclarationInputBuffer)
                                           .addParameter(code->varDeclarationState)
                                           .addParameter(code->varDeclarationWindowManager)
@@ -499,6 +501,7 @@ BinaryOperatorStatement CCodeGenerator::getBuffer(VariableDeclaration tupleBuffe
 }
 TypeCastExprStatement CCodeGenerator::getTypedBuffer(VariableDeclaration tupleBufferVariable,
                                                      StructDeclaration structDeclaraton) {
-    return TypeCast(getBuffer(tupleBufferVariable), createPointerDataType(createUserDefinedType(structDeclaraton)));
+    auto tf = getTypeFactory();
+    return TypeCast(getBuffer(tupleBufferVariable), tf->createPointer(tf->createUserDefinedType(structDeclaraton)));
 }
 }// namespace NES

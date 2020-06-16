@@ -8,6 +8,7 @@
 #include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
 
 namespace NES {
 
@@ -17,7 +18,7 @@ typedef std::shared_ptr<DataType> DataTypePtr;
 class FunctionBuilder {
   private:
     std::string name;
-    DataTypePtr returnType;
+    GeneratableDataTypePtr returnType;
     std::vector<VariableDeclaration> parameters;
     std::vector<VariableDeclaration> variable_declarations;
     std::vector<StatementPtr> statements;
@@ -26,7 +27,7 @@ class FunctionBuilder {
   public:
     static FunctionBuilder create(const std::string& function_name);
 
-    FunctionBuilder& returns(DataTypePtr returnType_);
+    FunctionBuilder& returns(GeneratableDataTypePtr returnType_);
     FunctionBuilder& addParameter(VariableDeclaration var_decl);
     FunctionBuilder& addStatement(StatementPtr statement);
     FunctionBuilder& addVariableDeclaration(VariableDeclaration var_decl);

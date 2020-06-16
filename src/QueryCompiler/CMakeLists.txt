@@ -9,6 +9,8 @@ add_source_nes(
         QueryCompiler.cpp
         PipelineContext.cpp
         PipelineExecutionContext.cpp
+        CompilerTypeFactory.cpp
 )
 add_subdirectory(CCodeGenerator)
 add_subdirectory(Compiler)
+add_subdirectory(DataTypes)

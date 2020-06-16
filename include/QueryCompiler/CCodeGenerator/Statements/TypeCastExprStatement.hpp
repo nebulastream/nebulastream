@@ -2,6 +2,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_TYPECASTEXPRSTATEMENT_HPP_
 
 #include <QueryCompiler/CCodeGenerator/Statements/ExpressionStatement.hpp>
+#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
 
 namespace NES {
 
@@ -13,13 +14,13 @@ class TypeCastExprStatement : public ExpressionStatment {
 
     const ExpressionStatmentPtr copy() const;
 
-    TypeCastExprStatement(const ExpressionStatment& expr, const DataTypePtr& type);
+    TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type);
 
     ~TypeCastExprStatement();
 
   private:
     ExpressionStatmentPtr expression;
-    DataTypePtr dataType;
+    GeneratableDataTypePtr dataType;
 };
 
 typedef TypeCastExprStatement TypeCast;

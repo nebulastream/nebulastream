@@ -2,7 +2,6 @@
 
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include <API/Types/DataTypes.hpp>
 #include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Util/TestUtils.hpp>

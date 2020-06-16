@@ -7,8 +7,10 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 
-#include <API/Types/DataTypes.hpp>
 #include <API/UserAPIExpression.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
+#include <QueryCompiler/CompilerTypesFactory.hpp>
+#include <QueryCompiler/DataTypes/GeneratableValueType.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
 
@@ -49,15 +51,16 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code) cons
         FunctionCallStatement expr = FunctionCallStatement(functionCallOverload);
         expr.addParameter(left->generateCode(code));
         expr.addParameter(right->generateCode(code));
+        auto tf = CompilerTypesFactory();
         if (bracket)
             return BinaryOperatorStatement(expr,
                                            op,
-                                           (ConstantExpressionStatement((createBasicTypeValue(BasicType::UINT8, "0")))),
+                                           (ConstantExpressionStatement(tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))),
                                            BRACKETS)
                 .copy();
         return BinaryOperatorStatement(expr,
                                        op,
-                                       (ConstantExpressionStatement((createBasicTypeValue(BasicType::UINT8, "0")))))
+                                       (ConstantExpressionStatement(tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))))
             .copy();
     }
 }
@@ -73,7 +76,9 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr& code) 
             NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from StructDeclaration!");
         }
     } else if (value) {
-        return ConstantExpressionStatement(value).copy();
+        // todo remove if compiler refactored
+        auto tf = CompilerTypesFactory();
+        return ConstantExpressionStatement(tf.createValueType(value)).copy();
     } else {
         NES_FATAL_ERROR("UserAPIExpression: PredicateItem has only NULL Pointers!");
     }
@@ -121,42 +126,45 @@ PredicateItem::PredicateItem(ValueTypePtr value) : mutation(PredicateItemMutatio
                                                    value(value) {}
 
 PredicateItem::PredicateItem(int8_t val) : mutation(PredicateItemMutation::VALUE),
-                                           value(createBasicTypeValue(BasicType::INT8, std::to_string(val))) {}
+                                           value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(val))) {}
 PredicateItem::PredicateItem(uint8_t val) : mutation(PredicateItemMutation::VALUE),
-                                            value(createBasicTypeValue(BasicType::UINT8, std::to_string(val))) {}
+                                            value(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), std::to_string(val))) {}
 PredicateItem::PredicateItem(int16_t val) : mutation(PredicateItemMutation::VALUE),
-                                            value(createBasicTypeValue(BasicType::INT16, std::to_string(val))) {}
+                                            value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(val))) {}
 PredicateItem::PredicateItem(uint16_t val) : mutation(PredicateItemMutation::VALUE),
-                                             value(createBasicTypeValue(BasicType::UINT16, std::to_string(val))) {}
+                                             value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(val))) {}
 PredicateItem::PredicateItem(int32_t val) : mutation(PredicateItemMutation::VALUE),
-                                            value(createBasicTypeValue(BasicType::INT32, std::to_string(val))) {}
+                                            value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(val))) {}
 PredicateItem::PredicateItem(uint32_t val) : mutation(PredicateItemMutation::VALUE),
-                                             value(createBasicTypeValue(BasicType::UINT32, std::to_string(val))) {}
+                                             value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(val))) {}
 PredicateItem::PredicateItem(int64_t val) : mutation(PredicateItemMutation::VALUE),
-                                            value(createBasicTypeValue(BasicType::INT64, std::to_string(val))) {}
+                                            value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), std::to_string(val))) {}
 PredicateItem::PredicateItem(uint64_t val) : mutation(PredicateItemMutation::VALUE),
-                                             value(createBasicTypeValue(BasicType::UINT64, std::to_string(val))) {}
+                                             value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), std::to_string(val))) {}
 PredicateItem::PredicateItem(float val) : mutation(PredicateItemMutation::VALUE),
-                                          value(createBasicTypeValue(BasicType::FLOAT32, std::to_string(val))) {}
+                                          value(DataTypeFactory::createBasicValue(DataTypeFactory::createFloat(), std::to_string(val))) {}
 PredicateItem::PredicateItem(double val) : mutation(PredicateItemMutation::VALUE),
-                                           value(createBasicTypeValue(BasicType::FLOAT64, std::to_string(val))) {}
+                                           value(DataTypeFactory::createBasicValue(DataTypeFactory::createDouble(), std::to_string(val))) {}
 PredicateItem::PredicateItem(bool val) : mutation(PredicateItemMutation::VALUE),
-                                         value(createBasicTypeValue(BasicType::BOOLEAN, std::to_string(val))) {}
+                                         value(DataTypeFactory::createBasicValue(DataTypeFactory::createBoolean(), std::to_string(val))) {}
 PredicateItem::PredicateItem(char val) : mutation(PredicateItemMutation::VALUE),
-                                         value(createBasicTypeValue(BasicType::CHAR, std::to_string(val))) {}
+                                         value() {}
 PredicateItem::PredicateItem(const char* val) : mutation(PredicateItemMutation::VALUE),
-                                                value(createStringValueType(val)) {}
+                                                value() {}
 
 const std::string PredicateItem::toString() const {
     switch (mutation) {
         case PredicateItemMutation::ATTRIBUTE: return attribute->toString();
-        case PredicateItemMutation::VALUE: return value->getCodeExpression()->code_;
+        case PredicateItemMutation::VALUE:  {
+                auto tf = CompilerTypesFactory();
+                return tf.createValueType(value)->generateCode()->code_;
+            }
     }
     return "";
 }
 
 bool PredicateItem::isStringType() const {
-    return (getDataTypePtr()->isCharDataType()) && (getDataTypePtr()->isArrayDataType());
+    return (getDataTypePtr()->isChar());
 }
 
 const DataTypePtr PredicateItem::getDataTypePtr() const {
@@ -172,8 +180,8 @@ UserAPIExpressionPtr PredicateItem::copy() const {
 bool PredicateItem::equals(const UserAPIExpression& _rhs) const {
     try {
         auto rhs = dynamic_cast<const NES::PredicateItem&>(_rhs);
-        if ((attribute == nullptr && rhs.attribute == nullptr) || (*attribute.get() == *rhs.attribute.get())) {
-            if ((value == nullptr && rhs.value == nullptr) || (*value.get() == *rhs.value.get())) {
+        if ((attribute == nullptr && rhs.attribute == nullptr) || attribute->isEqual(rhs.attribute)) {
+            if ((value == nullptr && rhs.value == nullptr) || (value->isEquals(rhs.value))) {
                 return mutation == rhs.mutation;
             }
         }
@@ -271,27 +279,27 @@ Predicate operator<=(const UserAPIExpression& lhs, const PredicateItem& rhs) {
     return operator<=(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
 }
 Predicate operator+(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator+(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
 }
 Predicate operator-(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator-(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
 }
 Predicate operator*(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator*(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
 }
 Predicate operator/(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator/(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
 }
 Predicate operator%(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator%(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
 }
@@ -333,27 +341,27 @@ Predicate operator<=(const PredicateItem& lhs, const UserAPIExpression& rhs) {
     return operator<=(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
 }
 Predicate operator+(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!lhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator+(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
 }
 Predicate operator-(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!lhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator-(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
 }
 Predicate operator*(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!lhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator*(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
 }
 Predicate operator/(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!lhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator/(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
 }
 Predicate operator%(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!lhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator%(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
 }
@@ -408,32 +416,27 @@ Predicate operator<=(const PredicateItem& lhs, const PredicateItem& rhs) {
     return operator<=(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
 }
 Predicate operator+(const PredicateItem& lhs, const PredicateItem& rhs) {
-    if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
-        || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator+(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
 }
 Predicate operator-(const PredicateItem& lhs, const PredicateItem& rhs) {
-    if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
-        || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator-(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
 }
 Predicate operator*(const PredicateItem& lhs, const PredicateItem& rhs) {
-    if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
-        || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator*(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
 }
 Predicate operator/(const PredicateItem& lhs, const PredicateItem& rhs) {
-    if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
-        || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator/(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
 }
 Predicate operator%(const PredicateItem& lhs, const PredicateItem& rhs) {
-    if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
-        || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+    if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
     return operator%(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
 }

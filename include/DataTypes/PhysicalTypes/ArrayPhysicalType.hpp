@@ -16,7 +16,7 @@ class ArrayPhysicalType: public PhysicalType{
     static PhysicalTypePtr create(DataTypePtr type, uint64_t length, PhysicalTypePtr component);
     bool isArrayType() override;
     u_int8_t size() const override;
-
+    std::string convertRawToString(void* rawData) override;
     const PhysicalTypePtr& getPhysicalComponentType() const;
     const uint64_t getLength() const;
 

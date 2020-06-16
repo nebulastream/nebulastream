@@ -1,5 +1,5 @@
 #include <API/Schema.hpp>
-#include <API/Types/DataTypes.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
@@ -61,11 +61,11 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer)
     buf.setNumberOfTuples(5);
 
     SchemaPtr s = Schema::create()
-                      ->addField("i64", UINT64)
-                      ->addField("f", FLOAT32)
-                      ->addField("d", FLOAT64)
-                      ->addField("i32", UINT32)
-                      ->addField("s", 12);
+                      ->addField("i64", DataTypeFactory::createUInt64())
+                      ->addField("f", DataTypeFactory::createFloat())
+                      ->addField("d", DataTypeFactory::createDouble())
+                      ->addField("i32", DataTypeFactory::createInt32())
+                      ->addField("s", DataTypeFactory::createChar(1));
 
     std::string reference = "+----------------------------------------------------+\n"
                             "|i64:UINT64|f:FLOAT32|d:FLOAT64|i32:UINT32|s:CHAR|\n"

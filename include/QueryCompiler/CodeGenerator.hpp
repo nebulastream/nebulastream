@@ -45,6 +45,10 @@ typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
+
+class CompilerTypesFactory;
+typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
+
 /**
  * @brief The code generator encapsulates the code generation for different operators.
  */
@@ -101,5 +105,7 @@ class CodeGenerator {
     virtual ExecutablePipelinePtr compile(GeneratedCodePtr code) = 0;
 
     virtual ~CodeGenerator();
+
+    CompilerTypesFactoryPtr getTypeFactory();
 };
 }// namespace NES

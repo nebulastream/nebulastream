@@ -3,40 +3,22 @@
 
 #pragma once
 
-#include <API/Types/DataTypes.hpp>
+#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
 
 namespace NES {
-class ReferenceDataType : public DataType {
+class ReferenceDataType : public GeneratableDataType {
   public:
-    ReferenceDataType() = default;
-    ~ReferenceDataType() override = default;
-    ReferenceDataType(const DataTypePtr& type);
-    ValueTypePtr getDefaultInitValue() const override;
 
-    ValueTypePtr getNullValue() const override;
-    uint32_t getSizeBytes() const override;
-    const std::string toString() const override;
-    const std::string convertRawToString(void* data) const override;
-    bool isArrayDataType() const;
+    ReferenceDataType(GeneratableDataTypePtr baseType);
 
-    const CodeExpressionPtr getDeclCode(const std::string& identifier) const override;
+    const CodeExpressionPtr getDeclCode(const std::string& identifier) const;
 
-    const CodeExpressionPtr getCode() const override;
+    const CodeExpressionPtr getCode() const;
 
-    bool isCharDataType() const override;
-
-    bool isEqual(DataTypePtr ptr) const override;
-
-    const bool isEqual(std::shared_ptr<ReferenceDataType> btr) const;
-
-    const CodeExpressionPtr getTypeDefinitionCode() const override;
-
-    const DataTypePtr copy() const override;
-
-    bool operator==(const DataType& _rhs) const override;
+    CodeExpressionPtr generateCode() override;
 
   private:
-    DataTypePtr base_type_;
+    GeneratableDataTypePtr baseType;
 };
 }// namespace NES
 #endif//INCLUDE_REFEREMCEDATATYPE_HPP_

@@ -2,7 +2,6 @@ add_source_nes(
         Config.cpp
         Schema.cpp
         ParameterTypes.cpp
-        InputQuery.cpp
         UserAPIExpression.cpp
         Stream.cpp
         Query.cpp

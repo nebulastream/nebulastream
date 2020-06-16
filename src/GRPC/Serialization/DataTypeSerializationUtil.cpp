@@ -25,7 +25,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
         serializedDataType->set_type(SerializableDataType_Type_INTEGER);
     } else if (dataType->isFloat()) {
         auto floatDataType = DataType::as<Float>(dataType);
-        auto serializableFloat = SerializableDataType_IntegerDetails();
+        auto serializableFloat = SerializableDataType_FloatDetails();
         serializableFloat.set_bits(floatDataType->getBits());
         serializableFloat.set_lowerbound(floatDataType->getLowerBound());
         serializableFloat.set_upperbound(floatDataType->getUpperBound());
@@ -69,11 +69,11 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     } else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
         auto integerDetails = SerializableDataType_IntegerDetails();
         serializedDataType->details().UnpackTo(&integerDetails);
-        return DataTypeFactory::createInteger(integerDetails.bits(), integerDetails.lowerbound(), integerDetails.lowerbound());
+        return DataTypeFactory::createInteger(integerDetails.bits(), integerDetails.lowerbound(), integerDetails.upperbound());
     } else if (serializedDataType->type() == SerializableDataType_Type_FLOAT) {
         auto floatDetails = SerializableDataType_FloatDetails();
         serializedDataType->details().UnpackTo(&floatDetails);
-        return DataTypeFactory::createFloat(floatDetails.bits(), floatDetails.lowerbound(), floatDetails.lowerbound());
+        return DataTypeFactory::createFloat(floatDetails.bits(), floatDetails.lowerbound(), floatDetails.upperbound());
     } else if (serializedDataType->type() == SerializableDataType_Type_BOOLEAN) {
         return DataTypeFactory::createBoolean();
     } else if (serializedDataType->type() == SerializableDataType_Type_ARRAY) {

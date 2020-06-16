@@ -15,12 +15,16 @@ typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr ;
 
+class GeneratableDataType;
+typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
+
 class VariableDeclaration : public Declaration {
   public:
     VariableDeclaration(const VariableDeclaration& var_decl);
     static VariableDeclaration create(DataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
+    static VariableDeclaration create(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
 
-    virtual const DataTypePtr getType() const override;
+    virtual const GeneratableDataTypePtr getType() const override;
     virtual const std::string getIdentifierName() const override;
 
     const Code getTypeDefinitionCode() const override;
@@ -29,15 +33,15 @@ class VariableDeclaration : public Declaration {
 
     const CodeExpressionPtr getIdentifier() const;
 
-    const DataTypePtr getDataType() const;
+    const GeneratableDataTypePtr getDataType() const;
 
     const DeclarationPtr copy() const override;
 
     virtual ~VariableDeclaration() override;
 
   private:
-    VariableDeclaration(DataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
-    DataTypePtr type_;
+    VariableDeclaration(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
+    GeneratableDataTypePtr type_;
     std::string identifier_;
     ValueTypePtr init_value_;
 };

@@ -12,7 +12,7 @@ class FunctionDeclaration : public Declaration {
   public:
     FunctionDeclaration(Code code);
 
-    virtual const DataTypePtr getType() const override;
+    virtual const GeneratableDataTypePtr getType() const override;
     virtual const std::string getIdentifierName() const override;
 
     const Code getTypeDefinitionCode() const override;

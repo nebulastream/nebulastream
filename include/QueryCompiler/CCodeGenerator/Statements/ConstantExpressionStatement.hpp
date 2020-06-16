@@ -6,6 +6,9 @@
 
 namespace NES {
 
+class GeneratableValueType;
+typedef std::shared_ptr<GeneratableValueType> GeneratableValueTypePtr;
+
 class ConstantExpressionStatement : public ExpressionStatment {
   public:
     virtual StatementType getStamentType() const;
@@ -14,14 +17,12 @@ class ConstantExpressionStatement : public ExpressionStatment {
 
     virtual const ExpressionStatmentPtr copy() const;
 
-    ConstantExpressionStatement(const ValueTypePtr& val);
-
-    ConstantExpressionStatement(int32_t value);
+    ConstantExpressionStatement(GeneratableValueTypePtr val);
 
     virtual ~ConstantExpressionStatement();
 
   private:
-    ValueTypePtr constantValue;
+    GeneratableValueTypePtr constantValue;
 };
 
 typedef ConstantExpressionStatement Constant;

@@ -3,40 +3,23 @@
 
 #pragma once
 
-#include <API/Types/DataTypes.hpp>
+#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
 
 namespace NES {
-class PointerDataType : public DataType {
+class PointerDataType : public GeneratableDataType {
   public:
-    PointerDataType() = default;
-    ~PointerDataType() override = default;
-    PointerDataType(const DataTypePtr& type);
-    ValueTypePtr getDefaultInitValue() const override;
+    PointerDataType(GeneratableDataTypePtr baseType);
+    ~PointerDataType() = default;
 
-    ValueTypePtr getNullValue() const override;
-    uint32_t getSizeBytes() const override;
-    const std::string toString() const override;
-    const std::string convertRawToString(void* data) const override;
-    bool isArrayDataType() const;
+    const CodeExpressionPtr getDeclCode(const std::string& identifier) const ;
 
-    const CodeExpressionPtr getDeclCode(const std::string& identifier) const override;
+    const CodeExpressionPtr getCode() const ;
 
-    const CodeExpressionPtr getCode() const override;
-
-    bool isCharDataType() const override;
-
-    bool isEqual(DataTypePtr ptr) const override;
-
-    const bool isEqual(std::shared_ptr<PointerDataType> btr) const;
-
-    const CodeExpressionPtr getTypeDefinitionCode() const override;
-
-    const DataTypePtr copy() const override;
-
-    bool operator==(const DataType& _rhs) const override;
+    const CodeExpressionPtr getTypeDefinitionCode() const ;
+    CodeExpressionPtr generateCode() override;
 
   private:
-    DataTypePtr base_type_;
+    GeneratableDataTypePtr baseType;
 };
 }// namespace NES
 #endif//INCLUDE_POINTERDATATYPE_HPP_
