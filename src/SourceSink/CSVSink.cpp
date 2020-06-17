@@ -49,9 +49,10 @@ std::string CSVSink::outputBufferWithSchema(TupleBuffer& tupleBuffer, SchemaPtr 
         size_t offset = 0;
         for (size_t j = 0; j < schema->getSize(); j++) {
             auto field = schema->get(j);
-            size_t fieldSize = field->getFieldSize();
             DataTypePtr ptr = field->getDataType();
-            std::string str = physicalDataTypeFactory.getPhysicalType(ptr)->convertRawToString(
+            auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
+            size_t fieldSize = physicalType->size();
+            std::string str = physicalType->convertRawToString(
                 buffer + offset + i * schema->getSchemaSizeInBytes());
             ss << str.c_str();
             if (j < schema->getSize() - 1) {
