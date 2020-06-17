@@ -14,7 +14,6 @@ namespace NES {
 class Integer : public Numeric {
 
   public:
-
     /**
      * @brief Constructs a new Integer type.
      * @param bits the number of bits in which this type is represented.

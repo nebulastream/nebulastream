@@ -64,7 +64,6 @@ class CSVSource : public DataSource {
     size_t tupleSize;
     std::string delimiter;
     size_t currentPosInFile;
-
 };
 
 typedef std::shared_ptr<CSVSource> CSVSourcePtr;

@@ -285,7 +285,7 @@ bool NesCoordinator::deployQuery(std::string queryId) {
     NES_DEBUG("NesCoordinator::deployQuery queryId=" << queryId);
 
     NES_DEBUG("NesCoordinator: preparing for Deployment by adding port information");
-    if(!queryDeployer->prepareForDeployment(queryId)){
+    if (!queryDeployer->prepareForDeployment(queryId)) {
         NES_ERROR("NesCoordinator: Failed to prepare for Deployment by adding port information");
         return false;
     }
@@ -332,7 +332,7 @@ bool NesCoordinator::undeployQuery(std::string queryId) {
 
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
-        NES_DEBUG("NESCoordinator::undeployQuery query at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
+        NES_DEBUG("NESCoordinator::undeployQuery query at execution node with id=" << executionNode->getId() << " and IP=" << nesNodeIp);
         bool success = workerRPCClient->unregisterQuery(nesNodeIp, queryId);
         if (success) {
             NES_DEBUG("NESCoordinator::undeployQuery  query " << queryId << " to " << nesNodeIp << " successful");
@@ -354,7 +354,7 @@ bool NesCoordinator::startQuery(std::string queryId) {
 
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
-        NES_DEBUG("NesCoordinator::startQuery at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
+        NES_DEBUG("NesCoordinator::startQuery at execution node with id=" << executionNode->getId() << " and IP=" << nesNodeIp);
         bool success = workerRPCClient->startQuery(nesNodeIp, queryId);
         if (success) {
             NES_DEBUG("NesCoordinator::startQuery " << queryId << " to " << nesNodeIp << " successful");
@@ -376,7 +376,7 @@ bool NesCoordinator::stopQuery(std::string queryId) {
 
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
-        NES_DEBUG("NESCoordinator::stopQuery at execution node with id=" << executionNode->getId()<< " and IP=" << nesNodeIp);
+        NES_DEBUG("NESCoordinator::stopQuery at execution node with id=" << executionNode->getId() << " and IP=" << nesNodeIp);
         bool success = workerRPCClient->stopQuery(nesNodeIp, queryId);
         if (success) {
             NES_DEBUG("NESCoordinator::stopQuery " << queryId << " to " << nesNodeIp << " successful");

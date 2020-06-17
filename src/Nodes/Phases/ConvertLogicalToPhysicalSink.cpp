@@ -1,15 +1,15 @@
+#include <Network/NetworkManager.hpp>
+#include <Network/NetworkSink.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <Util/Logger.hpp>
-#include <Network/NetworkSink.hpp>
-#include <Network/NetworkManager.hpp>
 
 namespace NES {
 
@@ -49,8 +49,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
             NES_ERROR("ConvertLogicalToPhysicalSink: Unknown File Mode");
             throw std::invalid_argument("Unknown File Mode");
         }
-    }
-    else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
+    } else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating network sink");
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         return createNetworkSink(schema, networkManager, networkSinkDescriptor->getNodeLocation(),

@@ -13,7 +13,6 @@ namespace NES {
 class Float : public Numeric {
 
   public:
-
     /**
      * @brief Constructs a new Float type.
      * @param bits the number of bits in which this type is represented.

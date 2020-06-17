@@ -28,7 +28,7 @@ bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, Execution
     ExecutionNodePtr childNode = getExecutionNodeByNodeId(childId);
     if (childNode) {
         NES_DEBUG("GlobalExecutionPlan: Adding Execution node as parent to the execution node with id " << childId);
-        if (childNode->containAsParent(parentExecutionNode)){
+        if (childNode->containAsParent(parentExecutionNode)) {
             NES_DEBUG("GlobalExecutionPlan: Execution node is already a parent to the node with id " << childId);
             return true;
         }

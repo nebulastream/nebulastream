@@ -1,5 +1,5 @@
-#include <SourceSink/GeneratorSource.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <SourceSink/GeneratorSource.hpp>
 
 #include <iostream>
 

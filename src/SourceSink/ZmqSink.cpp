@@ -10,8 +10,6 @@
 
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
-#include <Util/Logger.hpp>
-
 
 namespace NES {
 

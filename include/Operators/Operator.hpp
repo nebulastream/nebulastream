@@ -3,13 +3,11 @@
 
 #include <API/InputQuery.hpp>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
-#include <map>
-
-
 
 namespace NES {
 

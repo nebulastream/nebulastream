@@ -1,9 +1,9 @@
 #ifndef INCLUDE_SOURCESINK_SOURCECREATOR_HPP_
 #define INCLUDE_SOURCESINK_SOURCECREATOR_HPP_
 
+#include <Network/NetworkManager.hpp>
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/GeneratorSource.hpp>
-#include <Network/NetworkManager.hpp>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP

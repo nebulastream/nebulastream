@@ -1,14 +1,14 @@
 #include <SourceSink/ZmqSource.hpp>
 
+#include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/QueryManager.hpp>
+#include <Util/Logger.hpp>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <sstream>
 #include <string>
 #include <zmq.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -154,4 +154,3 @@ uint16_t ZmqSource::getPort() const {
 }
 
 }// namespace NES
-

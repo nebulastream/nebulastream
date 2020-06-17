@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_NETWORKSOURCEDESCRIPTOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_NETWORKSOURCEDESCRIPTOR_HPP_
 
-#include <string>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Network/NetworkCommon.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <string>
 
 namespace NES {
 namespace Network {
@@ -40,6 +40,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      * @return the nesPartition
      */
     NesPartition getNesPartition() const;
+
   private:
     explicit NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition);
 
@@ -49,7 +50,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
 
 typedef std::shared_ptr<NetworkSourceDescriptor> networkSourceDescriptorPtr;
 
-}
-}
+}// namespace Network
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_NETWORKSOURCEDESCRIPTOR_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_NETWORKSOURCEDESCRIPTOR_HPP_

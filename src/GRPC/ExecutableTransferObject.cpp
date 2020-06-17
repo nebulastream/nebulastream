@@ -7,7 +7,6 @@
 using std::string;
 using std::vector;
 
-
 namespace NES {
 ExecutableTransferObject::ExecutableTransferObject(string queryId,
                                                    SchemaPtr schema,

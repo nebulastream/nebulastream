@@ -65,7 +65,6 @@ const DataSinkPtr createBinaryFileSinkWithSchema(SchemaPtr schema,
 const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
                                 const uint16_t port);
 
-
 /**
  * @brief create a network data sink
  * @param schema

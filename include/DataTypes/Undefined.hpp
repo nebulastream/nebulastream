@@ -9,7 +9,6 @@ namespace NES {
  */
 class Undefined : public DataType {
   public:
-
     /**
     * @brief Checks if this data type is Undefined.
     */

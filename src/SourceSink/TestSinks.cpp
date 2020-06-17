@@ -1,3 +1,4 @@
+#include <Network/NetworkSink.hpp>
 #include <SourceSink/BinarySink.hpp>
 #include <SourceSink/CSVSink.hpp>
 #include <SourceSink/DataSink.hpp>
@@ -7,7 +8,6 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/ZmqSink.hpp>
 #include <Util/Logger.hpp>
-#include <Network/NetworkSink.hpp>
 
 namespace NES {
 
@@ -49,7 +49,7 @@ const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
 }
 
 const DataSinkPtr createNetworkSink(SchemaPtr schema, Network::NetworkManagerPtr networkManager, Network::NodeLocation nodeLocation,
-    Network::NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes) {
+                                    Network::NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes) {
     return std::make_shared<Network::NetworkSink>(schema, networkManager, nodeLocation, nesPartition, waitTime, retryTimes);
 }
 

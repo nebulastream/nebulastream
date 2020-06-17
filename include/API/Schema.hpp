@@ -114,7 +114,6 @@ class Schema {
     const std::string toString() const;
 
     std::vector<AttributeFieldPtr> fields;
-
 };
 
 }// namespace NES

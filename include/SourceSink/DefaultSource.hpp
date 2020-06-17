@@ -13,7 +13,6 @@ class DefaultSource : public GeneratorSource {
     SourceType getType() const override;
 
     std::optional<TupleBuffer> receiveData() override;
-
 };
 
 typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;

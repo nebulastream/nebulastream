@@ -16,10 +16,10 @@ namespace NES {
 QueryController::QueryController(NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog,
                                  TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog,
                                  GlobalExecutionPlanPtr globalExecutionPlan) : coordinator(coordinator),
-                                                                         queryCatalog(queryCatalog),
-                                                                         topologyManager(topologyManager),
-                                                                         streamCatalog(streamCatalog),
-                                                                         globalExecutionPlan(globalExecutionPlan) {
+                                                                               queryCatalog(queryCatalog),
+                                                                               topologyManager(topologyManager),
+                                                                               streamCatalog(streamCatalog),
+                                                                               globalExecutionPlan(globalExecutionPlan) {
     queryServicePtr = std::make_shared<QueryService>(streamCatalog);
 }
 
