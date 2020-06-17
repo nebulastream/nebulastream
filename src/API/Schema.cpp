@@ -2,8 +2,10 @@
 #include <stdexcept>
 
 #include <API/Schema.hpp>
-#include <Util/Logger.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -29,8 +31,10 @@ SchemaPtr Schema::copy() const {
 /* Return size of one row of schema in bytes. */
 size_t Schema::getSchemaSizeInBytes() const {
     size_t size = 0;
+    // todo if we introduce a physical schema.
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto const& field : fields) {
-        size += field->getFieldSize();
+        size += physicalDataTypeFactory.getPhysicalType(field->getDataType())->size();
     }
     return size;
 }

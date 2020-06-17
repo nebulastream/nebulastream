@@ -1,7 +1,6 @@
-#include <NodeEngine/TupleBuffer.hpp>
-#include <SourceSink/BinarySink.hpp>
 #include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <DataTypes/PhysicalTypes/PhysicalType.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <SourceSink/BinarySink.hpp>
 #include <Util/Logger.hpp>
 #include <fstream>
@@ -37,9 +36,10 @@ std::string BinarySink::outputBufferWithSchema(TupleBuffer& tupleBuffer, SchemaP
     std::vector<PhysicalTypePtr> types;
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        offsets.push_back(schema->get(i)->getFieldSize());
-        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") + std::to_string(schema->get(i)->getFieldSize()));
-        types.push_back(physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType()));
+        auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
+        offsets.push_back(physicalType->size());
+        types.push_back(physicalType);
+        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") + std::to_string(physicalType->size()));
     }
 
     uint32_t prefix_sum = 0;
@@ -53,8 +53,7 @@ std::string BinarySink::outputBufferWithSchema(TupleBuffer& tupleBuffer, SchemaP
     str << "+----------------------------------------------------+" << std::endl;
     str << "|";
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        str << schema->get(i)->name << ":"<< types[i]->toString()  << "|";
-        //str << schema->get(i)->toString()
+        str << schema->get(i)->name << ":" << types[i]->toString() << "|";
     }
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;

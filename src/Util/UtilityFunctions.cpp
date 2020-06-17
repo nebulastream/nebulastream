@@ -1,7 +1,7 @@
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -180,9 +180,10 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, Schema
     std::vector<PhysicalTypePtr> types;
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        offsets.push_back(schema->get(i)->getFieldSize());
-        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") + std::to_string(schema->get(i)->getFieldSize()));
-        types.push_back(physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType()));
+        auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
+        offsets.push_back(physicalType->size());
+        types.push_back(physicalType);
+        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") + std::to_string(physicalType->size()));
     }
 
     uint32_t prefix_sum = 0;
@@ -201,7 +202,6 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, Schema
     }
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;
-
 
     auto buf = buffer.getBufferAs<char>();
     for (uint32_t i = 0; i < buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes();
@@ -233,11 +233,10 @@ std::string UtilityFunctions::printTupleBuffer(TupleBuffer& tbuffer, SchemaPtr s
         size_t offset = 0;
         for (size_t j = 0; j < schema->getSize(); j++) {
             auto field = schema->get(j);
-            size_t fieldSize = field->getFieldSize();
-            DataTypePtr ptr = field->getDataType();
-
-            std::string str =  physicalDataTypeFactory.getPhysicalType(ptr)->convertRawToString(
-                buffer + offset + i * schema->getSchemaSizeInBytes());
+            auto ptr = field->getDataType();
+            auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
+            auto fieldSize = physicalType->size();
+            auto str = physicalType->convertRawToString(buffer + offset + i * schema->getSchemaSizeInBytes());
             ss << str.c_str();
             if (j < schema->getSize() - 1) {
                 ss << ",";

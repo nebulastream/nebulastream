@@ -15,20 +15,12 @@ typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 class AttributeField {
   public:
     AttributeField() = default;
-    AttributeField(const std::string& name, DataTypePtr data_type);
-    AttributeField(const std::string& name);
-
+    AttributeField(const std::string& name, DataTypePtr dataType);
     static AttributeFieldPtr create(std::string name, DataTypePtr dataType);
-
     std::string name;
     DataTypePtr dataType;
-    uint32_t getFieldSize() const;
     DataTypePtr getDataType() const;
-    bool hasType() const;
     const std::string toString() const;
-
-
-
     bool isEqual(AttributeFieldPtr attr);
 };
 

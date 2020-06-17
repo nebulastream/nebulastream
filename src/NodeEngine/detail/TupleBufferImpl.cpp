@@ -220,7 +220,7 @@ void revertEndianness(TupleBuffer& tbuffer, SchemaPtr schema) {
         for (size_t j = 0; j < schema->getSize(); j++) {
             auto field = schema->get(j);
             auto physicalField = physicalDataFactory.getPhysicalType(field->dataType);
-            size_t fieldSize = field->getFieldSize();
+            size_t fieldSize = physicalField->size();
             //TODO: add enum with switch for performance reasons
             if (physicalField->toString() == "UINT8") {
                 u_int8_t* orgVal = (u_int8_t*) buffer + offset + i * tupleSize;
