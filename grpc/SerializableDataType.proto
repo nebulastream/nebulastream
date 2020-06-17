@@ -15,6 +15,7 @@ message SerializableDataType{
     CHAR = 3;
     ARRAY = 4;
     BOOLEAN = 5;
+    FIXEDCHAR = 6;
   }
 
   /**

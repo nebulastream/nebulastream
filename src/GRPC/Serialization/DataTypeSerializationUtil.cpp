@@ -1,4 +1,5 @@
 #include <DataTypes/Array.hpp>
+#include <DataTypes/FixedChar.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
 #include <DataTypes/Float.hpp>
@@ -33,11 +34,13 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
         serializedDataType->set_type(SerializableDataType_Type_FLOAT);
     } else if (dataType->isBoolean()) {
         serializedDataType->set_type(SerializableDataType_Type_BOOLEAN);
+    }else if (dataType->isChar()) {
+        serializedDataType->set_type(SerializableDataType_Type_CHAR);
     } else if (dataType->isFixedChar()) {
         auto serializableChar = SerializableDataType_CharDetails();
-        serializableChar.set_dimensions(DataType::as<Array>(dataType)->getLength());
+        serializableChar.set_dimensions(DataType::as<FixedChar>(dataType)->getLength());
         serializedDataType->mutable_details()->PackFrom(serializableChar);
-        serializedDataType->set_type(SerializableDataType_Type_CHAR);
+        serializedDataType->set_type(SerializableDataType_Type_FIXEDCHAR);
     } else if (dataType->isArray()) {
         // for arrays we store additional information in the SerializableDataType_ArrayDetails
         // 1. cast to array data type
@@ -62,11 +65,13 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     NES_DEBUG("DataTypeSerializationUtil:: de-serialized " << serializedDataType->DebugString());
     if (serializedDataType->type() == SerializableDataType_Type_UNDEFINED) {
         return DataTypeFactory::createUndefined();
-    } else if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
+    } else if (serializedDataType->type() == SerializableDataType_Type_FIXEDCHAR) {
         auto charDetails = SerializableDataType_CharDetails();
         serializedDataType->details().UnpackTo(&charDetails);
         return DataTypeFactory::createFixedChar(charDetails.dimensions());
-    } else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
+    } else if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
+         return DataTypeFactory::createChar();
+    }else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
         auto integerDetails = SerializableDataType_IntegerDetails();
         serializedDataType->details().UnpackTo(&integerDetails);
         return DataTypeFactory::createInteger(integerDetails.bits(), integerDetails.lowerbound(), integerDetails.upperbound());
@@ -76,6 +81,8 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
         return DataTypeFactory::createFloat(floatDetails.bits(), floatDetails.lowerbound(), floatDetails.upperbound());
     } else if (serializedDataType->type() == SerializableDataType_Type_BOOLEAN) {
         return DataTypeFactory::createBoolean();
+    } else if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
+        return DataTypeFactory::createChar();
     } else if (serializedDataType->type() == SerializableDataType_Type_ARRAY) {
         // for arrays get additional information from the SerializableDataType_ArrayDetails
         auto arrayDetails = SerializableDataType_ArrayDetails();
