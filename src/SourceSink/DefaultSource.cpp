@@ -35,7 +35,9 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
             auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
             if (physicalType->isBasicType()) {
                 auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-                if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                    layout->getValueField<char>(recordIndex, fieldIndex)->write(buf, value);
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
                     layout->getValueField<uint8_t>(recordIndex, fieldIndex)->write(buf, value);
                 } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
                     layout->getValueField<uint16_t>(recordIndex, fieldIndex)->write(buf, value);
