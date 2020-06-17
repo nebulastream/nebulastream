@@ -11,6 +11,10 @@ typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 class GeneratableDataType;
 typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 
+class AssignmentStatment;
+class Statement;
+typedef std::shared_ptr<Statement> StatementPtr;
+
 class GeneratableDataType {
   public:
     GeneratableDataType() = default;
@@ -18,6 +22,7 @@ class GeneratableDataType {
     virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
     virtual CodeExpressionPtr  getDeclCode(std::string identifier) = 0;
     virtual CodeExpressionPtr generateCode() = 0;
+    virtual StatementPtr getStmtCopyAssignment(const AssignmentStatment& aParam) ;
 };
 }
 

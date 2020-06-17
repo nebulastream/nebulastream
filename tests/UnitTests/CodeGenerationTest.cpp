@@ -163,6 +163,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
                 tuples[i].text[j] = ((i + 1) % 64) + 64;
             }
             tuples[i].text[12] = '\0';
+
         }
 
         //buf->setBufferSizeInBytes(sizeof(InputTuple));
@@ -180,7 +181,8 @@ const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, Quer
                 ->addField("valueFloat", DataTypeFactory::createFloat())
                 ->addField("valueDouble", DataTypeFactory::createDouble())
                 ->addField("valueChar", DataTypeFactory::createChar())
-                ->addField("text", DataTypeFactory::createFixedChar(12)),
+                ->addField("text", DataTypeFactory::createFixedChar(12))
+            ,
             bPtr, dPtr,
             1));
 
@@ -225,8 +227,8 @@ const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, QueryManag
     DataSourcePtr source(
         std::make_shared<WindowTestingDataGeneratorSource>(
             Schema::create()
-                ->addField("key", BasicType::UINT64)
-                ->addField("value", BasicType::UINT64),
+                ->addField("key", DataTypeFactory::createUInt64())
+                ->addField("value", DataTypeFactory::createUInt64()),
             bPtr, dPtr,
             10));
     return source;
@@ -689,7 +691,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     }
     auto outputBuffer = context.buffers[0];
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
-    auto resultData = (int64_t*)outputBuffer.getBuffer();
+    auto resultData = (int64_t*) outputBuffer.getBuffer();
     /* check result for correctness */
     auto sumGeneratedCode = layout->getValueField<int64_t>(/*recordIndex*/ 0, /*fieldIndex*/ 0)->read(outputBuffer);
     auto sum = 0;
@@ -845,7 +847,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
  * @brief This test generates a predicate with string comparision
  */
 TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
-   // auto str = strcmp("HHHHHHHHHHH", {'H', 'V'});
+    // auto str = strcmp("HHHHHHHHHHH", {'H', 'V'});
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
@@ -910,14 +912,13 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     /* generate code for writing result tuples to output buffer */
     auto outputSchema = Schema::create()
-                            ->addField("id",DataTypeFactory::createInt32())
+                            ->addField("id", DataTypeFactory::createInt32())
                             ->addField("valueSmall", DataTypeFactory::createInt16())
                             ->addField("valueFloat", DataTypeFactory::createFloat())
                             ->addField("valueDouble", DataTypeFactory::createDouble())
                             ->addField(mappedValue)
-                            ->addField("valueChar", DataTypeFactory::createFixedChar(1))
-                            ->addField(
-                                "text", DataTypeFactory::createFixedChar(12));
+                            ->addField("valueChar", DataTypeFactory::createChar())
+                            ->addField("text", DataTypeFactory::createFixedChar(12));
 
     auto schemaSize = outputSchema->getSchemaSizeInBytes();
     /* generate code for writing result tuples to output buffer */

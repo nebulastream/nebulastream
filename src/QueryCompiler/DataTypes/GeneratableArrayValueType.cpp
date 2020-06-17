@@ -7,11 +7,11 @@
 
 namespace NES{
 
-GeneratableArrayValueType::GeneratableArrayValueType(ValueTypePtr  valueTypePtr, std::vector<std::string> values) : GeneratableValueType(), valueType(valueTypePtr), values(values) {}
+GeneratableArrayValueType::GeneratableArrayValueType(ValueTypePtr  valueTypePtr, std::vector<std::string> values, bool isString) : GeneratableValueType(), valueType(valueTypePtr), values(values),isString(isString) {}
 
 CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() {
     std::stringstream str;
-    if (valueType->isCharValue()) {
+    if (isString) {
         str << "\"" << values.at(0) << "\"";
         return std::make_shared<CodeExpression>(str.str());
     }

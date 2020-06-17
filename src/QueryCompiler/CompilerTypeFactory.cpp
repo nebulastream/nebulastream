@@ -49,7 +49,8 @@ GeneratableValueTypePtr CompilerTypesFactory::createValueType(ValueTypePtr value
     }else if(valueType->isArrayValue()){
         return std::make_shared<GeneratableArrayValueType>(valueType, std::dynamic_pointer_cast<ArrayValue>(valueType)->getValues());
     }else if(valueType->isCharValue()){
-        return std::make_shared<GeneratableArrayValueType>(valueType, std::dynamic_pointer_cast<CharValueType>(valueType)->getValues());
+        auto charValue=  std::dynamic_pointer_cast<CharValueType>(valueType);
+        return std::make_shared<GeneratableArrayValueType>(valueType,charValue->getValues(), charValue->isString1() );
     }
     NES_THROW_RUNTIME_ERROR("CompilerTypesFactory:: Error");
 

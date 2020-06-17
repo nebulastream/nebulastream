@@ -8,10 +8,6 @@ namespace NES{
 class ArrayPhysicalType: public PhysicalType{
 
   public:
-    /**
-     * @brief Array Header stores the lengths of the array as a 64bit uint.
-     */
-    static const uint8_t ARRAY_HEADER_SIZE = 64;
     ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr physicalComponentType);
     static PhysicalTypePtr create(DataTypePtr type, uint64_t length, PhysicalTypePtr component);
     bool isArrayType() override;
