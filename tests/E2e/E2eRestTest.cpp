@@ -252,6 +252,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
 }
 
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
+    sleep(10);
     cout << " start coordinator" << endl;
     std::string outputFilePath =
         "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
