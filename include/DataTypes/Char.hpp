@@ -5,7 +5,7 @@
 namespace NES {
 
 /**
- * @brief The char type.
+ * @brief The char type represents a single character.
  */
 class Char : public DataType {
   public:
@@ -29,6 +29,11 @@ class Char : public DataType {
      * @return DataTypePtr joined data type
      */
     DataTypePtr join(DataTypePtr otherDataType) override;
+
+    /**
+     * @brief Returns a string representation of the data type.
+     * @return string
+     */
     std::string toString() override;
 };
 

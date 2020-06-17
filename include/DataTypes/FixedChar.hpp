@@ -5,9 +5,9 @@
 namespace NES {
 
 /**
- * @brief Char(n), where n is a positive integer.
- * Char can store strings up to n characters (not bytes) in length.
- * If the string to be stored is shorter than the declared length, values of type Char will be space-padded.
+ * @brief FixedChar(n), where n is a positive integer.
+ * FixedChar can store strings up to n characters (not bytes) in length.
+ * If the string to be stored is shorter than the declared length, values of type FixedChar will be space-padded.
  */
 class FixedChar : public DataType {
   public:
