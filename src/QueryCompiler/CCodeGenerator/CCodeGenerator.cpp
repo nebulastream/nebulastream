@@ -246,9 +246,8 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
                                          code->varDeclarationInputTuples,
                                          *(varDeclarationField),
                                          *(code->varDeclarationRecordIndex)};
-                // TODO FIX HERE
-                // auto copyFieldStatement = varDeclarationField->getDataType()->getStmtCopyAssignment(as);
-                //code->currentCodeInsertionPoint->addStatement(copyFieldStatement);
+                auto copyFieldStatement = varDeclarationField->getDataType()->getStmtCopyAssignment(as);
+                code->currentCodeInsertionPoint->addStatement(copyFieldStatement);
             }
         }
     }

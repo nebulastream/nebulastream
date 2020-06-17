@@ -1,7 +1,12 @@
 
 #include <DataTypes/DataTypeFactory.hpp>
 #include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/DataTypes/ArrayGeneratableType.hpp>
 #include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
 #include <memory>
@@ -36,6 +41,16 @@ CodeExpressionPtr ArrayGeneratableType::getDeclCode(std::string identifier) {
         ptr = component->getCode();
     }
     return ptr;
+}
+StatementPtr ArrayGeneratableType::getStmtCopyAssignment(const AssignmentStatment& aParam) {
+    FunctionCallStatement func_call("memcpy");
+    func_call.addParameter(VarRef(aParam.lhs_tuple_var)[VarRef(aParam.lhs_index_var)].accessRef(VarRef(aParam.lhs_field_var)));
+    func_call.addParameter(VarRef(aParam.rhs_tuple_var)[VarRef(aParam.rhs_index_var)].accessRef(VarRef(aParam.rhs_field_var)));
+    auto tf = CompilerTypesFactory();
+    func_call.addParameter(ConstantExpressionStatement(
+        tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(this->type->getLength())))
+        ));
+    return func_call.copy();
 }
 
 }// namespace NES

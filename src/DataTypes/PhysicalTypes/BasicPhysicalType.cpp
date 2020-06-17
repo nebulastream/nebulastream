@@ -16,18 +16,18 @@ bool BasicPhysicalType::isBasicType() {
 
 u_int8_t BasicPhysicalType::size() const {
     switch (nativeType) {
-        case INT_8: return 8;
-        case INT_16: return 16;
-        case INT_32: return 32;
-        case INT_64: return 64;
-        case UINT_8: return 8;
-        case UINT_16: return 16;
-        case UINT_32: return 32;
-        case UINT_64: return 64;
-        case FLOAT: return 32;
-        case DOUBLE: return 64;
-        case BOOLEAN: return 8;
-        case CHAR: return 8;
+        case INT_8: return sizeof(int8_t);
+        case INT_16: return sizeof(int16_t);
+        case INT_32: return sizeof(int32_t);
+        case INT_64: return sizeof(int64_t);
+        case UINT_8: return sizeof(uint8_t);
+        case UINT_16: return sizeof(uint16_t);
+        case UINT_32: return sizeof(uint32_t);
+        case UINT_64: return sizeof(uint64_t);
+        case FLOAT: return sizeof(float);
+        case DOUBLE: return sizeof(double);
+        case BOOLEAN: return sizeof(bool);
+        case CHAR: return sizeof(char);
     };
 }
 std::string BasicPhysicalType::convertRawToString(void* data) {

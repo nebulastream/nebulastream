@@ -48,7 +48,7 @@ SchemaPtr Schema::addField(AttributeFieldPtr field) {
 }
 
 SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
-    NES_FATAL_ERROR("Not Implemented");
+    NES_FATAL_ERROR("Schema: Not Implemented");
     return nullptr;
 }
 

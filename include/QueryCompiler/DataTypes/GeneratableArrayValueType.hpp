@@ -9,12 +9,13 @@ namespace NES {
 
 class GeneratableArrayValueType : public GeneratableValueType {
   public:
-    GeneratableArrayValueType(ValueTypePtr valueType, std::vector<std::string> values);
+    GeneratableArrayValueType(ValueTypePtr valueType, std::vector<std::string> values, bool isString = false);
     CodeExpressionPtr getCodeExpression() override;
 
   private:
     ValueTypePtr valueType;
     std::vector<std::string> values;
+    bool isString;
 };
 
 }// namespace NES

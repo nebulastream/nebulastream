@@ -13,6 +13,7 @@ class GeneratableBasicValueType : public GeneratableValueType{
     GeneratableBasicValueType(BasicValuePtr basicValue);
     CodeExpressionPtr getCodeExpression() override;
 
+
   private:
     BasicValuePtr value;
 };

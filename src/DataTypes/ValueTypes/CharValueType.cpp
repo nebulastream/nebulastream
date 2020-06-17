@@ -4,8 +4,8 @@
 #include <sstream>
 namespace NES {
 
-CharValueType::CharValueType(std::vector<std::string> values) : ValueType(DataTypeFactory::createFixedChar(values.size())), values(values) {}
-CharValueType::CharValueType(const std::string& value) : ValueType(DataTypeFactory::createFixedChar(value.size())) {
+CharValueType::CharValueType(std::vector<std::string> values) : ValueType(DataTypeFactory::createFixedChar(values.size())), values(values), isString(false) {}
+CharValueType::CharValueType(const std::string& value) : ValueType(DataTypeFactory::createFixedChar(value.size())), isString(true) {
     auto dimension = value.size();
     u_int32_t i = 0;
     std::stringstream str;
@@ -48,6 +48,9 @@ std::string CharValueType::toString() {
 }
 const std::vector<std::string>& CharValueType::getValues() const {
     return values;
+}
+bool CharValueType::isString1() const {
+    return isString;
 }
 
 }// namespace NES
