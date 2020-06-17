@@ -1,16 +1,15 @@
 #include "gtest/gtest.h"
 
-#include <iostream>
-#include <string>
-#include <cstring>
-#include <limits>
 #include <NodeEngine/QueryManager.hpp>
+#include <cstring>
+#include <iostream>
+#include <limits>
+#include <string>
 
-#include <Util/Logger.hpp>
-#include <API/Types/DataTypes.hpp>
-#include <SourceSink/SourceCreator.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-
+#include <SourceSink/SourceCreator.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -24,7 +23,7 @@ struct __attribute__((packed)) ysbRecord {
     uint32_t ip;
 
     ysbRecord() {
-        event_type[0] = '-';  // invalid record
+        event_type[0] = '-';// invalid record
         current_ms = 0;
         ip = 0;
     }
@@ -64,19 +63,19 @@ struct __attribute__((packed)) everyBooleanTypeRecord {
     bool truthy_entry;
 };
 
-typedef const DataSourcePtr (* createFileSourceFuncPtr)(SchemaPtr,
+typedef const DataSourcePtr (*createFileSourceFuncPtr)(SchemaPtr,
+                                                       BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                                       const std::string&);
+
+typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr,
                                                         BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                                         const std::string&);
 
-typedef const DataSourcePtr (* createSenseSourceFuncPtr)(SchemaPtr,
-                                                         BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                                         const std::string&);
-
-typedef const DataSourcePtr (* createCSVSourceFuncPtr)(const SchemaPtr,
-                                                       BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                                       const std::string&,
-                                                       const std::string&,
-                                                       size_t, size_t);
+typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr,
+                                                      BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                                      const std::string&,
+                                                      const std::string&,
+                                                      size_t, size_t);
 
 class SourceTest : public testing::Test {
   public:
@@ -101,30 +100,35 @@ TEST_F(SourceTest, testBinarySource) {
         "../tests/test_data/ysb-tuples-100-campaign-100.bin";
 
     SchemaPtr schema =
-        Schema::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
-                "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
-            ->addField("current_ms", UINT64)->addField("ip", INT32);
+        Schema::create()
+            ->addField("user_id", DataTypeFactory::createFixedChar(16))
+            ->addField("page_id", DataTypeFactory::createFixedChar(16))
+            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+            ->addField("event_type", DataTypeFactory::createFixedChar(9))
+            ->addField("current_ms", UINT64)
+            ->addField("ip", INT32);
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     size_t num_of_buffers = 1;
-    uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
+    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createBinaryFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
         size_t i = 0;
-        while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
+        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(
-                *((ysbRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
+                *((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: "
                       << record.event_type << std::endl;
             EXPECT_STREQ(record.ad_type, "banner78");
             EXPECT_TRUE(
                 (!strcmp(record.event_type, "view")
-                    || !strcmp(record.event_type, "click")
-                    || !strcmp(record.event_type, "purchase")));
+                 || !strcmp(record.event_type, "click")
+                 || !strcmp(record.event_type, "purchase")));
             i++;
         }
     }
@@ -144,31 +148,36 @@ TEST_F(SourceTest, testCSVSource) {
     size_t num = 1;
     size_t frequency = 1;
     SchemaPtr schema =
-        Schema::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
-                "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
-            ->addField("current_ms", UINT64)->addField("ip", INT32);
+        Schema::create()
+            ->addField("user_id", DataTypeFactory::createFixedChar(16))
+            ->addField("page_id", DataTypeFactory::createFixedChar(16))
+            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+            ->addField("event_type", DataTypeFactory::createFixedChar(9))
+            ->addField("current_ms", UINT64)
+            ->addField("ip", INT32);
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     size_t num_of_buffers = 10;
-    uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
+    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
-                                            frequency);
+                                                     frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
         size_t i = 0;
-        while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
+        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(
-                *((ysbRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
+                *((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: "
                       << record.event_type << std::endl;
             EXPECT_STREQ(record.ad_type, "banner78");
             EXPECT_TRUE(
                 (!strcmp(record.event_type, "view")
-                    || !strcmp(record.event_type, "click")
-                    || !strcmp(record.event_type, "purchase")));
+                 || !strcmp(record.event_type, "click")
+                 || !strcmp(record.event_type, "purchase")));
             i++;
         }
     }
@@ -201,7 +210,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     size_t num_of_buffers = 2;
-    uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
+    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
                                                      frequency);
@@ -209,9 +218,8 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
         size_t i = 0;
-        while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
-            everyIntTypeRecord record(
-                *((everyIntTypeRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
+        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
+            everyIntTypeRecord record(*((everyIntTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i
                       << " record.uint64_entry: " << record.uint64_entry
                       << ", record.int64_entry: " << record.int64_entry
@@ -285,7 +293,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     size_t num_of_buffers = 2;
-    uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
+    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
                                                      frequency);
@@ -293,9 +301,9 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
         size_t i = 0;
-        while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
+        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             everyFloatTypeRecord record(
-                *((everyFloatTypeRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
+                *((everyFloatTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i
                       << " record.float64_entry: " << record.float64_entry
                       << ", record.float32_entry: " << record.float32_entry
@@ -337,7 +345,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     size_t num_of_buffers = 2;
-    uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
+    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
                                                      frequency);
@@ -345,9 +353,9 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
         size_t i = 0;
-        while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
+        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             everyBooleanTypeRecord record(
-                *((everyBooleanTypeRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
+                *((everyBooleanTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i
                       << " record.false_entry: " << record.false_entry
                       << ", record.true_entry: " << record.true_entry
@@ -375,14 +383,19 @@ TEST_F(SourceTest, testSenseSource) {
     createSenseSourceFuncPtr funcPtr = &createSenseSource;
 
     SchemaPtr schema =
-        Schema::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
-                "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
-            ->addField("current_ms", UINT64)->addField("ip", INT32);
+        Schema::create()
+            ->addField("user_id", DataTypeFactory::createFixedChar(16))
+            ->addField("page_id", DataTypeFactory::createFixedChar(16))
+            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+            ->addField("event_type", DataTypeFactory::createFixedChar(9))
+            ->addField("current_ms", UINT64)
+            ->addField("ip", INT32);
 
     uint64_t num_tuples_to_process = 1000;
     size_t num_of_buffers = 1000;
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
-    uint64_t buffer_size = num_tuples_to_process*tuple_size/num_of_buffers;
+    uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
     assert(buffer_size > 0);
 
     const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS);
@@ -391,4 +404,4 @@ TEST_F(SourceTest, testSenseSource) {
     std::cout << "Success" << std::endl;
 }
 
-}  //end of NES
+}// namespace NES

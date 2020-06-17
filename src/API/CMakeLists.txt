@@ -5,6 +5,7 @@ add_source_nes(
         UserAPIExpression.cpp
         Stream.cpp
         Query.cpp
+        InputQuery.cpp
 )
 add_subdirectory(Window)
 add_subdirectory(Expressions)

@@ -181,7 +181,7 @@ InputQuery& InputQuery::filter(const UserAPIExpression& predicate) {
 InputQuery& InputQuery::map(const AttributeField& field,
                             const Predicate predicate) {
     PredicatePtr pred = createPredicate(predicate);
-    AttributeFieldPtr attr = field.copy();
+    AttributeFieldPtr attr = AttributeField::create(field.name, field.dataType);
     OperatorPtr op = createMapOperator(attr, pred);
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
