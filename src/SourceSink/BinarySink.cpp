@@ -53,7 +53,8 @@ std::string BinarySink::outputBufferWithSchema(TupleBuffer& tupleBuffer, SchemaP
     str << "+----------------------------------------------------+" << std::endl;
     str << "|";
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        str << schema->get(i)->toString() << "|";
+        str << schema->get(i)->name << ":"<< types[i]->toString()  << "|";
+        //str << schema->get(i)->toString()
     }
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;

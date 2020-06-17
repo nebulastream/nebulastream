@@ -54,6 +54,9 @@ class Float : public Numeric {
     */
     DataTypePtr join(DataTypePtr otherDataType) override;
 
+    bool isNumeric() override;
+    std::string toString() override;
+
   private:
     const double lowerBound;
     const double upperBound;

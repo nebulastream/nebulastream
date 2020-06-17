@@ -6,7 +6,6 @@ namespace NES {
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
-
 class PhysicalType;
 typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
 
@@ -18,13 +17,11 @@ class PhysicalType {
     virtual u_int8_t size() const = 0;
     virtual std::string convertRawToString(void* rawData) = 0;
     DataTypePtr getType();
+    virtual std::string toString() = 0;
 
   private:
     const DataTypePtr type;
-
 };
-
-
 
 }// namespace NES
 

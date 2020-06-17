@@ -53,4 +53,22 @@ std::string BasicPhysicalType::convertRawToString(void* data) {
 BasicPhysicalType::NativeType BasicPhysicalType::getNativeType() {
     return nativeType;
 }
+std::string BasicPhysicalType::toString() {
+    switch (nativeType) {
+        case INT_8: return "INT8";
+        case UINT_8: return "UINT8";
+        case INT_16: return "INT16";
+        case UINT_16: return "UINT16";
+        case INT_32: return "INT32";
+        case UINT_32: return "UINT32";
+        case INT_64: return "INT64";
+        case UINT_64: return "UINT64";
+        case FLOAT: return "FLOAT32";
+        case DOUBLE: return "FLOAT64";
+        case BOOLEAN: return "BOOLEAN";
+        case CHAR: return "CHAR";
+    }
+    return "";
+}
+
 }// namespace NES
