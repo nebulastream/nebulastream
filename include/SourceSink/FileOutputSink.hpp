@@ -1,10 +1,10 @@
 #ifndef FILEOUTPUTSINK_HPP
 #define FILEOUTPUTSINK_HPP
 
+#include <SourceSink/DataSink.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <SourceSink/DataSink.hpp>
 
 namespace NES {
 
@@ -101,7 +101,6 @@ class FileOutputSink : public DataSink {
 
     FileOutputType outputType;
     FileOutputMode outputMode;
-
 
     /**
      * @brief Manipulate a tupleBuffer with a schema as specific output.

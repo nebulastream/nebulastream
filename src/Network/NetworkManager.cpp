@@ -21,9 +21,9 @@ NetworkManager::NetworkManager(const std::string& hostname, uint16_t port, Excha
 }
 
 NetworkManagerPtr NetworkManager::create(const std::string& hostname,
-                                                         uint16_t port,
-                                                         ExchangeProtocolPtr exchangeProtocol,
-                                                         uint16_t numServerThread) {
+                                         uint16_t port,
+                                         ExchangeProtocolPtr exchangeProtocol,
+                                         uint16_t numServerThread) {
     return std::make_shared<NetworkManager>(NetworkManager{hostname, port, exchangeProtocol, numServerThread});
 }
 

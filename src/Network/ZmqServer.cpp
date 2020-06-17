@@ -62,7 +62,8 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
     auto barrier = std::make_shared<ThreadBarrier>(1 + numHandlerThreads);
 
     try {
-        NES_DEBUG("ZmqServer: Trying to bind on " << "tcp://" + hostname + ":" + std::to_string(port));
+        NES_DEBUG("ZmqServer: Trying to bind on "
+                  << "tcp://" + hostname + ":" + std::to_string(port));
         frontendSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
         frontendSocket.bind("tcp://" + hostname + ":" + std::to_string(port));
         dispatcherSocket.bind(dispatcherPipe);
@@ -76,7 +77,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
 
     for (int i = 0; i < numHandlerThreads; ++i) {
         handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
-          messageHandlerEventLoop(barrier, i);
+            messageHandlerEventLoop(barrier, i);
         }));
     }
 

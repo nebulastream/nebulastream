@@ -2,10 +2,10 @@
 #define INCLUDE_DATASOURCE_H_
 
 #include <API/Schema.hpp>
-#include <mutex>
-#include <thread>
 #include <atomic>
+#include <mutex>
 #include <optional>
+#include <thread>
 //#include <NodeEngine/QueryManager.hpp>
 namespace NES {
 class BufferManager;

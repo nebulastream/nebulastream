@@ -7,8 +7,8 @@ namespace Network {
 
 NetworkSource::NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                              NetworkManagerPtr networkManager, NesPartition nesPartition) : DataSource(schema, bufferManager, queryManager, std::to_string(nesPartition.getQueryId())),
-                                                                                          networkManager(networkManager),
-                                                                                          nesPartition(nesPartition) {
+                                                                                            networkManager(networkManager),
+                                                                                            nesPartition(nesPartition) {
     NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
 }
 

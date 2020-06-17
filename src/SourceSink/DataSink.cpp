@@ -1,11 +1,11 @@
 #include <API/Schema.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <SourceSink/DataSink.hpp>
+#include <Util/Logger.hpp>
 #include <boost/serialization/export.hpp>
 #include <cassert>
 #include <iostream>
 #include <memory>
-#include <Util/Logger.hpp>
 
 namespace NES {
 

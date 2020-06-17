@@ -2,7 +2,6 @@
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/DataTypes/BasicDataType.hpp>
 
-
 namespace NES {
 
 BasicDataType::BasicDataType(const BasicType& type) : type(type), dataSize(0) {}

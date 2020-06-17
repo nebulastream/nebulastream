@@ -96,7 +96,6 @@ class BasePlacementStrategy {
     virtual GlobalExecutionPlanPtr updateGlobalExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) = 0;
 
   private:
-
     /**
      * Create a new system sink operator
      * @param nesNode
@@ -117,7 +116,6 @@ class BasePlacementStrategy {
     void addNetworkSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr currentNesNode, NESTopologyEntryPtr childNesNode);
 
   protected:
-
     /**
      * @brief This method will add the system generated operators where ever necessary along the selected path for operator placement.
      *

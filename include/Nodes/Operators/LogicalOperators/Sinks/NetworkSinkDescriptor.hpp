@@ -1,10 +1,10 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_
 
-#include <string>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Network/NetworkCommon.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <string>
 
 namespace NES {
 namespace Network {
@@ -77,8 +77,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
 
 typedef std::shared_ptr<NetworkSinkDescriptor> NetworkSinkDescriptorPtr;
 
-}
+}// namespace Network
 }// namespace NES
 
-
-#endif //NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_

@@ -2,9 +2,9 @@
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <SourceSink/DataSource.hpp>
+#include <assert.h>
 #include <set>
 #include <sstream>
-#include <assert.h>
 
 namespace NES {
 

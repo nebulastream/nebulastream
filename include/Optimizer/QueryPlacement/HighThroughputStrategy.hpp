@@ -20,7 +20,6 @@ class HighThroughputStrategy : public BasePlacementStrategy {
     }
 
   private:
-
     explicit HighThroughputStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,

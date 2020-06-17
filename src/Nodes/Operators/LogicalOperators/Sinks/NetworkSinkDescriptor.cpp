@@ -4,8 +4,7 @@ namespace NES {
 namespace Network {
 
 NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation, NesPartition nesPartition,
-                                             std::chrono::seconds waitTime, uint32_t retryTimes) :
-    nodeLocation(nodeLocation), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes) {
+                                             std::chrono::seconds waitTime, uint32_t retryTimes) : nodeLocation(nodeLocation), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes) {
 }
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation, NesPartition nesPartition,
@@ -43,5 +42,5 @@ uint8_t NetworkSinkDescriptor::getRetryTimes() const {
     return retryTimes;
 }
 
-}
-}
+}// namespace Network
+}// namespace NES

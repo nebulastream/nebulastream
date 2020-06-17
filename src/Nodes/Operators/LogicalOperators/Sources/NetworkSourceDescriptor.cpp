@@ -3,8 +3,7 @@
 namespace NES {
 namespace Network {
 
-NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition) :
-    SourceDescriptor(schema), nesPartition(nesPartition) {
+NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition) : SourceDescriptor(schema), nesPartition(nesPartition) {
 }
 
 SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema, NesPartition nesPartition) {
@@ -26,5 +25,5 @@ NesPartition NetworkSourceDescriptor::getNesPartition() const {
     return nesPartition;
 }
 
-}
-}
+}// namespace Network
+}// namespace NES

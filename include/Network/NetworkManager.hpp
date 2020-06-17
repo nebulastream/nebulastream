@@ -33,7 +33,7 @@ class NetworkManager {
      * @return the shared_ptr object
      */
     static std::shared_ptr<NetworkManager> create(const std::string& hostname, uint16_t port, ExchangeProtocolPtr exchangeProtocol,
-                                    uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+                                                  uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
      * @brief This method is called on the receiver side to register a SubpartitionConsumer, i.e. indicate that the
