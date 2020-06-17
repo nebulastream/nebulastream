@@ -19,6 +19,7 @@ class MemoryLayout;
 typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
 
 class ArrayPhysicalField;
+typedef std::shared_ptr<ArrayPhysicalField> ArrayPhysicalFieldPtr;
 
 /**
  * The MemoryLayout maps a schema to a physical representation,
@@ -74,7 +75,7 @@ class MemoryLayout {
      * @note in this special case we return an reference to the array field as we want to access the array via the [] operator.
      * @return ArrayPhysicalField&
      */
-    ArrayPhysicalField& getArrayField(uint64_t recordIndex, uint64_t fieldIndex) {
+    ArrayPhysicalField getArrayField(uint64_t recordIndex, uint64_t fieldIndex) {
         auto fieldOffset = getFieldOffset(recordIndex, fieldIndex);
         auto field = this->physicalSchema->createPhysicalField(fieldIndex, fieldOffset);
         return *field->asArrayField();

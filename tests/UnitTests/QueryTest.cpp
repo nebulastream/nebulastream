@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 
 #include <API/Query.hpp>
-#include <API/Types/DataTypes.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>

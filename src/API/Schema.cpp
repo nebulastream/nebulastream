@@ -3,6 +3,7 @@
 
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 
 namespace NES {
 
@@ -48,8 +49,7 @@ SchemaPtr Schema::addField(AttributeFieldPtr field) {
 }
 
 SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
-    NES_FATAL_ERROR("Schema: Not Implemented");
-    return nullptr;
+    return addField(name, DataTypeFactory::createType(type));
 }
 
 

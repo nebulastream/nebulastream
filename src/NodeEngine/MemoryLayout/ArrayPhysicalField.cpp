@@ -2,16 +2,12 @@
 #include <NodeEngine/MemoryLayout/ArrayPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <DataTypes/PhysicalTypes/PhysicalType.hpp>
+#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
 #include <memory>
+#include <utility>
 namespace NES {
 ArrayPhysicalField::ArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset)
-    : PhysicalField(bufferOffset), componentField(componentField) {}
-
-ArrayPhysicalField::ArrayPhysicalField(ArrayPhysicalField* physicalField) : PhysicalField(physicalField), componentField(physicalField->componentField){};
-
-const PhysicalFieldPtr ArrayPhysicalField::copy() const {
-    return std::make_shared<ArrayPhysicalField>(*this);
-}
+    : PhysicalField(bufferOffset), componentField(std::move(componentField)) {}
 
 std::shared_ptr<ArrayPhysicalField> ArrayPhysicalField::asArrayField() {
     return std::static_pointer_cast<ArrayPhysicalField>(this->shared_from_this());

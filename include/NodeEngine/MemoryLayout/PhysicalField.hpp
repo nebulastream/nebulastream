@@ -22,10 +22,7 @@ typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
 class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
   public:
     PhysicalField(uint64_t bufferOffset);
-    PhysicalField(PhysicalField* physicalField);
     ~PhysicalField();
-    virtual const PhysicalFieldPtr copy() const = 0;
-
     /**
      * @brief Casts the PhysicalField to a ValueField of a specific type.
      * @throws IllegalArgumentException if the type of the field dose not match the expected template.

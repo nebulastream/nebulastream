@@ -11,11 +11,8 @@ template<class ValueType>
 class BasicPhysicalField : public PhysicalField {
   public:
     BasicPhysicalField(uint64_t bufferOffset) : PhysicalField(bufferOffset){};
-    BasicPhysicalField(BasicPhysicalField<ValueType>* physicalField) : PhysicalField(physicalField){};
     ~BasicPhysicalField(){};
-    const PhysicalFieldPtr copy() const override {
-        return std::make_shared<BasicPhysicalField>(*this);
-    }
+
 
     /**
      * @brief writes a value of type ValueType to a particular position in the buffer.
