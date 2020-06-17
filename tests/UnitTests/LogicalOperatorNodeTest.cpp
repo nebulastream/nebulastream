@@ -1427,7 +1427,7 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
     ASSERT_TRUE(legacyFilter->getOperatorType() == FILTER_OP);
     auto legacyPredicate = std::dynamic_pointer_cast<FilterOperator>(legacyFilter)->getPredicate();
     std::cout << legacyPredicate->toString() << std::endl;
-    ASSERT_TRUE(legacyPredicate->toString() == "(1 == FieldName:INT8 )");
+    ASSERT_TRUE(legacyPredicate->toString() == "(1 == FieldName:INTEGER )");
     auto legacySource = legacyFilter->getChildren()[0];
     ASSERT_TRUE(legacySource->getOperatorType() == SOURCE_OP);
 }
