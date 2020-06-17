@@ -1,7 +1,7 @@
 #ifndef INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 #define INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 #include <API/AbstractWindowDefinition.hpp>
-#include <API/Types/AttributeField.hpp>
+#include <API/AttributeField.hpp>
 #include <API/UserAPIExpression.hpp>
 
 namespace NES {
