@@ -15,6 +15,7 @@ class ArrayPhysicalType: public PhysicalType{
     std::string convertRawToString(void* rawData) override;
     const PhysicalTypePtr& getPhysicalComponentType() const;
     const uint64_t getLength() const;
+    std::string toString() override;
 
   private:
     const PhysicalTypePtr physicalComponentType;

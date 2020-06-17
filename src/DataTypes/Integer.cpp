@@ -44,6 +44,8 @@ int64_t Integer::getLowerBound() const {
 int64_t Integer::getUpperBound() const {
     return upperBound;
 }
-
+std::string Integer::toString() {
+    return "INTEGER";
+}
 
 }// namespace NES

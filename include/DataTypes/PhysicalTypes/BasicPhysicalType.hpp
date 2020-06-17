@@ -28,6 +28,7 @@ class BasicPhysicalType : public PhysicalType {
     NativeType getNativeType();
 
     std::string convertRawToString(void* rawData) override;
+    std::string toString() override;
 
   private:
     const NativeType nativeType;

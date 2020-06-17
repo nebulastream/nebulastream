@@ -55,6 +55,8 @@ class Integer : public Numeric {
      */
     [[nodiscard]] int64_t getUpperBound() const;
 
+    std::string toString() override;
+
   private:
     const int64_t lowerBound;
     const int64_t upperBound;

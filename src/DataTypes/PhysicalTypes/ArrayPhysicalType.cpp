@@ -1,4 +1,5 @@
 #include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <sstream>
 
 namespace NES {
 
@@ -25,5 +26,10 @@ const uint64_t ArrayPhysicalType::getLength() const {
 }
 std::string ArrayPhysicalType::convertRawToString(void* rawData) {
     return "Array String";
+}
+std::string ArrayPhysicalType::toString() {
+    std::stringstream sstream;
+    sstream << physicalComponentType->toString() << "[" << length << "]";
+    return sstream.str();
 }
 }

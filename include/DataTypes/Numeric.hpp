@@ -21,7 +21,7 @@ class Numeric : public DataType {
      * @return int8_t
      */
     [[nodiscard]] int8_t getBits() const;
-    std::string toString() override;
+    virtual std::string toString() override = 0;
 
   protected:
     const int8_t bits;
