@@ -3,6 +3,7 @@
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/DataTypes/GeneratableValueType.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -13,13 +14,15 @@ StatementType ConstantExpressionStatement::getStamentType() const {
 }
 
 const CodeExpressionPtr ConstantExpressionStatement::getCode() const {
-    return constantValue->generateCode();
+    return constantValue->getCodeExpression();
 }
 
 const ExpressionStatmentPtr ConstantExpressionStatement::copy() const {
-    return std::make_shared<ConstantExpressionStatement>(*this);
+    auto vel = std::make_shared<ConstantExpressionStatement>(*this);
+    vel->constantValue = constantValue;
+    return vel;
 }
 
-ConstantExpressionStatement::ConstantExpressionStatement(GeneratableValueTypePtr val) : constantValue(val) {}
+ConstantExpressionStatement::ConstantExpressionStatement(GeneratableValueTypePtr val) : constantValue(std::move(val)) {}
 
 }// namespace NES

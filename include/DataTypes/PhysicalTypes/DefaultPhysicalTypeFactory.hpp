@@ -14,6 +14,12 @@ typedef std::shared_ptr<Array> ArrayPtr;
 class Float;
 typedef std::shared_ptr<Float> FloatPtr;
 
+class Char;
+typedef std::shared_ptr<Char> CharPtr;
+
+class FixedChar;
+typedef std::shared_ptr<FixedChar> FixedCharPtr;
+
 class DefaultPhysicalTypeFactory: public PhysicalTypeFactory{
   public:
     DefaultPhysicalTypeFactory();
@@ -21,6 +27,8 @@ class DefaultPhysicalTypeFactory: public PhysicalTypeFactory{
 
   private:
     PhysicalTypePtr getPhysicalType(IntegerPtr integerType);
+    PhysicalTypePtr getPhysicalType(CharPtr charType);
+    PhysicalTypePtr getPhysicalType(FixedCharPtr charType);
     PhysicalTypePtr getPhysicalType(FloatPtr floatType);
     PhysicalTypePtr getPhysicalType(ArrayPtr arrayType);
 };

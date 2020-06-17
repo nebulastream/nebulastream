@@ -1,7 +1,8 @@
 add_source_nes(
+        Char.cpp
         Array.cpp
         Boolean.cpp
-        Char.cpp
+        FixedChar.cpp
         Undefined.cpp
         DataType.cpp
         Numeric.cpp

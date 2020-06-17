@@ -1,6 +1,8 @@
 
 #include <API/Types/AttributeField.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <sstream>
 
 namespace NES {
@@ -17,8 +19,8 @@ AttributeFieldPtr AttributeField::create(std::string _name, DataTypePtr _data_ty
     return std::make_shared<AttributeField>(_name, _data_type);
 }
 uint32_t AttributeField::getFieldSize() const {
-    //return dataType->getSizeBytes();
-    return 0;
+    // todo
+    return DefaultPhysicalTypeFactory().getPhysicalType(this->dataType)->size();
 }
 
 bool AttributeField::hasType() const {

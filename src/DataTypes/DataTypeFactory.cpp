@@ -1,13 +1,15 @@
 
 #include <DataTypes/Array.hpp>
 #include <DataTypes/Boolean.hpp>
-#include <DataTypes/Char.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
+#include <DataTypes/FixedChar.hpp>
 #include <DataTypes/Float.hpp>
+#include <DataTypes/Char.hpp>
 #include <DataTypes/Integer.hpp>
 #include <DataTypes/Undefined.hpp>
 #include <DataTypes/ValueTypes/ArrayValueType.hpp>
 #include <DataTypes/ValueTypes/BasicValue.hpp>
+#include <DataTypes/ValueTypes/CharValueType.hpp>
 namespace NES {
 
 DataTypePtr DataTypeFactory::createUndefined() {
@@ -80,8 +82,12 @@ DataTypePtr DataTypeFactory::createArray(uint64_t length, DataTypePtr component)
     return std::make_shared<Array>(length, component);
 }
 
-DataTypePtr DataTypeFactory::createChar(uint64_t length) {
-    return std::make_shared<Char>(length);
+DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) {
+    return std::make_shared<FixedChar>(length);
+}
+
+DataTypePtr DataTypeFactory::createChar() {
+    return std::make_shared<Char>();
 }
 
 ValueTypePtr DataTypeFactory::createBasicValue(DataTypePtr type, std::string value) {
@@ -92,6 +98,11 @@ ValueTypePtr DataTypeFactory::createArrayValue(DataTypePtr type, std::vector<std
     return std::make_shared<ArrayValue>(type, values);
 }
 
-
+ValueTypePtr DataTypeFactory::createCharValue(std::vector<std::string> values) {
+    return std::make_shared<CharValueType>(values);
+}
+ValueTypePtr DataTypeFactory::createCharValue(const char* val) {
+    return std::make_shared<CharValueType>(val);
+}
 
 }// namespace NES

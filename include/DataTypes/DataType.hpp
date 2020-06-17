@@ -43,10 +43,16 @@ class DataType {
     */
     virtual bool isArray();
 
+
     /**
     * @brief Checks if this data type is Char.
     */
     virtual bool isChar();
+
+    /**
+    * @brief Checks if this data type is Char.
+    */
+    virtual bool isFixedChar();
 
     template<class DataType>
     static std::shared_ptr<DataType> as(DataTypePtr ptr) {

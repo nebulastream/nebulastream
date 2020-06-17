@@ -1,10 +1,13 @@
 
 #include <DataTypes/Array.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/FixedChar.hpp>
+#include <DataTypes/Char.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 #include <DataTypes/Float.hpp>
 #include <DataTypes/Integer.hpp>
-#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
 #include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
 #include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
@@ -20,6 +23,10 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
         return getPhysicalType(DataType::as<Float>(dataType));
     } else if (dataType->isArray()) {
         return getPhysicalType(DataType::as<Array>(dataType));
+    }else if (dataType->isFixedChar()) {
+        return getPhysicalType(DataType::as<FixedChar>(dataType));
+    }else if (dataType->isChar()) {
+        return getPhysicalType(DataType::as<Char>(dataType));
     }
     NES_THROW_RUNTIME_ERROR("DefaultPhysicalTypeFactory: it was not possible to infer a physical type for: " + dataType->toString());
 }
@@ -49,6 +56,11 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(IntegerPtr integer) 
     NES_THROW_RUNTIME_ERROR("DefaultPhysicalTypeFactory: it was not possible to infer a physical type for: " + integer->toString());
 }
 
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FixedCharPtr charType) {
+    auto componentType = getPhysicalType(DataTypeFactory::createChar());
+    return ArrayPhysicalType::create(charType, charType->getLength(), componentType);
+}
+
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FloatPtr floatType) {
     if (floatType->getBits() <= 32) {
         return BasicPhysicalType::create(floatType, BasicPhysicalType::FLOAT);
@@ -61,6 +73,10 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FloatPtr floatType) 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(ArrayPtr arrayType) {
     auto componentType = getPhysicalType(arrayType->getComponent());
     return ArrayPhysicalType::create(arrayType, arrayType->getLength(), componentType);
+}
+
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(CharPtr charType) {
+    return BasicPhysicalType::create(charType, BasicPhysicalType::CHAR);
 }
 
 }// namespace NES

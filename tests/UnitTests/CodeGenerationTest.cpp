@@ -119,7 +119,7 @@ const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, QueryMa
             Schema::create()
                 ->addField("id", DataTypeFactory::createUInt32())
                 ->addField("value", DataTypeFactory::createUInt32())
-                ->addField("text", DataTypeFactory::createChar(12)),
+                ->addField("text", DataTypeFactory::createFixedChar(12)),
             bPtr, dPtr,
             1));
 
@@ -179,8 +179,8 @@ const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, Quer
                 ->addField("valueSmall", DataTypeFactory::createInt16())
                 ->addField("valueFloat", DataTypeFactory::createFloat())
                 ->addField("valueDouble", DataTypeFactory::createDouble())
-                ->addField("valueChar", DataTypeFactory::createInt8())
-                ->addField("text", DataTypeFactory::createChar(12)),
+                ->addField("valueChar", DataTypeFactory::createChar())
+                ->addField("text", DataTypeFactory::createFixedChar(12)),
             bPtr, dPtr,
             1));
 
@@ -240,7 +240,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
     auto varDeclI = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "i", DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
     auto varDeclJ =
         VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "j", DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "5"));
-    auto varDeclK = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "",
+    auto varDeclK = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "k",
                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "7"));
 
     auto varDeclL = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "l", DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "2"));
@@ -258,14 +258,14 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         // Generate Array Operation
         std::vector<std::string> vals = {"a", "b", "c"};
         auto varDeclM = VariableDeclaration::create(
-            tf.createDataType(DataTypeFactory::createChar(12)), "m",
+            tf.createDataType(DataTypeFactory::createFixedChar(12)), "m",
             DataTypeFactory::createCharValue(vals));
         // declaration of m
         EXPECT_EQ(VarRefStatement(varDeclM).getCode()->code_, "m");
 
         // Char Array initialization
         auto varDeclN = VariableDeclaration::create(
-            tf.createDataType(DataTypeFactory::createChar(12)), "n",
+            tf.createDataType(DataTypeFactory::createFixedChar(12)), "n",
             DataTypeFactory::createCharValue(vals));
         EXPECT_EQ(varDeclN.getCode(), "char n[12] = {'a', 'b', 'c'}");
 
@@ -511,14 +511,14 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                                                                "buffer")
                                          .addField(
                                              VariableDeclaration::create(
-                                                 tf.createDataType(DataTypeFactory::createInt32()), "num_tuples",
+                                                 tf.createDataType(DataTypeFactory::createUInt64()), "num_tuples",
                                                  DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0")))
                                          .addField(
                                              variableDeclarationP);
 
         // check code generation for different assignment type
         auto varDeclTupleBuffer = VariableDeclaration::create(
-            createUserDefinedType(tupleBufferStructDecl), "buffer");
+            tf.createUserDefinedType(tupleBufferStructDecl), "buffer");
         EXPECT_EQ(varDeclTupleBuffer.getCode(), "TupleBuffer");
 
         auto varDeclTupleBufferPointer = VariableDeclaration::create(
@@ -594,8 +594,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /* uint64_t id = 0; */
     auto varDeclId = VariableDeclaration::create(
-        tf.createDataType(DataTypeFactory::createInt64()), "id",
-        DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"));
+        tf.createDataType(DataTypeFactory::createUInt64()), "id",
+        DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0"));
     /* int32_t ret = 0; */
     auto varDeclReturn = VariableDeclaration::create(
         tf.createDataType(DataTypeFactory::createInt32()), "ret",
@@ -609,7 +609,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /*  tuples = (Tuple *)tuple_buffer.getBuffer();*/
     BinaryOperatorStatement initTuplePtr(
-        VarRef(varDeclTuple).assign(TypeCast(VarRefStatement(varDeclTupleBuffers).accessRef(getBufferOfTupleBuffer), tf.createPointer(tf.createUserDefinedType(structDeclTuple)))));
+        VarRef(varDeclTuple)
+            .assign(TypeCast(VarRefStatement(varDeclTupleBuffers).accessRef(getBufferOfTupleBuffer), tf.createPointer(tf.createUserDefinedType(structDeclTuple)))));
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
     auto resultTupleBufferDeclaration = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
@@ -673,7 +674,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /* setup input and output for test */
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto recordSchema = Schema::create()->addField("id", BasicType::INT64);
+    auto recordSchema = Schema::create()->addField("id", DataTypeFactory::createInt64());
     auto layout = createRowLayout(recordSchema);
 
     for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
@@ -688,7 +689,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     }
     auto outputBuffer = context.buffers[0];
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
-
+    auto resultData = (int64_t*)outputBuffer.getBuffer();
     /* check result for correctness */
     auto sumGeneratedCode = layout->getValueField<int64_t>(/*recordIndex*/ 0, /*fieldIndex*/ 0)->read(outputBuffer);
     auto sum = 0;
@@ -714,13 +715,13 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* generate code for scanning input buffer */
     codeGenerator->generateCodeForScan(source->getSchema(), context);
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", UINT64), context);
+    codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", DataTypeFactory::createUInt64()), context);
     /* compile code to pipeline stage */
     Compiler compiler;
     auto stage = codeGenerator->compile(context->code);
 
     /* prepare input and output tuple buffer */
-    auto schema = Schema::create()->addField("i64", UINT64);
+    auto schema = Schema::create()->addField("i64", DataTypeFactory::createUInt64());
     auto buffer = source->receiveData().value();
 
     /* execute Stage */
@@ -844,6 +845,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
  * @brief This test generates a predicate with string comparision
  */
 TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
+   // auto str = strcmp("HHHHHHHHHHH", {'H', 'V'});
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
@@ -913,9 +915,9 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
                             ->addField("valueFloat", DataTypeFactory::createFloat())
                             ->addField("valueDouble", DataTypeFactory::createDouble())
                             ->addField(mappedValue)
-                            ->addField("valueChar", DataTypeFactory::createChar(1))
+                            ->addField("valueChar", DataTypeFactory::createFixedChar(1))
                             ->addField(
-                                "text", DataTypeFactory::createChar(12));
+                                "text", DataTypeFactory::createFixedChar(12));
 
     auto schemaSize = outputSchema->getSchemaSizeInBytes();
     /* generate code for writing result tuples to output buffer */

@@ -1,6 +1,7 @@
 #include <QueryCompiler/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/DataTypes/GeneratableValueType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
@@ -9,7 +10,7 @@ const GeneratableDataTypePtr VariableDeclaration::getType() const { return type_
 const std::string VariableDeclaration::getIdentifierName() const { return identifier_; }
 
 const Code VariableDeclaration::getTypeDefinitionCode() const {
-    CodeExpressionPtr code = type_->generateCode();
+    CodeExpressionPtr code = type_->getTypeDefinitionCode();
     if (code)
         return code->code_;
     else
@@ -19,14 +20,12 @@ const Code VariableDeclaration::getTypeDefinitionCode() const {
 const Code VariableDeclaration::getCode() const {
     std::stringstream str;
     // TODO FIXME
-    NES_THROW_RUNTIME_ERROR("Not Implemented");
-    /*
     str << type_->getDeclCode(identifier_)->code_;
     if (init_value_) {
-        str << " = " << init_value_->getCodeExpression()->code_;
+        auto valueType = CompilerTypesFactory().createValueType(init_value_);
+        str << " = " << valueType->getCodeExpression()->code_;
     }
     return str.str();
-     */
 }
 
 const CodeExpressionPtr VariableDeclaration::getIdentifier() const {

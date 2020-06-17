@@ -15,7 +15,7 @@ bool DataType::isArray() {
     return false;
 }
 
-bool DataType::isChar() {
+bool DataType::isFixedChar() {
     return false;
 }
 
@@ -28,6 +28,10 @@ bool DataType::isInteger() {
 }
 
 bool DataType::isNumeric() {
+    return false;
+}
+
+bool DataType::isChar() {
     return false;
 }
 

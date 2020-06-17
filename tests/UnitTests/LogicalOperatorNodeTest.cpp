@@ -41,13 +41,13 @@ class LogicalOperatorNodeTest : public testing::Test {
         SchemaPtr schema = sPtr->getSchema();
         auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0u);
 
-        pred1 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
-        pred2 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "2"));
-        pred3 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "3"));
-        pred4 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "4"));
-        pred5 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "5"));
-        pred6 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "6"));
-        pred7 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "7"));
+        pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
+        pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
+        pred3 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"));
+        pred4 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "4"));
+        pred5 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+        pred6 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
+        pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
         sourceOp = createSourceLogicalOperatorNode(sourceDescriptor);
         sourceOp->setId(0);

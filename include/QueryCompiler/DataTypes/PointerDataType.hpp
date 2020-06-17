@@ -15,8 +15,9 @@ class PointerDataType : public GeneratableDataType {
 
     const CodeExpressionPtr getCode() const ;
 
-    const CodeExpressionPtr getTypeDefinitionCode() const ;
+    const CodeExpressionPtr getTypeDefinitionCode() const override ;
     CodeExpressionPtr generateCode() override;
+    CodeExpressionPtr getDeclCode(std::string identifier) override;
 
   private:
     GeneratableDataTypePtr baseType;

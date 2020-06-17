@@ -17,9 +17,9 @@ class UserDefinedDataType : public GeneratableDataType {
   public:
     UserDefinedDataType(const StructDeclaration& decl);
 
-    const CodeExpressionPtr getTypeDefinitionCode() const;
-    const CodeExpressionPtr getCode() const;
-    const CodeExpressionPtr getDeclCode(const std::string& identifier) const;
+    const CodeExpressionPtr getTypeDefinitionCode() const override;
+    const CodeExpressionPtr getCode() const override;
+    CodeExpressionPtr getDeclCode(std::string identifier) override;
     CodeExpressionPtr generateCode() override;
     ~UserDefinedDataType();
 

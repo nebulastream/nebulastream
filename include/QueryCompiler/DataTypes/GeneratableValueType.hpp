@@ -11,7 +11,7 @@ typedef std::shared_ptr<GeneratableValueType> GeneratableValueTypePtr;
 
 class GeneratableValueType {
   public:
-    CodeExpressionPtr generateCode();
+   virtual CodeExpressionPtr getCodeExpression() = 0;
 };
 
 }

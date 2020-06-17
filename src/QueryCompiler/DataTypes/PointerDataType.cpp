@@ -7,19 +7,21 @@ PointerDataType::PointerDataType(GeneratableDataTypePtr baseType): GeneratableDa
 }
 
 const CodeExpressionPtr PointerDataType::getDeclCode(const std::string& identifier) const {
-    return std::make_shared<CodeExpression>(baseType->generateCode()->code_ + "* " + identifier);
+    return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "* " + identifier);
 }
 
 const CodeExpressionPtr PointerDataType::getCode() const {
-    return std::make_shared<CodeExpression>(baseType->generateCode()->code_ + "*");
+    return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "*");
 }
 
 const CodeExpressionPtr PointerDataType::getTypeDefinitionCode() const {
-    //return baseType->getTypeDefinitionCode();
-    //
-    }
+    return baseType->getTypeDefinitionCode();
+}
 CodeExpressionPtr PointerDataType::generateCode() {
-    return std::make_shared<CodeExpression>(baseType->generateCode()->code_ + "*");
+    return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "*");
+}
+CodeExpressionPtr PointerDataType::getDeclCode(std::string identifier) {
+    return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "* " + identifier);
 }
 
 }// namespace NES
