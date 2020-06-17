@@ -49,7 +49,7 @@ class TestAggregation : public WindowAggregation {
 
 TEST_F(WindowManagerTest, testSumAggregation)
 {
-    auto field = createField("test", 4);
+    auto field = AttributeField::create("test", DataTypeFactory::createInt64());
     const WindowAggregationPtr aggregation = Sum::on(Field(field));
     if (Sum* store = dynamic_cast<Sum*>(aggregation.get())) {
         auto partial = store->lift<int64_t, int64_t>(1L);
