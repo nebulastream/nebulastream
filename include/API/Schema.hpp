@@ -1,7 +1,7 @@
 #ifndef API_SCHEMA_H
 #define API_SCHEMA_H
 
-#include <API/Types/AttributeField.hpp>
+#include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <memory>
 #include <string>

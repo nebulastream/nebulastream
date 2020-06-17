@@ -1,8 +1,3 @@
-/**
- * UserAPIExpression header file
- * 
- * */
-
 #ifndef USERAPIEXPRESSION_HPP
 #define USERAPIEXPRESSION_HPP
 
@@ -10,7 +5,7 @@
 #include <string>
 
 #include <DataTypes/DataType.hpp>
-#include <API/Types/AttributeField.hpp>
+#include <API/AttributeField.hpp>
 #include <Operators/OperatorTypes.hpp>
 
 namespace NES {
