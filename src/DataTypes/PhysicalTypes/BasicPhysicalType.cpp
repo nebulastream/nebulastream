@@ -31,6 +31,7 @@ u_int8_t BasicPhysicalType::size() const {
     };
 }
 std::string BasicPhysicalType::convertRawToString(void* data) {
+
     if (!data)
         return std::string();
     std::stringstream str;
@@ -46,7 +47,13 @@ std::string BasicPhysicalType::convertRawToString(void* data) {
         case FLOAT: return std::to_string(*reinterpret_cast<float*>(data));
         case DOUBLE: return std::to_string(*reinterpret_cast<double*>(data));
         case BOOLEAN: return std::to_string(*reinterpret_cast<bool*>(data));
-        case CHAR: return std::to_string(*reinterpret_cast<char*>(data));
+        case CHAR:
+            if (size() == 0) {
+                str << static_cast<char>(*static_cast<char*>(data));
+            } else {
+                str << static_cast<char*>(data);
+            }
+            return str.str();
     }
 }
 

@@ -19,7 +19,7 @@ class PhysicalType {
     DataTypePtr getType();
     virtual std::string toString() = 0;
 
-  private:
+  protected:
     const DataTypePtr type;
 };
 
