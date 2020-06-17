@@ -5,7 +5,9 @@
 #include <cstring>
 #include <exception>
 #include <iostream>
+#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <sstream>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <NodeEngine/internal/backtrace.hpp>
@@ -212,57 +214,59 @@ void revertEndianness(TupleBuffer& tbuffer, SchemaPtr schema) {
     auto tupleSize = schema->getSchemaSizeInBytes();
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto buffer = tbuffer.getBufferAs<char>();
+    auto physicalDataFactory = DefaultPhysicalTypeFactory();
     for (size_t i = 0; i < numberOfTuples; i++) {
         size_t offset = 0;
         for (size_t j = 0; j < schema->getSize(); j++) {
             auto field = schema->get(j);
+            auto physicalField = physicalDataFactory.getPhysicalType(field->dataType);
             size_t fieldSize = field->getFieldSize();
             //TODO: add enum with switch for performance reasons
-            if (field->getDataType()->toString() == "UINT8") {
+            if (physicalField->toString() == "UINT8") {
                 u_int8_t* orgVal = (u_int8_t*) buffer + offset + i * tupleSize;
                 memcpy((char*) buffer + offset + i * tupleSize, orgVal, fieldSize);
-            } else if (field->getDataType()->toString() == "UINT16") {
+            } else if (physicalField->toString() == "UINT16") {
                 u_int16_t* orgVal = (u_int16_t*) ((char*) buffer + offset
                                                   + i * tupleSize);
                 u_int16_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
-            } else if (field->getDataType()->toString() == "UINT32") {
+            } else if (physicalField->toString() == "UINT32") {
                 uint32_t* orgVal = (uint32_t*) ((char*) buffer + offset + i * tupleSize);
                 uint32_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
-            } else if (field->getDataType()->toString() == "UINT64") {
+            } else if (physicalField->toString() == "UINT64") {
                 uint64_t* orgVal = (uint64_t*) ((char*) buffer + offset + i * tupleSize);
                 uint64_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
-            } else if (field->getDataType()->toString() == "INT8") {
+            } else if (physicalField->toString() == "INT8") {
                 int8_t* orgVal = (int8_t*) buffer + offset + i * tupleSize;
                 int8_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
-            } else if (field->getDataType()->toString() == "INT16") {
+            } else if (physicalField->toString() == "INT16") {
                 int16_t* orgVal = (int16_t*) ((char*) buffer + offset + i * tupleSize);
                 int16_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
-            } else if (field->getDataType()->toString() == "INT32") {
+            } else if (physicalField->toString() == "INT32") {
                 int32_t* orgVal = (int32_t*) ((char*) buffer + offset + i * tupleSize);
                 int32_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
-            } else if (field->getDataType()->toString() == "INT64") {
+            } else if (physicalField->toString() == "INT64") {
                 int64_t* orgVal = (int64_t*) ((char*) buffer + offset + i * tupleSize);
                 int64_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
-            } else if (field->getDataType()->toString() == "FLOAT32") {
+            } else if (physicalField->toString() == "FLOAT32") {
                 NES_WARNING(
                     "TupleBuffer::revertEndianness: float conversation is not totally supported, please check results");
                 uint32_t* orgVal = (uint32_t*) ((char*) buffer + offset + i * tupleSize);
                 uint32_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
-            } else if (field->getDataType()->toString() == "FLOAT64") {
+            } else if (physicalField->toString() == "FLOAT64") {
                 NES_WARNING(
                     "TupleBuffer::revertEndianness: double conversation is not totally supported, please check results");
                 uint64_t* orgVal = (uint64_t*) ((char*) buffer + offset + i * tupleSize);
                 uint64_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
-            } else if (field->getDataType()->toString() == "CHAR") {
+            } else if (physicalField->toString() == "CHAR") {
                 //TODO: I am not sure if we have to convert char at all because it is one byte only
                 throw new Exception(
                     "Data type float is currently not supported for endian conversation");
