@@ -15,14 +15,13 @@ const CodeExpressionPtr UserDefinedDataType::getCode() const {
     return std::make_shared<CodeExpression>(declaration.getTypeName());
 }
 
-const CodeExpressionPtr UserDefinedDataType::getDeclCode(const std::string& identifier) const {
-    return getCode();
-}
-
 UserDefinedDataType::~UserDefinedDataType() {}
 
 
 CodeExpressionPtr NES::UserDefinedDataType::generateCode() {
     return NES::CodeExpressionPtr();
+}
+CodeExpressionPtr UserDefinedDataType::getDeclCode(std::string identifier) {
+    return getCode();
 }
 }// namespace NES

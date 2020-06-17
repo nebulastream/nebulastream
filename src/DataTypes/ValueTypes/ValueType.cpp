@@ -12,6 +12,10 @@ bool ValueType::isBasicValue() {
     return false;
 }
 
+bool ValueType::isCharValue() {
+    return false;
+}
+
 DataTypePtr ValueType::getType() {
     return dataType;
 }

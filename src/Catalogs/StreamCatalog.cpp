@@ -12,21 +12,21 @@ StreamCatalog::StreamCatalog() {
     NES_DEBUG("StreamCatalog: constructed default_logical");
 
     SchemaPtr schemaExdra = Schema::create()
-                                ->addField("type", DataTypeFactory::createChar(30))
+                                ->addField("type", DataTypeFactory::createFixedChar(30))
                                 ->addField("metadata_generated", DataTypeFactory::createUInt64())
-                                ->addField("metadata_title", DataTypeFactory::createChar(50))
-                                ->addField("metadata_id", DataTypeFactory::createChar(50))
-                                ->addField("features_type", DataTypeFactory::createChar(50))
+                                ->addField("metadata_title", DataTypeFactory::createFixedChar(50))
+                                ->addField("metadata_id", DataTypeFactory::createFixedChar(50))
+                                ->addField("features_type", DataTypeFactory::createFixedChar(50))
                                 ->addField("features_properties_capacity", DataTypeFactory::createUInt64())
                                 ->addField("features_properties_efficiency", DataTypeFactory::createFloat())
                                 ->addField("features_properties_mag", DataTypeFactory::createFloat())
                                 ->addField("features_properties_time", DataTypeFactory::createUInt64())
                                 ->addField("features_properties_updated", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_type", DataTypeFactory::createChar(50))
-                                ->addField("features_geometry_type", DataTypeFactory::createChar(50))
+                                ->addField("features_properties_type", DataTypeFactory::createFixedChar(50))
+                                ->addField("features_geometry_type", DataTypeFactory::createFixedChar(50))
                                 ->addField("features_geometry_coordinates_longitude", DataTypeFactory::createFloat())
                                 ->addField("features_geometry_coordinates_latitude", DataTypeFactory::createFloat())
-                                ->addField("features_eventId ", DataTypeFactory::createChar(50));
+                                ->addField("features_eventId ", DataTypeFactory::createFixedChar(50));
     NES_DEBUG("StreamCatalog: schema for exdra is =" << schemaExdra->toString());
     addLogicalStream("exdra", schemaExdra);
     NES_DEBUG("StreamCatalog: constructed exdra");
@@ -284,21 +284,21 @@ bool StreamCatalog::reset() {
 
     //TODO I think we should get rid of this soon
     SchemaPtr schemaExdra = Schema::create()
-                                ->addField("type", DataTypeFactory::createChar(30))
+                                ->addField("type", DataTypeFactory::createFixedChar(30))
                                 ->addField("metadata_generated", DataTypeFactory::createUInt64())
-                                ->addField("metadata_title", DataTypeFactory::createChar(50))
-                                ->addField("metadata_id", DataTypeFactory::createChar(50))
-                                ->addField("features_type", DataTypeFactory::createChar(50))
+                                ->addField("metadata_title", DataTypeFactory::createFixedChar(50))
+                                ->addField("metadata_id", DataTypeFactory::createFixedChar(50))
+                                ->addField("features_type", DataTypeFactory::createFixedChar(50))
                                 ->addField("features_properties_capacity", DataTypeFactory::createUInt64())
                                 ->addField("features_properties_efficiency", DataTypeFactory::createFloat())
                                 ->addField("features_properties_mag", DataTypeFactory::createFloat())
                                 ->addField("features_properties_time", DataTypeFactory::createUInt64())
                                 ->addField("features_properties_updated", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_type", DataTypeFactory::createChar(50))
-                                ->addField("features_geometry_type", DataTypeFactory::createChar(50))
+                                ->addField("features_properties_type", DataTypeFactory::createFixedChar(50))
+                                ->addField("features_geometry_type", DataTypeFactory::createFixedChar(50))
                                 ->addField("features_geometry_coordinates_longitude", DataTypeFactory::createFloat())
                                 ->addField("features_geometry_coordinates_latitude", DataTypeFactory::createFloat())
-                                ->addField("features_eventId ", DataTypeFactory::createChar(50));
+                                ->addField("features_eventId ", DataTypeFactory::createFixedChar(50));
 
     bool success2 = addLogicalStream("exdra", schemaExdra);
     if (!success2) {

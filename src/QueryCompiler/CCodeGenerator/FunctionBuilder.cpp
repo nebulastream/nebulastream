@@ -31,7 +31,7 @@ FunctionDeclaration FunctionBuilder::build() {
     if (!returnType) {
         function << "void";
     } else {
-        function << returnType->generateCode()->code_;
+        function << returnType->getCode()->code_;
     }
     function << " " << name << "(";
     for (size_t i = 0; i < parameters.size(); ++i) {

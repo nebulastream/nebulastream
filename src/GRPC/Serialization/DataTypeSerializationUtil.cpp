@@ -33,7 +33,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
         serializedDataType->set_type(SerializableDataType_Type_FLOAT);
     } else if (dataType->isBoolean()) {
         serializedDataType->set_type(SerializableDataType_Type_BOOLEAN);
-    } else if (dataType->isChar()) {
+    } else if (dataType->isFixedChar()) {
         auto serializableChar = SerializableDataType_CharDetails();
         serializableChar.set_dimensions(DataType::as<Array>(dataType)->getLength());
         serializedDataType->mutable_details()->PackFrom(serializableChar);
@@ -65,7 +65,7 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     } else if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
         auto charDetails = SerializableDataType_CharDetails();
         serializedDataType->details().UnpackTo(&charDetails);
-        return DataTypeFactory::createChar(charDetails.dimensions());
+        return DataTypeFactory::createFixedChar(charDetails.dimensions());
     } else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
         auto integerDetails = SerializableDataType_IntegerDetails();
         serializedDataType->details().UnpackTo(&integerDetails);

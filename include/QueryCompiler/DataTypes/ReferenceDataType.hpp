@@ -11,11 +11,13 @@ class ReferenceDataType : public GeneratableDataType {
 
     ReferenceDataType(GeneratableDataTypePtr baseType);
 
-    const CodeExpressionPtr getDeclCode(const std::string& identifier) const;
+    const CodeExpressionPtr getTypeDefinitionCode() const override;
 
     const CodeExpressionPtr getCode() const;
 
     CodeExpressionPtr generateCode() override;
+
+    CodeExpressionPtr getDeclCode(std::string identifier) override;
 
   private:
     GeneratableDataTypePtr baseType;

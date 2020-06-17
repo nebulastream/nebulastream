@@ -135,11 +135,20 @@ class DataTypeFactory {
     * @param length length of the char
     * @return DataTypePtr
     */
-    static DataTypePtr createChar(uint64_t length);
+    static DataTypePtr createFixedChar(uint64_t length);
 
+
+    /**
+    * @brief Creates a new Char data type.
+    * @param length length of the char
+    * @return DataTypePtr
+    */
+    static DataTypePtr createChar();
 
     static ValueTypePtr createBasicValue(DataTypePtr type, std::string value);
     static ValueTypePtr createArrayValue(DataTypePtr type, std::vector<std::string> values);
+    static ValueTypePtr createCharValue(std::vector<std::string> values);
+    static ValueTypePtr createCharValue(const char* values);
 };
 
 }// namespace NES

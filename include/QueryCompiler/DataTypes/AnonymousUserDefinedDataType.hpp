@@ -17,8 +17,8 @@ class AnonymousUserDefinedDataType : public GeneratableDataType {
 
     const CodeExpressionPtr getTypeDefinitionCode() const;
     CodeExpressionPtr generateCode() override;
-    const CodeExpressionPtr getDeclCode(const std::string& identifier) ;
-
+    CodeExpressionPtr getDeclCode(std::string identifier) override ;
+    const CodeExpressionPtr getCode() const override;
     ~AnonymousUserDefinedDataType();
 
   private:

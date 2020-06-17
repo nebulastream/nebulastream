@@ -148,23 +148,23 @@ PredicateItem::PredicateItem(double val) : mutation(PredicateItemMutation::VALUE
 PredicateItem::PredicateItem(bool val) : mutation(PredicateItemMutation::VALUE),
                                          value(DataTypeFactory::createBasicValue(DataTypeFactory::createBoolean(), std::to_string(val))) {}
 PredicateItem::PredicateItem(char val) : mutation(PredicateItemMutation::VALUE),
-                                         value() {}
+                                         value(DataTypeFactory::createBasicValue(DataTypeFactory::createChar(), std::to_string(val))) {}
 PredicateItem::PredicateItem(const char* val) : mutation(PredicateItemMutation::VALUE),
-                                                value() {}
+                                                value(DataTypeFactory::createCharValue(val)) {}
 
 const std::string PredicateItem::toString() const {
     switch (mutation) {
         case PredicateItemMutation::ATTRIBUTE: return attribute->toString();
         case PredicateItemMutation::VALUE:  {
                 auto tf = CompilerTypesFactory();
-                return tf.createValueType(value)->generateCode()->code_;
+                return tf.createValueType(value)->getCodeExpression()->code_;
             }
     }
     return "";
 }
 
 bool PredicateItem::isStringType() const {
-    return (getDataTypePtr()->isChar());
+    return (getDataTypePtr()->isFixedChar());
 }
 
 const DataTypePtr PredicateItem::getDataTypePtr() const {

@@ -10,14 +10,15 @@ class StructDeclaration;
 
 class BasicGeneratableType : public GeneratableDataType {
   public:
-    BasicGeneratableType(DataTypePtr type);
+    BasicGeneratableType(BasicPhysicalTypePtr type);
 
     const CodeExpressionPtr getTypeDefinitionCode() const;
     const CodeExpressionPtr getCode() const;
     CodeExpressionPtr generateCode() override;
+    CodeExpressionPtr getDeclCode(std::string identifier) override;
 
   private:
-    DataTypePtr type;
+    BasicPhysicalTypePtr type;
 };
 }// namespace NES
 
