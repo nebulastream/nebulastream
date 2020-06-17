@@ -1,4 +1,5 @@
 #include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <DataTypes/DataType.hpp>
 #include <sstream>
 
 namespace NES {
@@ -24,12 +25,43 @@ const PhysicalTypePtr& ArrayPhysicalType::getPhysicalComponentType() const {
 const uint64_t ArrayPhysicalType::getLength() const {
     return length;
 }
-std::string ArrayPhysicalType::convertRawToString(void* rawData) {
-    return "Array String";
+std::string ArrayPhysicalType::convertRawToString(void* data) {
+    std::stringstream str;
+
+
+    // check if the pointer is valid
+    if (!data)
+        return "";
+
+    // we print a fixed char directly because the last char terminated the output.
+    if(type->isFixedChar()){
+        return  static_cast<char*>(data);
+    }
+
+
+    char* pointer = static_cast<char*>(data);
+
+    if (!type->isFixedChar())
+        str << '[';
+    for (u_int32_t dimension = 0; dimension < length; dimension++) {
+        if ((dimension != 0) && !type->isFixedChar())
+            str << ", ";
+        auto fieldOffset = physicalComponentType->size();
+        auto componentValue = &pointer[fieldOffset * dimension];
+        str << physicalComponentType->convertRawToString(componentValue);
+    }
+    if (!type->isFixedChar())
+        str << ']';
+    return str.str();
 }
 std::string ArrayPhysicalType::toString() {
     std::stringstream sstream;
-    sstream << physicalComponentType->toString() << "[" << length << "]";
-    return sstream.str();
+    if(type->isFixedChar()){
+        sstream << physicalComponentType->toString();
+        return sstream.str();
+    }else {
+        sstream << physicalComponentType->toString() << "[" << length << "]";
+        return sstream.str();
+    }
 }
 }
