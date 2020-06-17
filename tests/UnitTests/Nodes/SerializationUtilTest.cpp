@@ -36,7 +36,6 @@
 #include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>
 #include <google/protobuf/util/json_util.h>
