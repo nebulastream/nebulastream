@@ -13,13 +13,12 @@ class ArrayPhysicalField : public PhysicalField {
   public:
     ArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset);
     ~ArrayPhysicalField() = default;
-    ArrayPhysicalField(ArrayPhysicalField* physicalField);
     /**
      * @brief Cast the PhysicalField into an ArrayField
      * @return std::shared_ptr<ArrayPhysicalField>
      */
     std::shared_ptr<ArrayPhysicalField> asArrayField() override;
-    const PhysicalFieldPtr copy() const override;
+
     /**
      * @brief Get the PhysicalField at a specific array position.
      * @return std::shared_ptr<PhysicalField>

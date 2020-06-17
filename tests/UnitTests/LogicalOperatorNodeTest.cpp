@@ -12,6 +12,8 @@
 #include <iostream>
 
 #include <API/InputQuery.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
+#include <API/UserAPIExpression.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 #include <Operators/Operator.hpp>
@@ -1409,8 +1411,8 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
 
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
-    auto constValue = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
-    auto fieldRead = FieldAccessExpressionNode::create(createDataType(BasicType::INT8), "FieldName");
+    auto constValue = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
+    auto fieldRead = FieldAccessExpressionNode::create(DataTypeFactory::createInt8(), "FieldName");
     auto andNode = EqualsExpressionNode::create(constValue, fieldRead);
     auto filter = createFilterLogicalOperatorNode(andNode);
     sinkOperator->addChild(filter);

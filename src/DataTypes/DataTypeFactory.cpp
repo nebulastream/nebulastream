@@ -105,4 +105,21 @@ ValueTypePtr DataTypeFactory::createCharValue(const char* val) {
     return std::make_shared<CharValueType>(val);
 }
 
+DataTypePtr DataTypeFactory::createType(BasicType type) {
+    switch (type) {
+        case BOOLEAN: return DataTypeFactory::createBoolean();
+        case CHAR: return DataTypeFactory::createChar();
+        case INT8: return DataTypeFactory::createInt8();
+        case INT16: return DataTypeFactory::createInt16();
+        case INT32: return DataTypeFactory::createInt32();
+        case INT64: return DataTypeFactory::createInt64();
+        case UINT8: return DataTypeFactory::createUInt8();
+        case UINT16: return DataTypeFactory::createUInt16();
+        case UINT32: return DataTypeFactory::createUInt32();
+        case UINT64: return DataTypeFactory::createUInt64();
+        case FLOAT32: return DataTypeFactory::createFloat();
+        case FLOAT64: return DataTypeFactory::createDouble();
+    }
+}
+
 }// namespace NES

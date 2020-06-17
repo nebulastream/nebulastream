@@ -7,6 +7,7 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
 
 //#define DEBUG_OUTPUT
 
@@ -53,7 +54,7 @@ TEST_F(MemoryLayoutTest, rowLayoutTestInt) {
 
 TEST_F(MemoryLayoutTest, rowLayoutTestArray) {
     SchemaPtr schema = Schema::create()
-        ->addField("t1", createArrayDataType(BasicType::INT64, 10))
+        ->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()))
         ->addField("t2", BasicType::UINT8)
         ->addField("t3", BasicType::UINT8);
 
@@ -81,14 +82,14 @@ TEST_F(MemoryLayoutTest, rowLayoutTestArray) {
 
 TEST_F(MemoryLayoutTest, rowLayoutTestArrayAsPointerField) {
     SchemaPtr schema = Schema::create()
-        ->addField("t1", createArrayDataType(BasicType::INT64, 10));
+        ->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()));
 
     TupleBuffer buf = bufferManager->getBufferBlocking();
     auto layout = createRowLayout(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        auto arrayField = layout->getArrayField(recordIndex,  /*fieldIndex*/0);
+        auto arrayField = layout->getArrayField(recordIndex, /*fieldIndex*/ 0);
         for (uint64_t arrayIndex = 0; arrayIndex < 10; arrayIndex++) {
-            arrayField[arrayIndex]->asValueField<int64_t>()->write(buf, arrayIndex);
+            (arrayField)[arrayIndex]->asValueField<int64_t>()->write(buf, arrayIndex);
         }
     }
 

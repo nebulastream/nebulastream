@@ -10,6 +10,21 @@ typedef std::shared_ptr<DataType> DataTypePtr;
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
 
+enum BasicType {
+    INT8,
+    UINT8,
+    INT16,
+    UINT16,
+    INT32,
+    UINT32,
+    INT64,
+    FLOAT32,
+    UINT64,
+    FLOAT64,
+    BOOLEAN,
+    CHAR
+};
+
 /**
  * @brief The data type factory offers multiple methods to construct data types
  */
@@ -149,6 +164,8 @@ class DataTypeFactory {
     static ValueTypePtr createArrayValue(DataTypePtr type, std::vector<std::string> values);
     static ValueTypePtr createCharValue(std::vector<std::string> values);
     static ValueTypePtr createCharValue(const char* values);
+
+    static DataTypePtr createType(BasicType type);
 };
 
 }// namespace NES

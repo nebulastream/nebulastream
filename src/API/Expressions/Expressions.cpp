@@ -54,8 +54,7 @@ ExpressionItem Attribute(std::string fieldName) {
 }
 
 ExpressionItem Attribute(std::string fieldName, BasicType type) {
-    // TODO fix input
-    return ExpressionItem(FieldAccessExpressionNode::create(DataTypeFactory::createInt16(), std::move(fieldName)));
+    return ExpressionItem(FieldAccessExpressionNode::create(DataTypeFactory::createType(type), std::move(fieldName)));
 }
 
 ExpressionNodePtr ExpressionItem::getExpressionNode() {
