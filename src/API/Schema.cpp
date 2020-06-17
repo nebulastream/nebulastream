@@ -121,4 +121,8 @@ const std::string Schema::toString() const {
     }
     return ss.str();
 }
+
+AttributeFieldPtr createField(std::string name, BasicType type){
+    return AttributeField::create(name, DataTypeFactory::createType(type));
+};
 }// namespace NES

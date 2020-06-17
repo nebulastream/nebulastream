@@ -115,5 +115,7 @@ class Schema {
     std::vector<AttributeFieldPtr> fields;
 };
 
+AttributeFieldPtr createField(std::string name, BasicType type);
+
 }// namespace NES
 #endif// API_SCHEMA_H
