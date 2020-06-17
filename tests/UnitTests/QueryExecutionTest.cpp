@@ -3,9 +3,9 @@
 #include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Operators/Operator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-#include <Operators/Operator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <future>
@@ -20,9 +20,9 @@ class QueryExecutionTest : public testing::Test {
         NES_DEBUG("Setup QueryCatalogTest test class.");
         // create test input buffer
         testSchema = Schema::create()
-                         ->addField(createField("id", BasicType::INT64))
-                         ->addField(createField("one", BasicType::INT64))
-                         ->addField(createField("value", BasicType::INT64));
+                         ->addField("id", BasicType::INT64)
+                         ->addField("one", BasicType::INT64)
+                         ->addField("value", BasicType::INT64);
     }
 
     /* Will be called before a test is executed. */
@@ -172,8 +172,8 @@ TEST_F(QueryExecutionTest, DISABLED_windowQuery) {
                                          Milliseconds(2));
     auto windowOperator = createWindowOperator(
         createWindowDefinition(testSchema->get("value"), aggregation, windowType));
-    Schema resultSchema = Schema::create()->addField(
-        createField("sum", BasicType::INT64));
+    Schema resultSchema = Schema::create()
+                              ->addField("sum", BasicType::INT64);
     SchemaPtr ptr = std::make_shared<Schema>(resultSchema);
     auto windowScan = createWindowScanOperator(ptr);
     auto testSink = std::make_shared<TestSink>();
