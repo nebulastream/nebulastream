@@ -13,8 +13,8 @@ bool Integer::isInteger() {
 
 bool Integer::isEquals(DataTypePtr otherDataType) {
     if (otherDataType->isInteger()) {
-        auto otherFloat = as<Integer>(otherDataType);
-        return bits == otherFloat->bits && lowerBound == otherFloat->lowerBound && upperBound == otherFloat->upperBound;
+        auto otherInteger = as<Integer>(otherDataType);
+        return bits == otherInteger->bits && lowerBound == otherInteger->lowerBound && upperBound == otherInteger->upperBound;
     }
     return false;
 }
@@ -25,15 +25,15 @@ DataTypePtr Integer::join(DataTypePtr otherDataType) {
         // The other type is an float, thus we return a large enough float as a jointed type.
         auto otherFloat = as<Float>(otherDataType);
         auto newBits = std::max(bits, otherFloat->getBits());
-        auto newUpperBound = std::min((double) upperBound, otherFloat->getUpperBound());
-        auto newLowerBound = std::max((double) lowerBound, otherFloat->getLowerBound());
+        auto newUpperBound = std::max((double) upperBound, otherFloat->getUpperBound());
+        auto newLowerBound = std::min((double) lowerBound, otherFloat->getLowerBound());
         return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
     } else if (otherDataType->isInteger()) {
         // The other type is an Integer, thus we return a large enough integer.
         auto otherInteger = as<Integer>(otherDataType);
         auto newBits = std::max(bits, otherInteger->getBits());
-        auto newUpperBound = std::min(upperBound, otherInteger->getUpperBound());
-        auto newLowerBound = std::max(lowerBound, otherInteger->getLowerBound());
+        auto newUpperBound = std::max(upperBound, otherInteger->getUpperBound());
+        auto newLowerBound = std::min(lowerBound, otherInteger->getLowerBound());
         return DataTypeFactory::createInteger(newBits, newLowerBound, newUpperBound);
     }
     return DataTypeFactory::createUndefined();

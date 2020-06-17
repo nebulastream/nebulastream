@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+#include <DataTypes/DataTypeFactory.hpp>
 
 namespace NES {
 
@@ -32,16 +33,16 @@ class ExpressionNodeTest : public testing::Test {
 };
 
 TEST_F(ExpressionNodeTest, predicateConstruction) {
-    auto left = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "10"));
+    auto left = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, "10"));
     ASSERT_FALSE(left->isPredicate());
-    auto right = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "11"));
+    auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, "11"));
     ASSERT_FALSE(right->isPredicate());
     auto expression = EqualsExpressionNode::create(left, right);
 
     // check if expression is a predicate
     ASSERT_TRUE(expression->isPredicate());
-    auto fieldRead = FieldAccessExpressionNode::create(createDataType(INT64), "field_1");
-    auto constant = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "10"));
+    auto fieldRead = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "field_1");
+    auto constant = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, "10"));
     auto lessThen = LessEqualsExpressionNode::create(fieldRead, constant);
     ASSERT_TRUE(lessThen->isPredicate());
 
@@ -60,7 +61,7 @@ TEST_F(ExpressionNodeTest, attributeStampInference) {
 
     // infer stamp using schema
     attribute->inferStamp(schema);
-    ASSERT_TRUE(attribute->getStamp()->isEqual(createDataType(INT8)));
+    ASSERT_TRUE(attribute->getStamp()->isEquals(DataTypeFactory::createInt8()));
 
     // test inference with undefined attribute
     auto notValidAttribute = Attribute("f2").getExpressionNode();
@@ -75,22 +76,22 @@ TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
         ->addField("f1", INT8)
         ->addField("f2", INT64)
         ->addField("f3", FLOAT64)
-        ->addField("f3", createArrayDataType(BOOLEAN, 10));
+        ->addField("f3", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto addExpression = Attribute("f1") + 10;
     ASSERT_TRUE(addExpression->getStamp()->isUndefined());
     addExpression->inferStamp(schema);
-    ASSERT_TRUE(addExpression->getStamp()->isEqual(createDataType(INT32)));
+    ASSERT_TRUE(addExpression->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
 
     auto mulExpression = Attribute("f2")*10;
     ASSERT_TRUE(mulExpression->getStamp()->isUndefined());
     mulExpression->inferStamp(schema);
-    ASSERT_TRUE(mulExpression->getStamp()->isEqual(createDataType(INT64)));
+    ASSERT_TRUE(mulExpression->getStamp()->isEquals(DataTypeFactory::createType(INT64)));
 
     auto increment = Attribute("f3")++;
     ASSERT_TRUE(increment->getStamp()->isUndefined());
     increment->inferStamp(schema);
-    ASSERT_TRUE(increment->getStamp()->isEqual(createDataType(FLOAT64)));
+    ASSERT_TRUE(increment->getStamp()->isEquals(DataTypeFactory::createType(FLOAT64)));
 
     // We expect that you can't increment an array
     auto incrementArray = Attribute("f4")++;
@@ -103,7 +104,7 @@ TEST_F(ExpressionNodeTest, inferPredicateTest) {
         ->addField("f1", INT8)
         ->addField("f2", INT64)
         ->addField("f3", BOOLEAN)
-        ->addField("f3", createArrayDataType(BOOLEAN, 10));
+        ->addField("f3", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto equalsExpression = Attribute("f1") == 10;
     equalsExpression->inferStamp(schema);
@@ -138,11 +139,11 @@ TEST_F(ExpressionNodeTest, inferAssertionTest) {
         ->addField("f1", INT8)
         ->addField("f2", INT64)
         ->addField("f3", BOOLEAN)
-        ->addField("f3", createArrayDataType(BOOLEAN, 10));
+        ->addField("f3",  DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto assertion = Attribute("f1") = 10*(33 + Attribute("f1"));
     assertion->inferStamp(schema);
-    ASSERT_TRUE(assertion->getField()->getStamp()->isEqual(createDataType(INT32)));
+    ASSERT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
 }
 
 } // namespace NES
