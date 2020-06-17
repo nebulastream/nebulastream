@@ -1,10 +1,10 @@
 
 #include <DataTypes/Array.hpp>
 #include <DataTypes/Boolean.hpp>
+#include <DataTypes/Char.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
 #include <DataTypes/FixedChar.hpp>
 #include <DataTypes/Float.hpp>
-#include <DataTypes/Char.hpp>
 #include <DataTypes/Integer.hpp>
 #include <DataTypes/Undefined.hpp>
 #include <DataTypes/ValueTypes/ArrayValueType.hpp>
@@ -25,16 +25,16 @@ DataTypePtr DataTypeFactory::createFloat(int8_t bits, double lowerBound, double 
 }
 
 DataTypePtr DataTypeFactory::createFloat() {
-    return createFloat(32, std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+    return createFloat(32, std::numeric_limits<float>::max()*-1, std::numeric_limits<float>::max());
 }
 
 DataTypePtr DataTypeFactory::createFloat(double lowerBound, double upperBound) {
-    auto bits = lowerBound >= std::numeric_limits<float>::min() && upperBound <= std::numeric_limits<float>::min() ? 32 : 64;
+    auto bits = lowerBound >= std::numeric_limits<float>::max()*-1 && upperBound <= std::numeric_limits<float>::min() ? 32 : 64;
     return createFloat(bits, lowerBound, upperBound);
 }
 
 DataTypePtr DataTypeFactory::createDouble() {
-    return createFloat(64, std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
+    return createFloat(64, std::numeric_limits<double>::max()*-1, std::numeric_limits<double>::max());
 }
 
 DataTypePtr DataTypeFactory::createInteger(int8_t bits, int64_t lowerBound, int64_t upperBound) {
@@ -92,6 +92,9 @@ DataTypePtr DataTypeFactory::createChar() {
 
 ValueTypePtr DataTypeFactory::createBasicValue(DataTypePtr type, std::string value) {
     return std::make_shared<BasicValue>(type, value);
+}
+ValueTypePtr DataTypeFactory::createBasicValue(BasicType type, std::string value) {
+    return createBasicValue(createType(type), value);
 }
 
 ValueTypePtr DataTypeFactory::createArrayValue(DataTypePtr type, std::vector<std::string> values) {

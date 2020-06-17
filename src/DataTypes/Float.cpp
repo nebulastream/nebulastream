@@ -3,6 +3,7 @@
 #include <DataTypes/Integer.hpp>
 #include <algorithm>
 
+#include <cmath>
 namespace NES {
 
 bool Float::isFloat() {
@@ -30,14 +31,14 @@ DataTypePtr Float::join(DataTypePtr otherDataType) {
     if (otherDataType->isFloat()) {
         auto otherFloat = as<Float>(otherDataType);
         auto newBits = std::max(bits, otherFloat->getBits());
-        auto newUpperBound = std::min(upperBound, otherFloat->getUpperBound());
-        auto newLowerBound = std::max(lowerBound, otherFloat->getLowerBound());
+        auto newUpperBound = fmax(upperBound, otherFloat->getUpperBound());
+        auto newLowerBound = fmin(lowerBound, otherFloat->getLowerBound());
         return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
     } else if (otherDataType->isInteger()) {
         auto otherInteger = as<Integer>(otherDataType);
         auto newBits = std::max(bits, otherInteger->getBits());
-        auto newUpperBound = std::min(upperBound, (double) otherInteger->getUpperBound());
-        auto newLowerBound = std::max(lowerBound, (double) otherInteger->getLowerBound());
+        auto newUpperBound = fmax(upperBound, (double) otherInteger->getUpperBound());
+        auto newLowerBound = fmin(lowerBound, (double) otherInteger->getLowerBound());
         return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
     }
     return DataTypeFactory::createUndefined();

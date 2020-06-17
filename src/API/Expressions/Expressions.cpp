@@ -9,9 +9,9 @@
 #include <utility>
 namespace NES {
 
-ExpressionItem::ExpressionItem(int8_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(int8_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(uint8_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(uint8_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), std::to_string(value))) {}
 
 ExpressionItem::ExpressionItem(int16_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(value))) {}
 

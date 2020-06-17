@@ -5,7 +5,6 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include <API/Types/DataTypes.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/DefaultSource.hpp>
