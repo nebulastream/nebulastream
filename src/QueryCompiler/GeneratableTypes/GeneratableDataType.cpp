@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 namespace NES{

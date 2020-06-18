@@ -1,5 +1,3 @@
-#include <API/Schema.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
@@ -18,9 +16,9 @@
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <SourceSink/DataSink.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

@@ -7,8 +7,8 @@
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/DataTypes/ArrayGeneratableType.hpp>
-#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/ArrayGeneratableType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <memory>
 #include <sstream>
 namespace NES {

@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/DataTypes/GeneratableArrayValueType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <DataTypes/ValueTypes/BasicValue.hpp>
 #include <utility>

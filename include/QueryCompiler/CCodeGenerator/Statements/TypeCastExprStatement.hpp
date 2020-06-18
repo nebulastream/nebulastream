@@ -2,9 +2,11 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_TYPECASTEXPRSTATEMENT_HPP_
 
 #include <QueryCompiler/CCodeGenerator/Statements/ExpressionStatement.hpp>
-#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
 
 namespace NES {
+
+class GeneratableDataType;
+typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 
 class TypeCastExprStatement : public ExpressionStatment {
   public:

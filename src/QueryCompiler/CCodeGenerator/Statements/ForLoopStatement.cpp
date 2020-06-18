@@ -5,8 +5,6 @@
 #include <memory>
 #include <string>
 #include <sstream>
-
-#include <DataTypes/DataType.hpp>
 #include <utility>
 
 namespace NES {

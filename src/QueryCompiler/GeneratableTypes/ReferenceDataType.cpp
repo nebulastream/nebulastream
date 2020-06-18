@@ -1,5 +1,5 @@
 #include <QueryCompiler/CodeExpression.hpp>
-#include <QueryCompiler/DataTypes/ReferenceDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/ReferenceDataType.hpp>
 
 namespace NES {
 

@@ -6,6 +6,7 @@
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <API/AttributeField.hpp>
 #include <sstream>
 namespace NES {

@@ -1,7 +1,7 @@
 #include <QueryCompiler/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
-#include <QueryCompiler/DataTypes/GeneratableValueType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Util/Logger.hpp>
 namespace NES {

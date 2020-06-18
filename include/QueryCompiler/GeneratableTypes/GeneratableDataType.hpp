@@ -15,6 +15,10 @@ class AssignmentStatment;
 class Statement;
 typedef std::shared_ptr<Statement> StatementPtr;
 
+/**
+ * @brief A generatable data type,
+ * generate codes with regards to a particular data type.
+ */
 class GeneratableDataType {
   public:
     GeneratableDataType() = default;

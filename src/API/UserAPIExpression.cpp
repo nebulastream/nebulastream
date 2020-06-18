@@ -10,7 +10,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/DataTypes/GeneratableValueType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
 

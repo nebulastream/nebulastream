@@ -1,6 +1,6 @@
 
 #include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
-#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
 
