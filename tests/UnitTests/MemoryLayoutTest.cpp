@@ -7,7 +7,7 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 //#define DEBUG_OUTPUT
 

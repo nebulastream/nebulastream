@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEARRAYVALUETYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEARRAYVALUETYPE_HPP_
 
-#include <DataTypes/ValueTypes/ValueType.hpp>
+#include <Common/ValueTypes/ValueType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <string>
 #include <vector>

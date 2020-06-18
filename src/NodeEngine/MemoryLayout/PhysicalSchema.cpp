@@ -1,6 +1,6 @@
 #include <API/Schema.hpp>
-#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>

@@ -1,5 +1,5 @@
 
-#include <DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 namespace NES {
 GreaterExpressionNode::GreaterExpressionNode() : LogicalBinaryExpressionNode(){};

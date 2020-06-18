@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/ValueTypes/ValueType.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/ValueTypes/ValueType.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <utility>

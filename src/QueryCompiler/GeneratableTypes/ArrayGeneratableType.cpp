@@ -1,6 +1,6 @@
 
-#include <DataTypes/DataTypeFactory.hpp>
-#include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>

@@ -1,13 +1,13 @@
 
-#include <DataTypes/Array.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
-#include <DataTypes/FixedChar.hpp>
-#include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
-#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
-#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <DataTypes/ValueTypes/ArrayValueType.hpp>
-#include <DataTypes/ValueTypes/BasicValue.hpp>
-#include <DataTypes/ValueTypes/CharValueType.hpp>
+#include <Common/DataTypes/Array.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/FixedChar.hpp>
+#include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/ValueTypes/ArrayValueType.hpp>
+#include <Common/ValueTypes/BasicValue.hpp>
+#include <Common/ValueTypes/CharValueType.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>

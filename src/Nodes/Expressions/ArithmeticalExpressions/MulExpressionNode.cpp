@@ -1,4 +1,4 @@
-#include <DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 namespace NES {
 MulExpressionNode::MulExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(stamp){};

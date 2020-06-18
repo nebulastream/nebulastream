@@ -1,7 +1,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/CSVSink.hpp>
 #include <SourceSink/BinarySink.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>

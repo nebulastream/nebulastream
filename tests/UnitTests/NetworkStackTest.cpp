@@ -10,7 +10,7 @@
 #include <SourceSink/SourceCreator.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <Operators/Operator.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <gtest/gtest.h>

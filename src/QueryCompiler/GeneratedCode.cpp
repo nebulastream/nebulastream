@@ -1,5 +1,5 @@
 
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 
 namespace NES {

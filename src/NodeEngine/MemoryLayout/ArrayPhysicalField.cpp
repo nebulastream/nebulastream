@@ -1,6 +1,6 @@
 
-#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
-#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/MemoryLayout/ArrayPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <memory>

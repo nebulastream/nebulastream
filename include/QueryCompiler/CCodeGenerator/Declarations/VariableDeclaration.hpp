@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_VARIABLEDECLARATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_VARIABLEDECLARATION_HPP_
 
-#include <DataTypes/ValueTypes/ValueType.hpp>
+#include <Common/ValueTypes/ValueType.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 
 namespace NES {

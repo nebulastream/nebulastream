@@ -12,7 +12,7 @@
 #include <iostream>
 
 #include <API/InputQuery.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Operators/Impl/FilterOperator.hpp>

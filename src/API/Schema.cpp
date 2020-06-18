@@ -2,9 +2,9 @@
 #include <stdexcept>
 
 #include <API/Schema.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
-#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
