@@ -1,6 +1,6 @@
 
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/ValueTypes/ArrayValueType.hpp>
+#include <Common/ValueTypes/ArrayValue.hpp>
 
 namespace NES {
 

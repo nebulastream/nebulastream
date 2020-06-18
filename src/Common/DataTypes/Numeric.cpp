@@ -9,6 +9,7 @@ Numeric::Numeric(int8_t bits) : bits(bits) {
 bool Numeric::isNumeric() {
     return true;
 }
+
 int8_t Numeric::getBits() const {
     return bits;
 }

@@ -150,7 +150,7 @@ PredicateItem::PredicateItem(bool val) : mutation(PredicateItemMutation::VALUE),
 PredicateItem::PredicateItem(char val) : mutation(PredicateItemMutation::VALUE),
                                          value(DataTypeFactory::createBasicValue(DataTypeFactory::createChar(), std::to_string(val))) {}
 PredicateItem::PredicateItem(const char* val) : mutation(PredicateItemMutation::VALUE),
-                                                value(DataTypeFactory::createCharValue(val)) {}
+                                                value(DataTypeFactory::createFixedCharValue(val)) {}
 
 const std::string PredicateItem::toString() const {
     switch (mutation) {

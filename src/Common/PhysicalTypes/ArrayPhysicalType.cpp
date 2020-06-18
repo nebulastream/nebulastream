@@ -18,7 +18,7 @@ bool ArrayPhysicalType::isArrayType() {
 u_int8_t ArrayPhysicalType::size() const {
     return physicalComponentType->size() * length;
 }
-const PhysicalTypePtr& ArrayPhysicalType::getPhysicalComponentType() const {
+const PhysicalTypePtr ArrayPhysicalType::getPhysicalComponentType() const {
     return physicalComponentType;
 }
 const uint64_t ArrayPhysicalType::getLength() const {

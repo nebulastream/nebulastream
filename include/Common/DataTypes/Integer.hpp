@@ -55,6 +55,10 @@ class Integer : public Numeric {
      */
     [[nodiscard]] int64_t getUpperBound() const;
 
+    /**
+    * @brief Returns a string representation of the data type.
+    * @return string
+    */
     std::string toString() override;
 
   private:

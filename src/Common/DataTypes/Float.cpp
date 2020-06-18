@@ -6,12 +6,13 @@
 #include <cmath>
 namespace NES {
 
-bool Float::isFloat() {
-    return true;
-}
 Float::Float(int8_t bits, double lowerBound, double upperBound) : Numeric(bits),
                                                                   lowerBound(lowerBound),
                                                                   upperBound(upperBound) {
+}
+
+bool Float::isFloat() {
+    return true;
 }
 
 bool Float::isEquals(DataTypePtr otherDataType) {
@@ -43,9 +44,7 @@ DataTypePtr Float::join(DataTypePtr otherDataType) {
     }
     return DataTypeFactory::createUndefined();
 }
-bool Float::isNumeric() {
-    return true;
-}
+
 std::string Float::toString() {
     return "(Float)";
 }

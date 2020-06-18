@@ -7,9 +7,9 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Undefined.hpp>
-#include <Common/ValueTypes/ArrayValueType.hpp>
+#include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Common/ValueTypes/CharValueType.hpp>
+#include <Common/ValueTypes/FixedCharValue.hpp>
 namespace NES {
 
 DataTypePtr DataTypeFactory::createUndefined() {
@@ -101,11 +101,11 @@ ValueTypePtr DataTypeFactory::createArrayValue(DataTypePtr type, std::vector<std
     return std::make_shared<ArrayValue>(type, values);
 }
 
-ValueTypePtr DataTypeFactory::createCharValue(std::vector<std::string> values) {
-    return std::make_shared<CharValueType>(values);
+ValueTypePtr DataTypeFactory::createFixedCharValue(std::vector<std::string> values) {
+    return std::make_shared<FixedCharValue>(values);
 }
-ValueTypePtr DataTypeFactory::createCharValue(const char* val) {
-    return std::make_shared<CharValueType>(val);
+ValueTypePtr DataTypeFactory::createFixedCharValue(const char* val) {
+    return std::make_shared<FixedCharValue>(val);
 }
 
 DataTypePtr DataTypeFactory::createType(BasicType type) {

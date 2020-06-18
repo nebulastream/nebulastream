@@ -262,14 +262,14 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         std::vector<std::string> vals = {"a", "b", "c"};
         auto varDeclM = VariableDeclaration::create(
             tf.createDataType(DataTypeFactory::createFixedChar(12)), "m",
-            DataTypeFactory::createCharValue(vals));
+            DataTypeFactory::createFixedCharValue(vals));
         // declaration of m
         EXPECT_EQ(VarRefStatement(varDeclM).getCode()->code_, "m");
 
         // Char Array initialization
         auto varDeclN = VariableDeclaration::create(
             tf.createDataType(DataTypeFactory::createFixedChar(12)), "n",
-            DataTypeFactory::createCharValue(vals));
+            DataTypeFactory::createFixedCharValue(vals));
         EXPECT_EQ(varDeclN.getCode(), "char n[12] = {'a', 'b', 'c'}");
 
         // Int Array initialization

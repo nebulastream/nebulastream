@@ -162,8 +162,8 @@ class DataTypeFactory {
     static ValueTypePtr createBasicValue(DataTypePtr type, std::string value);
     static ValueTypePtr createBasicValue(BasicType type, std::string value);
     static ValueTypePtr createArrayValue(DataTypePtr type, std::vector<std::string> values);
-    static ValueTypePtr createCharValue(std::vector<std::string> values);
-    static ValueTypePtr createCharValue(const char* values);
+    static ValueTypePtr createFixedCharValue(std::vector<std::string> values);
+    static ValueTypePtr createFixedCharValue(const char* values);
 
     static DataTypePtr createType(BasicType type);
 };

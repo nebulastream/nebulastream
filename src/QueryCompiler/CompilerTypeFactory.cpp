@@ -5,9 +5,9 @@
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/ValueTypes/ArrayValueType.hpp>
+#include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Common/ValueTypes/CharValueType.hpp>
+#include <Common/ValueTypes/FixedCharValue.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
@@ -47,8 +47,8 @@ GeneratableValueTypePtr CompilerTypesFactory::createValueType(ValueTypePtr value
     } else if (valueType->isArrayValue()) {
         return std::make_shared<GeneratableArrayValueType>(valueType, std::dynamic_pointer_cast<ArrayValue>(valueType)->getValues());
     } else if (valueType->isCharValue()) {
-        auto charValue = std::dynamic_pointer_cast<CharValueType>(valueType);
-        return std::make_shared<GeneratableArrayValueType>(valueType, charValue->getValues(), charValue->isString1());
+        auto charValue = std::dynamic_pointer_cast<FixedCharValue>(valueType);
+        return std::make_shared<GeneratableArrayValueType>(valueType, charValue->getValues(), charValue->getIsString());
     }
     NES_THROW_RUNTIME_ERROR("CompilerTypesFactory:: Error");
 }

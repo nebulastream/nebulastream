@@ -49,6 +49,11 @@ class Array : public DataType {
      * @return DataTypePtr joined data type
      */
     DataTypePtr join(DataTypePtr otherDataType) override;
+
+    /**
+    * @brief Returns a string representation of the data type.
+    * @return string
+    */
     std::string toString() override;
 
   private:

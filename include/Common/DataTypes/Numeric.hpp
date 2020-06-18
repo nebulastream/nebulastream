@@ -21,6 +21,11 @@ class Numeric : public DataType {
      * @return int8_t
      */
     [[nodiscard]] int8_t getBits() const;
+
+    /**
+    * @brief Returns a string representation of the data type.
+    * @return string
+    */
     virtual std::string toString() override = 0;
 
   protected:
