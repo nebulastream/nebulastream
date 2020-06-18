@@ -530,7 +530,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(varDeclTupleBufferPointer.getCode(), "TupleBuffer* buffer");
 
         auto pointerDataType = tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl));
-        EXPECT_EQ(pointerDataType->generateCode()->code_, "TupleBuffer*");
+        EXPECT_EQ(pointerDataType->getCode()->code_, "TupleBuffer*");
 
         auto typeDefinition = VariableDeclaration::create(
                                   tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl)),

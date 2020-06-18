@@ -1,11 +1,5 @@
 
-#include <DataTypes/Array.hpp>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
-#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
-#include <DataTypes/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/BasicGeneratableType.hpp>
 #include <Util/Logger.hpp>
@@ -32,13 +26,9 @@ const CodeExpressionPtr BasicGeneratableType::getCode() const {
         case BasicPhysicalType::BOOLEAN: return std::make_shared<CodeExpression>("bool");
         case BasicPhysicalType::CHAR: return std::make_shared<CodeExpression>("char");
     }
-
     NES_THROW_RUNTIME_ERROR("Basic generatable type: it was not possible to generate code for this type: ");
-    return nullptr;
 }// namespace NES
-CodeExpressionPtr BasicGeneratableType::generateCode() {
-    return GeneratableDataType::generateCode();
-}
+
 CodeExpressionPtr BasicGeneratableType::getDeclCode(std::string identifier) {
     std::stringstream str;
     str << " " << identifier;

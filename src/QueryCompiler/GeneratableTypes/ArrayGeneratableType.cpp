@@ -20,8 +20,6 @@ const CodeExpressionPtr ArrayGeneratableType::getTypeDefinitionCode() const {
     return std::make_shared<CodeExpression>("");
 }
 
-CodeExpressionPtr ArrayGeneratableType::generateCode() {}
-
 const CodeExpressionPtr ArrayGeneratableType::getCode() const {
     std::stringstream str;
     str << "[" << type->getLength() << "]";

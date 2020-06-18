@@ -1,5 +1,4 @@
 
-#include <assert.h>
 #include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
 namespace NES {
 
@@ -17,10 +16,6 @@ const CodeExpressionPtr UserDefinedDataType::getCode() const {
 
 UserDefinedDataType::~UserDefinedDataType() {}
 
-
-CodeExpressionPtr NES::UserDefinedDataType::generateCode() {
-    return NES::CodeExpressionPtr();
-}
 CodeExpressionPtr UserDefinedDataType::getDeclCode(std::string identifier) {
     return getCode();
 }

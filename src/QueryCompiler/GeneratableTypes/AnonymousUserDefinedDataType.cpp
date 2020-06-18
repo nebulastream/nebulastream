@@ -12,14 +12,10 @@ const CodeExpressionPtr AnonymousUserDefinedDataType::getTypeDefinitionCode() co
     return std::make_shared<CodeExpression>(name);
 }
 
-CodeExpressionPtr AnonymousUserDefinedDataType::generateCode()  {
-    return std::make_shared<CodeExpression>(name);
-}
-
 CodeExpressionPtr AnonymousUserDefinedDataType::getDeclCode(std::string identifier) {
     std::stringstream str;
     str << " " << identifier;
-    return combine(generateCode(), std::make_shared<CodeExpression>(str.str()));
+    return combine(getCode(), std::make_shared<CodeExpression>(str.str()));
 }
 
 

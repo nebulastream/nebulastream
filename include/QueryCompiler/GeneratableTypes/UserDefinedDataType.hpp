@@ -18,7 +18,6 @@ class UserDefinedDataType : public GeneratableDataType {
     const CodeExpressionPtr getTypeDefinitionCode() const override;
     const CodeExpressionPtr getCode() const override;
     CodeExpressionPtr getDeclCode(std::string identifier) override;
-    CodeExpressionPtr generateCode() override;
     ~UserDefinedDataType();
 
   private:
