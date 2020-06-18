@@ -6,6 +6,10 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
+
+/**
+ * @brief A generatable data type which represent a reference to a typed value.
+ */
 class ReferenceDataType : public GeneratableDataType {
   public:
     ReferenceDataType(GeneratableDataTypePtr baseType);

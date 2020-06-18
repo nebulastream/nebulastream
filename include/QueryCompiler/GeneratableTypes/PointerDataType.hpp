@@ -6,8 +6,16 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
+
+/**
+ * @brief A generatable data type which represent a pointer to a typed value.
+ */
 class PointerDataType : public GeneratableDataType {
   public:
+    /**
+     * @brief Is constructed by the base of this value type.
+     * @param baseType
+     */
     PointerDataType(GeneratableDataTypePtr baseType);
     ~PointerDataType() = default;
 
