@@ -48,7 +48,7 @@ class GeneratableDataType {
     * @deprecated this will move to an own copy statement in the future.
     * @return CodeExpressionPtr
     */
-    virtual StatementPtr getStmtCopyAssignment(const AssignmentStatment& aParam);
+    virtual StatementPtr getStmtCopyAssignment(const AssignmentStatment& assignmentStatement);
 };
 }// namespace NES
 

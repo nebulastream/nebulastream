@@ -23,7 +23,6 @@ const CodeExpressionPtr ArrayGeneratableType::getTypeDefinitionCode() const {
 const CodeExpressionPtr ArrayGeneratableType::getCode() const {
     std::stringstream str;
     str << "[" << type->getLength() << "]";
-
     return combine(component->getCode(), std::make_shared<CodeExpression>(str.str()));
 }
 
@@ -40,14 +39,14 @@ CodeExpressionPtr ArrayGeneratableType::getDeclarationCode(std::string identifie
     }
     return ptr;
 }
-StatementPtr ArrayGeneratableType::getStmtCopyAssignment(const AssignmentStatment& aParam) {
-    FunctionCallStatement func_call("memcpy");
-    func_call.addParameter(VarRef(aParam.lhs_tuple_var)[VarRef(aParam.lhs_index_var)].accessRef(VarRef(aParam.lhs_field_var)));
-    func_call.addParameter(VarRef(aParam.rhs_tuple_var)[VarRef(aParam.rhs_index_var)].accessRef(VarRef(aParam.rhs_field_var)));
+StatementPtr ArrayGeneratableType::getStmtCopyAssignment(const AssignmentStatment& assignmentStatment) {
+    auto functionCall = FunctionCallStatement("memcpy");
+    functionCall.addParameter(VarRef(assignmentStatment.lhs_tuple_var)[VarRef(assignmentStatment.lhs_index_var)].accessRef(VarRef(assignmentStatment.lhs_field_var)));
+    functionCall.addParameter(VarRef(assignmentStatment.rhs_tuple_var)[VarRef(assignmentStatment.rhs_index_var)].accessRef(VarRef(assignmentStatment.rhs_field_var)));
     auto tf = CompilerTypesFactory();
-    func_call.addParameter(ConstantExpressionStatement(
-        tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(this->type->getLength())))));
-    return func_call.copy();
+    functionCall.addParameter(ConstantExpressionStatement(
+        tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(type->getLength())))));
+    return functionCall.copy();
 }
 
 }// namespace NES

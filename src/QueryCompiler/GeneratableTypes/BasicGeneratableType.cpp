@@ -30,8 +30,8 @@ const CodeExpressionPtr BasicGeneratableType::getCode() const {
         case BasicPhysicalType::BOOLEAN: return std::make_shared<CodeExpression>("bool");
         case BasicPhysicalType::CHAR: return std::make_shared<CodeExpression>("char");
     }
-    NES_THROW_RUNTIME_ERROR("Basic generatable type: it was not possible to generate code for this type: ");
-}// namespace NES
+    NES_THROW_RUNTIME_ERROR("BasicGeneratableType: it was not possible to generate code for this type: " + type->toString());
+}
 
 CodeExpressionPtr BasicGeneratableType::getDeclarationCode(std::string identifier) {
     std::stringstream str;
