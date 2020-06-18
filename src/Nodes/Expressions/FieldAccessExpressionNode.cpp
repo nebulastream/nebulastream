@@ -1,7 +1,7 @@
 
 #include <API/Schema.hpp>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <utility>
 namespace NES {

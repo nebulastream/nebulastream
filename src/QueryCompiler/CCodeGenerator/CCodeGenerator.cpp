@@ -1,5 +1,5 @@
 #include <API/Window/WindowDefinition.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>

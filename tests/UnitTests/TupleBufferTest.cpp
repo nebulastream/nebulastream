@@ -1,5 +1,5 @@
 #include <API/Schema.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>

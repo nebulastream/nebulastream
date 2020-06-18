@@ -1,7 +1,7 @@
 #ifndef INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
 #define INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
 
-#include <DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 namespace NES {

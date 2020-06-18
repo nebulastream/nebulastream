@@ -1,9 +1,9 @@
-#include <DataTypes/Array.hpp>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
-#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
-#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
+#include <Common/DataTypes/Array.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>

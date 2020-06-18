@@ -1,5 +1,5 @@
 
-#include <DataTypes/ValueTypes/BasicValue.hpp>
+#include <Common/ValueTypes/BasicValue.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>
 #include <sstream>

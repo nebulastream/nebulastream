@@ -1,5 +1,5 @@
 
-#include <DataTypes/ValueTypes/ValueType.hpp>
+#include <Common/ValueTypes/ValueType.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 namespace NES {
 ConstantValueExpressionNode::ConstantValueExpressionNode(const ValueTypePtr constantValue) : ExpressionNode(constantValue->getType()),

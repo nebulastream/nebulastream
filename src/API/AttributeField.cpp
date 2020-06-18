@@ -1,6 +1,6 @@
 
 #include <API/AttributeField.hpp>
-#include <DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <sstream>
 
 namespace NES {

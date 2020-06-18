@@ -2,7 +2,7 @@
 
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
 

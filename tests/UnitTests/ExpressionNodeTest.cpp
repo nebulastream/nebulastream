@@ -10,7 +10,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES {
 

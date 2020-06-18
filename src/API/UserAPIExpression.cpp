@@ -8,7 +8,7 @@
 #include <QueryCompiler/GeneratedCode.hpp>
 
 #include <API/UserAPIExpression.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <Util/Logger.hpp>

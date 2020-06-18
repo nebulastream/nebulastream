@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_BASICGENERATABLETYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DATATYPES_BASICGENERATABLETYPE_HPP_
 
-#include <DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {

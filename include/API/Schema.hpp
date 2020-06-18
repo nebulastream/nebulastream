@@ -6,7 +6,7 @@
 #include <memory>
 #include <string>
 
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <vector>
 
 namespace NES {

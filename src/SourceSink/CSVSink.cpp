@@ -1,5 +1,5 @@
-#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <SourceSink/CSVSink.hpp>
 #include <Util/Logger.hpp>

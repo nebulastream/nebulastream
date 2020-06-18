@@ -1,5 +1,5 @@
 #include <Catalogs/StreamCatalog.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 namespace NES {

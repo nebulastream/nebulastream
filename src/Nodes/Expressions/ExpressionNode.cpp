@@ -1,5 +1,5 @@
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 namespace NES {
 ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(stamp) {
