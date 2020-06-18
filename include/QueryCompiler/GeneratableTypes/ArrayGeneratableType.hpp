@@ -46,7 +46,7 @@ class ArrayGeneratableType : public GeneratableDataType {
    * @deprecated this will move to an own copy statement in the future.
    * @return CodeExpressionPtr
    */
-    StatementPtr getStmtCopyAssignment(const AssignmentStatment& aParam) override;
+    StatementPtr getStmtCopyAssignment(const AssignmentStatment& assignmentStatment) override;
 
   private:
     ArrayPhysicalTypePtr type;
