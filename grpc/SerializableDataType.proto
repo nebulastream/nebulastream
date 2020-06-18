@@ -45,7 +45,7 @@ message SerializableDataType{
   }
 
   /**
-  Details for array data types
+  Details for char data types
    */
   message CharDetails{
     uint64 dimensions = 2;
