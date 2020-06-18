@@ -7,7 +7,7 @@
 #include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <DataTypes/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <QueryCompiler/DataTypes/BasicGeneratableType.hpp>
+#include <QueryCompiler/GeneratableTypes/BasicGeneratableType.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 #include <sstream>

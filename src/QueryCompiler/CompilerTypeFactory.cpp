@@ -1,6 +1,5 @@
 
 #include <DataTypes/ValueTypes/BasicValue.hpp>
-#include <DataTypes/ValueTypes/ValueType.hpp>
 #include <DataTypes/ValueTypes/ArrayValueType.hpp>
 #include <DataTypes/ValueTypes/CharValueType.hpp>
 #include <DataTypes/Array.hpp>
@@ -8,18 +7,17 @@
 #include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
 #include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <QueryCompiler/DataTypes/GeneratableBasicValueType.hpp>
-#include <QueryCompiler/DataTypes/GeneratableArrayValueType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableBasicValueType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
-#include <DataTypes/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/DataTypes/ArrayGeneratableType.hpp>
-#include <QueryCompiler/DataTypes/BasicGeneratableType.hpp>
-#include <QueryCompiler/DataTypes/PointerDataType.hpp>
-#include <QueryCompiler/DataTypes/UserDefinedDataType.hpp>
-#include <QueryCompiler/DataTypes/ReferenceDataType.hpp>
-#include <QueryCompiler/DataTypes/AnonymousUserDefinedDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/ArrayGeneratableType.hpp>
+#include <QueryCompiler/GeneratableTypes/BasicGeneratableType.hpp>
+#include <QueryCompiler/GeneratableTypes/PointerDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/ReferenceDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
 #include <Util/Logger.hpp>
 namespace NES{
 

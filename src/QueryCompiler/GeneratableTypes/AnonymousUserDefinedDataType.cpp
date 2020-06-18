@@ -1,5 +1,5 @@
 
-#include <QueryCompiler/DataTypes/AnonymousUserDefinedDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <sstream>

@@ -1,5 +1,5 @@
 #include <QueryCompiler/CodeExpression.hpp>
-#include <QueryCompiler/DataTypes/PointerDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/PointerDataType.hpp>
 
 namespace NES {
 

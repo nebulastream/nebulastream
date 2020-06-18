@@ -2,10 +2,10 @@
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <QueryCompiler/DataTypes/ArrayDataType.hpp>
-#include <QueryCompiler/DataTypes/ArrayValueType.hpp>
-#include <QueryCompiler/DataTypes/BasicDataType.hpp>
-#include <QueryCompiler/DataTypes/ValueType.hpp>
+#include <QueryCompiler/GeneratableTypes/ArrayDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/ArrayValueType.hpp>
+#include <QueryCompiler/GeneratableTypes/BasicDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/ValueType.hpp>
 
 namespace NES {
 

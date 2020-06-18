@@ -1,8 +1,7 @@
 
-#include <DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <QueryCompiler/DataTypes/GeneratableValueType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <utility>
 
 namespace NES {

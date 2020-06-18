@@ -6,7 +6,7 @@
 
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <utility>
 
 namespace NES {

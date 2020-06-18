@@ -1,4 +1,3 @@
-
 #include <QueryCompiler/CCodeGenerator/Statements/CompoundStatement.hpp>
 
 #include <sstream>

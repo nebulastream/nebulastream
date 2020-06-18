@@ -8,12 +8,14 @@
 #include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
 
 namespace NES {
 
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
+
+class GeneratableDataType;
+typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 
 class FunctionBuilder {
   private:

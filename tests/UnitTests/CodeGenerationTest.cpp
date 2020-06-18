@@ -18,6 +18,7 @@
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>

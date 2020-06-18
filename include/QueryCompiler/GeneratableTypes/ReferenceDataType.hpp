@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <QueryCompiler/DataTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
 class ReferenceDataType : public GeneratableDataType {
