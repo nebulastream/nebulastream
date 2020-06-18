@@ -8,9 +8,17 @@ namespace NES {
 class BasicValue;
 typedef std::shared_ptr<BasicValue> BasicValuePtr;
 
+/**
+ * @brief Generates code for basic values.
+ */
 class GeneratableBasicValueType : public GeneratableValueType {
   public:
     GeneratableBasicValueType(BasicValuePtr basicValue);
+
+    /**
+    * @brief Generate the code expression for this value type.
+    * @return CodeExpressionPtr
+    */
     CodeExpressionPtr getCodeExpression() override;
 
   private:

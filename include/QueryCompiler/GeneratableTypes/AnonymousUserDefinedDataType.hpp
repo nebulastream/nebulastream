@@ -11,6 +11,10 @@
 
 namespace NES {
 
+/**
+ * @brief A generatable data type that generates code for anonymous user define types.
+ * This is usually used to generate code for runtime types, which are not covered by the nes type system.
+ */
 class AnonymousUserDefinedDataType : public GeneratableDataType {
   public:
     AnonymousUserDefinedDataType(const std::string name);

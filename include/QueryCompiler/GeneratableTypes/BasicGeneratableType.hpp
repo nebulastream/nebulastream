@@ -8,8 +8,12 @@ namespace NES {
 
 class StructDeclaration;
 
+/**
+ * @brief A basic generatable data type which generates code for all BasicPhysicalTypes.
+ */
 class BasicGeneratableType : public GeneratableDataType {
   public:
+
     BasicGeneratableType(BasicPhysicalTypePtr type);
 
     /**

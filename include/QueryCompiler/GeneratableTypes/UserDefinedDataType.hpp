@@ -3,14 +3,17 @@
 
 #include <memory>
 #include <string>
-
+#include <utility>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
-#include <utility>
+
 
 namespace NES {
 
+/**
+ * @brief Generated code for structure declarations
+ */
 class UserDefinedDataType : public GeneratableDataType {
   public:
     UserDefinedDataType(const StructDeclaration& decl);
