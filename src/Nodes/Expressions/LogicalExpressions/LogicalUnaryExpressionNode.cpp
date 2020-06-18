@@ -1,6 +1,6 @@
 
-#include <Nodes/Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
 
 namespace NES {
 

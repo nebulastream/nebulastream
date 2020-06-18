@@ -13,7 +13,7 @@ class CodeExpression;
 typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 
 class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr ;
+typedef std::shared_ptr<ValueType> ValueTypePtr;
 
 class GeneratableDataType;
 typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;

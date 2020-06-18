@@ -3,9 +3,9 @@
 
 #include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES{
+namespace NES {
 
-class ArrayPhysicalType: public PhysicalType{
+class ArrayPhysicalType : public PhysicalType {
 
   public:
     ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr physicalComponentType);
@@ -22,6 +22,6 @@ class ArrayPhysicalType: public PhysicalType{
     const uint64_t length;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_DATATYPES_PHYSICALTYPES_ARRAYPHYSICALTYPE_HPP_

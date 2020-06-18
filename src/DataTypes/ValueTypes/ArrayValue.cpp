@@ -1,6 +1,6 @@
 
-#include <DataTypes/ValueTypes/ArrayValueType.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/ValueTypes/ArrayValueType.hpp>
 namespace NES {
 
 ArrayValue::ArrayValue(DataTypePtr type, std::vector<std::string> values) : ValueType(type), values(values) {
@@ -19,12 +19,11 @@ std::string ArrayValue::toString() {
 }
 
 bool ArrayValue::isEquals(ValueTypePtr valueType) {
-    if(!valueType->isArrayValue()){
+    if (!valueType->isArrayValue()) {
         return false;
     }
     auto arrayValue = std::dynamic_pointer_cast<ArrayValue>(valueType);
     return getType()->isEquals(arrayValue->getType()) && values == arrayValue->values;
 }
-
 
 }// namespace NES

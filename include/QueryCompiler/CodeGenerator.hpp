@@ -45,7 +45,6 @@ typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-
 class CompilerTypesFactory;
 typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
 

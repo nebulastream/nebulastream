@@ -3,8 +3,8 @@
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <memory>
-#include <string>
 #include <sstream>
+#include <string>
 #include <utility>
 
 namespace NES {

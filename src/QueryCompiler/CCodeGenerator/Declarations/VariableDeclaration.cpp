@@ -20,7 +20,7 @@ const Code VariableDeclaration::getTypeDefinitionCode() const {
 const Code VariableDeclaration::getCode() const {
     std::stringstream str;
     // TODO FIXME
-    str << type_->getDeclCode(identifier_)->code_;
+    str << type_->getDeclarationCode(identifier_)->code_;
     if (init_value_) {
         auto valueType = CompilerTypesFactory().createValueType(init_value_);
         str << " = " << valueType->getCodeExpression()->code_;

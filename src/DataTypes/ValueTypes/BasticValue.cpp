@@ -1,9 +1,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/ValueTypes/BasicValue.hpp>
-namespace NES{
+namespace NES {
 
-BasicValue::BasicValue(DataTypePtr type, std::string value) : ValueType(type), value(value){}
+BasicValue::BasicValue(DataTypePtr type, std::string value) : ValueType(type), value(value) {}
 
 bool BasicValue::isBasicValue() {
     return true;
@@ -18,13 +18,10 @@ std::string BasicValue::getValue() {
 }
 
 bool BasicValue::isEquals(ValueTypePtr valueType) {
-    if(!valueType->isBasicValue())
+    if (!valueType->isBasicValue())
         return false;
     auto otherBasicValue = std::dynamic_pointer_cast<BasicValue>(valueType);
     return otherBasicValue->getType()->isEquals(getType()) && value == otherBasicValue->value;
 }
 
-
-
-
-}
+}// namespace NES

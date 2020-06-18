@@ -59,8 +59,6 @@ class Schema {
     */
     SchemaPtr addField(const std::string& name, DataTypePtr data);
 
-
-
     /**
      * @brief Replaces a field, which is already part of the schema.
      * @param name

@@ -1,7 +1,7 @@
 #include <DataTypes/ValueTypes/ValueType.hpp>
-namespace NES{
+namespace NES {
 
-ValueType::ValueType(DataTypePtr type) : dataType(type){
+ValueType::ValueType(DataTypePtr type) : dataType(type) {
 }
 
 bool ValueType::isArrayValue() {
@@ -20,5 +20,4 @@ DataTypePtr ValueType::getType() {
     return dataType;
 }
 
-
-}
+}// namespace NES

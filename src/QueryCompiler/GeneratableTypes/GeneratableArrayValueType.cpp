@@ -1,12 +1,12 @@
 
-#include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
 #include <DataTypes/ValueTypes/BasicValue.hpp>
+#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>
 #include <sstream>
 
-namespace NES{
+namespace NES {
 
-GeneratableArrayValueType::GeneratableArrayValueType(ValueTypePtr  valueTypePtr, std::vector<std::string> values, bool isString) : GeneratableValueType(), valueType(valueTypePtr), values(values),isString(isString) {}
+GeneratableArrayValueType::GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string> values, bool isString) : GeneratableValueType(), valueType(valueTypePtr), values(values), isString(isString) {}
 
 CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() {
     std::stringstream str;
@@ -29,4 +29,4 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() {
     str << "}";
     return std::make_shared<CodeExpression>(str.str());
 }
-}
+}// namespace NES

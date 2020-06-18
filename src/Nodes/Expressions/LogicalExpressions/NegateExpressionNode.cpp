@@ -1,6 +1,6 @@
 
-#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <DataTypes/DataType.hpp>
+#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 namespace NES {
 
 NegateExpressionNode::NegateExpressionNode() : LogicalUnaryExpressionNode() {}

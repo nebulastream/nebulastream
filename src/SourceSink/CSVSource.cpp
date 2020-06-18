@@ -129,8 +129,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
                     int8_t val = std::stoi(tokens[j].c_str());
                     memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                            fieldSize);
-                }
-                else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_8) {
+                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_8) {
                     int8_t val = std::stoi(tokens[j].c_str());
                     memcpy(buf.getBufferAs<char>() + offset + i * tupleSize, &val,
                            fieldSize);

@@ -3,7 +3,7 @@
 
 #include <DataTypes/PhysicalTypes/PhysicalTypeFactory.hpp>
 
-namespace NES{
+namespace NES {
 
 class Integer;
 typedef std::shared_ptr<Integer> IntegerPtr;
@@ -20,7 +20,7 @@ typedef std::shared_ptr<Char> CharPtr;
 class FixedChar;
 typedef std::shared_ptr<FixedChar> FixedCharPtr;
 
-class DefaultPhysicalTypeFactory: public PhysicalTypeFactory{
+class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
   public:
     DefaultPhysicalTypeFactory();
     PhysicalTypePtr getPhysicalType(DataTypePtr dataType) override;
@@ -33,7 +33,6 @@ class DefaultPhysicalTypeFactory: public PhysicalTypeFactory{
     PhysicalTypePtr getPhysicalType(ArrayPtr arrayType);
 };
 
-
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_DATATYPES_PHYSICALTYPES_DEFAULTPHYSICALTYPEFACTORY_HPP_

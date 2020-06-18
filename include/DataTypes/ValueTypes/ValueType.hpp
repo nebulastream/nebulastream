@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_DATATYPES_VALUETYPE_HPP_
 #define NES_INCLUDE_DATATYPES_VALUETYPE_HPP_
 #include <memory>
-namespace NES{
+namespace NES {
 
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
@@ -9,7 +9,7 @@ typedef std::shared_ptr<DataType> DataTypePtr;
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
 
-class ValueType{
+class ValueType {
   public:
     ValueType(DataTypePtr type);
 
@@ -24,9 +24,8 @@ class ValueType{
 
   private:
     DataTypePtr dataType;
-
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_DATATYPES_VALUETYPE_HPP_

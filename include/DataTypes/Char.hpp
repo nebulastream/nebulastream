@@ -9,7 +9,6 @@ namespace NES {
  */
 class Char : public DataType {
   public:
-
     /**
     * @brief Checks if this data type is Boolean.
     */

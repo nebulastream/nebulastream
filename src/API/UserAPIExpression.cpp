@@ -155,10 +155,10 @@ PredicateItem::PredicateItem(const char* val) : mutation(PredicateItemMutation::
 const std::string PredicateItem::toString() const {
     switch (mutation) {
         case PredicateItemMutation::ATTRIBUTE: return attribute->toString();
-        case PredicateItemMutation::VALUE:  {
-                auto tf = CompilerTypesFactory();
-                return tf.createValueType(value)->getCodeExpression()->code_;
-            }
+        case PredicateItemMutation::VALUE: {
+            auto tf = CompilerTypesFactory();
+            return tf.createValueType(value)->getCodeExpression()->code_;
+        }
     }
     return "";
 }

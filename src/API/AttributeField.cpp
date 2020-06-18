@@ -19,7 +19,6 @@ const std::string AttributeField::toString() const {
     return ss.str();
 }
 
-
 bool AttributeField::isEqual(AttributeFieldPtr attr) {
     if (!attr)
         return false;

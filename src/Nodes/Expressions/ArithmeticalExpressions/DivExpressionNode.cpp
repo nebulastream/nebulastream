@@ -1,5 +1,5 @@
-#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <DataTypes/DataType.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 namespace NES {
 DivExpressionNode::DivExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(stamp){};
 ExpressionNodePtr DivExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {

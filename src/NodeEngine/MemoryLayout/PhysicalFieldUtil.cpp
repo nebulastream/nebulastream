@@ -1,5 +1,5 @@
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/Array.hpp>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
 #include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -36,7 +36,9 @@ std::shared_ptr<PhysicalField> PhysicalFieldUtil::createPhysicalField(const Phys
         return createArrayPhysicalField(arrayPhysicalType->getPhysicalComponentType(), bufferOffset);
     } else {
         // TODO FIXME
-        NES_FATAL_ERROR("No physical field mapping for " << "test" << " available");
+        NES_FATAL_ERROR("No physical field mapping for "
+                        << "test"
+                        << " available");
         NES_NOT_IMPLEMENTED();
         ;
     }

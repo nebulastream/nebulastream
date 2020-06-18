@@ -1,8 +1,8 @@
 
 #include <DataTypes/PhysicalTypes/PhysicalType.hpp>
-namespace NES{
+namespace NES {
 
-PhysicalType::PhysicalType(DataTypePtr type): type(type){}
+PhysicalType::PhysicalType(DataTypePtr type) : type(type) {}
 
 bool PhysicalType::isArrayType() {
     return false;
@@ -16,6 +16,4 @@ DataTypePtr PhysicalType::getType() {
     return type;
 }
 
-
-
-}
+}// namespace NES

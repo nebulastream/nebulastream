@@ -2,7 +2,7 @@
 #define NES_INCLUDE_DATATYPES_DATATYPEFACTORY_HPP_
 #include <memory>
 #include <vector>
-namespace NES{
+namespace NES {
 
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
@@ -151,7 +151,6 @@ class DataTypeFactory {
     * @return DataTypePtr
     */
     static DataTypePtr createFixedChar(uint64_t length);
-
 
     /**
     * @brief Creates a new Char data type.

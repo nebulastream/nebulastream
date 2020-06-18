@@ -4,8 +4,8 @@
 #include <memory>
 #include <string>
 
-#include <DataTypes/DataType.hpp>
 #include <API/AttributeField.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Operators/OperatorTypes.hpp>
 
 namespace NES {
