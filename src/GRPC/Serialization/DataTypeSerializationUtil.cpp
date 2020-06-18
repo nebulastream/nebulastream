@@ -4,7 +4,7 @@
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Common/ValueTypes/ArrayValueType.hpp>
+#include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <SerializableDataType.pb.h>

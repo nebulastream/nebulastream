@@ -5,16 +5,54 @@
 
 namespace NES {
 
+/**
+ * @brief The array physical type, which represent Array and FixedChar types in NES.
+ */
 class ArrayPhysicalType : public PhysicalType {
 
   public:
     ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr physicalComponentType);
+
+    /**
+     * @brief Factory function to create a new Array Physical Type.
+     */
     static PhysicalTypePtr create(DataTypePtr type, uint64_t length, PhysicalTypePtr component);
+
+    /**
+    * @brief Indicates if this is a array data type.
+    * @return
+    */
     bool isArrayType() override;
+
+    /**
+     * @brief Returns the number of bytes occupied by this data type.
+     * @return u_int8_t
+     */
     u_int8_t size() const override;
+
+    /**
+     * @brief Converts the binary representation of this value to a string.
+     * @param rawData a pointer to the raw value
+     * @return
+     */
     std::string convertRawToString(void* rawData) override;
-    const PhysicalTypePtr& getPhysicalComponentType() const;
+
+    /**
+     * @brief Returns the physical type of the array component.
+     * @return PhysicalTypePtr
+     */
+    const PhysicalTypePtr getPhysicalComponentType() const;
+
+    /**
+     * @brief Returns the length of the array
+     * @return uint64_t
+     */
     const uint64_t getLength() const;
+
+    /**
+     * @brief Returns the string representation of this physical data type.
+     * @return string
+     */
     std::string toString() override;
 
   private:

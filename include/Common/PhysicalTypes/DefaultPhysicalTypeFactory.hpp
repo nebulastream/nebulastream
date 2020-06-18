@@ -20,9 +20,18 @@ typedef std::shared_ptr<Char> CharPtr;
 class FixedChar;
 typedef std::shared_ptr<FixedChar> FixedCharPtr;
 
+/**
+ * @brief This is a default physical type factory, which maps nes types to common x86 types.
+ */
 class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
   public:
     DefaultPhysicalTypeFactory();
+
+    /**
+     * @brief Translates a nes data type into a corresponding physical type.
+     * @param dataType
+     * @return PhysicalTypePtr
+     */
     PhysicalTypePtr getPhysicalType(DataTypePtr dataType) override;
 
   private:

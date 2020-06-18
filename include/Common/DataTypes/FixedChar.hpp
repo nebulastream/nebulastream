@@ -41,6 +41,11 @@ class FixedChar : public DataType {
     * @brief Returns the length of the char.
     */
     [[nodiscard]] uint64_t getLength() const;
+
+    /**
+    * @brief Returns a string representation of the data type.
+    * @return string
+    */
     std::string toString() override;
 
   private:
