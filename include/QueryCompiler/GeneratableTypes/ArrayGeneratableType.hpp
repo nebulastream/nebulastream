@@ -20,7 +20,6 @@ class ArrayGeneratableType : public GeneratableDataType {
 
     const CodeExpressionPtr getTypeDefinitionCode() const override;
     const CodeExpressionPtr getCode() const override;
-    CodeExpressionPtr generateCode() override;
     CodeExpressionPtr getDeclCode(std::string identifier) override;
     StatementPtr getStmtCopyAssignment(const AssignmentStatment& aParam) override;
 

@@ -12,9 +12,8 @@ class BasicGeneratableType : public GeneratableDataType {
   public:
     BasicGeneratableType(BasicPhysicalTypePtr type);
 
-    const CodeExpressionPtr getTypeDefinitionCode() const;
-    const CodeExpressionPtr getCode() const;
-    CodeExpressionPtr generateCode() override;
+    const CodeExpressionPtr getTypeDefinitionCode() const override;
+    const CodeExpressionPtr getCode() const override;
     CodeExpressionPtr getDeclCode(std::string identifier) override;
 
   private:

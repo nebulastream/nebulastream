@@ -25,7 +25,6 @@ class GeneratableDataType {
     virtual const CodeExpressionPtr getCode() const = 0;
     virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
     virtual CodeExpressionPtr  getDeclCode(std::string identifier) = 0;
-    virtual CodeExpressionPtr generateCode() = 0;
     virtual StatementPtr getStmtCopyAssignment(const AssignmentStatment& aParam) ;
 };
 }

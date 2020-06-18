@@ -2,7 +2,6 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <DataTypes/ValueTypes/BasicValue.hpp>
-#include <utility>
 #include <sstream>
 
 namespace NES{
