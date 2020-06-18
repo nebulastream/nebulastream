@@ -1,3 +1,4 @@
+#include <DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkSource.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
@@ -12,7 +13,6 @@
 #include <SourceSink/SenseSource.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/ZmqSource.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
 
 namespace NES {
 

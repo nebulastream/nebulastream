@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 
-
 namespace NES {
 
 typedef std::string Code;

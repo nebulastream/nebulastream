@@ -9,7 +9,11 @@ namespace NES {
 
 BasicGeneratableType::BasicGeneratableType(BasicPhysicalTypePtr type) : GeneratableDataType(), type(type) {}
 
-const CodeExpressionPtr BasicGeneratableType::getTypeDefinitionCode() const {}
+const CodeExpressionPtr BasicGeneratableType::getTypeDefinitionCode() const {
+    // A basic type need no type definition.
+    return std::make_shared<CodeExpression>("");
+}
+
 const CodeExpressionPtr BasicGeneratableType::getCode() const {
 
     switch (type->getNativeType()) {
@@ -29,7 +33,7 @@ const CodeExpressionPtr BasicGeneratableType::getCode() const {
     NES_THROW_RUNTIME_ERROR("Basic generatable type: it was not possible to generate code for this type: ");
 }// namespace NES
 
-CodeExpressionPtr BasicGeneratableType::getDeclCode(std::string identifier) {
+CodeExpressionPtr BasicGeneratableType::getDeclarationCode(std::string identifier) {
     std::stringstream str;
     str << " " << identifier;
     return combine(getCode(), std::make_shared<CodeExpression>(str.str()));

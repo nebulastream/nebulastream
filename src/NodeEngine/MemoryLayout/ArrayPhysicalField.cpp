@@ -1,8 +1,8 @@
 
+#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/MemoryLayout/ArrayPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
-#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
-#include <DataTypes/PhysicalTypes/BasicPhysicalType.hpp>
 #include <memory>
 #include <utility>
 namespace NES {

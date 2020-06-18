@@ -1,9 +1,9 @@
 
 #include <DataTypes/Array.hpp>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/FixedChar.hpp>
 #include <DataTypes/Char.hpp>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
+#include <DataTypes/FixedChar.hpp>
 #include <DataTypes/Float.hpp>
 #include <DataTypes/Integer.hpp>
 #include <DataTypes/PhysicalTypes/ArrayPhysicalType.hpp>
@@ -23,9 +23,9 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
         return getPhysicalType(DataType::as<Float>(dataType));
     } else if (dataType->isArray()) {
         return getPhysicalType(DataType::as<Array>(dataType));
-    }else if (dataType->isFixedChar()) {
+    } else if (dataType->isFixedChar()) {
         return getPhysicalType(DataType::as<FixedChar>(dataType));
-    }else if (dataType->isChar()) {
+    } else if (dataType->isChar()) {
         return getPhysicalType(DataType::as<Char>(dataType));
     }
     NES_THROW_RUNTIME_ERROR("DefaultPhysicalTypeFactory: it was not possible to infer a physical type for: " + dataType->toString());

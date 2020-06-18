@@ -692,7 +692,6 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     }
     auto outputBuffer = context.buffers[0];
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
-    auto resultData = (int64_t*) outputBuffer.getBuffer();
     /* check result for correctness */
     auto sumGeneratedCode = layout->getValueField<int64_t>(/*recordIndex*/ 0, /*fieldIndex*/ 0)->read(outputBuffer);
     auto sum = 0;
@@ -720,7 +719,6 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", DataTypeFactory::createUInt64()), context);
     /* compile code to pipeline stage */
-    Compiler compiler;
     auto stage = codeGenerator->compile(context->code);
 
     /* prepare input and output tuple buffer */
@@ -920,8 +918,6 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
                             ->addField(mappedValue)
                             ->addField("valueChar", DataTypeFactory::createChar())
                             ->addField("text", DataTypeFactory::createFixedChar(12));
-
-    auto schemaSize = outputSchema->getSchemaSizeInBytes();
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(outputSchema, context);
 

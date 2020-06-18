@@ -12,9 +12,9 @@ class ArrayValue : public ValueType {
     bool isArrayValue() override;
     std::string toString() override;
     bool isEquals(ValueTypePtr valueType) override;
+
   private:
     std::vector<std::string> values;
-
 };
 
 }// namespace NES

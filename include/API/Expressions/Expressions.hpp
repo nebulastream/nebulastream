@@ -8,8 +8,6 @@
 
 namespace NES {
 
-
-
 /**
  * @brief This file contains the user facing api to create expression nodes in a fluent and easy way.
  */

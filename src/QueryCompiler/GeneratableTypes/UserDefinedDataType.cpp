@@ -4,8 +4,6 @@ namespace NES {
 
 UserDefinedDataType::UserDefinedDataType(const StructDeclaration& decl) : declaration(decl) {}
 
-
-
 const CodeExpressionPtr UserDefinedDataType::getTypeDefinitionCode() const {
     return std::make_shared<CodeExpression>(declaration.getCode());
 }
@@ -16,7 +14,7 @@ const CodeExpressionPtr UserDefinedDataType::getCode() const {
 
 UserDefinedDataType::~UserDefinedDataType() {}
 
-CodeExpressionPtr UserDefinedDataType::getDeclCode(std::string identifier) {
+CodeExpressionPtr UserDefinedDataType::getDeclarationCode(std::string identifier) {
     return getCode();
 }
 }// namespace NES

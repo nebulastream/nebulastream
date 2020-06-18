@@ -56,7 +56,6 @@ SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
     return addField(name, DataTypeFactory::createType(type));
 }
 
-
 SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
     return addField(AttributeField::create(name, data));
 }
@@ -126,7 +125,7 @@ const std::string Schema::toString() const {
     return ss.str();
 }
 
-AttributeFieldPtr createField(std::string name, BasicType type){
+AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
 };
 }// namespace NES

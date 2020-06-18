@@ -1,7 +1,7 @@
 
 #include <DataTypes/DataType.hpp>
 
-namespace NES{
+namespace NES {
 
 bool DataType::isBoolean() {
     return false;
@@ -35,4 +35,4 @@ bool DataType::isChar() {
     return false;
 }
 
-}
+}// namespace NES

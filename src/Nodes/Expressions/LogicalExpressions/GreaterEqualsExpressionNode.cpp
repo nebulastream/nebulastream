@@ -1,6 +1,6 @@
 
-#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
 #include <DataTypes/DataType.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
 namespace NES {
 GreaterEqualsExpressionNode::GreaterEqualsExpressionNode() : LogicalBinaryExpressionNode(){};
 ExpressionNodePtr GreaterEqualsExpressionNode::create(const ExpressionNodePtr left,

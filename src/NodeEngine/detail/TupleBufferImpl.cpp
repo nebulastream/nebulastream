@@ -1,3 +1,5 @@
+#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <bitset>
@@ -5,9 +7,7 @@
 #include <cstring>
 #include <exception>
 #include <iostream>
-#include <DataTypes/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <sstream>
-#include <DataTypes/PhysicalTypes/PhysicalType.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <NodeEngine/internal/backtrace.hpp>

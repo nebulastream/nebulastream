@@ -1,6 +1,6 @@
 
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <DataTypes/DataType.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <memory>
 #include <utility>
 namespace NES {

@@ -25,16 +25,16 @@ DataTypePtr DataTypeFactory::createFloat(int8_t bits, double lowerBound, double 
 }
 
 DataTypePtr DataTypeFactory::createFloat() {
-    return createFloat(32, std::numeric_limits<float>::max()*-1, std::numeric_limits<float>::max());
+    return createFloat(32, std::numeric_limits<float>::max() * -1, std::numeric_limits<float>::max());
 }
 
 DataTypePtr DataTypeFactory::createFloat(double lowerBound, double upperBound) {
-    auto bits = lowerBound >= std::numeric_limits<float>::max()*-1 && upperBound <= std::numeric_limits<float>::min() ? 32 : 64;
+    auto bits = lowerBound >= std::numeric_limits<float>::max() * -1 && upperBound <= std::numeric_limits<float>::min() ? 32 : 64;
     return createFloat(bits, lowerBound, upperBound);
 }
 
 DataTypePtr DataTypeFactory::createDouble() {
-    return createFloat(64, std::numeric_limits<double>::max()*-1, std::numeric_limits<double>::max());
+    return createFloat(64, std::numeric_limits<double>::max() * -1, std::numeric_limits<double>::max());
 }
 
 DataTypePtr DataTypeFactory::createInteger(int8_t bits, int64_t lowerBound, int64_t upperBound) {

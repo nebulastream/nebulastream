@@ -1,7 +1,7 @@
 #include <DataTypes/Array.hpp>
-#include <DataTypes/FixedChar.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
+#include <DataTypes/FixedChar.hpp>
 #include <DataTypes/Float.hpp>
 #include <DataTypes/Integer.hpp>
 #include <DataTypes/ValueTypes/ArrayValueType.hpp>
@@ -34,7 +34,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
         serializedDataType->set_type(SerializableDataType_Type_FLOAT);
     } else if (dataType->isBoolean()) {
         serializedDataType->set_type(SerializableDataType_Type_BOOLEAN);
-    }else if (dataType->isChar()) {
+    } else if (dataType->isChar()) {
         serializedDataType->set_type(SerializableDataType_Type_CHAR);
     } else if (dataType->isFixedChar()) {
         auto serializableChar = SerializableDataType_CharDetails();
@@ -70,8 +70,8 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
         serializedDataType->details().UnpackTo(&charDetails);
         return DataTypeFactory::createFixedChar(charDetails.dimensions());
     } else if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
-         return DataTypeFactory::createChar();
-    }else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
+        return DataTypeFactory::createChar();
+    } else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
         auto integerDetails = SerializableDataType_IntegerDetails();
         serializedDataType->details().UnpackTo(&integerDetails);
         return DataTypeFactory::createInteger(integerDetails.bits(), integerDetails.lowerbound(), integerDetails.upperbound());

@@ -1,8 +1,8 @@
 
 #include <API/Schema.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <DataTypes/DataTypeFactory.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeFactory.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <utility>
 namespace NES {
 FieldAccessExpressionNode::FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName)

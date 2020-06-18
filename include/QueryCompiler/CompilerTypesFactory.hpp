@@ -25,9 +25,6 @@ class CompilerTypesFactory {
     GeneratableDataTypePtr createReference(GeneratableDataTypePtr type);
     GeneratableDataTypePtr createPointer(GeneratableDataTypePtr type);
     GeneratableValueTypePtr createValueType(ValueTypePtr valueType);
-
-
-
 };
 }// namespace NES
 

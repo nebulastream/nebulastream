@@ -3,11 +3,7 @@
 
 namespace NES {
 
-PointerDataType::PointerDataType(GeneratableDataTypePtr baseType): GeneratableDataType(), baseType(baseType) {
-}
-
-const CodeExpressionPtr PointerDataType::getDeclCode(const std::string& identifier) const {
-    return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "* " + identifier);
+PointerDataType::PointerDataType(GeneratableDataTypePtr baseType) : GeneratableDataType(), baseType(baseType) {
 }
 
 const CodeExpressionPtr PointerDataType::getCode() const {
@@ -18,7 +14,7 @@ const CodeExpressionPtr PointerDataType::getTypeDefinitionCode() const {
     return baseType->getTypeDefinitionCode();
 }
 
-CodeExpressionPtr PointerDataType::getDeclCode(std::string identifier) {
+CodeExpressionPtr PointerDataType::getDeclarationCode(std::string identifier) {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "* " + identifier);
 }
 

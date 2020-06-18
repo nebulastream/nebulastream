@@ -1,6 +1,6 @@
 
-#include <DataTypes/Undefined.hpp>
 #include <DataTypes/DataTypeFactory.hpp>
+#include <DataTypes/Undefined.hpp>
 
 namespace NES {
 

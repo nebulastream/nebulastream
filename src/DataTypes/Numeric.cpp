@@ -3,7 +3,7 @@
 
 namespace NES {
 
-Numeric::Numeric(int8_t bits) : bits(bits){
+Numeric::Numeric(int8_t bits) : bits(bits) {
 }
 
 bool Numeric::isNumeric() {

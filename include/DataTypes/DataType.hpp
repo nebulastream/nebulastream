@@ -43,7 +43,6 @@ class DataType {
     */
     virtual bool isArray();
 
-
     /**
     * @brief Checks if this data type is Char.
     */

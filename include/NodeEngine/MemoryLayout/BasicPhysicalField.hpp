@@ -13,7 +13,6 @@ class BasicPhysicalField : public PhysicalField {
     BasicPhysicalField(uint64_t bufferOffset) : PhysicalField(bufferOffset){};
     ~BasicPhysicalField(){};
 
-
     /**
      * @brief writes a value of type ValueType to a particular position in the buffer.
      * @param tupleBuffer target tuple buffer

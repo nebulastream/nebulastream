@@ -27,7 +27,7 @@ const CodeExpressionPtr ArrayGeneratableType::getCode() const {
     return combine(component->getCode(), std::make_shared<CodeExpression>(str.str()));
 }
 
-CodeExpressionPtr ArrayGeneratableType::getDeclCode(std::string identifier) {
+CodeExpressionPtr ArrayGeneratableType::getDeclarationCode(std::string identifier) {
     CodeExpressionPtr ptr;
     if (identifier != "") {
         ptr = component->getCode();
@@ -46,8 +46,7 @@ StatementPtr ArrayGeneratableType::getStmtCopyAssignment(const AssignmentStatmen
     func_call.addParameter(VarRef(aParam.rhs_tuple_var)[VarRef(aParam.rhs_index_var)].accessRef(VarRef(aParam.rhs_field_var)));
     auto tf = CompilerTypesFactory();
     func_call.addParameter(ConstantExpressionStatement(
-        tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(this->type->getLength())))
-        ));
+        tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(this->type->getLength())))));
     return func_call.copy();
 }
 

@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_DATATYPES_VALUETYPES_CHARVALUETYPE_HPP_
 #define NES_INCLUDE_DATATYPES_VALUETYPES_CHARVALUETYPE_HPP_
 #include <DataTypes/ValueTypes/ValueType.hpp>
-#include <vector>
 #include <string>
+#include <vector>
 namespace NES {
 
 class CharValueType : public ValueType {

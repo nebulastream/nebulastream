@@ -4,7 +4,7 @@
 
 namespace NES {
 
-FixedChar::FixedChar(uint64_t length) : length(length){}
+FixedChar::FixedChar(uint64_t length) : length(length) {}
 
 uint64_t FixedChar::getLength() const {
     return length;
@@ -14,7 +14,7 @@ bool FixedChar::isFixedChar() {
     return true;
 }
 bool FixedChar::isEquals(DataTypePtr otherDataType) {
-    if(otherDataType->isFixedChar()){
+    if (otherDataType->isFixedChar()) {
         auto otherChar = as<FixedChar>(otherDataType);
         return length == otherChar->getLength();
     }
