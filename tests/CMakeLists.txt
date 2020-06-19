@@ -244,6 +244,11 @@ add_executable(network-stack-test "UnitTests/NetworkStackTest.cpp")
 target_link_libraries(network-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME network-stack-test COMMAND network-stack-test)
 
+# MonitoringStackTest
+add_executable(monitoring-stack-test "UnitTests/MonitoringStackTest.cpp")
+target_link_libraries(monitoring-stack-test nes ${GTEST_LIBRARIES})
+add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
+
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
 add_executable(e2e-coordinator-single-worker-test "E2e/E2ECoordinatorSingleWorkerTest.cpp")
