@@ -3,7 +3,7 @@
 
 namespace NES {
 
-Counter::Counter(int64_t initCount) : count(initCount) {
+Counter::Counter(int64_t initCount) : Metric(MetricType::CounterType), count(initCount) {
     NES_DEBUG("Counter: Initializing with count " << initCount);
 }
 
@@ -23,7 +23,7 @@ void Counter::dec(int64_t n) {
     count -= n;
 }
 
-int64_t Counter::getCount() {
+int64_t Counter::getCount() const {
     return count;
 }
 

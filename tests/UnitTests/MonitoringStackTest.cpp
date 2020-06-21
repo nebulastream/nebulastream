@@ -1,5 +1,10 @@
 #include <gtest/gtest.h>
 #include <Util/Logger.hpp>
+#include <Monitoring/Metrics/MetricGroup.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/Metrics/Gauge.hpp>
+#include <Monitoring/Metrics/NesMetrics.hpp>
+
 
 namespace NES {
 class MonitoringStackTest : public testing::Test {
@@ -25,8 +30,11 @@ class MonitoringStackTest : public testing::Test {
     }
 };
 
-TEST_F(MonitoringStackTest, test) {
-    NES_INFO("Test");
+TEST_F(MonitoringStackTest, testCPUStats) {
+    auto cpuStats = NesMetrics::CPUStats();
+    std::unordered_map<std::string, uint64_t> metrics = cpuStats.getValue();
+    ASSERT_TRUE(metrics["cpuCount"] > 0);
+    ASSERT_TRUE(metrics.size()>=11);
 }
 
 }

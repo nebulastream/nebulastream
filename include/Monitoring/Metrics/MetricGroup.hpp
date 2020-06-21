@@ -1,9 +1,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_
 
-#include <Monitoring/Metrics/Counter.hpp>
-#include <Monitoring/Metrics/Gauge.hpp>
 #include <unordered_map>
+#include <Monitoring/Metrics/Metric.hpp>
 
 namespace NES {
 
@@ -17,35 +16,25 @@ namespace NES {
  */
 class MetricGroup {
   public:
-    MetricGroup();
-
-    ~MetricGroup();
+    MetricGroup() = default;
+    ~MetricGroup() = default;
 
     /**
-     * @brief Registers a Counter.
-     * @param id of the counter
-     * @param counter counter to register
-     * @return the given counter
+     * @brief Registers a metric.
+     * @param id of the metric
+     * @param metric metric to register
+     * @return true if successful, else false
      */
-    Counter& counter(uint64_t id, Counter& counter);
-
-    /**
-      * @brief Registers a Gauge.
-      * @param id of the Gauge
-      * @param gauge Gauge to register
-      * @return the given Gauge
-      */
-    template<typename T>
-    Gauge<T>& gauge(uint64_t id, Gauge<T>& gauge);
+    bool add(const std::string& id, Metric* metric);
 
     /**
      * @brief returns a map of the registered metrics
      * @return the metrics map
      */
-    std::unordered_map<uint64_t, Metric&>& getRegisteredMetrics();
+    std::unordered_map<std::string, Metric*> getRegisteredMetrics() const;
 
   private:
-    std::unordered_map<uint64_t, Metric&> metricMap;
+    std::unordered_map<std::string, Metric*> metricMap;
 
 };
 

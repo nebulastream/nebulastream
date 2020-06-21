@@ -1,29 +1,16 @@
 #include <Monitoring/Metrics/MetricGroup.hpp>
-#include <Util/Logger.hpp>
+
+#include <Monitoring/Metrics/Counter.hpp>
+#include <Monitoring/Metrics/Gauge.hpp>
 
 namespace NES {
 
-MetricGroup::MetricGroup() {
-    NES_DEBUG("MetricGroup: Initialized");
+bool MetricGroup::add(const std::string& id, Metric* metric) {
+    metricMap[id] = metric;
 }
 
-MetricGroup::~MetricGroup() {
-    NES_DEBUG("MetricGroup: Destroyed");
-}
-
-Counter& MetricGroup::counter(uint64_t id, Counter& counter) {
-    metricMap[id] = static_cast<Metric&>(counter);
-    return counter;
-}
-
-template<typename T>
-Gauge<T>& MetricGroup::gauge(uint64_t id, Gauge<T>& gauge) {
-    metricMap.insert(id, gauge);
-    return gauge;
-}
-
-std::unordered_map<uint64_t, Metric&>& MetricGroup::getRegisteredMetrics() {
-    return metricMap;
+std::unordered_map<std::string, Metric*> MetricGroup::getRegisteredMetrics() const {
+    return this->metricMap;
 }
 
 }
