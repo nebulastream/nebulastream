@@ -3,10 +3,21 @@
 
 namespace NES {
 
+enum MetricType {
+    CounterType,
+    GaugeType,
+    HistogramType,
+    MeterType
+};
+
 class Metric {
   public:
-    Metric() = default;
-    ~Metric() = default;
+    explicit Metric(MetricType metricType);
+
+    MetricType getMetricType() const;
+
+  private:
+    MetricType metricType;
 };
 
 }

@@ -1,16 +1,20 @@
 #ifndef NES_INCLUDE_RUNTIME_UTIL_SYSTEMRESOURCESCOUNTER_HPP_
 #define NES_INCLUDE_RUNTIME_UTIL_SYSTEMRESOURCESCOUNTER_HPP_
 
-#include <chrono>
+#include <Monitoring/Metrics/Gauge.hpp>
+#include <string>
+#include <unordered_map>
+
+namespace NES {
 
 class SystemResourcesReader {
   public:
-    SystemResourcesReader();
+    static std::unordered_map<std::string, uint64_t> CPUStats();
 
   private:
-    std::chrono::milliseconds probeInterval;
-
+    SystemResourcesReader() = default;
 };
 
+}
 
 #endif //NES_INCLUDE_RUNTIME_UTIL_SYSTEMRESOURCESCOUNTER_HPP_

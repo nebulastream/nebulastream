@@ -39,7 +39,7 @@ class Counter: public Metric {
      *
      * @return current count
      */
-    int64_t getCount();
+    int64_t getCount() const;
 
   private:
     int64_t count;
