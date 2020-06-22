@@ -15,7 +15,7 @@ bool ArrayPhysicalType::isArrayType() {
     return true;
 }
 
-u_int64_t ArrayPhysicalType::size() const {
+uint64_t ArrayPhysicalType::size() const {
     return physicalComponentType->size() * length;
 }
 const PhysicalTypePtr ArrayPhysicalType::getPhysicalComponentType() const {
@@ -40,7 +40,7 @@ std::string ArrayPhysicalType::convertRawToString(void* data) {
 
     if (!type->isFixedChar())
         str << '[';
-    for (u_int32_t dimension = 0; dimension < length; dimension++) {
+    for (uint32_t dimension = 0; dimension < length; dimension++) {
         if ((dimension != 0) && !type->isFixedChar())
             str << ", ";
         auto fieldOffset = physicalComponentType->size();

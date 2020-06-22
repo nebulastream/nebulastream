@@ -33,7 +33,7 @@ class PhysicalType {
      * @brief Returns the number of bytes occupied by this data type.
      * @return u_int64_t
      */
-    virtual u_int64_t size() const = 0;
+    virtual uint64_t size() const = 0;
 
     /**
      * @brief Converts the binary representation of this value to a string.

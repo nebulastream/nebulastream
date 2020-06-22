@@ -14,7 +14,7 @@ bool BasicPhysicalType::isBasicType() {
     return true;
 }
 
-u_int64_t BasicPhysicalType::size() const {
+uint64_t BasicPhysicalType::size() const {
     switch (nativeType) {
         case INT_8: return sizeof(int8_t);
         case INT_16: return sizeof(int16_t);
