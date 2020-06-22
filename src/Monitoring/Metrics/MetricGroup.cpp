@@ -5,8 +5,8 @@
 
 namespace NES {
 
-bool MetricGroup::add(const std::string& id, Metric* metric) {
-    metricMap[id] = metric;
+bool MetricGroup::add(const std::string& name, Metric* metric) {
+    metricMap[name] = metric;
 }
 
 std::unordered_map<std::string, Metric*> MetricGroup::getRegisteredMetrics() const {
