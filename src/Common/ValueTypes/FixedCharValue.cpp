@@ -20,12 +20,15 @@ bool FixedCharValue::isCharValue() {
 bool FixedCharValue::isEquals(ValueTypePtr valueType) {
     return false;
 }
+
 std::string FixedCharValue::toString() {
     return std::string();
 }
+
 const std::vector<std::string>& FixedCharValue::getValues() const {
     return values;
 }
+
 bool FixedCharValue::getIsString() const {
     return isString;
 }

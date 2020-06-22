@@ -19,7 +19,6 @@ const Code VariableDeclaration::getTypeDefinitionCode() const {
 
 const Code VariableDeclaration::getCode() const {
     std::stringstream str;
-    // TODO FIXME
     str << type_->getDeclarationCode(identifier_)->code_;
     if (init_value_) {
         auto valueType = CompilerTypesFactory().createValueType(init_value_);
@@ -52,9 +51,8 @@ VariableDeclaration VariableDeclaration::create(GeneratableDataTypePtr type, con
     return VariableDeclaration(type, identifier, value);
 }
 VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::string& identifier, ValueTypePtr value) {
-    auto tf = CompilerTypesFactory();
-
-    return VariableDeclaration(tf.createDataType(type), identifier, value);
+    auto typeFactory = CompilerTypesFactory();
+    return VariableDeclaration(typeFactory.createDataType(type), identifier, value);
 }
 
 }// namespace NES
