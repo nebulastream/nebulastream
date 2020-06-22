@@ -57,7 +57,6 @@ class BasicPhysicalType : public PhysicalType {
      */
     uint64_t size() const override;
 
-
     /**
      * @brief Converts the binary representation of this value to a string.
      * @param rawData a pointer to the raw value

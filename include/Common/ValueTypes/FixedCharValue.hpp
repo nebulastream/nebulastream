@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_DATATYPES_VALUETYPES_CHARVALUETYPE_HPP_
 #define NES_INCLUDE_DATATYPES_VALUETYPES_CHARVALUETYPE_HPP_
 
-#include <vector>
-#include <string>
 #include <Common/ValueTypes/ValueType.hpp>
+#include <string>
+#include <vector>
 
 namespace NES {
 
