@@ -1,8 +1,10 @@
 #ifndef NES_INCLUDE_DATATYPES_VALUETYPES_CHARVALUETYPE_HPP_
 #define NES_INCLUDE_DATATYPES_VALUETYPES_CHARVALUETYPE_HPP_
-#include "../../../../../../../../usr/include/c++/9/string"
-#include "../../../../../../../../usr/include/c++/9/vector"
-#include "ValueType.hpp"
+
+#include <vector>
+#include <string>
+#include <Common/ValueTypes/ValueType.hpp>
+
 namespace NES {
 
 /**

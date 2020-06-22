@@ -35,10 +35,39 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     PhysicalTypePtr getPhysicalType(DataTypePtr dataType) override;
 
   private:
+    /**
+    * @brief Translates an integer data type into a corresponding physical type.
+    * @param integerType
+    * @return PhysicalTypePtr
+    */
     PhysicalTypePtr getPhysicalType(IntegerPtr integerType);
+
+    /**
+    * @brief Translates a char data type into a corresponding physical type.
+    * @param dataType
+    * @return PhysicalTypePtr
+    */
     PhysicalTypePtr getPhysicalType(CharPtr charType);
-    PhysicalTypePtr getPhysicalType(FixedCharPtr charType);
+    /**
+    * @brief Translates a fixed char data type into a corresponding physical type.
+    * @param fixedCharType
+    * @return PhysicalTypePtr
+    */
+    PhysicalTypePtr getPhysicalType(FixedCharPtr fixedCharType);
+
+    /**
+    * @brief Translates a fixed char data type into a corresponding physical type.
+    * @param floatType
+    * @return PhysicalTypePtr
+    */
     PhysicalTypePtr getPhysicalType(FloatPtr floatType);
+
+
+    /**
+    * @brief Translates a array data type into a corresponding physical type.
+    * @param arrayType
+    * @return PhysicalTypePtr
+    */
     PhysicalTypePtr getPhysicalType(ArrayPtr arrayType);
 };
 

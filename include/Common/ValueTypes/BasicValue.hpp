@@ -20,6 +20,11 @@ class BasicValue : public ValueType {
     * @return string
     */
     std::string toString() override;
+
+    /**
+     * @brief Get the value of this value type.
+     * @return string
+     */
     std::string getValue();
 
     /**

@@ -5,6 +5,7 @@
 namespace NES {
 
 FixedCharValue::FixedCharValue(std::vector<std::string> values) : ValueType(DataTypeFactory::createFixedChar(values.size())), values(values), isString(false) {}
+
 FixedCharValue::FixedCharValue(const std::string& value) : ValueType(DataTypeFactory::createFixedChar(value.size())), isString(true) {
     auto dimension = value.size();
     u_int32_t i = 0;
