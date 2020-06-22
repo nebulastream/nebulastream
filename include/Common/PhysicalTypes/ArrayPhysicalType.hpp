@@ -39,7 +39,7 @@ class ArrayPhysicalType : public PhysicalType {
      * @brief Returns the number of bytes occupied by this data type.
      * @return u_int64_t
      */
-    u_int64_t size() const override;
+    uint64_t size() const override;
 
     /**
      * @brief Converts the binary representation of this value to a string.
