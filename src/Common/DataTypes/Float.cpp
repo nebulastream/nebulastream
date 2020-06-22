@@ -2,7 +2,6 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <algorithm>
-
 #include <cmath>
 namespace NES {
 

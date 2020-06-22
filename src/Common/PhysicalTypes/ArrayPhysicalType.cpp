@@ -28,9 +28,9 @@ std::string ArrayPhysicalType::convertRawToString(void* data) {
     std::stringstream str;
 
     // check if the pointer is valid
-    if (!data)
+    if (!data) {
         return "";
-
+    }
     // we print a fixed char directly because the last char terminated the output.
     if (type->isFixedChar()) {
         return static_cast<char*>(data);
@@ -38,8 +38,9 @@ std::string ArrayPhysicalType::convertRawToString(void* data) {
 
     char* pointer = static_cast<char*>(data);
 
-    if (!type->isFixedChar())
+    if (!type->isFixedChar()) {
         str << '[';
+    }
     for (uint32_t dimension = 0; dimension < length; dimension++) {
         if ((dimension != 0) && !type->isFixedChar())
             str << ", ";

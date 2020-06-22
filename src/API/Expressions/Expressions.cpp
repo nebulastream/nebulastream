@@ -30,8 +30,8 @@ ExpressionItem::ExpressionItem(float value) : ExpressionItem(DataTypeFactory::cr
 ExpressionItem::ExpressionItem(double value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createDouble(), std::to_string(value))) {}
 
 ExpressionItem::ExpressionItem(bool value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createBoolean(), std::to_string(value))) {}
-// TODO Fix;
-ExpressionItem::ExpressionItem(const char* value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUndefined(), "")) {}
+
+ExpressionItem::ExpressionItem(const char* value) : ExpressionItem(DataTypeFactory::createFixedCharValue(value)) {}
 
 ExpressionItem::ExpressionItem(ValueTypePtr value) : ExpressionItem(ConstantValueExpressionNode::create(std::move(value))) {}
 

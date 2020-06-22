@@ -17,9 +17,9 @@ const CodeExpressionPtr ConstantExpressionStatement::getCode() const {
 }
 
 const ExpressionStatmentPtr ConstantExpressionStatement::copy() const {
-    auto vel = std::make_shared<ConstantExpressionStatement>(*this);
-    vel->constantValue = constantValue;
-    return vel;
+    auto copy = std::make_shared<ConstantExpressionStatement>(*this);
+    copy->constantValue = constantValue;
+    return copy;
 }
 
 ConstantExpressionStatement::ConstantExpressionStatement(GeneratableValueTypePtr val) : constantValue(std::move(val)) {}

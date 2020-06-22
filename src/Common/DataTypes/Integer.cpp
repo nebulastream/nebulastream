@@ -2,6 +2,7 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <algorithm>
+#include <cmath>
 namespace NES {
 
 Integer::Integer(int8_t bits, int64_t lowerBound, int64_t upperBound) : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {
@@ -25,8 +26,8 @@ DataTypePtr Integer::join(DataTypePtr otherDataType) {
         // The other type is an float, thus we return a large enough float as a jointed type.
         auto otherFloat = as<Float>(otherDataType);
         auto newBits = std::max(bits, otherFloat->getBits());
-        auto newUpperBound = std::max((double) upperBound, otherFloat->getUpperBound());
-        auto newLowerBound = std::min((double) lowerBound, otherFloat->getLowerBound());
+        auto newUpperBound = fmax((double) upperBound, otherFloat->getUpperBound());
+        auto newLowerBound = fmin((double) lowerBound, otherFloat->getLowerBound());
         return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
     } else if (otherDataType->isInteger()) {
         // The other type is an Integer, thus we return a large enough integer.
