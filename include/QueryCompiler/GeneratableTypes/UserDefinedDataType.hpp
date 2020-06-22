@@ -1,13 +1,12 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_USERDEFINEDDATATYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DATATYPES_USERDEFINEDDATATYPE_HPP_
 
-#include <memory>
-#include <string>
-#include <utility>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
-
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace NES {
 

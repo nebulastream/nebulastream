@@ -11,7 +11,6 @@ namespace NES {
 class ArrayPhysicalType : public PhysicalType {
 
   public:
-
     /**
      * @brief Factory function to create a new Array Physical Type.
      * @param type the logical data type.

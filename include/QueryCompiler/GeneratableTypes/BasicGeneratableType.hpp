@@ -13,7 +13,6 @@ class StructDeclaration;
  */
 class BasicGeneratableType : public GeneratableDataType {
   public:
-
     BasicGeneratableType(BasicPhysicalTypePtr type);
 
     /**

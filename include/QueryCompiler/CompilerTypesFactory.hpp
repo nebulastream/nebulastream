@@ -22,7 +22,6 @@ class StructDeclaration;
  */
 class CompilerTypesFactory {
   public:
-
     /**
      * @brief Create a annonymus data type, which is used to represent types of the runtime system that are not covered by the nes type system.
      * @param type

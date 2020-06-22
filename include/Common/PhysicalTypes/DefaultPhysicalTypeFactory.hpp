@@ -62,7 +62,6 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     */
     PhysicalTypePtr getPhysicalType(FloatPtr floatType);
 
-
     /**
     * @brief Translates a array data type into a corresponding physical type.
     * @param arrayType

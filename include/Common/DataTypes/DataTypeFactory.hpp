@@ -167,7 +167,6 @@ class DataTypeFactory {
      */
     static ValueTypePtr createBasicValue(DataTypePtr type, std::string value);
 
-
     /**
      * @brief Create a basic typed value. For instance a Integer with value "42".
      * @param type the data type as a BasicType
