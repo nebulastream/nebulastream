@@ -26,19 +26,19 @@ ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp) {
-    return leftExp + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), "1"));
+    return leftExp + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp) {
-    return leftExp - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), "1"));
+    return leftExp - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp, int) {
-    return leftExp + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), "1"));
+    return leftExp + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp, int) {
-    return leftExp - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), "1"));
+    return leftExp - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp) {

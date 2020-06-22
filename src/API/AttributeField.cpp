@@ -1,4 +1,3 @@
-
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <sstream>

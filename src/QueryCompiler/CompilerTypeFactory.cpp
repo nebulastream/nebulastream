@@ -38,7 +38,7 @@ GeneratableDataTypePtr CompilerTypesFactory::createDataType(DataTypePtr type) {
         auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
         return std::make_shared<BasicGeneratableType>(basicPhysicalType);
     }
-    NES_THROW_RUNTIME_ERROR("CompilerTypesFactory:: Error");
+    NES_THROW_RUNTIME_ERROR("CompilerTypesFactory:: No suitable generatable type was found.");
 }
 
 GeneratableValueTypePtr CompilerTypesFactory::createValueType(ValueTypePtr valueType) {
@@ -50,7 +50,7 @@ GeneratableValueTypePtr CompilerTypesFactory::createValueType(ValueTypePtr value
         auto charValue = std::dynamic_pointer_cast<FixedCharValue>(valueType);
         return std::make_shared<GeneratableArrayValueType>(valueType, charValue->getValues(), charValue->getIsString());
     }
-    NES_THROW_RUNTIME_ERROR("CompilerTypesFactory:: Error");
+    NES_THROW_RUNTIME_ERROR("CompilerTypesFactory:: No suitable value  type was found.");
 }
 
 GeneratableDataTypePtr CompilerTypesFactory::createAnonymusDataType(std::string type) {

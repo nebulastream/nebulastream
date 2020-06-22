@@ -11,29 +11,40 @@ namespace NES {
 class ArrayPhysicalType : public PhysicalType {
 
   public:
-    ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr physicalComponentType);
 
     /**
      * @brief Factory function to create a new Array Physical Type.
+     * @param type the logical data type.
+     * @param length the length of the array.
+     * @param component the physical component type of this array.
+     */
+    ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr component);
+
+    /**
+     * @brief Factory function to create a new Array Physical Type.
+     * @param type the logical data type.
+     * @param length the length of the array.
+     * @param component the physical component type of this array.
+     * @return PhysicalTypePtr
      */
     static PhysicalTypePtr create(DataTypePtr type, uint64_t length, PhysicalTypePtr component);
 
     /**
     * @brief Indicates if this is a array data type.
-    * @return
+    * @return true if type is array
     */
     bool isArrayType() override;
 
     /**
      * @brief Returns the number of bytes occupied by this data type.
-     * @return u_int8_t
+     * @return u_int64_t
      */
-    u_int8_t size() const override;
+    u_int64_t size() const override;
 
     /**
      * @brief Converts the binary representation of this value to a string.
      * @param rawData a pointer to the raw value
-     * @return
+     * @return string
      */
     std::string convertRawToString(void* rawData) override;
 

@@ -42,7 +42,8 @@ DataTypePtr DataTypeFactory::createInteger(int8_t bits, int64_t lowerBound, int6
 }
 
 DataTypePtr DataTypeFactory::createInteger(int64_t lowerBound, int64_t upperBound) {
-    auto bits = upperBound <= INT16_MAX ? 16 : upperBound <= INT32_MAX ? 32 : 64;
+    // derive the correct bite size for the correct lower and upper bound
+    auto bits = upperBound <= INT8_MAX ? 8 : upperBound <= INT16_MAX ? 16 : upperBound <= INT32_MAX ? 32 : 64;
     return createInteger(bits, lowerBound, upperBound);
 }
 

@@ -24,39 +24,44 @@ class BasicPhysicalType : public PhysicalType {
         BOOLEAN
     };
 
+    /**
+     * @brief Constructor for a basic physical type.
+     * @param type the data type represented by this physical type
+     * @param nativeType the native type of the nes type.
+     */
     BasicPhysicalType(DataTypePtr type, NativeType nativeType);
 
     /**
      * @brief Factory function to create a new physical type.
      * @param type
      * @param nativeType
-     * @return
+     * @return PhysicalTypePtr
      */
     static PhysicalTypePtr create(DataTypePtr type, NativeType nativeType);
 
     /**
      * @brief get the underling native data type for this physical data type.
-     * @return
+     * @return NativeType
      */
     NativeType getNativeType();
 
     /**
      * @brief Indicates if this is a basic data type.
-     * @return
+     * @return true
      */
     bool isBasicType() override;
 
     /**
      * @brief Returns the number of bytes occupied by this data type.
-     * @return u_int8_t
+     * @return u_int64_t
      */
-    u_int8_t size() const override;
+    u_int64_t size() const override;
 
 
     /**
      * @brief Converts the binary representation of this value to a string.
      * @param rawData a pointer to the raw value
-     * @return
+     * @return string
      */
     std::string convertRawToString(void* rawData) override;
 

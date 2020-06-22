@@ -19,26 +19,26 @@ class PhysicalType {
 
     /**
      * @brief Indicates if this is a basic data type.
-     * @return
+     * @return true if type is basic type
      */
     virtual bool isBasicType();
 
     /**
     * @brief Indicates if this is a array data type.
-    * @return
+    * @return true if type is array
     */
     virtual bool isArrayType();
 
     /**
      * @brief Returns the number of bytes occupied by this data type.
-     * @return u_int8_t
+     * @return u_int64_t
      */
-    virtual u_int8_t size() const = 0;
+    virtual u_int64_t size() const = 0;
 
     /**
      * @brief Converts the binary representation of this value to a string.
      * @param rawData a pointer to the raw value
-     * @return
+     * @return string
      */
     virtual std::string convertRawToString(void* rawData) = 0;
 
