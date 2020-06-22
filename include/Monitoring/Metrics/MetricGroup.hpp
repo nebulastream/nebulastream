@@ -21,11 +21,11 @@ class MetricGroup {
 
     /**
      * @brief Registers a metric.
-     * @param id of the metric
+     * @param name of the metric
      * @param metric metric to register
      * @return true if successful, else false
      */
-    bool add(const std::string& id, Metric* metric);
+    bool add(const std::string& name, Metric* metric);
 
     /**
      * @brief returns a map of the registered metrics

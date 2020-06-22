@@ -10,6 +10,8 @@ class NesMetrics {
   public:
     static Gauge<std::unordered_map<std::string, uint64_t>> CPUStats();
 
+    static Gauge<uint64_t> CPUIdle(std::string cpuName);
+
   private:
     NesMetrics() = default;
 

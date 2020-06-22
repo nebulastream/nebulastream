@@ -35,6 +35,9 @@ TEST_F(MonitoringStackTest, testCPUStats) {
     std::unordered_map<std::string, uint64_t> metrics = cpuStats.getValue();
     ASSERT_TRUE(metrics["cpuCount"] > 0);
     ASSERT_TRUE(metrics.size()>=11);
+
+    auto cpuIdle = NesMetrics::CPUIdle("cpu1");
+    NES_INFO("Idle " << cpuIdle.getValue());
 }
 
 }
