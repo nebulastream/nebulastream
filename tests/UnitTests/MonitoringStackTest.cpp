@@ -32,12 +32,37 @@ class MonitoringStackTest : public testing::Test {
 
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = NesMetrics::CPUStats();
-    std::unordered_map<std::string, uint64_t> metrics = cpuStats.getValue();
+    std::unordered_map<std::string, uint64_t> metrics = cpuStats.readValue();
     ASSERT_TRUE(metrics["cpuCount"] > 0);
     ASSERT_TRUE(metrics.size()>=11);
 
     auto cpuIdle = NesMetrics::CPUIdle("cpu1");
-    NES_INFO("Idle " << cpuIdle.getValue());
+    NES_INFO("MonitoringStackTest: Idle " << cpuIdle.readValue());
+}
+
+TEST_F(MonitoringStackTest, testMemoryStats) {
+    auto memStats = NesMetrics::MemoryStats();
+    std::unordered_map<std::string, uint64_t> metrics = memStats.readValue();
+    ASSERT_TRUE(metrics.size()==13);
+
+    NES_INFO("MonitoringStackTest: Total ram " << metrics["totalram"]/(1024*1024) << "gb");
+}
+
+TEST_F(MonitoringStackTest, testDiskStats) {
+    auto diskStats = NesMetrics::DiskStats();
+    std::unordered_map<std::string, uint64_t> metrics = diskStats.readValue();
+    ASSERT_TRUE(metrics.size()==5);
+}
+
+TEST_F(MonitoringStackTest, testNetworkStats) {
+    auto networkStats = NesMetrics::NetworkStats();
+    auto metrics = networkStats.readValue();
+    ASSERT_TRUE(!metrics.empty());
+
+    for (auto const& intfs : metrics) {
+        NES_INFO("MonitoringStackTest: Received metrics for interface " << intfs.first);
+        ASSERT_TRUE(intfs.second.size()==16);
+    }
 }
 
 }
