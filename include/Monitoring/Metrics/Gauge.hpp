@@ -21,7 +21,7 @@ class Gauge: public Metric {
      * @brief Calculates and returns the measured value.
      * @return the value
      */
-    T getValue() {
+    T readValue() {
         return probingFunc();
     }
 

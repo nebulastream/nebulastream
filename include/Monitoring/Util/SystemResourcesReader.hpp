@@ -10,6 +10,10 @@ namespace NES {
 class SystemResourcesReader {
   public:
     static std::unordered_map<std::string, uint64_t> CPUStats();
+    static std::unordered_map<std::string, uint64_t> MemoryStats();
+    static std::unordered_map<std::string, uint64_t> DiskStats();
+    static std::unordered_map<std::string, std::unordered_map<std::string, uint64_t>> NetworkStats();
+
 
   private:
     SystemResourcesReader() = default;

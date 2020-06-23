@@ -9,7 +9,9 @@ namespace NES {
 class NesMetrics {
   public:
     static Gauge<std::unordered_map<std::string, uint64_t>> CPUStats();
-
+    static Gauge<std::unordered_map<std::string, uint64_t>> MemoryStats();
+    static Gauge<std::unordered_map<std::string, uint64_t>> DiskStats();
+    static Gauge<std::unordered_map<std::string, std::unordered_map<std::string, uint64_t>>> NetworkStats();
     static Gauge<uint64_t> CPUIdle(std::string cpuName);
 
   private:
