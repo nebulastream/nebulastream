@@ -5,6 +5,7 @@ add_source_nes(
         UserAPIExpression.cpp
         Stream.cpp
         Query.cpp
+        Pattern.cpp
         InputQuery.cpp
         AttributeField.cpp
 )

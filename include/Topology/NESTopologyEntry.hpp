@@ -10,6 +10,9 @@ namespace NES {
 class Query;
 typedef std::shared_ptr<Query> QueryPtr;
 
+class Pattern;
+typedef std::shared_ptr<Pattern> PatternPtr;
+
 enum NESNodeType {
     Coordinator,
     Worker,
