@@ -198,6 +198,11 @@ add_executable(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
 target_link_libraries(query-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-plan-tests COMMAND query-plan-tests)
 
+# SimplePatternTest
+add_executable(simple-pattern-test "UnitTests/SimplePatternTest.cpp")
+target_link_libraries(simple-pattern-test nes ${GTEST_LIBRARIES})
+add_test(NAME simple-pattern-test COMMAND simple-pattern-test)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

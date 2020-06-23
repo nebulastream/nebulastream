@@ -64,7 +64,17 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
 
     string queryId;
     try {
-        QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
+        QueryPtr query;
+        if (queryString.find("Pattern::") != std::string::npos ){
+            NES_DEBUG("QueryCatalog: registerQuery: Identified a Pattern");
+            query = UtilityFunctions::createPatternFromCodeString(queryString);
+        }
+        if (queryString.find("Query::") != std::string::npos ){
+            NES_DEBUG("QueryCatalog: registerQuery: Identified a Query");
+            query = UtilityFunctions::createQueryFromCodeString(queryString);
+        }
+
+
         OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
         auto queryPlan = query->getQueryPlan();
         queryId = queryPlan->getQueryId();
