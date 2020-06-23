@@ -35,7 +35,6 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <API/Query.hpp>" << std::endl;
         code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
-        code << "#include <API/Query.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
@@ -56,6 +55,66 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         // add return statement in front of input query
         // NOTE: This will not work if you have created object of Input query and do further manipulation
         boost::replace_all(newQuery, "Query::from", "return Query::from");
+
+        code << newQuery << std::endl;
+        code << "}" << std::endl;
+        code << "}" << std::endl;
+        Compiler compiler;
+        CompiledCodePtr compiled_code = compiler.compile(code.str(), true);
+        if (!code) {
+            NES_ERROR("Compilation of query code failed! Code: " << code.str());
+        }
+
+        typedef Query(*CreateQueryFunctionPtr)();
+        CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>(
+            "_ZN3NES11createQueryEv");
+        if (!func) {
+            NES_ERROR("Error retrieving function! Symbol not found!");
+        }
+        /* call loaded function to create query object */
+        Query query((*func)());
+
+        return std::make_shared<Query>(query);
+    } catch (std::exception& exc) {
+        NES_ERROR(
+            "UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet
+                                                                                    << exc.what());
+        throw;
+    } catch (...) {
+        NES_ERROR(
+            "UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet);
+        throw "Failed to create the query from input code string";
+    }
+}
+
+QueryPtr UtilityFunctions::createPatternFromCodeString(
+    const std::string& queryCodeSnippet) {
+    try {
+        /* translate user code to a shared library, load and execute function, then return query object */
+        std::stringstream code;
+        code << "#include <API/Query.hpp>" << std::endl;
+        code << "#include <API/Config.hpp>" << std::endl;
+        code << "#include <API/Schema.hpp>" << std::endl;
+        code << "#include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
+        code << "#include <SourceSink/DataSource.hpp>" << std::endl;
+        code << "#include <API/UserAPIExpression.hpp>" << std::endl;
+        code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
+        code << "namespace NES{" << std::endl;
+        code << "Query createQuery(){" << std::endl;
+
+        std::string streamName = queryCodeSnippet.substr(
+            queryCodeSnippet.find("::from("));
+        streamName = streamName.substr(7, streamName.find(")") - 7);
+        std::cout << " stream name = " << streamName << std::endl;
+        std::string newQuery = queryCodeSnippet;
+
+        // add return statement in front of input query
+        // NOTE: This will not work if you have created object of Input query and do further manipulation
+        boost::replace_all(newQuery, "Pattern::from", "return Query::from");
 
         code << newQuery << std::endl;
         code << "}" << std::endl;
