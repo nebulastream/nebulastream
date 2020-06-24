@@ -1,4 +1,15 @@
 #ifndef NES_INCLUDE_MONITORING_SAMPLINGPROTOCOL_HPP_
 #define NES_INCLUDE_MONITORING_SAMPLINGPROTOCOL_HPP_
 
+namespace NES {
+
+/**
+ * @brief WIP
+ */
+class SamplingProtocol {
+
+};
+
+}
+
 #endif //NES_INCLUDE_MONITORING_SAMPLINGPROTOCOL_HPP_

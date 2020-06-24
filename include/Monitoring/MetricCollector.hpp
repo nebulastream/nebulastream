@@ -1,4 +1,16 @@
 #ifndef NES_INCLUDE_MONITORING_METRICCOLLECTOR_HPP_
 #define NES_INCLUDE_MONITORING_METRICCOLLECTOR_HPP_
 
+namespace NES {
+
+/**
+ * @brief WIP
+ */
+class MetricCollector {
+
+
+};
+
+}
+
 #endif //NES_INCLUDE_MONITORING_METRICCOLLECTOR_HPP_

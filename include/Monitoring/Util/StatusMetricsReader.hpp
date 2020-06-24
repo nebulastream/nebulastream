@@ -1,4 +1,15 @@
 #ifndef NES_INCLUDE_RUNTIME_UTIL_STATUSMETRICS_HPP_
 #define NES_INCLUDE_RUNTIME_UTIL_STATUSMETRICS_HPP_
 
+namespace NES {
+
+/**
+ * @brief WIP
+ */
+class StatusMetricsReader {
+
+};
+
+}
+
 #endif //NES_INCLUDE_RUNTIME_UTIL_STATUSMETRICS_HPP_

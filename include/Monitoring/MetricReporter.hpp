@@ -1,4 +1,16 @@
 #ifndef NES_INCLUDE_MONITORING_METRICREPORTER_HPP_
 #define NES_INCLUDE_MONITORING_METRICREPORTER_HPP_
 
+namespace NES {
+
+/**
+ * @brief WIP
+ */
+class MetricReporter {
+
+
+};
+
+}
+
 #endif //NES_INCLUDE_MONITORING_METRICREPORTER_HPP_

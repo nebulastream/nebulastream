@@ -6,6 +6,9 @@
 
 namespace NES {
 
+/**
+ * @brief A monitoring metric class that represents counters.
+ */
 class Counter: public Metric {
   public:
     explicit Counter(int64_t initCount=0);
