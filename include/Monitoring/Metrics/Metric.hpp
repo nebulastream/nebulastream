@@ -10,10 +10,17 @@ enum MetricType {
     MeterType
 };
 
+/**
+ * @brief The metric class is a conceptual superclass that represents all metrics in NES.
+ */
 class Metric {
   public:
     explicit Metric(MetricType metricType);
 
+    /**
+     * @brief Returns the type a metric is representing, e.g., CounterType, GaugeType..
+     * @return the metric type
+     */
     MetricType getMetricType() const;
 
   private:

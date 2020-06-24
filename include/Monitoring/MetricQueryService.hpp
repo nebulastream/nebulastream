@@ -3,12 +3,12 @@
 
 namespace NES {
 
+/**
+ * @brief WIP
+ */
 class MetricQueryService {
   public:
     MetricQueryService();
-
-
-
 
 };
 
