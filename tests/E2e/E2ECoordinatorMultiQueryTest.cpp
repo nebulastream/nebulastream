@@ -1,14 +1,14 @@
-#include <gtest/gtest.h>
 #include <Util/Logger.hpp>
+#include <gtest/gtest.h>
 #include <string>
 #include <unistd.h>
 #define GetCurrentDir getcwd
-#include <cpprest/http_client.h>
-#include <cpprest/filestream.h>
+#include <Util/TestUtils.hpp>
 #include <boost/process.hpp>
+#include <cpprest/filestream.h>
+#include <cpprest/http_client.h>
 #include <cstdio>
 #include <sstream>
-#include <Util/TestUtils.hpp>
 
 using namespace std;
 using namespace utility;
@@ -74,47 +74,49 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     cout << "string submit for query2=" << ssQuery2.str();
 
     web::json::value jsonReturnQ1;
-    web::http::client::http_client clientQ1(
-        "http://localhost:8081/v1/nes/query/execute-query");
-    clientQ1.request(web::http::methods::POST, "/", ssQuery1.str()).then(
-        [](const web::http::http_response& response) {
-          cout << "get first then" << endl;
-          return response.extract_json();
-        }).then([&jsonReturnQ1](const pplx::task<web::json::value>& task) {
-      try {
-          cout << "set return" << endl;
-          jsonReturnQ1 = task.get();
-      } catch (const web::http::http_exception& e) {
-          cout << "error while setting return" << endl;
-          std::cout << "error " << e.what() << std::endl;
-      }
-    });
+    web::http::client::http_client clientQ1("http://localhost:8081/v1/nes/");
+    clientQ1.request(web::http::methods::POST, "/query/execute-query", ssQuery1.str())
+        .then([](const web::http::http_response& response) {
+            cout << "get first then" << endl;
+            return response.extract_json();
+        })
+        .then([&jsonReturnQ1](const pplx::task<web::json::value>& task) {
+            try {
+                cout << "set return" << endl;
+                jsonReturnQ1 = task.get();
+            } catch (const web::http::http_exception& e) {
+                cout << "error while setting return" << endl;
+                std::cout << "error " << e.what() << std::endl;
+            }
+        })
+        .wait();
 
     cout << "return from q1" << endl;
-    web::json::value jsonReturnQ2;
-    web::http::client::http_client clientQ2(
-        "http://localhost:8081/v1/nes/query/execute-query");
-    clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then(
-        [](const web::http::http_response& response) {
-          cout << "get first then" << endl;
-          return response.extract_json();
-        }).then([&jsonReturnQ2](const pplx::task<web::json::value>& task) {
-      try {
-          cout << "set return" << endl;
-          jsonReturnQ2 = task.get();
-      } catch (const web::http::http_exception& e) {
-          cout << "error while setting return" << endl;
-          std::cout << "error " << e.what() << std::endl;
-      }
-    }).wait();
-    cout << "return from q2" << endl;
-
     std::cout << "try to acc return Q1=" << jsonReturnQ1 << std::endl;
-    std::cout << "try to acc return Q2=" << jsonReturnQ2 << std::endl;
-
     string queryId1 = jsonReturnQ1.at("queryId").as_string();
     std::cout << "Query ID1: " << queryId1 << std::endl;
     EXPECT_TRUE(!queryId1.empty());
+
+    web::json::value jsonReturnQ2;
+    web::http::client::http_client clientQ2(
+        "http://localhost:8081/v1/nes/query/execute-query");
+    clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then([](const web::http::http_response& response) {
+                                                                       cout << "get first then" << endl;
+                                                                       return response.extract_json();
+                                                                   })
+        .then([&jsonReturnQ2](const pplx::task<web::json::value>& task) {
+            try {
+                cout << "set return" << endl;
+                jsonReturnQ2 = task.get();
+            } catch (const web::http::http_exception& e) {
+                cout << "error while setting return" << endl;
+                std::cout << "error " << e.what() << std::endl;
+            }
+        })
+        .wait();
+    cout << "return from q2" << endl;
+
+    std::cout << "try to acc return Q2=" << jsonReturnQ2 << std::endl;
 
     string queryId2 = jsonReturnQ2.at("queryId").as_string();
     std::cout << "Query ID2: " << queryId2 << std::endl;
@@ -122,7 +124,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
-
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -161,4 +162,4 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
-}
+}// namespace NES
