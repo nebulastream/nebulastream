@@ -4,10 +4,12 @@
 #include <unistd.h>
 #define GetCurrentDir getcwd
 #include <cpprest/http_client.h>
+#include <cpprest/details/basic_types.h>
 #include <cpprest/filestream.h>
 #include <boost/process.hpp>
-#include <stdio.h>
+#include <cstdio>
 #include <sstream>
+#include <Util/TestUtils.hpp>
 using namespace std;
 using namespace utility;
 // Common utilities like string conversions
@@ -20,17 +22,13 @@ using namespace web::http::client;
 using namespace concurrency::streams;
 // Asynchronous streams
 namespace bp = boost::process;
-
+//#define _XPLATSTR(x) _XPLATSTR(x)
 namespace NES {
 
-class E2eRestTest : public testing::Test {
+class E2ECoordinatorSingleWorkerTest : public testing::Test {
   public:
-    string host = "localhost";
-    int port = 8081;
-    string url = "http://localhost:8081/v1/nes/query/execute-query";
-
     static void SetUpTestCase() {
-        NES::setupLogging("E2eRestTest.log", NES::LOG_DEBUG);
+        NES::setupLogging("E2ECoordinatorSingleWorkerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
     }
 
@@ -41,19 +39,18 @@ class E2eRestTest : public testing::Test {
 };
 
 
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutput) {
     cout << " start coordinator" << endl;
     string path = "./nesCoordinator --coordinatorPort=12345";
     bp::child coordinatorProc(path.c_str());
 
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
-    sleep(2);
+    sleep(1);
 
     string path2 = "./nesWorker --coordinatorPort=12345";
     bp::child workerProc(path2.c_str());
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
-    sleep(3);
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -67,7 +64,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 
     web::http::client::http_client client(
         "http://localhost:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, U("/"), body).then(
+    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then(
         [](const web::http::http_response& response) {
           cout << "get first then with response" << endl;
           return response.extract_json();
@@ -83,36 +80,32 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
     }).wait();
 
     std::cout << "try to acc return" << std::endl;
-
     string queryId = json_return.at("queryId").as_string();
     std::cout << "Query ID: " << queryId << std::endl;
     EXPECT_TRUE(!queryId.empty());
 
-    sleep(2);
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+
     cout << "Killing worker process->PID: " << workerPid << endl;
     workerProc.terminate();
-    sleep(2);
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
-
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput) {
     cout << " start coordinator" << endl;
     std::string outputFilePath = "ValidUserQueryWithFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
     string path = "./nesCoordinator --coordinatorPort=12346";
     bp::child coordinatorProc(path.c_str());
-
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
-    sleep(2);
+    sleep(1);
 
     string path2 = "./nesWorker --coordinatorPort=12346";
     bp::child workerProc(path2.c_str());
     cout << "started worker with pid = " << workerProc.id() << endl;
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
-    sleep(3);
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -127,7 +120,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
 
     web::http::client::http_client client(
         "http://localhost:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, U("/"), body).then(
+    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then(
         [](const web::http::http_response& response) {
           cout << "get first then" << endl;
           return response.extract_json();
@@ -140,7 +133,6 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
           std::cout << "error " << e.what() << std::endl;
       }
     }).wait();
-    sleep(4);
 
     std::cout << "try to acc return" << std::endl;
 
@@ -148,7 +140,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
     std::cout << "Query ID: " << queryId << std::endl;
     EXPECT_TRUE(!queryId.empty());
 
-    sleep(2);
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
     ifstream my_file(outputFilePath);
     EXPECT_TRUE(my_file.good());
@@ -179,30 +171,26 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
 
-    sleep(2);
     cout << "Killing worker process->PID: " << workerPid << endl;
     workerProc.terminate();
-    sleep(2);
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
     cout << " start coordinator" << endl;
     std::string outputFilePath = "UserQueryWithFileOutputWithFilterTestResult.txt";
     remove(outputFilePath.c_str());
 
     string path = "./nesCoordinator --coordinatorPort=12267";
     bp::child coordinatorProc(path.c_str());
-
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
-    sleep(2);
+    sleep(1);
 
     string path2 = "./nesWorker --coordinatorPort=12267";
     bp::child workerProc(path2.c_str());
     cout << "started worker with pid = " << workerProc.id() << endl;
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
-    sleep(3);
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -218,7 +206,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
 
     web::http::client::http_client client(
         "http://localhost:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, U("/"), body).then(
+    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then(
         [](const web::http::http_response& response) {
           cout << "get first then" << endl;
           return response.extract_json();
@@ -237,133 +225,19 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
     std::cout << "Query ID: " << queryId << std::endl;
     EXPECT_TRUE(!queryId.empty());
 
-    sleep(2);
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 0));
 
     // if filter is applied correctly, no output is generated
     ifstream outFile(outputFilePath);
     EXPECT_TRUE(!outFile.good());
 
-    sleep(2);
     cout << "Killing worker process->PID: " << workerPid << endl;
     workerProc.terminate();
-    sleep(2);
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
 
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
-    sleep(10);
-    cout << " start coordinator" << endl;
-    std::string outputFilePath =
-        "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
-    remove(outputFilePath.c_str());
-
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
-    bp::child coordinatorProc(cmdCoord.c_str());
-
-    cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
-    sleep(2);
-
-    string cmdWrk = "./nesWorker --coordinatorPort=12348";
-    bp::child workerProc1(cmdWrk.c_str());
-    cout << "started worker 1 with pid = " << workerProc1.id() << endl;
-
-    bp::child workerProc2(cmdWrk.c_str());
-    cout << "started worker 2 with pid = " << workerProc2.id() << endl;
-
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid1 = workerProc1.id();
-    size_t workerPid2 = workerProc2.id();
-    sleep(3);
-
-    std::stringstream ss;
-    ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
-    ss << outputFilePath;
-    ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
-    ss << endl;
-    cout << "string submit=" << ss.str();
-    string body = ss.str();
-
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://localhost:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, U("/"), body).then(
-        [](const web::http::http_response& response) {
-          cout << "get first then" << endl;
-          return response.extract_json();
-        }).then([&json_return](const pplx::task<web::json::value>& task) {
-      try {
-          cout << "set return" << endl;
-          json_return = task.get();
-      } catch (const web::http::http_exception& e) {
-          cout << "error while setting return" << endl;
-          std::cout << "error " << e.what() << std::endl;
-      }
-    }).wait();
-    cout << "before sleep" << endl;
-    sleep(10);
-    cout << "after sleep" << endl;
-    std::cout << "try to acc return" << std::endl;
-
-    string queryId = json_return.at("queryId").as_string();
-    std::cout << "Query ID: " << queryId << std::endl;
-    EXPECT_TRUE(!queryId.empty());
-
-    sleep(2);
-
-    std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
-
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------+";
-    cout << "content=" << content << endl;
-    cout << "expContent=" << expectedContent << endl;
-    EXPECT_EQ(content, expectedContent);
-
-    int response = remove(outputFilePath.c_str());
-    EXPECT_TRUE(response == 0);
-
-    sleep(2);
-    cout << "Killing worker 1 process->PID: " << workerPid1 << endl;
-    workerProc1.terminate();
-    cout << "Killing worker 2 process->PID: " << workerPid2 << endl;
-    workerProc2.terminate();
-    sleep(2);
-    cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
-    coordinatorProc.terminate();
-}
-
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStream) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStream) {
     cout << " start coordinator" << endl;
     std::string outputFilePath =
         "ValidUserQueryWithFileOutputAndRegisterPhyStreamTestResult.txt";
@@ -371,9 +245,8 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
 
     string path = "./nesCoordinator --coordinatorPort=12342";
     bp::child coordinatorProc(path.c_str());
-
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
-    sleep(2);
+    sleep(1);
 
     string path2 =
         "./nesWorker --coordinatorPort=12342 --sourceType=DefaultSource --numberOfBuffersToProduce=2 --physicalStreamName=test_stream --logicalStreamName=default_logical";
@@ -381,7 +254,6 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
     cout << "started worker with pid = " << workerProc.id() << endl;
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
-    sleep(3);
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -396,7 +268,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
 
     web::http::client::http_client client(
         "http://localhost:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, U("/"), body).then(
+    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then(
         [](const web::http::http_response& response) {
           cout << "get first then" << endl;
           return response.extract_json();
@@ -409,7 +281,6 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
           std::cout << "error " << e.what() << std::endl;
       }
     }).wait();
-    sleep(2);
 
     std::cout << "try to acc return" << std::endl;
 
@@ -417,7 +288,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
     std::cout << "Query ID: " << queryId << std::endl;
     EXPECT_TRUE(!queryId.empty());
 
-    sleep(2);
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
     ifstream my_file(outputFilePath);
     EXPECT_TRUE(my_file.good());
@@ -448,15 +319,13 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
 
-    sleep(2);
     cout << "Killing worker process->PID: " << workerPid << endl;
     workerProc.terminate();
-    sleep(2);
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
 
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
     cout << " start coordinator" << endl;
     std::string testFile = "exdra.csv";
     remove(testFile.c_str());
@@ -464,7 +333,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
     string path = "./nesCoordinator --coordinatorPort=12346";
     bp::child coordinatorProc(path.c_str());
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
-    sleep(2);
+    sleep(1);
 
     string path2 =
         "./nesWorker --coordinatorPort=12346 --sourceType=CSVSource --sourceConfig=tests/test_data/exdra.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra";
@@ -473,7 +342,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
     cout << "started worker with pid = " << workerProc.id() << endl;
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
-    sleep(3);
+    //sleep(3);
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -489,7 +358,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
 
     web::http::client::http_client client(
         "http://localhost:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, U("/"), body).then(
+    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then(
         [](const web::http::http_response& response) {
           cout << "get first then" << endl;
           return response.extract_json();
@@ -502,14 +371,16 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
           std::cout << "error " << e.what() << std::endl;
       }
     }).wait();
-    sleep(2);
+    //sleep(2);
 
     std::cout << "try to acc return" << std::endl;
     string queryId = json_return.at("queryId").as_string();
     std::cout << "Query ID: " << queryId << std::endl;
     EXPECT_TRUE(!queryId.empty());
 
-    sleep(2);
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+
+    //sleep(2);
 
     ifstream testFileOutput(testFile);
     EXPECT_TRUE(testFileOutput.good());
@@ -527,136 +398,12 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
     int response = remove(testFile.c_str());
     EXPECT_TRUE(response == 0);
 
-    sleep(2);
+    //sleep(2);
     cout << "Killing worker process->PID: " << workerPid << endl;
     workerProc.terminate();
-    sleep(2);
+    //sleep(2);
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
 
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoQueries) {
-    cout << " start coordinator" << endl;
-    std::string pathQuery1 = "query1.out";
-    std::string pathQuery2 = "query2.out";
-
-    remove(pathQuery1.c_str());
-    remove(pathQuery2.c_str());
-
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12346";
-    bp::child coordinatorProc(cmdCoord.c_str());
-
-    cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
-    sleep(2);
-
-    string cmdWrk = "./nesWorker --coordinatorPort=12346";
-    bp::child workerProc(cmdWrk.c_str());
-    cout << "started worker with pid = " << workerProc.id() << endl;
-
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid = workerProc.id();
-    sleep(3);
-
-    std::stringstream ssQuery1;
-    ssQuery1
-        << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
-    ssQuery1 << pathQuery1;
-    ssQuery1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << endl;
-    cout << "string submit for query1=" << ssQuery1.str();
-
-    std::stringstream ssQuery2;
-    ssQuery2
-        << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
-    ssQuery2 << pathQuery2;
-    ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << endl;
-    cout << "string submit for query2=" << ssQuery2.str();
-
-    web::json::value jsonReturnQ1;
-    web::http::client::http_client clientQ1(
-        "http://localhost:8081/v1/nes/query/execute-query");
-    clientQ1.request(web::http::methods::POST, U("/"), ssQuery1.str()).then(
-        [](const web::http::http_response& response) {
-          cout << "get first then" << endl;
-          return response.extract_json();
-        }).then([&jsonReturnQ1](const pplx::task<web::json::value>& task) {
-      try {
-          cout << "set return" << endl;
-          jsonReturnQ1 = task.get();
-      } catch (const web::http::http_exception& e) {
-          cout << "error while setting return" << endl;
-          std::cout << "error " << e.what() << std::endl;
-      }
-    });
-
-    cout << "return from q1" << endl;
-    web::json::value jsonReturnQ2;
-    web::http::client::http_client clientQ2(
-        "http://localhost:8081/v1/nes/query/execute-query");
-    clientQ2.request(web::http::methods::POST, U("/"), ssQuery2.str()).then(
-        [](const web::http::http_response& response) {
-          cout << "get first then" << endl;
-          return response.extract_json();
-        }).then([&jsonReturnQ2](const pplx::task<web::json::value>& task) {
-      try {
-          cout << "set return" << endl;
-          jsonReturnQ2 = task.get();
-      } catch (const web::http::http_exception& e) {
-          cout << "error while setting return" << endl;
-          std::cout << "error " << e.what() << std::endl;
-      }
-    }).wait();
-    cout << "return from q2" << endl;
-    sleep(5);
-
-    std::cout << "try to acc return Q1=" << jsonReturnQ1 << std::endl;
-    std::cout << "try to acc return Q2=" << jsonReturnQ2 << std::endl;
-
-    string queryId1 = jsonReturnQ1.at("queryId").as_string();
-    std::cout << "Query ID1: " << queryId1 << std::endl;
-    EXPECT_TRUE(!queryId1.empty());
-
-    string queryId2 = jsonReturnQ2.at("queryId").as_string();
-    std::cout << "Query ID2: " << queryId2 << std::endl;
-    EXPECT_TRUE(!queryId2.empty());
-    sleep(2);
-
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------+";
-
-    std::ifstream ifsQ1(pathQuery1.c_str());
-    EXPECT_TRUE(ifsQ1.good());
-    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
-                          (std::istreambuf_iterator<char>()));
-    cout << "content Q1=" << contentQ1 << endl;
-    cout << "expContent=" << expectedContent << endl;
-    EXPECT_EQ(contentQ1, expectedContent);
-
-    std::ifstream ifsQ2(pathQuery2.c_str());
-    EXPECT_TRUE(ifsQ2.good());
-    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)),
-                          (std::istreambuf_iterator<char>()));
-    cout << "content Q2=" << contentQ2 << endl;
-    cout << "expContent=" << expectedContent << endl;
-    EXPECT_EQ(contentQ2, expectedContent);
-
-    sleep(2);
-    cout << "Killing worker process->PID: " << workerPid << endl;
-    workerProc.terminate();
-    sleep(2);
-    cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
-    coordinatorProc.terminate();
-}
 }

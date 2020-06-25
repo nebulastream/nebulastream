@@ -3,12 +3,15 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
+#include <NodeEngine/QueryStatistics.hpp>
 
 namespace NES {
 
 QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog,
                                                NesCoordinatorPtr coordinator) {
     NES_DEBUG("QueryCatalogController()");
+    this->queryCatalog = queryCatalog;
+    this->coordinator = coordinator;
 }
 
 void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {
@@ -51,9 +54,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 }
             })
             .wait();
-
     } else if (path[1] == "allRegisteredQueries") {
-
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                 try {
@@ -75,6 +76,36 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 } catch (const std::exception& exc) {
                     NES_ERROR(
                         "QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the query plan for user request:"
+                        << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                }
+            })
+            .wait();
+    } else if (path[1] == "getNumberOfProducedBuffers") {
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try {
+                    NES_DEBUG("getNumberOfProducedBuffers called");
+                    //Prepare Input query from user string
+                    std::string payload(body.begin(), body.end());
+                    NES_DEBUG("getNumberOfProducedBuffers payload=" << payload);
+
+                    //Prepare the response
+                    json::value result{};
+                    size_t processedBuffers = coordinator->getQueryStatistics(payload)->getProcessedBuffers();
+                    NES_DEBUG("getNumberOfProducedBuffers processedBuffers=" << processedBuffers);
+
+                    result["producedBuffers"] = processedBuffers;
+
+                    successMessageImpl(message, result);
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR(
+                        "QueryCatalogController: handleGet -getNumberOfProducedBuffers: Exception occurred while fetching the number of buffers:"
                         << exc.what());
                     handleException(message, exc);
                     return;

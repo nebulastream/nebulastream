@@ -236,10 +236,21 @@ add_test(NAME network-stack-test COMMAND network-stack-test)
 
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
-add_executable(e2e-rest-test "E2e/E2eRestTest.cpp")
-target_link_libraries(e2e-rest-test nes ${GTEST_LIBRARIES})
-add_test(NAME e2e-rest-test COMMAND e2e-rest-test)
-set_tests_properties(e2e-rest-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_executable(e2e-single-worker-test "E2e/E2ECoordinatorSingleWorkerTest.cpp")
+target_link_libraries(e2e-single-worker-test nes ${GTEST_LIBRARIES})
+add_test(NAME e2e-single-worker-test COMMAND e2e-single-worker-test)
+set_tests_properties(e2e-single-worker-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
+add_executable(e2e-multi-worker-test "E2e/E2ECoordinatorMultiWorkerTest.cpp")
+target_link_libraries(e2e-multi-worker-test nes ${GTEST_LIBRARIES})
+add_test(NAME e2e-multi-worker-test COMMAND e2e-multi-worker-test)
+set_tests_properties(e2e-multi-worker-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
+add_executable(e2e-multi-query-test "E2e/E2ECoordinatorMultiQueryTest.cpp")
+target_link_libraries(e2e-multi-query-test nes ${GTEST_LIBRARIES})
+add_test(NAME e2e-multi-query-test COMMAND e2e-multi-query-test)
+set_tests_properties(e2e-multi-query-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
