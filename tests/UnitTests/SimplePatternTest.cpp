@@ -23,7 +23,7 @@ class SimplePatternTest : public testing::Test {
     }
 };
 
-/*
+/* 1. Test
  * Here, we test the translation of a simple pattern (1 Stream) into a query
  */
 TEST_F(SimplePatternTest, testPatternWithFilter) {
@@ -60,7 +60,7 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
     NES_DEBUG("test finished");
     }
 
-/*
+/* 2.Test
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
 TEST_F(SimplePatternTest, testPatternWithTestStream) {
@@ -90,11 +90,8 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     conf.logicalStreamName = "QnV";
     conf.physicalStreamName = "test_stream";
     conf.sourceType = "CSVSource";
-    conf.sourceConfig = "../tests/test_data/QnV.csv";
+    conf.sourceConfig = "../tests/test_data/QnV_short.csv";
     conf.numberOfBuffersToProduce = 1;
-    // csv = 1 buffer
-    // TODO: what are these parameters
-    // sourceFreq. wie oft tuple erstellt wird
     conf.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf);
 
@@ -139,7 +136,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     EXPECT_TRUE(retStopCord);
 }
 
-/*
+/* Test 3
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and expecting no output
  * TODO: doublicate PrintSink, but no result print
  */
@@ -170,11 +167,8 @@ TEST_F(SimplePatternTest, testPatternWithEmptyResult) {
     conf.logicalStreamName = "QnV";
     conf.physicalStreamName = "test_stream";
     conf.sourceType = "CSVSource";
-    conf.sourceConfig = "../tests/test_data/QnV.csv";
+    conf.sourceConfig = "../tests/test_data/QnV_short.csv";
     conf.numberOfBuffersToProduce = 1;
-    // csv = 1 buffer
-    // TODO: what are these parameters
-    // sourceFreq. wie oft tuple erstellt wird
     conf.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf);
 
@@ -184,7 +178,7 @@ TEST_F(SimplePatternTest, testPatternWithEmptyResult) {
 
 
     //register query
-    std::string query = "Pattern::from(\"QnV\").filter(Attribute(\"velocity\") <= 25).sink(PrintSinkDescriptor::create()); ";
+    std::string query = "Pattern::from(\"QnV\").filter(Attribute(\"velocity\") <= 20).sink(PrintSinkDescriptor::create()); ";
                         /*".sink(FileSinkDescriptor::create(\""
                         + outputFilePath + "\")); ";*/
 
@@ -197,14 +191,12 @@ TEST_F(SimplePatternTest, testPatternWithEmptyResult) {
 
     ASSERT_TRUE(crd->removeQuery(queryId));
 
-    string expectedContent = "";
-
-    /*string expectedContent = "+----------------------------------------------------+\n"
+   string expectedContent = "+----------------------------------------------------+\n"
                              "|sensor_id:CHAR[8]|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|\n"
                              "+----------------------------------------------------+\n"
                              "|R2000070|1543626120000|20.476191|1|\n"
                              "|R2000070|1543626420000|20.714285|2|\n"
-                             "+----------------------------------------------------+";*/
+                             "+----------------------------------------------------+";
 
     /*
     std::ifstream ifs(outputFilePath.c_str());
