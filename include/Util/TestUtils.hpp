@@ -7,6 +7,10 @@
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <cpprest/http_client.h>
+//#include <cpprest/details/basic_types.h>
+
+
 using Seconds = std::chrono::seconds;
 using Clock = std::chrono::high_resolution_clock;
 using namespace std;
@@ -45,6 +49,49 @@ class TestUtils {
         NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout");
         return false;
     }
+
+    static bool checkCompleteOrTimeout(std::string queryId, size_t expectedResult) {
+        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        auto now = start_timestamp;
+
+        size_t currentResult = 0;
+        web::json::value json_return;
+
+        while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
+            NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
+
+            web::http::client::http_client clientProc(
+                "http://localhost:8081/v1/nes/queryCatalog/getNumberOfProducedBuffers");
+            clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId).then([](const web::http::http_response& response) {
+                  cout << "read number of buffers" << endl;
+                  return response.extract_json();
+                })
+                .then([&json_return, &currentResult](const pplx::task<web::json::value>& task) {
+                  try {
+                      cout << "got #buffers=" << json_return;//
+                      json_return = task.get();
+                      currentResult = json_return.at("producedBuffers").as_integer();
+                  } catch (const web::http::http_exception& e) {
+                      cout << "error while setting return" << endl;
+                      std::cout << "error " << e.what() << std::endl;
+                  }
+                })
+                .wait();
+
+            if (currentResult == expectedResult) {
+                NES_DEBUG("checkCompleteOrTimeout: results are correct");
+                return true;
+            }
+            NES_DEBUG(
+                "checkCompleteOrTimeout: sleep because val=" << currentResult
+                                                             << " < " << expectedResult);
+            sleep(1);
+        }
+        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout");
+        return false;
+    }
+
     /**
          * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
          * @param ptr to NesWorker
