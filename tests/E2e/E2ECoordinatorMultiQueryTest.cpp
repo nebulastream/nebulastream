@@ -57,7 +57,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
 
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
-    //sleep(3);
+    sleep(3);
 
     std::stringstream ssQuery1;
     ssQuery1

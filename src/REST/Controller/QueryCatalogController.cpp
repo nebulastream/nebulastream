@@ -1,9 +1,9 @@
 #include "REST/Controller/QueryCatalogController.hpp"
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <NodeEngine/QueryStatistics.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
-#include <NodeEngine/QueryStatistics.hpp>
 
 namespace NES {
 
@@ -115,9 +115,9 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 }
             })
             .wait();
+    } else {
+        resourceNotFoundImpl(message);
     }
-
-    resourceNotFoundImpl(message);
 }
 
 void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, web::http::http_request message) {
@@ -158,9 +158,9 @@ void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, w
                 }
             })
             .wait();
+    } else {
+        resourceNotFoundImpl(message);
     }
-
-    resourceNotFoundImpl(message);
 }
 
 }// namespace NES
