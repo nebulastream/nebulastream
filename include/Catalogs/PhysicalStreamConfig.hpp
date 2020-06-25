@@ -9,8 +9,8 @@ namespace NES {
  * @brief this struct covers the information about the attached sensor
  * @param sourceType: string of data source, e.g., DefaultSource or CSVSource
  * @param sourceConf: parameter for the data source, e.g., numberOfProducedBuffer or file path
- * @param the sampling frequency in which the stream should sample a result
- * @param the number of buffers to produce
+ * @param sourceFrequency: the sampling frequency in which the stream should sample a result
+ * @param numberOfBuffersToProduce: the number of buffers to produce
  * @param physicalStreamName: name of the stream created by this source
  * @param logicalStreamName: name of the logical steam where this physical stream contributes to
  */
