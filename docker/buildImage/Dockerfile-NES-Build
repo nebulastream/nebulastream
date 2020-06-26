@@ -39,3 +39,4 @@ RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git &&
 ADD ./entrypoint-nes-build.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
+
