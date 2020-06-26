@@ -95,7 +95,7 @@ jobs:
           CI_SECRET: ${{ secrets.CI_SECRET }}
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
-          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
       - name: Build and Release NES Build Image
         run: |
           echo '${{ steps.file_changes.outputs.files_modified }}'
