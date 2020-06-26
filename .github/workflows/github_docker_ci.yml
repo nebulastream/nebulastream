@@ -36,22 +36,22 @@ jobs:
           echo '${{ steps.file_changes.outputs.files_modified}}'
           echo '${{ steps.file_changes.outputs.files_added}}'
           echo '${{ steps.file_changes.outputs.files_removed}}'
-#      - name: Build and Release NES Build Image
-#        run: |
-#          cd docker
-#          docker build -f Dockerfile-NES-Build . nebulastream/nes-build-image:latest
-#          docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
-#          docker push nebulastream/nes-build-image:latest
-#      - name: Build and Release NES Dev Image
-#        run: |
-#          cd docker
-#          docker build -f Dockerfile-NES-Dev . nebulastream/nes-dev-image:latest
-#          docker push nebulastream/nes-dev-image:latest
-#      - name: Build and Release NES Executable Image
-#        run: |
-#          cd docker
-#          docker build -f Dockerfile-NES-Executable . nebulastream/nes-executable-image:latest
-#          docker push nebulastream/nes-executable-image:latest
+      - name: Build and Release NES Build Image
+        run: |
+          cd docker
+          docker build -f Dockerfile-NES-Build . nebulastream/nes-build-image:latest
+          docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+          docker push nebulastream/nes-build-image:latest
+      - name: Build and Release NES Dev Image
+        run: |
+          cd docker
+          docker build -f Dockerfile-NES-Dev . nebulastream/nes-dev-image:latest
+          docker push nebulastream/nes-dev-image:latest
+      - name: Build and Release NES Executable Image
+        run: |
+          cd docker
+          docker build -f Dockerfile-NES-Executable . nebulastream/nes-executable-image:latest
+          docker push nebulastream/nes-executable-image:latest
 #      - name: Notify Slack
 #        uses: 8398a7/action-slack@v2
 #        with:
