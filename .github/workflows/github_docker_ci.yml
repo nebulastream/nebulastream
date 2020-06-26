@@ -3,7 +3,7 @@ name: NES DOCKER CI
 on:
   push:
     branches:
-      - 'master'
+      - 'refs/heads/717-release-docker'
     tags-ignore:
       - '*'
     paths:
@@ -13,6 +13,9 @@ jobs:
   docker-build-and-relese-job:
     runs-on: self-hosted
     timeout-minutes: 30
+    env:
+      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
+      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -21,46 +24,68 @@ jobs:
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
-      - name: Build and Release NES Build Image
-        env:
-          CI_SECRET: ${{ secrets.CI_SECRET }}
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.3
+      - name: test
         run: |
-          cd docker
-          docker build -f Dockerfile-NES-Build . nebulastream/nes-build-image:  run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
-      - name: Notify Slack
-        uses: 8398a7/action-slack@v2
-        with:
-          status: ${{ job.status }}
-          author_name: ${{ github.actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always()
-
-  release:
-    runs-on: self-hosted
-    if: github.ref == 'refs/heads/master'
-    needs: build-job
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-      - name: Fetch git history
-        run: |
-          git fetch --prune --unshallow --tags
-      - name: Release new version
-        env:
-          CI_SECRET: ${{ secrets.CI_SECRET }}
-        run: |
-          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
-          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
-      - name: Notify Slack
-        uses: 8398a7/action-slack@v2
-        with:
-          status: ${{ job.status }}
-          author_name: ${{ github.actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always()
+          cat $HOME/files.json
+          cat $HOME/files_modified.json
+          cat $HOME/files_added.json
+          cat $HOME/files_removed.json
+          echo '${{ steps.file_changes.outputs.files}}'
+          echo '${{ steps.file_changes.outputs.files_modified}}'
+          echo '${{ steps.file_changes.outputs.files_added}}'
+          echo '${{ steps.file_changes.outputs.files_removed}}'
+#      - name: Build and Release NES Build Image
+#        run: |
+#          cd docker
+#          docker build -f Dockerfile-NES-Build . nebulastream/nes-build-image:latest
+#          docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+#          docker push nebulastream/nes-build-image:latest
+#      - name: Build and Release NES Dev Image
+#        run: |
+#          cd docker
+#          docker build -f Dockerfile-NES-Dev . nebulastream/nes-dev-image:latest
+#          docker push nebulastream/nes-dev-image:latest
+#      - name: Build and Release NES Executable Image
+#        run: |
+#          cd docker
+#          docker build -f Dockerfile-NES-Executable . nebulastream/nes-executable-image:latest
+#          docker push nebulastream/nes-executable-image:latest
+#      - name: Notify Slack
+#        uses: 8398a7/action-slack@v2
+#        with:
+#          status: ${{ job.status }}
+#          author_name: ${{ github.actor }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#        if: always()
+#
+#  release:
+#    runs-on: self-hosted
+#    if: github.ref == 'refs/heads/master'
+#    needs: build-job
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          ssh-key: ${{ secrets.CI_SECRET }}
+#          ssh-strict: 'false'
+#      - name: Fetch git history
+#        run: |
+#          git fetch --prune --unshallow --tags
+#      - name: Release new version
+#        env:
+#          CI_SECRET: ${{ secrets.CI_SECRET }}
+#        run: |
+#          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
+#          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+#      - name: Notify Slack
+#        uses: 8398a7/action-slack@v2
+#        with:
+#          status: ${{ job.status }}
+#          author_name: ${{ github.actor }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#        if: always()
