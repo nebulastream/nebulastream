@@ -36,7 +36,7 @@ RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git &&
   cd ${HOME} && rm -rf cppzmq && \
   apt-get purge -y wget && apt autoremove -y
 
-ADD ./scripts/entrypoint-nes-build.sh /entrypoint.sh
+ADD ./entrypoint-nes-build.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 
