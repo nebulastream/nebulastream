@@ -17,61 +17,14 @@ jobs:
   build-job:
     runs-on: self-hosted
     timeout-minutes: 30
-    env:
-      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
-      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
     steps:
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
-      - id: file_changes
-        uses: trilom/file-changes-action@v1.2.3
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
-      - name: Build and Release NES Build Image
-        run: |
-          echo '${{ steps.file_changes.outputs.files_modified }}'
-          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
-              echo "Found changes done to buildImage"
-              cd docker/buildImage
-              #docker build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest
-              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              #docker push nebulastream/nes-build-image:latest
-              echo "Pushed the image"
-              docker logout
-          else
-              echo "No changes done in buildImage. Skipping the build and release phase."
-          fi
-      - name: Build and Release NES Dev Image
-        run: |
-          echo '${{ steps.file_changes.outputs.files_modified }}'
-          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "devImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
-              echo "Found changes done to devImage"
-              cd docker/devImage/
-              docker build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest
-              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              docker push nebulastream/nes-dev-image:latest
-              echo "Pushed the image"
-              docker logout
-          else
-              echo "No changes done to devImage. Skipping the build and release phase."
-          fi
-      - name: Build and Release NES Executable Image
-        run: |
-          echo '${{ steps.file_changes.outputs.files_modified }}'
-          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "executableImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
-              echo "Found changes done to executableImage"
-              cd docker/executableImage/
-              docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:latest
-              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              docker push nebulastream/nes-executable-image:latest
-              echo "Pushed the image"
-              docker logout
-          else
-              echo "No changes done in executableImage. Skipping the build and release phase."
-          fi
       - name: Run tests
         run: |
           docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
@@ -113,9 +66,14 @@ jobs:
           echo '${{ steps.file_changes.outputs.files_modified }}'
           if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
               echo "Found changes done to buildImage"
-              docker build -f docker/buildImage/Dockerfile-NES-Build docker/buildImage/. nebulastream/nes-build-image:latest
-              docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              cd docker/buildImage
+              #When we decide on weather to use the version as tag or not we can use the below command to extract the current version.
+              #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
+              docker build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest
+              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
               docker push nebulastream/nes-build-image:latest
+              echo "Pushed the build image"
+              docker logout
           else
               echo "No changes done in buildImage. Skipping the build and release phase."
           fi
@@ -124,9 +82,12 @@ jobs:
           echo '${{ steps.file_changes.outputs.files_modified }}'
           if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "devImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
               echo "Found changes done to devImage"
-              docker build -f docker/devImage/Dockerfile-NES-Dev docker/devImage/. nebulastream/nes-dev-image:latest
-              docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              cd docker/devImage/
+              docker build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest
+              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
               docker push nebulastream/nes-dev-image:latest
+              echo "Pushed the dev image"
+              docker logout
           else
               echo "No changes done to devImage. Skipping the build and release phase."
           fi
@@ -135,9 +96,12 @@ jobs:
           echo '${{ steps.file_changes.outputs.files_modified }}'
           if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "executableImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
               echo "Found changes done to executableImage"
-              docker build -f docker/buildImage/Dockerfile-NES-Build docker/buildImage/. nebulastream/nes-executable-image:latest
-              docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              cd docker/executableImage/
+              docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:latest
+              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
               docker push nebulastream/nes-executable-image:latest
+              echo "Pushed the execution image"
+              docker logout
           else
               echo "No changes done in executableImage. Skipping the build and release phase."
           fi
