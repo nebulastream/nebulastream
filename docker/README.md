@@ -13,7 +13,7 @@ folder.
 
 #### Dockerfile-NES-Build
 This is the docker image for our CI builds. There is no way to connect to a running container of this image, 
-aside from `docker attach`. Its purpose is to build and exit. It can be found in [Build](Dockerfile-NES-Build).
+aside from `docker attach`. Its purpose is to build and exit. It can be found in [Build](buildImage/Dockerfile-NES-Build).
 
 The `ENTRYPOINT` is located in [entrypoint-nes-build.sh](\scripts\entrypoint-nes-build.sh). The entrypoint
 checks if source code is indeed mounted in the correct location inside the
@@ -22,7 +22,7 @@ container and starts a `make_debug` test build.
 #### Dockerfile-NES-Dev
 This image is based on NES-Build-image. Additionally, we add connectivity and any interactivity tools to this image.
 It has everything installed that we need for development, including `ssh` connectivity. Its purpose is to start
-in the background while our IDEs connect to it for remote debugging purposes. It can be found in [Dev](Dockerfile-NES-Dev).
+in the background while our IDEs connect to it for remote debugging purposes. It can be found in [Dev](devImage/Dockerfile-NES-Dev).
 
 Currently, there is no need for an `ENTRYPOINT` for this image. 
 It stars `sshd` and can be kept in the background. For more info, check
@@ -34,7 +34,7 @@ image, aside from `docker attach`. Its purpose is to offer a host operating syst
 
 For this image, we install NebulaStream using a `deb` package inside the [resources](\resources) folder.
 If you want to update the NebulaStream binary, please create a new `deb` package by compiling the code inside the docker image and running `cpack` command.
-Afterwards, replace the `deb` package inside the resources folder. The image can be found in [Executable](Dockerfile-NES-Executable).
+Afterwards, replace the `deb` package inside the resources folder. The image can be found in [Executable](executableImage/Dockerfile-NES-Executable).
 
 Currently, the image is tasked with only running a `.deb` version of NebulaStream. This may change
 in the future. Its `ENTRYPOINT` is located in [entrypoint-nes-executable.sh](\scripts\entrypoint-nes-executable.sh).

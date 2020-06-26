@@ -24,15 +24,42 @@ jobs:
           ssh-strict: 'false'
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.3
-      - name: test
-        run: |
-          echo '${{ steps.file_changes.outputs.files}}'
-          echo '${{ steps.file_changes.outputs.files_modified}}'
-          echo '${{ steps.file_changes.outputs.files_added}}'
-          echo '${{ steps.file_changes.outputs.files_removed}}'
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
+      - name: Build and Release NES Build Image
+        run: |
+          echo '${{ steps.file_changes.outputs.files_modified}}'
+          if [[ " ${{ steps.file_changes.outputs.files_modified[@]}} " =~ "buildImage" ]]; then
+              echo "Found changes done to buildImage"
+              docker build -f docker/buildImage/Dockerfile-NES-Build docker/buildImage/. nebulastream/nes-build-image:latest
+              docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              docker push nebulastream/nes-build-image:latest
+          else
+              echo "No changes done in buildImage. Skipping the build and release phase."
+          fi
+      - name: Build and Release NES Dev Image
+        run: |
+          echo '${{ steps.file_changes.outputs.files_modified}}'
+          if [[ " ${{ steps.file_changes.outputs.files_modified[@]}} " =~ "devImage" || " ${{ steps.file_changes.outputs.files_modified[@]}} " =~ "buildImage" ]]; then
+              echo "Found changes done to devImage"
+              docker build -f docker/devImage/Dockerfile-NES-Dev docker/devImage/. nebulastream/nes-dev-image:latest
+              docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              docker push nebulastream/nes-dev-image:latest
+          else
+              echo "No changes done to devImage. Skipping the build and release phase."
+          fi
+      - name: Build and Release NES Executable Image
+        run: |
+          echo '${{ steps.file_changes.outputs.files_modified}}'
+          if [[ " ${{ steps.file_changes.outputs.files_modified[@]}} " =~ "executableImage" || " ${{ steps.file_changes.outputs.files_modified[@]}} " =~ "buildImage" ]]; then
+              echo "Found changes done to executableImage"
+              docker build -f docker/buildImage/Dockerfile-NES-Build docker/buildImage/. nebulastream/nes-executable-image:latest
+              docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              docker push nebulastream/nes-executable-image:latest
+          else
+              echo "No changes done in executableImage. Skipping the build and release phase."
+          fi
       - name: Run tests
         run: |
           docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
@@ -50,11 +77,16 @@ jobs:
     runs-on: self-hosted
     if: github.ref == 'refs/heads/master'
     needs: build-job
+    env:
+      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
+      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
     steps:
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.3
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
@@ -64,6 +96,39 @@ jobs:
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
           docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+      - name: Build and Release NES Build Image
+        run: |
+          echo '${{ steps.file_changes.outputs.files_modified}}'
+          if [[ " ${{ steps.file_changes.outputs.files_modified[@]}} " =~ "buildImage" ]]; then
+              echo "Found changes done to buildImage"
+              docker build -f docker/buildImage/Dockerfile-NES-Build docker/buildImage/. nebulastream/nes-build-image:latest
+              docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              docker push nebulastream/nes-build-image:latest
+          else
+              echo "No changes done in buildImage. Skipping the build and release phase."
+          fi
+      - name: Build and Release NES Dev Image
+        run: |
+          echo '${{ steps.file_changes.outputs.files_modified}}'
+          if [[ " ${{ steps.file_changes.outputs.files_modified[@]}} " =~ "devImage" || " ${{ steps.file_changes.outputs.files_modified[@]}} " =~ "buildImage" ]]; then
+              echo "Found changes done to devImage"
+              docker build -f docker/devImage/Dockerfile-NES-Dev docker/devImage/. nebulastream/nes-dev-image:latest
+              docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              docker push nebulastream/nes-dev-image:latest
+          else
+              echo "No changes done to devImage. Skipping the build and release phase."
+          fi
+      - name: Build and Release NES Executable Image
+        run: |
+          echo '${{ steps.file_changes.outputs.files_modified}}'
+          if [[ " ${{ steps.file_changes.outputs.files_modified[@]}} " =~ "executableImage" || " ${{ steps.file_changes.outputs.files_modified[@]}} " =~ "buildImage" ]]; then
+              echo "Found changes done to executableImage"
+              docker build -f docker/buildImage/Dockerfile-NES-Build docker/buildImage/. nebulastream/nes-executable-image:latest
+              docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              docker push nebulastream/nes-executable-image:latest
+          else
+              echo "No changes done in executableImage. Skipping the build and release phase."
+          fi
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
