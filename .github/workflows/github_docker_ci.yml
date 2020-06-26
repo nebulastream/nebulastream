@@ -3,7 +3,7 @@ name: NES DOCKER CI
 on:
   push:
     branches:
-      - 717-release-docker
+      - '717-release-docker'
     tags-ignore:
       - '*'
     paths:
