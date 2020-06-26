@@ -8,14 +8,13 @@ Currently, we have two images on our repository: a build image used by travis an
 ## Images and Dockerfiles
 We have three docker files, one for each docker image, describing how 
 to build the docker images. In case you want to add or modify any dependencies in the docker image please 
-edit the corresponding docker file. Also, the startup script for each build image is present inside the [scripts](\scripts) 
-folder. 
+edit the corresponding docker file.
 
 #### Dockerfile-NES-Build
 This is the docker image for our CI builds. There is no way to connect to a running container of this image, 
 aside from `docker attach`. Its purpose is to build and exit. It can be found in [Build](buildImage/Dockerfile-NES-Build).
 
-The `ENTRYPOINT` is located in [entrypoint-nes-build.sh](\scripts\entrypoint-nes-build.sh). The entrypoint
+The `ENTRYPOINT` is located in [entrypoint-nes-build.sh](buildImage\entrypoint-nes-build.sh). The entrypoint
 checks if source code is indeed mounted in the correct location inside the
 container and starts a `make_debug` test build.
 
@@ -32,12 +31,12 @@ Docker's official docs [here](https://docs.docker.com/engine/examples/running_ss
 This is our executable image. It extends the Build image. There is no way to connect to a running container of this 
 image, aside from `docker attach`. Its purpose is to offer a host operating system for an executable of NES.
 
-For this image, we install NebulaStream using a `deb` package inside the [resources](\resources) folder.
+For this image, we install NebulaStream using a `deb` package inside the [resources](executableImage\resources) folder.
 If you want to update the NebulaStream binary, please create a new `deb` package by compiling the code inside the docker image and running `cpack` command.
-Afterwards, replace the `deb` package inside the resources folder. The image can be found in [Executable](executableImage/Dockerfile-NES-Executable).
+Afterwards, replace the `deb` package inside the resources folder. The image can be found in [Executable](executableImage\Dockerfile-NES-Executable).
 
 Currently, the image is tasked with only running a `.deb` version of NebulaStream. This may change
-in the future. Its `ENTRYPOINT` is located in [entrypoint-nes-executable.sh](\scripts\entrypoint-nes-executable.sh).
+in the future. Its `ENTRYPOINT` is located in [entrypoint-nes-executable.sh](executableImage\entrypoint-nes-executable.sh).
 
 #### Changing running behavior of images
 If you want to change the startup behavior of the docker images, please change the corresponding entrypoint script.   
