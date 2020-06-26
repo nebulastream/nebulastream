@@ -32,7 +32,8 @@ jobs:
           echo '${{ steps.file_changes.outputs.files_modified }}'
           if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
               echo "Found changes done to buildImage"
-              docker build -f docker/buildImage/Dockerfile-NES-Build docker/buildImage/. nebulastream/nes-build-image:latest
+              cd docker/buildImage
+              docker build -f Dockerfile-NES-Build . nebulastream/nes-build-image:latest
               docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
               docker push nebulastream/nes-build-image:latest
           else
