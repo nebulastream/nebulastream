@@ -1,0 +1,66 @@
+name: NES DOCKER CI
+
+on:
+  push:
+    branches:
+      - 'master'
+    tags-ignore:
+      - '*'
+    paths:
+      - 'docker/*'
+
+jobs:
+  docker-build-and-relese-job:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+      - name: Fetch git history
+        run: |
+          git fetch --prune --unshallow --tags
+      - name: Build and Release NES Build Image
+        env:
+          CI_SECRET: ${{ secrets.CI_SECRET }}
+        run: |
+          cd docker
+          docker build -f Dockerfile-NES-Build . nebulastream/nes-build-image:  run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
+
+  release:
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/master'
+    needs: build-job
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+      - name: Fetch git history
+        run: |
+          git fetch --prune --unshallow --tags
+      - name: Release new version
+        env:
+          CI_SECRET: ${{ secrets.CI_SECRET }}
+        run: |
+          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
+          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/scripts/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
