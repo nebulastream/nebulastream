@@ -99,7 +99,7 @@ jobs:
       - name: Build and Release NES Build Image
         run: |
           echo '${{ steps.file_changes.outputs.files_modified }}'
-          if [[ " ${{ steps.file_changes.outputs.files_modified[@] }} " =~ "buildImage" ]]; then
+          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
               echo "Found changes done to buildImage"
               docker build -f docker/buildImage/Dockerfile-NES-Build docker/buildImage/. nebulastream/nes-build-image:latest
               docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
@@ -110,7 +110,7 @@ jobs:
       - name: Build and Release NES Dev Image
         run: |
           echo '${{ steps.file_changes.outputs.files_modified }}'
-          if [[ " ${{ steps.file_changes.outputs.files_modified[@] }} " =~ "devImage" || " ${{ steps.file_changes.outputs.files_modified[@] }} " =~ "buildImage" ]]; then
+          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "devImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
               echo "Found changes done to devImage"
               docker build -f docker/devImage/Dockerfile-NES-Dev docker/devImage/. nebulastream/nes-dev-image:latest
               docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
@@ -121,7 +121,7 @@ jobs:
       - name: Build and Release NES Executable Image
         run: |
           echo '${{ steps.file_changes.outputs.files_modified }}'
-          if [[ " ${{ steps.file_changes.outputs.files_modified[@] }} " =~ "executableImage" || " ${{ steps.file_changes.outputs.files_modified[@] }} " =~ "buildImage" ]]; then
+          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "executableImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
               echo "Found changes done to executableImage"
               docker build -f docker/buildImage/Dockerfile-NES-Build docker/buildImage/. nebulastream/nes-executable-image:latest
               docker login -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
