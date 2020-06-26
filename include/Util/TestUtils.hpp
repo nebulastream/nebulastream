@@ -8,7 +8,6 @@
 #include <cpprest/http_client.h>
 #include <iostream>
 #include <memory>
-//#include <cpprest/details/basic_types.h>
 
 using Seconds = std::chrono::seconds;
 using Clock = std::chrono::high_resolution_clock;
@@ -68,12 +67,11 @@ class TestUtils {
                                                                                 })
                 .then([&json_return, &currentResult](const pplx::task<web::json::value>& task) {
                     try {
-                        cout << "got #buffers=" << json_return;//
+                        NES_DEBUG("got #buffers=" << json_return);
                         json_return = task.get();
                         currentResult = json_return.at("producedBuffers").as_integer();
                     } catch (const web::http::http_exception& e) {
-                        cout << "error while setting return" << endl;
-                        std::cout << "error " << e.what() << std::endl;
+                        NES_ERROR("error while setting return" << e.what());
                     }
                 })
                 .wait();
