@@ -22,8 +22,8 @@ jobs:
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
-#      - id: file_changes
-#        uses: trilom/file-changes-action@v1.2.3
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.3
       - name: test
         run: |
           echo '${{ steps.file_changes.outputs.files}}'
