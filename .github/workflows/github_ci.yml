@@ -34,7 +34,7 @@ jobs:
               echo "Found changes done to buildImage"
               cd docker/buildImage
               #docker build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest
-              docker login hub.docker.com -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              echo "$DOCKER_SECRET" | docker login hub.docker.com -u "$DOCKER_USER_NAME" --password-stdin
               #docker push nebulastream/nes-build-image:latest
           else
               echo "No changes done in buildImage. Skipping the build and release phase."
@@ -46,7 +46,7 @@ jobs:
               echo "Found changes done to devImage"
               cd docker/devImage/
               docker build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest
-              docker login hub.docker.com -u "$DOCKER_USER_NAME" --password "$DOCKER_SECRET"
+              echo "$DOCKER_SECRET" | docker login hub.docker.com -u "$DOCKER_USER_NAME" --password-stdin
               docker push nebulastream/nes-dev-image:latest
           else
               echo "No changes done to devImage. Skipping the build and release phase."
