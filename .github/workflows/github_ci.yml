@@ -17,6 +17,9 @@ jobs:
   build-job:
     runs-on: self-hosted
     timeout-minutes: 30
+    env:
+      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
+      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
     steps:
       - uses: actions/checkout@v2
         with:
