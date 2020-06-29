@@ -55,12 +55,6 @@ jobs:
           git fetch --prune --unshallow --tags
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
-      - name: Release new version
-        env:
-          CI_SECRET: ${{ secrets.CI_SECRET }}
-        run: |
-          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
-          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
       - name: Build and Release NES Build Image
         run: |
           echo '${{ steps.file_changes.outputs.files_modified }}'
@@ -105,6 +99,12 @@ jobs:
           else
               echo "No changes done in executableImage. Skipping the build and release phase."
           fi
+      - name: Release new version
+        env:
+          CI_SECRET: ${{ secrets.CI_SECRET }}
+        run: |
+          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
+          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
