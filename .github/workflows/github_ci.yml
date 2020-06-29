@@ -50,11 +50,11 @@ jobs:
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
-      - id: file_changes
-        uses: trilom/file-changes-action@v1.2.3
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.4
       - name: Release new version
         env:
           CI_SECRET: ${{ secrets.CI_SECRET }}
