@@ -3,6 +3,6 @@ FROM nebulastream/nes-build-image:latest
 ADD ./resources/NebulaStream-0.0.1-1.x86_64.deb NebulaStream-0.0.1-1.x86_64.deb
 RUN dpkg -i NebulaStream-0.0.1-1.x86_64.deb
 ADD ./resources/exdra.csv /opt/local/nebula-stream/exdra.csv
-ADD ./scripts/entrypoint-nes-executable.sh /entrypoint.sh
+ADD ./entrypoint-nes-executable.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
