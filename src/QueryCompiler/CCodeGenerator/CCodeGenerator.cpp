@@ -159,7 +159,7 @@ bool CCodeGenerator::generateCodeForFilter(PredicatePtr pred, PipelineContextPtr
  * @param out - sending some other information if wanted
  * @return modified query-code
  */
-bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, PredicatePtr pred, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, UserAPIExpressionPtr pred, PipelineContextPtr context) {
 
     auto code = context->code;
     auto tf = getTypeFactory();

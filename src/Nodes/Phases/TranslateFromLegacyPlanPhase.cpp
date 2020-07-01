@@ -112,7 +112,7 @@ OperatorNodePtr TranslateFromLegacyPlanPhase::transformIndividualOperator(Operat
     } else if (operatorPtr->getOperatorType() == MAP_OP) {
         NES_DEBUG("TranslateFromLegacyPlanPhase: translate operator into logical map operator");
         auto mapOperator = std::dynamic_pointer_cast<MapOperator>(operatorPtr);
-        PredicatePtr predicate = mapOperator->getPredicate();
+        UserAPIExpressionPtr predicate = mapOperator->getPredicate();
         ExpressionNodePtr expression = transformToExpression(predicate);
         if (expression == nullptr) {
             NES_THROW_RUNTIME_ERROR("TranslateFromLegacyPhase: Error during translating map expression");

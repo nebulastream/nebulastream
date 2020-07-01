@@ -10,13 +10,13 @@
 
 namespace NES {
 
-MapOperator::MapOperator(AttributeFieldPtr field, PredicatePtr ptr) : predicate_(ptr), field_(field) {}
+MapOperator::MapOperator(AttributeFieldPtr field, UserAPIExpressionPtr ptr) : predicate_(ptr), field_(field) {}
 
 MapOperator::MapOperator(const MapOperator& other) : predicate_(other.predicate_), field_(other.field_) {}
 
 MapOperator& MapOperator::operator=(const MapOperator& other) {
     if (this != &other) {
-        predicate_ = NES::copy(other.predicate_);
+        predicate_ = other.predicate_;
         field_ = other.field_;
     }
     return *this;
@@ -48,7 +48,7 @@ OperatorType MapOperator::getOperatorType() const {
 
 MapOperator::~MapOperator() {}
 
-const PredicatePtr& MapOperator::getPredicate() const {
+const UserAPIExpressionPtr& MapOperator::getPredicate() const {
     return predicate_;
 }
 
@@ -56,7 +56,7 @@ const AttributeFieldPtr& MapOperator::getField() const {
     return field_;
 }
 
-const OperatorPtr createMapOperator(AttributeFieldPtr field, PredicatePtr ptr) {
+const OperatorPtr createMapOperator(AttributeFieldPtr field, UserAPIExpressionPtr ptr) {
     return std::make_shared<MapOperator>(field, ptr);
 }
 

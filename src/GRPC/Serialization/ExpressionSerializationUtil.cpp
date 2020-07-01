@@ -51,6 +51,7 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(Express
         auto serializedFieldAssignmentExpression = SerializableExpression_FieldAssignmentExpression();
         auto serializedFieldAccessExpression = serializedFieldAssignmentExpression.mutable_field();
         serializedFieldAccessExpression->set_fieldname(fieldAssignmentExpressionNode->getField()->getFieldName());
+        DataTypeSerializationUtil::serializeDataType(fieldAssignmentExpressionNode->getField()->getStamp(), serializedFieldAccessExpression->mutable_type());
         // serialize assignment expression
         serializeExpression(fieldAssignmentExpressionNode->getAssignment(), serializedFieldAssignmentExpression.mutable_assignment());
         serializedExpression->mutable_details()->PackFrom(serializedFieldAssignmentExpression);
@@ -93,7 +94,8 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             SerializableExpression_FieldAssignmentExpression serializedFieldAccessExpression;
             serializedExpression->details().UnpackTo(&serializedFieldAccessExpression);
             auto field = serializedFieldAccessExpression.mutable_field();
-            auto fieldAccessNode = FieldAccessExpressionNode::create(field->fieldname());
+            auto fieldStamp = DataTypeSerializationUtil::deserializeDataType(field->mutable_type());
+            auto fieldAccessNode = FieldAccessExpressionNode::create(fieldStamp, field->fieldname());
             auto fieldAssignmentExpression = deserializeExpression(serializedFieldAccessExpression.mutable_assignment());
             expressionNodePtr = FieldAssignmentExpressionNode::create(fieldAccessNode->as<FieldAccessExpressionNode>(), fieldAssignmentExpression);
         } else {

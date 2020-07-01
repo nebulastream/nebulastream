@@ -59,8 +59,8 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         auto legacyFieldAccess = transformExpression(mapExpression->getField());
         auto legacyAssignment = transformExpression(mapExpression->getAssignment());
         // Cast to the proper type
-        auto legacyPredicate = std::dynamic_pointer_cast<Predicate>(legacyAssignment);
-        auto legacyField = std::dynamic_pointer_cast<Field>(legacyAssignment);
+        auto legacyPredicate = std::dynamic_pointer_cast<UserAPIExpression>(legacyAssignment);
+        auto legacyField = std::dynamic_pointer_cast<PredicateItem>(legacyFieldAccess);
         if (legacyPredicate == nullptr || legacyField == nullptr) {
             NES_FATAL_ERROR("TranslateToLegacyPhase: Error during translating map expression");
         }
@@ -117,8 +117,10 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformExpression(ExpressionN
         // Translate field read expression node.
         auto fieldReadExpression = expression->as<FieldAccessExpressionNode>();
         auto fieldName = fieldReadExpression->getFieldName();
-        auto value = fieldReadExpression->getStamp();
-        return Field(AttributeField::create(fieldName, value)).copy();
+        auto stamp = fieldReadExpression->getStamp();
+        NES_DEBUG(
+            "TranslateToLegacyPhase: Translate FieldAccessExpressionNode: " << expression->toString());
+        return Field(AttributeField::create(fieldName, stamp)).copy();
     }
     NES_FATAL_ERROR(
         "TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());

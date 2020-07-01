@@ -37,7 +37,7 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForMap(AttributeFieldPtr field, PredicatePtr pred, PipelineContextPtr context) override;
+    bool generateCodeForMap(AttributeFieldPtr field, UserAPIExpressionPtr pred, PipelineContextPtr context) override;
 
     /**
     * @brief Code generation for a emit, which depends on a particular output schema.

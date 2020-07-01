@@ -18,7 +18,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
     Network::NetworkManagerPtr networkManager;
 
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating print sink");
+        NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
         const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
         return createPrintSinkWithSchema(schema, std::cout);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
