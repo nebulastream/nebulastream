@@ -9,11 +9,10 @@ namespace NES {
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
 
-Query::Query(std::string queryName) : queryName(queryName){}
-
 Query::Query(const Query& query)
     : queryPlan(query.queryPlan) {
 }
+
 
 Query Query::from(const std::string sourceStreamName) {
     NES_DEBUG("Query: create query for input stream " << sourceStreamName);
