@@ -55,7 +55,7 @@ TEST_F(QueryPlanTest, testHasOperatorForSysOperators) {
 
 TEST_F(QueryPlanTest, testLeafOperators) {
     LogicalOperatorNodePtr op1 = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create("test_stream"));
-    QueryPlanPtr queryPlan = QueryPlan::create("test_stream", op1);
+    QueryPlanPtr queryPlan = QueryPlan::create(op1);
     LogicalOperatorNodePtr op2 = createSinkLogicalOperatorNode(PrintSinkDescriptor::create());
     queryPlan->appendOperator(op2);
 
