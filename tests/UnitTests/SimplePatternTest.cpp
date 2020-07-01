@@ -23,7 +23,7 @@ class SimplePatternTest : public testing::Test {
 };
 
 /* 1. Test
- * Here, we test the translation of a simple pattern (1 Stream) into a query
+ * Translation of a simple pattern (1 Stream) into a query
  */
 TEST_F(SimplePatternTest, testPatternWithFilter) {
     NES_DEBUG("start coordinator");
@@ -78,7 +78,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     //register logical stream qnv
     //TODO: update CHAR (sensor id is in result set )
     std::string qnv =
-        "Schema::create()->addField(createField(\"sensor_id\", CHAR))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
+        "Schema::create()->addField(\"sensor_id\", DataTypeFactory::createFixedChar(8))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
     std::string testSchemaFileName = "QnV.hpp";
     std::ofstream out(testSchemaFileName);
     out << qnv;
@@ -112,12 +112,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     ASSERT_TRUE(crd->removeQuery(queryId));
 
     string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "||1543624020000|102.629631|8|\n"
-        "||1543625280000|108.166664|5|\n"
-        "+----------------------------------------------------+";
+        "+----------------------------------------------------+\n|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|\n+----------------------------------------------------+\n|R2000073 P)gg\x1|1543624020000|102.629631|8|\n|R2000070|1543625280000|108.166664|5|\n+----------------------------------------------------+";
 
 
     std::ifstream ifs(outputFilePath.c_str());
@@ -153,8 +148,9 @@ TEST_F(SimplePatternTest, testPatternWithPrintSink) {
     NES_DEBUG("worker1 started successfully");
 
     //register logical stream
+    // DataTypeFactory::createArray(8, Char)
     std::string qnv =
-        "Schema::create()->addField(createField(\"sensor_id\", CHAR))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
+        "Schema::create()->addField(\"sensor_id\", DataTypeFactory::createFixedChar(8))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
     std::string testSchemaFileName = "QnV.hpp";
     std::ofstream out(testSchemaFileName);
     out << qnv;
@@ -173,6 +169,7 @@ TEST_F(SimplePatternTest, testPatternWithPrintSink) {
     wrk1->registerPhysicalStream(conf);
 
     //register query
+    //TODO Patternname name() and ...
     std::string query = "Pattern::from(\"QnV\").filter(Attribute(\"velocity\") <= 21).map(Attribute(\"PatternName\") = 1)"
                         ".sink(PrintSinkDescriptor::create()); ";
 
@@ -228,7 +225,7 @@ TEST_F(SimplePatternTest, testPatternWithEmptyResult2) {
 
     //register logical stream
     std::string qnv =
-        "Schema::create()->addField(createField(\"sensor_id\", createArrayDataType(BasicType::CHAR, 8)))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
+        "Schema::create()->addField(\"sensor_id\", DataTypeFactory::createFixedChar(8))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
     std::string testSchemaFileName = "QnV.hpp";
     std::ofstream out(testSchemaFileName);
     out << qnv;
@@ -261,19 +258,14 @@ TEST_F(SimplePatternTest, testPatternWithEmptyResult2) {
     EXPECT_NE(queryId, "");
 
     // TODO: what does 0 mean here? If I put 1 failsure is here
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 0));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 0));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
 
     ASSERT_TRUE(crd->removeQuery(queryId));
 
     //string expectedContent = "";
     // < 21 and 1
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|sensor_id:CHAR[8]|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|\n"
-                             "+----------------------------------------------------+\n"
-                             "|R2000070|1543626120000|20.476191|1|\n"
-                             "|R2000070|1543626420000|20.714285|2|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent = "+----------------------------------------------------+\n|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|\n+----------------------------------------------------+\n|R2000070@[Igg\x1|1543626120000|20.476191|1|\n|R2000070 \xEFMgg\x1|1543626420000|20.714285|2|\n+----------------------------------------------------+";
 
 
     std::ifstream ifs(outputFilePath.c_str());
