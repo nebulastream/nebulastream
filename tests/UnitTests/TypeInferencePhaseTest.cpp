@@ -44,7 +44,6 @@ class TypeInferencePhaseTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
         std::cout << "Tear down TypeInferencePhaseTest test class." << std::endl;
-
     }
 };
 
@@ -56,11 +55,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source = createSourceLogicalOperatorNode(DefaultSourceDescriptor::create(inputSchema, 0, 0));
+    auto source = createSourceLogicalOperatorNode(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
     auto map = createMapLogicalOperatorNode(Attribute("f3") = Attribute("f1") * 42);
     auto sink = createSinkLogicalOperatorNode(FileSinkDescriptor::create(""));
 
-    auto plan = QueryPlan::create("default_logical", source);
+    auto plan = QueryPlan::create(source);
     plan->appendOperator(map);
     plan->appendOperator(sink);
 
@@ -103,11 +102,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source = createSourceLogicalOperatorNode(DefaultSourceDescriptor::create(inputSchema, 0, 0));
+    auto source = createSourceLogicalOperatorNode(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
     auto map = createMapLogicalOperatorNode(Attribute("f3") = Attribute("f3") * 42);
     auto sink = createSinkLogicalOperatorNode(FileSinkDescriptor::create(""));
 
-    auto plan = QueryPlan::create("default_logical", source);
+    auto plan = QueryPlan::create(source);
     plan->appendOperator(map);
     plan->appendOperator(sink);
 
