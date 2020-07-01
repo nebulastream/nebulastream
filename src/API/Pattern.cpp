@@ -2,8 +2,9 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <iostream>
+
 
 namespace NES {
 
@@ -17,6 +18,7 @@ Pattern Pattern::from(const std::string sourceStreamName) {
     NES_DEBUG("Pattern: create query for input stream " << sourceStreamName);
     auto sourceOperator = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceStreamName, sourceOperator);
+    //TODO queryPlan.isCEP(true)
     return Pattern(queryPlan);
 }
 
