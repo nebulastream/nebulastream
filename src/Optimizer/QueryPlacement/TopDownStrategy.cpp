@@ -28,7 +28,11 @@ GlobalExecutionPlanPtr TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr q
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
-    const string streamName = queryPlan->getSourceStreamName();
+    if(!sourceOperator->getSourceDescriptor()->hasStreamName()){
+        NES_THROW_RUNTIME_ERROR("BottomUpStrategy: Source Descriptor need stream name");
+    }
+    const string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
+
     const vector<NESTopologyEntryPtr>& sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {

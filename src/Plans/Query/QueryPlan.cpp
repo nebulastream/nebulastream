@@ -5,22 +5,22 @@
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <set>
+#include <utility>
 
 namespace NES {
 
-QueryPlanPtr QueryPlan::create(std::string sourceStreamName, OperatorNodePtr rootOperator) {
-    return std::make_shared<QueryPlan>(QueryPlan(sourceStreamName, rootOperator));
+QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator) {
+    return std::make_shared<QueryPlan>(QueryPlan(std::move(rootOperator)));
 }
 
 QueryPlanPtr QueryPlan::create() {
     return std::make_shared<QueryPlan>(QueryPlan());
 }
 
-QueryPlan::QueryPlan(std::string sourceStreamName, OperatorNodePtr rootOperator) {
+QueryPlan::QueryPlan(OperatorNodePtr rootOperator) {
     currentOperatorId = 0;
     rootOperator->setId(getNextOperatorId());
-    rootOperators.push_back(rootOperator);
-    this->sourceStreamName = sourceStreamName;
+    rootOperators.push_back(std::move(rootOperator));
 }
 
 QueryPlan::QueryPlan() {}
@@ -28,7 +28,7 @@ QueryPlan::QueryPlan() {}
 std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators;
-    for (auto rootOperator : rootOperators) {
+    for (const auto& rootOperator : rootOperators) {
         auto sourceOptrs = rootOperator->getNodesByType<SourceLogicalOperatorNode>();
         NES_DEBUG("QueryPlan: insert all source operators to the collection");
         sourceOperators.insert(sourceOperators.end(), sourceOptrs.begin(), sourceOptrs.end());
@@ -40,7 +40,7 @@ std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
 std::vector<SinkLogicalOperatorNodePtr> QueryPlan::getSinkOperators() {
     NES_DEBUG("QueryPlan: Get all sink operators by traversing all the root nodes.");
     std::vector<SinkLogicalOperatorNodePtr> sinkOperators;
-    for (auto rootOperator : rootOperators) {
+    for (const auto& rootOperator : rootOperators) {
         auto sinkOptrs = rootOperator->getNodesByType<SinkLogicalOperatorNode>();
         NES_DEBUG("QueryPlan: insert all sink operators to the collection");
         sinkOperators.insert(sinkOperators.end(), sinkOptrs.begin(), sinkOptrs.end());
@@ -132,10 +132,6 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
         }
     }
     return leafOperators;
-}
-
-const std::string QueryPlan::getSourceStreamName() const {
-    return sourceStreamName;
 }
 
 bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {

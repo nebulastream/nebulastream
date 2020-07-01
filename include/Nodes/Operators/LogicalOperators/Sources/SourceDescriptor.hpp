@@ -16,17 +16,23 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
 
   public:
-    SourceDescriptor(SchemaPtr schema) : schema(schema){};
+    /**
+     * @brief Creates a new source descriptor without a streamName.
+     * @param schema the source schema
+     */
+    explicit SourceDescriptor(SchemaPtr schema);
 
-    virtual ~SourceDescriptor() = default;
+    /**
+    * @brief Creates a new source descriptor with a streamName.
+    * @param schema the source schema
+    */
+    SourceDescriptor(SchemaPtr schema, std::string streamName);
 
     /**
      * @brief Returns the schema, which is produced by this source descriptor
      * @return SchemaPtr
      */
-    const SchemaPtr getSchema() const {
-        return schema;
-    }
+    SchemaPtr getSchema();
 
     /**
     * @brief Checks if the source descriptor is of type SourceType
@@ -55,11 +61,41 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
             throw std::bad_cast();
         }
     }
+
+    /**
+     * @brief Indicates if the source descriptor has a stream name.
+     * @return returns true if the stream name is defined.
+     */
+    bool hasStreamName();
+
+    /**
+     * @brief Returns the streamName. If no streamName is defined it returns the empty string.
+     * @return streamName
+     */
+    std::string getStreamName();
+
+    /**
+     * @brief Returns the string representation of the source descriptor.
+     * @return string
+     */
     virtual std::string toString() = 0;
+
+    /**
+     * @brief Checks if two source descriptors are the same.
+     * @param other source descriptor.
+     * @return true if both are the same.
+     */
     virtual bool equal(SourceDescriptorPtr other) = 0;
+
+
+    /**
+     * @brief Destructor
+     */
+    virtual ~SourceDescriptor() = default;
 
   private:
     SchemaPtr schema;
+    std::string streamName;
 };
 
 }// namespace NES

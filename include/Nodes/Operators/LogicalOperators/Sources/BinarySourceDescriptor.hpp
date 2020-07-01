@@ -12,6 +12,7 @@ class BinarySourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string filePath);
 
     /**
      * @brief Get the path of binary file
@@ -25,6 +26,7 @@ class BinarySourceDescriptor : public SourceDescriptor {
 
   private:
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
+    explicit BinarySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath);
 
     std::string filePath;
 };
