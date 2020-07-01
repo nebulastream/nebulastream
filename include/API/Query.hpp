@@ -39,6 +39,7 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class Query {
   public:
     Query(const Query&);
+    Query(std::string queryName);
     ~Query() = default;
 
     /**
@@ -94,9 +95,14 @@ class Query {
     QueryPlanPtr getQueryPlan();
     // creates a new query object
     Query(QueryPlanPtr queryPlan);
+    //TODO: remove if Pattern class is ready
+    const std::string& getQueryName() const;
+    void setQueryName(const std::string& queryName);
+
   private:
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
+    std::string queryName;
 };
 
 typedef std::shared_ptr<Query> QueryPtr;

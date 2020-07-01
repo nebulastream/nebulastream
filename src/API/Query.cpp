@@ -9,6 +9,8 @@ namespace NES {
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
 
+Query::Query(std::string queryName) : queryName(queryName){}
+
 Query::Query(const Query& query)
     : queryPlan(query.queryPlan) {
 }
@@ -51,6 +53,13 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
 
 QueryPlanPtr Query::getQueryPlan() {
     return queryPlan;
+}
+
+const std::string& Query::getQueryName() const {
+    return queryName;
+}
+void Query::setQueryName(const std::string& queryName) {
+    Query::queryName = queryName;
 }
 
 }// namespace NES

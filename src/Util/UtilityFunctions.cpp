@@ -93,6 +93,7 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
         code << "#include <API/Query.hpp>" << std::endl;
+        //code << "#include <API/Pattern.hpp>" << std::endl;
         code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>" << std::endl;
@@ -105,16 +106,29 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
         code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
         code << "Query createQuery(){" << std::endl;
+        //code << "Pattern createPattern(){" << std::endl;
 
         std::string streamName = queryCodeSnippet.substr(
             queryCodeSnippet.find("::from("));
         streamName = streamName.substr(7, streamName.find(")") - 7);
-        std::cout << " stream name = " << streamName << std::endl;
-        std::string newQuery = queryCodeSnippet;
+        NES_DEBUG(" stream name = " << streamName );
 
-        // add return statement in front of input query
-        // NOTE: This will not work if you have created object of Input query and do further manipulation
+        std::string patternName = "";
+        if (queryCodeSnippet.find("name(") != std::string::npos) {
+            patternName = queryCodeSnippet.substr(
+                queryCodeSnippet.find("name("));
+            patternName = patternName.substr(5, patternName.find(")") - 5);
+            NES_DEBUG(" pattern name = " << patternName);
+        }
+
+        std::string newQuery = queryCodeSnippet;
+        //boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
+        if (patternName != ""){
+            boost::replace_all(newQuery, ".name(" + patternName + ")", "");
+        }
+
         boost::replace_all(newQuery, "Pattern::from", "return Query::from");
+        boost::replace_all(newQuery, ".sink(", ".map(Attribute(\"PatternName\") = 1).sink(");
 
         code << newQuery << std::endl;
         code << "}" << std::endl;
@@ -137,6 +151,10 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
         auto queryPtr = std::make_shared<Query>(query);
         std::string queryId = UtilityFunctions::generateIdString();
         queryPtr->getQueryPlan()->setQueryId(queryId);
+        if (patternName == ""){
+            patternName = queryId;
+        }
+        queryPtr->setQueryName(patternName);
         return queryPtr;
     } catch (std::exception& exc) {
         NES_ERROR(
