@@ -1,7 +1,6 @@
 #include <iostream>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include <API/Types/DataTypes.hpp>
 #include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Util/TestUtils.hpp>
@@ -77,8 +76,9 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     NES_DEBUG("worker1 started successfully");
 
     //register logical stream qnv
+    //TODO: update CHAR (sensor id is in result set )
     std::string qnv =
-        "Schema::create()->addField(createField(\"sensor_id\", createArrayDataType(BasicType::CHAR, 8)))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
+        "Schema::create()->addField(createField(\"sensor_id\", CHAR))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
     std::string testSchemaFileName = "QnV.hpp";
     std::ofstream out(testSchemaFileName);
     out << qnv;
@@ -113,10 +113,10 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|sensor_id:CHAR[8]|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|\n"
+        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|\n"
         "+----------------------------------------------------+\n"
-        "|R2000073|1543624020000|102.629631|8|\n"
-        "|R2000070|1543625280000|108.166664|5|\n"
+        "||1543624020000|102.629631|8|\n"
+        "||1543625280000|108.166664|5|\n"
         "+----------------------------------------------------+";
 
 
@@ -137,10 +137,9 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 }
 
 /* Test 3
- * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and expecting no output
- * TODO: doublicate PrintSink, but no result print
+ * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and PrintSink
  */
-TEST_F(SimplePatternTest, testPatternWithEmptyResult) {
+TEST_F(SimplePatternTest, testPatternWithPrintSink) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -155,7 +154,7 @@ TEST_F(SimplePatternTest, testPatternWithEmptyResult) {
 
     //register logical stream
     std::string qnv =
-        "Schema::create()->addField(createField(\"sensor_id\", createArrayDataType(BasicType::CHAR, 8)))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
+        "Schema::create()->addField(createField(\"sensor_id\", CHAR))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
     std::string testSchemaFileName = "QnV.hpp";
     std::ofstream out(testSchemaFileName);
     out << qnv;
@@ -167,53 +166,42 @@ TEST_F(SimplePatternTest, testPatternWithEmptyResult) {
     conf.logicalStreamName = "QnV";
     conf.physicalStreamName = "test_stream";
     conf.sourceType = "CSVSource";
-    conf.sourceConfig = "../tests/test_data/QnV_short.csv";
+    conf.sourceConfig = "../tests/test_data/QnV.csv";
     conf.numberOfBuffersToProduce = 1;
+    //TODO understand this parameters, how do I set them, what do they do and what do I need to know
     conf.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf);
 
-   std::string outputFilePath =
-        "testPatternWithEmptyResult.out";
-    remove(outputFilePath.c_str());
-
-
     //register query
-    std::string query = "Pattern::from(\"QnV\").filter(Attribute(\"velocity\") <= 20).sink(PrintSinkDescriptor::create()); ";
-                        /*".sink(FileSinkDescriptor::create(\""
-                        + outputFilePath + "\")); ";*/
+    std::string query = "Pattern::from(\"QnV\").filter(Attribute(\"velocity\") <= 21).map(Attribute(\"PatternName\") = 1)"
+                        ".sink(PrintSinkDescriptor::create()); ";
 
     std::string queryId = crd->addQuery(query, "BottomUp");
     EXPECT_NE(queryId, "");
 
     // TODO: what does 0 mean here? If I put 1 failsure is here
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 0));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 0));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
 
     ASSERT_TRUE(crd->removeQuery(queryId));
 
    string expectedContent = "+----------------------------------------------------+\n"
-                             "|sensor_id:CHAR[8]|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|\n"
+                             "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|\n"
                              "+----------------------------------------------------+\n"
-                             "|R2000070|1543626120000|20.476191|1|\n"
-                             "|R2000070|1543626420000|20.714285|2|\n"
+                             "||1543626120000|20.476191|1|\n"
+                             "||1543626420000|20.714285|2|\n"
                              "+----------------------------------------------------+";
 
-    /*
-    std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
-    /*
-     * Value of: ifs.good()
-    Actual: false
-    Expected: true
-     */
-    /*
-    std::string content((std::istreambuf_iterator<char>(ifs)),
+   // Pattern:QNV first(||1543626120000|20.476191|1|)
+
+   //TODO content print sink check?
+    /*std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
 
     NES_DEBUG("content=" << content);
     NES_DEBUG("expContent=" << expectedContent );
-    EXPECT_EQ(content, expectedContent);
-    */
+    EXPECT_EQ(content, expectedContent);*/
+
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
 
@@ -221,7 +209,7 @@ TEST_F(SimplePatternTest, testPatternWithEmptyResult) {
     EXPECT_TRUE(retStopCord);
 }
 
-/*
+/* Test 4
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and expecting no output
  * TODO: doublicate CSVSink, but no result print
  */
@@ -252,7 +240,7 @@ TEST_F(SimplePatternTest, testPatternWithEmptyResult2) {
     conf.logicalStreamName = "QnV";
     conf.physicalStreamName = "test_stream";
     conf.sourceType = "CSVSource";
-    conf.sourceConfig = "../tests/test_data/QnV.csv";
+    conf.sourceConfig = "../tests/test_data/QnV_short.csv";
     conf.numberOfBuffersToProduce = 1;
     // csv = 1 buffer
     // TODO: what are these parameters
