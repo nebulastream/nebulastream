@@ -16,7 +16,7 @@ std::string SourceDescriptor::getStreamName() {
 }
 
 bool SourceDescriptor::hasStreamName() {
-    return streamName.empty();
+    return !streamName.empty();
 }
 
 }// namespace NES
