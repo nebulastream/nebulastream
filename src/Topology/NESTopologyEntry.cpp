@@ -1,12 +1,17 @@
 #include <Topology/NESTopologyEntry.hpp>
-
+#include <Util/Logger.hpp>
 namespace NES {
 
 void NESTopologyEntry::setNodeProperty(std::string nodeProperties) {
+    NES_DEBUG("setNodeProperty=" << nodeProperties);
     if (nodeProperties != "")
+    {
         this->nodeProperties = std::make_shared<NodeProperties>(nodeProperties);
+    }
     else
+    {
         this->nodeProperties = std::make_shared<NodeProperties>();
+    }
 }
 
 /**
