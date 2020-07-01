@@ -93,7 +93,7 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
         code << "#include <API/Query.hpp>" << std::endl;
-        //code << "#include <API/Pattern.hpp>" << std::endl;
+        code << "#include <API/Pattern.hpp>" << std::endl;
         code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>" << std::endl;
@@ -122,11 +122,11 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
         }
 
         std::string newQuery = queryCodeSnippet;
-        //boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
+
         if (patternName != ""){
             boost::replace_all(newQuery, ".name(" + patternName + ")", "");
         }
-
+        //boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
         boost::replace_all(newQuery, "Pattern::from", "return Query::from");
         boost::replace_all(newQuery, ".sink(", ".map(Attribute(\"PatternName\") = 1).sink(");
 
