@@ -165,4 +165,5 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
+
 }// namespace NES

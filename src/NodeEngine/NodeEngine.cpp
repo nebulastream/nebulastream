@@ -37,7 +37,9 @@ NodeProperties* NodeEngine::getNodeProperties() {
     return props.get();
 }
 
-NodeEngine::NodeEngine() {
+NodeEngine::NodeEngine() :
+    registerUnregisterQuery(),
+    startStopQuery(){
     NES_DEBUG("NodeEngine()");
     props = std::make_shared<NodeProperties>();
     isRunning = false;
@@ -51,6 +53,7 @@ NodeEngine::~NodeEngine() {
 }
 
 bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject) {
+    std::unique_lock<std::mutex> lock(deployUndeployQuery);
     NES_DEBUG("NodeEngine::deployQueryInNodeEngine eto " << executableTransferObject);
     // TODO currently this method is not called. We should evaluate the purpose of this method.
     NES_FATAL_ERROR("NODE ENGINE: Deploy Quer in Node is currently not implemented");
@@ -63,6 +66,7 @@ bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject) {
 }
 
 bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
+    std::unique_lock<std::mutex> lock(deployUndeployQuery);
     NES_DEBUG("NodeEngine: deployQueryInNodeEngine query using qep " << qep);
     bool successRegister = registerQueryInNodeEngine(qep);
     if (!successRegister) {
@@ -81,10 +85,30 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
     return true;
 }
 
+bool NodeEngine::undeployQuery(std::string queryId) {
+    std::unique_lock<std::mutex> lock(deployUndeployQuery);
+    NES_DEBUG("NodeEngine: undeployQuery query=" << queryId);
+    bool successStop = stopQuery(queryId);
+    if (!successStop) {
+        NES_ERROR("NodeEngine::undeployQuery: failed to stop query");
+        return false;
+    } else {
+        NES_DEBUG("NodeEngine::undeployQuery: successfully stop query");
+    }
+
+    bool successUnregister = unregisterQuery(queryId);
+    if (!successUnregister) {
+        NES_ERROR("NodeEngine::undeployQuery: failed to unregister query");
+        return false;
+    } else {
+        NES_DEBUG("NodeEngine::undeployQuery: successfully unregister query");
+        return true;
+    }
+}
+
 bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr queryOperators) {
-
+    std::unique_lock<std::mutex> lock(registerUnregisterQuery);
     NES_DEBUG("WorkerActor::running() queryId after " << queryId);
-
     NES_INFO("*** Creating QueryExecutionPlan for " << queryId);
 
     // Translate the query operators in their legacy representation
@@ -116,6 +140,8 @@ bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr 
 }
 
 bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr qep) {
+    std::unique_lock<std::mutex> lock(registerUnregisterQuery);
+
     NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << qep << " queryId=" << qep->getQueryId());
     qep->setBufferManager(bufferManager);
 
@@ -135,44 +161,9 @@ bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr qep) {
     }
 }
 
-bool NodeEngine::startQuery(std::string queryId) {
-    NES_DEBUG("NodeEngine: startQuery=" << queryId);
-    if (queryIdToQepMap.find(queryId) != queryIdToQepMap.end()) {
-        if (queryManager->startQuery(queryIdToQepMap[queryId])) {
-            NES_DEBUG("NodeEngine: start of QEP " << queryId << " succeeded");
-            qepToStatusMap[queryIdToQepMap[queryId]] = NodeEngineQueryStatus::started;
-            return true;
-        } else {
-            NES_DEBUG("NodeEngine: start of QEP " << queryId << " failed");
-            return false;
-        }
-    } else {
-        NES_DEBUG("NodeEngine: qep does not exists. start failed" << queryId);
-        return false;
-    }
-}
-
-bool NodeEngine::undeployQuery(std::string queryId) {
-    NES_DEBUG("NodeEngine: undeployQuery query=" << queryId);
-    bool successStop = stopQuery(queryId);
-    if (!successStop) {
-        NES_ERROR("NodeEngine::undeployQuery: failed to stop query");
-        return false;
-    } else {
-        NES_DEBUG("NodeEngine::undeployQuery: successfully stop query");
-    }
-
-    bool successUnregister = unregisterQuery(queryId);
-    if (!successUnregister) {
-        NES_ERROR("NodeEngine::undeployQuery: failed to unregister query");
-        return false;
-    } else {
-        NES_DEBUG("NodeEngine::undeployQuery: successfully unregister query");
-        return true;
-    }
-}
-
 bool NodeEngine::unregisterQuery(std::string queryId) {
+    std::unique_lock<std::mutex> lock(registerUnregisterQuery);
+
     NES_DEBUG("NodeEngine: unregisterQuery query=" << queryId);
     if (queryIdToQepMap.find(queryId) != queryIdToQepMap.end()) {
         if (queryManager->deregisterQuery(queryIdToQepMap[queryId])) {
@@ -198,7 +189,29 @@ bool NodeEngine::unregisterQuery(std::string queryId) {
     }
 }
 
+bool NodeEngine::startQuery(std::string queryId) {
+    std::unique_lock<std::mutex> lock(startStopQuery);
+
+    NES_DEBUG("NodeEngine: startQuery=" << queryId);
+    if (queryIdToQepMap.find(queryId) != queryIdToQepMap.end()) {
+        if (queryManager->startQuery(queryIdToQepMap[queryId])) {
+            NES_DEBUG("NodeEngine: start of QEP " << queryId << " succeeded");
+            qepToStatusMap[queryIdToQepMap[queryId]] = NodeEngineQueryStatus::started;
+            return true;
+        } else {
+            NES_DEBUG("NodeEngine: start of QEP " << queryId << " failed");
+            return false;
+        }
+    } else {
+        NES_DEBUG("NodeEngine: qep does not exists. start failed" << queryId);
+        return false;
+    }
+}
+
+
 bool NodeEngine::stopQuery(std::string queryId) {
+    std::unique_lock<std::mutex> lock(startStopQuery);
+
     NES_DEBUG("NodeEngine:stopQuery for qep" << queryId);
     if (queryIdToQepMap.find(queryId) != queryIdToQepMap.end()) {
         if (queryManager->stopQuery(queryIdToQepMap[queryId])) {
