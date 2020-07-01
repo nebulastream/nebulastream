@@ -2,6 +2,7 @@
 
 #include <Operators/Impl/WindowOperator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -21,7 +22,9 @@ WindowOperator& WindowOperator::operator=(const WindowOperator& other) {
 }
 
 void WindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    getChildren()[0]->produce(codegen, context, out);
+    auto newPipelineContext1 = PipelineContext::create();
+    getChildren()[0]->produce(codegen, newPipelineContext1, out);
+    context->addNextPipeline(newPipelineContext1);
 }
 
 void WindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
