@@ -4,12 +4,9 @@ namespace NES {
 
 void NESTopologyEntry::setNodeProperty(std::string nodeProperties) {
     NES_DEBUG("setNodeProperty=" << nodeProperties);
-    if (nodeProperties != "")
-    {
+    if (nodeProperties != "") {
         this->nodeProperties = std::make_shared<NodeProperties>(nodeProperties);
-    }
-    else
-    {
+    } else {
         this->nodeProperties = std::make_shared<NodeProperties>();
     }
 }
