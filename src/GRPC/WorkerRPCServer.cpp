@@ -4,7 +4,8 @@
 using namespace NES;
 
 WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
-    : nodeEngine(nodeEngine) {
+    : nodeEngine(nodeEngine)
+{
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer");
 }
 
