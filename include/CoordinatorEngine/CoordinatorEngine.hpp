@@ -2,6 +2,7 @@
 #define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #include <Topology/NESTopologyEntry.hpp>
 #include <memory>
+#include <mutex>
 
 namespace NES {
 class StreamCatalog;
@@ -94,6 +95,9 @@ class CoordinatorEngine {
   private:
     StreamCatalogPtr streamCatalog;
     TopologyManagerPtr topologyManager;
+    std::mutex registerDeregisterNode;
+    std::mutex addRemoveLogicalStream;
+    std::mutex addRemovePhysicalStream;
 };
 
 typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;
@@ -101,3 +105,4 @@ typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;
 }// namespace NES
 
 #endif//NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
+

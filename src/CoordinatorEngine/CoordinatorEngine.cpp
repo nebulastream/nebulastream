@@ -8,7 +8,11 @@ namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager)
     : streamCatalog(streamCatalog),
-      topologyManager(topologyManager) {
+      topologyManager(topologyManager),
+      registerDeregisterNode(),
+      addRemoveLogicalStream(),
+      addRemovePhysicalStream()
+{
     NES_DEBUG("CoordinatorEngine()");
 }
 
@@ -22,12 +26,14 @@ size_t CoordinatorEngine::registerNode(std::string address,
                                        size_t numberOfCPUs,
                                        std::string nodeProperties,
                                        NESNodeType type) {
-    topologyManager->printNESTopologyPlan();
-
     NES_DEBUG("CoordinatorEngine: Register Node address=" << address
                                                           << " numberOfCpus=" << numberOfCPUs
                                                           << " nodeProperties=" << nodeProperties
                                                           << " type=" << type);
+    std::unique_lock<std::mutex> lock(registerDeregisterNode);
+
+    topologyManager->printNESTopologyPlan();
+
     //get unique id for the new node
     size_t id = getIdFromIp(address);
 
@@ -132,6 +138,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
 
 bool CoordinatorEngine::unregisterNode(size_t nodeId) {
     NES_DEBUG("CoordinatorEngine::UnregisterNode: try to disconnect sensor with id " << nodeId);
+    std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
     std::vector<NESTopologyEntryPtr> sensorNodes =
         topologyManager->getNESTopologyPlan()->getNodeById(
@@ -178,6 +185,7 @@ bool CoordinatorEngine::registerPhysicalStream(size_t nodeId,
                                                std::string physicalstreamname,
                                                std::string logicalstreamname) {
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream id " << nodeId);
+    std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
     PhysicalStreamConfig streamConf(sourcetype,
                                     sourceconf,
@@ -220,6 +228,7 @@ bool CoordinatorEngine::unregisterPhysicalStream(size_t nodeId, std::string phys
         "stream with name "
         << physicalStreamName << " logical name "
         << logicalStreamName << " workerId=" << nodeId);
+    std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
     std::vector<NESTopologyEntryPtr> sensorNodes =
         topologyManager->getNESTopologyPlan()->getNodeById(
@@ -250,6 +259,8 @@ bool CoordinatorEngine::unregisterPhysicalStream(size_t nodeId, std::string phys
 bool CoordinatorEngine::registerLogicalStream(std::string logicalStreamName, std::string schemaString) {
     NES_DEBUG("CoordinatorEngine::registerLogicalStream: register logical stream=" << logicalStreamName << " schema="
                                                                                    << schemaString);
+    std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
+
     SchemaPtr schema = UtilityFunctions::createSchemaFromCode(schemaString);
     NES_DEBUG("StreamCatalogService: schema successfully created");
     bool success = streamCatalog->addLogicalStream(logicalStreamName, schema);
@@ -257,6 +268,7 @@ bool CoordinatorEngine::registerLogicalStream(std::string logicalStreamName, std
 }
 
 bool CoordinatorEngine::unregisterLogicalStream(std::string logicalStreamName) {
+    std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
     NES_DEBUG("CoordinatorEngine::unregisterLogicalStream: register logical stream=" << logicalStreamName);
     bool success = streamCatalog->removeLogicalStream(logicalStreamName);
     return success;

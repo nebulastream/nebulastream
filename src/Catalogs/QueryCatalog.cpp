@@ -10,7 +10,7 @@
 namespace NES {
 
 QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan)
-    : topologyManager(topologyManager), streamCatalog(streamCatalog), globalExecutionPlan(globalExecutionPlan) {
+    : topologyManager(topologyManager), streamCatalog(streamCatalog), globalExecutionPlan(globalExecutionPlan), insertDeleteQuery() {
     NES_DEBUG("QueryCatalog()");
 }
 
@@ -52,6 +52,7 @@ std::map<std::string, std::string> QueryCatalog::getAllRegisteredQueries() {
 }
 
 string QueryCatalog::registerQuery(const string& queryString, const string& optimizationStrategyName) {
+    std::unique_lock<std::mutex> lock(insertDeleteQuery);
     NES_DEBUG(
         "QueryCatalog: Registering query " << queryString << " with strategy " << optimizationStrategyName);
 
@@ -64,32 +65,46 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
         QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
         OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
         auto queryPlan = query->getQueryPlan();
+        //TODO: @Ankit please make sure that in the following no execption is thrown and that all changes that has be done until an error are reverted
+        // in general I think we should have a two phase appraoch where we first try to create a new query plan and only if this succesed add the new query to not damage the existing one
         GlobalExecutionPlanPtr executionPlan = optimizerService->updateGlobalExecutionPlan(queryPlan, optimizationStrategyName);
-
+        if (!executionPlan) {
+            NES_ERROR("QueryCatalog::registerQuery updateGlobalExecutionPlan failed");
+            return "ERROR create execution plan";
+        }
         NES_DEBUG("QueryCatalog: Final Execution Plan =" << executionPlan->getAsString());
 
         string queryId = queryPlan->getQueryId();
         QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(queryId, queryString, queryPlan, QueryStatus::Registered);
         queries[queryId] = entry;
+        if (queries.find(queryId)->second != entry) {
+            NES_ERROR("QueryCatalog::registerQuery insert into query failed");
+            //TODO: @Ankit how can I reverse the changes in the execution plan here?
+            return "ERROR insertMap";
+        }
         NES_DEBUG("number of queries after insert=" << queries.size());
         return queryId;
     } catch (const std::exception& exc) {
+        //TODO: @Ankit how can I reverse the changes in the execution plan here?
         NES_ERROR("QueryCatalog:_exception:" << exc.what());
         NES_ERROR(
             "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
                                                                                 << optimizationStrategyName);
-        throw;
+        NES_ERROR("QueryCatalog::registerQuery insert into query failed");
+        return "ERROR QueryCatalog:_exception";
     } catch (...) {
+        //TODO: @Ankit how can I reverse the changes in the execution plan here?
         NES_ERROR(
             "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
                                                                                 << optimizationStrategyName);
-        return "";
+        return "ERROR QueryCatalog:_exception";
     }
 }
 
 bool QueryCatalog::deleteQuery(const string& queryId) {
+    std::unique_lock<std::mutex> lock(insertDeleteQuery);
     if (!queryExists(queryId)) {
-        NES_DEBUG(
+        NES_ERROR(
             "QueryCatalog: No deletion required! Query has neither been registered or deployed->" << queryId);
         return false;
     } else {
@@ -99,14 +114,25 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
             NES_DEBUG("QueryCatalog: query is running, stopping it");
             markQueryAs(queryId, QueryStatus::Stopped);
         }
+        else
+        {
+            //TODO: @Ankit what do we do here?
+        }
+
         NES_DEBUG("QueryCatalog: erase query " << queryId);
-        auto it = queries.find(queryId);
-        queries.erase(it);
+        size_t ret = queries.erase(queryId);
+        if(ret != 1)
+        {
+            NES_DEBUG("QueryCatalog: erasing wrong number of queries=" << ret);
+            //TODO: @Ankit what do we do here maybe reset query to running?
+            return false;
+        }
         return true;
     }
 }
 
 void QueryCatalog::markQueryAs(string queryId, QueryStatus queryStatus) {
+    //TODO: check if a mutex is required
     NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << queryStatus);
     queries[queryId]->setQueryStatus(queryStatus);
 }
