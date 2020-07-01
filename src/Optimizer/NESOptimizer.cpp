@@ -21,7 +21,8 @@ GlobalExecutionPlanPtr NESOptimizer::updateExecutionGraph(std::string strategy, 
     NES_INFO("NESOptimizer: Initializing Placement strategy");
     auto placementStrategyPtr = BasePlacementStrategy::getStrategy(strategy, nesTopologyPlan, globalExecutionPlan);
     if (!placementStrategyPtr) {
-        NES_THROW_RUNTIME_ERROR("NESOptimizer: unable to find placement strategy for " + strategy);
+        NES_ERROR("NESOptimizer: unable to find placement strategy for " + strategy);
+        return nullptr;
     }
 
     NES_INFO("NESOptimizer: Building Execution plan for the input query");

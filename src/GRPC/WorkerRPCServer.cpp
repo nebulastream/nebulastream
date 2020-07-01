@@ -8,40 +8,6 @@ WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer");
 }
 
-Status WorkerRPCServer::DeployQuery(ServerContext* context, const DeployQueryRequest* request,
-                                    DeployQueryReply* reply) {
-    assert(0);
-    /*
-    NES_DEBUG("WorkerRPCServer::DeployQuery: got request for " << request->queryid());
-    bool success = nodeEngine->deployQueryInNodeEngine(request->eto());
-    if (success) {
-        NES_DEBUG("WorkerRPCServer::DeployQuery: success");
-        reply->set_success(true);
-        return Status::OK;
-    } else {
-        NES_ERROR("WorkerRPCServer::DeployQuery: failed");
-        reply->set_success(false);
-        return Status::CANCELLED;
-    }
-     */
-}
-
-Status WorkerRPCServer::UndeployQuery(ServerContext* context, const UndeployQueryRequest* request,
-                                      UndeployQueryReply* reply) {
-    assert(0);
-    NES_DEBUG("WorkerRPCServer::UndeployQuery: got request for " << request->queryid());
-    bool success = nodeEngine->undeployQuery(request->queryid());
-    if (success) {
-        NES_DEBUG("WorkerRPCServer::UndeployQuery: success");
-        reply->set_success(true);
-        return Status::OK;
-    } else {
-        NES_ERROR("WorkerRPCServer::UndeployQuery: failed");
-        reply->set_success(false);
-        return Status::CANCELLED;
-    }
-}
-
 Status WorkerRPCServer::RegisterQuery(ServerContext* context, const RegisterQueryRequest* request,
                                       RegisterQueryReply* reply) {
     auto queryId = request->queryid();
