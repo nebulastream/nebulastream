@@ -23,11 +23,15 @@ BottomUpStrategy::BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExe
 GlobalExecutionPlanPtr BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
 
     const string& queryId = queryPlan->getQueryId();
+
+    // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
-    // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string streamName = queryPlan->getSourceStreamName();
+    if(!sourceOperator->getSourceDescriptor()->hasStreamName()){
+        NES_THROW_RUNTIME_ERROR("BottomUpStrategy: Source Descriptor need stream name: " + queryId);
+    }
+    const string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
 
     if (!sourceOperator) {
         NES_THROW_RUNTIME_ERROR("BottomUpStrategy: No source operator found in the query plan wih id: " + queryId);

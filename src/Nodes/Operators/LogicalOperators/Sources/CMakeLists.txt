@@ -1,4 +1,5 @@
 add_source_nes(
+        SourceDescriptor.cpp
         SourceLogicalOperatorNode.cpp
         SenseSourceDescriptor.cpp
         KafkaSourceDescriptor.cpp

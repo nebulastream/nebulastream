@@ -1,5 +1,6 @@
 #include <API/Schema.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
+#include <utility>
 namespace NES {
 
 CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
@@ -7,11 +8,35 @@ CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
                                          std::string delimiter,
                                          size_t numBuffersToProcess,
                                          size_t frequency)
-    : SourceDescriptor(schema),
-      filePath(filePath),
-      delimiter(delimiter),
+    : SourceDescriptor(std::move(schema)),
+      filePath(std::move(filePath)),
+      delimiter(std::move(delimiter)),
       numBuffersToProcess(numBuffersToProcess),
       frequency(frequency) {}
+
+CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter, size_t numBuffersToProcess, size_t frequency)
+    : SourceDescriptor(std::move(schema), std::move(streamName)),
+      filePath(std::move(filePath)),
+      delimiter(std::move(delimiter)),
+      numBuffersToProcess(numBuffersToProcess),
+      frequency(frequency) {}
+
+SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
+                                                std::string filePath,
+                                                std::string delimiter,
+                                                size_t numBuffersToProcess,
+                                                size_t frequency) {
+    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(filePath), std::move(delimiter), numBuffersToProcess, frequency));
+}
+
+SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
+                                                std::string streamName,
+                                                std::string filePath,
+                                                std::string delimiter,
+                                                size_t numBuffersToProcess,
+                                                size_t frequency) {
+    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(streamName), std::move(filePath), std::move(delimiter), numBuffersToProcess, frequency));
+}
 
 const std::string& CsvSourceDescriptor::getFilePath() const {
     return filePath;
@@ -27,13 +52,6 @@ size_t CsvSourceDescriptor::getNumBuffersToProcess() const {
 
 size_t CsvSourceDescriptor::getFrequency() const {
     return frequency;
-}
-SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
-                                                std::string filePath,
-                                                std::string delimiter,
-                                                size_t numBuffersToProcess,
-                                                size_t frequency) {
-    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(schema, filePath, delimiter, numBuffersToProcess, frequency));
 }
 
 bool CsvSourceDescriptor::equal(SourceDescriptorPtr other) {

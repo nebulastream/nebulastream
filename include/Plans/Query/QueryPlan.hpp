@@ -30,7 +30,7 @@ class QueryPlan {
      * @param rootOperator The root operator usually a source operator.
      * @return a pointer to the query plan.
      */
-    static QueryPlanPtr create(std::string sourceStreamName, OperatorNodePtr rootOperator);
+    static QueryPlanPtr create(OperatorNodePtr rootOperator);
 
     /**
      * @brief Creates a new query plan without and operator.
@@ -95,12 +95,6 @@ class QueryPlan {
     std::vector<OperatorNodePtr> getLeafOperators();
 
     /**
-     * @brief Get the source stream name
-     * @return sourceStreamName
-     */
-    const std::string getSourceStreamName() const;
-
-    /**
      * Find if the operator with same Id exists in the plan.
      * Note: This method only check if there exists another operator with same Id or not.
      * Note: The system generated operators are ignored from this check.
@@ -126,7 +120,7 @@ class QueryPlan {
      * @brief initialize query plan and set currentOperatorId to 1
      * @param rootOperator
      */
-    explicit QueryPlan(std::string sourceStreamName, OperatorNodePtr rootOperator);
+    explicit QueryPlan(OperatorNodePtr rootOperator);
 
     /**
      * @brief initialize an empty query plan
@@ -141,7 +135,6 @@ class QueryPlan {
     std::vector<OperatorNodePtr> rootOperators;
     uint64_t currentOperatorId;
     std::string queryId;
-    std::string sourceStreamName;
 };
 }// namespace NES
 #endif//NES_INCLUDE_PLANS_QUERY_HPP_
