@@ -111,7 +111,7 @@ const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec);
 const OperatorPtr createFilterOperator(const PredicatePtr predicate);
 const OperatorPtr createJoinOperator(const JoinPredicatePtr join_spec);
 const OperatorPtr createKeyByOperator(const Attributes& keyby_spec);
-const OperatorPtr createMapOperator(AttributeFieldPtr attr, PredicatePtr ptr);
+const OperatorPtr createMapOperator(AttributeFieldPtr attr, UserAPIExpressionPtr ptr);
 const OperatorPtr createSinkOperator(const DataSinkPtr sink);
 const OperatorPtr createSortOperator(const Sort& sort_spec);
 const OperatorPtr createSourceOperator(const DataSourcePtr source);

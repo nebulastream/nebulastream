@@ -20,6 +20,7 @@ message SerializableExpression {
   }
   message FieldAccessExpression{
     string fieldName = 1;
+    SerializableDataType type = 2;
   }
   message FieldAssignmentExpression{
     FieldAccessExpression field = 1;

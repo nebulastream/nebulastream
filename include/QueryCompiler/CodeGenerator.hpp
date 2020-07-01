@@ -78,7 +78,7 @@ class CodeGenerator {
      * @param context The context of the current pipeline.
      * @return flag if the generation was successful.
      */
-    virtual bool generateCodeForMap(AttributeFieldPtr field, PredicatePtr pred, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForMap(AttributeFieldPtr field, UserAPIExpressionPtr pred, PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a emit, which depends on a particular output schema.
