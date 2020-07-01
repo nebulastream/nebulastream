@@ -74,7 +74,12 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         /* call loaded function to create query object */
         Query query((*func)());
 
-        return std::make_shared<Query>(query);
+        auto queryPtr = std::make_shared<Query>(query);
+        std::string queryId = UtilityFunctions::generateIdString();
+        queryPtr->getQueryPlan()->setQueryId(queryId);
+
+        return queryPtr;
+
     } catch (std::exception& exc) {
         NES_ERROR(
             "UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet

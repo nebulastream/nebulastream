@@ -39,7 +39,7 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class Query {
   public:
     Query(const Query&);
-    Query(std::string queryName);
+
     ~Query() = default;
 
     /**
