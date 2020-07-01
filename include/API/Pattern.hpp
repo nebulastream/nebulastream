@@ -85,11 +85,17 @@ class Pattern : public Query {
      * @return QueryPlan
      */
     QueryPlanPtr getQueryPlan();
+
+    const std::string& getPatternName() const;
+    void setPatternName(const std::string& patternName);
+
   private:
     // creates a new query object
     Pattern(QueryPlanPtr queryPlan);
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
+    std::string patternName;
+
 };
 
 typedef std::shared_ptr<Pattern> PatternPtr;

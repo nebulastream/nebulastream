@@ -46,5 +46,11 @@ Pattern& Pattern::sink(const SinkDescriptorPtr sinkDescriptor) {
 QueryPlanPtr Pattern::getQueryPlan() {
     return queryPlan;
 }
+const std::string& Pattern::getPatternName() const {
+    return patternName;
+}
+void Pattern::setPatternName(const std::string& patternName) {
+    Pattern::patternName = patternName;
+}
 
 }// namespace NES
