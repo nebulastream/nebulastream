@@ -68,6 +68,11 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
         QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
         OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
         auto queryPlan = query->getQueryPlan();
+        queryId = queryPlan->getQueryId();
+        if (queryId == "") {
+            NES_ERROR("QueryCatalog::registerQuery: cannot register query without id");
+            throw;
+        }
         GlobalExecutionPlanPtr executionPlan = optimizerService->updateGlobalExecutionPlan(queryPlan, optimizationStrategyName);
         if (!executionPlan) {
             NES_ERROR("QueryCatalog::registerQuery updateGlobalExecutionPlan failed");
@@ -75,7 +80,6 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
         }
         NES_DEBUG("QueryCatalog: Final Execution Plan =" << executionPlan->getAsString());
 
-        queryId = queryPlan->getQueryId();
         QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(queryId, queryString, queryPlan, QueryStatus::Registered);
         queries[queryId] = entry;
         if (queries.find(queryId)->second != entry) {
@@ -104,15 +108,15 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
         NES_ERROR(
             "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
                                                                                 << optimizationStrategyName);
-        NES_ERROR("QueryCatalog::registerQuery insert into query failed");
-        return "ERROR QueryCatalog:_exception";
+        NES_ERROR("QueryCatalog::registerQuery insert into query failed with " << exc.what());
+        return "ERROR QueryCatalog:exception";
     }
 }
 
 bool QueryCatalog::deleteQuery(const string& queryId) {
     std::unique_lock<std::mutex> lock(insertDeleteQuery);
     if (!queryExists(queryId)) {
-        NES_ERROR(
+        NES_WARNING(
             "QueryCatalog: No deletion required! Query has neither been registered or deployed->" << queryId);
         return false;
     } else {
@@ -121,20 +125,31 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
         if (getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
             NES_DEBUG("QueryCatalog: query is running, stopping it");
             markQueryAs(queryId, QueryStatus::Stopped);
-        } else {
-            //TODO: @Ankit what do we do here?
+        } else if (getQuery(queryId)->getQueryStatus() == QueryStatus::Stopped) {
+            NES_DEBUG("QueryCatalog:deleteQuery: query already stopped");
+        } else if (getQuery(queryId)->getQueryStatus() == QueryStatus::Scheduling) {
+            NES_WARNING("QueryCatalog:deleteQuery: query is currently scheduled");
+            return false;
+        } else if (getQuery(queryId)->getQueryStatus() == QueryStatus::Registered) {
+            NES_WARNING("QueryCatalog:deleteQuery:  query is just registered but not running");
+            return false;
+        } else if (getQuery(queryId)->getQueryStatus() == QueryStatus::Failed) {
+            NES_WARNING("QueryCatalog:deleteQuery: query status failed");
+            return false;
         }
 
         NES_DEBUG("QueryCatalog: erase query " << queryId);
         size_t ret = queries.erase(queryId);
-        if (ret != 1) {
-            NES_DEBUG("QueryCatalog: erasing wrong number of queries=" << ret);
-            //TODO: @Ankit what do we do here maybe reset query to running?
+        if (ret == 0) {
+            NES_WARNING("QueryCatalog: query does not exists");
+            return false;
+        } else if (ret > 1) {
+            NES_ERROR("QueryCatalog: query exists two times in the catalog, this should not happen");
             return false;
         }
         return true;
     }
-}
+}// namespace NES
 
 void QueryCatalog::markQueryAs(string queryId, QueryStatus queryStatus) {
     //TODO: check if a mutex is required

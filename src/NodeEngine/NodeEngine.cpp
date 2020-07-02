@@ -37,9 +37,8 @@ NodeProperties* NodeEngine::getNodeProperties() {
     return props.get();
 }
 
-NodeEngine::NodeEngine() :
-    registerUnregisterQuery(),
-    startStopQuery(){
+NodeEngine::NodeEngine() : registerUnregisterQuery(),
+                           startStopQuery(), deployUndeployQuery() {
     NES_DEBUG("NodeEngine()");
     props = std::make_shared<NodeProperties>();
     isRunning = false;
@@ -213,7 +212,6 @@ bool NodeEngine::startQuery(std::string queryId) {
         return false;
     }
 }
-
 
 bool NodeEngine::stopQuery(std::string queryId) {
     std::unique_lock<std::mutex> lock(startStopQuery);
