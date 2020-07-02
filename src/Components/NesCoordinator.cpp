@@ -317,6 +317,7 @@ bool NesCoordinator::deployQuery(std::string queryId) {
             return false;
         }
     }
+    queryCatalog->markQueryAs(queryId, QueryStatus::Running);
     NES_INFO("NesCoordinator: Finished deploying execution plan for query with Id " << queryId);
     return true;
 }
