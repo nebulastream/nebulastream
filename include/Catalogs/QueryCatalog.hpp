@@ -4,9 +4,9 @@
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
-#include <mutex>
 
 namespace NES {
 
@@ -120,9 +120,7 @@ class QueryCatalog {
     StreamCatalogPtr streamCatalog;
     GlobalExecutionPlanPtr globalExecutionPlan;
     std::map<string, QueryCatalogEntryPtr> queries;
-
     std::mutex insertDeleteQuery;
-
 };
 
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;

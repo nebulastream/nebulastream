@@ -183,7 +183,6 @@ class NodeEngine {
     std::mutex deployUndeployQuery;
     std::mutex registerUnregisterQuery;
     std::mutex startStopQuery;
-
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

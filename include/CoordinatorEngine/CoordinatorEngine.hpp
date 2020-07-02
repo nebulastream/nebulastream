@@ -105,4 +105,3 @@ typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;
 }// namespace NES
 
 #endif//NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
-
