@@ -129,7 +129,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         //de-serialize child
         operatorNode->addChild(deserializeOperator(&child));
     }
-    NES_DEBUG("OperatorSerializationUtil:: de-serialize " << serializedOperator->DebugString() << " to " << operatorNode->toString());
+    NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator->DebugString() << " to " << operatorNode->toString());
     return operatorNode;
 }
 
@@ -238,7 +238,7 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
 
 SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails) {
     // de-serialize source details and all its properties to a SourceDescriptor
-    NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor " << serializedSourceDetails->DebugString());
+    NES_TRACE("OperatorSerializationUtil:: de-serialized SourceDescriptor " << serializedSourceDetails->DebugString());
     const auto& serializedSourceDescriptor = serializedSourceDetails->sourcedescriptor();
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor>()) {
         // de-serialize zmq source descriptor
@@ -370,7 +370,7 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
 }
 SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(SerializableOperator_SinkDetails* sinkDetails) {
     // de-serialize a sink descriptor and all its properties to a SinkDescriptor.
-    NES_DEBUG("OperatorSerializationUtil:: de-serialized SinkDescriptor " << sinkDetails->DebugString());
+    NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor " << sinkDetails->DebugString());
     const auto& deserializedSinkDescriptor = sinkDetails->sinkdescriptor();
     if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor>()) {
         // de-serialize print sink descriptor

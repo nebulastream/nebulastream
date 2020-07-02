@@ -53,19 +53,23 @@ NodeEngine::~NodeEngine() {
 }
 
 bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject) {
+    NES_DEBUG("NodeEngine::deployQueryInNodeEngine wait for lock executableTransferObject=" << executableTransferObject);
+
     std::unique_lock<std::mutex> lock(deployUndeployQuery);
     NES_DEBUG("NodeEngine::deployQueryInNodeEngine eto " << executableTransferObject);
     // TODO currently this method is not called. We should evaluate the purpose of this method.
     NES_FATAL_ERROR("NODE ENGINE: Deploy Quer in Node is currently not implemented");
     ExecutableTransferObject eto = ExecutableTransferObject();
     NES_DEBUG(
-        "WorkerActor::running() eto after parse=" << eto.toString());
+        "NodeEngine::running() eto after parse=" << eto.toString());
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(queryCompiler);
-    NES_DEBUG("WorkerActor::running()  add query to queries map");
+    NES_DEBUG("NodeEngine::running()  add query to queries map");
     deployQueryInNodeEngine(qep);
 }
 
 bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("NodeEngine::deployQueryInNodeEngine wait for lock qep=" << qep);
+
     std::unique_lock<std::mutex> lock(deployUndeployQuery);
     NES_DEBUG("NodeEngine: deployQueryInNodeEngine query using qep " << qep);
     bool successRegister = registerQueryInNodeEngine(qep);
@@ -86,6 +90,7 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
 }
 
 bool NodeEngine::undeployQuery(std::string queryId) {
+    NES_DEBUG("NodeEngine::undeployQuery wait for lock queryId=" << queryId);
     std::unique_lock<std::mutex> lock(deployUndeployQuery);
     NES_DEBUG("NodeEngine: undeployQuery query=" << queryId);
     bool successStop = stopQuery(queryId);
@@ -107,8 +112,7 @@ bool NodeEngine::undeployQuery(std::string queryId) {
 }
 
 bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr queryOperators) {
-    std::unique_lock<std::mutex> lock(registerUnregisterQuery);
-    NES_DEBUG("WorkerActor::running() queryId after " << queryId);
+    NES_DEBUG("NodeEngine::running() queryId after " << queryId);
     NES_INFO("*** Creating QueryExecutionPlan for " << queryId);
 
     // Translate the query operators in their legacy representation
@@ -140,6 +144,7 @@ bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr 
 }
 
 bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("NodeEngine::registerQueryInNodeEngine wait for lock qep=" << qep);
     std::unique_lock<std::mutex> lock(registerUnregisterQuery);
 
     NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << qep << " queryId=" << qep->getQueryId());
@@ -162,6 +167,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr qep) {
 }
 
 bool NodeEngine::unregisterQuery(std::string queryId) {
+    NES_DEBUG("NodeEngine::unregisterQuery wait for lock queryId=" << queryId);
     std::unique_lock<std::mutex> lock(registerUnregisterQuery);
 
     NES_DEBUG("NodeEngine: unregisterQuery query=" << queryId);

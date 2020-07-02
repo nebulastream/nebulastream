@@ -62,7 +62,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
 
 DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType* serializedDataType) {
     // de-serialize data type to the DataTypePtr
-    NES_DEBUG("DataTypeSerializationUtil:: de-serialized " << serializedDataType->DebugString());
+    NES_TRACE("DataTypeSerializationUtil:: de-serialized " << serializedDataType->DebugString());
     if (serializedDataType->type() == SerializableDataType_Type_UNDEFINED) {
         return DataTypeFactory::createUndefined();
     } else if (serializedDataType->type() == SerializableDataType_Type_FIXEDCHAR) {

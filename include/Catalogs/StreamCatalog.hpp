@@ -20,7 +20,8 @@ namespace NES {
  *    - TODO: add mutex to make it secure
  *    - TODO: delete methods only delete catalog entries not the entries in the topology
  */
-class StreamCatalog {
+class
+    StreamCatalog {
   public:
     /**
    * @brief method to add a logical stream
@@ -175,6 +176,8 @@ class StreamCatalog {
 
     //map logical stream to physical source
     std::map<std::string, std::vector<StreamCatalogEntryPtr>> logicalToPhysicalStreamMapping;
+
+    void addDefaultStreams();
 };
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 }// namespace NES

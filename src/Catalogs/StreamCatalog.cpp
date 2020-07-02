@@ -4,33 +4,44 @@
 #include <Util/UtilityFunctions.hpp>
 namespace NES {
 
+void StreamCatalog::addDefaultStreams()
+{
+    NES_DEBUG("Streamcatalog addDefaultStreams");
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    bool success = addLogicalStream("default_logical", schema);
+    if (!success) {
+        NES_ERROR("StreamCatalog::addDefaultStreams: error while add default_logical");
+        throw Exception("Error while addDefaultStreams StreamCatalog");
+    }
+
+    //TODO I think we should get rid of this soon
+    SchemaPtr schemaExdra = Schema::create()
+        ->addField("type", DataTypeFactory::createFixedChar(30))
+        ->addField("metadata_generated", DataTypeFactory::createUInt64())
+        ->addField("metadata_title", DataTypeFactory::createFixedChar(50))
+        ->addField("metadata_id", DataTypeFactory::createFixedChar(50))
+        ->addField("features_type", DataTypeFactory::createFixedChar(50))
+        ->addField("features_properties_capacity", DataTypeFactory::createUInt64())
+        ->addField("features_properties_efficiency", DataTypeFactory::createFloat())
+        ->addField("features_properties_mag", DataTypeFactory::createFloat())
+        ->addField("features_properties_time", DataTypeFactory::createUInt64())
+        ->addField("features_properties_updated", DataTypeFactory::createUInt64())
+        ->addField("features_properties_type", DataTypeFactory::createFixedChar(50))
+        ->addField("features_geometry_type", DataTypeFactory::createFixedChar(50))
+        ->addField("features_geometry_coordinates_longitude", DataTypeFactory::createFloat())
+        ->addField("features_geometry_coordinates_latitude", DataTypeFactory::createFloat())
+        ->addField("features_eventId ", DataTypeFactory::createFixedChar(50));
+
+    bool success2 = addLogicalStream("exdra", schemaExdra);
+    if (!success2) {
+        NES_ERROR("StreamCatalog::addDefaultStreams: error while add exdra");
+        throw Exception("Error while addDefaultStreams StreamCatalog");
+    }
+
+}
 StreamCatalog::StreamCatalog() {
     NES_DEBUG("StreamCatalog: construct stream catalog");
-
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    addLogicalStream("default_logical", schema);
-    NES_DEBUG("StreamCatalog: constructed default_logical");
-
-    SchemaPtr schemaExdra = Schema::create()
-                                ->addField("type", DataTypeFactory::createFixedChar(30))
-                                ->addField("metadata_generated", DataTypeFactory::createUInt64())
-                                ->addField("metadata_title", DataTypeFactory::createFixedChar(50))
-                                ->addField("metadata_id", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_type", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_properties_capacity", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_efficiency", DataTypeFactory::createFloat())
-                                ->addField("features_properties_mag", DataTypeFactory::createFloat())
-                                ->addField("features_properties_time", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_updated", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_type", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_geometry_type", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_geometry_coordinates_longitude", DataTypeFactory::createFloat())
-                                ->addField("features_geometry_coordinates_latitude", DataTypeFactory::createFloat())
-                                ->addField("features_eventId ", DataTypeFactory::createFixedChar(50));
-    NES_DEBUG("StreamCatalog: schema for exdra is =" << schemaExdra->toString());
-    addLogicalStream("exdra", schemaExdra);
-    NES_DEBUG("StreamCatalog: constructed exdra");
-
+    addDefaultStreams();
     NES_DEBUG("StreamCatalog: construct stream catalog successfully");
 }
 
@@ -275,38 +286,8 @@ bool StreamCatalog::reset() {
     logicalStreamToSchemaMapping.clear();
     logicalToPhysicalStreamMapping.clear();
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    bool success = addLogicalStream("default_logical", schema);
-    if (!success) {
-        NES_ERROR("StreamCatalog::reset: error while reset default_logical");
-        throw new Exception("Error while resetting StreamCatalog");
-    }
-
-    //TODO I think we should get rid of this soon
-    SchemaPtr schemaExdra = Schema::create()
-                                ->addField("type", DataTypeFactory::createFixedChar(30))
-                                ->addField("metadata_generated", DataTypeFactory::createUInt64())
-                                ->addField("metadata_title", DataTypeFactory::createFixedChar(50))
-                                ->addField("metadata_id", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_type", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_properties_capacity", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_efficiency", DataTypeFactory::createFloat())
-                                ->addField("features_properties_mag", DataTypeFactory::createFloat())
-                                ->addField("features_properties_time", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_updated", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_type", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_geometry_type", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_geometry_coordinates_longitude", DataTypeFactory::createFloat())
-                                ->addField("features_geometry_coordinates_latitude", DataTypeFactory::createFloat())
-                                ->addField("features_eventId ", DataTypeFactory::createFixedChar(50));
-
-    bool success2 = addLogicalStream("exdra", schemaExdra);
-    if (!success2) {
-        NES_ERROR("StreamCatalog::reset: error while reset exdra");
-        throw new Exception("Error while resetting StreamCatalog");
-    }
-
-    NES_DEBUG("StreamCatalog: reset completed exdra");
+    addDefaultStreams();
+    NES_DEBUG("StreamCatalog: reset Stream Catalog completed");
     return true;
 }
 
