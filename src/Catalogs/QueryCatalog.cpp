@@ -132,7 +132,6 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
             return false;
         } else if (getQuery(queryId)->getQueryStatus() == QueryStatus::Registered) {
             NES_WARNING("QueryCatalog:deleteQuery:  query is just registered but not running");
-            return false;
         } else if (getQuery(queryId)->getQueryStatus() == QueryStatus::Failed) {
             NES_WARNING("QueryCatalog:deleteQuery: query status failed");
             return false;
