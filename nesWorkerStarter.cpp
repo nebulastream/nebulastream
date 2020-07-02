@@ -8,11 +8,11 @@
  *
  ********************************************************/
 
-#include <iostream>
-#include <Util/UtilityFunctions.hpp>
 #include "boost/program_options.hpp"
-#include <Util/Logger.hpp>
 #include <Components/NesWorker.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <iostream>
 
 using std::cout;
 using std::endl;
@@ -49,12 +49,10 @@ int main(int argc, char** argv) {
     std::string parentId = "-1";
 
     desc.add_options()("coordinatorPort", po::value<string>(&coordinatorPort)->default_value(coordinatorPort),
-                       "Set NES rpc server port (default: 0).")
-        ("coordinatorIp", po::value<string>(&coordinatorIp)->default_value(coordinatorIp),
-         "Set NES server ip (default: localhost).")
-        (
-            "sourceType", po::value<string>(&sourceType)->default_value(sourceType),
-            "Set the type of the Source either CSVSource or DefaultSource")(
+                       "Set NES rpc server port (default: 0).")("coordinatorIp", po::value<string>(&coordinatorIp)->default_value(coordinatorIp),
+                                                                "Set NES server ip (default: localhost).")(
+        "sourceType", po::value<string>(&sourceType)->default_value(sourceType),
+        "Set the type of the Source either CSVSource or DefaultSource")(
         "sourceConfig",
         po::value<string>(&sourceConfig)->default_value(sourceConfig),
         "Set the config for the source e.g. the file name")(
@@ -65,16 +63,13 @@ int main(int argc, char** argv) {
         po::value<string>(&physicalStreamName)->default_value(physicalStreamName),
         "Set the physical name of the stream")(
         "numberOfBuffersToProduce",
-        po::value<size_t>(&numberOfBuffersToProduce)->default_value(
-            numberOfBuffersToProduce),
+        po::value<size_t>(&numberOfBuffersToProduce)->default_value(numberOfBuffersToProduce),
         "Set the number of buffers to produce")(
         "logicalStreamName",
         po::value<string>(&logicalStreamName)->default_value(logicalStreamName),
-        "Set the logical stream name where this stream is added to")
-        ("parentId",
-         po::value<string>(&parentId)->default_value(parentId),
-         "Set the parentId of this node")
-        ("help", "Display help message");
+        "Set the logical stream name where this stream is added to")("parentId",
+                                                                     po::value<string>(&parentId)->default_value(parentId),
+                                                                     "Set the parentId of this node")("help", "Display help message");
 
     po::variables_map vm;
 
@@ -88,33 +83,32 @@ int main(int argc, char** argv) {
     }
 
     if (vm.count("help")) {
-        std::cout << "Basic Command Line Parameter " << std::endl << desc
+        std::cout << "Basic Command Line Parameter " << std::endl
+                  << desc
                   << std::endl;
         return 0;
     }
 
     if (argc == 1) {
-        cout << "Please specify at least the port you want to connect to" <<
-             endl;
-        std::cout << "Basic Command Line Parameter " << std::endl << desc
+        cout << "Please specify at least the port you want to connect to" << endl;
+        std::cout << "Basic Command Line Parameter " << std::endl
+                  << desc
                   << std::endl;
         return 0;
     }
 
     size_t localPort = (time(0) * 321) % 10000 * (rand() % 100) + ::getpid();
-    cout << "port=" << localPort <<  "localport=" << to_string(localPort)  << " pid=" << getpid() << endl;
+    cout << "port=" << localPort << "localport=" << to_string(localPort) << " pid=" << getpid() << endl;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(
         coordinatorIp,
         coordinatorPort,
         coordinatorIp,
         to_string(localPort),
-        NESNodeType::Sensor
-    );
+        NESNodeType::Sensor);
 
     //register phy stream if nessesary
     if (sourceType != "") {
-        cout << "start with dedicated source=" << sourceType <<
-             endl;
+        cout << "start with dedicated source=" << sourceType << endl;
         PhysicalStreamConfig conf;
         conf.sourceType = sourceType;
         conf.sourceConfig = sourceConfig;
@@ -124,16 +118,11 @@ int main(int argc, char** argv) {
         conf.logicalStreamName = logicalStreamName;
 
         wrk->setWitRegister(conf);
-
     } else if (parentId != "-1") {
-        cout << "start with dedicated parent=" << parentId <<
-             endl;
-        wrk->
-            setWithParent(parentId);
+        cout << "start with dedicated parent=" << parentId << endl;
+        wrk->setWithParent(parentId);
     }
 
-    wrk->start(/**blocking*/true, /**withConnect*/true);
-    cout << "worker started" <<
-         endl;
-
+    wrk->start(/**blocking*/ true, /**withConnect*/ true);
+    cout << "worker started" << endl;
 }
