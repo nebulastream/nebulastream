@@ -12,7 +12,6 @@ RestServer::RestServer(std::string host, u_int16_t port, NesCoordinatorPtr coord
     : host(host), port(port), coordinator(coordinator), queryCatalog(queryCatalog) {
 
     restEngine = std::make_shared<RestEngine>(streamCatalog, coordinator, queryCatalog, topologyManager, globalExecutionPlan);
-    InterruptHandler::hookSIGINT();
 }
 
 RestServer::~RestServer() {
@@ -22,7 +21,7 @@ RestServer::~RestServer() {
 bool RestServer::start() {
 
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
-
+    InterruptHandler::hookSIGINT();
     restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
     try {
         // wait for server initialization...
@@ -30,7 +29,7 @@ bool RestServer::start() {
         NES_DEBUG("RestServer: Server started");
         NES_DEBUG("RestServer: REST Server now listening for requests at: " << restEngine->endpoint());
         InterruptHandler::waitForUserInterrupt();
-        restEngine->shutdown();
+        restEngine->shutdown().wait();
         NES_DEBUG("RestServer: after waitForUserInterrupt");
     } catch (const std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server << " << e.what());
