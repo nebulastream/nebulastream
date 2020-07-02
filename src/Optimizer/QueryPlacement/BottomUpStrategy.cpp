@@ -82,12 +82,12 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
             } else if (candidateNesNode->getRemainingCpuCapacity() == 0) {
                 NES_DEBUG("BottomUpStrategy: Find the next NES node in the path where operator can be placed");
                 while (pathItr != path.end()) {
-                    ++pathItr;
                     if ((*pathItr)->getRemainingCpuCapacity() > 0) {
                         candidateNesNode = (*pathItr);
                         NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : " << candidateNesNode->getId());
                         break;
                     }
+                    ++pathItr;
                 }
             }
 

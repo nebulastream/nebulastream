@@ -75,12 +75,12 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
             } else if (candidateNesNode->getRemainingCpuCapacity() == 0) {
                 NES_DEBUG("TopDownStrategy: Find the next NES node in the path where operator can be placed");
                 while (pathItr != path.rend()) {
-                    --pathItr;
                     if ((*pathItr)->getRemainingCpuCapacity() > 0) {
                         candidateNesNode = (*pathItr);
                         NES_DEBUG("TopDownStrategy: Found NES node for placing the operators with id : " + candidateNesNode->getId());
                         break;
                     }
+                    --pathItr;
                 }
             }
 
