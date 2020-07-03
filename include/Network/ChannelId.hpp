@@ -2,7 +2,7 @@
 #define NES_INCLUDE_NETWORK_CHANNELID_HPP_
 
 #include <Network/NesPartition.hpp>
-namespace NES{
+namespace NES {
 namespace Network {
 
 class ChannelId {
@@ -30,6 +30,6 @@ class ChannelId {
     const NesPartition nesPartition;
     const size_t threadId;
 };
-}
-}
+}// namespace Network
+}// namespace NES
 #endif//NES_INCLUDE_NETWORK_CHANNELID_HPP_

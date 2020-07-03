@@ -9,9 +9,9 @@ ExchangeProtocol::ExchangeProtocol(BufferManagerPtr bufferManager,
                                    std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer,
                                    std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream,
                                    std::function<void(Messages::ErrMessage)>&& onException) : bufferManager(bufferManager), partitionManager(partitionManager), queryManager(queryManager),
-                                                                                               onDataBufferCallback(std::move(onDataBuffer)),
-                                                                                               onEndOfStreamCallback(std::move(onEndOfStream)),
-                                                                                               onExceptionCallback(std::move(onException)) {
+                                                                                              onDataBufferCallback(std::move(onDataBuffer)),
+                                                                                              onEndOfStreamCallback(std::move(onEndOfStream)),
+                                                                                              onExceptionCallback(std::move(onException)) {
     NES_DEBUG("ExchangeProtocol: Initializing ExchangeProtocol()");
     if (!onDataBufferCallback) {
         NES_THROW_RUNTIME_ERROR("ExchangeProtocol: OnDataBuffer not initialized.");

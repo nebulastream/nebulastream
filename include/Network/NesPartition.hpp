@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-namespace NES{
+namespace NES {
 namespace Network {
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
 
@@ -78,8 +78,8 @@ class NesPartition {
     const PartitionId partitionId;
     const SubpartitionId subpartitionId;
 };
-}
-}
+}// namespace Network
+}// namespace NES
 namespace std {
 template<>
 struct hash<NES::Network::NesPartition> {
@@ -89,11 +89,11 @@ struct hash<NES::Network::NesPartition> {
         // Hash function for the NesPartition
         // Compute individual hash values of the Ints and combine them using XOR and bit shifting:
         return ((hash<uint64_t>()(k.getQueryId())
-            ^ (hash<uint64_t>()(k.getOperatorId()) << 1))
-            >> 1)
+                 ^ (hash<uint64_t>()(k.getOperatorId()) << 1))
+                >> 1)
             ^ ((hash<uint64_t>()(k.getPartitionId())
                 ^ (hash<uint64_t>()(k.getSubpartitionId()) << 1))
-                >> 1);
+               >> 1);
     }
 };
 

@@ -1,12 +1,12 @@
 #ifndef NES_NETWORKMESSAGE_HPP
 #define NES_NETWORKMESSAGE_HPP
 
-#include <Network/NesPartition.hpp>
 #include <Network/ChannelId.hpp>
+#include <Network/NesPartition.hpp>
 
 #include <cstdint>
-#include <utility>
 #include <stdexcept>
+#include <utility>
 
 namespace NES {
 namespace Network {

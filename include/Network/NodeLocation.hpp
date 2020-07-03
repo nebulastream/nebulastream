@@ -43,6 +43,6 @@ class NodeLocation {
     const std::string hostname;
     const uint32_t port;
 };
-}
-}
+}// namespace Network
+}// namespace NES
 #endif//NES_INCLUDE_NETWORK_NODELOCATION_HPP_
