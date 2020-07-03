@@ -156,6 +156,14 @@ bool NesCoordinator::stopCoordinator(bool force) {
     NES_DEBUG("NesCoordinator: stopCoordinator force=" << force);
     if (!stopped) {
 
+        NES_DEBUG("NesCoordinator: stopping rest server");
+        bool successStopRest = restServer->stop();
+        if (!successStopRest) {
+            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
+            throw Exception("Error while stopping NesCoordinator");
+        }
+        NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
+
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
         if (rpcThread->joinable()) {
@@ -165,14 +173,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
             throw Exception("Error while stopping thread->join");
         }
-
-        NES_DEBUG("NesCoordinator: stopping rest server");
-        bool successStopRest = restServer->stop();
-        if (!successStopRest) {
-            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
-            throw Exception("Error while stopping NesCoordinator");
-        }
-        NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
 
         bool successShutdownWorker = worker->stop(force);
         if (!successShutdownWorker) {
