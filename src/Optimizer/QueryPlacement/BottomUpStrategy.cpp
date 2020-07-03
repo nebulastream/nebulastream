@@ -28,7 +28,7 @@ GlobalExecutionPlanPtr BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr 
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
-    if(!sourceOperator->getSourceDescriptor()->hasStreamName()){
+    if (!sourceOperator->getSourceDescriptor()->hasStreamName()) {
         NES_THROW_RUNTIME_ERROR("BottomUpStrategy: Source Descriptor need stream name: " + queryId);
     }
     const string streamName = sourceOperator->getSourceDescriptor()->getStreamName();

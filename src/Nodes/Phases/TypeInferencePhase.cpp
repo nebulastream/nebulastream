@@ -78,13 +78,13 @@ SourceDescriptorPtr TypeInferencePhase::createSourceDescriptor(std::string strea
         NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema,
                                            streamName,
-                                           conf,   /**delimiter*/
+                                           conf, /**delimiter*/
                                            ",",
                                            numBuffers,
                                            frequency);
     } else if (type == "SenseSource") {
         NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
-        return SenseSourceDescriptor::create(schema,  streamName, /**udfs*/ conf);
+        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     } else {
         NES_ERROR("TypeInferencePhase:: source type " << type << " not supported");
         NES_FATAL_ERROR("type not supported");
