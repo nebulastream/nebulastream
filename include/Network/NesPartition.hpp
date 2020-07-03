@@ -1,15 +1,10 @@
-#ifndef NES_NETWORKCOMMON_HPP
-#define NES_NETWORKCOMMON_HPP
-
+#ifndef NES_INCLUDE_NETWORK_NESPARTITION_HPP_
+#define NES_INCLUDE_NETWORK_NESPARTITION_HPP_
 #include <cstdint>
 #include <string>
-#include <thread>
-#include <tuple>
-#include <zmq.hpp>
 
-namespace NES {
+namespace NES{
 namespace Network {
-
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
 
 using NodeId = uint64_t;
@@ -17,7 +12,6 @@ using SubpartitionId = uint64_t;
 using PartitionId = uint64_t;
 using OperatorId = uint64_t;
 using QueryId = uint64_t;
-
 class NesPartition {
   public:
     explicit NesPartition(QueryId queryId, OperatorId operatorId, PartitionId partitionId,
@@ -84,74 +78,8 @@ class NesPartition {
     const PartitionId partitionId;
     const SubpartitionId subpartitionId;
 };
-
-class ChannelId {
-  public:
-    ChannelId(NesPartition nesPartition, size_t threadId) : nesPartition(nesPartition), threadId(threadId) {
-    }
-
-    NesPartition getNesPartition() const {
-        return nesPartition;
-    }
-
-    size_t getThreadId() const {
-        return threadId;
-    }
-
-    std::string toString() const {
-        return nesPartition.toString() + "(threadId=" + std::to_string(threadId) + ")";
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const ChannelId& channelId) {
-        return os << channelId.toString();
-    }
-
-  private:
-    const NesPartition nesPartition;
-    const size_t threadId;
-};
-
-class NodeLocation {
-  public:
-    explicit NodeLocation(NodeId nodeId, const std::string& hostname, uint32_t port)
-        : nodeId(nodeId), hostname(hostname), port(port) {
-    }
-
-    std::string createZmqURI() const {
-        return "tcp://" + hostname + ":" + std::to_string(port);
-    }
-
-    NodeId getNodeId() const {
-        return nodeId;
-    }
-
-    const std::string& getHostname() const {
-        return hostname;
-    }
-
-    uint32_t getPort() const {
-        return port;
-    }
-
-    /**
-     * @brief The equals operator for the NodeLocation.
-     * @param lhs
-     * @param rhs
-     * @return true, if they are equal, else false
-     */
-    friend bool operator==(const NodeLocation& lhs, const NodeLocation& rhs) {
-        return lhs.nodeId == rhs.nodeId && lhs.hostname == rhs.hostname && lhs.port == rhs.port;
-    }
-
-  private:
-    const NodeId nodeId;
-    const std::string hostname;
-    const uint32_t port;
-};
-}// namespace Network
-}// namespace NES
-
-// this is required to add the hashing function for NesPartition to std namespace
+}
+}
 namespace std {
 template<>
 struct hash<NES::Network::NesPartition> {
@@ -161,14 +89,13 @@ struct hash<NES::Network::NesPartition> {
         // Hash function for the NesPartition
         // Compute individual hash values of the Ints and combine them using XOR and bit shifting:
         return ((hash<uint64_t>()(k.getQueryId())
-                 ^ (hash<uint64_t>()(k.getOperatorId()) << 1))
-                >> 1)
+            ^ (hash<uint64_t>()(k.getOperatorId()) << 1))
+            >> 1)
             ^ ((hash<uint64_t>()(k.getPartitionId())
                 ^ (hash<uint64_t>()(k.getSubpartitionId()) << 1))
-               >> 1);
+                >> 1);
     }
 };
 
 }// namespace std
-
-#endif//NES_NETWORKCOMMON_HPP
+#endif//NES_INCLUDE_NETWORK_NESPARTITION_HPP_

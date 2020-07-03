@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
 #define NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
 
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
 #include <Network/NetworkManager.hpp>
 #include <SourceSink/DataSource.hpp>
 

@@ -20,7 +20,7 @@ bool NetworkSink::writeData(TupleBuffer& inputBuffer) {
         NES_DEBUG("NetworkSink: Initializing thread specific OutputChannel");
         auto channel = networkManager->registerSubpartitionProducer(
             nodeLocation, nesPartition,
-            [](Messages::ErroMessage ex) {
+            [](Messages::ErrMessage ex) {
                 NES_ERROR("NetworkSink: Error in RegisterSubpartitionProducer " << ex.getErrorTypeAsString());
             },
             waitTime, retryTimes);

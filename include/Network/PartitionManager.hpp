@@ -1,7 +1,7 @@
 #ifndef NES_PARTITIONMANAGER_HPP
 #define NES_PARTITIONMANAGER_HPP
 
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
 #include <map>
 #include <shared_mutex>
 #include <unordered_map>

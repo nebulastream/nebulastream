@@ -8,7 +8,7 @@ ExchangeProtocol::ExchangeProtocol(BufferManagerPtr bufferManager,
                                    QueryManagerPtr queryManager,
                                    std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer,
                                    std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream,
-                                   std::function<void(Messages::ErroMessage)>&& onException) : bufferManager(bufferManager), partitionManager(partitionManager), queryManager(queryManager),
+                                   std::function<void(Messages::ErrMessage)>&& onException) : bufferManager(bufferManager), partitionManager(partitionManager), queryManager(queryManager),
                                                                                                onDataBufferCallback(std::move(onDataBuffer)),
                                                                                                onEndOfStreamCallback(std::move(onEndOfStream)),
                                                                                                onExceptionCallback(std::move(onException)) {
@@ -37,7 +37,7 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
         // send response back to the client based on the identity
         return Messages::ServerReadyMessage{msg.getChannelId()};
     } else {
-        auto errorMsg = Messages::ErroMessage{msg.getChannelId(), Messages::PartitionNotRegisteredError};
+        auto errorMsg = Messages::ErrMessage{msg.getChannelId(), Messages::PartitionNotRegisteredError};
         throw Messages::NesNetworkError(errorMsg);
     }
 }
@@ -59,7 +59,7 @@ void ExchangeProtocol::onBuffer(NesPartition nesPartition, TupleBuffer& buffer) 
     onDataBufferCallback(nesPartition, buffer);
 }
 
-Messages::ErroMessage ExchangeProtocol::onError(const Messages::ErroMessage error) {
+Messages::ErrMessage ExchangeProtocol::onError(const Messages::ErrMessage error) {
     onExceptionCallback(error);
     return error;
 }

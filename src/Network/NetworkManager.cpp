@@ -42,7 +42,7 @@ uint64_t NetworkManager::unregisterSubpartitionConsumer(NesPartition nesPartitio
 }
 
 OutputChannel* NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
-                                                            std::function<void(Messages::ErroMessage)>&& onError,
+                                                            std::function<void(Messages::ErrMessage)>&& onError,
                                                             std::chrono::seconds waitTime, uint8_t retryTimes) {
     NES_INFO("NetworkManager: Registering SubpartitionProducer: " << nesPartition.toString());
     // method needs to return a pointer so that it can be passed to boost::thread_specific_ptr

@@ -1,7 +1,7 @@
 #ifndef NES_NETWORKSINK_HPP
 #define NES_NETWORKSINK_HPP
 
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/OutputChannel.hpp>
 #include <SourceSink/DataSink.hpp>

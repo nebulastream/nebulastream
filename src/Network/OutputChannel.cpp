@@ -1,4 +1,4 @@
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqUtils.hpp>
@@ -11,7 +11,7 @@ namespace Network {
 
 OutputChannel::OutputChannel(std::shared_ptr<zmq::context_t> zmqContext, const std::string& address,
                              NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes,
-                             std::function<void(Messages::ErroMessage)> onError, size_t threadId) : socketAddr(address),
+                             std::function<void(Messages::ErrMessage)> onError, size_t threadId) : socketAddr(address),
                                                                                                     zmqSocket(*zmqContext, ZMQ_DEALER),
                                                                                                     channelId(ChannelId{nesPartition, threadId}),
                                                                                                     isClosed(false),
@@ -88,7 +88,7 @@ bool OutputChannel::registerAtServer() {
             // if server receives a message that an error occured
             zmq::message_t errorEnvelope;
             zmqSocket.recv(&errorEnvelope);
-            auto errorMsg = errorEnvelope.data<Messages::ErroMessage>();
+            auto errorMsg = errorEnvelope.data<Messages::ErrMessage>();
 
             NES_ERROR("OutputChannel: Received error from server-> " << errorMsg->getErrorTypeAsString());
             onError(*errorMsg);
@@ -122,7 +122,7 @@ bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, size_t tupleSize) {
     return false;
 }
 
-void OutputChannel::onError(Messages::ErroMessage& errorMsg) {
+void OutputChannel::onError(Messages::ErrMessage& errorMsg) {
     onErrorCb(errorMsg);
 }
 

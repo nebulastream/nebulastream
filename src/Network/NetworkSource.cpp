@@ -1,4 +1,4 @@
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Util/Logger.hpp>
 

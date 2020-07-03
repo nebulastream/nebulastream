@@ -1,11 +1,12 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_
 
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
+#include <Network/NodeLocation.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <string>
-
+#include <chrono>
 namespace NES {
 namespace Network {
 
