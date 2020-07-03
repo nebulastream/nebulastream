@@ -27,7 +27,6 @@ NesWorker::NesWorker(std::string coordinatorIp, std::string coordinatorPort, std
 
 NesWorker::~NesWorker() {
     NES_DEBUG("NesWorker::~NesWorker()");
-    stop(true);
 }
 bool NesWorker::setWitRegister(PhysicalStreamConfig pConf) {
     withRegisterStream = true;

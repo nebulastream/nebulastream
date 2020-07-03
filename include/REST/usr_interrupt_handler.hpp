@@ -10,13 +10,13 @@ namespace NES {
 
 class InterruptHandler {
   public:
-    static void hookSIGINT() {
-        signal(SIGINT, handleUserInterrupt);
+    static void hookUserInterruptHandler() {
+        signal(SIGTERM, handleUserInterrupt);
     }
 
     static void handleUserInterrupt(int signal) {
         std::cout << "handleUserInterrupt" << '\n';
-        if (signal == SIGINT) {
+        if (signal == SIGTERM) {
             std::cout << "SIGINT trapped ..." << '\n';
             _condition.notify_one();
         }

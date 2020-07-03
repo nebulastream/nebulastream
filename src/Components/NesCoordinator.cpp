@@ -148,7 +148,6 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
             "NesCoordinator started, return without blocking on port " << rpcPort);
         return rpcPort;
     }
-
     NES_DEBUG("NesCoordinator startCoordinator succeed");
 }
 
@@ -163,6 +162,14 @@ bool NesCoordinator::stopCoordinator(bool force) {
             throw Exception("Error while stopping NesCoordinator");
         }
         NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
+
+        if (restThread->joinable()) {
+            NES_DEBUG("NesCoordinator: join restThread");
+            restThread->join();
+        } else {
+            NES_ERROR("NesCoordinator: rest thread not joinable");
+            throw Exception("Error while stopping thread->join");
+        }
 
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
