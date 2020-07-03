@@ -12,8 +12,9 @@ SourceDescriptorPtr LogicalStreamSourceDescriptor::create(std::string streamName
 }
 
 bool LogicalStreamSourceDescriptor::equal(SourceDescriptorPtr other) {
-    if (!other->instanceOf<LogicalStreamSourceDescriptor>())
+    if (!other->instanceOf<LogicalStreamSourceDescriptor>()) {
         return false;
+    }
     auto otherLogicalStreamSource = other->as<LogicalStreamSourceDescriptor>();
     return getStreamName() == otherLogicalStreamSource->getStreamName();
 }
