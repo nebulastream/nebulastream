@@ -157,7 +157,7 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
         std::string queryId = UtilityFunctions::generateIdString();
         queryPtr->getQueryPlan()->setQueryId(queryId);
         if (patternName == ""){
-            patternName = queryId;
+            patternName = "Pattern" + queryId;
         }
         queryPtr->setQueryName(patternName);
         return queryPtr;
