@@ -72,8 +72,8 @@ NesCoordinator::~NesCoordinator() {
 /**
  * @brief this method starts the rest server and then blocks
  */
-void startRestServer(std::shared_ptr<RestServer> restServer,
-                     std::string restHost, uint16_t restPort, NesCoordinatorPtr coordinator, std::promise<bool>& prom) {
+void startRestServer(std::shared_ptr<RestServer> restServer, std::string restHost, uint16_t restPort,
+                     NesCoordinatorPtr coordinator, std::promise<bool>& prom) {
 
     prom.set_value(true);
     restServer->start();//this call is blocking
@@ -155,21 +155,6 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
 bool NesCoordinator::stopCoordinator(bool force) {
     NES_DEBUG("NesCoordinator: stopCoordinator force=" << force);
     if (!stopped) {
-        NES_DEBUG("NesCoordinator: stopping rest server");
-        bool successStopRest = restServer->stop();
-        if (!successStopRest) {
-            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
-            throw Exception("Error while stopping NesCoordinator");
-        }
-
-        NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
-        if (restThread->joinable()) {
-            NES_DEBUG("NesCoordinator: join restThread");
-            restThread->join();
-        } else {
-            NES_ERROR("NesCoordinator: rest thread not joinable");
-            throw Exception("Error while stopping restThread->join");
-        }
 
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
@@ -180,6 +165,14 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
             throw Exception("Error while stopping thread->join");
         }
+
+        NES_DEBUG("NesCoordinator: stopping rest server");
+        bool successStopRest = restServer->stop();
+        if (!successStopRest) {
+            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
+            throw Exception("Error while stopping NesCoordinator");
+        }
+        NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
 
         bool successShutdownWorker = worker->stop(force);
         if (!successShutdownWorker) {
