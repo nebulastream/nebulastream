@@ -21,7 +21,7 @@ RestServer::~RestServer() {
 bool RestServer::start() {
 
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
-    InterruptHandler::hookSIGINT();
+    InterruptHandler::hookUserInterruptHandler();
     restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
     try {
         // wait for server initialization...
@@ -43,7 +43,7 @@ bool RestServer::start() {
 
 bool RestServer::stop() {
     NES_DEBUG("RestServer::stop");
-    InterruptHandler::handleUserInterrupt(SIGINT);
+    InterruptHandler::handleUserInterrupt(SIGTERM);
     return true;
 }
 

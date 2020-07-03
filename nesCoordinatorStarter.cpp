@@ -87,7 +87,8 @@ int main(int argc, const char* argv[]) {
     }
 
     cout << "start coordinator ip=" << serverIp  << " with rpc port " << rpcPort << " restPort=" << restPort << endl;
-    crd->startCoordinator(/**blocking**/true);
+    crd->startCoordinator(/**blocking**/true); //blocking call
+    crd->stopCoordinator(true);
     cout << "coordinator started" << endl;
 
 }

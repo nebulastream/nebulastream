@@ -123,6 +123,7 @@ int main(int argc, char** argv) {
         wrk->setWithParent(parentId);
     }
 
-    wrk->start(/**blocking*/ true, /**withConnect*/ true);
+    wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
+    wrk->stop(/**force*/ true);
     cout << "worker started" << endl;
 }
