@@ -12,8 +12,9 @@ SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema, NesPartiti
 }
 
 bool NetworkSourceDescriptor::equal(SourceDescriptorPtr other) {
-    if (!other->instanceOf<NetworkSourceDescriptor>())
+    if (!other->instanceOf<NetworkSourceDescriptor>()) {
         return false;
+    }
     auto otherNetworkSource = other->as<NetworkSourceDescriptor>();
     return schema == otherNetworkSource->schema && nesPartition == otherNetworkSource->nesPartition;
 }
