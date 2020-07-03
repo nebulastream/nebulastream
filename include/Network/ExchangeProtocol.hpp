@@ -23,7 +23,7 @@ class ExchangeProtocol {
         },
         std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream = [](Messages::EndOfStreamMessage p) {
         },
-        std::function<void(Messages::ErroMessage)>&& onException = [](Messages::ErroMessage ex) {
+        std::function<void(Messages::ErrMessage)>&& onException = [](Messages::ErrMessage ex) {
         });
 
     /**
@@ -46,7 +46,7 @@ class ExchangeProtocol {
      * @param the error message
      * @return the handled error message
      */
-    Messages::ErroMessage onError(const Messages::ErroMessage error);
+    Messages::ErrMessage onError(const Messages::ErrMessage error);
 
     /**
      * @brief Reaction of the zmqServer after an EndOfStream message is received.
@@ -79,7 +79,7 @@ class ExchangeProtocol {
 
     std::function<void(NesPartition, TupleBuffer&)> onDataBufferCallback;
     std::function<void(Messages::EndOfStreamMessage)> onEndOfStreamCallback;
-    std::function<void(Messages::ErroMessage)> onExceptionCallback;
+    std::function<void(Messages::ErrMessage)> onExceptionCallback;
 };
 typedef std::shared_ptr<ExchangeProtocol> ExchangeProtocolPtr;
 

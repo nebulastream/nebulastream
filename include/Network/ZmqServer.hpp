@@ -2,7 +2,7 @@
 #define NES_ZMQSERVER_HPP
 
 #include <Network/ExchangeProtocol.hpp>
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
 #include <Network/PartitionManager.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <atomic>

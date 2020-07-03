@@ -158,7 +158,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                         sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket, outIdentityEnvelope, returnMessage);
                     } catch (Messages::NesNetworkError& ex) {
                         auto returnMessage = exchangeProtocol->onError(ex.getErrorMessage());
-                        sendMessageWithIdentity<Messages::ErroMessage>(dispatcherSocket, outIdentityEnvelope, returnMessage);
+                        sendMessageWithIdentity<Messages::ErrMessage>(dispatcherSocket, outIdentityEnvelope, returnMessage);
                     }
                     break;
                 }

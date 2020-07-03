@@ -1,7 +1,7 @@
 #ifndef NES_ZMQUTILS_HPP
 #define NES_ZMQUTILS_HPP
 
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <zmq.hpp>
 

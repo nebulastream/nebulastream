@@ -2,7 +2,8 @@
 #define NES_NETWORKDISPATCHER_HPP
 
 #include <Network/ExchangeProtocol.hpp>
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
+#include <Network/NodeLocation.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/PartitionManager.hpp>
 #include <NodeEngine/BufferManager.hpp>
@@ -68,7 +69,7 @@ class NetworkManager {
      * @return
      */
     OutputChannel* registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
-                                                std::function<void(Messages::ErroMessage)>&& onError,
+                                                std::function<void(Messages::ErrMessage)>&& onError,
                                                 std::chrono::seconds waitTime, uint8_t retryTimes);
 
   private:

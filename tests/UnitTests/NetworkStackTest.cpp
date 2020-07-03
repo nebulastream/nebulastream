@@ -147,7 +147,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         // start zmqServer
         std::promise<bool> completed;
         auto onBuffer = [](NesPartition id, TupleBuffer& buf) {};
-        auto onError = [&completed](Messages::ErroMessage ex) {
+        auto onError = [&completed](Messages::ErrMessage ex) {
           if (ex.getErrorType() != Messages::PartitionNotRegisteredError) {
               completed.set_exception(make_exception_ptr(runtime_error("Error")));
           }
@@ -200,7 +200,7 @@ TEST_F(NetworkStackTest, testSendData) {
               && (id.getSubpartitionId(), 444);
         };
 
-        auto onError = [](Messages::ErroMessage ex) {
+        auto onError = [](Messages::ErrMessage ex) {
           //can be empty for this test
         };
 
@@ -267,7 +267,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
           bufferReceived++;
         };
 
-        auto onError = [](Messages::ErroMessage ex) {
+        auto onError = [](Messages::ErrMessage ex) {
           //can be empty for this test
         };
 
@@ -339,7 +339,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
 
         auto onBuffer = [](NesPartition id, TupleBuffer& buf) {};
 
-        auto onErrorServer = [&serverError, &retryTimes, &errorCallsServer](Messages::ErroMessage errorMsg) {
+        auto onErrorServer = [&serverError, &retryTimes, &errorCallsServer](Messages::ErrMessage errorMsg) {
           errorCallsServer++;
           if (errorCallsServer == retryTimes) {
               serverError.set_value(true);
@@ -348,7 +348,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
           ASSERT_EQ(errorMsg.getErrorType(), Messages::PartitionNotRegisteredError);
         };
 
-        auto onErrorChannel = [&channelError, &retryTimes, &errorCallsChannel](Messages::ErroMessage errorMsg) {
+        auto onErrorChannel = [&channelError, &retryTimes, &errorCallsChannel](Messages::ErrMessage errorMsg) {
           errorCallsChannel++;
           if (errorCallsChannel == retryTimes) {
               channelError.set_value(true);
@@ -405,7 +405,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
           usleep(1000);
         };
 
-        auto onError = [](Messages::ErroMessage ex) {};
+        auto onError = [](Messages::ErrMessage ex) {};
 
         auto onEndOfStream = [&completedPromises](Messages::EndOfStreamMessage p) {
           completedPromises[p.getChannelId().getNesPartition().getQueryId()].set_value(true);
@@ -489,7 +489,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
     try {
         // create NetworkSink
-        auto onError = [&completed](Messages::ErroMessage ex) {
+        auto onError = [&completed](Messages::ErrMessage ex) {
           if (ex.getErrorType() != Messages::PartitionNotRegisteredError) {
               completed.set_exception(make_exception_ptr(runtime_error("Error")));
           }
@@ -606,7 +606,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
     try {
         // create NetworkSink
-        auto onError = [&completed](Messages::ErroMessage ex) {
+        auto onError = [&completed](Messages::ErrMessage ex) {
           if (ex.getErrorType() != Messages::PartitionNotRegisteredError) {
               completed.set_exception(make_exception_ptr(runtime_error("Error")));
           }
@@ -679,7 +679,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSink) {
     NesPartition nesPartition{1, 22, 33, 44};
 
     // create NetworkSink
-    auto onError = [](Messages::ErroMessage ex) {};
+    auto onError = [](Messages::ErrMessage ex) {};
     auto onEndOfStream = [&completed](Messages::EndOfStreamMessage p) {completed.set_value(true);};
     auto onBuffer = [this, &bufferReceived](NesPartition id, TupleBuffer& buf) {
       NES_DEBUG("NetworkStackTest: Received buffer \n" << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
@@ -742,7 +742,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSource) {
     nodeEngine->startQueryManager();
     auto bufferManager = nodeEngine->getBufferManager();
     auto partitionManager = std::make_shared<PartitionManager>();
-    auto onError = [](Messages::ErroMessage ex) {};
+    auto onError = [](Messages::ErrMessage ex) {};
     auto onEndOfStream = [](Messages::EndOfStreamMessage p) {};
     auto onBuffer = [this, &completed](NesPartition id, TupleBuffer& buf) {
       NES_DEBUG("NetworkStackTest: Received buffer \n" << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));

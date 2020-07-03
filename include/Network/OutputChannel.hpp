@@ -7,6 +7,7 @@
 #include <boost/core/noncopyable.hpp>
 #include <iostream>
 #include <memory>
+#include <zmq.hpp>
 
 namespace NES {
 namespace Network {
@@ -22,7 +23,7 @@ class OutputChannel : public boost::noncopyable {
         const std::string& address,
         NesPartition nesPartition,
         std::chrono::seconds waitTime, uint8_t retryTimes,
-        std::function<void(Messages::ErroMessage)> onError,
+        std::function<void(Messages::ErrMessage)> onError,
         size_t threadId = std::hash<std::thread::id>{}(std::this_thread::get_id()));
 
     ~OutputChannel() {
@@ -47,7 +48,7 @@ class OutputChannel : public boost::noncopyable {
      * @brief Method to handle the error
      * @param the error message
      */
-    void onError(Messages::ErroMessage& errorMsg);
+    void onError(Messages::ErrMessage& errorMsg);
 
     /**
      * Close the outchannel and send EndOfStream message to consumer
@@ -69,7 +70,7 @@ class OutputChannel : public boost::noncopyable {
     bool isClosed;
     bool connected;
 
-    std::function<void(Messages::ErroMessage)> onErrorCb;
+    std::function<void(Messages::ErrMessage)> onErrorCb;
 };
 
 }// namespace Network

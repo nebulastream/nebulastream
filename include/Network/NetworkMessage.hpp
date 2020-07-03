@@ -1,9 +1,12 @@
 #ifndef NES_NETWORKMESSAGE_HPP
 #define NES_NETWORKMESSAGE_HPP
 
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
+#include <Network/ChannelId.hpp>
+
 #include <cstdint>
 #include <utility>
+#include <stdexcept>
 
 namespace NES {
 namespace Network {
@@ -85,11 +88,11 @@ class EndOfStreamMessage : public ExchangeMessage {
     }
 };
 
-class ErroMessage : public ExchangeMessage {
+class ErrMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = ErrorMessage;
 
-    explicit ErroMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), error(error){};
+    explicit ErrMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), error(error){};
 
     const ErrorType getErrorType() const { return error; }
 
@@ -135,15 +138,15 @@ class DataBufferMessage {
 
 class NesNetworkError : public std::runtime_error {
   public:
-    explicit NesNetworkError(ErroMessage& msg) : std::runtime_error(msg.getErrorTypeAsString()), msg(msg) {
+    explicit NesNetworkError(ErrMessage& msg) : msg(msg), std::runtime_error("") {
     }
 
-    const ErroMessage& getErrorMessage() const {
+    const ErrMessage& getErrorMessage() const {
         return msg;
     }
 
   private:
-    const ErroMessage msg;
+    const ErrMessage msg;
 };
 
 }// namespace Messages

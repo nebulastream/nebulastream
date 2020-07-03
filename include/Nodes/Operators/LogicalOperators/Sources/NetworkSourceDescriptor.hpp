@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_NETWORKSOURCEDESCRIPTOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_NETWORKSOURCEDESCRIPTOR_HPP_
 
-#include <Network/NetworkCommon.hpp>
+#include <Network/NesPartition.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <string>
 
