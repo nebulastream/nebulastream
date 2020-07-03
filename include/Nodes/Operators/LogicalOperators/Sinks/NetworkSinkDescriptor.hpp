@@ -5,8 +5,8 @@
 #include <Network/NodeLocation.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <string>
 #include <chrono>
+#include <string>
 namespace NES {
 namespace Network {
 

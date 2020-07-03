@@ -12,11 +12,11 @@ namespace Network {
 OutputChannel::OutputChannel(std::shared_ptr<zmq::context_t> zmqContext, const std::string& address,
                              NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes,
                              std::function<void(Messages::ErrMessage)> onError, size_t threadId) : socketAddr(address),
-                                                                                                    zmqSocket(*zmqContext, ZMQ_DEALER),
-                                                                                                    channelId(ChannelId{nesPartition, threadId}),
-                                                                                                    isClosed(false),
-                                                                                                    connected(false),
-                                                                                                    onErrorCb(std::move(onError)) {
+                                                                                                   zmqSocket(*zmqContext, ZMQ_DEALER),
+                                                                                                   channelId(ChannelId{nesPartition, threadId}),
+                                                                                                   isClosed(false),
+                                                                                                   connected(false),
+                                                                                                   onErrorCb(std::move(onError)) {
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
     init(waitTime, retryTimes);
 }
