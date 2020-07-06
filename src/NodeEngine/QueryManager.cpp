@@ -81,6 +81,11 @@ bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("QueryManager::startQuery: query" << qep);
     std::unique_lock<std::mutex> lock(queryMutex);
 
+    if (!qep->setup() || !qep->start()) {
+        NES_FATAL_ERROR("QueryManager: query execution plan could not started");
+        return false;
+    }
+
     // start elements
     auto sources = qep->getSources();
     for (const auto& source : sources) {
@@ -98,10 +103,7 @@ bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
         sink->setup();
     }
 
-    if (!qep->setup() || !qep->start()) {
-        NES_FATAL_ERROR("QueryManager: query execution plan could not started");
-        return false;
-    }
+
     return true;
 }
 

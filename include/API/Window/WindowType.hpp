@@ -20,7 +20,7 @@ class TumblingWindow : public WindowType {
    * @param size
    * @return WindowTypePtr
    */
-    static WindowTypePtr of(TimeCharacteristic timeCharacteristic, TimeMeasure size);
+    static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
 
     /**
    * Calculates the next window end based on a given timestamp.
@@ -35,7 +35,7 @@ class TumblingWindow : public WindowType {
     void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 
   private:
-    TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size);
+    TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
     const TimeMeasure size;
 };
 
@@ -45,7 +45,7 @@ class TumblingWindow : public WindowType {
  */
 class SlidingWindow : public WindowType {
   public:
-    static WindowTypePtr of(TimeCharacteristic timeType, TimeMeasure size, TimeMeasure slide);
+    static WindowTypePtr of(TimeCharacteristicPtr timeType, TimeMeasure size, TimeMeasure slide);
     /**
   * Calculates the next window end based on a given timestamp.
   * @param currentTs
@@ -56,7 +56,7 @@ class SlidingWindow : public WindowType {
     }
 
   private:
-    SlidingWindow(TimeCharacteristic timeType, TimeMeasure size, TimeMeasure slide);
+    SlidingWindow(TimeCharacteristicPtr timeType, TimeMeasure size, TimeMeasure slide);
 
     const TimeMeasure size;
     const TimeMeasure slide;
@@ -75,7 +75,7 @@ class SessionWindow : public WindowType {
   * elements to sessions based on the element timestamp.
   * @param size The session timeout, i.e. the time gap between sessions
   */
-    static WindowTypePtr withGap(TimeCharacteristic timeType, TimeMeasure gap);
+    static WindowTypePtr withGap(TimeCharacteristicPtr timeType, TimeMeasure gap);
     /**
   * Calculates the next window end based on a given timestamp.
   * @param currentTs
@@ -88,7 +88,7 @@ class SessionWindow : public WindowType {
     void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 
   private:
-    SessionWindow(TimeCharacteristic timeType, TimeMeasure gap);
+    SessionWindow(TimeCharacteristicPtr timeType, TimeMeasure gap);
     const TimeMeasure gap;
 };
 }// namespace NES

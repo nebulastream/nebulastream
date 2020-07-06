@@ -19,15 +19,39 @@ class WindowState {
 };
 
 typedef std::shared_ptr<std::vector<WindowState>> WindowListPtr;
+class AttributeField;
+typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
-enum class TimeCharacteristic {
-    EventTime = 1,
-    ProcessingTime = 2
+class TimeCharacteristic;
+typedef std::shared_ptr<TimeCharacteristic> TimeCharacteristicPtr;
+
+class TimeCharacteristic {
+  public:
+
+    enum Type {
+        ProcessingTime,
+        EventTime
+    };
+    explicit TimeCharacteristic(Type type);
+    TimeCharacteristic(Type type, AttributeFieldPtr field);
+
+    static TimeCharacteristicPtr createProcessingTime();
+    static TimeCharacteristicPtr createEventTime(AttributeFieldPtr field);
+
+    Type getType();
+
+    AttributeFieldPtr getField();
+
+
+  private:
+    Type type;
+    AttributeFieldPtr field;
 };
+
 
 class WindowType {
   public:
-    WindowType(TimeCharacteristic timeCharacteristic);
+    WindowType(TimeCharacteristicPtr timeCharacteristic);
     /**
       * Calculates the next window end based on a given timestamp
       * @param currentTs
@@ -47,10 +71,10 @@ class WindowType {
      * @brief Get the time characteristic of the window.
      * @return
      */
-    TimeCharacteristic getTimeCharacteristic() const;
+    TimeCharacteristicPtr getTimeCharacteristic() const;
 
   private:
-    TimeCharacteristic timeCharacteristic;
+    TimeCharacteristicPtr timeCharacteristic;
 };
 
 typedef std::shared_ptr<WindowType> WindowTypePtr;

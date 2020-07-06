@@ -2,8 +2,10 @@
 
 #include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
+#include <SourceSink/DefaultSource.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <Util/Logger.hpp>
@@ -38,17 +40,69 @@ class QueryExecutionTest : public testing::Test {
     SchemaPtr testSchema;
 };
 
+/**
+ * @brief A window source, which generates data consisting of (key, value, ts).
+ * Key = 1||2
+ * Value = 1
+ * Ts = #Iteration
+ */
+class WindowSource : public DefaultSource {
+  public:
+    int64_t timestamp = 1;
+    WindowSource(SchemaPtr schema,
+                 BufferManagerPtr bufferManager,
+                 QueryManagerPtr queryManager,
+                 const uint64_t numbersOfBufferToProduce,
+                 size_t frequency) : DefaultSource(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency) {}
+
+    std::optional<TupleBuffer> receiveData() override {
+        auto buffer = bufferManager->getBufferBlocking();
+        auto rowLayout = createRowLayout(schema);
+        for (int i = 0; i < 10; i++) {
+            rowLayout->getValueField<int64_t>(i, 0)->write(buffer, i % 2);
+            rowLayout->getValueField<int64_t>(i, 1)->write(buffer, 1);
+            rowLayout->getValueField<int64_t>(i, 2)->write(buffer, Seconds(timestamp).getTime());
+        }
+        buffer.setNumberOfTuples(10);
+        timestamp = timestamp + 10;
+        return buffer;
+    };
+
+    static DataSourcePtr create(BufferManagerPtr bufferManager,
+                                QueryManagerPtr queryManager,
+                                const uint64_t numbersOfBufferToProduce,
+                                size_t frequency) {
+        auto windowSchema = Schema::create()
+                                ->addField("key", BasicType::INT64)
+                                ->addField("value", BasicType::INT64)
+                                ->addField("ts", BasicType::INT64);
+        return std::make_shared<WindowSource>(windowSchema, bufferManager, queryManager, numbersOfBufferToProduce, frequency);
+    }
+};
+
+typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;
+
 class TestSink : public DataSink {
   public:
+    TestSink(uint64_t expectedBuffer) : expectedBuffer(expectedBuffer){};
     bool writeData(TupleBuffer& input_buffer) override {
         std::unique_lock lock(m);
         NES_DEBUG("TestSink: got buffer " << input_buffer);
         NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchema()));
         resultBuffers.emplace_back(std::move(input_buffer));
-        if (resultBuffers.size() == 10) {
+        if (resultBuffers.size() == expectedBuffer) {
             completed.set_value(true);
         }
         return true;
+    }
+
+    /**
+     * @brief Factory to create a new TestSink.
+     * @param expectedBuffer number of buffers expected this sink should receive.
+     * @return
+     */
+    static std::shared_ptr<TestSink> create(uint64_t expectedBuffer) {
+        return std::make_shared<TestSink>(expectedBuffer);
     }
 
     TupleBuffer& get(size_t index) {
@@ -88,10 +142,9 @@ class TestSink : public DataSink {
         }
         resultBuffers.clear();
     }
-
-  private:
     std::vector<TupleBuffer> resultBuffers;
     std::mutex m;
+    uint64_t expectedBuffer;
 
   public:
     std::promise<bool> completed;
@@ -117,7 +170,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     auto source = createSourceOperator(testSource);
     auto filter = createFilterOperator(
         createPredicate(Field(testSchema->get("id")) < 5));
-    auto testSink = std::make_shared<TestSink>();
+    auto testSink = std::make_shared<TestSink>(10);
     auto sink = createSinkOperator(testSink);
 
     filter->addChild(source);
@@ -155,30 +208,37 @@ TEST_F(QueryExecutionTest, filterQuery) {
     plan->stop();
 }
 
+/**
+ * @brief This tests creates a windowed query.
+ * WindowSource -> windowOperator -> windowScan -> TestSink
+ */
 TEST_F(QueryExecutionTest, windowQuery) {
-    // TODO in this test, it is not clear what we are testing
-    // TODO 10 windows are fired -> 10 output buffers in the sink
-    // TODO however, we check the 2nd buffer only
+
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
-    // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                    nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager());
-    auto source = createSourceOperator(testSource);
-    auto aggregation = Sum::on(testSchema->get("one"));
-    auto windowType = TumblingWindow::of(TimeCharacteristic::ProcessingTime,
-                                         Milliseconds(2));
-    auto windowOperator = createWindowOperator(
-        createWindowDefinition(testSchema->get("value"), aggregation, windowType));
-    Schema resultSchema = Schema::create()
-                              ->addField("sum", BasicType::INT64);
-    SchemaPtr ptr = std::make_shared<Schema>(resultSchema);
-    auto windowScan = createWindowScanOperator(ptr);
-    auto testSink = std::make_shared<TestSink>();
+    // Create Operator Tree
+
+    // 1. add window source and create two buffers each second one.
+    auto windowSource = WindowSource::create(
+        nodeEngine->getBufferManager(),
+        nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+    auto source = createSourceOperator(windowSource);
+
+    // 2. dd window operator:
+    // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
+    auto windowType = TumblingWindow::of(TimeCharacteristic::createEventTime(windowSource->getSchema()->get("ts")), Seconds(10));
+    auto aggregation = Sum::on(windowSource->getSchema()->get("value"));
+    auto windowOperator = createWindowOperator(createWindowDefinition(windowSource->getSchema()->get("key"), aggregation, windowType));
+    // 2.1 add window scan operator
+    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
+    auto windowScan = createWindowScanOperator(windowResultSchema);
+
+    // 3. add sink. We expect that this sink will receive one buffer
+    auto testSink = TestSink::create(/*expected result buffer*/ 1);
     auto sink = createSinkOperator(testSink);
 
+    // cain all operator to each other
     windowOperator->addChild(source);
     source->setParent(windowOperator);
     windowScan->addChild(windowOperator);
@@ -186,12 +246,13 @@ TEST_F(QueryExecutionTest, windowQuery) {
     sink->addChild(windowScan);
     windowScan->setParent(sink);
 
+    // compile query plan
     auto compiler = createDefaultQueryCompiler(nodeEngine->getQueryManager());
     compiler->setQueryManager(nodeEngine->getQueryManager());
     compiler->setBufferManager(nodeEngine->getBufferManager());
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
-    plan->addDataSource(testSource);
+    plan->addDataSource(windowSource);
     plan->setBufferManager(nodeEngine->getBufferManager());
     plan->setQueryManager(nodeEngine->getQueryManager());
     plan->setQueryId("1");
@@ -199,17 +260,20 @@ TEST_F(QueryExecutionTest, windowQuery) {
     nodeEngine->registerQueryInNodeEngine(plan);
     nodeEngine->startQuery("1");
 
-    auto& resultBuffer = testSink->get(2);// TODO why the 2nd buffer?
-    // The output buffer should contain 5 tuple;
-    // TODO why do we check for 2 tuple?
+    // wait till all buffers have been produced
+    testSink->completed.get_future().get();
+
+    // get result buffer, which should contain two results.
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    auto& resultBuffer = testSink->get(0);
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
-    auto resultLayout = createRowLayout(ptr);
+    auto resultLayout = createRowLayout(windowResultSchema);
     for (int recordIndex = 0; recordIndex < 2; recordIndex++) {
-        auto v = resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer);
-        EXPECT_EQ(v, 10);
+        auto windowAggregationValue = resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer);
+        EXPECT_EQ(windowAggregationValue, 5);
     }
     testSink->shutdown();
-    testSource->stop();
+    windowSource->stop();
 }
 
 // P1 = Source1 -> filter1
@@ -252,7 +316,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     mergeOperator->setParent(windowScan);
     windowScan->addChild(mergeOperator);
 
-    auto testSink = std::make_shared<TestSink>();
+    auto testSink = std::make_shared<TestSink>(10);
     auto sink = createSinkOperator(testSink);
 
     windowScan->setParent(sink);

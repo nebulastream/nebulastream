@@ -78,7 +78,7 @@ class WindowHandler {
         // For processing time we use the current wall clock as watermark.
         // TODO we should add a allowed lateness to support out of order events
         auto windowTimeType = windowDefinition->windowType->getTimeCharacteristic();
-        auto watermark = windowTimeType == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMaxTs();
+        auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMaxTs();
 
         // create result vector of windows
         auto windows = std::make_shared<std::vector<WindowState>>();

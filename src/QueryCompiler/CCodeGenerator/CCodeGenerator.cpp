@@ -368,13 +368,19 @@ bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineC
 
     // get current timestamp
     // TODO add support for event time
-    auto currentTimeVariableDeclaration = VariableDeclaration::create(
-        tf->createAnonymusDataType("auto"), "current_ts");
-    auto getCurrentTs = FunctionCallStatement("NES::getTsFromClock");
-    auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration)
-                                     .assign(getCurrentTs);
-    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
-        getCurrentTsStatement));
+    auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
+    if (window->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+        auto getCurrentTs = FunctionCallStatement("NES::getTsFromClock");
+        auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
+    } else {
+        auto tsVariableDeclaration =
+            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->windowType->getTimeCharacteristic()->getField()->name);
+        auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration)
+                                                  .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                                                      VarRef(tsVariableDeclaration)));
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
+    }
 
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
@@ -413,9 +419,9 @@ bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineC
         context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
 
-    context->code->cleanupStmts.push_back(emitTupleBuffer(context->code->varDeclarationExecutionContext,
-                                                          context->code->varDeclarationResultBuffer)
-                                              .copy());
+    // context->code->cleanupStmts.push_back(emitTupleBuffer(context->code->varDeclarationExecutionContext,
+    //                                                      context->code->varDeclarationResultBuffer)
+    //                                          .copy());
     return true;
 }
 
