@@ -1,5 +1,5 @@
+#include <Exceptions/NesNetworkError.hpp>
 #include <Network/ExchangeProtocol.hpp>
-#include <Exceptions/NesExceptions.hpp>
 namespace NES {
 namespace Network {
 

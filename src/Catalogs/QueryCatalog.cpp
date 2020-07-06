@@ -1,4 +1,5 @@
 #include <Catalogs/QueryCatalog.hpp>
+#include <Exceptions/NesNetworkError.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/OptimizerService.hpp>
@@ -6,7 +7,6 @@
 #include <Util/UtilityFunctions.hpp>
 #include <string>
 #include <unordered_set>
-#include <Exceptions/NesExceptions.hpp>
 namespace NES {
 
 QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan)

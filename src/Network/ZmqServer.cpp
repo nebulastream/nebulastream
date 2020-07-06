@@ -1,3 +1,4 @@
+#include <Exceptions/NesNetworkError.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Network/ZmqUtils.hpp>
@@ -5,7 +6,6 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
-#include <Exceptions/NesExceptions.hpp>
 
 #define TO_RAW_ZMQ_SOCKET static_cast<void*>
 
