@@ -42,9 +42,8 @@ class Pattern : public Query {
 
     /**
      * @brief: Monitors a condition from a particular source stream. The source stream is identified by its name.
-     * During query processing the underlying source descriptor is retrieved from the stream catalog.
+     * During processing the underlying source descriptor is retrieved from the stream catalog.
      * @param sourceStreamName name of the stream to monitor. This name has to be registered in the query catalog.
-     * //TODO own catalog for patterns?
      * @return the pattern
      */
     static Pattern from(const std::string sourceStreamName);
@@ -61,9 +60,9 @@ class Pattern : public Query {
     void setPatternName(const std::string& patternName);
 
   private:
-    // creates a new query object
+    // creates a new pattern object
     Pattern(QueryPlanPtr queryPlan);
-    // query plan containing the operators.
+
     std::string patternName;
 
 };
