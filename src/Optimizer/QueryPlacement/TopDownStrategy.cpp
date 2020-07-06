@@ -92,7 +92,7 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
                 NES_THROW_RUNTIME_ERROR("TopDownStrategy: No node available for further placement of operators");
             }
 
-            if(candidateOperator->instanceOf<SinkLogicalOperatorNode>()){
+            if (candidateOperator->instanceOf<SinkLogicalOperatorNode>()) {
                 if (!globalExecutionPlan->getExecutionNodeByNodeId(candidateNesNode->getId())) {
                     NES_DEBUG("TopDownStrategy: Creating a new root execution node for placing sink operator");
                     const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode);
