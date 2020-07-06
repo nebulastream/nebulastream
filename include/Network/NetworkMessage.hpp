@@ -136,18 +136,6 @@ class DataBufferMessage {
     const uint32_t numOfRecords;
 };
 
-class NesNetworkError : public std::runtime_error {
-  public:
-    explicit NesNetworkError(ErrMessage& msg) : msg(msg), std::runtime_error("") {
-    }
-
-    const ErrMessage& getErrorMessage() const {
-        return msg;
-    }
-
-  private:
-    const ErrMessage msg;
-};
 
 }// namespace Messages
 }// namespace Network

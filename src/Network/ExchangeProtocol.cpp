@@ -1,5 +1,5 @@
 #include <Network/ExchangeProtocol.hpp>
-
+#include <Exceptions/NesExceptions.hpp>
 namespace NES {
 namespace Network {
 
@@ -38,7 +38,7 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
         return Messages::ServerReadyMessage{msg.getChannelId()};
     } else {
         auto errorMsg = Messages::ErrMessage{msg.getChannelId(), Messages::PartitionNotRegisteredError};
-        throw Messages::NesNetworkError(errorMsg);
+        throw NesNetworkError(errorMsg);
     }
 }
 
