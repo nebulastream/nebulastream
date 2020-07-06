@@ -37,7 +37,7 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class Pattern : public Query {
 
   public:
-    Pattern(const Pattern&);
+    //Pattern(const Pattern&);
     ~Pattern() = default;
 
     /**
@@ -49,42 +49,13 @@ class Pattern : public Query {
      */
     static Pattern from(const std::string sourceStreamName);
 
-    /**
-     * @brief Create Query using queryPlan
-     * @param sourceStreamName source stream name
-     * @param queryPlan the input query plan
-     * @return Query instance
-     */
-    static Pattern createFromQueryPlan(QueryPlanPtr queryPlan);
-
-    /**
-     * @brief: Filter records according to the predicate.
-     * filter(Attribute("f1" < 10))
-     * @param predicate as expression node
-     * @return the query
-     */
-    Pattern& filter(const ExpressionNodePtr filterExpression);
-
-    /**
-     * @brief: Map records according to a map expression.
-     * map(Attribute("f2") = Attribute("f1") * 42 )
-     * @param map expression
-     * @return query
-     */
-    Pattern& map(const FieldAssignmentExpressionNodePtr mapExpression);
 
     /**
      * @brief Add sink operator for the query.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor
      */
-    Pattern& sink(const SinkDescriptorPtr sinkDescriptor);
-
-    /**
-     * @brief Gets the query plan from the current query.
-     * @return QueryPlan
-     */
-    QueryPlanPtr getQueryPlan();
+    //Pattern& sink(const SinkDescriptorPtr sinkDescriptor);
 
     const std::string& getPatternName() const;
     void setPatternName(const std::string& patternName);
@@ -93,7 +64,6 @@ class Pattern : public Query {
     // creates a new query object
     Pattern(QueryPlanPtr queryPlan);
     // query plan containing the operators.
-    QueryPlanPtr queryPlan;
     std::string patternName;
 
 };

@@ -1,3 +1,4 @@
+#include <API/Pattern.hpp>
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -97,7 +98,6 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
-        code << "#include <API/Query.hpp>" << std::endl;
         code << "#include <API/Pattern.hpp>" << std::endl;
         code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
@@ -110,8 +110,8 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
         code << "#include <API/UserAPIExpression.hpp>" << std::endl;
         code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
-        code << "Query createQuery(){" << std::endl;
-        //code << "Pattern createPattern(){" << std::endl;
+        //code << "Query createQuery(){" << std::endl;
+        code << "Pattern createQuery(){" << std::endl;
 
         std::string streamName = queryCodeSnippet.substr(
             queryCodeSnippet.find("::from("));
@@ -132,7 +132,7 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
             boost::replace_all(newQuery, ".name(" + patternName + ")", "");
         }
         //boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
-        boost::replace_all(newQuery, "Pattern::from", "return Query::from");
+        boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
         boost::replace_all(newQuery, ".sink(", ".map(Attribute(\"PatternName\") = 1).sink(");
 
         code << newQuery << std::endl;
@@ -144,14 +144,14 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
             NES_ERROR("Compilation of query code failed! Code: " << code.str());
         }
 
-        typedef Query (*CreateQueryFunctionPtr)();
+        typedef Pattern (*CreateQueryFunctionPtr)();
         CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>(
             "_ZN3NES11createQueryEv");
         if (!func) {
             NES_ERROR("Error retrieving function! Symbol not found!");
         }
         /* call loaded function to create query object */
-        Query query((*func)());
+        Pattern query((*func)());
 
         auto queryPtr = std::make_shared<Query>(query);
         std::string queryId = UtilityFunctions::generateIdString();
