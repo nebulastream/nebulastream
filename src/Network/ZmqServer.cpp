@@ -5,6 +5,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
+#include <Exceptions/NesExceptions.hpp>
 
 #define TO_RAW_ZMQ_SOCKET static_cast<void*>
 
@@ -156,7 +157,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     try {
                         auto returnMessage = exchangeProtocol->onClientAnnouncement(receivedMsg);
                         sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket, outIdentityEnvelope, returnMessage);
-                    } catch (Messages::NesNetworkError& ex) {
+                    } catch (NesNetworkError& ex) {
                         auto returnMessage = exchangeProtocol->onError(ex.getErrorMessage());
                         sendMessageWithIdentity<Messages::ErrMessage>(dispatcherSocket, outIdentityEnvelope, returnMessage);
                     }

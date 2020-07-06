@@ -6,9 +6,8 @@
 #include <Util/UtilityFunctions.hpp>
 #include <string>
 #include <unordered_set>
-
+#include <Exceptions/NesExceptions.hpp>
 namespace NES {
-class ErrorWhileRevertingChanges : public std::exception {};
 
 QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan)
     : topologyManager(topologyManager), streamCatalog(streamCatalog), globalExecutionPlan(globalExecutionPlan), insertDeleteQuery() {
