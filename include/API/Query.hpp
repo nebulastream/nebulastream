@@ -67,7 +67,7 @@ class Query {
 
     /**
      * @brief: Filter records according to the predicate.
-     * filter(Attribute("f1" < 10))
+     * @example filter(Attribute("f1" < 10))
      * @param predicate as expression node
      * @return the query
      */
@@ -75,7 +75,7 @@ class Query {
 
     /**
      * @brief: Map records according to a map expression.
-     * map(Attribute("f2") = Attribute("f1") * 42 )
+     * @example map(Attribute("f2") = Attribute("f1") * 42 )
      * @param map expression
      * @return query
      */
@@ -95,7 +95,7 @@ class Query {
     QueryPlanPtr getQueryPlan();
     // creates a new query object
     Query(QueryPlanPtr queryPlan);
-    //TODO: remove if Pattern class is ready
+
     const std::string& getQueryName() const;
     void setQueryName(const std::string& queryName);
 
