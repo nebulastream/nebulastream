@@ -5,17 +5,17 @@
 
 namespace NES {
 
-WindowType::WindowType(TimeCharacteristic timeCharacteristic) : timeCharacteristic(timeCharacteristic) {
+WindowType::WindowType(TimeCharacteristicPtr timeCharacteristic) : timeCharacteristic(timeCharacteristic) {
 }
 
-TimeCharacteristic WindowType::getTimeCharacteristic() const {
+TimeCharacteristicPtr WindowType::getTimeCharacteristic() const {
     return this->timeCharacteristic;
 }
 
-TumblingWindow::TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size)
+TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
     : size(size), WindowType(timeCharacteristic) {}
 
-WindowTypePtr TumblingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size) {
+WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size) {
     return std::make_shared<TumblingWindow>(TumblingWindow(timeCharacteristic, size));
 }
 
@@ -29,12 +29,12 @@ void TumblingWindow::triggerWindows(WindowListPtr windows,
     }
 }
 
-SlidingWindow::SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide)
+SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
     : size(size), slide(slide), WindowType(timeCharacteristic) {
     NES_NOT_IMPLEMENTED();
 }
 
-WindowTypePtr SlidingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
+WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
     return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));
 }
 
@@ -44,12 +44,12 @@ void SlidingWindow::triggerWindows(WindowListPtr windows,
     NES_NOT_IMPLEMENTED();
 }
 
-SessionWindow::SessionWindow(TimeCharacteristic timeCharacteristic, TimeMeasure gap)
+SessionWindow::SessionWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure gap)
     : gap(gap), WindowType(timeCharacteristic) {
     NES_NOT_IMPLEMENTED();
 }
 
-WindowTypePtr SessionWindow::withGap(TimeCharacteristic timeCharacteristic, TimeMeasure gap) {
+WindowTypePtr SessionWindow::withGap(TimeCharacteristicPtr timeCharacteristic, TimeMeasure gap) {
     return std::make_shared<SessionWindow>(SessionWindow(timeCharacteristic, gap));
 }
 

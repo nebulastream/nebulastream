@@ -1,6 +1,7 @@
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <Util/SharedLibrary.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <iostream>
 
 namespace NES {
 
@@ -13,6 +14,7 @@ SystemCompilerCompiledCode::~SystemCompilerCompiledCode() {
 }
 
 void* SystemCompilerCompiledCode::getFunctionPointerImpl(const std::string& name) {
+    std::cout << baseFileName << std::endl;
     return library->getSymbol(name);
 }
 

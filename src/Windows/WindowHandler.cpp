@@ -27,6 +27,7 @@ bool WindowHandler::setup(QueryExecutionPlanPtr queryExecutionPlan, uint32_t pip
 
 void WindowHandler::trigger() {
     while (running) {
+        sleep(1);
         // we currently assume processing time and only want to check for new window results every 1 second
         // todo change this when we support event time.
         NES_DEBUG("WindowHandler: check widow trigger");

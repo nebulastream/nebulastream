@@ -16,6 +16,7 @@ uint32_t CompiledExecutablePipeline::execute(TupleBuffer& inputBuffer,
                                              WindowManagerPtr window_manager,
                                              PipelineExecutionContext& context) {
     PipelineFunctionPtr fn = compiledCode->getFunctionPointer<PipelineFunctionPtr>(mangledEntryPoint);
+
     return (*fn)(inputBuffer, state, window_manager.get(), context);
 }
 
