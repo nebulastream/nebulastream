@@ -22,9 +22,10 @@ WindowOperator& WindowOperator::operator=(const WindowOperator& other) {
 }
 
 void WindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    auto newPipelineContext1 = PipelineContext::create();
-    getChildren()[0]->produce(codegen, newPipelineContext1, out);
-    context->addNextPipeline(newPipelineContext1);
+    // The window operator is a pipeline breaker -> we create a new pipeline context for the children
+    auto newPipelineContext = PipelineContext::create();
+    getChildren()[0]->produce(codegen, newPipelineContext, out);
+    context->addNextPipeline(newPipelineContext);
 
 }
 
