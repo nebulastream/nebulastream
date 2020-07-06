@@ -1,5 +1,5 @@
 #include <Catalogs/QueryCatalog.hpp>
-#include <Exceptions/NesNetworkError.hpp>
+#include <Exceptions/ErrorWhileRevertingChanges.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/OptimizerService.hpp>
