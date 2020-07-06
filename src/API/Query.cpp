@@ -57,7 +57,7 @@ const std::string& Query::getQueryName() const {
     return queryName;
 }
 void Query::setQueryName(const std::string& queryName) {
-    Query::queryName = queryName;
+    this->queryName = queryName;
 }
 
 }// namespace NES
