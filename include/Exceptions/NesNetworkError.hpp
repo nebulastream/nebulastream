@@ -1,14 +1,13 @@
-#ifndef NES_INCLUDE_EXCEPTIONS_NESEXCEPTIONS_HPP_
-#define NES_INCLUDE_EXCEPTIONS_NESEXCEPTIONS_HPP_
+#ifndef NES_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
+#define NES_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
 #include <Network/NesPartition.hpp>
-#include <stdexcept>
 #include <Network/NetworkMessage.hpp>
+#include <stdexcept>
 
 /**
- * @brief This class should collect all nes specific exception
+ * @brief This exception represents a network error
  */
 namespace NES {
-class ErrorWhileRevertingChanges : public std::exception {};
 
 class NesNetworkError : public std::runtime_error {
   public:
@@ -24,4 +23,4 @@ class NesNetworkError : public std::runtime_error {
 };
 
 }// namespace NES
-#endif//NES_INCLUDE_EXCEPTIONS_NESEXCEPTIONS_HPP_
+#endif//NES_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
