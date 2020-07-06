@@ -1,4 +1,4 @@
-#include <API/AbstractWindowDefinition.hpp>
+#include <API/Window/TimeCharacteristic.hpp>
 
 namespace NES{
 

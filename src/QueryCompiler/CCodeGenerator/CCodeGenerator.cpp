@@ -20,6 +20,7 @@
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Logger.hpp>
+#include <API/Window/TimeCharacteristic.hpp>
 
 namespace NES {
 
