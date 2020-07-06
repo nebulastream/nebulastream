@@ -37,7 +37,7 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class Pattern : public Query {
 
   public:
-    //Pattern(const Pattern&);
+    Pattern(const Pattern&);
     ~Pattern() = default;
 
     /**

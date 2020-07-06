@@ -9,7 +9,7 @@
 
 namespace NES {
 
-//Pattern::Pattern(const Pattern& query) : Query (query)  {}
+Pattern::Pattern(const Pattern& query) : Query (query.queryPlan)  {}
 
 Pattern::Pattern(QueryPlanPtr queryPlan) :Query(queryPlan){}
 
