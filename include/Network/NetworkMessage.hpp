@@ -136,7 +136,6 @@ class DataBufferMessage {
     const uint32_t numOfRecords;
 };
 
-
 }// namespace Messages
 }// namespace Network
 }// namespace NES
