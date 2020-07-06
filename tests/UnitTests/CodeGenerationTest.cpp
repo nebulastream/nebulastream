@@ -810,7 +810,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto sum = Sum::on(Field(input_schema->get("value")));
     auto windowDefinition = createWindowDefinition(
         input_schema->get("key"), sum,
-        TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)));
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)));
 
     codeGenerator->generateCodeForWindow(windowDefinition, context);
 

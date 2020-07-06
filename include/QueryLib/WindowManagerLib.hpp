@@ -1,4 +1,5 @@
 #include <API/AbstractWindowDefinition.hpp>
+#include <API/Window/TimeCharacteristic.hpp>
 #include <State/StateVariable.hpp>
 #include <memory>
 #include <utility>
