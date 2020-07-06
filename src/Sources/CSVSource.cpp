@@ -14,13 +14,6 @@
 
 namespace NES {
 
-CSVSource::CSVSource()
-    : filePath(""),
-      tupleSize(0),
-      delimiter(","),
-      currentPosInFile(0) {
-}
-
 CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& _file_path,
                      const std::string& delimiter, size_t numBuffersToProcess,
                      size_t frequency)

@@ -31,7 +31,7 @@ using grpc::Status;
 
 namespace NES {
 
-NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort)
+NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort)
     : serverIp(serverIp), restPort(restPort), rpcPort(rpcPort) {
     NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
     stopped = false;
@@ -56,6 +56,7 @@ NesCoordinator::~NesCoordinator() {
     streamCatalog->reset();
     queryCatalog->clearQueries();
     topologyManager->resetNESTopologyPlan();
+    NES_ASSERT(shared_from_this().use_count() == 1, "Nes Coordinator leaked");
 }
 
 size_t NesCoordinator::startCoordinator(bool blocking) {
@@ -80,7 +81,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     worker = std::make_shared<NesWorker>(serverIp, std::to_string(rpcPort), serverIp,
-                                         std::to_string(rpcPort + 1), NESNodeType::Worker);
+                                         rpcPort + 1, rpcPort + 2, NESNodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //Start rest that accepts queries form the outsides
@@ -102,13 +103,12 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
         NES_DEBUG("NesCoordinator started, return without blocking on port " << rpcPort);
         return rpcPort;
     }
-    NES_DEBUG("NesCoordinator startCoordinator succeed");
+    return -1;
 }
 
 bool NesCoordinator::stopCoordinator(bool force) {
     NES_DEBUG("NesCoordinator: stopCoordinator force=" << force);
     if (!stopped) {
-
         NES_DEBUG("NesCoordinator: stopping rest server");
         bool successStopRest = restServer->stop();
         if (!successStopRest) {
@@ -126,7 +126,8 @@ bool NesCoordinator::stopCoordinator(bool force) {
         }
 
         NES_DEBUG("NesCoordinator: stopping rpc server");
-        rpcServer->Shutdown();
+        rpcServer->Shutdown(std::chrono::system_clock::now());
+        rpcServer->Wait();
         if (rpcThread->joinable()) {
             NES_DEBUG("NesCoordinator: join rpcThread");
             rpcThread->join();
@@ -164,7 +165,7 @@ void NesCoordinator::buildAndStartGRPCServer() {
     grpc::ServerBuilder builder;
     CoordinatorRPCServer service(coordinatorEngine);
 
-    std::string address = serverIp + ":" + ::to_string(rpcPort);
+    std::string address = serverIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     rpcServer = builder.BuildAndStart();

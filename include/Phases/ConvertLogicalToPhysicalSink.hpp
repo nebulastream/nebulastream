@@ -10,6 +10,9 @@ namespace NES {
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
+class NodeEngine;
+typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
+
 /**
  * @brief This class is responsible for creating the physical sink from Logical sink description
  */
@@ -19,9 +22,10 @@ class ConvertLogicalToPhysicalSink {
     /**
      * @brief This method is responsible for creating the physical sink from logical sink descriptor
      * @param sinkDescriptor: logical sink descriptor
+     * @param nodeEngine: the running node engine where the sink is deployed
      * @return Data sink pointer representing the physical sink
      */
-    static DataSinkPtr createDataSink(SchemaPtr schema, BufferManagerPtr bufferManager, SinkDescriptorPtr sinkDescriptor);
+    static DataSinkPtr createDataSink(SchemaPtr schema, SinkDescriptorPtr sinkDescriptor, NodeEnginePtr nodeEngine);
 
   private:
     ConvertLogicalToPhysicalSink() = default;

@@ -1,10 +1,10 @@
 #ifndef NES_INCLUDE_DEPLOYER_QUERYDEPLOYER_HPP_
 #define NES_INCLUDE_DEPLOYER_QUERYDEPLOYER_HPP_
 
-#include <GRPC/ExecutableTransferObject.hpp>
 #include <Sources/DataSource.hpp>
 
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 namespace NES {
@@ -24,6 +24,10 @@ typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
+
+
 class QueryDeployer {
 
   public:
@@ -35,17 +39,17 @@ class QueryDeployer {
      * @brief prepare for a query deployment
      * @param query a queryId of the query
      */
-    bool prepareForDeployment(const string& queryId);
+    bool prepareForDeployment(const std::string& queryId);
 
     /**
      * @brief helper method to get an automatically assigned receive port where ZMQs are communicating.
      * Currently only server/client architecture, i.e., only one layer, is supported
      * @param query the descriptor of the query
      */
-    int assignPort(const string& queryId);
+    int assignPort(const std::string& queryId);
 
   private:
-    std::unordered_map<string, int> queryToPort;
+    std::unordered_map<std::string, int> queryToPort;
     QueryCatalogPtr queryCatalog;
     TopologyManagerPtr topologyManager;
     GlobalExecutionPlanPtr globalExecutionPlan;

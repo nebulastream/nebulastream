@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>//
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -8,9 +9,9 @@
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>
-#include <iostream>
 
+#include <iostream>
+#include <NodeEngine/NodeEngine.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/LogicalStream.hpp>
@@ -29,7 +30,7 @@
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 
-
+using namespace std;
 namespace NES {
 
 class LogicalOperatorNodeTest : public testing::Test {
@@ -939,7 +940,6 @@ TEST_F(LogicalOperatorNodeTest, isCyclic) {
     filterOp1->addChild(filterOp2);
     filterOp1->addChild(filterOp4);
     filterOp3->addChild(filterOp6);
-
     EXPECT_TRUE(filterOp6->isCyclic());
     EXPECT_TRUE(filterOp3->isCyclic());
     EXPECT_FALSE(filterOp1->isCyclic());
@@ -1418,10 +1418,11 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
     sinkOperator->addChild(filter);
     filter->addChild(sourceOp);
 
+    auto engine = NodeEngine::create("127.0.0.1", 30000);
     ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
-    auto translatePhase = TranslateToLegacyPlanPhase::create(nullptr);
-    auto legacySink = translatePhase->transform(sinkOperator->as<OperatorNode>());
+    auto translatePhase = TranslateToLegacyPlanPhase::create();
+    auto legacySink = translatePhase->transform(sinkOperator->as<OperatorNode>(), engine);
     std::cout << legacySink->toString() << std::endl;
     ASSERT_TRUE(legacySink->getOperatorType() == SINK_OP);
     auto legacyFilter = legacySink->getChildren()[0];

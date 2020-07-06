@@ -124,6 +124,7 @@ DataTypePtr DataTypeFactory::createType(BasicType type) {
         case FLOAT32: return DataTypeFactory::createFloat();
         case FLOAT64: return DataTypeFactory::createDouble();
     }
+    return DataTypePtr();
 }
 
 }// namespace NES

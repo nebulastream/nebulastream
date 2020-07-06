@@ -1,6 +1,7 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
+#include <GRPC/WorkerRPCClient.hpp>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
@@ -43,7 +44,7 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
-    NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort);
+    explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort);
 
     /**
      * @brief dtor
@@ -108,6 +109,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      */
     void buildAndStartGRPCServer();
 
+  private:
     std::string serverIp;
     uint16_t restPort;
     uint16_t rpcPort;

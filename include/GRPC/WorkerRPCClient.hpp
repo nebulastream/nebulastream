@@ -9,7 +9,6 @@
 #include <grpcpp/grpcpp.h>
 #include <string>
 
-using namespace std;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;

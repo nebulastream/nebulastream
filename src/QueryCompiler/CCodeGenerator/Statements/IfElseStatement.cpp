@@ -3,7 +3,7 @@
 
 namespace NES {
 
-IfElseStatement::IfElseStatement(const Statement& cond_true, const Statement& cond_false) {}
+IfElseStatement::IfElseStatement(const Statement&, const Statement&) {}
 
 const CodeExpressionPtr IfElseStatement::getCode() const {
     return std::make_shared<CodeExpression>("");

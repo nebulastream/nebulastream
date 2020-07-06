@@ -5,13 +5,14 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
-using namespace std;
-
+using std::cout;
+using std::endl;
 #define DEBUG_OUTPUT
 namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
+// TODO use grpc async queue to fix this issue - I am currently increasing the rpc port by 30 on every test! this is very bad!
 uint64_t rpcPort = 4000;
 
 class WorkerCoordinatorStarterTest : public testing::Test {
@@ -29,7 +30,7 @@ class WorkerCoordinatorStarterTest : public testing::Test {
         std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl;
     }
 
-    std::string ipAddress = "localhost";
+    std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 };
 
@@ -41,7 +42,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started connected successfully" << endl;
@@ -55,6 +56,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     cout << "stopping coordinator" << endl;
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
+    rpcPort += 30;
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
@@ -65,7 +67,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started connected successfully" << endl;
@@ -79,6 +81,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
+    rpcPort += 30;
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
@@ -89,7 +92,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -103,6 +106,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
+    rpcPort += 30;
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
@@ -113,7 +117,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -127,6 +131,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
 
     bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
+    rpcPort += 30;
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator) {
@@ -137,7 +142,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -155,6 +160,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
+    rpcPort += 30;
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
@@ -165,7 +171,7 @@ TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;

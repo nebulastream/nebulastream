@@ -18,19 +18,21 @@ namespace NES {
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0),
-      lastGatheringTimeStamp(0), sourceId(UtilityFunctions::generateIdString()) { NES_DEBUG(
-                                     "DataSource " << this->getSourceId() << ": Init Data Source with schema"); };
+      lastGatheringTimeStamp(0), sourceId(UtilityFunctions::generateIdString()) {
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source with schema");
+    NES_ASSERT(this->bufferManager, "Invalid buffer manager");
+    NES_ASSERT(this->queryManager, "Invalid query manager");
+}
+
 
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                        std::string sourceId)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0),
-      lastGatheringTimeStamp(0), sourceId(sourceId) { NES_DEBUG(
-                                     "DataSource " << this->getSourceId() << ": Init Data Source with schema"); };
-
-DataSource::DataSource() {
-    NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source Default w/o schema");
-    running = false;
+      lastGatheringTimeStamp(0), sourceId(sourceId) {
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source with schema");
+    NES_ASSERT(this->bufferManager, "Invalid buffer manager");
+    NES_ASSERT(this->queryManager, "Invalid query manager");
 }
 
 SchemaPtr DataSource::getSchema() const { return schema; }
@@ -109,9 +111,6 @@ bool DataSource::stop() {
 bool DataSource::isRunning() { return running; }
 
 void DataSource::setGatheringInterval(size_t interval) { this->gatheringInterval = interval; }
-
-void DataSource::setQueryManager(QueryManagerPtr queryManager) { this->queryManager = queryManager; }
-void DataSource::setBufferManger(BufferManagerPtr bufferManager) { this->bufferManager = bufferManager; }
 
 void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
     if (!queryManager) {

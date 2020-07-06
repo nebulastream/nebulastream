@@ -23,8 +23,6 @@ QueryPlan::QueryPlan(OperatorNodePtr rootOperator) {
     rootOperators.push_back(std::move(rootOperator));
 }
 
-QueryPlan::QueryPlan() {}
-
 std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators;

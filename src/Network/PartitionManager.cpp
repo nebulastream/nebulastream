@@ -13,7 +13,7 @@ uint64_t PartitionManager::registerSubpartition(NesPartition partition) {
     } else {
         partitionCounter[partition] = 0;
     }
-    NES_INFO("PartitionManager: Registering " << partition.toString() << "=" << partitionCounter[partition]);
+    NES_DEBUG("PartitionManager: Registering " << partition.toString() << "=" << partitionCounter[partition]);
     return partitionCounter[partition];
 }
 

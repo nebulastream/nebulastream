@@ -17,7 +17,7 @@ typedef std::shared_ptr<Pattern> PatternPtr;
 enum NESNodeType {
     Coordinator,
     Worker,
-    Sensor
+    Sensor // TODO what is this?!
 };
 
 class NESTopologyEntry {

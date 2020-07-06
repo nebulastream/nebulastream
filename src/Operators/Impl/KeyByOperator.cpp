@@ -19,8 +19,8 @@ KeyByOperator& KeyByOperator::operator=(const KeyByOperator& other) {
     return *this;
 }
 
-void KeyByOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
-void KeyByOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
+void KeyByOperator::produce(CodeGeneratorPtr, PipelineContextPtr, std::ostream&) {}
+void KeyByOperator::consume(CodeGeneratorPtr, PipelineContextPtr, std::ostream&) {}
 
 const OperatorPtr KeyByOperator::copy() const {
     const OperatorPtr copy = std::make_shared<KeyByOperator>(*this);

@@ -32,7 +32,7 @@ class Gauge {
 };
 
 template<typename T>
-MetricType getMetricType(const Gauge<T>& x) {
+MetricType getMetricType(const Gauge<T>&) {
     return MetricType::GaugeType;
 }
 

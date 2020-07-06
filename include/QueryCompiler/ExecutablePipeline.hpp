@@ -16,8 +16,9 @@ class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
 class PipelineExecutionContext;
-typedef std::unique_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
+typedef std::shared_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
 
+// TODO move state and windowManager inside the PipelineExecutionContext
 class ExecutablePipeline {
   public:
     virtual ~ExecutablePipeline() = default;
@@ -26,10 +27,11 @@ class ExecutablePipeline {
      * @brief Executes the pipeline given the input
      * @return error code: 1 for valid execution, 0 for error
      */
+     // TODO use dedicate type for return
     virtual uint32_t execute(TupleBuffer& input_buffers,
                              void* state,
                              WindowManagerPtr window_manager,
-                             PipelineExecutionContext& context) = 0;
+                             QueryExecutionContextPtr context) = 0;
 };
 
 }// namespace NES

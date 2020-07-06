@@ -1,5 +1,6 @@
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
+#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
@@ -15,9 +16,32 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
+/**
+ * @brief A running execution plan on a node engine.
+ * This class is thread-safe.
+ */
 class QueryExecutionPlan {
   public:
-    QueryExecutionPlan(std::string queryId);
+    enum QueryExecutionPlanStatus {
+        Created,
+        Deployed, // Created->Deployed when calling setup()
+        Running, // Deployed->Running when calling start()
+        Finished,
+        Stopped, // Running->Stopped when calling stop() and in Running state
+        ErrorState,
+        Invalid
+    };
+
+  protected:
+
+    explicit QueryExecutionPlan(
+        QueryExecutionPlanId queryId,
+        std::vector<DataSourcePtr> sources,
+        std::vector<PipelineStagePtr> stages,
+        QueryManagerPtr queryManager,
+        BufferManagerPtr bufferManager);
+
+  public:
     virtual ~QueryExecutionPlan();
 
     /**
@@ -35,48 +59,23 @@ class QueryExecutionPlan {
      */
     bool stop();
 
-    /**
-     * @brief Execute a particular pipeline stage with the given input buffer.
-     * @param pipeline_stage_id
-     * @param buf
-     * @return true if pipeline stage was executed successfully.
-     */
-    virtual bool executeStage(uint32_t pipeline_stage_id, TupleBuffer& buf);
-
-    /**
-     * @brief Get pipeline stage id for a data source.
-     * @param source
-     * @return pipline stage id
-     */
-    uint32_t stageIdFromSource(DataSource* source);
-
-    /**
-     * @brief Add a data source to the query plan.
-     * @param source
-     */
-    void addDataSource(DataSourcePtr source);
+    QueryExecutionPlanStatus getStatus();
 
     /**
      * @brief Get data sources.
      */
-    const std::vector<DataSourcePtr> getSources() const;
-
-    /**
-     * @brief Add a data sing to the query plan.
-     * @param sink
-     */
-    void addDataSink(DataSinkPtr sink);
+    std::vector<DataSourcePtr> getSources() const;
 
     /**
      * @brief Get data sinks.
      */
-    const std::vector<DataSinkPtr> getSinks() const;
+    std::vector<DataSinkPtr> getSinks() const;
+
 
     /**
-     * Appends a pipeline stage to the query plan.
-     * @param pipelineStage
+     * @brief Get i-th stage.
      */
-    void appendPipelineStage(PipelineStagePtr pipelineStage);
+    PipelineStagePtr getStage(size_t index) const;
 
     /**
      * @brief Gets number of pipeline stages.
@@ -86,31 +85,22 @@ class QueryExecutionPlan {
     }
 
     QueryManagerPtr getQueryManager();
-    void setQueryManager(QueryManagerPtr queryManager);
 
     BufferManagerPtr getBufferManager();
-    void setBufferManager(BufferManagerPtr bufferManager);
 
     void print();
 
-    void setQueryId(std::string queryId);
-    std::string getQueryId();
+    QueryExecutionPlanId getQueryId();
 
   protected:
-    QueryExecutionPlan(std::string queryId,
-                       std::vector<DataSourcePtr> sources,
-                       std::vector<PipelineStagePtr> stages,
-                       std::map<DataSource*, uint32_t> sourceToStage,
-                       std::map<uint32_t, uint32_t> stageToDest);
-
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<PipelineStagePtr> stages;
-    std::map<DataSource*, uint32_t> sourceToStage;
-    std::map<uint32_t, uint32_t> stageToDest;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
-    std::string queryId;
+    const QueryExecutionPlanId queryId;
+
+    std::atomic<QueryExecutionPlanStatus> qepStatus;
 };
 
 }// namespace NES

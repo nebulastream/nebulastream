@@ -27,7 +27,7 @@ bool PipelineContext::hasNextPipeline() const {
     return this->nextPipelines.size() != 0;
 }
 
-std::vector<PipelineContextPtr> PipelineContext::getNextPipelines() const {
+const std::vector<PipelineContextPtr>& PipelineContext::getNextPipelineContexts() const {
     return this->nextPipelines;
 }
 

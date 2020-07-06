@@ -81,7 +81,7 @@ bool QueryDeploymentPhase::startQuery(std::string queryId, std::vector<Execution
     NES_DEBUG("NesCoordinator::startQuery queryId=" << queryId);
 
     for (ExecutionNodePtr executionNode : executionNodes) {
-        string nesNodeIp = executionNode->getNesNode()->getIp();
+        auto nesNodeIp = executionNode->getNesNode()->getIp();
         NES_DEBUG("NesCoordinator::startQuery at execution node with id=" << executionNode->getId() << " and IP=" << nesNodeIp);
         bool success = workerRPCClient->startQuery(nesNodeIp, queryId);
         if (success) {

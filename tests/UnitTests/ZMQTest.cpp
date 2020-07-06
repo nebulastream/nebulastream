@@ -66,8 +66,7 @@ public:
 
 /* - ZeroMQ Data Source ---------------------------------------------------- */
 TEST_F(ZMQTest, testZmqSourceReceiveData) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 3000);
 
     // Create ZeroMQ Data Source.
     auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",

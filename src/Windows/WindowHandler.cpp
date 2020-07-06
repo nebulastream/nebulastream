@@ -6,22 +6,24 @@
 #include <atomic>
 #include <iostream>
 #include <memory>
+#include <utility>
 
 namespace NES {
 
 WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)
-    : windowDefinition(windowDefinitionPtr), queryManager(queryManager), bufferManager(bufferManager) {
+    : windowDefinition(std::move(windowDefinitionPtr)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)) {
     this->thread.reset();
 }
 
-bool WindowHandler::setup(QueryExecutionPlanPtr queryExecutionPlan, uint32_t pipelineStageId) {
+bool WindowHandler::setup(PipelineStagePtr nextPipeline, uint32_t pipelineStageId) {
     this->pipelineStageId = pipelineStageId;
-    this->queryExecutionPlan = queryExecutionPlan;
     this->thread.reset();
     // Initialize WindowHandler Manager
     this->windowManager = std::make_shared<WindowManager>(this->windowDefinition);
     // Initialize StateVariable
     this->windowState = &StateManager::instance().registerState<int64_t, WindowSliceStore<int64_t>*>("window");
+    this->nextPipeline = nextPipeline;
+    NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
     return true;
 }
 
@@ -46,8 +48,7 @@ void WindowHandler::trigger() {
             NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records");
             queryManager->addWorkForNextPipeline(
                 tupleBuffer,
-                this->queryExecutionPlan,
-                this->pipelineStageId);
+                this->nextPipeline);
         }
     }
 }

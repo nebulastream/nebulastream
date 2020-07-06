@@ -370,7 +370,7 @@ TEST_F(NesTopologyManagerTest, printGraph) {
     std::cout << " current plan from topo="
               << topologyManager->getNESTopologyPlanString()
               << std::endl;
-    stringstream ss;
+    std::stringstream ss;
     ss << "graph G {\n"
           "0[label=\"0 type=Worker\"];\n"
           "1[label=\"1 type=Worker\"];\n"
@@ -418,8 +418,8 @@ TEST_F(NesTopologyManagerTest, printGraph) {
     ss << "21--4 [label=\"" << links[20]->getId() << "\"];\n";
     ss << "}\n";
 
-    string expected_result = ss.str();
-    cout << "expected_result=" << expected_result << endl;
+    std::string expected_result = ss.str();
+    std::cout << "expected_result=" << expected_result << std::endl;
 
     EXPECT_EQ(topologyManager->getNESTopologyPlanString(),
               expected_result);

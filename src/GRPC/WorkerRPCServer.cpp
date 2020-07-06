@@ -8,13 +8,19 @@ WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer");
 }
 
-Status WorkerRPCServer::RegisterQuery(ServerContext* context, const RegisterQueryRequest* request,
+Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request,
                                       RegisterQueryReply* reply) {
     auto queryId = request->queryid();
 
     auto queryPlan = OperatorSerializationUtil::deserializeOperator((SerializableOperator*) &request->operatortree());
     NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryId);
-    bool success = nodeEngine->registerQueryInNodeEngine(queryId, queryPlan);
+    bool success;
+    try {
+        success = nodeEngine->registerQueryInNodeEngine(queryId, queryPlan);
+    } catch (std::exception& error) {
+        NES_ERROR("Register query crashed: " << error.what());
+        success = false;
+    }
     if (success) {
         NES_DEBUG("WorkerRPCServer::RegisterQuery: success");
         reply->set_success(true);
@@ -26,7 +32,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext* context, const RegisterQuer
     }
 }
 
-Status WorkerRPCServer::UnregisterQuery(ServerContext* context, const UnregisterQueryRequest* request,
+Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryRequest* request,
                                         UnregisterQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::UnregisterQuery: got request for " << request->queryid());
     bool success = nodeEngine->unregisterQuery(request->queryid());
@@ -41,7 +47,7 @@ Status WorkerRPCServer::UnregisterQuery(ServerContext* context, const Unregister
     }
 }
 
-Status WorkerRPCServer::StartQuery(ServerContext* context, const StartQueryRequest* request,
+Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* request,
                                    StartQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::StartQuery: got request for " << request->queryid());
     bool success = nodeEngine->startQuery(request->queryid());
@@ -56,7 +62,7 @@ Status WorkerRPCServer::StartQuery(ServerContext* context, const StartQueryReque
     }
 }
 
-Status WorkerRPCServer::StopQuery(ServerContext* context, const StopQueryRequest* request,
+Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* request,
                                   StopQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::StopQuery: got request for " << request->queryid());
     bool success = nodeEngine->stopQuery(request->queryid());

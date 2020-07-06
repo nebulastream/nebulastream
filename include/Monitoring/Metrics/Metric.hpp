@@ -23,7 +23,7 @@ enum MetricType {
 };
 
 template<typename T>
-MetricType getMetricType(const T& x) {
+MetricType getMetricType(const T&) {
     return UnknownType;
 }
 

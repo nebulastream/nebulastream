@@ -5,9 +5,11 @@
 #include <utility>
 namespace NES {
 
-PipelineExecutionContext::PipelineExecutionContext(BufferManagerPtr bufferManager,
-                                                   std::function<void(TupleBuffer&)> emitFunction) : bufferManager(std::move(bufferManager)),
-                                                                                                     emitFunctionHandler(std::move(emitFunction)) {
+PipelineExecutionContext::PipelineExecutionContext(
+    BufferManagerPtr bufferManager,
+    std::function<void(TupleBuffer&)>&& emitFunction)
+    : bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)) {
+    // nop
 }
 
 TupleBuffer PipelineExecutionContext::allocateTupleBuffer() {

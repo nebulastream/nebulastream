@@ -1,15 +1,18 @@
+#include <gtest/gtest.h> //
 #include <cassert>
 #include <iostream>
-
+#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
+#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
+#include <QueryCompiler/ExecutablePipeline.hpp>
+#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <future>
-#include <gtest/gtest.h>
+
 
 using namespace std;
 
@@ -81,23 +84,14 @@ std::string joinedExpectedOutput10 =
 
 std::string filePath = "file.txt";
 
-class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
+class HandCodedExecutablePipeline : public ExecutablePipeline {
   public:
-    std::atomic<uint64_t> count;
-    std::atomic<uint64_t> sum;
+    std::atomic<uint64_t> count = 0;
+    std::atomic<uint64_t> sum = 0;
     std::promise<bool> completedPromise;
-    CompiledTestQueryExecutionPlan()
-        :
-        HandCodedQueryExecutionPlan(),
-        count(0),
-        sum(0) {
-    }
 
-    bool firstPipelineStage(const TupleBuffer&) {
-        return false;
-    }
 
-    bool executeStage(uint32_t pipeline_stage_id, TupleBuffer& inBuf) {
+    uint32_t execute(TupleBuffer& inBuf, void*, WindowManagerPtr, QueryExecutionContextPtr context) override {
         auto tuples = inBuf.getBufferAs<uint64_t>();
 
         NES_INFO("Test: Start execution");
@@ -113,15 +107,14 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
             "Test: query result = Processed Block:" << inBuf.getNumberOfTuples() << " count: " << count << " psum: "
                                                     << psum << " sum: " << sum);
 
-        auto sink = getSinks()[0];
-        TupleBuffer outputBuffer = inBuf;
+        TupleBuffer outputBuffer = context->allocateTupleBuffer();
 
         NES_DEBUG("TEST: got buffer");
         auto arr = outputBuffer.getBufferAs<uint32_t>();
         arr[0] = static_cast<uint32_t>(sum.load());
         outputBuffer.setNumberOfTuples(1);
         NES_DEBUG("TEST: written " << arr[0]);
-        sink->writeData(outputBuffer);
+        context->emitBuffer(outputBuffer);
 
         if (sum == 10) {
             NES_DEBUG("TEST: result correct");
@@ -132,10 +125,12 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
         }
 
         NES_DEBUG("TEST: return");
-        return true;
+        return 1;
     }
+
+
 };
-typedef std::shared_ptr<CompiledTestQueryExecutionPlan> CompiledTestQueryExecutionPlanPtr;
+typedef std::shared_ptr<HandCodedExecutablePipeline> CompiledTestQueryExecutionPlanPtr;
 
 /**
  * @brief test for the engine
@@ -201,17 +196,26 @@ void testOutput(std::string path, std::string expectedOutput) {
     EXPECT_TRUE(response == 0);
 }
 
-CompiledTestQueryExecutionPlanPtr setupQEP(BufferManagerPtr bPtr, QueryManagerPtr dPtr, std::string queryId) {
-    CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
+auto setupQEP(NodeEnginePtr engine, std::string queryId) {
+    GeneratedQueryExecutionPlanBuilder builder = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(bPtr, dPtr);
+        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch = Schema::create()
         ->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createTextFileSink(sch, bPtr, filePath, true);
-    qep->addDataSource(source);
-    qep->addDataSink(sink);
-    qep->setQueryId(queryId);
-    return qep;
+    DataSinkPtr sink = createTextFileSink(sch, engine->getBufferManager(), filePath, true);
+    builder.addSource(source);
+    builder.addSink(sink);
+    builder.setQueryId(queryId);
+    builder.setQueryManager(engine->getQueryManager());
+    builder.setBufferManager(engine->getBufferManager());
+    builder.setCompiler(engine->getCompiler());
+    auto context = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink](TupleBuffer& buffer) {
+        sink->writeData(buffer);
+    });
+    auto executable = std::make_shared<HandCodedExecutablePipeline>();
+    auto pipeline = PipelineStage::create(0, queryId, executable, context, nullptr);
+    builder.addPipelineStage(pipeline);
+    return std::make_tuple(builder.build(), executable);
 }
 
 //TODO: add test for register and start only
@@ -221,242 +225,304 @@ CompiledTestQueryExecutionPlanPtr setupQEP(BufferManagerPtr bPtr, QueryManagerPt
  *     cout << "Stats=" << ptr->getStatistics() << endl;
  */
 TEST_F(EngineTest, testStartStopEngineEmpty) {
-    NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->stop(false));
+    auto engine = NodeEngine::create("127.0.0.1", 31337);
+    ASSERT_TRUE(engine->stop());
 }
 
 TEST_F(EngineTest, teststartDeployStop) {
-    NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    ASSERT_TRUE(ptr->start());
+    auto engine = NodeEngine::create("127.0.0.1", 31337);
 
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
-    ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
-    qep->completedPromise.get_future().get();
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
-    ASSERT_TRUE(!ptr->stop(false));
+    auto [qep, pipeline] = setupQEP(engine, testQueryId);
+    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
+    pipeline->completedPromise.get_future().get();
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->stop());
 
     testOutput();
 }
 
 TEST_F(EngineTest, testStartDeployUndeployStop) {
-    NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    ASSERT_TRUE(ptr->start());
+    auto ptr = NodeEngine::create("127.0.0.1", 31337);
 
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
+    auto [qep, pipeline] = setupQEP(ptr, testQueryId);
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
-    qep->completedPromise.get_future().get();
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
+    pipeline->completedPromise.get_future().get();
+    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
     ASSERT_TRUE(ptr->undeployQuery(testQueryId));
-    ASSERT_TRUE(ptr->stop(false));
+    ASSERT_TRUE(ptr->stop());
 
     testOutput();
 }
 
 TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
-    NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    ASSERT_TRUE(ptr->start());
+    auto ptr = NodeEngine::create("127.0.0.1", 31337);
 
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
+    auto [qep, pipeline] = setupQEP(ptr, testQueryId);
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep));
     ASSERT_TRUE(ptr->startQuery(testQueryId));
-    qep->completedPromise.get_future().get();
-
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
-
+    pipeline->completedPromise.get_future().get();
+    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
     ASSERT_TRUE(ptr->stopQuery(testQueryId));
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
+    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Stopped);
 
     ASSERT_TRUE(ptr->unregisterQuery(testQueryId));
-    ASSERT_TRUE(ptr->stop(false));
+    ASSERT_TRUE(ptr->stop());
 
     testOutput();
 }
-
+//
 TEST_F(EngineTest, testParallelDifferentSource) {
-    NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    ASSERT_TRUE(ptr->start());
+    auto engine = NodeEngine::create("127.0.0.1", 31337);
 
-    CompiledTestQueryExecutionPlanPtr qep1 = std::make_shared<CompiledTestQueryExecutionPlan>();
+    GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(), ptr->getQueryManager());
+        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, ptr->getBufferManager(), "qep1.txt", true);
-    qep1->addDataSource(source1);
-    qep1->addDataSink(sink1);
-    qep1->setQueryId("1");
+    DataSinkPtr sink1 = createTextFileSink(sch1, engine->getBufferManager(), "qep1.txt", true);
+    builder1.addSource(source1);
+    builder1.addSink(sink1);
+    builder1.setQueryId("1");
+    builder1.setQueryManager(engine->getQueryManager());
+    builder1.setBufferManager(engine->getBufferManager());
+    builder1.setCompiler(engine->getCompiler());
+    auto context1 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer) {
+      sink1->writeData(buffer);
+    });
+    auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
+    auto pipeline1 = PipelineStage::create(0, "1", executable1, context1, nullptr);
+    builder1.addPipelineStage(pipeline1);
 
-    CompiledTestQueryExecutionPlanPtr qep2 = std::make_shared<CompiledTestQueryExecutionPlan>();
-    DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(),
-                                                                                     ptr->getQueryManager());
+    GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
+    DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(),
+                                                                                     engine->getQueryManager());
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink2 = createTextFileSink(sch2, ptr->getBufferManager(), "qep2.txt", true);
-    qep2->addDataSource(source2);
-    qep2->addDataSink(sink2);
-    qep2->setQueryId("2");
+    DataSinkPtr sink2 = createTextFileSink(sch2, engine->getBufferManager(), "qep2.txt", true);
+    builder2.addSource(source2);
+    builder2.addSink(sink2);
+    builder2.setQueryId("2");
+    builder2.setQueryManager(engine->getQueryManager());
+    builder2.setBufferManager(engine->getBufferManager());
+    builder2.setCompiler(engine->getCompiler());
+    auto context2 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink2](TupleBuffer& buffer) {
+      sink2->writeData(buffer);
+    });
+    auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
+    auto pipeline2 = PipelineStage::create(0, "2", executable2, context2, nullptr);
+    builder2.addPipelineStage(pipeline2);
 
-    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
-    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
+    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
+    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
 
-    ASSERT_TRUE(ptr->startQuery("1"));
-    ASSERT_TRUE(ptr->startQuery("2"));
+    ASSERT_TRUE(engine->startQuery("1"));
+    ASSERT_TRUE(engine->startQuery("2"));
 
-    qep1->completedPromise.get_future().get();
-    qep2->completedPromise.get_future().get();
+    executable1->completedPromise.get_future().get();
+    executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "1", 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "2", 1));
+    ASSERT_TRUE(engine->getQueryStatus("1") == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus("2") == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
 
-    ASSERT_TRUE(ptr->undeployQuery("1"));
-    ASSERT_TRUE(ptr->undeployQuery("2"));
+    ASSERT_TRUE(engine->stopQuery("1"));
+    ASSERT_TRUE(engine->stopQuery("2"));
 
-    ASSERT_TRUE(ptr->stop(false));
+    ASSERT_TRUE(engine->getQueryStatus("1") == QueryExecutionPlan::QueryExecutionPlanStatus::Stopped);
+    ASSERT_TRUE(engine->getQueryStatus("2") == QueryExecutionPlan::QueryExecutionPlanStatus::Stopped);
+
+    ASSERT_TRUE(!engine->stop());
+
+    ASSERT_TRUE(engine->getQueryStatus("1") == QueryExecutionPlan::QueryExecutionPlanStatus::Invalid);
+    ASSERT_TRUE(engine->getQueryStatus("2") == QueryExecutionPlan::QueryExecutionPlanStatus::Invalid);
 
     testOutput("qep1.txt");
     testOutput("qep2.txt");
 }
-
+//
 TEST_F(EngineTest, testParallelSameSource) {
-    NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    ASSERT_TRUE(ptr->start());
+    auto engine = NodeEngine::create("127.0.0.1", 31337);
 
-    CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
-    DataSourcePtr source1 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(),
-                                                                                     ptr->getQueryManager());
+    GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
+    DataSourcePtr source1 =
+        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, ptr->getBufferManager(), "qep1.txt", true);
-    qep1->addDataSource(source1);
-    qep1->addDataSink(sink1);
-    qep1->setQueryId("1");
+    DataSinkPtr sink1 = createTextFileSink(sch1, engine->getBufferManager(), "qep1.txt", true);
+    builder1.addSource(source1);
+    builder1.addSink(sink1);
+    builder1.setQueryId("1");
+    builder1.setQueryManager(engine->getQueryManager());
+    builder1.setBufferManager(engine->getBufferManager());
+    builder1.setCompiler(engine->getCompiler());
+    auto context1 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer) {
+      sink1->writeData(buffer);
+    });
+    auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
+    auto pipeline1 = PipelineStage::create(0, "1", executable1, context1, nullptr);
+    builder1.addPipelineStage(pipeline1);
 
-    CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-    DataSinkPtr sink2 = createTextFileSink(sch1, ptr->getBufferManager(), "qep2.txt", true);
-    qep2->addDataSource(source1);
-    qep2->addDataSink(sink2);
-    qep2->setQueryId("2");
+    GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
+    DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(),
+                                                                                     engine->getQueryManager());
+    SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
+    DataSinkPtr sink2 = createTextFileSink(sch2, engine->getBufferManager(), "qep2.txt", true);
+    builder2.addSource(source2);
+    builder2.addSink(sink2);
+    builder2.setQueryId("2");
+    builder2.setQueryManager(engine->getQueryManager());
+    builder2.setBufferManager(engine->getBufferManager());
+    builder2.setCompiler(engine->getCompiler());
+    auto context2 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink2](TupleBuffer& buffer) {
+      sink2->writeData(buffer);
+    });
+    auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
+    auto pipeline2 = PipelineStage::create(0, "2", executable2, context2, nullptr);
+    builder2.addPipelineStage(pipeline2);
 
-    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
-    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
+    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
+    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
 
-    cout << "start qep1" << endl;
-    ASSERT_TRUE(ptr->startQuery("1"));
-    cout << "start qep2" << endl;
-    ASSERT_TRUE(ptr->startQuery("2"));
+    ASSERT_TRUE(engine->startQuery("1"));
+    ASSERT_TRUE(engine->startQuery("2"));
 
-    cout << "wait prom q1" << endl;
-    qep1->completedPromise.get_future().get();
+    executable1->completedPromise.get_future().get();
+    executable2->completedPromise.get_future().get();
 
-    cout << "wait prom q2" << endl;
-    qep2->completedPromise.get_future().get();
+    ASSERT_TRUE(engine->getQueryStatus("1") == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus("2") == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "1", 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "2", 1));
-
-    cout << "undeploy qep1" << endl;
-    ASSERT_TRUE(ptr->undeployQuery("1"));
-    cout << "undeploy qep2" << endl;
-    ASSERT_TRUE(ptr->undeployQuery("2"));
-
-    cout << "stop" << endl;
-    ASSERT_TRUE(ptr->stop(false));
+    ASSERT_TRUE(engine->undeployQuery("1"));
+    ASSERT_TRUE(engine->undeployQuery("2"));
+    ASSERT_TRUE(engine->stop());
 
     testOutput("qep1.txt");
     testOutput("qep2.txt");
 }
-
+//
 TEST_F(EngineTest, testParallelSameSink) {
-    NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    ASSERT_TRUE(ptr->start());
+    auto engine = NodeEngine::create("127.0.0.1", 31337);
 
-    CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+    GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(), ptr->getQueryManager());
+        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, ptr->getBufferManager(), "qep12.txt", true);
-    qep1->addDataSource(source1);
-    qep1->addDataSink(sink1);
-    qep1->setQueryId("1");
+    DataSinkPtr sink1 = createTextFileSink(sch1, engine->getBufferManager(), "qep12.txt", true);
+    builder1.addSource(source1);
+    builder1.addSink(sink1);
+    builder1.setQueryId("1");
+    builder1.setQueryManager(engine->getQueryManager());
+    builder1.setBufferManager(engine->getBufferManager());
+    builder1.setCompiler(engine->getCompiler());
+    auto context1 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer) {
+      sink1->writeData(buffer);
+    });
+    auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
+    auto pipeline1 = PipelineStage::create(0, "1", executable1, context1, nullptr);
+    builder1.addPipelineStage(pipeline1);
 
-    CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-    DataSourcePtr source2 =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(), ptr->getQueryManager());
+    GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
+    DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(),
+                                                                                     engine->getQueryManager());
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    qep2->addDataSource(source2);
-    qep2->addDataSink(sink1);
-    qep2->setQueryId("2");
+    builder2.addSource(source2);
+    builder2.addSink(sink1);
+    builder2.setQueryId("2");
+    builder2.setQueryManager(engine->getQueryManager());
+    builder2.setBufferManager(engine->getBufferManager());
+    builder2.setCompiler(engine->getCompiler());
+    auto context2 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer) {
+      sink1->writeData(buffer);
+    });
+    auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
+    auto pipeline2 = PipelineStage::create(0, "2", executable2, context2, nullptr);
+    builder2.addPipelineStage(pipeline2);
 
-    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
-    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
+    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
+    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
 
-    ASSERT_TRUE(ptr->startQuery("1"));
-    ASSERT_TRUE(ptr->startQuery("2"));
+    ASSERT_TRUE(engine->startQuery("1"));
+    ASSERT_TRUE(engine->startQuery("2"));
 
-    qep1->completedPromise.get_future().get();
-    qep2->completedPromise.get_future().get();
+    executable1->completedPromise.get_future().get();
+    executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "1", 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "2", 1));
+    ASSERT_TRUE(engine->getQueryStatus("1") == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus("2") == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
 
-    ASSERT_TRUE(ptr->undeployQuery("1"));
-    ASSERT_TRUE(ptr->undeployQuery("2"));
-
-    ASSERT_TRUE(ptr->stop(false));
+    ASSERT_TRUE(engine->undeployQuery("1"));
+    ASSERT_TRUE(engine->undeployQuery("2"));
+    ASSERT_TRUE(engine->stop());
     testOutput("qep12.txt", joinedExpectedOutput);
 }
-
+//
 TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
-    NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    ASSERT_TRUE(ptr->start());
+    auto engine = NodeEngine::create("127.0.0.1", 31337);
 
-    CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+    GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(), ptr->getQueryManager());
+        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, ptr->getBufferManager(), "qep3.txt", true);
-    qep1->addDataSource(source1);
-    qep1->addDataSink(sink1);
-    qep1->setQueryId("1");
+    DataSinkPtr sink1 = createTextFileSink(sch1, engine->getBufferManager(), "qep3.txt", true);
+    builder1.addSource(source1);
+    builder1.addSink(sink1);
+    builder1.setQueryId("1");
+    builder1.setQueryManager(engine->getQueryManager());
+    builder1.setBufferManager(engine->getBufferManager());
+    builder1.setCompiler(engine->getCompiler());
+    auto context1 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer) {
+      sink1->writeData(buffer);
+    });
+    auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
+    auto pipeline1 = PipelineStage::create(0, "1", executable1, context1, nullptr);
+    builder1.addPipelineStage(pipeline1);
 
-    CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-    qep2->addDataSource(source1);
-    qep2->addDataSink(sink1);
-    qep2->setQueryId("2");
+    GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
 
-    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
-    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
+    SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
+    builder2.addSource(source1);
+    builder2.addSink(sink1);
+    builder2.setQueryId("2");
+    builder2.setQueryManager(engine->getQueryManager());
+    builder2.setBufferManager(engine->getBufferManager());
+    builder2.setCompiler(engine->getCompiler());
+    auto context2 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer) {
+      sink1->writeData(buffer);
+    });
+    auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
+    auto pipeline2 = PipelineStage::create(0, "2", executable2, context2, nullptr);
+    builder2.addPipelineStage(pipeline2);
 
-    ASSERT_TRUE(ptr->startQuery("1"));
-    ASSERT_TRUE(ptr->startQuery("2"));
+    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
+    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
 
-    qep1->completedPromise.get_future().get();
-    qep2->completedPromise.get_future().get();
+    ASSERT_TRUE(engine->startQuery("1"));
+    ASSERT_TRUE(engine->startQuery("2"));
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "1", 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "2", 1));
+    executable1->completedPromise.get_future().get();
+    executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(ptr->undeployQuery("1"));
-    ASSERT_TRUE(ptr->undeployQuery("2"));
+    ASSERT_TRUE(engine->getQueryStatus("1") == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus("2") == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
 
-    ASSERT_TRUE(ptr->stop(false));
+    ASSERT_TRUE(engine->undeployQuery("1"));
+    ASSERT_TRUE(engine->undeployQuery("2"));
+    ASSERT_TRUE(engine->stop());
 
     testOutput("qep3.txt", joinedExpectedOutput);
 }
-
+//
 TEST_F(EngineTest, testStartStopStartStop) {
-    NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    ASSERT_TRUE(ptr->start());
+    auto engine = NodeEngine::create("127.0.0.1", 31337);
 
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
-    ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
-    qep->completedPromise.get_future().get();
+    auto [qep, pipeline] = setupQEP(engine, testQueryId);
+    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
+    pipeline->completedPromise.get_future().get();
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
 
-    ASSERT_TRUE(ptr->undeployQuery(testQueryId));
-    ASSERT_TRUE(ptr->stop(false));
-    ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->stop(false));
+    ASSERT_TRUE(engine->undeployQuery(testQueryId));
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Invalid);
+
+    ASSERT_TRUE(engine->stop());
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Invalid);
     testOutput();
 }
 }

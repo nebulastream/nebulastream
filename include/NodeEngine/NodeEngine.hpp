@@ -1,7 +1,6 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
-#include <API/Config.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
@@ -13,12 +12,11 @@
 #include <unordered_set>
 #include <vector>
 #include <zmq.hpp>
+#include <Network/NetworkManager.hpp>
+#include <Common/ForwardDeclaration.hpp>
+#include <Network/ExchangeProtocolListener.hpp>
 
-using namespace std;
 namespace NES {
-
-class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
 /**
  * @brief this class represents the interface and entrance point into the
@@ -26,20 +24,38 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
  * such as deploying, undeploying, starting, and stopping.
  *
  */
-class NodeEngine {
+class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_shared_from_this<NodeEngine> {
+
+    static constexpr auto DEFAULT_BUFFER_SIZE = 4096;
+    static constexpr auto DEFAULT_NUM_BUFFERS = 1024;
   public:
     enum NodeEngineQueryStatus {
         started,
         stopped,
         registered
     };
+
+    /**
+     * @brief this creates a new NodeEngine
+     * @param hostname the ip address for the network manager
+     * @param port the port for the network manager
+     * @param bufferSize the buffer size for the buffer manager
+     * @param numBuffers the number of buffers for the buffer manager
+     * @return
+     */
+    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, size_t bufferSize = DEFAULT_BUFFER_SIZE, size_t numBuffers = DEFAULT_NUM_BUFFERS);
+
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    NodeEngine();
+    explicit NodeEngine(BufferManagerPtr&&, QueryManagerPtr&&, std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&, Network::PartitionManagerPtr&&, QueryCompilerPtr&&);
 
     ~NodeEngine();
+
+    NodeEngine() = delete;
+    NodeEngine(const NodeEngine&) = delete;
+    NodeEngine& operator=(const NodeEngine&) = delete;
 
     /**
      * @brief deploy registers and starts a query
@@ -47,14 +63,6 @@ class NodeEngine {
      * @return true if succeeded, else false
      */
     bool deployQueryInNodeEngine(QueryExecutionPlanPtr qep);
-
-    /**
-    * @brief deploy registers and starts a query
-    * @param queryId
-    * @param new query plan as eto
-    * @return true if succeeded, else false
-    */
-    bool deployQueryInNodeEngine(std::string executableTransferObject);
 
     /**
      * @brief undeploy stops and undeploy a query
@@ -91,25 +99,19 @@ class NodeEngine {
      * @param queryId to start
      * @return bool indicating success
      */
-    bool startQuery(std::string queryId);
+    bool startQuery(QueryExecutionPlanId queryId);
 
     /**
      * @brief method to stop a query
      * @param queryId to stop
      * @return bool indicating success
      */
-    bool stopQuery(std::string queryId);
+    bool stopQuery(QueryExecutionPlanId queryId);
 
     /**
-     * @brief start thread pool
+     * @brief release all resource of the node engine
      */
-    bool start();
-
-    /**
-     * @brief stop thread pool
-     * @param force
-     */
-    bool stop(bool force);
+    bool stop();
 
     /**
      * @brief gets the node properties.
@@ -130,58 +132,65 @@ class NodeEngine {
     BufferManagerPtr getBufferManager();
 
     /**
-     * @brief method to create the buffer manager with defualt config
-     * @return bool indicating success
+     * @brief getter of buffer manager
+     * @return bufferManager
      */
-    bool createBufferManager();
+    QueryCompilerPtr getCompiler();
 
     /**
-     * @brief method to create buffer manager with custom config
-     * @param bufferSize
-     * @param numBuffers
-     * @return bool indicating success
+     * @brief getter of network manager
+     * @return network manager
      */
-    bool createBufferManager(size_t bufferSize, size_t numBuffers);
+    Network::NetworkManagerPtr getNetworkManager();
 
     /**
-     * @brief method to stop buffer manager
-     * @return bool indicating success
+     * @return return the status of a query
      */
-    bool stopBufferManager();
-
-    /**
-     * @brief method to start query manager
-     * @return bool indicating success
-     */
-    bool startQueryManager();
-
-    /**
-     * @brief method to stop query manager
-     * @return bool indicating success
-     */
-    bool stopQueryManager();
+    QueryExecutionPlan::QueryExecutionPlanStatus getQueryStatus(QueryExecutionPlanId queryId);
 
     /**
     * @brief method to return the query statistics
     * @param id of the query
     * @return queryStatistics
     */
-    QueryStatisticsPtr getQueryStatistics(std::string queryId);
+    QueryStatisticsPtr getQueryStatistics(const std::string& queryId);
+
+    Network::PartitionManagerPtr getPartitionManager();
+
+    ///// Network Callback //////
+
+    /**
+     * @brief this callback is called once a tuple buffer arrives on the network manager
+     * for a given nes partition
+     */
+    void onDataBuffer(Network::NesPartition, TupleBuffer&) override;
+
+    /**
+     * @brief this callback is called once an end of stream message arrives
+     */
+    void onEndOfStream(Network::Messages::EndOfStreamMessage) override;
+
+    /**
+     * @brief this callback is called once an error is raised on the server side
+     */
+    void onServerError(Network::Messages::ErrorMessage) override;
+
+    /**
+     * @brief this callback is called once an error is raised on the channel(client) side
+     */
+    void onChannelError(Network::Messages::ErrorMessage) override;
 
   private:
     NodeStatsProviderPtr nodeStatsProvider;
-    std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> qepToStatusMap;
-    std::map<std::string, QueryExecutionPlanPtr> queryIdToQepMap;
-
+    std::map<QueryExecutionPlanId, QueryExecutionPlanPtr> deployedQEPs;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
-    bool isRunning;
-
+    Network::NetworkManagerPtr networkManager;
+    Network::PartitionManagerPtr partitionManager;
     QueryCompilerPtr queryCompiler;
 
-    std::mutex deployUndeployQuery;
-    std::mutex registerUnregisterQuery;
-    std::mutex startStopQuery;
+    bool isReleased;
+    std::recursive_mutex engineMutex;
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

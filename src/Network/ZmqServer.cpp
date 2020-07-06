@@ -1,4 +1,3 @@
-#include <Exceptions/NesNetworkError.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Network/ZmqUtils.hpp>
@@ -13,9 +12,9 @@ namespace NES {
 namespace Network {
 
 ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads,
-                     ExchangeProtocolPtr exchangeProtocol)
+                     ExchangeProtocol& exchangeProtocol, BufferManagerPtr bufferManager)
     : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), isRunning(false), keepRunning(true),
-      exchangeProtocol(exchangeProtocol) {
+      exchangeProtocol(exchangeProtocol), bufferManager(bufferManager) {
     NES_DEBUG("ZmqServer: Creating ZmqServer()");
     if (numNetworkThreads < DEFAULT_NUM_SERVER_THREADS) {
         NES_THROW_RUNTIME_ERROR("ZmqServer: numNetworkThreads is greater than DEFAULT_NUM_SERVER_THREADS");
@@ -103,7 +102,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
             // handle
             if (zmqError.num() == ETERM) {
                 shutdownComplete = true;
-                NES_INFO("ZmqServer: Shutdown completed!");
+                NES_INFO("ZmqServer: Shutdown completed! address: " << "tcp://" + hostname + ":" + std::to_string(port));
             } else {
                 NES_ERROR("ZmqServer: " << zmqError.what());
                 errorPromise.set_exception(eptr);
@@ -145,7 +144,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                 NES_THROW_RUNTIME_ERROR("ZmqServer: Stream is corrupted");
             }
             switch (msgHeader->getMsgType()) {
-                case Messages::ClientAnnouncement: {
+                case Messages::kClientAnnouncement: {
                     // if server receives announcement, that a client wants to send buffers
                     zmq::message_t outIdentityEnvelope;
                     zmq::message_t clientAnnouncementEnvelope;
@@ -154,16 +153,17 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     auto receivedMsg = *clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>();
 
                     // react after announcement is received
-                    try {
-                        auto returnMessage = exchangeProtocol->onClientAnnouncement(receivedMsg);
+                    auto returnMessage = exchangeProtocol.onClientAnnouncement(receivedMsg);
+                    if (returnMessage.isOk() || returnMessage.isPartitionNotFound()) {
                         sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket, outIdentityEnvelope, returnMessage);
-                    } catch (NesNetworkError& ex) {
-                        auto returnMessage = exchangeProtocol->onError(ex.getErrorMessage());
-                        sendMessageWithIdentity<Messages::ErrMessage>(dispatcherSocket, outIdentityEnvelope, returnMessage);
+                        break;
                     }
+                    auto errMess = Messages::ErrorMessage(receivedMsg.getChannelId(), returnMessage.getErrorType());
+                    sendMessageWithIdentity<Messages::ErrorMessage>(dispatcherSocket, outIdentityEnvelope, errMess);
+                    exchangeProtocol.onServerError(errMess);
                     break;
                 }
-                case Messages::DataBuffer: {
+                case Messages::kDataBuffer: {
                     // if server receives a tuple buffer
                     zmq::message_t bufferHeaderMsg;
                     dispatcherSocket.recv(&bufferHeaderMsg);
@@ -172,24 +172,24 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     auto nesPartition = *identityEnvelope.data<NesPartition>();
 
                     // receive buffer content
-                    TupleBuffer buffer = exchangeProtocol->getBufferManager()->getBufferBlocking();
+                    TupleBuffer buffer = bufferManager->getBufferBlocking();
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize());
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
 
-                    exchangeProtocol->onBuffer(nesPartition, buffer);
+                    exchangeProtocol.onBuffer(nesPartition, buffer);
                     break;
                 }
-                case Messages::ErrorMessage: {
+                case Messages::kErrorMessage: {
                     // if server receives a message that an error occured
                     NES_FATAL_ERROR("ZmqServer: ErrorMessage not supported yet");
                     break;
                 }
-                case Messages::EndOfStream: {
+                case Messages::kEndOfStream: {
                     // if server receives a message that the stream did terminate
                     zmq::message_t eosEnvelope;
                     dispatcherSocket.recv(&eosEnvelope);
                     auto eosMsg = *eosEnvelope.data<Messages::EndOfStreamMessage>();
-                    exchangeProtocol->onEndOfStream(eosMsg);
+                    exchangeProtocol.onEndOfStream(eosMsg);
                     break;
                 }
                 default: {

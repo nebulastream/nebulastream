@@ -93,8 +93,7 @@ class SourceTest : public testing::Test {
 };
 
 TEST_F(SourceTest, testBinarySource) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.bin";
@@ -138,9 +137,7 @@ TEST_F(SourceTest, testBinarySource) {
 }
 
 TEST_F(SourceTest, testCSVSource) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
-
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
@@ -187,8 +184,7 @@ TEST_F(SourceTest, testCSVSource) {
 }
 
 TEST_F(SourceTest, testCSVSourceIntTypes) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     std::string path_to_file =
         "../tests/test_data/every-int.csv";
@@ -276,8 +272,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 }
 
 TEST_F(SourceTest, testCSVSourceFloatTypes) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     std::string path_to_file =
         "../tests/test_data/every-float.csv";
@@ -326,9 +321,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 }
 
 TEST_F(SourceTest, testCSVSourceBooleanTypes) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
-
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
     std::string path_to_file =
         "../tests/test_data/every-boolean.csv";
 
@@ -376,8 +369,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 }
 
 TEST_F(SourceTest, testSenseSource) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     std::string testUDFS("...");
     createSenseSourceFuncPtr funcPtr = &createSenseSource;
@@ -396,7 +388,7 @@ TEST_F(SourceTest, testSenseSource) {
     size_t num_of_buffers = 1000;
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
-    assert(buffer_size > 0);
+    ASSERT_GT(buffer_size, 0);
 
     const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS);
 

@@ -4,10 +4,9 @@
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <boost/core/noncopyable.hpp>
+#include <zmq.hpp>
 #include <iostream>
 #include <memory>
-#include <zmq.hpp>
 
 namespace NES {
 namespace Network {
@@ -16,25 +15,49 @@ namespace Network {
  * NOT THREAD SAFE! DON'T SHARE AMONG THREADS!
  *
  */
-class OutputChannel : public boost::noncopyable {
+class OutputChannel;
+typedef std::unique_ptr<OutputChannel> OutputChannelPtr;
+
+class OutputChannel {
   public:
     explicit OutputChannel(
-        std::shared_ptr<zmq::context_t> zmqContext,
-        const std::string& address,
-        NesPartition nesPartition,
-        std::chrono::seconds waitTime, uint8_t retryTimes,
-        std::function<void(Messages::ErrMessage)> onError,
-        size_t threadId = std::hash<std::thread::id>{}(std::this_thread::get_id()));
+        zmq::socket_t&& zmqSocket,
+        const ChannelId channelId,
+        const std::string address);
 
+  public:
+    /**
+     * @brief close the output channel and release resources
+     */
     ~OutputChannel() {
         close();
     }
 
-  private:
-    void init(std::chrono::seconds waitTime, uint8_t retryTimes);
-    bool registerAtServer();
+    OutputChannel(const OutputChannel&) = delete;
 
+    OutputChannel& operator=(const OutputChannel&) = delete;
   public:
+
+    /**
+     * @brief Creates an output channe instance with the given parameters
+     * @param zmqContext the local zmq server context
+     * @param address the ip address of the remote server
+     * @param nesPartition the remote nes partition to connect to
+     * @param protocol the protocol implementation
+     * @param waitTime the backoff time in case of failure when connecting
+     * @param retryTimes the number of retries before the methods will raise error
+     * @param threadId the id of the thread accessing the channel (this will go away when #766 is in place)
+     * @return
+     */
+    static OutputChannelPtr create(std::shared_ptr<zmq::context_t> zmqContext,
+                                 const std::string address,
+                                 NesPartition nesPartition,
+                                 ExchangeProtocol& protocol,
+                                 std::chrono::seconds waitTime,
+                                 uint8_t retryTimes,
+                                 size_t threadId = std::hash<std::thread::id>{}(std::this_thread::get_id()));
+
+
     /**
      * @brief Send buffer to the destination defined in the constructor. Note that this method will internally
      * compute the payloadSize as tupleSizeInBytes*buffer.getNumberOfTuples()
@@ -48,29 +71,19 @@ class OutputChannel : public boost::noncopyable {
      * @brief Method to handle the error
      * @param the error message
      */
-    void onError(Messages::ErrMessage& errorMsg);
+    void onError(Messages::ErrorMessage& errorMsg);
 
     /**
      * Close the outchannel and send EndOfStream message to consumer
      */
     void close();
 
-    /**
-     * @brief checks if the OutputChannel has successfully established a connection with the server
-     * @return true if connection is established, else false
-     */
-    bool isConnected() const;
-
   private:
-    const std::string& socketAddr;
-
+    const std::string socketAddr;
     zmq::socket_t zmqSocket;
     const ChannelId channelId;
-
     bool isClosed;
-    bool connected;
 
-    std::function<void(Messages::ErrMessage)> onErrorCb;
 };
 
 }// namespace Network

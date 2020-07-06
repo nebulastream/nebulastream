@@ -1,5 +1,7 @@
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
+#include <QueryCompiler/QueryExecutionPlanId.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <memory>
 #include <vector>
 
@@ -23,19 +25,19 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 class WindowManager;
 
 class PipelineExecutionContext;
-typedef std::unique_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
+typedef std::shared_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
 
 class PipelineStage {
   public:
     PipelineStage(
         uint32_t pipelineStageId,
-        QueryExecutionPlanPtr queryExecutionPlan,
+        QueryExecutionPlanId qepId,
         ExecutablePipelinePtr executablePipeline,
-        WindowHandlerPtr windowHandler);
-    explicit PipelineStage(uint32_t pipelineStageId,
-                           QueryExecutionPlanPtr queryExecutionPlan, ExecutablePipelinePtr executablePipeline);
-    bool execute(TupleBuffer& inputBuffer,
-                 PipelineExecutionContext& context);
+        QueryExecutionContextPtr pipelineContext,
+        PipelineStagePtr nextPipelineStage,
+        WindowHandlerPtr windowHandler = WindowHandlerPtr());
+
+    bool execute(TupleBuffer& inputBuffer);
 
     /**
    * @brief Initialises a pipeline stage
@@ -62,39 +64,40 @@ class PipelineStage {
     PipelineStagePtr getNextStage();
 
     /**
-    * @brief Set next pipeline stage, remember the next pipeline state is *not* necessary current stage ID +1
-    * @return
-    */
-    void setNextStage(PipelineStagePtr pipelineStagePtr);
-
-    /**
     * @brief Get id of pipeline stage
     * @return
     */
     uint32_t getPipeStageId();
 
-    ~PipelineStage();
+    QueryExecutionPlanId getQepParentId() const;
+
+    ~PipelineStage() = default;
+
+  public:
+
+    static PipelineStagePtr create(uint32_t pipelineStageId,
+            const QueryExecutionPlanId queryExecutionPlanId,
+            const ExecutablePipelinePtr compiledCode,
+            QueryExecutionContextPtr pipelineContext,
+            const PipelineStagePtr nextPipelineStage,
+            const WindowHandlerPtr& windowHandler = WindowHandlerPtr());
+
 
   private:
     uint32_t pipelineStageId;
-    QueryExecutionPlanPtr queryExecutionPlan;
+    QueryExecutionPlanId qepId;
     ExecutablePipelinePtr executablePipeline;
     WindowHandlerPtr windowHandler;
     PipelineStagePtr nextStage;
+    QueryExecutionContextPtr pipelineContext;
+
+  private:
     bool hasWindowHandler();
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
 class CompiledCode;
 typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
-
-PipelineStagePtr createPipelineStage(uint32_t pipelineStageId,
-                                     const QueryExecutionPlanPtr& queryExecutionPlanPtr,
-                                     const ExecutablePipelinePtr& compiled_code,
-                                     const WindowHandlerPtr& window_handler);
-PipelineStagePtr createPipelineStage(uint32_t pipelineStageId,
-                                     const QueryExecutionPlanPtr& queryExecutionPlanPtr,
-                                     const ExecutablePipelinePtr& compiled_code);
 
 }// namespace NES
 

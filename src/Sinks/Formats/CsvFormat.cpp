@@ -54,15 +54,14 @@ std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
             buffers.push_back(buf);
         }
         NES_DEBUG("CsvFormat::getData: successfully copied buffer=" << numberOfBuffers);
-
     } else {
         NES_DEBUG("CsvFormat::getData: content fits in one buffer");
         auto buf = this->bufferManager->getBufferBlocking();
         std::memcpy(buf.getBufferAs<char>(), bufferContent.c_str(), contentSize);
         buf.setNumberOfTuples(contentSize);
         buffers.push_back(buf);
-        return buffers;
     }
+    return buffers;
 }
 
 std::string CsvFormat::toString() {

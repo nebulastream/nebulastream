@@ -47,8 +47,8 @@ std::vector<TupleBuffer> TextFormat::getData(TupleBuffer& inputBuffer) {
         std::memcpy(buf.getBuffer(), bufferContent.c_str(), contentSize);
         buf.setNumberOfTuples(contentSize);
         buffers.push_back(buf);
-        return buffers;
     }
+    return buffers;
 }
 
 std::string TextFormat::toString() {

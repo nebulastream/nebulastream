@@ -7,7 +7,6 @@
 #include <Network/OutputChannel.hpp>
 #include <Network/PartitionManager.hpp>
 #include <NodeEngine/BufferManager.hpp>
-#include <boost/core/noncopyable.hpp>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -33,8 +32,12 @@ class NetworkManager {
      * @param numServerThread
      * @return the shared_ptr object
      */
-    static std::shared_ptr<NetworkManager> create(const std::string& hostname, uint16_t port, ExchangeProtocolPtr exchangeProtocol,
-                                                  uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+    static std::shared_ptr<NetworkManager> create(
+        const std::string& hostname,
+        uint16_t port,
+        Network::ExchangeProtocol&& exchangeProtocol,
+        BufferManagerPtr bufferManager,
+        uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
      * @brief This method is called on the receiver side to register a SubpartitionConsumer, i.e. indicate that the
@@ -63,21 +66,18 @@ class NetworkManager {
      * The OutputChannel is not thread safe!
      * @param nodeLocation is the destination
      * @param nesPartition indicates the partition
-     * @param onError lambda which is called in case of an error
      * @param waitTime time in seconds to wait until a retry is called
      * @param retryTimes times to retry a connection
      * @return
      */
-    OutputChannel* registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
-                                                std::function<void(Messages::ErrMessage)>&& onError,
+    OutputChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
                                                 std::chrono::seconds waitTime, uint8_t retryTimes);
 
-  private:
-    explicit NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocolPtr exchangeProtocol,
+    explicit NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocol&& exchangeProtocol, BufferManagerPtr bufferManager,
                             uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     std::shared_ptr<ZmqServer> server;
-    ExchangeProtocolPtr exchangeProtocol;
+    ExchangeProtocol exchangeProtocol;
 };
 typedef std::shared_ptr<NetworkManager> NetworkManagerPtr;
 

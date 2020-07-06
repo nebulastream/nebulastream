@@ -1,5 +1,6 @@
 #ifndef INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
 #define INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
+#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <memory>
 #include <vector>
 namespace NES {
@@ -32,7 +33,7 @@ typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
  */
 class QueryCompiler {
   public:
-    QueryCompiler(QueryCompiler* queryCompiler);
+    QueryCompiler();
     ~QueryCompiler() = default;
     /**
      * Creates a new query compiler
@@ -45,22 +46,17 @@ class QueryCompiler {
      * @param queryPlan
      * @return
      */
-    QueryExecutionPlanPtr compile(OperatorPtr queryPlan);
-
-    void setQueryManager(QueryManagerPtr queryManager);
-    void setBufferManager(BufferManagerPtr bufferManager);
+    void compile(GeneratedQueryExecutionPlanBuilder&, OperatorPtr queryPlan);
 
   private:
-    QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
 
-    std::shared_ptr<PipelineStage> compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan,
-                                                         CodeGeneratorPtr codeGenerator,
-                                                         PipelineContextPtr context);
-    QueryCompiler();
+    void compilePipelineStages(
+        GeneratedQueryExecutionPlanBuilder& queryExecutionPlanBuilder,
+        CodeGeneratorPtr codeGenerator,
+        PipelineContextPtr context);
 };
 
-QueryCompilerPtr createDefaultQueryCompiler(QueryManagerPtr queryManager);
+QueryCompilerPtr createDefaultQueryCompiler();
 
 }// namespace NES
 

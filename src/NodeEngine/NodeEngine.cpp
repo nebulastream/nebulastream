@@ -1,4 +1,3 @@
-#include <GRPC/ExecutableTransferObject.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -19,38 +18,77 @@ NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() {
     return nodeStatsProvider;
 }
 
-NodeEngine::NodeEngine() : registerUnregisterQuery(),
-                           startStopQuery(), deployUndeployQuery(), nodeStatsProvider(NodeStatsProvider::create()) {
-    NES_DEBUG("NodeEngine()");
-    isRunning = false;
+std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, size_t bufferSize, size_t numBuffers) {
+    try {
+        auto partitionManager = std::make_shared<Network::PartitionManager>();
+        auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
+        auto queryManager = std::make_shared<QueryManager>();
+        if (!partitionManager) {
+            NES_ERROR("NodeEngine: error while creating partition manager");
+            throw Exception("Error while creating partition manager");
+        }
+        if (!bufferManager) {
+            NES_ERROR("NodeEngine: error while creating buffer manager");
+            throw Exception("Error while creating buffer manager");
+        }
+        if (!queryManager) {
+            NES_ERROR("NodeEngine: error while creating queryManager");
+            throw Exception("Error while creating queryManager");
+        }
+        if (!queryManager->startThreadPool()) {
+            NES_ERROR("NodeEngine: error while start thread pool");
+            throw Exception("Error while start thread pool");
+        } else {
+            NES_DEBUG("NodeEngine(): thread pool successfully started");
+        }
+        auto compiler = createDefaultQueryCompiler();
+        if (!compiler) {
+            NES_ERROR("NodeEngine: error while creating compiler");
+            throw Exception("Error while creating compiler");
+        }
+        return std::make_shared<NodeEngine>(
+            std::move(bufferManager),
+            std::move(queryManager),
+            [hostname, port](std::shared_ptr<NodeEngine> engine) {
+              return Network::NetworkManager::create(
+                  hostname,
+                  port,
+                  Network::ExchangeProtocol(engine->getPartitionManager(), engine),
+                  engine->getBufferManager());
+            }, std::move(partitionManager), std::move(compiler));
+    } catch (std::exception& err) {
+        NES_ERROR("Cannot start node engine " << err.what());
+        NES_THROW_RUNTIME_ERROR("Cant start node engine");
+    }
+}
+
+NodeEngine::NodeEngine(
+    BufferManagerPtr&& bufferManager,
+    QueryManagerPtr&& queryManager,
+    std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
+    Network::PartitionManagerPtr&& partitionManager,
+    QueryCompilerPtr&& queryCompiler)
+        : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>() {
+    NES_TRACE("NodeEngine()");
+    nodeStatsProvider = std::make_shared<NodeStatsProvider>();
+    this->queryCompiler = std::move(queryCompiler);
+    this->queryManager = std::move(queryManager);
+    this->bufferManager = std::move(bufferManager);
+    this->partitionManager = std::move(partitionManager);
+    isReleased = false;
+    // here shared_from_this() does not work because of the machinery behind make_shared
+    // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
+    // plz make sure that ExchangeProtocol never leaks the impl pointer
+    networkManager = networkManagerCreator(std::shared_ptr<NodeEngine>(this, [](NodeEngine*){}));
 }
 
 NodeEngine::~NodeEngine() {
-    NES_DEBUG("~NodeEngine()");
-    stop(true);
-    queryIdToQepMap.clear();
-    qepToStatusMap.clear();
-}
-
-bool NodeEngine::deployQueryInNodeEngine(std::string executableTransferObject) {
-    NES_DEBUG("NodeEngine::deployQueryInNodeEngine wait for lock executableTransferObject=" << executableTransferObject);
-
-    std::unique_lock<std::mutex> lock(deployUndeployQuery);
-    NES_DEBUG("NodeEngine::deployQueryInNodeEngine eto " << executableTransferObject);
-    // TODO currently this method is not called. We should evaluate the purpose of this method.
-    NES_FATAL_ERROR("NODE ENGINE: Deploy Quer in Node is currently not implemented");
-    ExecutableTransferObject eto = ExecutableTransferObject();
-    NES_DEBUG(
-        "NodeEngine::running() eto after parse=" << eto.toString());
-    QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(queryCompiler);
-    NES_DEBUG("NodeEngine::running()  add query to queries map");
-    deployQueryInNodeEngine(qep);
+    NES_TRACE("~NodeEngine()");
+    stop();
 }
 
 bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine::deployQueryInNodeEngine wait for lock qep=" << qep);
-
-    std::unique_lock<std::mutex> lock(deployUndeployQuery);
+    std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: deployQueryInNodeEngine query using qep " << qep);
     bool successRegister = registerQueryInNodeEngine(qep);
     if (!successRegister) {
@@ -69,9 +107,86 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool NodeEngine::undeployQuery(std::string queryId) {
-    NES_DEBUG("NodeEngine::undeployQuery wait for lock queryId=" << queryId);
-    std::unique_lock<std::mutex> lock(deployUndeployQuery);
+bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr queryOperators) {
+    std::unique_lock lock(engineMutex);
+    NES_INFO("Creating QueryExecutionPlan for " << queryId);
+    try {
+        // Translate the query operators in their legacy representation
+        // todo this is not required if later the query compiler can handle it by it self.
+        auto translationPhase = TranslateToLegacyPlanPhase::create();
+        auto legacyOperatorPlan = translationPhase->transform(queryOperators, shared_from_this());
+
+        // Compile legacy operators with qep builder.
+        auto qepBuilder = GeneratedQueryExecutionPlanBuilder::create()
+            .setQueryManager(queryManager)
+            .setBufferManager(bufferManager)
+            .setCompiler(queryCompiler)
+            .setQueryId(queryId)
+            .addOperatorQueryPlan(legacyOperatorPlan);
+
+        // Translate all operator source to the physical sources and add them to the query plan
+        for (const auto& sources : queryOperators->getNodesByType<SourceLogicalOperatorNode>()) {
+            auto sourceDescriptor = sources->getSourceDescriptor();
+            auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, shared_from_this());
+            qepBuilder.addSource(legacySource);
+            NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
+        }
+
+        // Translate all operator sink to the physical sink and add them to the query plan
+        for (const auto& sink : queryOperators->getNodesByType<SinkLogicalOperatorNode>()) {
+            auto sinkDescriptor = sink->getSinkDescriptor();
+            auto schema = sink->getOutputSchema();
+            // todo use the correct schema
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this());
+            qepBuilder.addSink(legacySink);
+            NES_DEBUG("ExecutableTransferObject:: add source" << legacySink->toString());
+        }
+
+        return registerQueryInNodeEngine(qepBuilder.build());
+    } catch (std::exception& error) {
+        NES_ERROR("Error while building query execution plan " << error.what());
+        return false;
+    }
+
+}
+
+bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr qep) {
+    std::unique_lock lock(engineMutex);
+    NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << qep << " queryId=" << qep->getQueryId());
+    if (deployedQEPs.find(qep->getQueryId()) == deployedQEPs.end()) {
+        if (queryManager->registerQuery(qep)) {
+            deployedQEPs[qep->getQueryId()] = qep;
+            NES_DEBUG("NodeEngine: register of QEP " << qep << " succeeded");
+            return true;
+        } else {
+            NES_DEBUG("NodeEngine: register of QEP " << qep << " failed");
+            return false;
+        }
+    } else {
+        NES_DEBUG("NodeEngine: qep already exists. register failed" << qep);
+        return false;
+    }
+}
+
+bool NodeEngine::startQuery(QueryExecutionPlanId queryId) {
+    std::unique_lock lock(engineMutex);
+    NES_DEBUG("NodeEngine: startQuery=" << queryId);
+    if (deployedQEPs.find(queryId) != deployedQEPs.end()) {
+        if (queryManager->startQuery(deployedQEPs[queryId])) {
+            NES_DEBUG("NodeEngine: start of QEP " << queryId << " succeeded");
+            return true;
+        } else {
+            NES_DEBUG("NodeEngine: start of QEP " << queryId << " failed");
+            return false;
+        }
+    } else {
+        NES_DEBUG("NodeEngine: qep does not exists. start failed" << queryId);
+        return false;
+    }
+}
+
+bool NodeEngine::undeployQuery(QueryExecutionPlanId queryId) {
+    std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: undeployQuery query=" << queryId);
     bool successStop = stopQuery(queryId);
     if (!successStop) {
@@ -91,80 +206,14 @@ bool NodeEngine::undeployQuery(std::string queryId) {
     }
 }
 
-bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr queryOperators) {
-    NES_DEBUG("NodeEngine::running() queryId after " << queryId);
-    NES_INFO("*** Creating QueryExecutionPlan for " << queryId);
-
-    // Translate the query operators in their legacy representation
-    // todo this is not required if later the query compiler can handle it by it self.
-    auto translationPhase = TranslateToLegacyPlanPhase::create(bufferManager);
-    auto legacyOperatorPlan = translationPhase->transform(queryOperators);
-    // Compile legacy operators with query compiler.
-    auto qep = queryCompiler->compile(legacyOperatorPlan);
-    qep->setQueryId(queryId);
-
-    // Translate all operator source to the physical sources and add them to the query plan
-    for (const auto& sources : queryOperators->getNodesByType<SourceLogicalOperatorNode>()) {
-        auto sourceDescriptor = sources->getSourceDescriptor();
-        auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
-        qep->addDataSource(legacySource);
-        NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
-    }
-
-    // Translate all operator sink to the physical sink and add them to the query plan
-    for (const auto& sink : queryOperators->getNodesByType<SinkLogicalOperatorNode>()) {
-        auto sinkDescriptor = sink->getSinkDescriptor();
-        // todo use the correct schema
-        auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(sink->getInputSchema(), bufferManager, sinkDescriptor);
-        qep->addDataSink(legacySink);
-        NES_DEBUG("ExecutableTransferObject:: add source" << legacySink->toString());
-    }
-
-    return registerQueryInNodeEngine(qep);
-}
-
-bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine::registerQueryInNodeEngine wait for lock qep=" << qep);
-    std::unique_lock<std::mutex> lock(registerUnregisterQuery);
-
-    NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << qep << " queryId=" << qep->getQueryId());
-    qep->setBufferManager(bufferManager);
-
-    if (queryIdToQepMap.find(qep->getQueryId()) == queryIdToQepMap.end()) {
-        if (queryManager->registerQuery(qep)) {
-            queryIdToQepMap.insert({qep->getQueryId(), qep});
-            qepToStatusMap.insert({qep, NodeEngineQueryStatus::registered});
-            NES_DEBUG("NodeEngine: register of QEP " << qep << " succeeded");
-            return true;
-        } else {
-            NES_DEBUG("NodeEngine: register of QEP " << qep << " failed");
-            return false;
-        }
-    } else {
-        NES_DEBUG("NodeEngine: qep already exists. register failed" << qep);
-        return false;
-    }
-}
-
 bool NodeEngine::unregisterQuery(std::string queryId) {
-    NES_DEBUG("NodeEngine::unregisterQuery wait for lock queryId=" << queryId);
-    std::unique_lock<std::mutex> lock(registerUnregisterQuery);
-
+    std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: unregisterQuery query=" << queryId);
-    if (queryIdToQepMap.find(queryId) != queryIdToQepMap.end()) {
-        if (queryManager->deregisterQuery(queryIdToQepMap[queryId])) {
-            size_t delCnt1 = qepToStatusMap.erase(queryIdToQepMap[queryId]);
-            NES_DEBUG("NodeEngine: unregister of QEP " << queryId << " succeeded with cnt=" << delCnt1);
-
-            size_t delCnt2 = queryIdToQepMap.erase(queryId);
-            NES_DEBUG("NodeEngine: unregister of query " << queryId << " succeeded with cnt=" << delCnt2);
-
-            if (delCnt1 == 1 && delCnt2 == 1) {
-                return true;
-            } else {
-                NES_ERROR("NodeEngine::unregisterQuery: error while unregister query");
-                return false;
-            }
+    if (deployedQEPs.find(queryId) != deployedQEPs.end()) {
+        if (queryManager->deregisterQuery(deployedQEPs[queryId])) {
+            deployedQEPs.erase(queryId);
+            NES_DEBUG("NodeEngine: unregister of query " << queryId << " succeeded");
+            return true;
         } else {
             NES_ERROR("NodeEngine: unregister of QEP " << queryId << " failed");
             return false;
@@ -175,33 +224,12 @@ bool NodeEngine::unregisterQuery(std::string queryId) {
     }
 }
 
-bool NodeEngine::startQuery(std::string queryId) {
-    std::unique_lock<std::mutex> lock(startStopQuery);
-
-    NES_DEBUG("NodeEngine: startQuery=" << queryId);
-    if (queryIdToQepMap.find(queryId) != queryIdToQepMap.end()) {
-        if (queryManager->startQuery(queryIdToQepMap[queryId])) {
-            NES_DEBUG("NodeEngine: start of QEP " << queryId << " succeeded");
-            qepToStatusMap[queryIdToQepMap[queryId]] = NodeEngineQueryStatus::started;
-            return true;
-        } else {
-            NES_DEBUG("NodeEngine: start of QEP " << queryId << " failed");
-            return false;
-        }
-    } else {
-        NES_DEBUG("NodeEngine: qep does not exists. start failed" << queryId);
-        return false;
-    }
-}
-
 bool NodeEngine::stopQuery(std::string queryId) {
-    std::unique_lock<std::mutex> lock(startStopQuery);
-
+    std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine:stopQuery for qep" << queryId);
-    if (queryIdToQepMap.find(queryId) != queryIdToQepMap.end()) {
-        if (queryManager->stopQuery(queryIdToQepMap[queryId])) {
+    if (deployedQEPs.find(queryId) != deployedQEPs.end()) {
+        if (queryManager->stopQuery(deployedQEPs[queryId])) {
             NES_DEBUG("NodeEngine: stop of QEP " << queryId << " succeeded");
-            qepToStatusMap[queryIdToQepMap[queryId]] = NodeEngineQueryStatus::stopped;
             return true;
         } else {
             NES_DEBUG("NodeEngine: stop of QEP " << queryId << " failed");
@@ -217,163 +245,119 @@ QueryManagerPtr NodeEngine::getQueryManager() {
     return queryManager;
 }
 
-bool NodeEngine::start() {
-    if (!isRunning) {
-        NES_DEBUG("NodeEngine: start thread pool");
-        bool successTp = startQueryManager();
-        NES_DEBUG("NodeEngine: start thread pool success=" << successTp);
-
-        NES_DEBUG("NodeEngine:start reset query manager");
-        queryManager->resetQueryManager();
-
-        NES_DEBUG("NodeEngine: create buffer manager");
-        bool successBm = createBufferManager();
-        NES_DEBUG("NodeEngine: create buffer manager success=" << successBm);
-
-        if (successTp && successBm) {
-            isRunning = true;
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        NES_WARNING("NodeEngine::start: is already running");
-        return true;
-    }
-}
-
-bool NodeEngine::stop(bool forceStop) {
+bool NodeEngine::stop() {
     //TODO: add check if still queries are running
-    if (isRunning) {
-        NES_DEBUG("NodeEngine:stop stop NodeEngine, undeploy " << qepToStatusMap.size() << " queries");
-        for (auto entry : qepToStatusMap) {
-            if (entry.second == NodeEngineQueryStatus::started && !forceStop) {
-                NES_ERROR("NodeEngine::stop: cannot stop as query " << entry.first << " still running");
-                return false;
-            }
-        }
+    //TODO @Steffen: does it make sense to have force stop still?
+    //TODO @all: imho, when this method terminates, nothing must be running still and all resources must be returned to the engine
+    //TODO @all: error handling, e.g., is it an error if the query is stopped but not undeployed? @Steffen?
+    std::unique_lock lock(engineMutex);
 
-        //extract key column from map
-        std::vector<std::string> copyOfVec;
-        std::transform(queryIdToQepMap.begin(), queryIdToQepMap.end(), std::back_inserter(copyOfVec),
-                       [](std::pair<std::string, QueryExecutionPlanPtr> const& dev) {
-                           return dev.first;
-                       });
-
-        for (std::string qId : copyOfVec) {
-            bool success = undeployQuery(qId);
-            if (success) {
-                NES_DEBUG("NodeEngine:stop undeployQuery query " << qId << " successfully");
-
-            } else {
-                NES_ERROR("NodeEngine:stop undeploy query " << qId << " failed");
-                return false;
-            }
-        }
-
-        NES_DEBUG("NodeEngine:stop undeploy successful");
-        queryManager->resetQueryManager();
-        copyOfVec.clear();
-        isRunning = false;
-
-        bool successTp = stopQueryManager();
-        NES_DEBUG("NodeEngine:stop stop threadpool with success=" << successTp);
-
-        bool successBm = stopBufferManager();
-        NES_DEBUG("NodeEngine:stop stop buffer manager with success=" << successBm);
-
-        return successTp && successBm;
-    } else {
+    if (isReleased) {
         NES_WARNING("NodeEngine::stop: engine already stopped");
         return true;
     }
+    bool withError = false;
+
+    // release all deployed queries
+    for (auto it = deployedQEPs.begin(); it != deployedQEPs.end();) {
+        auto& [queryId, qep] = *it;
+        try {
+            if (queryManager->stopQuery(qep)) {
+                NES_DEBUG("NodeEngine: stop of QEP " << queryId << " succeeded");
+            } else {
+                NES_DEBUG("NodeEngine: stop of QEP " << queryId << " failed");
+                withError = true;
+            }
+        } catch (std::exception& err) {
+            NES_DEBUG("NodeEngine: stop of QEP " << queryId << " failed: " << err.what());
+            withError = true;
+        }
+        try {
+            if (queryManager->deregisterQuery(qep)) {
+                NES_DEBUG("NodeEngine: deregisterQuery of QEP " << queryId << " succeeded");
+                it = deployedQEPs.erase(it);
+            } else {
+                NES_DEBUG("NodeEngine: deregisterQuery of QEP " << queryId << " failed");
+                withError = true;
+                ++it;
+            }
+        } catch (std::exception& err) {
+            NES_DEBUG("NodeEngine: deregisterQuery of QEP " << queryId << " failed: " << err.what());
+            withError = true;
+            ++it;
+        }
+    }
+
+    // release components
+
+    queryManager.reset();
+    networkManager.reset();
+    bufferManager.reset();
+
+    return !withError;
 }
 
 BufferManagerPtr NodeEngine::getBufferManager() {
     return bufferManager;
 }
 
-bool NodeEngine::createBufferManager() {
-    if (bufferManager) {
-        NES_ERROR("NodeEngine::createBufferManager: buffer manager already exists");
-        return true;
-    }
-    NES_DEBUG("createBufferManager: setup buffer manager");
-    bufferManager = std::make_shared<BufferManager>(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
-    return bufferManager->isReady();
+Network::NetworkManagerPtr NodeEngine::getNetworkManager() {
+    return networkManager;
 }
 
-bool NodeEngine::createBufferManager(size_t bufferSize, size_t numBuffers) {
-    if (bufferManager) {
-        NES_ERROR("NodeEngine::createBufferManager: buffer manager already exists");
-        return true;
-    }
-
-    NES_DEBUG("createBufferManager: setup buffer manager");
-    bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
-    return bufferManager->isReady();
+QueryCompilerPtr NodeEngine::getCompiler() {
+    return queryCompiler;
 }
 
-bool NodeEngine::stopBufferManager() {
-    if (!bufferManager) {
-        NES_ERROR("NodeEngine::stopBufferManager buffer manager does not exists");
-        throw Exception("Error while stop buffer manager");
+QueryExecutionPlan::QueryExecutionPlanStatus NodeEngine::getQueryStatus(QueryExecutionPlanId queryId) {
+    std::unique_lock lock(engineMutex);
+    decltype(deployedQEPs)::iterator it;
+    if ((it = deployedQEPs.find(queryId)) != deployedQEPs.end()) {
+        return it->second->getStatus();
     }
-    NES_DEBUG("QueryManager::stopBufferManager: stop");
-    return true;
+    return QueryExecutionPlan::QueryExecutionPlanStatus::Invalid;
 }
 
-bool NodeEngine::startQueryManager() {
-    NES_DEBUG("startQueryManager: setup query manager");
-    if (queryManager) {
-        NES_ERROR("NodeEngine::startQueryManager: query manager already exists");
-        return true;
-    }
-    NES_DEBUG("startQueryManager: setup query manager");
-    queryManager = std::make_shared<QueryManager>();
-    if (queryManager) {
-        NES_DEBUG("NodeEngine::startQueryManager(): successful");
-        NES_DEBUG("QueryManager(): start thread pool");
-        bool success = queryManager->startThreadPool();
-        if (!success) {
-            NES_ERROR("QueryManager: error while start thread pool");
-            throw Exception("Error while start thread pool");
-        } else {
-            NES_DEBUG("QueryManager(): thread pool successfully started");
-
-            NES_DEBUG("NodeEngine::startQueryManager create compiler");
-            queryCompiler = createDefaultQueryCompiler(queryManager);
-            return true;
-        }
+void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& buffer) {
+    // TODO analyze performance penalty here because of double lock
+    if (partitionManager->isRegistered(nesPartition)) {
+        // create a string for logging of the identity which corresponds to the
+        // queryId::operatorId::partitionId::subpartitionId
+        //TODO: dont use strings for lookups
+        queryManager->addWork(std::to_string(nesPartition.getQueryId()), buffer);
     } else {
-        NES_ERROR("NodeEngine::startQueryManager(): query manager could not be starterd");
-        return false;
+        // partition is not registered, discard the buffer
+        buffer.release();
+        NES_ERROR("DataBuffer for " + nesPartition.toString()
+                      + " is not registered and was discarded!");
+        NES_THROW_RUNTIME_ERROR("NES Network Error: unhandled message");
     }
 }
 
-bool NodeEngine::stopQueryManager() {
-    if (!queryManager) {
-        NES_ERROR("NodeEngine::stopQueryManager query manager does not exists");
-        throw Exception("Error while stop query manager");
-    }
-    NES_DEBUG("stopQueryManager: stop query manager");
-
-    bool success = queryManager->stopThreadPool();
-    if (!success) {
-        NES_ERROR("NodeEngine::stopQueryManager: could not stop thread pool");
-        throw Exception("Error while stopping thread pool");
-    }
-
-    return true;
+void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage) {
+    // nop
 }
 
-QueryStatisticsPtr NodeEngine::getQueryStatistics(std::string queryId) {
-    QueryExecutionPlanPtr qep = queryIdToQepMap[queryId];
-    if (!qep) {
-        NES_ERROR("QueryManager::getNumberOfProcessedBuffer: query does not exists");
-        throw Exception("Query does not exists");
+void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
+    NES_THROW_RUNTIME_ERROR(err.getErrorTypeAsString());
+}
+
+void NodeEngine::onChannelError(Network::Messages::ErrorMessage err) {
+    NES_THROW_RUNTIME_ERROR(err.getErrorTypeAsString());
+}
+
+QueryStatisticsPtr NodeEngine::getQueryStatistics(const std::string& queryId) {
+    std::unique_lock lock(engineMutex);
+    auto it = deployedQEPs.find(queryId);
+    if (it == deployedQEPs.end()) {
+        NES_ERROR("QueryManager::getQueryStatistics: query does not exists " << queryId);
+        return nullptr;
     }
-    return queryManager->getQueryStatistics(qep);
+    return queryManager->getQueryStatistics(queryId);
+}
+
+Network::PartitionManagerPtr NodeEngine::getPartitionManager() {
+    return partitionManager;
 }
 
 }// namespace NES

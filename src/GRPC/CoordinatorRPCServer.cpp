@@ -5,7 +5,7 @@ using namespace NES;
 
 CoordinatorRPCServer::CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine) : coordinatorEngine(coordinatorEngine){};
 
-Status CoordinatorRPCServer::RegisterNode(ServerContext* context, const RegisterNodeRequest* request,
+Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request,
                                           RegisterNodeReply* reply) {
     NES_DEBUG("CoordinatorEngine::RegisterNode: request =" << request);
 
@@ -24,7 +24,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext* context, const Register
     }
 }
 
-Status CoordinatorRPCServer::UnregisterNode(ServerContext* context, const UnregisterNodeRequest* request,
+Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNodeRequest* request,
                                             UnregisterNodeReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request =" << request);
 
@@ -40,7 +40,7 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext* context, const Unregi
     }
 }
 
-Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext* context,
+Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*,
                                                     const RegisterPhysicalStreamRequest* request,
                                                     RegisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream: request =" << request);
@@ -64,7 +64,7 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext* context,
     }
 }
 
-Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext* context,
+Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext*,
                                                       const UnregisterPhysicalStreamRequest* request,
                                                       UnregisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalStream: request =" << request);
@@ -84,7 +84,7 @@ Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext* context,
     }
 }
 
-Status CoordinatorRPCServer::RegisterLogicalStream(ServerContext* context,
+Status CoordinatorRPCServer::RegisterLogicalStream(ServerContext*,
                                                    const RegisterLogicalStreamRequest* request,
                                                    RegisterLogicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterLogicalStream: request =" << request);
@@ -102,7 +102,7 @@ Status CoordinatorRPCServer::RegisterLogicalStream(ServerContext* context,
     }
 }
 
-Status CoordinatorRPCServer::UnregisterLogicalStream(ServerContext* context,
+Status CoordinatorRPCServer::UnregisterLogicalStream(ServerContext*,
                                                      const UnregisterLogicalStreamRequest* request,
                                                      UnregisterLogicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalStream: request =" << request);
@@ -119,7 +119,7 @@ Status CoordinatorRPCServer::UnregisterLogicalStream(ServerContext* context,
     }
 }
 
-Status CoordinatorRPCServer::AddParent(ServerContext* context, const AddParentRequest* request,
+Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* request,
                                        AddParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::AddParent: request =" << request);
 
@@ -135,7 +135,7 @@ Status CoordinatorRPCServer::AddParent(ServerContext* context, const AddParentRe
     }
 }
 
-Status CoordinatorRPCServer::RemoveParent(ServerContext* context, const RemoveParentRequest* request,
+Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequest* request,
                                           RemoveParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RemoveParent: request =" << request);
 

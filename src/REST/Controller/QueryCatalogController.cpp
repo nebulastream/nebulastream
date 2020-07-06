@@ -55,7 +55,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
             .wait();
     } else if (path[1] == "allRegisteredQueries") {
         message.extract_string(true)
-            .then([this, message](utility::string_t body) {
+            .then([this, message](utility::string_t) {
                 try {
                     //Prepare the response
                     json::value result{};

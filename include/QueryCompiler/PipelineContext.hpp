@@ -36,7 +36,7 @@ class PipelineContext {
     SchemaPtr resultSchema;
     GeneratedCodePtr code;
 
-    std::vector<PipelineContextPtr> getNextPipelines() const;
+    const std::vector<PipelineContextPtr>& getNextPipelineContexts() const;
     void addNextPipeline(PipelineContextPtr nextPipeline);
     bool hasNextPipeline() const;
 

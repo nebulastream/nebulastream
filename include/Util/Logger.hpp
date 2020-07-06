@@ -7,6 +7,8 @@
 #include <log4cxx/fileappender.h>
 #include <log4cxx/logger.h>
 #include <log4cxx/patternlayout.h>
+#include <Util/StacktraceLoader.hpp>
+
 
 using namespace log4cxx;
 using namespace log4cxx::helpers;
@@ -49,6 +51,10 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
     do {                                \
         LOG4CXX_DEBUG(NESLogger, TEXT); \
     } while (0)
+#define NES_TRACE(TEXT)                 \
+    do {                                \
+        LOG4CXX_TRACE(NESLogger, TEXT); \
+    } while (0)
 #define NES_INFO(TEXT)                 \
     do {                               \
         LOG4CXX_INFO(NESLogger, TEXT); \
@@ -68,8 +74,18 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 
 #define NES_THROW_RUNTIME_ERROR(TEXT)   \
     do {                                \
+        NES::collectAndPrintStacktrace(); \
         NES_FATAL_ERROR(TEXT);          \
         throw std::runtime_error(TEXT); \
+    } while (0)
+
+#define NES_ASSERT(CONDITION, TEXT)           \
+    do {                                      \
+        if (!CONDITION) {                     \
+            NES::collectAndPrintStacktrace(); \
+            NES_FATAL_ERROR(TEXT);            \
+            throw std::runtime_error("NES Runtime Error on condition " #CONDITION);       \
+        }                                     \
     } while (0)
 
 static void setupLogging(std::string logFileName, DebugLevel level) {

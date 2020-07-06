@@ -1,6 +1,7 @@
 #ifndef NES_EXCHANGEPROTOCOL_HPP
 #define NES_EXCHANGEPROTOCOL_HPP
 
+#include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Network/PartitionManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
@@ -8,23 +9,23 @@
 
 namespace NES {
 namespace Network {
-
+class ExchangeProtocolListener;
 /**
  * @brief This class is used by the ZmqServer and defines the reaction for events onDataBuffer,
  * clientAnnouncement, endOfStream and exceptionHandling between all nodes of NES.
  */
 class ExchangeProtocol {
   public:
+    /**
+     * @brief Create an exchange protocol object with a partition manager and a listener
+     * @param partitionManager
+     * @param listener
+     */
     explicit ExchangeProtocol(
-        BufferManagerPtr bufferManager, PartitionManagerPtr partitionManager,
-        QueryManagerPtr queryManager,
-        std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer = [](NesPartition id,
-                                                                            TupleBuffer& buf) {
-        },
-        std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream = [](Messages::EndOfStreamMessage p) {
-        },
-        std::function<void(Messages::ErrMessage)>&& onException = [](Messages::ErrMessage ex) {
-        });
+        std::shared_ptr<PartitionManager> partitionManager,
+        std::shared_ptr<ExchangeProtocolListener> listener);
+
+    ~ExchangeProtocol();
 
     /**
      * @brief Reaction of the zmqServer after a ClientAnnounceMessage is received.
@@ -44,9 +45,14 @@ class ExchangeProtocol {
     /**
      * @brief Reaction of the zmqServer after an error occurs.
      * @param the error message
-     * @return the handled error message
      */
-    Messages::ErrMessage onError(const Messages::ErrMessage error);
+    void onServerError(const Messages::ErrorMessage error);
+
+    /**
+     * @brief Reaction of the zmqServer after an error occurs.
+     * @param the error message
+     */
+    void onChannelError(const Messages::ErrorMessage error);
 
     /**
      * @brief Reaction of the zmqServer after an EndOfStream message is received.
@@ -55,33 +61,16 @@ class ExchangeProtocol {
     void onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage);
 
     /**
-     * @brief getter for the BufferManager
-     * @return the buffer manager
-     */
-    BufferManagerPtr getBufferManager() const;
-
-    /**
      * @brief getter for the PartitionManager
      * @return the PartitionManager
      */
-    PartitionManagerPtr getPartitionManager() const;
+    std::shared_ptr<PartitionManager> getPartitionManager() const;
 
-    /**
-     * @brief getter for the QueryManager
-     * @return the QueryManager
-     */
-    QueryManagerPtr getQueryManager() const;
 
   private:
-    BufferManagerPtr bufferManager;
-    PartitionManagerPtr partitionManager;
-    QueryManagerPtr queryManager;
-
-    std::function<void(NesPartition, TupleBuffer&)> onDataBufferCallback;
-    std::function<void(Messages::EndOfStreamMessage)> onEndOfStreamCallback;
-    std::function<void(Messages::ErrMessage)> onExceptionCallback;
+    std::shared_ptr<PartitionManager> partitionManager;
+    std::shared_ptr<ExchangeProtocolListener> protocolListener;
 };
-typedef std::shared_ptr<ExchangeProtocol> ExchangeProtocolPtr;
 
 }// namespace Network
 }// namespace NES

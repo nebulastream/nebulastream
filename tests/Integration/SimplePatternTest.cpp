@@ -1,12 +1,13 @@
-#include <Catalogs/QueryCatalog.hpp>
-#include <Components/NesCoordinator.hpp>
-#include <Components/NesWorker.hpp>
-#include <Services/QueryService.hpp>
+#include <iostream>
 #include <Util/Logger.hpp>
+#include <gtest/gtest.h>
+#include <Components/NesWorker.hpp>
+#include <Components/NesCoordinator.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <Services/QueryService.hpp>
 
 //used tests: QueryCatalogTest, QueryTest
 namespace fs = std::filesystem;
@@ -31,7 +32,7 @@ class SimplePatternTest : public testing::Test {
         std::cout << "Tear down SimplePatternTest class." << std::endl;
     }
 
-    std::string ipAddress = "localhost";
+    std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 };
 
@@ -46,7 +47,7 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
     NES_DEBUG("SimplePatternTest: coordinator started successfully");
 
     NES_DEBUG("SimplePatternTest: start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_DEBUG("SimplePatternTest: worker1 started successfully");
@@ -54,7 +55,7 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string query = "Pattern::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
+    std::string query = R"(Pattern::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     std::string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
@@ -84,7 +85,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     NES_DEBUG("coordinator started successfully");
 
     NES_DEBUG("start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_DEBUG("worker1 started successfully");
@@ -95,7 +96,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     //register logical stream qnv
     //TODO: update CHAR (sensor id is in result set )
     std::string qnv =
-        "Schema::create()->addField(\"sensor_id\", DataTypeFactory::createFixedChar(8))->addField(createField(\"timestamp\", UINT64))->addField(createField(\"velocity\", FLOAT32))->addField(createField(\"quantity\", UINT64));";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
     std::string testSchemaFileName = "QnV.hpp";
     std::ofstream out(testSchemaFileName);
     out << qnv;
@@ -117,7 +118,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     remove(outputFilePath.c_str());
 
     //register query
-    std::string query = "Pattern::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\""
+    std::string query = R"(Pattern::from("QnV").filter(Attribute("velocity") > 100).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
     std::string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");

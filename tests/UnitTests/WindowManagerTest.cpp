@@ -22,7 +22,8 @@
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <Windows/WindowHandler.hpp>
-
+#include <QueryCompiler/ExecutablePipeline.hpp>
+#include <QueryCompiler/PipelineExecutionContext.hpp>
 namespace NES {
 class WindowManagerTest : public testing::Test {
   public:
@@ -43,8 +44,8 @@ class WindowManagerTest : public testing::Test {
 class TestAggregation : public WindowAggregation {
   public:
     TestAggregation() : WindowAggregation(){};
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef,
-                            StructDeclaration inputStruct, BinaryOperatorStatement inputRef){};
+    void compileLiftCombine(CompoundStatementPtr, BinaryOperatorStatement,
+                            StructDeclaration, BinaryOperatorStatement){};
 };
 
 TEST_F(WindowManagerTest, testSumAggregation)
@@ -85,8 +86,7 @@ TEST_F(WindowManagerTest, testCheckSlice)
 }
 
 TEST_F(WindowManagerTest, testWindowTrigger) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -96,7 +96,24 @@ TEST_F(WindowManagerTest, testWindowTrigger) {
         WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(AttributeField::create("test", DataTypeFactory::createUInt64())), Milliseconds(10))));
 
     auto w = WindowHandler(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
-    w.setup(nullptr, 0);
+
+    class MockedExecutablePipeline : public ExecutablePipeline {
+      public:
+        uint32_t execute(TupleBuffer&, void*, WindowManagerPtr, QueryExecutionContextPtr) override {
+            return 0;
+        }
+    };
+
+    class MockedPipelineExecutionContext : public PipelineExecutionContext {
+      public:
+        MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&){}) {
+            // nop
+        }
+    };
+    auto executable = std::make_shared<MockedExecutablePipeline>();
+    auto context = std::make_shared<MockedPipelineExecutionContext>();
+    auto nextPipeline = PipelineStage::create(0, "1", executable, context, nullptr);
+    w.setup(nextPipeline, 0);
 
     auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*)w.getWindowState();
     auto keyRef = windowState->get(10);
@@ -124,8 +141,8 @@ TEST_F(WindowManagerTest, testWindowTrigger) {
 
     size_t tupleCnt = buf.getNumberOfTuples();
 
-    assert(buf.getBuffer() != NULL);
-    assert(tupleCnt == 1);
+    ASSERT_NE(buf.getBuffer(), nullptr);
+    ASSERT_EQ(tupleCnt, 1);
 
     uint64_t* tuples = (uint64_t*)buf.getBuffer();
     ASSERT_EQ(tuples[0], 1);

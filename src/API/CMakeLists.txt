@@ -1,5 +1,4 @@
 add_source_nes(
-        Config.cpp
         Schema.cpp
         ParameterTypes.cpp
         UserAPIExpression.cpp

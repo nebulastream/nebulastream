@@ -38,9 +38,9 @@ WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMe
     return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));
 }
 
-void SlidingWindow::triggerWindows(WindowListPtr windows,
-                                   uint64_t lastWatermark,
-                                   uint64_t currentWatermark) const {
+void SlidingWindow::triggerWindows(WindowListPtr,
+                                   uint64_t,
+                                   uint64_t) const {
     NES_NOT_IMPLEMENTED();
 }
 
@@ -53,9 +53,9 @@ WindowTypePtr SessionWindow::withGap(TimeCharacteristicPtr timeCharacteristic, T
     return std::make_shared<SessionWindow>(SessionWindow(timeCharacteristic, gap));
 }
 
-void SessionWindow::triggerWindows(WindowListPtr windows,
-                                   uint64_t lastWatermark,
-                                   uint64_t currentWatermark) const {
+void SessionWindow::triggerWindows(WindowListPtr,
+                                   uint64_t ,
+                                   uint64_t) const {
     NES_NOT_IMPLEMENTED();
 }
 

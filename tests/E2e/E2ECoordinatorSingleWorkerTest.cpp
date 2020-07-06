@@ -63,7 +63,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     web::json::value json_return;
 
     web::http::client::http_client client(
-        "http://localhost:8081/v1/nes/query/execute-query");
+        "http://127.0.0.1:8081/v1/nes/query/execute-query");
     client.request(web::http::methods::POST, _XPLATSTR("/"), body).then(
         [](const web::http::http_response& response) {
           cout << "get first then with response" << endl;
@@ -119,7 +119,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     web::json::value json_return;
 
     web::http::client::http_client client(
-        "http://localhost:8081/v1/nes/query/execute-query");
+        "http://127.0.0.1:8081/v1/nes/query/execute-query");
     client.request(web::http::methods::POST, _XPLATSTR("/"), body).then(
         [](const web::http::http_response& response) {
           cout << "get first then" << endl;
@@ -207,7 +207,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     web::json::value json_return;
 
     web::http::client::http_client client(
-        "http://localhost:8081/v1/nes/query/execute-query");
+        "http://127.0.0.1:8081/v1/nes/query/execute-query");
     client.request(web::http::methods::POST, _XPLATSTR("/"), body).then(
         [](const web::http::http_response& response) {
           cout << "get first then" << endl;
@@ -289,7 +289,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithF
     web::json::value json_return;
 
     web::http::client::http_client client(
-        "http://localhost:8081/v1/nes/query/execute-query");
+        "http://127.0.0.1:8081/v1/nes/query/execute-query");
     client.request(web::http::methods::POST, _XPLATSTR("/"), body).then(
         [](const web::http::http_response& response) {
           cout << "get first then" << endl;
@@ -379,7 +379,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithF
     web::json::value json_return;
 
     web::http::client::http_client client(
-        "http://localhost:8081/v1/nes/query/execute-query");
+        "http://127.0.0.1:8081/v1/nes/query/execute-query");
     client.request(web::http::methods::POST, _XPLATSTR("/"), body).then(
         [](const web::http::http_response& response) {
           cout << "get first then" << endl;

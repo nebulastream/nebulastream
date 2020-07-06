@@ -5,6 +5,7 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
+using namespace std;
 using namespace NES;
 
 class PathFinderTest : public testing::Test {

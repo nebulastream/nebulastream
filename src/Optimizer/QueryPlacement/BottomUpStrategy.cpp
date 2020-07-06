@@ -12,6 +12,7 @@
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 
+using namespace std;
 namespace NES {
 
 std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
@@ -43,7 +44,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         throw QueryPlacementException("BottomUpStrategy: No source operator found in the query plan wih id: " + queryId);
     }
 
-    const vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
+    const std::vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
     if (sourceNodes.empty()) {
         NES_ERROR("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + queryId);
         throw QueryPlacementException("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + queryId);
@@ -69,7 +70,7 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
     NESTopologyEntryPtr sinkNode = nesTopologyPlan->getRootNode();
 
     NES_DEBUG("BottomUpStrategy: Place the operator chain from each source node for query with id : " << queryId);
-    for (NESTopologyEntryPtr sourceNode : sourceNodes) {
+    for (const NESTopologyEntryPtr& sourceNode : sourceNodes) {
 
         NES_INFO("BottomUpStrategy: Find the path between source and sink node for query with id : " << queryId);
         const vector<NESTopologyEntryPtr> path = pathFinder->findPathBetween(sourceNode, sinkNode);

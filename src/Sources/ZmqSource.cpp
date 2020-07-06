@@ -12,13 +12,6 @@
 
 namespace NES {
 
-ZmqSource::ZmqSource()
-    : host(""), port(0), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
-    // This constructor is needed for Serialization
-    NES_DEBUG(
-        "ZMQSOURCE  " << this << ": Init DEFAULT for serializazionZMQ ZMQSOURCE to " << host << ":" << port << "/");
-}
-
 ZmqSource::ZmqSource(SchemaPtr schema,
                      BufferManagerPtr bufferManager,
                      QueryManagerPtr queryManager,
@@ -59,7 +52,7 @@ std::optional<TupleBuffer> ZmqSource::receiveData() {
             socket.recv(&new_data2);// actual data
 
             // Get some information about received data
-            size_t tuple_size = schema->getSchemaSizeInBytes();
+//            size_t tuple_size = schema->getSchemaSizeInBytes();
             // Create new TupleBuffer and copy data
             auto buffer = bufferManager->getBufferBlocking();
             NES_DEBUG("ZMQSource  " << this << ": got buffer ");

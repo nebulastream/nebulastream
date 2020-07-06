@@ -12,10 +12,6 @@ using namespace std;
 
 namespace NES {
 
-SenseSource::SenseSource()
-    : udsf("") {
-}
-
 SenseSource::SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udsf)
     : DataSource(schema, bufferManager, queryManager),
       udsf(udsf) {
@@ -36,7 +32,7 @@ const std::string SenseSource::toString() const {
     return ss.str();
 }
 
-void SenseSource::fillBuffer(TupleBuffer& buf) {
+void SenseSource::fillBuffer(TupleBuffer&) {
 }
 
 SourceType SenseSource::getType() const {

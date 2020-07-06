@@ -22,7 +22,7 @@ class ZmqSource : public DataSource {
      * @param host name of the source queue
      * @param port of the source queue
      */
-    ZmqSource(SchemaPtr schema,
+    explicit ZmqSource(SchemaPtr schema,
               BufferManagerPtr bufferManager,
               QueryManagerPtr queryManager,
               const std::string& host,

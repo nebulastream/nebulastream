@@ -36,9 +36,6 @@ class TupleBuffer {
 
     friend class detail::MemorySegment;
 
-  private:
-    TupleBuffer() noexcept;
-
   public:
     TupleBuffer(const TupleBuffer& other) noexcept;
 
@@ -48,6 +45,7 @@ class TupleBuffer {
 
     TupleBuffer& operator=(TupleBuffer&& other);
 
+    TupleBuffer() noexcept;
   private:
     explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size);
 

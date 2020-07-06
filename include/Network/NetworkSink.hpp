@@ -53,7 +53,6 @@ class NetworkSink : public SinkMedium {
 
     const std::chrono::seconds waitTime;
     const uint8_t retryTimes;
-    SchemaPtr schema;
 };
 
 }// namespace Network

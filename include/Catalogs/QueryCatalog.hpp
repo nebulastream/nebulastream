@@ -9,6 +9,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <mutex>
 
 namespace NES {
 
@@ -106,8 +107,9 @@ class QueryCatalog {
     std::map<std::string, std::string> getAllQueries();
 
   private:
-    std::mutex queryStatus;
-    std::mutex queryRequest;
+    // TODO this is a temp fix, please look at issue
+    // TODO 890 to have a proper fix
+    std::recursive_mutex catalogMutex;
     std::map<std::string, QueryCatalogEntryPtr> queries;
 };
 

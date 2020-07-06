@@ -1,3 +1,4 @@
+#include <NodeEngine/WorkerContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/Task.hpp>
 #include <NodeEngine/ThreadPool.hpp>
@@ -21,16 +22,16 @@ ThreadPool::~ThreadPool() {
     threads.clear();
 }
 
-void ThreadPool::runningRoutine() {
+void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
     while (running) {
-        TaskPtr task = queryManager->getWork(running);
+        Task task;
         //TODO: check if TaskPtr() will really return a task that is skipped in if statement
-        if (task) {
-            task->execute();
-            queryManager->completedWork(task);
-            NES_DEBUG("Threadpool: finished task " << task);
+        if (!!(task = queryManager->getWork(running))) {
+            task(workerContext);
+            queryManager->completedWork(task, workerContext);
+            NES_TRACE("Threadpool: finished task " << task);
         } else {
-            NES_DEBUG("Threadpool: task invalid " << task);
+            NES_ERROR("Threadpool: task invalid");
             running = false;
         }
     }
@@ -51,9 +52,9 @@ bool ThreadPool::start() {
     /* spawn threads */
     NES_DEBUG("Threadpool: Spawning " << numThreads << " threads");
     for (uint64_t i = 0; i < numThreads; ++i) {
-        threads.emplace_back([this, barrier]() {
+        threads.emplace_back([this, i, barrier]() {
             barrier->wait();
-            runningRoutine();
+            runningRoutine(WorkerContext(i));
         });
     }
     barrier->wait();

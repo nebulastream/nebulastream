@@ -2,23 +2,23 @@
 
 namespace NES {
 
-void BaseController::handleDelete(std::vector<utility::string_t> path, http_request message) {
+void BaseController::handleDelete(std::vector<utility::string_t>, http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, getPath(message)));
 }
 
-void BaseController::handleGet(std::vector<utility::string_t> path, http_request message) {
+void BaseController::handleGet(std::vector<utility::string_t>, http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, getPath(message)));
 }
 
-void BaseController::handleHead(std::vector<utility::string_t> path, http_request message) {
+void BaseController::handleHead(std::vector<utility::string_t>, http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(message)));
 }
 
-void BaseController::handleMerge(std::vector<utility::string_t> path, http_request message) {
+void BaseController::handleMerge(std::vector<utility::string_t>, http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(message)));
 }
 
-void BaseController::handleTrace(std::vector<utility::string_t> path, http_request message) {
+void BaseController::handleTrace(std::vector<utility::string_t>, http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(message)));
 }
 

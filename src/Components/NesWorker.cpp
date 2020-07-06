@@ -2,22 +2,31 @@
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Util/Logger.hpp>
 #include <future>
+#include <utility>
 #include <signal.h>
 
+using namespace std;
 volatile sig_atomic_t flag = 0;
 
-void termFunc(int sig) {
+void termFunc(int) {
     cout << "termfunc" << endl;
     flag = 1;
 }
 
 namespace NES {
 
-NesWorker::NesWorker(std::string coordinatorIp, std::string coordinatorPort, std::string localIp, std::string localWorkerPort, NESNodeType type)
-    : coordinatorIp(coordinatorIp),
+NesWorker::NesWorker(
+    std::string coordinatorIp,
+    std::string coordinatorPort,
+    std::string localIp,
+    uint16_t localWorkerRpcPort,
+    uint16_t localWorkerZmqPort,
+    NESNodeType type)
+    : coordinatorIp(std::move(coordinatorIp)),
       coordinatorPort(coordinatorPort),
-      localWorkerIp(localIp),
-      localWorkerPort(localWorkerPort),
+      localWorkerIp(std::move(localIp)),
+      localWorkerRpcPort(localWorkerRpcPort),
+      localWorkerZmqPort(localWorkerZmqPort),
       type(type) {
     connected = false;
     withRegisterStream = false;
@@ -27,6 +36,8 @@ NesWorker::NesWorker(std::string coordinatorIp, std::string coordinatorPort, std
 
 NesWorker::~NesWorker() {
     NES_DEBUG("NesWorker::~NesWorker()");
+    NES_DEBUG("NesWorker::~NesWorker() use count of node engine: " << nodeEngine.use_count());
+    nodeEngine.reset();
 }
 bool NesWorker::setWitRegister(PhysicalStreamConfig pConf) {
     withRegisterStream = true;
@@ -56,21 +67,23 @@ void startWorkerRPCServer(std::shared_ptr<Server>& rpcServer, std::string addres
 }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
-    NES_DEBUG("NesWorker: start with blocking " << blocking << " coordinatorIp=" << coordinatorIp
-                                                << " coordinatorPort=" << coordinatorPort << " localWorkerIp=" << localWorkerIp << " localWorkerPort=" << localWorkerPort
-                                                << " type=" << type);
+    NES_DEBUG("NesWorker: start with blocking "
+              << blocking << " coordinatorIp=" << coordinatorIp
+              << " coordinatorPort=" << coordinatorPort << " localWorkerIp="
+              << localWorkerIp << " localWorkerRpcPort=" << localWorkerRpcPort
+              << " localWorkerZmqPort=" << localWorkerZmqPort
+              << " type=" << type);
 
     NES_DEBUG("NesWorker::start: start NodeEngine");
-    nodeEngine = std::make_shared<NodeEngine>();
-    bool success = nodeEngine->start();
-    if (!success) {
+    try {
+        nodeEngine = NodeEngine::create(localWorkerIp, localWorkerZmqPort);
+        NES_DEBUG("NesWorker: Node engine started successfully");
+    } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
         throw Exception("NesWorker error while starting node engine");
-    } else {
-        NES_DEBUG("NesWorker: Node engine started successfully");
     }
 
-    std::string address = localWorkerIp + ":" + localWorkerPort;
+    std::string address = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
     NES_DEBUG("startWorkerRPCServer for accepting messages for address=" << address);
     std::promise<bool> promRPC;
     std::thread threadRPC([&]() {
@@ -84,19 +97,19 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("NesWorker: start with connect");
         bool con = connect();
         NES_DEBUG("connected= " << con);
-        assert(con);
+        NES_ASSERT(con, "cannot connect");
     }
     if (withRegisterStream) {
         NES_DEBUG("NesWorker: start with register stream");
         bool success = registerPhysicalStream(conf);
         NES_DEBUG("registered= " << success);
-        assert(success);
+        NES_ASSERT(success, "cannot register");
     }
     if (withParent) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
         bool success = addParent(atoi(parentId.c_str()));
         NES_DEBUG("parent add= " << success);
-        assert(success);
+        NES_ASSERT(success, "cannot addParent");
     }
 
     stopped = false;
@@ -125,7 +138,7 @@ NodeEnginePtr NesWorker::getNodeEngine() {
     return nodeEngine;
 }
 
-bool NesWorker::stop(bool force) {
+bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
     if (!stopped) {
         NES_DEBUG("NesWorker: stopping rpc server");
@@ -135,13 +148,14 @@ bool NesWorker::stop(bool force) {
             rpcThread.join();
         }
 
-        bool successShutdownNodeEngine = nodeEngine->stop(force);
+        bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
             NES_ERROR("NesWorker::stop node engine stop not successful");
             throw Exception("NesWorker::stop  error while stopping node engine");
         } else {
             NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
         }
+        nodeEngine.reset();
         stopped = true;
         return successShutdownNodeEngine;
     } else {
@@ -153,9 +167,8 @@ bool NesWorker::stop(bool force) {
 bool NesWorker::connect() {
     std::string address = coordinatorIp + ":" + coordinatorPort;
 
-    coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(
-        address);
-    std::string localAddress = localWorkerIp + ":" + localWorkerPort;
+    coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(address);
+    std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
 
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddres=" << localAddress);
     // todo add nodeEngine->getNodePropertiesAsString()

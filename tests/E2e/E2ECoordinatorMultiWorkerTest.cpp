@@ -50,11 +50,12 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
-    string cmdWrk = "./nesWorker --coordinatorPort=12348";
-    bp::child workerProc1(cmdWrk.c_str());
+    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352";
+    bp::child workerProc1(cmdWrk1.c_str());
     cout << "started worker 1 with pid = " << workerProc1.id() << endl;
 
-    bp::child workerProc2(cmdWrk.c_str());
+    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354";
+    bp::child workerProc2(cmdWrk2.c_str());
     cout << "started worker 2 with pid = " << workerProc2.id() << endl;
 
     size_t coordinatorPid = coordinatorProc.id();
@@ -73,7 +74,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
     web::json::value json_return;
 
     web::http::client::http_client client(
-        "http://localhost:8081/v1/nes/query/execute-query");
+        "http://127.0.0.1:8081/v1/nes/query/execute-query");
     client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
                                                               cout << "get first then" << endl;
                                                               return response.extract_json();

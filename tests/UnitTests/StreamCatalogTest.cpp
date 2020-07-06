@@ -9,7 +9,7 @@
 #include <API/Schema.hpp>
 
 #include <Util/Logger.hpp>
-
+using namespace std;
 using namespace NES;
 std::string testSchema =
     "Schema::create()->addField(\"id\", BasicType::UINT32)"

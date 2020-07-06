@@ -60,8 +60,7 @@ class SinkTest : public testing::Test {
 };
 
 TEST_F(SinkTest, testCSVFileSink) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr csvSink = createCSVFileSink(test_schema, nodeEngine->getBufferManager(), path_to_csv_file, true);
@@ -102,12 +101,10 @@ TEST_F(SinkTest, testCSVFileSink) {
         }
     }
     buffer.release();
-    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testTextFileSink) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
 
@@ -132,12 +129,10 @@ TEST_F(SinkTest, testTextFileSink) {
     cout << "File Content=" << fileContent << endl;
     EXPECT_EQ(bufferContent, fileContent);
     buffer.release();
-    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testNESBinaryFileSink) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr binSink = createBinaryNESFileSink(test_schema, nodeEngine->getBufferManager(), path_to_bin_file, true);
@@ -185,12 +180,10 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     cout << "File path = " << path_to_bin_file << " Content=" << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema);
     EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema), UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
     buffer.release();
-    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testCSVPrintSink) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     std::filebuf fb;
     fb.open(path_to_osfile_file, std::ios::out);
@@ -236,12 +229,10 @@ TEST_F(SinkTest, testCSVPrintSink) {
     }
     fb.close();
     buffer.release();
-    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testTextPrintSink) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     std::filebuf fb;
     fb.open(path_to_osfile_file, std::ios::out);
@@ -272,12 +263,10 @@ TEST_F(SinkTest, testTextPrintSink) {
     buffer.release();
     fb.close();
     buffer.release();
-    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testCSVZMQSink) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr zmq_sink = createCSVZmqSink(test_schema, nodeEngine->getBufferManager(), "localhost", 666555);
@@ -320,12 +309,10 @@ TEST_F(SinkTest, testCSVZMQSink) {
     zmq_sink->writeData(buffer);
     receiving_thread.join();
     buffer.release();
-    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testTextZMQSink) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr zmq_sink = createTextZmqSink(test_schema, nodeEngine->getBufferManager(), "localhost", 666555);
@@ -357,12 +344,10 @@ TEST_F(SinkTest, testTextZMQSink) {
     zmq_sink->writeData(buffer);
     receiving_thread.join();
     buffer.release();
-    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testBinaryZMQSink) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, nodeEngine->getBufferManager(), "localhost", 666555, false);
@@ -379,7 +364,6 @@ TEST_F(SinkTest, testBinaryZMQSink) {
     std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
-    bool receiving_finished = false;
     auto receiving_thread = std::thread([&]() {
         auto schemaData = zmq_source->receiveData();
         TupleBuffer bufSchema = schemaData.value();
@@ -399,6 +383,5 @@ TEST_F(SinkTest, testBinaryZMQSink) {
     zmq_sink->writeData(buffer);
     receiving_thread.join();
     buffer.release();
-    nodeEngine->stop(true);
 }
 }// namespace NES

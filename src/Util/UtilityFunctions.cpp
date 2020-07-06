@@ -44,7 +44,6 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         std::stringstream code;
         code << "#include <API/Query.hpp>" << std::endl;
         code << "#include <API/Pattern.hpp>" << std::endl;
-        code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
@@ -116,7 +115,6 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSni
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
-        code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
         code << "#include <Sources/DataSource.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
@@ -189,7 +187,7 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
 std::string UtilityFunctions::printTupleBufferAsText(TupleBuffer& buffer) {
-    stringstream ss;
+    std::stringstream ss;
     for (size_t i = 0; i < buffer.getNumberOfTuples(); i++) {
         ss << buffer.getBufferAs<char>()[i];
     }

@@ -26,7 +26,7 @@ bool Array::isEquals(DataTypePtr otherDataType) {
     return false;
 }
 
-DataTypePtr Array::join(DataTypePtr otherDataType) {
+DataTypePtr Array::join(DataTypePtr) {
     return DataTypeFactory::createUndefined();
 }
 
