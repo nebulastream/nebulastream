@@ -99,7 +99,7 @@ class Query {
     const std::string& getQueryName() const;
     void setQueryName(const std::string& queryName);
 
-  private:
+  protected:
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
     std::string queryName;

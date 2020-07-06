@@ -111,7 +111,7 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
         code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
         //code << "Query createQuery(){" << std::endl;
-        code << "Pattern createQuery(){" << std::endl;
+        code << "Query createQuery(){" << std::endl;
 
         std::string streamName = queryCodeSnippet.substr(
             queryCodeSnippet.find("::from("));
@@ -144,14 +144,14 @@ QueryPtr UtilityFunctions::createPatternFromCodeString(
             NES_ERROR("Compilation of query code failed! Code: " << code.str());
         }
 
-        typedef Pattern (*CreateQueryFunctionPtr)();
+        typedef Query (*CreateQueryFunctionPtr)();
         CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>(
             "_ZN3NES11createQueryEv");
         if (!func) {
             NES_ERROR("Error retrieving function! Symbol not found!");
         }
         /* call loaded function to create query object */
-        Pattern query((*func)());
+        Query query((*func)());
 
         auto queryPtr = std::make_shared<Query>(query);
         std::string queryId = UtilityFunctions::generateIdString();
