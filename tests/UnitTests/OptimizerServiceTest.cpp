@@ -69,7 +69,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_top
          << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));";
     const QueryPtr query = queryService->getQueryFromQueryString(code.str());
 
-    const std::string plan = optimizerService->getExecutionPlanAsString(query->getQueryPlan(), "BottomUp");
+    const std::string plan = optimizerService->getExecutionPlanAsString(query->getQueryPlan(), "TopDown");
     EXPECT_TRUE(plan.size() != 0);
 }
 

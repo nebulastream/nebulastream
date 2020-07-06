@@ -92,6 +92,14 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
                 NES_THROW_RUNTIME_ERROR("TopDownStrategy: No node available for further placement of operators");
             }
 
+            if(candidateOperator->instanceOf<SinkLogicalOperatorNode>()){
+                if (!globalExecutionPlan->getExecutionNodeByNodeId(candidateNesNode->getId())) {
+                    NES_DEBUG("TopDownStrategy: Creating a new root execution node for placing sink operator");
+                    const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode);
+                    globalExecutionPlan->addExecutionNodeAsRoot(rootExecutionNode);
+                }
+            }
+
             NES_DEBUG("TopDownStrategy: Checking if execution node for the target worker node already present.");
 
             if (globalExecutionPlan->checkIfExecutionNodeExists(candidateNesNode->getId())) {
@@ -104,7 +112,7 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
                     if (candidateExecutionNode->checkIfQuerySubPlanContainsOperator(queryId, candidateOperator)) {
                         NES_DEBUG("TopDownStrategy: skip to next upstream operator as the target operator is already placed.");
                         vector<NodePtr> children = candidateOperator->getChildren();
-                        if (children.empty()) {
+                        if (!children.empty()) {
                             candidateOperator = children[0]->as<LogicalOperatorNode>();
                         } else {
                             candidateOperator = nullptr;
@@ -117,21 +125,21 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
                         if (!querySubPlan) {
                             NES_THROW_RUNTIME_ERROR("TopDownStrategy : unable to find query sub plan with id " + queryId);
                         }
-                        querySubPlan->prependPreExistingOperator(candidateOperator);
+                        querySubPlan->prependPreExistingOperator(candidateOperator->copy());
                         if (!candidateExecutionNode->updateQuerySubPlan(queryId, querySubPlan)) {
                             NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + queryId);
                         }
                     }
                 } else {
                     NES_DEBUG("TopDownStrategy: Adding the operator to an existing execution node");
-                    if (!candidateExecutionNode->createNewQuerySubPlan(queryId, candidateOperator)) {
+                    if (!candidateExecutionNode->createNewQuerySubPlan(queryId, candidateOperator->copy())) {
                         NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
                     }
                 }
             } else {
 
                 NES_DEBUG("TopDownStrategy: create new execution node with id: " << candidateNesNode->getId());
-                ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, candidateOperator);
+                ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, candidateOperator->copy());
                 NES_DEBUG("TopDownStrategy: Adding new execution node with id: " << candidateNesNode->getId());
                 if (!globalExecutionPlan->addExecutionNode(newExecutionNode)) {
                     NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to add execution node for query " + queryId);
@@ -142,7 +150,7 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
             candidateNesNode->reduceCpuCapacity(1);
-            if (!candidateOperator->getParents().empty()) {
+            if (!candidateOperator->getChildren().empty()) {
                 //FIXME: currently we are not considering split operators
                 NES_DEBUG("TopDownStrategy: Finding next operator for placement");
                 candidateOperator = candidateOperator->getChildren()[0]->as<LogicalOperatorNode>();
