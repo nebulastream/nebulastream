@@ -28,7 +28,6 @@ namespace NES {
 
 class QueryTest : public testing::Test {
   public:
-
     static void SetUpTestCase() {
         NES::setupLogging("QueryTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup QueryTest test class.");
@@ -57,24 +56,52 @@ TEST_F(QueryTest, testQueryFilter) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addPhysicalStream("default_logical", sce);
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-        "value", BasicType::UINT64);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
-    const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = plan->getSourceOperators();
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 1);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
     EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
 
-    const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = plan->getSinkOperators();
+    const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1);
-    
+
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
 
+    const std::vector<NodePtr>& children = sinkOptr->getChildren();
+    EXPECT_EQ(sinkOperators.size(), 1);
+}
+
+/**
+ * Merge two input stream: one with filter and one without filter.
+ */
+TEST_F(QueryTest, testQueryMerge) {
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    PhysicalStreamConfig streamConf;
+    streamConf.physicalStreamName = "test2";
+    streamConf.logicalStreamName = "test_stream";
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addPhysicalStream("default_logical", sce);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
+    auto subQuery = Query::from("default_logical").filter(lessExpression);
+    auto query = Query::from("default_logical").merge(&subQuery).sink(printSinkDescriptor);
+    auto plan = query.getQueryPlan();
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
+    EXPECT_EQ(sourceOperators.size(), 2);
+    SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+    const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
+    EXPECT_EQ(sinkOperators.size(), 1);
+    SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
     const std::vector<NodePtr>& children = sinkOptr->getChildren();
     EXPECT_EQ(sinkOperators.size(), 1);
 }
@@ -106,10 +133,9 @@ TEST_F(QueryTest, testQueryExpression) {
     auto equals = notEqualExpression->as<NegateExpressionNode>()->child();
     ASSERT_TRUE(equals->instanceOf<EqualsExpressionNode>());
 
-    auto assignmentExpression = Attribute("f1") = --Attribute("f1")+++10;
+    auto assignmentExpression = Attribute("f1") = --Attribute("f1")++ + 10;
     ConsoleDumpHandler::create()->dump(assignmentExpression, std::cout);
     ASSERT_TRUE(assignmentExpression->instanceOf<FieldAssignmentExpressionNode>());
 }
 
-}  // namespace NES
-
+}// namespace NES

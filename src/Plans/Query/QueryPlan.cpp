@@ -161,4 +161,7 @@ void QueryPlan::setQueryId(std::string& queryId) {
     QueryPlan::queryId = queryId;
 }
 
+void QueryPlan::addRootOperator(std::shared_ptr<OperatorNode> root) {
+    rootOperators.push_back(root);
+}
 }// namespace NES

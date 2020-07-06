@@ -32,6 +32,7 @@ LogicalOperatorNodePtr createSinkLogicalOperatorNode(const SinkDescriptorPtr sin
 LogicalOperatorNodePtr createMapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression);
 LogicalOperatorNodePtr createSourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor);
 LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition);
+LogicalOperatorNodePtr createMergeLogicalOperatorNode();
 }// namespace NES
 
 #endif// LOGICAL_OPERATOR_NODE_HPP

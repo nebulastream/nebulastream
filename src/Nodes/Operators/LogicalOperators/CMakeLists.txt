@@ -3,6 +3,7 @@ add_source_nes(
         FilterLogicalOperatorNode.cpp
         MapLogicalOperatorNode.cpp
         WindowLogicalOperatorNode.cpp
+        MergeLogicalOperatorNode.cpp
 )
 
 add_subdirectory(Sinks)
