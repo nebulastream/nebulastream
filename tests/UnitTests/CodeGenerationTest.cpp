@@ -829,10 +829,6 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
     stage->execute(inputBuffer, windowHandler->getWindowState(),
                    windowHandler->getWindowManager(), queryContext);
-    auto resultBuffer = queryContext.buffers[0];
-
-    /* check for correctness, after a window assigner no tuple should be produced*/
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 0);
 
     //check partial aggregates in window state
     auto stateVar =
