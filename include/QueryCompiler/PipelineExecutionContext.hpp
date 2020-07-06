@@ -8,6 +8,9 @@ typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
 class TupleBuffer;
 
+// TODO Philipp, please clarify if we should introduce WindowManager, StateVars, etc... here
+// TODO so that we have one central point that the compiled code uses to access runtime
+
 /**
  * @brief The PipelineExecutionContext is passed to a compiled pipeline and offers basic functionality to interact with the runtime.
  * Via the context, the compile code is able to allocate new TupleBuffers and to emit tuple buffers to the runtime.
@@ -20,8 +23,9 @@ class PipelineExecutionContext {
      * @param bufferManager a reference to the buffer manager to enable allocation from within the pipeline
      * @param emitFunctionHandler an handler to receive the emitted buffers from the pipeline.
      */
-    explicit PipelineExecutionContext(BufferManagerPtr bufferManager,
-                                      std::function<void(TupleBuffer&)> emitFunctionHandler);
+    explicit PipelineExecutionContext(
+        BufferManagerPtr bufferManager,
+        std::function<void(TupleBuffer&)>&& emitFunctionHandler);
 
     /**
      * @brief Allocates a new tuple buffer.

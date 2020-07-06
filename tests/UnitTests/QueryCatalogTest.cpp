@@ -13,6 +13,7 @@
 #include <Exceptions/InvalidArgumentException.hpp>
 
 using namespace NES;
+using namespace std;
 
 std::string ip = "127.0.0.1";
 std::string host = "localhost";

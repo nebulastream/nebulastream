@@ -44,7 +44,7 @@ std::set<OperatorType> Operator::traverseOpTree(bool traverse_children) {
     return result;
 }
 
-bool Operator::equals(const Operator& _rhs) {
+bool Operator::equals(const Operator&) {
     //TODO: change equals method to virtual bool equals(const Operator &_rhs) = 0;
     assert(0);
     return false;

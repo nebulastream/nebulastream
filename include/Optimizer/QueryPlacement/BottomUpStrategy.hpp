@@ -8,8 +8,6 @@ namespace NES {
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
-using namespace std;
-
 /**\brief:
  *          This class implements Bottom Up placement strategy. In this strategy, the source and sink operators are
  *          placed at respective nes nodes but rest of the operators are placed starting near to the source and then
@@ -35,7 +33,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      *
      * @throws exception if the operator can't be placed anywhere.
      */
-    void placeOperators(std::string queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
+    void placeOperators(std::string queryId, LogicalOperatorNodePtr sourceOperator, std::vector<NESTopologyEntryPtr> sourceNodes);
 };
 }// namespace NES
 

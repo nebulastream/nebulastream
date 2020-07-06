@@ -9,7 +9,6 @@
 #include <grpcpp/grpcpp.h>
 #include <string>
 
-using namespace std;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -20,7 +19,7 @@ class NodeStats;
 
 class CoordinatorRPCClient {
   public:
-    CoordinatorRPCClient(string address);
+    CoordinatorRPCClient(std::string address);
 
     /**
      * @brief this methods registers a physical stream via the coordinator to a logical stream

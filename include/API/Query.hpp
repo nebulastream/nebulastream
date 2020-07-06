@@ -1,7 +1,7 @@
 #ifndef API_QUERY_H
 #define API_QUERY_H
 
-#include <API/Config.hpp>
+
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>

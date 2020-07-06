@@ -28,18 +28,18 @@
 #include <utility>
 namespace NES {
 
-TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create(BufferManagerPtr bufferManager) {
-    return std::make_shared<TranslateToLegacyPlanPhase>(TranslateToLegacyPlanPhase(std::move(bufferManager)));
+TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create() {
+    return std::make_shared<TranslateToLegacyPlanPhase>();
 }
 
-TranslateToLegacyPlanPhase::TranslateToLegacyPlanPhase(BufferManagerPtr bufferManager) : bufferManager(std::move(bufferManager)) {}
+TranslateToLegacyPlanPhase::TranslateToLegacyPlanPhase() {}
 
-OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNodePtr operatorNode) {
+OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine) {
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // Translate Source operator node.
         auto sourceNodeOperator = operatorNode->as<SourceLogicalOperatorNode>();
         const SourceDescriptorPtr sourceDescriptor = sourceNodeOperator->getSourceDescriptor();
-        const DataSourcePtr dataSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
+        const DataSourcePtr dataSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, nodeEngine);
         const OperatorPtr operatorPtr = createSourceOperator(dataSource);
         operatorPtr->setOperatorId(operatorNode->getId());
         return operatorPtr;
@@ -85,7 +85,7 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
         const SinkDescriptorPtr sinkDescriptor = sinkNodeOperator->getSinkDescriptor();
         const SchemaPtr schema = sinkNodeOperator->getOutputSchema();
-        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(schema, bufferManager, sinkDescriptor);
+        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine);
         const OperatorPtr operatorPtr = createSinkOperator(dataSink);
         operatorPtr->setOperatorId(operatorNode->getId());
         return operatorPtr;
@@ -96,11 +96,11 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
 /**
  * Translade operator node and all its children to the legacy representation.
  */
-OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode) {
+OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine) {
     NES_DEBUG("TranslateToLegacyPhase: translate " << operatorNode);
-    auto legacyOperator = transformIndividualOperator(operatorNode);
+    auto legacyOperator = transformIndividualOperator(operatorNode, nodeEngine);
     for (const NodePtr& child : operatorNode->getChildren()) {
-        auto legacyChildOperator = transform(child->as<OperatorNode>());
+        auto legacyChildOperator = transform(child->as<OperatorNode>(), nodeEngine);
         legacyOperator->addChild(legacyChildOperator);
         legacyChildOperator->setParent(legacyOperator);
     }

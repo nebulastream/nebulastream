@@ -142,7 +142,7 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     } else {
         NES_DEBUG("stream does not exist, create new item");
         logicalToPhysicalStreamMapping.insert(
-            pair<std::string, std::vector<StreamCatalogEntryPtr>>(
+            std::pair<std::string, std::vector<StreamCatalogEntryPtr>>(
                 logicalStreamName, std::vector<StreamCatalogEntryPtr>()));
         logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry);
     }
@@ -153,11 +153,11 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     return true;
 }
 
-bool StreamCatalog::removeAllPhysicalStreams(std::string physicalStreamName) {
+bool StreamCatalog::removeAllPhysicalStreams(std::string) {
     NES_NOT_IMPLEMENTED();
 }
 
-bool StreamCatalog::removePhysicalStream(string logicalStreamName, string physicalStreamName, std::size_t hashId) {
+bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::size_t hashId) {
     NES_DEBUG(
         "StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName);
 
@@ -173,7 +173,7 @@ bool StreamCatalog::removePhysicalStream(string logicalStreamName, string physic
         NES_DEBUG(
             "StreamCatalog: logical stream " << logicalStreamName << " exists try to remove physical stream"
                                              << physicalStreamName << " from node " << hashId);
-        for (vector<StreamCatalogEntryPtr>::const_iterator entry =
+        for (std::vector<StreamCatalogEntryPtr>::const_iterator entry =
                  logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
              entry != logicalToPhysicalStreamMapping[logicalStreamName].cend();
              entry++) {
@@ -211,7 +211,7 @@ bool StreamCatalog::removePhysicalStreamByHashId(size_t hashId) {
 
     for (auto logStream : logicalToPhysicalStreamMapping) {
         NES_DEBUG("StreamCatalog: check log stream " << logStream.first);
-        for (vector<StreamCatalogEntryPtr>::const_iterator entry =
+        for (std::vector<StreamCatalogEntryPtr>::const_iterator entry =
                  logicalToPhysicalStreamMapping[logStream.first].cbegin();
              entry != logicalToPhysicalStreamMapping[logStream.first].cend();
              entry++) {
@@ -263,12 +263,12 @@ bool StreamCatalog::testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::str
         != logicalToPhysicalStreamMapping.end();
 }
 
-vector<NESTopologyEntryPtr> StreamCatalog::getSourceNodesForLogicalStream(string logicalStreamName) {
+std::vector<NESTopologyEntryPtr> StreamCatalog::getSourceNodesForLogicalStream(std::string logicalStreamName) {
 
-    vector<NESTopologyEntryPtr> listOfSourceNodes;
+    std::vector<NESTopologyEntryPtr> listOfSourceNodes;
 
     //get current physical stream for this logical stream
-    vector<StreamCatalogEntryPtr> physicalStreams = logicalToPhysicalStreamMapping[logicalStreamName];
+    std::vector<StreamCatalogEntryPtr> physicalStreams = logicalToPhysicalStreamMapping[logicalStreamName];
 
     if (physicalStreams.empty()) {
         return listOfSourceNodes;
@@ -292,7 +292,7 @@ bool StreamCatalog::reset() {
 }
 
 std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
-    stringstream ss;
+    std::stringstream ss;
     for (auto entry : logicalToPhysicalStreamMapping) {
         ss << "stream name=" << entry.first << " with " << entry.second.size()
            << " elements:";
@@ -316,7 +316,7 @@ std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStream() {
 std::map<std::string, std::string> StreamCatalog::getAllLogicalStreamAsString() {
 
     std::map<std::string, std::string> allLogicalStreamAsString;
-    const map<std::string, SchemaPtr> allLogicalStream = getAllLogicalStream();
+    const std::map<std::string, SchemaPtr> allLogicalStream = getAllLogicalStream();
 
     for (auto const& [key, val] : allLogicalStream) {
         allLogicalStreamAsString[key] = val->toString();

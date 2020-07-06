@@ -4,8 +4,8 @@ add_source_nes(
         GeneratedCode.cpp
         QueryExecutionPlan.cpp
         PipelineStage.cpp
-        HandCodedQueryExecutionPlan.cpp
         GeneratedQueryExecutionPlan.cpp
+        GeneratedQueryExecutionPlanBuilder.cpp
         QueryCompiler.cpp
         PipelineContext.cpp
         PipelineExecutionContext.cpp

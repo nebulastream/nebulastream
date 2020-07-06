@@ -12,8 +12,9 @@
 
 using Seconds = std::chrono::seconds;
 using Clock = std::chrono::high_resolution_clock;
-using namespace std;
-
+using std::string;
+using std::cout;
+using std::endl;
 namespace NES {
 
 class NodeStats;
@@ -24,7 +25,7 @@ typedef std::shared_ptr<NodeStats> NodeStatsPtr;
  */
 class TestUtils {
   public:
-    static const size_t timeout = 10;
+    static const size_t timeout = 30;
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
@@ -131,15 +132,21 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
+    template <typename Predicate = std::equal_to<size_t>>
     static bool checkCompleteOrTimeout(NesWorkerPtr ptr, std::string queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-
+        Predicate cmp;
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
-            if (queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatus() == QueryStatus::Running
-                && ptr->getQueryStatistics(queryId)->getProcessedBuffers() == expectedResult
-                && ptr->getQueryStatistics(queryId)->getProcessedTasks() == expectedResult) {
+            auto query = queryCatalog->getQueryCatalogEntry(queryId);
+            auto statistics = ptr->getQueryStatistics(queryId);
+            if (!query || !statistics) {
+                continue;
+            }
+            bool isQueryRunning = query->getQueryStatus() == QueryStatus::Running;
+            if (isQueryRunning && cmp(statistics->getProcessedBuffers(), expectedResult)
+                && cmp(statistics->getProcessedTasks(), expectedResult)) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct");
                 return true;
             }
@@ -157,15 +164,22 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
+    template <typename Predicate = std::equal_to<size_t>>
     static bool checkCompleteOrTimeout(NesCoordinatorPtr ptr, std::string queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
+        Predicate cmp;
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr");
-            if (queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatus() == QueryStatus::Running
-                && ptr->getQueryStatistics(queryId)->getProcessedBuffers() == expectedResult
-                && ptr->getQueryStatistics(queryId)->getProcessedTasks() == expectedResult) {
-                NES_DEBUG("checkCompleteOrTimeout: results are correct");
+            auto query = queryCatalog->getQueryCatalogEntry(queryId);
+            auto statistics = ptr->getQueryStatistics(queryId);
+            if (!query || !statistics) {
+                continue;
+            }
+            bool isQueryRunning = query->getQueryStatus() == QueryStatus::Running;
+            if (isQueryRunning && cmp(statistics->getProcessedBuffers(), expectedResult)
+                && cmp(statistics->getProcessedTasks(), expectedResult)) {
+                NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct");
                 return true;
             }
             sleep(1);

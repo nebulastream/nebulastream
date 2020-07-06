@@ -126,12 +126,12 @@ class QueryPlan {
      * @brief initialize query plan and set currentOperatorId to 1
      * @param rootOperator
      */
-    explicit QueryPlan(OperatorNodePtr rootOperator);
+    QueryPlan(OperatorNodePtr rootOperator);
 
     /**
      * @brief initialize an empty query plan
      */
-    explicit QueryPlan();
+    QueryPlan() = default;
 
     /**
      * @brief Get next free operator id

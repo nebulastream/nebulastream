@@ -77,7 +77,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
     cout << "string submit for query2=" << ssQuery2.str();
 
     web::json::value jsonReturnQ1;
-    web::http::client::http_client clientQ1("http://localhost:8081/v1/nes/");
+    web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
     clientQ1.request(web::http::methods::POST, "/query/execute-query", ssQuery1.str())
         .then([](const web::http::http_response& response) {
             cout << "get first then" << endl;
@@ -102,7 +102,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
 
     web::json::value jsonReturnQ2;
     web::http::client::http_client clientQ2(
-        "http://localhost:8081/v1/nes/query/execute-query");
+        "http://127.0.0.1:8081/v1/nes/query/execute-query");
     clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then([](const web::http::http_response& response) {
                                                                        cout << "get first then" << endl;
                                                                        return response.extract_json();
@@ -212,7 +212,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     cout << "string submit for query2=" << ssQuery3.str();
 
     web::json::value jsonReturnQ1;
-    web::http::client::http_client clientQ1("http://localhost:8081/v1/nes/");
+    web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
     clientQ1.request(web::http::methods::POST, "/query/execute-query", ssQuery1.str())
         .then([](const web::http::http_response& response) {
             cout << "get first then" << endl;
@@ -232,7 +232,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     cout << "return from q1" << endl;
 
     web::json::value jsonReturnQ2;
-    web::http::client::http_client clientQ2("http://localhost:8081/v1/nes/query/execute-query");
+    web::http::client::http_client clientQ2("http://127.0.0.1:8081/v1/nes/query/execute-query");
     clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then([](const web::http::http_response& response) {
                                                                        cout << "get first then" << endl;
                                                                        return response.extract_json();
@@ -251,7 +251,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 
     cout << "send query 3:" << endl;
     web::json::value jsonReturnQ3;
-    web::http::client::http_client clientQ3("http://localhost:8081/v1/nes/query/execute-query");
+    web::http::client::http_client clientQ3("http://127.0.0.1:8081/v1/nes/query/execute-query");
     clientQ3.request(web::http::methods::POST, "/", ssQuery3.str()).then([](const web::http::http_response& response) {
                                                                        cout << "get first then" << endl;
                                                                        return response.extract_json();

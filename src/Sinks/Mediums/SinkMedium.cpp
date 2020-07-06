@@ -2,14 +2,16 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
+#include <utility>
 
 namespace NES {
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat)
-    : sinkFormat(sinkFormat),
+    : sinkFormat(std::move(sinkFormat)),
       sentBuffer(0),
       sentTuples(0),
-      schemaWritten(false) {
+      schemaWritten(false),
+      append(false) {
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 

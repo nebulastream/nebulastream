@@ -6,7 +6,6 @@
 
 namespace NES {
 
-using namespace std;
 
 class TopDownStrategy : public BasePlacementStrategy {
 
@@ -28,7 +27,7 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param sinkOperator:  sink operator for the query
      * @param nesSourceNodes: list of physical source nodes
      */
-    void placeOperators(std::string queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes);
+    void placeOperators(std::string queryId, LogicalOperatorNodePtr sinkOperator, std::vector<NESTopologyEntryPtr> nesSourceNodes);
 };
 
 }// namespace NES

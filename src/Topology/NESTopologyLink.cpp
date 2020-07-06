@@ -32,7 +32,7 @@ LinkType NESTopologyLink::getLinkType() {
                && destNode->getEntryType() == Sensor) {
         return NodeToSensor;
     }
-    NES_FATAL_ERROR("Unrecognized LinkType!");
+    NES_THROW_RUNTIME_ERROR("Unrecognized LinkType!");
 }
 
 std::string NESTopologyLink::getLinkTypeString() {
@@ -41,7 +41,7 @@ std::string NESTopologyLink::getLinkTypeString() {
         case SensorToNode: return "SensorToNode";
         case NodeToSensor: return "NodeToSensor";
     }
-    NES_FATAL_ERROR("String for LinkType not found!");
+    NES_THROW_RUNTIME_ERROR("String for LinkType not found!");
 }
 
 void NESTopologyLink::updateLinkLatency(size_t linkLatency) {

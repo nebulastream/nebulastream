@@ -5,39 +5,33 @@
 
 namespace NES {
 
-QueryExecutionPlan::QueryExecutionPlan(std::string queryId) : queryId(queryId), sources(), stages() {
-}
-
 QueryExecutionPlan::QueryExecutionPlan(std::string queryId,
                                        std::vector<DataSourcePtr> sources,
                                        std::vector<PipelineStagePtr> stages,
-                                       std::map<DataSource*, uint32_t> sourceToStage,
-                                       std::map<uint32_t, uint32_t> stageToDest)
-    : queryId(queryId),
+                                       QueryManagerPtr queryManager,
+                                       BufferManagerPtr bufferManager)
+    : queryId(std::move(queryId)),
       sources(std::move(sources)),
       stages(std::move(stages)),
-      sourceToStage(std::move(sourceToStage)),
-      stageToDest(std::move(stageToDest)) {
+      queryManager(std::move(queryManager)),
+      bufferManager(std::move(bufferManager)),
+      qepStatus(Created) {
 }
 
-void QueryExecutionPlan::setQueryId(std::string queryId) {
-    this->queryId = queryId;
-}
-
-std::string QueryExecutionPlan::getQueryId() {
+QueryExecutionPlanId QueryExecutionPlan::getQueryId() {
     return queryId;
 }
 
 QueryExecutionPlan::~QueryExecutionPlan() {
     NES_DEBUG("destroy qep");
+    NES_ASSERT(qepStatus.load() == Stopped || qepStatus.load() == ErrorState, "QueryPlan is created but not executing " << queryId);
     sources.clear();
     stages.clear();
-    sourceToStage.clear();
-    stageToDest.clear();
 }
 
 bool QueryExecutionPlan::stop() {
     bool ret = true;
+    NES_ASSERT(qepStatus == Running, "QueryPlan is created but not executing " << queryId);
     NES_DEBUG("QueryExecutionPlan: stop");
     for (auto& stage : stages) {
         if (!stage->stop()) {
@@ -45,29 +39,48 @@ bool QueryExecutionPlan::stop() {
             ret = false;
         }
     }
+    if (ret) {
+        qepStatus.store(Stopped);
+    } else {
+        qepStatus.store(ErrorState);
+    }
     return ret;
+}
+
+QueryExecutionPlan::QueryExecutionPlanStatus QueryExecutionPlan::getStatus() {
+    return qepStatus.load();
 }
 
 bool QueryExecutionPlan::setup() {
     NES_DEBUG("QueryExecutionPlan: setup");
-    for (auto& stage : stages) {
-        if (!stage->setup()) {
-            NES_ERROR("QueryExecutionPlan: setup failed!");
-            this->stop();
-            return false;
+    auto expected = Created;
+    if (qepStatus.compare_exchange_strong(expected, Deployed)) {
+        for (auto& stage : stages) {
+            if (!stage->setup()) {
+                NES_ERROR("QueryExecutionPlan: setup failed!");
+                this->stop();
+                return false;
+            }
         }
+    } else {
+        NES_THROW_RUNTIME_ERROR("QEP expected to be Created but was not");
     }
     return true;
 }
 
 bool QueryExecutionPlan::start() {
     NES_DEBUG("QueryExecutionPlan: start");
-    for (auto& stage : stages) {
-        if (!stage->start()) {
-            NES_ERROR("QueryExecutionPlan: start failed!");
-            this->stop();
-            return false;
+    auto expected = Deployed;
+    if (qepStatus.compare_exchange_strong(expected, Running)) {
+        for (auto& stage : stages) {
+            if (!stage->start()) {
+                NES_ERROR("QueryExecutionPlan: start failed!");
+                this->stop();
+                return false;
+            }
         }
+    } else {
+        NES_THROW_RUNTIME_ERROR("QEP expected to be Deployed but was not");
     }
     return true;
 }
@@ -76,32 +89,16 @@ QueryManagerPtr QueryExecutionPlan::getQueryManager() {
     return queryManager;
 }
 
-void QueryExecutionPlan::setQueryManager(QueryManagerPtr queryManager) {
-    this->queryManager = queryManager;
-}
-
 BufferManagerPtr QueryExecutionPlan::getBufferManager() {
     return bufferManager;
 }
 
-void QueryExecutionPlan::setBufferManager(BufferManagerPtr bufferManager) {
-    this->bufferManager = bufferManager;
-}
+std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
 
-void QueryExecutionPlan::addDataSource(DataSourcePtr source) {
-    sources.push_back(source);
-}
+std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
 
-const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
-
-void QueryExecutionPlan::addDataSink(DataSinkPtr sink) {
-    sinks.push_back(sink);
-}
-
-const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
-
-void QueryExecutionPlan::appendPipelineStage(PipelineStagePtr pipelineStage) {
-    stages.push_back(pipelineStage);
+PipelineStagePtr QueryExecutionPlan::getStage(size_t index) const {
+    return stages[index];
 }
 
 void QueryExecutionPlan::print() {
@@ -118,10 +115,5 @@ void QueryExecutionPlan::print() {
     }
 }
 
-bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, TupleBuffer& buf) {
-    return false;
-}
-
-uint32_t QueryExecutionPlan::stageIdFromSource(DataSource* source) { return sourceToStage[source]; };
 
 }// namespace NES

@@ -16,6 +16,7 @@
 
 namespace po = boost::program_options;
 using namespace NES;
+using namespace std;
 
 const std::string logo = "/********************************************************\n"
                          " *     _   _   ______    _____\n"
@@ -34,12 +35,12 @@ int main(int argc, const char* argv[]) {
     // Initializing defaults
     uint16_t restPort = 8081;
     uint16_t rpcPort = 4000;
-    std::string serverIp = "localhost";
+    std::string serverIp = "127.0.0.1";
 
     po::options_description serverOptions("Nes Coordinator Server Options");
     serverOptions.add_options()(
         "serverIp", po::value<std::string>(&serverIp)->default_value(serverIp),
-        "Set NES server ip (default: localhost).")(
+        "Set NES server ip (default: 127.0.0.1).")(
         "restPort", po::value<uint16_t>(),
         "Set NES REST server port (default: 8081).")
 
@@ -79,7 +80,7 @@ int main(int argc, const char* argv[]) {
     if (changed) {
         NES_INFO("config changed thus rest params");
     }
-    if (serverIp != "localhost") {
+    if (serverIp != "127.0.0.1") {
         NES_INFO("set server ip to " << serverIp);
         crd->setServerIp(serverIp);
     }

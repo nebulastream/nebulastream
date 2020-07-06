@@ -14,6 +14,7 @@
 
 using namespace web;
 using namespace http;
+using namespace std;
 
 namespace NES {
 

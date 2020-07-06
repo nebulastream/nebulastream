@@ -6,6 +6,10 @@
 
 namespace NES {
 
+class NodeEngine;
+typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
+
+
 /**
  * @brief This class is responsible for creating logical source descriptor to physical source.
  */
@@ -17,7 +21,7 @@ class ConvertLogicalToPhysicalSource {
      * @param sourceDescriptor : the logical source desciptor
      * @return Data source pointer for the physical source
      */
-    static DataSourcePtr createDataSource(SourceDescriptorPtr sourceDescriptor);
+    static DataSourcePtr createDataSource(SourceDescriptorPtr sourceDescriptor, NodeEnginePtr nodeEngine);
 
   private:
     ConvertLogicalToPhysicalSource() = default;

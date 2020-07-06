@@ -24,7 +24,7 @@ class SinkMedium {
     /**
      * @brief public constructor for data sink
      */
-    SinkMedium(SinkFormatPtr sinkFormat);
+    explicit SinkMedium(SinkFormatPtr sinkFormat);
 
     /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted

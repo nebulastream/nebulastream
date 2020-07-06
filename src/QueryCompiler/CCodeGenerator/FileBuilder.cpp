@@ -6,7 +6,7 @@
 
 namespace NES {
 
-FileBuilder FileBuilder::create(const std::string& file_name) {
+FileBuilder FileBuilder::create(const std::string&) {
     FileBuilder builder;
     builder.declations << "#include <cstdint>" << std::endl;
     builder.declations << "#include <string.h>" << std::endl;

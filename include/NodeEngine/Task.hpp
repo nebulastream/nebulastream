@@ -3,9 +3,10 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <memory>
 namespace NES {
-class DataSource;
-class QueryExecutionPlan;
-typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
+
+class WorkerContext;
+class PipelineStage;
+typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
 /**
  * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers
@@ -20,14 +21,18 @@ class Task {
      * @param id of the pipeline stage inside the QEP that should be applied
      * @param pointer to the tuple buffer that has to be process
      */
-    explicit Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, TupleBuffer& buf);
+    explicit Task(PipelineStagePtr pipeline, TupleBuffer& buf);
+
+    explicit Task() : pipeline(nullptr), buf() {
+        // nop
+    }
 
     ~Task() = default;
 
     /**
      * @brief execute the task by calling executeStage of QEP and providing the stageId and the buffer
      */
-    bool execute();
+    bool operator()(WorkerContext& workerContext);
 
     /**
      * @brief return the number of tuples in the input buffer (for statistics)
@@ -39,15 +44,29 @@ class Task {
      * @brief method to return the qep of a task
      * @return
      */
-    QueryExecutionPlanPtr getQep();
+    PipelineStagePtr getPipelineStage();
+
+    /**
+     * @return true if this Task is valid and it is safe to execute
+     */
+    explicit operator bool() const;
+
+    /**
+     * @return true if this Task is valid and it is safe to execute
+     */
+    bool operator!() const;
+
+
+    friend std::ostream& operator<<(std::ostream& os, const Task&) {
+        os << "Task()";
+        return os;
+    }
 
   private:
-    QueryExecutionPlanPtr qep;
-    uint32_t pipeline_stage_id;
+    PipelineStagePtr pipeline;
     TupleBuffer buf;
 };
 
-typedef std::shared_ptr<Task> TaskPtr;
 }// namespace NES
 
 #endif /* INCLUDE_TASK_H_ */

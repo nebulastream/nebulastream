@@ -6,8 +6,6 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 
-using namespace std;
-
 namespace NES {
 class WorkerActor;
 typedef std::shared_ptr<WorkerActor> WorkerActorPtr;
@@ -20,7 +18,8 @@ class NesWorker {
     NesWorker(std::string coordinatorIp,
               std::string coordinatorPort,
               std::string localWorkerIp,
-              std::string localWorkerPort,
+              uint16_t localWorkerRpcPort,
+              uint16_t localWorkerZmqPort,
               NESNodeType type);
 
     /**
@@ -54,7 +53,6 @@ class NesWorker {
 
     /**
      * @brief stop the worker
-     * @param force to stop with stopping all queries
      * @return bool indicating success
      */
     bool stop(bool force);
@@ -143,7 +141,8 @@ class NesWorker {
     std::string coordinatorIp;
     std::string coordinatorPort;
     std::string localWorkerIp;
-    std::string localWorkerPort;
+    uint16_t localWorkerRpcPort;
+    uint16_t localWorkerZmqPort;
 
     NESNodeType type;
     bool stopped;

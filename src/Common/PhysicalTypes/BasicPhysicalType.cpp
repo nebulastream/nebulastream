@@ -2,6 +2,7 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <sstream>
+
 namespace NES {
 
 BasicPhysicalType::BasicPhysicalType(DataTypePtr type, NativeType nativeType) : PhysicalType(type), nativeType(nativeType) {}
@@ -28,7 +29,8 @@ uint64_t BasicPhysicalType::size() const {
         case DOUBLE: return sizeof(double);
         case BOOLEAN: return sizeof(bool);
         case CHAR: return sizeof(char);
-    };
+    }
+    return -1;
 }
 std::string BasicPhysicalType::convertRawToString(void* data) {
 
@@ -58,6 +60,7 @@ std::string BasicPhysicalType::convertRawToString(void* data) {
             }
             return str.str();
     }
+    return "invalid";
 }
 
 BasicPhysicalType::NativeType BasicPhysicalType::getNativeType() {

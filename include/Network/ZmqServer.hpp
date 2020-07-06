@@ -30,7 +30,7 @@ class ZmqServer : public boost::noncopyable {
      * @param exchangeProtocol
      */
     explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads,
-                       ExchangeProtocolPtr exchangeProtocol);
+                       ExchangeProtocol& exchangeProtocol, BufferManagerPtr bufferManager);
 
     ~ZmqServer();
 
@@ -80,7 +80,8 @@ class ZmqServer : public boost::noncopyable {
     std::atomic_bool isRunning;
     std::atomic_bool keepRunning;
 
-    ExchangeProtocolPtr exchangeProtocol;
+    ExchangeProtocol& exchangeProtocol;
+    BufferManagerPtr bufferManager;
 
     // error management
     std::promise<bool> errorPromise;

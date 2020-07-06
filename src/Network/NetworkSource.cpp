@@ -10,6 +10,7 @@ NetworkSource::NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, Q
                                                                                             networkManager(networkManager),
                                                                                             nesPartition(nesPartition) {
     NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
+    NES_ASSERT(this->networkManager, "Invalid network manager");
 }
 
 NetworkSource::~NetworkSource() {

@@ -103,8 +103,7 @@ const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema,
  * @result true, if source starts, changes interval, and stops
  */
 TEST_F(AdaptiveSourceTest, testSamplingChange) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 3133);
 
     std::string path_to_file =
         "../tests/test_data/adaptive-test-mock.csv";
@@ -127,8 +126,8 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
     }
 
     ASSERT_NE(initialGatheringInterval, source->getGatheringInterval());
-    ASSERT_TRUE(nodeEngine->stop(false));
     ASSERT_TRUE(source->stop());
+    ASSERT_TRUE(nodeEngine->stop());
 }
 
 }// namespace NES

@@ -9,7 +9,6 @@
 #include <vector>
 //#include <Topology/NESTopologyEntry.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
-using namespace std;
 namespace NES {
 
 class LogicalStream;
@@ -64,7 +63,7 @@ class StreamCatalog {
    * @param structure describing the entry in the catalog
    * @return bool indicating success of remove stream
    */
-    bool removePhysicalStream(string logicalStreamName, string physicalStreamName, std::size_t hashId);
+    bool removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::size_t hashId);
 
     /**
    * @brief method to remove a physical stream from its logical streams
@@ -129,7 +128,7 @@ class StreamCatalog {
    * @param name of logical stream
    * @return list of physical nodes as pointers into the topology
    */
-    vector<NESTopologyEntryPtr> getSourceNodesForLogicalStream(
+    std::vector<NESTopologyEntryPtr> getSourceNodesForLogicalStream(
         std::string logicalStreamName);
 
     /**

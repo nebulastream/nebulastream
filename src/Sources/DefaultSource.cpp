@@ -7,13 +7,14 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 
 namespace NES {
 
 DefaultSource::DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                              const uint64_t numbersOfBufferToProduce,
                              size_t frequency)
-    : GeneratorSource(schema, bufferManager, queryManager, numbersOfBufferToProduce) {
+    : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce) {
     NES_DEBUG("DefaultSource:" << this << " creating");
     this->gatheringInterval = frequency;
 }

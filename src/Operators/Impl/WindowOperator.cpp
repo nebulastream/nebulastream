@@ -28,7 +28,7 @@ void WindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr contex
     context->addNextPipeline(newPipelineContext);
 }
 
-void WindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
+void WindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream&) {
     codegen->generateCodeForWindow(this->window_definition, context);
 }
 

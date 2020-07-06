@@ -17,6 +17,9 @@
 namespace po = boost::program_options;
 
 using namespace NES;
+using std::string;
+using std::cout;
+using std::endl;
 
 const string logo = "/********************************************************\n"
                     " *     _   _   ______    _____\n"
@@ -28,6 +31,8 @@ const string logo = "/********************************************************\n
                     " *\n"
                     " ********************************************************/";
 
+
+// TODO handle proper configuration properly
 int main(int argc, char** argv) {
     NES::setupLogging("nesWorkerStarter.log", NES::LOG_DEBUG);
     NES_INFO(logo);
@@ -35,7 +40,9 @@ int main(int argc, char** argv) {
     namespace po = boost::program_options;
     po::options_description desc("Nes Worker Options");
     std::string coordinatorPort = "0";
-    std::string coordinatorIp = "localhost";
+    std::string rpcPort = "3000";
+    std::string dataPort = "3001";
+    std::string coordinatorIp = "127.0.0.1";
 
     std::string sourceType = "";
     std::string sourceConfig = "";
@@ -45,8 +52,14 @@ int main(int argc, char** argv) {
     std::string logicalStreamName;
     std::string parentId = "-1";
 
-    desc.add_options()("coordinatorPort", po::value<string>(&coordinatorPort)->default_value(coordinatorPort),
-                       "Set NES rpc server port (default: 0).")("coordinatorIp", po::value<string>(&coordinatorIp)->default_value(coordinatorIp),
+    desc.add_options()
+        ("coordinatorPort", po::value<string>(&coordinatorPort)->default_value(coordinatorPort),
+                       "Set NES rpc server port (default: 0).")
+        ("rpcPort", po::value<string>(&rpcPort)->default_value(rpcPort),
+         "Set NES rpc server port (default: 0).")
+        ("dataPort", po::value<string>(&dataPort)->default_value(dataPort),
+         "Set NES data server port (default: 0).")
+        ("coordinatorIp", po::value<string>(&coordinatorIp)->default_value(coordinatorIp),
                                                                 "Set NES server ip (default: localhost).")(
         "sourceType", po::value<string>(&sourceType)->default_value(sourceType),
         "Set the type of the Source either CSVSource or DefaultSource")(
@@ -92,18 +105,24 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    size_t localPort = (time(0) * 321) % 10000 * (rand() % 100) + ::getpid();
-    NES_INFO("port=" << localPort << "localport=" << to_string(localPort) << " pid=" << getpid());
+    // TODO remote calls to cout
+
+    size_t localPort = std::stol(rpcPort);
+    size_t zmqDataPort = std::stol(dataPort);
+    cout << "port=" << localPort <<  "localport=" << std::to_string(localPort)  << " pid=" << getpid() << endl;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(
         coordinatorIp,
         coordinatorPort,
-        coordinatorIp,
-        to_string(localPort),
-        NESNodeType::Sensor);
+        coordinatorIp, // TODO add rpc/zmq server ip address
+        localPort,
+        zmqDataPort,
+        NESNodeType::Sensor // TODO what is this?!
+    );
 
     //register phy stream if nessesary
     if (sourceType != "") {
-        cout << "start with dedicated source=" << sourceType << endl;
+        cout << "start with dedicated source=" << sourceType <<
+             endl;
         PhysicalStreamConfig conf;
         conf.sourceType = sourceType;
         conf.sourceConfig = sourceConfig;

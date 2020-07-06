@@ -21,7 +21,7 @@ bool FixedChar::isEquals(DataTypePtr otherDataType) {
     return false;
 }
 
-DataTypePtr FixedChar::join(DataTypePtr otherDataType) {
+DataTypePtr FixedChar::join(DataTypePtr) {
     return DataTypeFactory::createUndefined();
 }
 

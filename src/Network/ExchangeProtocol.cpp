@@ -1,27 +1,23 @@
-#include <Exceptions/NesNetworkError.hpp>
 #include <Network/ExchangeProtocol.hpp>
+#include <Network/ExchangeProtocolListener.hpp>
+#include <utility>
+
 namespace NES {
 namespace Network {
 
-ExchangeProtocol::ExchangeProtocol(BufferManagerPtr bufferManager,
-                                   PartitionManagerPtr partitionManager,
-                                   QueryManagerPtr queryManager,
-                                   std::function<void(NesPartition, TupleBuffer&)>&& onDataBuffer,
-                                   std::function<void(Messages::EndOfStreamMessage)>&& onEndOfStream,
-                                   std::function<void(Messages::ErrMessage)>&& onException) : bufferManager(bufferManager), partitionManager(partitionManager), queryManager(queryManager),
-                                                                                              onDataBufferCallback(std::move(onDataBuffer)),
-                                                                                              onEndOfStreamCallback(std::move(onEndOfStream)),
-                                                                                              onExceptionCallback(std::move(onException)) {
+// Important invariant: never leak the protocolListener pointer
+// there is a hack that disables the reference counting
+
+ExchangeProtocol::ExchangeProtocol(
+    std::shared_ptr<PartitionManager> partitionManager,
+    std::shared_ptr<ExchangeProtocolListener> protocolListener) : partitionManager(std::move(partitionManager)), protocolListener(std::move(protocolListener)) {
+    NES_ASSERT(this->partitionManager, "Wrong parameter partitionManager is null");
+    NES_ASSERT(this->protocolListener, "Wrong parameter ExchangeProtocolListener is null");
     NES_DEBUG("ExchangeProtocol: Initializing ExchangeProtocol()");
-    if (!onDataBufferCallback) {
-        NES_THROW_RUNTIME_ERROR("ExchangeProtocol: OnDataBuffer not initialized.");
-    }
-    if (!onEndOfStreamCallback) {
-        NES_THROW_RUNTIME_ERROR("ExchangeProtocol: onEndOfStreamCallback not initialized.");
-    }
-    if (!onExceptionCallback) {
-        NES_THROW_RUNTIME_ERROR("ExchangeProtocol: onExceptionCallback not initialized.");
-    }
+}
+
+ExchangeProtocol::~ExchangeProtocol() {
+    NES_ASSERT(protocolListener.use_count() == 1, "the protocolListener pointer was leaked");
 }
 
 Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
@@ -34,54 +30,38 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
     if (partitionManager->isRegistered(nesPartition)) {
         // increment the counter
         partitionManager->registerSubpartition(nesPartition);
+        NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " REGISTERED");
         // send response back to the client based on the identity
-        return Messages::ServerReadyMessage{msg.getChannelId()};
+        return Messages::ServerReadyMessage(msg.getChannelId());
     } else {
-        auto errorMsg = Messages::ErrMessage{msg.getChannelId(), Messages::PartitionNotRegisteredError};
-        throw NesNetworkError(errorMsg);
+        NES_ERROR("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " NOT REGISTERED");
+        protocolListener->onServerError(Messages::ErrorMessage(msg.getChannelId(), Messages::kPartitionNotRegisteredError));
+        return Messages::ServerReadyMessage(msg.getChannelId(), Messages::kPartitionNotRegisteredError);
     }
 }
 
 void ExchangeProtocol::onBuffer(NesPartition nesPartition, TupleBuffer& buffer) {
-    // check if identity is registered
-    if (partitionManager->isRegistered(nesPartition)) {
-        // create a string for logging of the identity which corresponds to the
-        // queryId::operatorId::partitionId::subpartitionId
-        //TODO: dont use strings for lookups
-        queryManager->addWork(std::to_string(nesPartition.getQueryId()), buffer);
-    } else {
-        // partition is not registered, discard the buffer
-        buffer.release();
-        NES_ERROR("ExchangeProtocol: "
-                  << "DataBuffer for " + nesPartition.toString()
-                      + " is not registered and was discarded!");
-    }
-    onDataBufferCallback(nesPartition, buffer);
+    protocolListener->onDataBuffer(nesPartition, buffer);
 }
 
-Messages::ErrMessage ExchangeProtocol::onError(const Messages::ErrMessage error) {
-    onExceptionCallback(error);
-    return error;
+void ExchangeProtocol::onServerError(const Messages::ErrorMessage error) {
+    protocolListener->onServerError(error);
+}
+
+void ExchangeProtocol::onChannelError(const Messages::ErrorMessage error) {
+    protocolListener->onChannelError(error);
 }
 
 void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage) {
-    NES_INFO("ExchangeProtocol: EndOfStream message received from " << endOfStreamMessage.getChannelId().toString());
+    NES_DEBUG("ExchangeProtocol: EndOfStream message received from " << endOfStreamMessage.getChannelId().toString());
     if (partitionManager->isRegistered(endOfStreamMessage.getChannelId().getNesPartition())) {
         partitionManager->unregisterSubpartition(endOfStreamMessage.getChannelId().getNesPartition());
     }
-    onEndOfStreamCallback(endOfStreamMessage);
+    protocolListener->onEndOfStream(endOfStreamMessage);
 }
 
-BufferManagerPtr ExchangeProtocol::getBufferManager() const {
-    return bufferManager;
-}
-
-PartitionManagerPtr ExchangeProtocol::getPartitionManager() const {
+std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const {
     return partitionManager;
-}
-
-QueryManagerPtr ExchangeProtocol::getQueryManager() const {
-    return queryManager;
 }
 
 }// namespace Network

@@ -8,7 +8,7 @@ namespace NES {
 using std::string;
 
 QueryManager::QueryManager()
-    : taskQueue(), sourceIdToQueryMap(), bufferMutex(), queryMutex(), workMutex() {
+    : taskQueue(), sourceIdToQueryMap(), queryMutex(), workMutex() {
     NES_DEBUG("Init QueryManager::QueryManager()");
 }
 
@@ -32,7 +32,7 @@ bool QueryManager::stopThreadPool() {
 }
 
 void QueryManager::resetQueryManager() {
-    std::scoped_lock locks(queryMutex, workMutex);
+    std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
     NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
     taskQueue.clear();
     NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToQueryMap.size());
@@ -45,21 +45,18 @@ void QueryManager::resetQueryManager() {
 
 bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep);
-    std::unique_lock<std::mutex> lock(queryMutex);
+    std::scoped_lock lock(queryMutex, statisticsMutex);
 
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
     for (const auto& source : qep->getSources()) {
-        source->setQueryManager(shared_from_this());
-        source->setBufferManger(qep->getBufferManager());
         if (sourceIdToQueryMap.find(source->getSourceId()) != sourceIdToQueryMap.end()) {
             // source already exists, add qep to source set if not there
             if (sourceIdToQueryMap[source->getSourceId()].find(qep) == sourceIdToQueryMap[source->getSourceId()].end()) {
                 // qep not found in list, add it
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << source->getSourceId());
                 sourceIdToQueryMap[source->getSourceId()].insert(qep);
-                QueryStatisticsPtr stats = std::make_shared<QueryStatistics>();
-                queryToStatisticsMap.insert({qep, stats});
+                queryToStatisticsMap[qep->getQueryId()] = std::make_shared<QueryStatistics>();
             } else {
                 NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.");
                 return false;
@@ -69,9 +66,8 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
             NES_DEBUG("QueryManager: Source " << source->getSourceId()
                                               << " not found. Creating new element with with qep " << qep);
             std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
-            sourceIdToQueryMap.insert({source->getSourceId(), qepSet});
-            QueryStatisticsPtr stats = std::make_shared<QueryStatistics>();
-            queryToStatisticsMap.insert({qep, stats});
+            sourceIdToQueryMap[source->getSourceId()] = qepSet;
+            queryToStatisticsMap[qep->getQueryId()] = std::make_shared<QueryStatistics>();
         }
     }
     return true;
@@ -79,16 +75,19 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
 
 bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("QueryManager::startQuery: query" << qep);
-    std::unique_lock<std::mutex> lock(queryMutex);
+    std::unique_lock lock(queryMutex);
+
+    for (const auto& sink : qep->getSinks()) {
+        NES_DEBUG("QueryManager: start sink " << sink);
+        sink->setup();
+    }
 
     if (!qep->setup() || !qep->start()) {
         NES_FATAL_ERROR("QueryManager: query execution plan could not started");
         return false;
     }
 
-    // start elements
-    auto sources = qep->getSources();
-    for (const auto& source : sources) {
+    for (const auto& source : qep->getSources()) {
         NES_DEBUG("QueryManager: start source " << source << " str=" << source->toString());
         if (!source->start()) {
             NES_WARNING("QueryManager: source " << source << " could not started as it is already running");
@@ -97,19 +96,14 @@ bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
         }
     }
 
-    auto sinks = qep->getSinks();
-    for (const auto& sink : sinks) {
-        NES_DEBUG("QueryManager: start sink " << sink);
-        sink->setup();
-    }
-
+    runningQEPs.emplace(qep);
     return true;
 }
 
 bool QueryManager::deregisterQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("QueryManager::deregisterAndUndeployQuery: query" << qep);
 
-    std::unique_lock<std::mutex> lock(queryMutex);
+    std::unique_lock lock(queryMutex);
     bool succeed = true;
     auto sources = qep->getSources();
 
@@ -141,7 +135,7 @@ bool QueryManager::deregisterQuery(QueryExecutionPlanPtr qep) {
 
 bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("QueryManager::stopQuery: query" << qep);
-    std::unique_lock<std::mutex> lock(queryMutex);
+    std::unique_lock lock(queryMutex);
 
     auto sources = qep->getSources();
     for (const auto& source : sources) {
@@ -174,11 +168,12 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
         // TODO: do we also have to prevent to shutdown sink that is still used by another qep
         sink->shutdown();
     }
-    NES_DEBUG("QueryManager::stopQuery: query finished");
+    NES_DEBUG("QueryManager::stopQuery: query finished " << qep);
+    runningQEPs.erase(qep);
     return true;
 }
 
-TaskPtr QueryManager::getWork(std::atomic<bool>& threadPool_running) {
+Task QueryManager::getWork(std::atomic<bool>& threadPool_running) {
     NES_DEBUG("QueryManager: QueryManager::getWork wait get lock");
     std::unique_lock<std::mutex> lock(workMutex);
     NES_DEBUG("QueryManager:getWork wait got lock");
@@ -188,23 +183,21 @@ TaskPtr QueryManager::getWork(std::atomic<bool>& threadPool_running) {
         if (!threadPool_running) {
             // return empty task if thread pool was shut down
             NES_DEBUG("QueryManager: Thread pool was shut down while waiting");
-            return TaskPtr();
+            return Task();
         }
     }
     NES_DEBUG("QueryManager::getWork queue is not empty");
     // there is a potential task in the queue and the thread pool is running
-    TaskPtr task;
     if (threadPool_running) {
-        task = taskQueue.front();
-        NES_DEBUG("QueryManager: provide task" << task.get() << " to thread (getWork())");
+        auto task = taskQueue.front();
+        NES_TRACE("QueryManager: provide task" << task << " to thread (getWork())");
         taskQueue.pop_front();
+        return task;
     } else {
         NES_DEBUG("QueryManager: Thread pool was shut down while waiting");
         cleanupUnsafe();
-        task = TaskPtr();
+        return Task();
     }
-    NES_DEBUG("QueryManager:getWork return task");
-    return task;
 }
 
 void QueryManager::cleanupUnsafe() {
@@ -224,72 +217,68 @@ void QueryManager::cleanup() {
     NES_DEBUG("QueryManager::cleanup: finished");
 }
 
-void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, QueryExecutionPlanPtr queryExecutionPlan,
-                                          uint32_t pipelineId) {
-    std::unique_lock<std::mutex> lock(workMutex);
+void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr nextPipeline) {
+    std::unique_lock lock(workMutex);
 
     // dispatch buffer as task
-    TaskPtr task = std::make_shared<Task>(queryExecutionPlan, pipelineId + 1, buffer);
-    taskQueue.push_back(task);
-    NES_DEBUG("QueryManager: added Task " << task.get() << " for QEP " << queryExecutionPlan << " inputBuffer " << buffer);
+    taskQueue.emplace_back(std::move(nextPipeline), buffer);
+    NES_TRACE("QueryManager: added Task " << taskQueue.back() << " for nextPipeline " << nextPipeline << " inputBuffer " << buffer);
 
     cv.notify_all();
 }
 
-void QueryManager::addWork(const string& sourceId, TupleBuffer& buf) {
-    std::unique_lock<std::mutex> lock(workMutex);
+void QueryManager::addWork(const std::string& sourceId, TupleBuffer& buf) {
+    std::shared_lock queryLock(queryMutex); // we need this lock because sourceIdToQueryMap can be concurrently modified
+    std::unique_lock workQueueLock(workMutex);
     for (const auto& qep : sourceIdToQueryMap[sourceId]) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
-        TaskPtr task = std::make_shared<Task>(qep, 0, buf);
-        taskQueue.push_back(task);
-        NES_DEBUG("QueryManager: added Task " << task.get() << " for query " << sourceId << " for QEP " << qep
+        taskQueue.emplace_back(qep->getStage(0), buf);
+        NES_DEBUG("QueryManager: added Task " << taskQueue.back() << " for query " << sourceId << " for QEP " << qep
                                               << " inputBuffer " << buf);
     }
     cv.notify_all();
 }
 
-void QueryManager::completedWork(TaskPtr task) {
-    std::unique_lock<std::mutex> lock(workMutex);// TODO is necessary?
+void QueryManager::completedWork(Task& task, WorkerContext&) {
     NES_INFO("QueryManager::completedWork: Work for task=" << task);
-
-    auto statistics = queryToStatisticsMap[task->getQep()];
+    std::unique_lock lock(statisticsMutex);
+    auto statistics = queryToStatisticsMap[task.getPipelineStage()->getQepParentId()];
     statistics->incProcessedTasks();
     statistics->incProcessedBuffers();
-    statistics->incProcessedTuple(task->getNumberOfTuples());
-
-    task.reset();
+    statistics->incProcessedTuple(task.getNumberOfTuples());
 }
 
 std::string QueryManager::getQueryManagerStatistics() {
+    std::unique_lock lock(statisticsMutex);
     std::stringstream ss;
     ss << "QueryManager Statistics:";
-    for (auto& qep : queryToStatisticsMap) {
-        ss << "Query=" << qep.first;
-        ss << "\t processedTasks =" << qep.second->getProcessedTasks();
-        ss << "\t processedTuple =" << qep.second->getProcessedTuple();
-        ss << "\t processedBuffers =" << qep.second->getProcessedBuffers();
+    for (auto& qep : runningQEPs) {
+        auto stats = queryToStatisticsMap[qep->getQueryId()];
+        ss << "Query=" << qep;
+        ss << "\t processedTasks =" << stats->getProcessedTasks();
+        ss << "\t processedTuple =" << stats->getProcessedTuple();
+        ss << "\t processedBuffers =" << stats->getProcessedBuffers();
 
         ss << "Source Statistics:";
-        auto sources = qep.first->getSources();
-        for (auto source : sources) {
+        for (const auto& source : qep->getSources()) {
             ss << "Source:" << source;
             ss << "\t Generated Buffers=" << source->getNumberOfGeneratedBuffers();
             ss << "\t Generated Tuples=" << source->getNumberOfGeneratedTuples();
         }
-        auto sinks = qep.first->getSinks();
-        for (auto sink : sinks) {
+        for (const auto& sink : qep->getSinks()) {
             ss << "Sink:" << sink;
-            ss << "\t Generated Buffers=" << sink->getNumberOfWrittenOutBuffers();
-            ss << "\t Generated Tuples=" << sink->getNumberOfWrittenOutTuples();
+            ss << "\t Written Buffers=" << sink->getNumberOfWrittenOutBuffers();
+            ss << "\t Written Tuples=" << sink->getNumberOfWrittenOutTuples();
         }
     }
     return ss.str();
 }
 
-QueryStatisticsPtr QueryManager::getQueryStatistics(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qep);
-    return queryToStatisticsMap[qep];
+QueryStatisticsPtr QueryManager::getQueryStatistics(QueryExecutionPlanId qepId) {
+    std::unique_lock lock(statisticsMutex);
+    NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qepId);
+    return queryToStatisticsMap[qepId];
 }
 
 }// namespace NES

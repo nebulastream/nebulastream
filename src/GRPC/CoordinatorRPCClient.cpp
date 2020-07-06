@@ -5,7 +5,7 @@
 #include <string>
 namespace NES {
 
-CoordinatorRPCClient::CoordinatorRPCClient(string address)
+CoordinatorRPCClient::CoordinatorRPCClient(std::string address)
     : address(address) {
     NES_DEBUG("CoordinatorRPCClient(): creating channels to address =" << address);
     rpcChannel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());

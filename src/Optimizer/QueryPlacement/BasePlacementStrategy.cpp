@@ -21,7 +21,7 @@
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
-
+using namespace std;
 namespace NES {
 
 BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,

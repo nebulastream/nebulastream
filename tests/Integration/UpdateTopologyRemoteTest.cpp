@@ -6,6 +6,7 @@
 #include <ctime>
 #include <gtest/gtest.h>
 
+using namespace std;
 namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
@@ -14,7 +15,7 @@ uint64_t rpcPort = 4000;
 
 class UpdateTopologyRemoteTest : public testing::Test {
   public:
-    std::string ipAddress = "localhost";
+    std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 
     static void SetUpTestCase() {
@@ -38,12 +39,12 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 20), NESNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 20, port + 21, NESNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;
@@ -123,12 +124,12 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 20), NESNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 20, port + 21, NESNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;

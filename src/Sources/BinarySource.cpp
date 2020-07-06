@@ -8,12 +8,6 @@
 
 namespace NES {
 
-BinarySource::BinarySource()
-    : file_path(""),
-      file_size(0),
-      tuple_size(0) {
-}
-
 BinarySource::BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& _file_path)
     : DataSource(schema, bufferManager, queryManager),
       input(std::ifstream(_file_path.c_str())),

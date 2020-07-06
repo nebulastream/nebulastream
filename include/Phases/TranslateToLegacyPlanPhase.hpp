@@ -20,8 +20,8 @@ typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+class NodeEngine;
+typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
 /**
  * @brief Translates a logical query plan to the legacy operator tree
@@ -31,23 +31,22 @@ class TranslateToLegacyPlanPhase {
     /**
      * @brief Factory method to create a translator phase.
      */
-    static TranslateToLegacyPlanPhasePtr create(BufferManagerPtr bufferManagerPtr);
+    static TranslateToLegacyPlanPhasePtr create();
     /**
      * @brief Translates a operator node and all its children to the legacy representation.
      * @param operatorNode
      * @return Legacy Operator Tree
      */
-    OperatorPtr transform(OperatorNodePtr operatorNode);
+    OperatorPtr transform(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine);
 
-  private:
-    TranslateToLegacyPlanPhase(BufferManagerPtr bufferManager);
+    TranslateToLegacyPlanPhase();
 
     /**
      * @brief Translates an individual operator to its legacy representation.
      * @param operatorNode
      * @return Legacy Operator
      */
-    OperatorPtr transformIndividualOperator(OperatorNodePtr operatorNode);
+    OperatorPtr transformIndividualOperator(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine);
     /**
      * @brief Translates an expression to a legacy user api expression.
      * @param expression node
@@ -69,7 +68,6 @@ class TranslateToLegacyPlanPhase {
      */
     UserAPIExpressionPtr transformArithmeticalExpressions(ExpressionNodePtr node);
 
-    BufferManagerPtr bufferManager;
 };
 
 }// namespace NES

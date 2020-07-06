@@ -17,7 +17,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyMan
 
 size_t getIdFromIp(std::string ip) {
     std::hash<std::string> hashFn;
-    string uidString = UtilityFunctions::generateIdString();
+    std::string uidString = UtilityFunctions::generateIdString();
     return hashFn(uidString + ip);
 }
 

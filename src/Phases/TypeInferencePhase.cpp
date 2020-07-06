@@ -83,7 +83,7 @@ SourceDescriptorPtr TypeInferencePhase::createSourceDescriptor(std::string strea
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     } else {
         NES_ERROR("TypeInferencePhase:: source type " << type << " not supported");
-        NES_FATAL_ERROR("type not supported");
+        NES_THROW_RUNTIME_ERROR("type not supported");
     }
 }
 

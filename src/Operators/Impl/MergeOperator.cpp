@@ -24,8 +24,7 @@ void MergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context
     context->addNextPipeline(newPipelineContext2);
 }
 
-void MergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-
+void MergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream&) {
     codegen->generateCodeForEmit(schemaPtr, context);
 }
 

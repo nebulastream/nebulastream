@@ -9,12 +9,12 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog() : queryStatus(), queryRequest() {
+QueryCatalog::QueryCatalog() : catalogMutex() {
     NES_DEBUG("QueryCatalog()");
 }
 
 std::map<std::string, std::string> QueryCatalog::getQueriesWithStatus(std::string status) {
-
+    std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog : fetching all queries with status " << status);
     std::transform(status.begin(), status.end(), status.begin(), ::toupper);
     if (stringToQueryStatusMap.find(status) == stringToQueryStatusMap.end()) {
@@ -31,7 +31,7 @@ std::map<std::string, std::string> QueryCatalog::getQueriesWithStatus(std::strin
 }
 
 std::map<std::string, std::string> QueryCatalog::getAllQueries() {
-
+    std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog : get all queries");
     std::map<std::string, QueryCatalogEntryPtr> registeredQueries = getAllQueryCatalogEntries();
     std::map<std::string, std::string> result;
@@ -43,7 +43,7 @@ std::map<std::string, std::string> QueryCatalog::getAllQueries() {
 }
 
 QueryCatalogEntryPtr QueryCatalog::addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
-    std::unique_lock<std::mutex> lock(queryRequest);
+    std::unique_lock lock(catalogMutex);
     std::string queryId = queryPlan->getQueryId();
     NES_INFO("QueryCatalog: Registering query with id " << queryId);
     NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
@@ -53,7 +53,7 @@ QueryCatalogEntryPtr QueryCatalog::addNewQueryRequest(const std::string& querySt
 }
 
 QueryCatalogEntryPtr QueryCatalog::addQueryStopRequest(std::string queryId) {
-    std::unique_lock<std::mutex> lock(queryRequest);
+    std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog: Validating with old query status.");
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
     QueryStatus currentStatus = queryCatalogEntry->getQueryStatus();
@@ -67,7 +67,7 @@ QueryCatalogEntryPtr QueryCatalog::addQueryStopRequest(std::string queryId) {
 }
 
 void QueryCatalog::markQueryAs(std::string queryId, QueryStatus newStatus) {
-    std::unique_lock<std::mutex> lock(queryStatus);
+    std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << newStatus);
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
     QueryStatus oldStatus = queryCatalogEntry->getQueryStatus();
@@ -79,21 +79,25 @@ void QueryCatalog::markQueryAs(std::string queryId, QueryStatus newStatus) {
 }
 
 bool QueryCatalog::isQueryRunning(std::string queryId) {
+    std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: test if query started with id " << queryId << " running=" << queries[queryId]->getQueryStatus());
     return queries[queryId]->getQueryStatus() == QueryStatus::Running;
 }
 
 std::map<std::string, QueryCatalogEntryPtr> QueryCatalog::getAllQueryCatalogEntries() {
+    std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: return registered queries=" << printQueries());
     return queries;
 }
 
 QueryCatalogEntryPtr QueryCatalog::getQueryCatalogEntry(std::string queryId) {
+    std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: getQueryCatalogEntry with id " << queryId);
     return queries[queryId];
 }
 
 bool QueryCatalog::queryExists(std::string queryId) {
+    std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: queryExists with id=" << queryId << " registered queries=" << printQueries());
     if (queries.count(queryId) > 0) {
         NES_DEBUG("QueryCatalog: query with id " << queryId << " exists");
@@ -105,6 +109,7 @@ bool QueryCatalog::queryExists(std::string queryId) {
 }
 
 std::map<std::string, QueryCatalogEntryPtr> QueryCatalog::getQueries(QueryStatus requestedStatus) {
+    std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: getQueriesWithStatus() registered queries=" << printQueries());
     std::map<std::string, QueryCatalogEntryPtr> runningQueries;
     for (auto q : queries) {
@@ -116,12 +121,13 @@ std::map<std::string, QueryCatalogEntryPtr> QueryCatalog::getQueries(QueryStatus
 }
 
 void QueryCatalog::clearQueries() {
+    std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: clear query catalog");
     queries.clear();
-    assert(queries.size() == 0);
 }
 
 std::string QueryCatalog::printQueries() {
+    std::unique_lock lock(catalogMutex);
     std::stringstream ss;
     for (auto q : queries) {
         ss << "queryID=" << q.first << " running=" << q.second->getQueryStatus() << std::endl;

@@ -71,7 +71,7 @@ BinaryOperatorStatement BinaryOperatorStatement::addRight(const BinaryOperatorTy
     return BinaryOperatorStatement(*this, op, rhs, bracket_mode);
 }
 
-StatementPtr BinaryOperatorStatement::assignToVariable(const VarRefStatement& lhs) { return StatementPtr(); }
+StatementPtr BinaryOperatorStatement::assignToVariable(const VarRefStatement&) { return StatementPtr(); }
 
 StatementType BinaryOperatorStatement::getStamentType() const { return BINARY_OP_STMT; }
 

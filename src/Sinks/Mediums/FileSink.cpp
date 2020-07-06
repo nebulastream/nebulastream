@@ -3,6 +3,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <iostream>
 #include <string>
+#include <utility>
 
 namespace NES {
 
@@ -15,9 +16,8 @@ SinkMediumTypes FileSink::getSinkMediumType() {
 }
 
 FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append)
-    : SinkMedium(format) {
+    : SinkMedium(std::move(format)) {
     this->filePath = filePath;
-    this->sinkFormat = format;
     this->append = append;
     if (!append) {
         int success = std::remove(filePath.c_str());

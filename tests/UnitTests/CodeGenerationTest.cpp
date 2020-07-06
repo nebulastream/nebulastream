@@ -34,7 +34,8 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <utility>
-
+using std::cout;
+using std::endl;
 namespace NES {
 
 class CodeGenerationTest : public testing::Test {
@@ -546,8 +547,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  * @brief Simple test that generates code to process a input buffer and calculate a running sum.
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6262);
     auto tf = CompilerTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NES::TupleBuffer");
     auto pipelineExecutionContextType = tf.createAnonymusDataType("NES::PipelineExecutionContext");
@@ -686,11 +686,11 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     inputBuffer.setNumberOfTuples(100);
 
     /* execute code */
-    auto context = TestPipelineExecutionContext(nodeEngine->getBufferManager());
+    auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     if (!stage->execute(inputBuffer, nullptr, nullptr, context)) {
         std::cout << "Error!" << std::endl;
     }
-    auto outputBuffer = context.buffers[0];
+    auto outputBuffer = context->buffers[0];
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
     /* check result for correctness */
     auto sumGeneratedCode = layout->getValueField<int64_t>(/*recordIndex*/ 0, /*fieldIndex*/ 0)->read(outputBuffer);
@@ -706,8 +706,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
  */
 TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
 
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -727,9 +726,9 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
 
     /* execute Stage */
     NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
-    auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     stage->execute(buffer, nullptr, nullptr, queryContext);
-    auto resultBuffer = queryContext.buffers[0];
+    auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
     auto layout = createRowLayout(schema);
@@ -743,8 +742,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
  */
 TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -773,12 +771,10 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     ;
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
 
-    auto sizeOfTuple = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char) * 12);
-
     /* execute Stage */
-    auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     stage->execute(inputBuffer, nullptr, NULL, queryContext);
-    auto resultBuffer = queryContext.buffers[0];
+    auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
     NES_INFO(
         "Number of generated output tuples: " << resultBuffer.getNumberOfTuples());
@@ -796,8 +792,7 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
  */
 TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -820,13 +815,16 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     // init window handler
     auto windowHandler =
         new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
-    windowHandler->setup(nullptr, 0);
+
+
+    auto nextPipeline = std::make_shared<PipelineStage>(1, "0", nullptr, nullptr, nullptr); // TODO Philipp, plz add pass-through pipeline here
+    windowHandler->setup(nextPipeline, 0);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     stage->execute(inputBuffer, windowHandler->getWindowState(),
                    windowHandler->getWindowManager(), queryContext);
 
@@ -843,8 +841,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
  */
 TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     // auto str = strcmp("HHHHHHHHHHH", {'H', 'V'});
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -874,11 +871,11 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
 
     /* execute Stage */
 
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
-    auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
     stage->execute(inputBuffer, nullptr, nullptr, queryContext);
 
-    auto resultBuffer = queryContext.buffers[0];
+    auto resultBuffer = queryContext->buffers[0];
 
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3);
@@ -890,8 +887,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
-    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
-    nodeEngine->start();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -925,10 +921,10 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     stage->execute(inputBuffer, nullptr, nullptr, queryContext);
 
-    auto resultBuffer = queryContext.buffers[0];
+    auto resultBuffer = queryContext->buffers[0];
 
     auto inputLayout = createRowLayout(inputSchema);
     auto outputLayout = createRowLayout(outputSchema);

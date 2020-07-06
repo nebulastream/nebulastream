@@ -1,4 +1,3 @@
-#include <Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqUtils.hpp>
@@ -9,21 +8,25 @@
 namespace NES {
 namespace Network {
 
-OutputChannel::OutputChannel(std::shared_ptr<zmq::context_t> zmqContext, const std::string& address,
-                             NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes,
-                             std::function<void(Messages::ErrMessage)> onError, size_t threadId) : socketAddr(address),
-                                                                                                   zmqSocket(*zmqContext, ZMQ_DEALER),
-                                                                                                   channelId(ChannelId{nesPartition, threadId}),
-                                                                                                   isClosed(false),
-                                                                                                   connected(false),
-                                                                                                   onErrorCb(std::move(onError)) {
+OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, const std::string address)
+    : zmqSocket(std::move(zmqSocket)), channelId(channelId), socketAddr(address), isClosed(false) {
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
-    init(waitTime, retryTimes);
 }
 
-void OutputChannel::init(std::chrono::seconds waitTime, uint8_t retryTimes) {
+
+std::unique_ptr<OutputChannel> OutputChannel::create(
+    std::shared_ptr<zmq::context_t> zmqContext,
+    const std::string socketAddr,
+    NesPartition nesPartition,
+    ExchangeProtocol& protocol,
+    std::chrono::seconds waitTime,
+    uint8_t retryTimes,
+    size_t threadId) {
+    bool connected = false;
     int linger = -1;
     try {
+        ChannelId channelId(nesPartition, threadId);
+        zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
         NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << linger << ", id=" << channelId);
         zmqSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
         zmqSocket.setsockopt(ZMQ_IDENTITY, &channelId, sizeof(ChannelId));
@@ -31,12 +34,62 @@ void OutputChannel::init(std::chrono::seconds waitTime, uint8_t retryTimes) {
         int i = 0;
 
         while ((!connected) && (i <= retryTimes)) {
-            if (i > 0) {
-                std::this_thread::sleep_for(waitTime);
-                NES_INFO("OutputChannel: Connection with server failed! Reconnecting attempt " << i);
+            sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId);
+
+            zmq::message_t recvHeaderMsg;
+            zmqSocket.recv(&recvHeaderMsg);
+
+            auto recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
+
+            if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
+                NES_THROW_RUNTIME_ERROR("OutputChannel: Message from server is corrupt!");
             }
-            i = i + 1;
-            connected = registerAtServer();
+
+            switch (recvHeader->getMsgType()) {
+                case Messages::kServerReady: {
+                    zmq::message_t recvMsg;
+                    zmqSocket.recv(&recvMsg);
+                    auto serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
+                    // check if server responds with a ServerReadyMessage
+                    // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
+                    if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
+                        NES_ERROR("OutputChannel: Connection failed with server "
+                                      << socketAddr << " for " << channelId.getNesPartition().toString()
+                                      << "->Wrong server ready message! Reason: Partitions are not matching");
+                        break;
+                    }
+
+                    if (serverReadyMsg->isOk() && !serverReadyMsg->isPartitionNotFound()) {
+                        NES_INFO("OutputChannel: Connection established with server " << socketAddr << " for "
+                                                                                      << channelId);
+                        return std::make_unique<OutputChannel>(std::move(zmqSocket), channelId, socketAddr);
+                    }
+                    protocol.onChannelError(Messages::ErrorMessage(channelId, serverReadyMsg->getErrorType()));
+                    break;
+                }
+                case Messages::kErrorMessage: {
+                    // if server receives a message that an error occured
+                    zmq::message_t errorEnvelope;
+                    zmqSocket.recv(&errorEnvelope);
+                    auto errorMsg = *errorEnvelope.data<Messages::ErrorMessage>();
+                    NES_ERROR("OutputChannel: Received error from server-> " << errorMsg.getErrorTypeAsString());
+                    protocol.onChannelError(errorMsg);
+                    break;
+                }
+                default: {
+                    // got a wrong message type!
+                    NES_ERROR("OutputChannel: received unknown message " << recvHeader->getMsgType());
+                    return nullptr;
+                }
+            }
+            std::this_thread::sleep_for(waitTime);
+            NES_INFO("OutputChannel: Connection with server failed! Reconnecting attempt " << i);
+            i++;
+        }
+        if (!connected) {
+            NES_ERROR("OutputChannel: Error establishing a connection with server. Closing socket!");
+            zmqSocket.close();
+            return nullptr;
         }
     } catch (zmq::error_t& err) {
         if (err.num() == ETERM) {
@@ -46,60 +99,7 @@ void OutputChannel::init(std::chrono::seconds waitTime, uint8_t retryTimes) {
             throw err;
         }
     }
-    if (!connected) {
-        NES_ERROR("OutputChannel: Error establishing a connection with server. Closing socket!");
-        close();
-    }
-}
-
-bool OutputChannel::registerAtServer() {
-    // send announcement to server to register channel
-    sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId);
-
-    zmq::message_t recvHeaderMsg;
-    zmqSocket.recv(&recvHeaderMsg);
-
-    auto recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
-
-    if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
-        NES_ERROR("OutputChannel: Message from server is corrupt!");
-        //TODO: think if it makes sense to reconnect after this error
-        return false;
-    }
-
-    switch (recvHeader->getMsgType()) {
-        case Messages::ServerReady: {
-            zmq::message_t recvMsg;
-            zmqSocket.recv(&recvMsg);
-            auto serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
-            // check if server responds with a ServerReadyMessage
-            // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
-            if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
-                NES_ERROR("OutputChannel: Connection failed with server "
-                          << socketAddr << " for " << channelId.getNesPartition().toString()
-                          << "->Wrong server ready message! Reason: Partitions are not matching");
-                return false;
-            }
-            NES_INFO("OutputChannel: Connection established with server " << socketAddr << " for "
-                                                                          << channelId);
-            return true;
-        }
-        case Messages::ErrorMessage: {
-            // if server receives a message that an error occured
-            zmq::message_t errorEnvelope;
-            zmqSocket.recv(&errorEnvelope);
-            auto errorMsg = errorEnvelope.data<Messages::ErrMessage>();
-
-            NES_ERROR("OutputChannel: Received error from server-> " << errorMsg->getErrorTypeAsString());
-            onError(*errorMsg);
-            return false;
-        }
-        default: {
-            // got a wrong message type!
-            NES_ERROR("OutputChannel: received unknown message " << recvHeader->getMsgType());
-            return false;
-        }
-    }
+    return nullptr;
 }
 
 bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, size_t tupleSize) {
@@ -122,27 +122,20 @@ bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, size_t tupleSize) {
     return false;
 }
 
-void OutputChannel::onError(Messages::ErrMessage& errorMsg) {
-    onErrorCb(errorMsg);
+void OutputChannel::onError(Messages::ErrorMessage& errorMsg) {
+    NES_ERROR(errorMsg.getErrorTypeAsString());
 }
 
 void OutputChannel::close() {
     if (isClosed) {
         return;
     }
-    if (connected) {
-        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId);
-    }
-
+    sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId);
     zmqSocket.close();
     NES_DEBUG("OutputChannel: Socket closed for " << channelId);
     isClosed = true;
-    connected = false;
 }
 
-bool OutputChannel::isConnected() const {
-    return connected;
-}
 
 }// namespace Network
 }// namespace NES

@@ -16,7 +16,7 @@ class BinarySource : public DataSource {
      * @param schema of the data source
      * @param file path
      */
-    BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& file_path);
+    explicit BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& file_path);
 
     /**
      * @brief override the receiveData method for the binary source
@@ -41,8 +41,6 @@ class BinarySource : public DataSource {
     const std::string& getFilePath() const;
 
   private:
-    //this one only required for serialization
-    BinarySource();
     std::ifstream input;
     std::string file_path;
 

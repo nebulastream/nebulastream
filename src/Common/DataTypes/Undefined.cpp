@@ -12,7 +12,7 @@ bool Undefined::isEquals(DataTypePtr otherDataType) {
     return otherDataType->isUndefined();
 }
 
-DataTypePtr Undefined::join(DataTypePtr otherDataType) {
+DataTypePtr Undefined::join(DataTypePtr) {
     return DataTypeFactory::createUndefined();
 }
 std::string Undefined::toString() {

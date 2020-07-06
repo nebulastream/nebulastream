@@ -1,25 +1,36 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Task.hpp>
-#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <NodeEngine/WorkerContext.hpp>
+#include <QueryCompiler/PipelineExecutionContext.hpp>
+#include <QueryCompiler/PipelineStage.hpp>
+#include <utility>
 
 namespace NES {
 
-Task::Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, TupleBuffer& buffer)
-    : qep(_qep),
-      pipeline_stage_id(_pipeline_stage_id),
+Task::Task(PipelineStagePtr pipeline, TupleBuffer& buffer)
+    : pipeline(std::move(pipeline)),
       buf(buffer) {
+    // nop
 }
 
-bool Task::execute() {
-    return qep->executeStage(pipeline_stage_id, buf);
+bool Task::operator()(WorkerContext&) {
+    return pipeline->execute(buf);
 }
 
 size_t Task::getNumberOfTuples() {
     return buf.getNumberOfTuples();
 }
 
-QueryExecutionPlanPtr Task::getQep() {
-    return qep;
+PipelineStagePtr Task::getPipelineStage() {
+    return pipeline;
+}
+
+bool Task::operator!() const {
+    return pipeline == nullptr;
+}
+
+Task::operator bool() const {
+    return pipeline != nullptr;
 }
 
 }// namespace NES

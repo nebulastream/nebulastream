@@ -40,7 +40,7 @@ class DataSource {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
+    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
 
     /**
      * @brief public constructor for data source
@@ -48,7 +48,9 @@ class DataSource {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string sourceId);
+    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string sourceId);
+
+    DataSource() = delete;
 
     /**
      * @brief method to start the source.
@@ -145,19 +147,6 @@ class DataSource {
     const std::string& getSourceId() const;
 
     /**
-     * @brief this methods are only for backward comp to the old query api and will be removed
-     * @todo remove if new query api is in place
-     * @param queryManager
-     */
-    void setQueryManager(QueryManagerPtr queryManager);
-
-    /**
-     * @brief Set buffer manager
-     * @param bufferManager: buffer manager pointer
-     */
-    void setBufferManger(BufferManagerPtr bufferManager);
-
-    /**
      * @brief Get number of buffers to be processed
      */
     size_t getNumBuffersToProcess() const;
@@ -168,11 +157,6 @@ class DataSource {
     size_t getGatheringInterval() const;
 
   protected:
-    /**
-     * @brief Internal protected constructor without schema
-     */
-    DataSource();
-
     SchemaPtr schema;
     size_t generatedTuples;
     size_t generatedBuffers;

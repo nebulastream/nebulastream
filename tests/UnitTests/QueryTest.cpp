@@ -72,8 +72,6 @@ TEST_F(QueryTest, testQueryFilter) {
     EXPECT_EQ(sinkOperators.size(), 1);
 
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
-
-    const std::vector<NodePtr>& children = sinkOptr->getChildren();
     EXPECT_EQ(sinkOperators.size(), 1);
 }
 
@@ -102,7 +100,6 @@ TEST_F(QueryTest, testQueryMerge) {
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1);
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
-    const std::vector<NodePtr>& children = sinkOptr->getChildren();
     EXPECT_EQ(sinkOperators.size(), 1);
 }
 

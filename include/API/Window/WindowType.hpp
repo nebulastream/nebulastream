@@ -51,7 +51,7 @@ class SlidingWindow : public WindowType {
   * @param currentTs
   * @return the next window end
   */
-    uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
+    uint64_t calculateNextWindowEnd(uint64_t) const override {
         return 0;
     }
 
@@ -81,7 +81,7 @@ class SessionWindow : public WindowType {
   * @param currentTs
   * @return the next window end
   */
-    uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
+    uint64_t calculateNextWindowEnd(uint64_t) const override {
         return 0;
     }
 

@@ -9,16 +9,15 @@
 namespace NES {
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
+class WorkerContext;
 
 /**
  * @brief the tread pool handles the dynamic scheduling of tasks during runtime
  * @Limitations
  *    - threads are not pinned to cores
  *    - not using std::thread::hardware_concurrency() to run with max threads
- *    - start/stop is not thread safe
- *    - no statics are gathered
+ *    - no statistics are gathered
  */
-
 class ThreadPool {
   public:
     /**
@@ -53,6 +52,7 @@ class ThreadPool {
        */
     bool stop();
 
+  private:
     /**
        * @brief running routine of threads, in this routine, threads repeatedly execute the following steps
        * 1.) Check if running is still true
@@ -60,8 +60,9 @@ class ThreadPool {
        * 3.) If task is valid, execute the task and completeWork
        * 4.) Repeat
        */
-    void runningRoutine();
+    void runningRoutine(WorkerContext&& workerContext);
 
+  public:
     /**
      * @brief set the number of threads in the thread pool
      * @note this effect will take place after the next restart

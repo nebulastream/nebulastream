@@ -4,20 +4,20 @@
 
 namespace NES {
 
-static std::string mangledEntryPoint = "_Z14compiled_queryRN3NES11TupleBufferEPvPNS_13WindowManagerERNS_24PipelineExecutionContextE";
+// TODO this might change across OS
+static constexpr auto mangledEntryPoint = "_Z14compiled_queryRN3NES11TupleBufferEPvPNS_13WindowManagerERNS_24PipelineExecutionContextE";
 
-CompiledExecutablePipeline::CompiledExecutablePipeline(CompiledCodePtr compiled_code) : compiledCode(std::move(compiled_code)) {
+CompiledExecutablePipeline::CompiledExecutablePipeline(CompiledCodePtr compiled_code)
+    : compiledCode(std::move(compiled_code)), pipelineFunc(compiledCode->getFunctionPointer<PipelineFunctionPtr>(mangledEntryPoint)) {
+    // nop
 }
 
-typedef uint32_t (*PipelineFunctionPtr)(TupleBuffer&, void*, WindowManager*, const PipelineExecutionContext&);
 
 uint32_t CompiledExecutablePipeline::execute(TupleBuffer& inputBuffer,
                                              void* state,
-                                             WindowManagerPtr window_manager,
-                                             PipelineExecutionContext& context) {
-    PipelineFunctionPtr fn = compiledCode->getFunctionPointer<PipelineFunctionPtr>(mangledEntryPoint);
-
-    return (*fn)(inputBuffer, state, window_manager.get(), context);
+                                             WindowManagerPtr windowManager,
+                                             QueryExecutionContextPtr context) {
+    return (*pipelineFunc)(inputBuffer, state, windowManager.get(), *context.get());
 }
 
 ExecutablePipelinePtr CompiledExecutablePipeline::create(const CompiledCodePtr compiledCode) {

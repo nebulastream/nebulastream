@@ -11,14 +11,16 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 
+#include <NodeEngine/NodeEngine.hpp>
+
 namespace NES {
 
-DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorPtr sourceDescriptor) {
+DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorPtr sourceDescriptor, NodeEnginePtr nodeEngine) {
 
-    //TODO this has be be fixed
-    BufferManagerPtr bufferManager;
-    QueryManagerPtr queryManager;
-    Network::NetworkManagerPtr networkManager;
+    NES_ASSERT(nodeEngine, "invalid engine");
+    BufferManagerPtr bufferManager = nodeEngine->getBufferManager();
+    QueryManagerPtr queryManager = nodeEngine->getQueryManager();
+    Network::NetworkManagerPtr networkManager = nodeEngine->getNetworkManager();
 
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ZMQ source");

@@ -52,7 +52,7 @@ const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclarat
     }
 }
 
-const std::string toString(void* value, DataTypePtr type) {
+const std::string toString(void*, DataTypePtr) {
     //     if(type->)
     return "";
 }
