@@ -48,37 +48,28 @@ int SensorBus::raw_i2c_rdrw(int file, uint8_t address, uint8_t read_write, uint8
     return return_status;
 }
 
-void SensorBus::read(int file, int address, int size, unsigned char *buffer) {
-    if (SensorBus::raw_i2c_rdrw(file, address, I2C_SMBUS_READ, size, buffer) < 0) {
-        // Reading I2C Bus Error
-        // TODO: use proper logging, remove exit
-        exit(EXIT_FAILURE);
-    }
+bool SensorBus::read(int file, int address, int size, unsigned char *buffer) {
+    return !(SensorBus::raw_i2c_rdrw(file, address, I2C_SMBUS_READ, size, buffer) < 0);
 }
 
-void SensorBus::write(int file, int address, int size, unsigned char *buffer) {
-    if (SensorBus::raw_i2c_rdrw(file, address, I2C_SMBUS_WRITE, size, buffer) < 0) {
-        // Writing I2C Bus Error
-        // TODO: use proper logging, remove exit
-        exit(EXIT_FAILURE);
-    }
+bool SensorBus::write(int file, int address, int size, unsigned char *buffer) {
+    return !(SensorBus::raw_i2c_rdrw(file, address, I2C_SMBUS_WRITE, size, buffer) < 0);
 }
 
-int SensorBus::init_bus(const char *filename, int address) {
-    int file;
+bool SensorBus::init_bus(int& file, const char *filename, int address) {
     if ((file = open(filename, O_RDWR)) < 0) {
         // Failed to open bus
-        // TODO: use proper logging, remove exit
-        exit(EXIT_FAILURE);
+        // TODO: use proper logging
+        return false;
     }
 
     if (ioctl(file, I2C_SLAVE, address) < 0) {
         // Failed to control sensor
-        // TODO: use proper logging, remove exit
-        exit(EXIT_FAILURE);
+        // TODO: use proper logging
+        return false;
     }
 
-    return file;
+    return true;
 }
 
 }// namespace NES

@@ -12,11 +12,12 @@ class SensorBus {
   public:
     /**
      * Initialize the file and check if the address behind the file exists
+     * @param file the file-descriptor to be allocated
      * @param filename the path of the bus
      * @param address the register address we're interested in
      * @return the new file descriptor
      */
-    static int init_bus(const char* filename, int address);
+    static bool init_bus(int& file, const char* filename, int address);
 
     /**
      * Write the buffer to file `file` at address `address`, using `length`.
@@ -25,7 +26,7 @@ class SensorBus {
      * @param size the size of the data
      * @param buffer the data
      */
-    static void write(int file, int address, int size, unsigned char* buffer);
+    static bool write(int file, int address, int size, unsigned char* buffer);
 
     /**
      * Read `buffer` from `address` under bus located at `file`, using `length`.
@@ -34,7 +35,7 @@ class SensorBus {
      * @param size the size of the data
      * @param buffer the data
      */
-    static void read(int file, int address, int size, unsigned char* buffer);
+    static bool read(int file, int address, int size, unsigned char* buffer);
 
   private:
     /**
