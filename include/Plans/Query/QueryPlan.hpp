@@ -88,6 +88,12 @@ class QueryPlan {
     std::vector<OperatorNodePtr> getRootOperators();
 
     /**
+     * add subQuery's rootnode into the current node for merging purpose.
+     * Note: improves this when we have to due with multi-root use case.
+     * @param root
+     */
+    void addRootOperator(std::shared_ptr<OperatorNode> root);
+    /**
      * @brief Get all the leaf operators in the query plan
      * Note: in certain stages the source operators might not be Leaf operators
      * @return returns a vector of leaf operators

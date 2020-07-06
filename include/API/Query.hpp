@@ -50,6 +50,13 @@ class Query {
     static Query from(const std::string sourceStreamName);
 
     /**
+     * This looks ugly, but we can't reference to QueryPtr at this line.
+     * @param subQuery is the query to be merged
+     * @return
+     */
+    Query& merge(Query* subQuery);
+
+    /**
      * @brief Create Query using queryPlan
      * @param sourceStreamName source stream name
      * @param queryPlan the input query plan

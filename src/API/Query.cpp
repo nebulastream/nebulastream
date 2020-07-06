@@ -20,6 +20,14 @@ Query Query::from(const std::string sourceStreamName) {
     return Query(queryPlan);
 }
 
+Query& Query::merge(Query* subQuery) {
+    NES_DEBUG("Query: merge the subQuery to current query");
+    OperatorNodePtr op = createMergeLogicalOperatorNode();
+    getQueryPlan()->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
+    queryPlan->appendOperator(op);
+    return *this;
+}
+
 Query& Query::filter(const ExpressionNodePtr filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
     OperatorNodePtr op = createFilterLogicalOperatorNode(filterExpression);
