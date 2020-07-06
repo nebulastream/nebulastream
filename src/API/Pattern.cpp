@@ -20,7 +20,7 @@ Pattern::Pattern(QueryPlanPtr queryPlan) : Query(queryPlan){
 Pattern Pattern::from(const std::string sourceStreamName) {
     NES_DEBUG("Pattern: create query for input stream " << sourceStreamName);
     auto sourceOperator = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create(sourceStreamName));
-    auto queryPlan = QueryPlan::create(sourceStreamName, sourceOperator);
+    auto queryPlan = QueryPlan::create(sourceOperator);
     return Pattern(queryPlan);
 }
 
@@ -36,7 +36,7 @@ const std::string& Pattern::getPatternName() const {
     return patternName;
 }
 void Pattern::setPatternName(const std::string& patternName) {
-    Pattern::patternName = patternName;
+    this->patternName = patternName;
 }
 
 }// namespace NES
