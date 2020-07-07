@@ -53,11 +53,4 @@ QueryPlanPtr Query::getQueryPlan() {
     return queryPlan;
 }
 
-const std::string& Query::getQueryName() const {
-    return queryName;
-}
-void Query::setQueryName(const std::string& queryName) {
-    this->queryName = queryName;
-}
-
 }// namespace NES

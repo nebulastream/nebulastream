@@ -54,24 +54,12 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         streamName = streamName.substr(7, streamName.find(")") - 7);
         NES_DEBUG(" stream name = " << streamName );
 
-        //if pattern
-        std::string patternName = "";
-        if (pattern && queryCodeSnippet.find("name(") != std::string::npos) {
-            patternName = queryCodeSnippet.substr(
-                queryCodeSnippet.find("name("));
-            patternName = patternName.substr(5, patternName.find(")") - 5);
-            NES_DEBUG(" pattern name = " << patternName);
-        }
-
         std::string newQuery = queryCodeSnippet;
 
         //if pattern
         if (pattern) {
-            if (patternName != "") {
-                boost::replace_all(newQuery, ".name(" + patternName + ")", "");
-            }
             boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
-            boost::replace_all(newQuery, ".sink(", ".map(Attribute(\"PatternName\") = 1).sink(");
+            boost::replace_all(newQuery, ".sink(", ".map(Attribute(\"PatternId\") = 1).sink(");
         }
         else {
             // add return statement in front of input query
@@ -100,13 +88,6 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         auto queryPtr = std::make_shared<Query>(query);
         std::string queryId = UtilityFunctions::generateIdString();
         queryPtr->getQueryPlan()->setQueryId(queryId);
-
-        if(pattern) {
-            if (patternName == "") {
-                patternName = "Pattern" + queryId;
-            }
-            queryPtr->setQueryName(patternName);
-        }
 
         return queryPtr;
     } catch (std::exception& exc) {

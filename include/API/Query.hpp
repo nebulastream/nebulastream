@@ -96,13 +96,9 @@ class Query {
     // creates a new query object
     Query(QueryPlanPtr queryPlan);
 
-    const std::string& getQueryName() const;
-    void setQueryName(const std::string& queryName);
-
   protected:
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
-    std::string queryName;
 };
 
 typedef std::shared_ptr<Query> QueryPtr;
