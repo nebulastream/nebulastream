@@ -6,14 +6,13 @@
 #include <iostream>
 #include <utility>
 
-
 namespace NES {
 
-Pattern::Pattern(const Pattern& query) : Query (query.queryPlan)  {
+Pattern::Pattern(const Pattern& query) : Query(query.queryPlan) {
     NES_DEBUG("Pattern: copy constructor: handover Pattern to Query");
 }
 
-Pattern::Pattern(QueryPlanPtr queryPlan) : Query(queryPlan){
+Pattern::Pattern(QueryPlanPtr queryPlan) : Query(queryPlan) {
     NES_DEBUG("Pattern: copy constructor: handover Pattern to Query");
 }
 
