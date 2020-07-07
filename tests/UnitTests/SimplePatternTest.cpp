@@ -39,7 +39,7 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
     NES_DEBUG("worker1 started successfully");
 
     std::string query =
-        "Pattern::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()).name(\"test\"); ";
+        "Pattern::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
 
     std::string queryId = crd->addQuery(query, "BottomUp");
 
@@ -114,7 +114,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternName:INT32|\n"
+        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
         "+----------------------------------------------------+\n"
         "|R2000073 P)gg\x1|1543624020000|102.629631|8|1|\n"
         "|R2000070|1543625280000|108.166664|5|1|\n"
