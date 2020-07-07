@@ -5,9 +5,9 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
+#include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
-#include <API/Query.hpp>
 
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <SourceSink/DataSource.hpp>
@@ -48,7 +48,6 @@ class Pattern : public Query {
      */
     static Pattern from(const std::string sourceStreamName);
 
-
     /**
      * @brief Add sink operator for the query.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
@@ -64,7 +63,6 @@ class Pattern : public Query {
     Pattern(QueryPlanPtr queryPlan);
 
     std::string patternName;
-
 };
 
 typedef std::shared_ptr<Pattern> PatternPtr;

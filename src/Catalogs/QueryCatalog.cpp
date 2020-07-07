@@ -66,7 +66,7 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
     try {
         QueryPtr query;
 
-        if (queryString.find("Query::") != std::string::npos || queryString.find("Pattern::") != std::string::npos){
+        if (queryString.find("Query::") != std::string::npos || queryString.find("Pattern::") != std::string::npos) {
             NES_DEBUG("QueryCatalog: registerQuery: Identified a Query or Pattern");
             query = UtilityFunctions::createQueryFromCodeString(queryString);
         }
