@@ -25,7 +25,8 @@ enum SourceType {
     BINARY_SOURCE,
     SENSE_SOURCE,
     DEFAULT_SOURCE,
-    NETWORK_SOURCE
+    NETWORK_SOURCE,
+    ADAPTIVE_SOURCE
 };
 
 /**
