@@ -10,4 +10,8 @@ AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager,
     this->gatheringInterval = initialFrequency;
 }
 
+SourceType AdaptiveSource::getType() const {
+    return ADAPTIVE_SOURCE;
+}
+
 }// namespace NES
