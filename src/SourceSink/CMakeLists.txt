@@ -14,6 +14,7 @@ add_source_nes(
         TestSinks.cpp
         DefaultSource.cpp
         SenseSource.cpp
+        AdaptiveSource.cpp
 )
 
 if(NES_USE_KAFKA)
