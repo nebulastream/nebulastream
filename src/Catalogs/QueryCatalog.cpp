@@ -92,7 +92,7 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
             //revert changes
             if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
                 //this a severe error so we should terminate
-                throw ExecutionPlanRollbackException();
+                throw ExecutionPlanRollbackException("Unable to remove query with Id "+ queryId + " from execution plan.");
             }
             markQueryAs(queryId, QueryStatus::Failed);
             return "ERROR insertMap";
@@ -106,7 +106,7 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
         //revert changes
         if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
             //this a severe error so we should terminate
-            throw ExecutionPlanRollbackException();
+            throw ExecutionPlanRollbackException("Unable to remove query with Id "+ queryId + " from execution plan.");
         }
         markQueryAs(queryId, QueryStatus::Failed);
 

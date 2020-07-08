@@ -43,7 +43,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bot
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
     createExampleTopology(streamCatalog, topologyManager);
-    QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
+    QueryServicePtr queryService = std::make_shared<QueryService>();
 
     std::stringstream code;
     code << "Query::from(\"temperature\")"
@@ -62,7 +62,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_top
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
     createExampleTopology(streamCatalog, topologyManager);
-    QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
+    QueryServicePtr queryService = std::make_shared<QueryService>();
 
     std::stringstream code;
     code << "Query::from(\"temperature\").filter(Attribute(\"value\")==5)" << std::endl
@@ -80,7 +80,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_query) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
     createExampleTopology(streamCatalog, topologyManager);
-    QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
+    QueryServicePtr queryService = std::make_shared<QueryService>();
 
     try {
         std::stringstream code;
@@ -100,7 +100,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
     createExampleTopology(streamCatalog, topologyManager);
-    QueryServicePtr queryService = std::make_shared<QueryService>(streamCatalog);
+    QueryServicePtr queryService = std::make_shared<QueryService>();
 
     try {
         std::stringstream code;
