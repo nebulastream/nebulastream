@@ -8,6 +8,10 @@
 
 namespace NES {
 
+QueryService::QueryService(QueryCatalogPtr queryCatalog) : queryCatalog(queryCatalog) {
+    NES_DEBUG("QueryService()");
+}
+
 std::string QueryService::validateAndRegisterQuery(std::string queryString, std::string placementStrategyName) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
@@ -18,9 +22,10 @@ std::string QueryService::validateAndRegisterQuery(std::string queryString, std:
     NES_INFO("QueryService: Parsing and converting user query string");
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
     std::string queryId = UtilityFunctions::generateIdString();
-    query->getQueryPlan()->setQueryId(queryId);
+    const QueryPlanPtr queryPlan = query->getQueryPlan();
+    queryPlan->setQueryId(queryId);
     NES_INFO("QueryService: Queuing the query for the execution");
-    queryCatalog->registerAndAddToSchedulingQueue(queryString, query, placementStrategyName);
+    queryCatalog->registerAndAddToSchedulingQueue(queryString, queryPlan, placementStrategyName);
     return queryId;
 }
 

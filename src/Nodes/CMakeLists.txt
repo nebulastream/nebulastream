@@ -5,4 +5,3 @@ add_source_nes(
 add_subdirectory(Operators)
 add_subdirectory(Util)
 add_subdirectory(Expressions)
-add_subdirectory(Phases)

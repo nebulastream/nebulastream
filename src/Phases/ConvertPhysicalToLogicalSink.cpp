@@ -4,7 +4,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
+#include <Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>

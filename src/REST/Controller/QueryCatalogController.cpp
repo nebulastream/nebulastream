@@ -60,7 +60,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 try {
                     //Prepare the response
                     json::value result{};
-                    map<string, string> queries = queryCatalog->getAllRegisteredQueries();
+                    map<string, string> queries = queryCatalog->getAllQueries();
 
                     for (auto [key, value] : queries) {
                         result[key] = json::value::string(value);

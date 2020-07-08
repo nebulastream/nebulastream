@@ -13,14 +13,10 @@ using namespace http;
 
 namespace NES {
 
-QueryController::QueryController(NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog,
-                                 TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog,
-                                 GlobalExecutionPlanPtr globalExecutionPlan) : coordinator(coordinator),
-                                                                               queryCatalog(queryCatalog),
-                                                                               topologyManager(topologyManager),
-                                                                               streamCatalog(streamCatalog),
-                                                                               globalExecutionPlan(globalExecutionPlan) {
-    queryServicePtr = std::make_shared<QueryService>();
+QueryController::QueryController(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog,
+                                 GlobalExecutionPlanPtr globalExecutionPlan) : queryCatalog(queryCatalog), topologyManager(topologyManager),
+                                                                               streamCatalog(streamCatalog), globalExecutionPlan(globalExecutionPlan) {
+    queryServicePtr = std::make_shared<QueryService>(queryCatalog);
 }
 
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
@@ -111,9 +107,9 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
-                    queryServicePtr->validateAndRegisterQuery(userQuery, optimizationStrategyName);
+                    string queryId = queryServicePtr->validateAndRegisterQuery(userQuery, optimizationStrategyName);
 
-                    string queryId = coordinator->addQuery(userQuery, optimizationStrategyName);
+                    //                    string queryId = coordinator->addQuery(userQuery, optimizationStrategyName);
 
                     //Prepare the response
                     json::value restResponse{};

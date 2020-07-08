@@ -5,24 +5,17 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <string>
 #include <vector>
-#include <queue>
 
 namespace NES {
 
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
-
-static std::map<std::string, QueryStatus> stringToQueryStatusMap{
-    {"REGISTERED", Registered},
-    {"SCHEDULING", Scheduling},
-    {"RUNNING", Running},
-    {"STOPPED", Stopped},
-    {"FAILED", Failed},
-};
 
 /**
  * @brief catalog class to handle the queries in the system
@@ -37,39 +30,45 @@ class QueryCatalog {
     /**
      * @brief registers an RPC query into the NES topology to make it deployable
      * @param queryString : a user query in string form
-     * @param query : a user query to be executed
+     * @param queryPlan : a user query plan to be executed
      * @param optimizationStrategyName : the optimization strategy (bottomUp or topDown)
      * @return true if registration successful else false
      */
-    bool registerAndAddToSchedulingQueue(const string& queryString, const QueryPtr query, const string& optimizationStrategyName);
+    bool registerAndAddToSchedulingQueue(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName);
+
+    /**
+     * @brief Get a batch of query plans to be scheduled
+     * @return a vector of query plans
+     */
+    std::vector<QueryPlanPtr> getQueriesToSchedule();
 
     /**
      * @brief method which is called to unregister an already running query
      * @param queryId the queryId of the query
      * @return true if deleted from running queries, otherwise false
      */
-    bool deleteQuery(const string& queryId);
+    bool deleteQuery(const std::string& queryId);
 
     /**
      * @brief method to change status of a query
      * @param id of the query
      * @param status of the query
      */
-    void markQueryAs(string queryId, QueryStatus queryStatus);
+    void markQueryAs(std::string queryId, QueryStatus queryStatus);
 
     /**
      * @brief method to test if a query is started
      * @param id of the query to stop
      * @note this will set the running bool to false in the QueryCatalogEntry
      */
-    bool isQueryRunning(string queryId);
+    bool isQueryRunning(std::string queryId);
 
     /**
      * @brief method to get the registered queries
      * @note this contain all queries running/not running
      * @return this will return a COPY of the queries in the catalog
      */
-    map<string, QueryCatalogEntryPtr> getRegisteredQueries();
+    std::map<std::string, QueryCatalogEntryPtr> getRegisteredQueries();
 
     /**
      * @brief method to get a particular query
@@ -90,7 +89,7 @@ class QueryCatalog {
      * @param requestedStatus : desired query status
      * @return this will return a COPY of the queries in the catalog that are running
      */
-    map<string, QueryCatalogEntryPtr> getQueries(QueryStatus requestedStatus);
+    std::map<std::string, QueryCatalogEntryPtr> getQueries(QueryStatus requestedStatus);
 
     /**
      * @brief method to reset the catalog
@@ -115,15 +114,16 @@ class QueryCatalog {
      * @brief Get all queries registered in the system
      * @return map of query ids and query string with query status
      */
-    std::map<std::string, std::string> getAllRegisteredQueries();
+    std::map<std::string, std::string> getAllQueries();
 
   private:
     TopologyManagerPtr topologyManager;
     StreamCatalogPtr streamCatalog;
     GlobalExecutionPlanPtr globalExecutionPlan;
-    std::map<string, QueryCatalogEntryPtr> queries;
+    std::map<std::string, QueryCatalogEntryPtr> queries;
     std::mutex insertDeleteQuery;
     std::queue<QueryCatalogEntryPtr> schedulingQueue;
+    int64_t batchSize=1;
 };
 
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;

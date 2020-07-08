@@ -10,7 +10,7 @@ RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordin
     NES_DEBUG("RestEngine");
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator);
-    queryController = std::make_shared<QueryController>(coordinator, queryCatalog, topologyManager, streamCatalog, globalExecutionPlan);
+    queryController = std::make_shared<QueryController>(queryCatalog, topologyManager, streamCatalog, globalExecutionPlan);
 }
 
 RestEngine::~RestEngine() {
