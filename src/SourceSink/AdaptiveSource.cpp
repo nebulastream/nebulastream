@@ -23,7 +23,7 @@ std::optional<TupleBuffer> AdaptiveSource::receiveData() {
     auto buf = this->bufferManager->getBufferBlocking();
     this->sampleSourceAndFillBuffer(buf);
     this->decideNewFrequency();
-    NES_DEBUG("AdaptiveSource::receiveData called");
+    NES_DEBUG("AdaptiveSource::receiveData finished");
     return buf;
 }
 
