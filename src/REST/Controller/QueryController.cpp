@@ -72,7 +72,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string userQuery = req.at("userQuery").as_string();
 
                     //Call the service
-                    auto basePlan = queryServicePtr->generateBaseQueryPlanFromQueryString(userQuery);
+                    auto basePlan = queryServicePtr->getQueryPlanForQueryId(userQuery);
 
                     //Prepare the response
                     successMessageImpl(message, basePlan);
