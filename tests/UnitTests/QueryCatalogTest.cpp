@@ -154,7 +154,7 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_without_query_registration) 
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
 
     std::map<std::string, std::string> allRegisteredQueries =
-        queryCatalog->getAllRegisteredQueries();
+        queryCatalog->getAllQueries();
     EXPECT_TRUE(allRegisteredQueries.empty());
 }
 
@@ -172,7 +172,7 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
                                                                          "BottomUp");
 
     std::map<std::string, std::string> allRegisteredQueries =
-        queryCatalog->getAllRegisteredQueries();
+        queryCatalog->getAllQueries();
     EXPECT_EQ(allRegisteredQueries.size(), 1);
     EXPECT_TRUE(allRegisteredQueries.find(queryId) != allRegisteredQueries.end());
 }

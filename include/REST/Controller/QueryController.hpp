@@ -32,7 +32,8 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class QueryController : public BaseController {
   public:
-    explicit QueryController(NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager,
+
+    explicit QueryController(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager,
                              StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~QueryController() = default;
@@ -52,7 +53,6 @@ class QueryController : public BaseController {
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
-    NesCoordinatorPtr coordinator;
     QueryCatalogPtr queryCatalog;
     TopologyManagerPtr topologyManager;
     QueryServicePtr queryServicePtr;

@@ -16,10 +16,10 @@
 #include <Nodes/Node.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
-#include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
-#include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
-#include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
+#include <Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <Phases/ConvertPhysicalToLogicalSink.hpp>
+#include <Phases/ConvertPhysicalToLogicalSource.hpp>
+#include <Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 #include <Operators/Impl/MapOperator.hpp>
 #include <Operators/Impl/SinkOperator.hpp>

@@ -7,7 +7,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 
 #include <Network/NetworkManager.hpp>
-#include <Nodes/Phases/ConvertLogicalToPhysicalSource.hpp>
+#include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 

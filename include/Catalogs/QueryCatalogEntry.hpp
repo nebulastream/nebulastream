@@ -7,8 +7,6 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 namespace NES {
 
 class QueryPlan;
@@ -24,7 +22,7 @@ typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
  * @brief Represents various states the user query goes through.
  *
  * Registered : Query is registered to be scheduled to the worker nodes
- * Scheduling: Coordinator node is transmitting the execution pipelines to worker nodes
+ * Scheduling: Coordinator node is processing the Query and will transmit the execution pipelines to worker nodes
  * Running: Query is now running successfully
  * Stopped: Query was explicitly stopped by system
  * Failed: Query failed because of some reason
@@ -36,6 +34,14 @@ enum QueryStatus { Registered,
                    Stopped,
                    Failed };
 
+static std::map<std::string, QueryStatus> stringToQueryStatusMap{
+    {"REGISTERED", Registered},
+    {"SCHEDULING", Scheduling},
+    {"RUNNING", Running},
+    {"STOPPED", Stopped},
+    {"FAILED", Failed},
+};
+
 /**
  * @brief class to handle the entry in the query catalog
  * @param queryId: id of the query (is also the key in the queries map)
@@ -46,7 +52,7 @@ enum QueryStatus { Registered,
  */
 class QueryCatalogEntry {
   public:
-    QueryCatalogEntry(string queryId, string queryString, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus)
+    QueryCatalogEntry(std::string queryId, std::string queryString, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus)
         : queryId(queryId),
           queryString(queryString),
           queryPlanPtr(queryPlanPtr),
@@ -57,7 +63,7 @@ class QueryCatalogEntry {
     * @brief method to get the id of the query
     * @return query id
     */
-    const string& getQueryId() const {
+    const std::string& getQueryId() const {
         return queryId;
     }
 
@@ -65,7 +71,7 @@ class QueryCatalogEntry {
     * @brief method to get the string of the query
     * @return query string
     */
-    const string& getQueryString() const {
+    const std::string& getQueryString() const {
         return queryString;
     }
 
@@ -94,8 +100,8 @@ class QueryCatalogEntry {
     }
 
   private:
-    string queryId;
-    string queryString;
+    std::string queryId;
+    std::string queryString;
     QueryPlanPtr queryPlanPtr;
     QueryStatus queryStatus;
 };
