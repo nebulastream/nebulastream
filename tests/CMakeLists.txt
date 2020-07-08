@@ -208,6 +208,11 @@ add_test(NAME simple-pattern-test COMMAND simple-pattern-test)
 #target_link_libraries(sensor-bus-tests nes ${GTEST_LIBRARIES})
 #add_test(NAME sensor-bus-tests COMMAND sensor-bus-tests)
 
+### Adaptive Source Tests ###
+add_executable(adaptive-source-tests "UnitTests/AdaptiveSourceTest.cpp")
+target_link_libraries(adaptive-source-tests nes ${GTEST_LIBRARIES})
+add_test(NAME adaptive-source-tests COMMAND adaptive-source-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
