@@ -11,6 +11,9 @@ typedef std::shared_ptr<Node> NodePtr;
 class FilterLogicalOperatorNode;
 typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 
+class FilterPushDownRule;
+typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
+
 /**
  * @brief This class is responsible for altering the query plan to push down the filter as much as possible.
  * Following are the exceptions:
@@ -25,7 +28,12 @@ class FilterPushDownRule : public BaseRewriteRule {
   public:
     QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
 
+    static FilterPushDownRulePtr create();
+
   private:
+
+    explicit FilterPushDownRule();
+
     /**
      * @brief Push down given filter operator as close to the source operator as possible
      * @param filterOperator

@@ -14,6 +14,10 @@
 
 namespace NES {
 
+FilterPushDownRulePtr FilterPushDownRule::create() {
+    return std::make_shared<FilterPushDownRule>(FilterPushDownRule());
+}
+
 QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
 
     NES_INFO("FilterPushDownRule: Get all filter nodes in the graph");
