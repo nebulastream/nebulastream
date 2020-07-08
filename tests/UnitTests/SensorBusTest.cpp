@@ -55,7 +55,7 @@ class SensorBusTest : public testing::Test {
    * Create an int64_t value to write and later read.
    */
   void SetUp() override {
-      std::cout << "Setup SourceBusTest test case." << std::endl;
+      NES_DEBUG("Setup SourceBusTest test case.");
       bus_file_allocated_id = 1;
       snprintf(path_to_bus_str, 19,
                "/dev/i2c-%d",
@@ -66,7 +66,7 @@ class SensorBusTest : public testing::Test {
   }
 
   void TearDown() override {
-      std::cout << "Tear down SourceBusTest test case." << std::endl;
+      NES_DEBUG("Tear down SourceBusTest test case.");
   }
 };
 
