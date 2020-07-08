@@ -20,7 +20,7 @@ QueryController::QueryController(NesCoordinatorPtr coordinator, QueryCatalogPtr 
                                                                                topologyManager(topologyManager),
                                                                                streamCatalog(streamCatalog),
                                                                                globalExecutionPlan(globalExecutionPlan) {
-    queryServicePtr = std::make_shared<QueryService>(streamCatalog);
+    queryServicePtr = std::make_shared<QueryService>();
 }
 
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
