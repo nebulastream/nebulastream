@@ -1,6 +1,6 @@
 #include <API/Query.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Phases/TypeInferencePhase.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Optimizer/NESOptimizer.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>

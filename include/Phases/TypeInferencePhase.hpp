@@ -25,7 +25,7 @@ class TypeInferencePhase {
      * @brief Factory method to create a type inference phase.
      * @return TypeInferencePhasePtr
      */
-    static TypeInferencePhasePtr create();
+    static TypeInferencePhasePtr create(StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Performs type inference on the given query plan.
@@ -39,8 +39,6 @@ class TypeInferencePhase {
      */
     QueryPlanPtr transform(QueryPlanPtr queryPlan);
 
-    void setStreamCatalog(StreamCatalogPtr streamCatalog);
-
   private:
     /**
      * @brief creates the corresponding source descriptor from a given stream name.
@@ -48,7 +46,7 @@ class TypeInferencePhase {
      * @return SourceDescriptorPtr
      */
     SourceDescriptorPtr createSourceDescriptor(std::string streamName);
-    TypeInferencePhase();
+    explicit TypeInferencePhase(StreamCatalogPtr streamCatalog);
     StreamCatalogPtr streamCatalog;
 };
 }// namespace NES

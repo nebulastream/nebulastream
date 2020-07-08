@@ -1,4 +1,4 @@
-#include <Nodes/Phases/TypeInferencePhase.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Optimizer/NESOptimizer.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -20,8 +20,7 @@ std::string OptimizerService::getExecutionPlanAsString(QueryPlanPtr queryPlan, s
 
 GlobalExecutionPlanPtr OptimizerService::updateGlobalExecutionPlan(QueryPlanPtr queryPlan, string optimizationStrategyName) {
 
-    TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create();
-    typeInferencePhasePtr->setStreamCatalog(streamCatalog);
+    TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhasePtr->transform(queryPlan);
 
     const NESTopologyPlanPtr topologyPlan = topologyManager->getNESTopologyPlan();

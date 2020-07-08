@@ -55,7 +55,7 @@ class QueryController : public BaseController {
   private:
     QueryCatalogPtr queryCatalog;
     TopologyManagerPtr topologyManager;
-    QueryServicePtr queryServicePtr;
+    QueryServicePtr queryService;
     StreamCatalogPtr streamCatalog;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };

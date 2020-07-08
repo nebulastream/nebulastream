@@ -2,7 +2,7 @@
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>

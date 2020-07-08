@@ -16,7 +16,7 @@ namespace NES {
 QueryController::QueryController(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog,
                                  GlobalExecutionPlanPtr globalExecutionPlan) : queryCatalog(queryCatalog), topologyManager(topologyManager),
                                                                                streamCatalog(streamCatalog), globalExecutionPlan(globalExecutionPlan) {
-    queryServicePtr = std::make_shared<QueryService>(queryCatalog);
+    queryService = std::make_shared<QueryService>(queryCatalog);
 }
 
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
@@ -37,7 +37,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string optimizationStrategyName = req.at("strategyName").as_string();
 
                     // Call the service
-                    string queryId = queryCatalog->registerAndAddToSchedulingQueue(userQuery, optimizationStrategyName);
+                    string queryId = queryService->validateAndRegisterQuery(userQuery, optimizationStrategyName);
                     std::string executionPlanAsString = globalExecutionPlan->getAsString();
 
                     // Prepare the response
@@ -68,7 +68,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string userQuery = req.at("userQuery").as_string();
 
                     //Call the service
-                    auto basePlan = queryServicePtr->getQueryPlanForQueryId(userQuery);
+                    auto basePlan = queryService->getQueryPlanForQueryId(userQuery);
 
                     //Prepare the response
                     successMessageImpl(message, basePlan);
@@ -107,7 +107,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
-                    string queryId = queryServicePtr->validateAndRegisterQuery(userQuery, optimizationStrategyName);
+                    string queryId = queryService->validateAndRegisterQuery(userQuery, optimizationStrategyName);
 
                     //                    string queryId = coordinator->addQuery(userQuery, optimizationStrategyName);
 

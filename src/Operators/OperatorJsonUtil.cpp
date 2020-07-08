@@ -1,5 +1,5 @@
 #include <API/Query.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>

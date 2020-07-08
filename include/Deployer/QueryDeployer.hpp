@@ -87,7 +87,7 @@ class QueryDeployer {
     int assignPort(const string& queryId);
 
   private:
-    unordered_map<string, int> queryToPort;
+    std::unordered_map<string, int> queryToPort;
     QueryCatalogPtr queryCatalog;
     TopologyManagerPtr topologyManager;
     GlobalExecutionPlanPtr globalExecutionPlan;

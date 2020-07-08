@@ -1,7 +1,7 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Node.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
 
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>

@@ -4,7 +4,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
