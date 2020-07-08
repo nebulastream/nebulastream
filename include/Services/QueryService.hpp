@@ -23,12 +23,19 @@ class QueryService {
     ~QueryService() = default;
 
     /**
+     * Register the incoming query in the system and add it to the queue for later processing
+     * @param queryString
+     * @return queryId
+     */
+    std::string registerQuery(std::string queryString);
+
+    /**
      * This method is used for generating the base query plan from the input query as string.
      *
      * @param userQuery : user query as string
      * @return a json object representing the query plan
      */
-    web::json::value generateBaseQueryPlanFromQueryString(std::string userQuery);
+    web::json::value getQueryPlanForQueryId(std::string userQuery);
 
     /**
      * This method is used for generating the query object from the input query as string.

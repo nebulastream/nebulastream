@@ -4,7 +4,7 @@
 #include <Util/UtilityFunctions.hpp>
 using namespace NES;
 
-json::value QueryService::generateBaseQueryPlanFromQueryString(std::string userQuery) {
+json::value QueryService::getQueryPlanForQueryId(std::string userQuery) {
 
     //build query from string
     QueryPtr query = getQueryFromQueryString(userQuery);

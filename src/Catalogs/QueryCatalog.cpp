@@ -1,5 +1,5 @@
 #include <Catalogs/QueryCatalog.hpp>
-#include <Exceptions/ErrorWhileRevertingChanges.hpp>
+#include <Exceptions/ExecutionPlanRollbackException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/OptimizerService.hpp>
@@ -92,21 +92,21 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
             //revert changes
             if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
                 //this a severe error so we should terminate
-                throw ErrorWhileRevertingChanges();
+                throw ExecutionPlanRollbackException();
             }
             markQueryAs(queryId, QueryStatus::Failed);
             return "ERROR insertMap";
         }
         NES_DEBUG("number of queries after insert=" << queries.size());
         return queryId;
-    } catch (const ErrorWhileRevertingChanges e) {
+    } catch (const ExecutionPlanRollbackException e) {
         throw;
     } catch (const std::exception& exc) {
         NES_ERROR("QueryCatalog:_exception:" << exc.what() << " try to revert changes");
         //revert changes
         if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
             //this a severe error so we should terminate
-            throw ErrorWhileRevertingChanges();
+            throw ExecutionPlanRollbackException();
         }
         markQueryAs(queryId, QueryStatus::Failed);
 
