@@ -1,11 +1,30 @@
-#include "Services/QueryService.hpp"
+#include <Catalogs/QueryCatalog.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
-#include <Util/Logger.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
-using namespace NES;
+
+namespace NES {
+
+std::string QueryService::validateAndRegisterQuery(std::string queryString, std::string placementStrategyName) {
+
+    NES_INFO("QueryService: Validating and registering the user query.");
+    if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
+        NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
+        throw InvalidArgumentException("BasePlacementStrategy: Unknown placement strategy name", "placementStrategyName", placementStrategyName);
+    }
+    NES_INFO("QueryService: Parsing and converting user query string");
+    QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
+    std::string queryId = UtilityFunctions::generateIdString();
+    query->getQueryPlan()->setQueryId(queryId);
+    NES_INFO("QueryService: Queuing the query for the execution");
+    queryCatalog->registerAndAddToSchedulingQueue(queryString, query, placementStrategyName);
+    return queryId;
+}
 
 json::value QueryService::getQueryPlanForQueryId(std::string userQuery) {
-
     //build query from string
     QueryPtr query = getQueryFromQueryString(userQuery);
     //build the query plan
@@ -16,3 +35,5 @@ json::value QueryService::getQueryPlanForQueryId(std::string userQuery) {
 QueryPtr QueryService::getQueryFromQueryString(std::string userQuery) {
     return UtilityFunctions::createQueryFromCodeString(userQuery);
 }
+
+}// namespace NES

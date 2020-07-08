@@ -272,8 +272,8 @@ bool NesCoordinator::removeQuery(const string queryId) {
 }
 
 string NesCoordinator::registerQuery(const string queryString, const string strategy) {
-    NES_DEBUG("NesCoordinator:registerQuery queryString=" << queryString << " strategy=" << strategy);
-    return queryCatalog->registerQuery(queryString, strategy);
+    NES_DEBUG("NesCoordinator:registerAndAddToSchedulingQueue queryString=" << queryString << " strategy=" << strategy);
+    return queryCatalog->registerAndAddToSchedulingQueue(queryString, strategy);
 }
 
 bool NesCoordinator::unregisterQuery(const string queryId) {

@@ -3,6 +3,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -30,6 +31,12 @@ std::string UtilityFunctions::trim(std::string s) {
 }
 
 QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCodeSnippet) {
+
+    if (queryCodeSnippet.find("Stream(") != std::string::npos || queryCodeSnippet.find("Schema::create()") != std::string::npos) {
+        NES_ERROR("QueryCatalog: queries are not allowed to specify schemas anymore.");
+        throw InvalidQueryException("Queries are not allowed to define schemas anymore");
+    }
+
     bool pattern = queryCodeSnippet.find("Pattern::") != std::string::npos;
     bool merge = queryCodeSnippet.find(".merge") != std::string::npos;
     try {
@@ -94,11 +101,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         /* call loaded function to create query object */
         Query query((*func)());
 
-        auto queryPtr = std::make_shared<Query>(query);
-        std::string queryId = UtilityFunctions::generateIdString();
-        queryPtr->getQueryPlan()->setQueryId(queryId);
-
-        return queryPtr;
+        return std::make_shared<Query>(query);
     } catch (std::exception& exc) {
         NES_ERROR(
             "UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet
