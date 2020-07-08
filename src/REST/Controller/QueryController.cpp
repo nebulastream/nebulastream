@@ -41,7 +41,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string optimizationStrategyName = req.at("strategyName").as_string();
 
                     // Call the service
-                    string queryId = queryCatalog->registerQuery(userQuery, optimizationStrategyName);
+                    string queryId = queryCatalog->registerAndAddToSchedulingQueue(userQuery, optimizationStrategyName);
                     std::string executionPlanAsString = globalExecutionPlan->getAsString();
 
                     // Prepare the response
@@ -108,24 +108,18 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     json::value req = json::value::parse(userRequest);
                     NES_DEBUG("QueryController: handlePost -execute-query: get user query");
                     string userQuery = req.at("userQuery").as_string();
-                    NES_DEBUG("QueryController: handlePost -execute-query: query=" << userQuery);
-
-                    NES_DEBUG("QueryController: handlePost -execute-query: try to parse strategy name");
                     string optimizationStrategyName = req.at("strategyName").as_string();
-                    NES_DEBUG("QueryController: handlePost -execute-query: strategyName=" << optimizationStrategyName);
-
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
+                    queryServicePtr->validateAndRegisterQuery(userQuery, optimizationStrategyName);
 
                     string queryId = coordinator->addQuery(userQuery, optimizationStrategyName);
 
+                    //Prepare the response
                     json::value restResponse{};
                     restResponse["queryId"] = json::value::string(queryId);
-
-                    //Prepare the response
                     successMessageImpl(message, restResponse);
                     return;
-
                 } catch (const std::exception& exc) {
                     NES_ERROR("QueryController: handlePost -execute-query: Exception occurred while building the query plan for user request:" << exc.what());
                     handleException(message, exc);

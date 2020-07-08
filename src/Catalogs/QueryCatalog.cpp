@@ -6,7 +6,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
-#include <unordered_set>
+
 namespace NES {
 
 QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan)
@@ -51,54 +51,44 @@ std::map<std::string, std::string> QueryCatalog::getAllRegisteredQueries() {
     return result;
 }
 
-string QueryCatalog::registerQuery(const string& queryString, const string& optimizationStrategyName) {
+bool QueryCatalog::registerAndAddToSchedulingQueue(const string& queryString, const QueryPtr query, const string& optimizationStrategyName) {
     std::unique_lock<std::mutex> lock(insertDeleteQuery);
-    NES_DEBUG(
-        "QueryCatalog: Registering query " << queryString << " with strategy " << optimizationStrategyName);
-
-    if (queryString.find("Stream(") != std::string::npos || queryString.find("Schema::create()") != std::string::npos) {
-
-        NES_ERROR("QueryCatalog: queries are not allowed to specify schemas anymore.");
-        throw Exception("Queries are not allowed to define schemas anymore");
-    }
-
-    string queryId;
+    auto queryPlan = query->getQueryPlan();
+    string queryId = queryPlan->getQueryId();
+    NES_INFO("QueryCatalog: Registering query with id " << queryId);
     try {
-        QueryPtr query;
 
-        if (queryString.find("Query::") != std::string::npos || queryString.find("Pattern::") != std::string::npos) {
-            NES_DEBUG("QueryCatalog: registerQuery: Identified a Query or Pattern");
-            query = UtilityFunctions::createQueryFromCodeString(queryString);
-        }
+        NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
+        QueryCatalogEntryPtr queryCatalogEntry = std::make_shared<QueryCatalogEntry>(queryId, queryString, queryPlan, QueryStatus::Registered);
+        queries[queryId] = queryCatalogEntry;
+        NES_INFO("QueryCatalog: Adding query with id " << queryId << " to the scheduling queue");
+        schedulingQueue.push(queryCatalogEntry);
 
-        OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
-        auto queryPlan = query->getQueryPlan();
-        queryId = queryPlan->getQueryId();
-        if (queryId == "") {
-            NES_ERROR("QueryCatalog::registerQuery: cannot register query without id");
-            throw;
-        }
-        GlobalExecutionPlanPtr executionPlan = optimizerService->updateGlobalExecutionPlan(queryPlan, optimizationStrategyName);
-        if (!executionPlan) {
-            NES_ERROR("QueryCatalog::registerQuery updateGlobalExecutionPlan failed");
-            return "ERROR create execution plan";
-        }
-        NES_DEBUG("QueryCatalog: Final Execution Plan =" << executionPlan->getAsString());
-
-        QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(queryId, queryString, queryPlan, QueryStatus::Registered);
-        queries[queryId] = entry;
-        if (queries.find(queryId)->second != entry) {
-            NES_ERROR("QueryCatalog::registerQuery insert into query failed");
-            //revert changes
-            if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
-                //this a severe error so we should terminate
-                throw ExecutionPlanRollbackException("Unable to remove query with Id "+ queryId + " from execution plan.");
-            }
-            markQueryAs(queryId, QueryStatus::Failed);
-            return "ERROR insertMap";
-        }
-        NES_DEBUG("number of queries after insert=" << queries.size());
-        return queryId;
+//
+//        OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
+//        if (queryId == "") {
+//            NES_ERROR("QueryCatalog::registerAndAddToSchedulingQueue: cannot register query without id");
+//            throw;
+//        }
+//        GlobalExecutionPlanPtr executionPlan = optimizerService->updateGlobalExecutionPlan(queryPlan, optimizationStrategyName);
+//        if (!executionPlan) {
+//            NES_ERROR("QueryCatalog::registerAndAddToSchedulingQueue updateGlobalExecutionPlan failed");
+//            return "ERROR create execution plan";
+//        }
+//        NES_DEBUG("QueryCatalog: Final Execution Plan =" << executionPlan->getAsString());
+//
+//        if (queries.find(queryId)->second != queryCatalogEntry) {
+//            NES_ERROR("QueryCatalog::registerAndAddToSchedulingQueue insert into query failed");
+//            //revert changes
+//            if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
+//                //this a severe error so we should terminate
+//                throw ExecutionPlanRollbackException("Unable to remove query with Id " + queryId + " from execution plan.");
+//            }
+//            markQueryAs(queryId, QueryStatus::Failed);
+//            return "ERROR insertMap";
+//        }
+//        NES_DEBUG("number of queries after insert=" << queries.size());
+        return true;
     } catch (const ExecutionPlanRollbackException e) {
         throw;
     } catch (const std::exception& exc) {
@@ -106,15 +96,15 @@ string QueryCatalog::registerQuery(const string& queryString, const string& opti
         //revert changes
         if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
             //this a severe error so we should terminate
-            throw ExecutionPlanRollbackException("Unable to remove query with Id "+ queryId + " from execution plan.");
+            throw ExecutionPlanRollbackException("Unable to remove query with Id " + queryId + " from execution plan.");
         }
         markQueryAs(queryId, QueryStatus::Failed);
 
         NES_ERROR(
             "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
                                                                                 << optimizationStrategyName);
-        NES_ERROR("QueryCatalog::registerQuery insert into query failed with " << exc.what());
-        return "ERROR QueryCatalog:exception";
+        NES_ERROR("QueryCatalog::registerAndAddToSchedulingQueue insert into query failed with " << exc.what());
+        return false;
     }
 }
 

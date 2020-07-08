@@ -5,11 +5,10 @@
 #include <Services/OptimizerService.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
-#include <chrono>
 
-using namespace NES;
 using namespace web;
 
+namespace NES{
 OptimizerService::OptimizerService(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan)
     : topologyManager(topologyManager), streamCatalog(streamCatalog), globalExecutionPlan(globalExecutionPlan) {
     NES_DEBUG("OptimizerService()");
@@ -29,10 +28,6 @@ GlobalExecutionPlanPtr OptimizerService::updateGlobalExecutionPlan(QueryPlanPtr 
     NES_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString());
 
     NESOptimizer queryOptimizer;
-
-    OperatorJsonUtil operatorJsonUtil;
-    const json::value& basePlan = operatorJsonUtil.getBasePlan(queryPlan);
-
-    NES_DEBUG("OptimizerService: query plan=" << basePlan);
     return queryOptimizer.updateExecutionGraph(optimizationStrategyName, queryPlan, topologyPlan, streamCatalog, globalExecutionPlan);
+}
 }

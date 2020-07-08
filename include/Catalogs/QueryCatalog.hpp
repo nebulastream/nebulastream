@@ -7,6 +7,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <queue>
 
 namespace NES {
 
@@ -32,14 +33,15 @@ static std::map<std::string, QueryStatus> stringToQueryStatusMap{
 class QueryCatalog {
   public:
     QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan);
+
     /**
      * @brief registers an RPC query into the NES topology to make it deployable
-     * @param queryString a queryString of the query
-     * @param optimizationStrategyName the optimization strategy (bottomUp or topDown)
-     * @return query id
+     * @param queryString : a user query in string form
+     * @param query : a user query to be executed
+     * @param optimizationStrategyName : the optimization strategy (bottomUp or topDown)
+     * @return true if registration successful else false
      */
-    string registerQuery(const string& queryString,
-                         const string& optimizationStrategyName);
+    bool registerAndAddToSchedulingQueue(const string& queryString, const QueryPtr query, const string& optimizationStrategyName);
 
     /**
      * @brief method which is called to unregister an already running query
@@ -121,6 +123,7 @@ class QueryCatalog {
     GlobalExecutionPlanPtr globalExecutionPlan;
     std::map<string, QueryCatalogEntryPtr> queries;
     std::mutex insertDeleteQuery;
+    std::queue<QueryCatalogEntryPtr> schedulingQueue;
 };
 
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
