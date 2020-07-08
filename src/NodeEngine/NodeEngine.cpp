@@ -4,9 +4,9 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
-#include <Nodes/Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <Phases/ConvertLogicalToPhysicalSource.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 using namespace std;
