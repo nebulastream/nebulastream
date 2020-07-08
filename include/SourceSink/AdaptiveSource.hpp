@@ -4,6 +4,7 @@
 #include <SourceSink/DataSource.hpp>
 
 namespace NES {
+class TupleBuffer;
 
 /**
  * @brief This class defines a source that adapts its sampling rate
@@ -16,13 +17,8 @@ class AdaptiveSource : public DataSource {
      * @param bufferManager
      * @param queryManager
      */
-    AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t initialFrequency);
-
-    /**
-     * Function to sample data from a physical source
-     * @return
-     */
-    std::optional<TupleBuffer> receiveData() override;
+    AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                   size_t initialFrequency);
 
     /**
      * @brief Get type of source
@@ -34,8 +30,27 @@ class AdaptiveSource : public DataSource {
      * @param bufferManager
      * @param queryManager
      */
-    void runningRoutine(BufferManagerPtr, QueryManagerPtr);
+    void runningRoutine(BufferManagerPtr, QueryManagerPtr) override;
+
+    /**
+     * @brief sample data and choose to update the new frequency
+     * @return the filled tuple buffer
+     */
+    std::optional<TupleBuffer> receiveData() override;
+
+  private:
+    /**
+     * @brief sample a source, implemented by derived
+     */
+    virtual void sampleSourceAndFillBuffer(TupleBuffer&) = 0;
+
+    /**
+     * @brief decision of new frequency, implemented by derived
+     */
+    virtual void decideNewFrequency() = 0;
 };
+
+typedef std::shared_ptr<AdaptiveSource> AdaptiveSourcePtr;
 
 }// namespace NES
 
