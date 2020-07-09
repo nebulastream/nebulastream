@@ -26,20 +26,6 @@ namespace NES {
 std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::string placementStrategyName, NESTopologyPlanPtr nesTopologyPlan,
                                                                           GlobalExecutionPlanPtr globalExecutionPlan) {
 
-    switch (stringToPlacementStrategyType[placementStrategyName]) {
-        case BottomUp:
-            return BottomUpStrategy::create(nesTopologyPlan, globalExecutionPlan);
-        case TopDown:
-            return TopDownStrategy::create(nesTopologyPlan, globalExecutionPlan);
-            // FIXME: enable them with issue #755
-            //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
-            //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
-            //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
-            //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
-            //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
-        default:
-            return nullptr;
-    }
 }
 
 BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan)

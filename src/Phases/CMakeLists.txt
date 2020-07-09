@@ -7,4 +7,6 @@ add_source_nes(
         ConvertPhysicalToLogicalSink.cpp
         TypeInferencePhase.cpp
         QueryOptimizationPhase.cpp
+        QueryPlacementPhase.cpp
+        QueryRewritePhase.cpp
 )
