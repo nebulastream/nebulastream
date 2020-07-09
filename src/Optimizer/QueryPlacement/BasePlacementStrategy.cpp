@@ -3,9 +3,9 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 //#include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
 //#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
 //#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
@@ -23,15 +23,10 @@
 
 namespace NES {
 
-std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::string placementStrategyName, NESTopologyPlanPtr nesTopologyPlan,
-                                                                          GlobalExecutionPlanPtr globalExecutionPlan) {
-
-}
-
-BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan)
-    : nesTopologyPlan(nesTopologyPlan), globalExecutionPlan(globalExecutionPlan) {
+BasePlacementStrategy::BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase, GlobalExecutionPlanPtr globalExecutionPlan,
+                                             StreamCatalogPtr streamCatalog)
+    : nesTopologyPlan(nesTopologyPlan), globalExecutionPlan(globalExecutionPlan), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {
     pathFinder = PathFinder::create(nesTopologyPlan);
-    typeInferencePhase = TypeInferencePhase::create();
 }
 
 OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(NESTopologyEntryPtr nesNode) {
