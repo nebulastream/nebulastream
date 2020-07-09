@@ -116,11 +116,11 @@ void DataSource::setBufferManger(BufferManagerPtr bufferManager) { this->bufferM
 void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
     if (!queryManager) {
         NES_ERROR("query Manager not set");
-        assert(0);
+        throw std::logic_error("DataSource: QueryManager not set");
     }
     if (!bufferManager) {
         NES_ERROR("bufferManager not set");
-        assert(0);
+        throw std::logic_error("DataSource: BufferManager not set");
     }
 
     if (!this->sourceId.empty()) {
