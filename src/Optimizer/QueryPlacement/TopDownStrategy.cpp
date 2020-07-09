@@ -16,7 +16,8 @@
 
 namespace NES {
 
-std::unique_ptr<TopDownStrategy> TopDownStrategy::create(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan) {
+std::unique_ptr<TopDownStrategy> TopDownStrategy::create(NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase, GlobalExecutionPlanPtr globalExecutionPlan,
+                                                         StreamCatalogPtr streamCatalog) {
     return std::make_unique<TopDownStrategy>(TopDownStrategy(nesTopologyPlan, executionPlan));
 }
 

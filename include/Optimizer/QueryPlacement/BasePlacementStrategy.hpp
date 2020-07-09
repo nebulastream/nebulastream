@@ -53,7 +53,8 @@ class BasePlacementStrategy {
     static const int ZMQ_DEFAULT_PORT = 5555;
 
   public:
-    explicit BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan);
+    explicit BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase, GlobalExecutionPlanPtr globalExecutionPlan,
+                                   StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
@@ -79,8 +80,19 @@ class BasePlacementStrategy {
      */
     OperatorNodePtr createNetworkSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
 
+    /**
+     * @brief
+     * @param queryPlan
+     * @param parentNesNode
+     */
     void addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode);
 
+    /**
+     * @brief
+     * @param queryPlan
+     * @param currentNesNode
+     * @param childNesNode
+     */
     void addNetworkSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr currentNesNode, NESTopologyEntryPtr childNesNode);
 
   protected:
@@ -93,8 +105,9 @@ class BasePlacementStrategy {
     void addSystemGeneratedOperators(std::string queryId, std::vector<NESTopologyEntryPtr> path);
     NESTopologyPlanPtr nesTopologyPlan;
     GlobalExecutionPlanPtr globalExecutionPlan;
-    PathFinderPtr pathFinder;
     TypeInferencePhasePtr typeInferencePhase;
+    StreamCatalogPtr streamCatalog;
+    PathFinderPtr pathFinder;
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP
