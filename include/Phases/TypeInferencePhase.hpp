@@ -37,7 +37,7 @@ class TypeInferencePhase {
      * @throws RuntimeException if it was not possible to infer the data types of schemas and expression
      * @return QueryPlanPtr
      */
-    QueryPlanPtr transform(QueryPlanPtr queryPlan);
+    QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
   private:
     /**

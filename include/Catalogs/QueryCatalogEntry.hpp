@@ -99,9 +99,18 @@ class QueryCatalogEntry {
         QueryCatalogEntry::queryStatus = queryStatus;
     }
 
+    /**
+     * @brief Get name of the query placement strategy
+     * @return query placement strategy
+     */
+    const std::string& getQueryPlacementStrategy() const {
+        return queryPlacementStrategy;
+    }
+
   private:
     std::string queryId;
     std::string queryString;
+    std::string queryPlacementStrategy;
     QueryPlanPtr queryPlanPtr;
     QueryStatus queryStatus;
 };

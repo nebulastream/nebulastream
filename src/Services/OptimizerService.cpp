@@ -21,7 +21,7 @@ std::string OptimizerService::getExecutionPlanAsString(QueryPlanPtr queryPlan, s
 GlobalExecutionPlanPtr OptimizerService::updateGlobalExecutionPlan(QueryPlanPtr queryPlan, string optimizationStrategyName) {
 
     TypeInferencePhasePtr typeInferencePhasePtr = TypeInferencePhase::create(streamCatalog);
-    queryPlan = typeInferencePhasePtr->transform(queryPlan);
+    queryPlan = typeInferencePhasePtr->execute(queryPlan);
 
     const NESTopologyPlanPtr topologyPlan = topologyManager->getNESTopologyPlan();
     NES_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString());

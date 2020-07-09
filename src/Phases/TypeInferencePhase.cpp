@@ -19,7 +19,7 @@ TypeInferencePhasePtr TypeInferencePhase::create(StreamCatalogPtr streamCatalog)
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(streamCatalog));
 }
 
-QueryPlanPtr TypeInferencePhase::transform(QueryPlanPtr queryPlan) {
+QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     // first we have to check if all source operators have a correct source descriptors
     auto sources = queryPlan->getSourceOperators();
     for (auto source : sources) {
