@@ -26,7 +26,7 @@ class TimeCharacteristic {
     TimeCharacteristic(Type type, AttributeFieldPtr field);
 
     /**
-     * @brief Factory to create a processing time window
+     * @brief Factory to create a time characteristic for processing time window
      * @return TimeCharacteristicPtr
      */
     static TimeCharacteristicPtr createProcessingTime();
