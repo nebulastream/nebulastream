@@ -1,6 +1,7 @@
 syntax = "proto3";
 import "google/protobuf/any.proto";
 import "SerializableExpression.proto";
+//import "Schema.hpp/SchemaPtr";
 package NES;
 
 
@@ -136,6 +137,13 @@ message SerializableOperator{
   */
   message MapDetails {
     SerializableExpression expression = 1;
+  }
+
+  /**
+  Merge Details contains properties for the merge operator
+  */
+  message MergeDetails {
+     SerializableExpression schemaPtr = 1;
   }
 
   /**
