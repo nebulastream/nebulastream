@@ -23,6 +23,5 @@ bool QueryOptimizationPhase::execute(QueryCatalogEntryPtr queryCatalogEntry) {
     queryPlan = queryRewritePhase->execute(queryPlan);
     queryPlan = typeInferencePhase->execute(queryPlan);
     queryPlacementPhase->execute(placementStrategy, queryPlan);
-
 }
 }// namespace NES

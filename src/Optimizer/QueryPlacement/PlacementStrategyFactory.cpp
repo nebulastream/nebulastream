@@ -1,0 +1,25 @@
+#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
+#include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
+
+namespace NES {
+
+std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(std::string strategyName, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+                                                                             GlobalExecutionPlanPtr globalExecutionPlan, StreamCatalogPtr streamCatalog) {
+    switch (stringToPlacementStrategyType[strategyName]) {
+        case BottomUp:
+            return BottomUpStrategy::create(nesTopologyPlan, globalExecutionPlan);
+        case TopDown:
+            return TopDownStrategy::create(nesTopologyPlan, globalExecutionPlan);
+            // FIXME: enable them with issue #755
+            //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
+            //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
+            //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
+            //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
+            //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
+        default:
+            return nullptr;
+    }
+}
+
+}

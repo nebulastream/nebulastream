@@ -5,6 +5,11 @@
 
 namespace NES {
 
+QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr NESTopologyPlan,
+                                         StreamCatalogPtr streamCatalog, TypeInferencePhasePtr typeInferencePhase) {
+
+}
+
 QueryPlacementPhasePtr QueryPlacementPhase::create() {
     return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase());
 }
