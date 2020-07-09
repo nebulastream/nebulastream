@@ -8,6 +8,9 @@
 
 namespace NES {
 
+/**
+ * @brief Utility class for performing I/O on top of known sensor buses.
+ */
 class SensorBus {
   public:
     /**
@@ -17,7 +20,7 @@ class SensorBus {
      * @param address the register address we're interested in
      * @return the new file descriptor
      */
-    static bool init_bus(int& file, const char* filename, int address);
+    static bool initBus(int& file, const char* filename, int address);
 
     /**
      * Write the buffer to file `file` at address `address`, using `length`.
@@ -42,12 +45,12 @@ class SensorBus {
      * Perform a r/w operation on top of raw I2C / SMBus
      * @param file the file descriptor to perform the operation on
      * @param address the register addres we're interested in
-     * @param read_write the operation to perform from I2C
+     * @param readWrite the operation to perform from I2C
      * @param size the size of the buffer to read/write
      * @param buffer the data
      * @return operation status
      */
-    static int raw_i2c_rdrw(int file, uint8_t address, uint8_t read_write, uint8_t size, unsigned char* buffer);
+    static int rawI2CRdrw(int file, uint8_t address, uint8_t readWrite, uint8_t size, unsigned char* buffer);
 };
 
 } // namespace NES
