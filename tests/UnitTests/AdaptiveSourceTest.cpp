@@ -37,8 +37,8 @@ struct __attribute__((packed)) inputRow {
 class MockCSVAdaptiveSource : public AdaptiveSource {
   public:
     MockCSVAdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                          size_t initialFrequency, std::string filePath)
-        : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency),
+                          size_t initialGatheringInterval, std::string filePath)
+        : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval),
           filePath(filePath) {};
 
     ~MockCSVAdaptiveSource() = default;
@@ -48,7 +48,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     const std::string toString() const override {
         std::stringstream ss;
         ss << "ADAPTIVE_CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath
-           << " freq=" << this->getGatheringInterval() << " numBuff="
+           << " gatherInterval=" << this->getGatheringInterval() << " numBuff="
            << this->numBuffersToProcess << ")";
         return ss.str();
     };
@@ -82,7 +82,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     /**
      * @brief naively increment the gathering interval
      */
-    void decideNewFrequency() override {
+    void decideNewGatheringInterval() override {
         NES_DEBUG("Old sampling interval: " << this->gatheringInterval);
         ++this->gatheringInterval;
         NES_DEBUG("New sampling interval: " << this->gatheringInterval);
@@ -92,14 +92,14 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
 const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema,
                                                 BufferManagerPtr bufferManager,
                                                 QueryManagerPtr queryManager,
-                                                size_t initialFrequency, std::string filePath) {
+                                                size_t initialGatheringInterval, std::string filePath) {
     return std::make_shared<MockCSVAdaptiveSource>(schema, bufferManager, queryManager,
-                                                   initialFrequency, filePath);
+                                                   initialGatheringInterval, filePath);
 }
 
 /**
- * @brief start a source and check that frequency/interval has changed
- * @component AdaptiveSampler::decideNewFrequency()
+ * @brief start a source and check that interval has changed
+ * @component AdaptiveSampler::decideNewGatheringInterval()
  * @result true, if source starts, changes interval, and stops
  */
 TEST_F(AdaptiveSourceTest, testSamplingChange) {
@@ -114,10 +114,10 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
             ->addField("temperature", UINT32);
 
     size_t num_of_buffers = 1;
-    size_t initialFrequency = 4;
+    size_t initialGatheringInterval = 4;
 
     const DataSourcePtr source = createMockCSVAdaptiveSource(schema, nodeEngine->getBufferManager(),
-                                                             nodeEngine->getQueryManager(), initialFrequency,
+                                                             nodeEngine->getQueryManager(), initialGatheringInterval,
                                                              path_to_file);
 
     ASSERT_TRUE(source->start());
@@ -126,7 +126,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
         auto optBuf = source->receiveData();
     }
 
-    ASSERT_NE(initialFrequency, source->getGatheringInterval());
+    ASSERT_NE(initialGatheringInterval, source->getGatheringInterval());
     ASSERT_TRUE(nodeEngine->stop(false));
     ASSERT_TRUE(source->stop());
 }

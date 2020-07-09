@@ -18,7 +18,7 @@ class AdaptiveSource : public DataSource {
      * @param queryManager
      */
     AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                   size_t initialFrequency);
+                   size_t initialGatheringInterval);
 
     /**
      * @brief Get type of source
@@ -47,7 +47,7 @@ class AdaptiveSource : public DataSource {
     /**
      * @brief decision of new frequency, implemented by derived
      */
-    virtual void decideNewFrequency() = 0;
+    virtual void decideNewGatheringInterval() = 0;
 };
 
 typedef std::shared_ptr<AdaptiveSource> AdaptiveSourcePtr;
