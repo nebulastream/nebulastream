@@ -26,10 +26,6 @@ namespace NES {
 std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::string placementStrategyName, NESTopologyPlanPtr nesTopologyPlan,
                                                                           GlobalExecutionPlanPtr globalExecutionPlan) {
 
-    if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
-        throw std::invalid_argument("BasePlacementStrategy: Unknown placement strategy name " + placementStrategyName);
-    }
-
     switch (stringToPlacementStrategyType[placementStrategyName]) {
         case BottomUp:
             return BottomUpStrategy::create(nesTopologyPlan, globalExecutionPlan);
@@ -131,7 +127,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
             addNetworkSinkOperator(querySubPlan, parentNesNode);
 
             NES_DEBUG("BasePlacementStrategy: Infer the output and input schema for the updated query plan");
-            typeInferencePhase->transform(querySubPlan);
+            typeInferencePhase->execute(querySubPlan);
 
             if (!executionNode->createNewQuerySubPlan(queryId, querySubPlan)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated query sub plan.");
@@ -168,7 +164,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std
             }
 
             NES_DEBUG("BasePlacementStrategy: Infer the output and input schema for the updated query plan");
-            typeInferencePhase->transform(querySubPlan);
+            typeInferencePhase->execute(querySubPlan);
 
             if (!executionNode->updateQuerySubPlan(queryId, querySubPlan)) {
                 NES_THROW_RUNTIME_ERROR("BasePlacementStrategy: Unable to add system generated source operator.");

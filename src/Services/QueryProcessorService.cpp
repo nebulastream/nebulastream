@@ -18,7 +18,7 @@ int QueryProcessorService::operator()() {
         if (queryBatch.empty()) {
             //process the queries using a-query-at-a-time model
             for (auto queryPlan : queryBatch) {
-                queryPlan = typeInferencePhase->transform(queryPlan);
+                queryPlan = typeInferencePhase->execute(queryPlan);
             }
         }
     }
