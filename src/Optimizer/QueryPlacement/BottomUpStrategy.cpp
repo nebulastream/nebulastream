@@ -13,14 +13,16 @@
 
 namespace NES {
 
-std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan) {
-    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(nesTopologyPlan, executionPlan));
+std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+                                                           TypeInferencePhasePtr typeInferencePhase,StreamCatalogPtr streamCatalog) {
+    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog));
 }
 
-BottomUpStrategy::BottomUpStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan)
-    : BasePlacementStrategy(nesTopologyPlan, globalExecutionPlan) {}
+BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+                                   StreamCatalogPtr streamCatalog)
+    : BasePlacementStrategy(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog) {}
 
-GlobalExecutionPlanPtr BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
+bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     const string& queryId = queryPlan->getQueryId();
 
@@ -56,7 +58,7 @@ GlobalExecutionPlanPtr BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr 
         addSystemGeneratedOperators(queryId, path);
     }
 
-    return globalExecutionPlan;
+    return true;
 }
 
 void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {

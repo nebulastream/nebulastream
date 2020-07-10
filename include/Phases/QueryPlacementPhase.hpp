@@ -25,13 +25,17 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class QueryPlacementPhase {
   public:
-    QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr NESTopologyPlan,
-                                  StreamCatalogPtr streamCatalog, TypeInferencePhasePtr typeInferencePhase);
+    QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+                                  TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
     bool execute(std::string placementStrategy, QueryPlanPtr queryPlan);
   private:
-    explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr NESTopologyPlan,
-                                 StreamCatalogPtr streamCatalog, TypeInferencePhasePtr typeInferencePhase);
+    explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+                                 TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
+    GlobalExecutionPlanPtr globalExecutionPlan;
+    NESTopologyPlanPtr nesTopologyPlan;
+    TypeInferencePhasePtr typeInferencePhase;
+    StreamCatalogPtr streamCatalog;
 };
 }// namespace NES
 #endif//NES_QUERYPLACEMENTPHASE_HPP
