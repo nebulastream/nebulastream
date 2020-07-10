@@ -68,21 +68,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     bool stopCoordinator(bool force);
 
     /**
-     * @brief method to register, deploy, and start a query
-     * @param queryString : user query, in string form, to be executed
-     * @param strategy : deployment strategy for the query operators
-     * @return UUID of the submitted user query.
-     */
-    string addQuery(const string queryString, const string strategy);
-
-    /**
-     * @brief method to deregister, undeploy, and stop a query
-     * @param queryID
-     * @return bool indicating success
-     */
-    bool removeQuery(const string queryId);
-
-    /**
     * @brief method to return the query statistics
     * @param id of the query
     * @return queryStatistics
@@ -106,50 +91,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     TopologyManagerPtr getTopologyManger() {
         return topologyManager;
     }
-
-  private:
-    /**
-    * @brief method to register a query without start
-    * @param queryString : user query, in string form, to be executed
-    * @param strategy : deployment strategy for the query operators
-    * @return UUID of the submitted user query.
-    */
-    string registerQuery(const string queryString, const string strategy);
-
-    /**
-     * @brief ungregisters a query
-     * @param queryID
-     * @return bool indicating success
-     */
-    bool unregisterQuery(const string queryId);
-
-    /**
-     * @brief method to start a already deployed query
-     * @param queryDeployments
-     * @return bool indicating success
-     */
-    bool startQuery(std::string queryId);
-
-    /**
-     * @brief method to stop a query
-     * @param queryDeployments
-     * @return bool indicating success
-     */
-    bool stopQuery(std::string queryId);
-
-    /**
-     * @brief method send query to nodes
-     * @param queryDeployments
-     * @return bool indicating success
-    */
-    bool deployQuery(std::string queryId);
-
-    /**
-     * @brief method remove query from nodes
-     * @param queryDeployments
-     * @return bool indicating success
-     */
-    bool undeployQuery(std::string queryId);
 
   private:
     std::string serverIp;

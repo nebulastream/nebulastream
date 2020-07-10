@@ -4,12 +4,9 @@
 #include <stdexcept>
 
 namespace NES {
-class InvalidQueryException : public std::exception {
+class InvalidQueryException : public std::runtime_error {
   public:
     explicit InvalidQueryException(std::string message);
-
-  private:
-    std::string message;
 };
 }// namespace NES
 

@@ -1,6 +1,5 @@
 #include <Phases/TypeInferencePhase.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
-#include <Optimizer/NESOptimizer.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Services/OptimizerService.hpp>
 #include <Topology/TopologyManager.hpp>

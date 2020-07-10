@@ -1,5 +1,5 @@
 #include "Exceptions/ExecutionPlanRollbackException.hpp"
 
-using namespace NES;
-
-ExecutionPlanRollbackException::ExecutionPlanRollbackException(std::string message) : message(message) {}
+namespace NES {
+ExecutionPlanRollbackException::ExecutionPlanRollbackException(std::string message) : std::runtime_error(message) {}
+}// namespace NES
