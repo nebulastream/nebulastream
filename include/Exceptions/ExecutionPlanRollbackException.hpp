@@ -8,12 +8,9 @@ namespace NES {
 /**
  * @brief This exception represents an error occurred while reverting the changes in the QEP plan
  */
-class ExecutionPlanRollbackException : public std::exception {
+class ExecutionPlanRollbackException : public std::runtime_error {
   public:
     explicit ExecutionPlanRollbackException(std::string message);
-
-  private:
-    std::string message;
 };
 }
 

@@ -8,7 +8,7 @@ namespace NES {
 /**
  * @brief Exception indicating problem during operator placement
  */
-class QueryPlacementException : public std::logic_error {
+class QueryPlacementException : public std::runtime_error {
 
   public:
     explicit QueryPlacementException(std::string message);

@@ -1,5 +1,5 @@
 #include "Exceptions/InvalidQueryException.hpp"
 
-using namespace NES;
-
-InvalidQueryException::InvalidQueryException(std::string message): message(message) {}
+namespace NES {
+InvalidQueryException::InvalidQueryException(std::string message) : std::runtime_error(message) {}
+}// namespace NES

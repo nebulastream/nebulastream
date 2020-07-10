@@ -36,10 +36,10 @@ class QueryService {
     /**
      * This method is used for generating the base query plan from the input query as string.
      *
-     * @param userQuery : user query as string
+     * @param queryId : user query as string
      * @return a json object representing the query plan
      */
-    web::json::value getQueryPlanForQueryId(std::string userQuery);
+    web::json::value getQueryPlanAsJson(std::string queryId);
 
     /**
      * This method is used for generating the query object from the input query as string.
@@ -48,6 +48,56 @@ class QueryService {
      * @return a json object representing the query plan
      */
     QueryPtr getQueryFromQueryString(std::string userQuery);
+
+    /**
+     * @brief ungregisters a query
+     * @param queryID
+     * @return bool indicating success
+     */
+    bool unregisterQuery(std::string queryId);
+
+    /**
+     * @brief method to start a already deployed query
+     * @param queryDeployments
+     * @return bool indicating success
+     */
+    bool startQuery(std::string queryId);
+
+    /**
+     * @brief method to stop a query
+     * @param queryDeployments
+     * @return bool indicating success
+     */
+    bool stopQuery(std::string queryId);
+
+    /**
+     * @brief method send query to nodes
+     * @param queryDeployments
+     * @return bool indicating success
+    */
+    bool deployQuery(std::string queryId);
+
+    /**
+     * @brief method remove query from nodes
+     * @param queryDeployments
+     * @return bool indicating success
+     */
+    bool undeployQuery(std::string queryId);
+
+    /**
+     * @brief method to register, deploy, and start a query
+     * @param queryString : user query, in string form, to be executed
+     * @param strategy : deployment strategy for the query operators
+     * @return UUID of the submitted user query.
+     */
+    std::string addQuery(std::string queryString, const std::string strategy);
+
+    /**
+     * @brief method to deregister, undeploy, and stop a query
+     * @param queryID
+     * @return bool indicating success
+     */
+    bool removeQuery(std::string queryId);
 
   private:
     QueryCatalogPtr queryCatalog;

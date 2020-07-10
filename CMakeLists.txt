@@ -236,7 +236,7 @@ add_subdirectory(src)
 # Add Library
 get_source_nes(nes_SOURCE_FILES)
 get_header_nes(nes_HEADER_FILES)
-add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS} src/Phases/QueryOptimizationPhase.cpp include/Phases/QueryOptimizationPhase.hpp src/Phases/QueryRewritePhase.cpp include/Phases/QueryRewritePhase.hpp src/Phases/QueryPlacementPhase.cpp include/Phases/QueryPlacementPhase.hpp src/Optimizer/QueryPlacement/PlacementStrategyFactory.cpp include/Optimizer/QueryPlacement/PlacementStrategyFactory.hpp src/Exceptions/QueryPlacementException.cpp include/Exceptions/QueryPlacementException.hpp)
+add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS} src/Phases/QueryOptimizationPhase.cpp include/Phases/QueryOptimizationPhase.hpp src/Phases/QueryRewritePhase.cpp include/Phases/QueryRewritePhase.hpp src/Phases/QueryPlacementPhase.cpp include/Phases/QueryPlacementPhase.hpp src/Optimizer/QueryPlacement/PlacementStrategyFactory.cpp include/Optimizer/QueryPlacement/PlacementStrategyFactory.hpp src/Exceptions/QueryPlacementException.cpp include/Exceptions/QueryPlacementException.hpp src/Exceptions/QueryDeploymentException.cpp include/Exceptions/QueryDeploymentException.hpp)
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(nes PUBLIC ${LIBRARIES} cppzmq ${PROTOBUF_LIBRARIES})
