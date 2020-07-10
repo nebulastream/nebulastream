@@ -1,5 +1,5 @@
-#ifndef NES_QUERYPROCESSORSERVICE_HPP
-#define NES_QUERYPROCESSORSERVICE_HPP
+#ifndef NES_QUERYOPTIMIZATIONSERVICE_HPP
+#define NES_QUERYOPTIMIZATIONSERVICE_HPP
 
 #include <memory>
 
@@ -14,15 +14,18 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
-class QueryProcessorService {
+class QueryOptimizationService {
   public:
-    explicit QueryProcessorService(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog);
+    explicit QueryOptimizationService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog,
+                                      StreamCatalogPtr streamCatalog);
     int operator()();
 
   private:
     bool stopQueryProcessor = false;
     QueryCatalogPtr queryCatalog;
     TypeInferencePhasePtr typeInferencePhase;
+    QueryRewritePhasePtr queryRewritePhase;
+    QueryPlacementPhasePtr queryPlacementPhase;
 };
 }// namespace NES
-#endif//NES_QUERYPROCESSORSERVICE_HPP
+#endif//NES_QUERYOPTIMIZATIONSERVICE_HPP

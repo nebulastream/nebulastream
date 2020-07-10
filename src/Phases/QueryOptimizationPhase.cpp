@@ -18,10 +18,6 @@ QueryOptimizationPhasePtr QueryOptimizationPhase::create(QueryRewritePhasePtr qu
 
 bool QueryOptimizationPhase::execute(QueryCatalogEntryPtr queryCatalogEntry) {
 
-    std::string placementStrategy = queryCatalogEntry->getQueryPlacementStrategy();
-    auto queryPlan = queryCatalogEntry->getQueryPlan();
-    queryPlan = queryRewritePhase->execute(queryPlan);
-    queryPlan = typeInferencePhase->execute(queryPlan);
-    queryPlacementPhase->execute(placementStrategy, queryPlan);
+
 }
 }// namespace NES

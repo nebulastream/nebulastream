@@ -25,7 +25,7 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class QueryPlacementPhase {
   public:
-    QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+    static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
                                   TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
     bool execute(std::string placementStrategy, QueryPlanPtr queryPlan);
   private:
