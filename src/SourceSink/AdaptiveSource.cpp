@@ -1,7 +1,7 @@
-#include <SourceSink/AdaptiveSource.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <SourceSink/AdaptiveSource.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 #include <cassert>
 #include <unistd.h>
@@ -55,9 +55,9 @@ void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManager
                 if (!!optBuf) {
                     auto& buf = optBuf.value();
                     NES_DEBUG("AdaptiveSource " << this->getSourceId()
-                                            << " string=" << this->toString()
-                                            << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
-                                            << " iteration=" << cnt);
+                                                << " string=" << this->toString()
+                                                << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
+                                                << " iteration=" << cnt);
 
                     queryManager->addWork(this->sourceId, buf);
                     cnt++;

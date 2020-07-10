@@ -1,9 +1,9 @@
 #ifndef SENSOR_BUS_HPP
 #define SENSOR_BUS_HPP
 
-#include <string>
-#include <linux/i2c.h>
 #include <linux/i2c-dev.h>
+#include <linux/i2c.h>
+#include <string>
 #include <sys/ioctl.h>
 
 namespace NES {
@@ -53,6 +53,6 @@ class SensorBus {
     static int rawI2CRdrw(int file, uint8_t address, uint8_t readWrite, uint8_t size, unsigned char* buffer);
 };
 
-} // namespace NES
+}// namespace NES
 
 #endif /* SENSOR_BUS_HPP */
