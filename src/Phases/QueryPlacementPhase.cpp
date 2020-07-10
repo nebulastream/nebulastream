@@ -10,8 +10,8 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
                                          StreamCatalogPtr streamCatalog) : globalExecutionPlan(globalExecutionPlan), nesTopologyPlan(nesTopologyPlan),
                                                                            typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {}
 
-QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
-                                                   TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog) {
+QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+                                                   StreamCatalogPtr streamCatalog) {
     return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog));
 }
 

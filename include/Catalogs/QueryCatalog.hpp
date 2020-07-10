@@ -38,9 +38,9 @@ class QueryCatalog {
 
     /**
      * @brief Get a batch of query plans to be scheduled
-     * @return a vector of query plans
+     * @return a vector of query catalog entry to schedule
      */
-    std::vector<QueryPlanPtr> getQueriesToSchedule();
+    std::vector<QueryCatalogEntryPtr> getQueriesToSchedule();
 
     /**
      * @brief method which is called to unregister an already running query

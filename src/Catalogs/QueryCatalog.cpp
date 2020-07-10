@@ -36,17 +36,16 @@ std::map<std::string, std::string> QueryCatalog::getQueriesWithStatus(std::strin
     return result;
 }
 
-std::vector<QueryPlanPtr> QueryCatalog::getQueriesToSchedule() {
+std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueriesToSchedule() {
     std::unique_lock<std::mutex> lock(insertDeleteQuery);
     NES_INFO("QueryCatalog: Fetching Queries to Schedule");
-    std::vector<QueryPlanPtr> queriesToSchedule;
+    std::vector<QueryCatalogEntryPtr> queriesToSchedule;
     if (!schedulingQueue.empty()) {
         int64_t currentBatchSize = 1;
         int64_t totalQueriesToSchedule = schedulingQueue.size();
         //Prepare a batch of queries to schedule
         while (currentBatchSize <= batchSize || currentBatchSize == totalQueriesToSchedule) {
-            QueryCatalogEntryPtr queryCatalogEntry = schedulingQueue.front();
-            queriesToSchedule.push_back(queryCatalogEntry->getQueryPlan());
+            queriesToSchedule.push_back(schedulingQueue.front());
             schedulingQueue.pop();
             currentBatchSize ++;
         }
