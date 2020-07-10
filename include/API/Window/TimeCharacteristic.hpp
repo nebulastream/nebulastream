@@ -2,7 +2,7 @@
 #define NES_INCLUDE_API_WINDOW_TIMECHARACTERISTIC_HPP_
 #include <memory>
 
-namespace NES{
+namespace NES {
 
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
@@ -53,6 +53,5 @@ class TimeCharacteristic {
     AttributeFieldPtr field;
 };
 
-
-}
+}// namespace NES
 #endif//NES_INCLUDE_API_WINDOW_TIMECHARACTERISTIC_HPP_

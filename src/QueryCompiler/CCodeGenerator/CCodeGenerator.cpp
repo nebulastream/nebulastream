@@ -1,3 +1,4 @@
+#include <API/Window/TimeCharacteristic.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
@@ -20,7 +21,6 @@
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Logger.hpp>
-#include <API/Window/TimeCharacteristic.hpp>
 
 namespace NES {
 
