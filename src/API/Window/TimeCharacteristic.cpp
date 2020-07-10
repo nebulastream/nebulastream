@@ -1,9 +1,9 @@
 #include <API/Window/TimeCharacteristic.hpp>
 
-namespace NES{
+namespace NES {
 
-TimeCharacteristic::TimeCharacteristic(Type type): type(type) {}
-TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field): type(type), field(field) {}
+TimeCharacteristic::TimeCharacteristic(Type type) : type(type) {}
+TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field) : type(type), field(field) {}
 
 TimeCharacteristicPtr TimeCharacteristic::createEventTime(AttributeFieldPtr field) {
     return std::make_shared<TimeCharacteristic>(Type::EventTime, field);
@@ -21,5 +21,4 @@ TimeCharacteristic::Type TimeCharacteristic::getType() {
     return type;
 }
 
-
-}
+}// namespace NES

@@ -26,7 +26,6 @@ typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 class TimeCharacteristic;
 typedef std::shared_ptr<TimeCharacteristic> TimeCharacteristicPtr;
 
-
 class WindowType {
   public:
     WindowType(TimeCharacteristicPtr timeCharacteristic);

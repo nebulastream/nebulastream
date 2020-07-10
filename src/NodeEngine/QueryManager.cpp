@@ -103,7 +103,6 @@ bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
         sink->setup();
     }
 
-
     return true;
 }
 
