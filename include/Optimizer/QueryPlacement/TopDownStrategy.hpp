@@ -13,12 +13,14 @@ class TopDownStrategy : public BasePlacementStrategy {
   public:
     ~TopDownStrategy() = default;
 
-    GlobalExecutionPlanPtr updateGlobalExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
+    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
 
-    static std::unique_ptr<TopDownStrategy> create(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr executionPlan);
+    static std::unique_ptr<TopDownStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+                                                   StreamCatalogPtr streamCatalog);
 
   private:
-    TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan);
+    TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+                    StreamCatalogPtr streamCatalog);
 
     /**
      * @brief place query operators and prepare the global execution plan

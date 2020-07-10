@@ -1,30 +1,30 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Phases/QueryPlacementPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr NESTopologyPlan,
-                                         StreamCatalogPtr streamCatalog, TypeInferencePhasePtr typeInferencePhase) {
+QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+                                         StreamCatalogPtr streamCatalog) : globalExecutionPlan(globalExecutionPlan), nesTopologyPlan(nesTopologyPlan),
+                                                                           typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {}
 
-}
-
-QueryPlacementPhasePtr QueryPlacementPhase::create() {
-    return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase());
+QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+                                                   TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog) {
+    return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog));
 }
 
 bool QueryPlacementPhase::execute(std::string placementStrategy, QueryPlanPtr queryPlan) {
-    NES_INFO("NESOptimizer: Preparing execution graph for input query");
-    NES_INFO("NESOptimizer: Initializing Placement strategy");
-    auto placementStrategyPtr = BasePlacementStrategy::getStrategy(placementStrategy, nesTopologyPlan, globalExecutionPlan);
+    NES_INFO("NESOptimizer: Placing input Query Plan on Global Execution Plan");
+    NES_INFO("NESOptimizer: Get the placement strategy");
+    auto placementStrategyPtr = PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, nesTopologyPlan,
+                                                                      typeInferencePhase, streamCatalog);
     if (!placementStrategyPtr) {
         NES_ERROR("NESOptimizer: unable to find placement strategy for " + placementStrategy);
-        return nullptr;
+        return false;
     }
-    GlobalExecutionPlanPtr globalExecution = placementStrategyPtr->updateGlobalExecutionPlan(queryPlan, streamCatalog);
-    return globalExecution;
+    return placementStrategyPtr->updateGlobalExecutionPlan(queryPlan);
 }
 
-
-}
+}// namespace NES

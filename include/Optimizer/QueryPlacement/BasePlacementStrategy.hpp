@@ -44,6 +44,9 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class TypeInferencePhase;
 typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -53,16 +56,15 @@ class BasePlacementStrategy {
     static const int ZMQ_DEFAULT_PORT = 5555;
 
   public:
-    explicit BasePlacementStrategy(NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase, GlobalExecutionPlanPtr globalExecutionPlan,
+    explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
                                    StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
      * @param queryPlan: the query plan
-     * @param streamCatalog: the stream catalog
-     * @return updated global execution plan
+     * @return true if successful
      */
-    virtual GlobalExecutionPlanPtr updateGlobalExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) = 0;
+    virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) = 0;
 
   private:
     /**
@@ -103,8 +105,9 @@ class BasePlacementStrategy {
      * @param path vector of nodes where operators could be placed
      */
     void addSystemGeneratedOperators(std::string queryId, std::vector<NESTopologyEntryPtr> path);
-    NESTopologyPlanPtr nesTopologyPlan;
+
     GlobalExecutionPlanPtr globalExecutionPlan;
+    NESTopologyPlanPtr nesTopologyPlan;
     TypeInferencePhasePtr typeInferencePhase;
     StreamCatalogPtr streamCatalog;
     PathFinderPtr pathFinder;

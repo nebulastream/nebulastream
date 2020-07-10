@@ -1,8 +1,8 @@
 #ifndef NES_PLACEMENTSTRATEGYFACTORY_HPP
 #define NES_PLACEMENTSTRATEGYFACTORY_HPP
 
-#include <memory>
 #include <map>
+#include <memory>
 
 namespace NES {
 
@@ -55,8 +55,8 @@ class PlacementStrategyFactory {
      * @param streamCatalog : stream catalog
      * @return instance of type BaseOptimizer
      */
-    static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string strategyName, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
-                                                              GlobalExecutionPlanPtr globalExecutionPlan, StreamCatalogPtr streamCatalog);
+    static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string strategyName, GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+                                                              TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 };
 }// namespace NES
 #endif//NES_PLACEMENTSTRATEGYFACTORY_HPP

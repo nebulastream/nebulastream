@@ -16,15 +16,16 @@
 
 namespace NES {
 
-std::unique_ptr<TopDownStrategy> TopDownStrategy::create(NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase, GlobalExecutionPlanPtr globalExecutionPlan,
+std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
                                                          StreamCatalogPtr streamCatalog) {
-    return std::make_unique<TopDownStrategy>(TopDownStrategy(nesTopologyPlan, executionPlan));
+    return std::make_unique<TopDownStrategy>(TopDownStrategy(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog));
 }
 
-TopDownStrategy::TopDownStrategy(NESTopologyPlanPtr nesTopologyPlan, GlobalExecutionPlanPtr globalExecutionPlan)
-    : BasePlacementStrategy(nesTopologyPlan, globalExecutionPlan) {}
+TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+                                 StreamCatalogPtr streamCatalog)
+    : BasePlacementStrategy(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog) {}
 
-GlobalExecutionPlanPtr TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
+bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
@@ -53,7 +54,7 @@ GlobalExecutionPlanPtr TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr q
         addSystemGeneratedOperators(queryId, path);
     }
 
-    return globalExecutionPlan;
+    return true;
 }
 
 void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes) {

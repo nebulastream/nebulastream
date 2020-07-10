@@ -1,11 +1,12 @@
-#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
+#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 
 namespace NES {
 
-std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(std::string strategyName, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
-                                                                             GlobalExecutionPlanPtr globalExecutionPlan, StreamCatalogPtr streamCatalog) {
+std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(std::string strategyName, GlobalExecutionPlanPtr globalExecutionPlan,
+                                                                             NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+                                                                             StreamCatalogPtr streamCatalog) {
     switch (stringToPlacementStrategyType[strategyName]) {
         case BottomUp:
             return BottomUpStrategy::create(nesTopologyPlan, globalExecutionPlan);
@@ -22,4 +23,4 @@ std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(std
     }
 }
 
-}
+}// namespace NES
