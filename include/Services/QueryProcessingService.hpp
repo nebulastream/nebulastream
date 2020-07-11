@@ -20,21 +20,24 @@ typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
 class WorkerRPCClient;
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
+class QueryService;
+typedef std::shared_ptr<QueryService> QueryServicePtr;
+
 class QueryProcessingService {
   public:
     explicit QueryProcessingService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog,
                                       StreamCatalogPtr streamCatalog, QueryDeployerPtr queryDeployer, WorkerRPCClientPtr workerRPCClient);
     int operator()();
 
+    /**
+     * @brief Indicate if query processor service is running
+     * @return true if query processor is running
+     */
+    bool isQueryProcessorRunning() const;
+
   private:
 
-    /**
-     * @brief Deploys the processed query to the respective worker nodes
-     * @param queryId : Id of the query to be deployed
-     * @return true if successful
-     */
-    bool deployQuery(std::string queryId);
-    bool stopQueryProcessor = false;
+    bool queryProcessorRunning = true;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     TypeInferencePhasePtr typeInferencePhase;
@@ -42,6 +45,7 @@ class QueryProcessingService {
     QueryPlacementPhasePtr queryPlacementPhase;
     QueryDeployerPtr queryDeployer;
     WorkerRPCClientPtr workerRPCClient;
+    QueryServicePtr queryService;
 };
 }// namespace NES
 #endif//NES_QUERYPROCESSINGSERVICE_HPP
