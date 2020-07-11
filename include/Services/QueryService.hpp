@@ -70,7 +70,7 @@ class QueryService {
      * @param queryId : id of the query
      * @return true if successful
      */
-    bool stopAndUndeployQuery(const string queryId);
+    bool stopAndUndeployQuery(const std::string queryId);
 
   private:
 
