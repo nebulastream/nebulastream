@@ -2,7 +2,6 @@
 #include <Exceptions/ExecutionPlanRollbackException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Services/OptimizerService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
@@ -82,31 +81,6 @@ bool QueryCatalog::registerAndAddToSchedulingQueue(const std::string& queryStrin
         queries[queryId] = queryCatalogEntry;
         NES_INFO("QueryCatalog: Adding query with id " << queryId << " to the scheduling queue");
         schedulingQueue.push(queryCatalogEntry);
-
-        //
-        //        OptimizerServicePtr optimizerService = std::make_shared<OptimizerService>(topologyManager, streamCatalog, globalExecutionPlan);
-        //        if (queryId == "") {
-        //            NES_ERROR("QueryCatalog::registerAndAddToSchedulingQueue: cannot register query without id");
-        //            throw;
-        //        }
-        //        GlobalExecutionPlanPtr executionPlan = optimizerService->updateGlobalExecutionPlan(queryPlan, optimizationStrategyName);
-        //        if (!executionPlan) {
-        //            NES_ERROR("QueryCatalog::registerAndAddToSchedulingQueue updateGlobalExecutionPlan failed");
-        //            return "ERROR create execution plan";
-        //        }
-        //        NES_DEBUG("QueryCatalog: Final Execution Plan =" << executionPlan->getAsString());
-        //
-        //        if (queries.find(queryId)->second != queryCatalogEntry) {
-        //            NES_ERROR("QueryCatalog::registerAndAddToSchedulingQueue insert into query failed");
-        //            //revert changes
-        //            if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
-        //                //this a severe error so we should terminate
-        //                throw ExecutionPlanRollbackException("Unable to remove query with Id " + queryId + " from execution plan.");
-        //            }
-        //            markQueryAs(queryId, QueryStatus::Failed);
-        //            return "ERROR insertMap";
-        //        }
-        //        NES_DEBUG("number of queries after insert=" << queries.size());
         return true;
     } catch (const ExecutionPlanRollbackException e) {
         throw;
@@ -218,9 +192,9 @@ void QueryCatalog::clearQueries() {
 }
 
 std::string QueryCatalog::printQueries() {
-    stringstream ss;
+    std::stringstream ss;
     for (auto q : queries) {
-        ss << "queryID=" << q.first << " running=" << q.second->getQueryStatus() << endl;
+        ss << "queryID=" << q.first << " running=" << q.second->getQueryStatus() << std::endl;
     }
     return ss.str();
 }
