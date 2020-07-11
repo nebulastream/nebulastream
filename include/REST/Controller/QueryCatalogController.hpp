@@ -12,11 +12,9 @@ typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 class QueryCatalogController : public BaseController {
 
   public:
-    QueryCatalogController(QueryCatalogPtr queryCatalog,
-                           NesCoordinatorPtr coordinator);
+    QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorPtr coordinator);
 
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
-    void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
     QueryCatalogPtr queryCatalog;

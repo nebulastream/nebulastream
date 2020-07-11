@@ -7,11 +7,9 @@
 
 namespace NES {
 
-QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog,
-                                               NesCoordinatorPtr coordinator) {
+QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorPtr coordinator) {
     NES_DEBUG("QueryCatalogController()");
     this->queryCatalog = queryCatalog;
-    this->coordinator = coordinator;
 }
 
 void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {
@@ -106,49 +104,6 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 } catch (const std::exception& exc) {
                     NES_ERROR(
                         "QueryCatalogController: handleGet -getNumberOfProducedBuffers: Exception occurred while fetching the number of buffers:"
-                        << exc.what());
-                    handleException(message, exc);
-                    return;
-                } catch (...) {
-                    RuntimeUtils::printStackTrace();
-                    internalServerErrorImpl(message);
-                }
-            })
-            .wait();
-    } else {
-        resourceNotFoundImpl(message);
-    }
-}
-
-void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, web::http::http_request message) {
-
-    if (path[1] == "query") {
-
-        message.extract_string(true)
-            .then([this, message](utility::string_t body) {
-                try {
-                    //Prepare Input query from user string
-                    std::string payload(body.begin(), body.end());
-                    json::value req = json::value::parse(payload);
-                    std::string queryId = req.at("queryId").as_string();
-
-                    //Perform async call for deleting the query using actor
-                    //Note: This is an async call and would not know if the deletion has failed
-                    bool success = coordinator->removeQuery(queryId);
-
-                    if (success) {
-                        //Prepare the response
-                        json::value result{};
-                        result["success"] = json::value::boolean(success);
-                        successMessageImpl(message, result);
-                    } else {
-                        throw std::invalid_argument("Could not delete query with id " + queryId + ".");
-                    }
-
-                    return;
-                } catch (const std::exception& exc) {
-                    NES_ERROR(
-                        "QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for user request:"
                         << exc.what());
                     handleException(message, exc);
                     return;
