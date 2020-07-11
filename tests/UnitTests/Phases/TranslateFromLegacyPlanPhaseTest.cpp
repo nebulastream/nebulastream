@@ -8,7 +8,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Phases/TranslateFromLegacyPlanPhase.hpp>
+#include <Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
@@ -34,21 +34,6 @@ class TranslateFromLegacyPlanPhaseTest : public testing::Test {
             "value", BasicType::UINT64);
     }
 
-//    void static setupSensorNodeAndStreamCatalog() {
-//        NES_INFO("Setup TranslateFromLegacyPlanPhase test case.");
-////        TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-////
-////        NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
-////
-////        PhysicalStreamConfig streamConf;
-////        streamConf.physicalStreamName = "test2";
-////        streamConf.logicalStreamName = "test_stream";
-////
-////        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
-////        assert(0);
-////        StreamCatalog::instance().addPhysicalStream("default_logical", sce);
-//    }
-
     /* Will be called before a test is executed. */
     void TearDown() {
         NES_INFO("Setup TranslateFromLegacyPlanPhase test case.");
@@ -56,7 +41,7 @@ class TranslateFromLegacyPlanPhaseTest : public testing::Test {
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        NES_INFO("Tear down FilterPushDownRuleTest test class.");
+        NES_INFO("Tear down TranslateFromLegacyPlanPhase test class.");
     }
 };
 

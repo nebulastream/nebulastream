@@ -24,8 +24,8 @@
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Nodes/Phases/TypeInferencePhase.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 

@@ -75,8 +75,8 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMap) {
     const NodePtr srcOperator = (*itr);
 
     // Execute
-    FilterPushDownRule filterPushDownRule;
-    const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
+    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -118,8 +118,8 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMapAndBeforeFilter) {
     const NodePtr srcOperator = (*itr);
 
     // Execute
-    FilterPushDownRule filterPushDownRule;
-    const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
+    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -166,8 +166,8 @@ TEST_F(FilterPushDownTest, testPushingFiltersBelowAllMapOperators) {
     const NodePtr srcOperator = (*itr);
 
     // Execute
-    FilterPushDownRule filterPushDownRule;
-    const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
+    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -213,8 +213,8 @@ TEST_F(FilterPushDownTest, testPushingTwoFilterBelowMap) {
     const NodePtr srcOperator = (*itr);
 
     // Execute
-    FilterPushDownRule filterPushDownRule;
-    const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
+    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -255,8 +255,8 @@ TEST_F(FilterPushDownTest, testPushingFilterAlreadyAtBottom) {
     const NodePtr srcOperator = (*itr);
 
     // Execute
-    FilterPushDownRule filterPushDownRule;
-    const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
+    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
