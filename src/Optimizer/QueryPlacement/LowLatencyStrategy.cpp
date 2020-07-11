@@ -3,8 +3,8 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Nodes/Phases/TypeInferencePhase.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>

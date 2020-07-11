@@ -109,9 +109,9 @@ add_test(NAME kafka-tests COMMAND kafka-tests)
 endif(NES_USE_KAFKA)
 
 ###  Optimizer Service Tests ###
-add_executable(optimizer-service-tests "UnitTests/OptimizerServiceTest.cpp")
-target_link_libraries(optimizer-service-tests nes ${GTEST_LIBRARIES})
-add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
+#add_executable(optimizer-service-tests "UnitTests/OptimizerServiceTest.cpp")
+#target_link_libraries(optimizer-service-tests nes ${GTEST_LIBRARIES})
+#add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
 
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/MemoryLayoutTest.cpp")
@@ -169,7 +169,7 @@ target_link_libraries(convert-logical-to-physical-source-tests nes ${GTEST_LIBRA
 add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
 
 # Type inference test
-add_executable(type-inference-tests "UnitTests/TypeInferencePhaseTest.cpp")
+add_executable(type-inference-tests "UnitTests/Phases/TypeInferencePhaseTest.cpp")
 target_link_libraries(type-inference-tests nes ${GTEST_LIBRARIES})
 add_test(NAME type-inference-tests COMMAND type-inference-tests)
 
@@ -179,7 +179,7 @@ target_link_libraries(filter-push-down-test nes ${GTEST_LIBRARIES})
 add_test(NAME filter-push-down-test COMMAND filter-push-down-test)
 
 # TranslateFromLegacyPlanPhaseTest
-add_executable(translate-from-legacy-plan-phase-test "UnitTests/Nodes/Phases/TranslateFromLegacyPlanPhaseTest.cpp")
+add_executable(translate-from-legacy-plan-phase-test "UnitTests/Phases/TranslateFromLegacyPlanPhaseTest.cpp")
 target_link_libraries(translate-from-legacy-plan-phase-test nes ${GTEST_LIBRARIES})
 add_test(NAME translate-from-legacy-plan-phase-test COMMAND translate-from-legacy-plan-phase-test)
 

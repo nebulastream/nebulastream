@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
-#include <Nodes/Phases/ConvertLogicalToPhysicalSource.hpp>
+#include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>

@@ -11,7 +11,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Nodes/Phases/TypeInferencePhase.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
@@ -75,10 +75,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
                                                                      sensorNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
 
-    auto phase = TypeInferencePhase::create();
-    phase->setStreamCatalog(streamCatalog);
-
-    auto resultPlan = phase->transform(plan);
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto resultPlan = phase->execute(plan);
 
     // we just access the old references
 
@@ -121,9 +119,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
                                                                      sensorNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
-    auto phase = TypeInferencePhase::create();
-    phase->setStreamCatalog(streamCatalog);
-    ASSERT_ANY_THROW(phase->transform(plan));
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    ASSERT_ANY_THROW(phase->execute(plan));
 }
 
 /**
@@ -152,10 +149,9 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create();
-    phase->setStreamCatalog(streamCatalog);
+    auto phase = TypeInferencePhase::create(streamCatalog);
 
-    plan = phase->transform(plan);
+    plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
 
     auto resultSchema = Schema::create()

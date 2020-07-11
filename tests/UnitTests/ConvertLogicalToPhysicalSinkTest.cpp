@@ -6,7 +6,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 
-#include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
