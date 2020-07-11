@@ -52,6 +52,13 @@ class QueryController : public BaseController {
      */
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
 
+    /**
+     * @brief Handle the stop request for the query
+     * @param path : the resource path the user wanted to get
+     * @param message : the user message
+     */
+    void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
+
   private:
     QueryCatalogPtr queryCatalog;
     TopologyManagerPtr topologyManager;

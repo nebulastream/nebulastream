@@ -131,4 +131,44 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
     }
 }
 
+void QueryController::handleDelete(std::vector<utility::string_t> path, http_request message) {
+    if (path[1] == "stop-query") {
+
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+              try {
+                  //Prepare Input query from user string
+                  std::string payload(body.begin(), body.end());
+                  json::value req = json::value::parse(payload);
+                  std::string queryId = req.at("queryId").as_string();
+
+                  bool success = queryService->stopAndUndeployQuery(queryId);
+
+                  if (success) {
+                      //Prepare the response
+                      json::value result{};
+                      result["success"] = json::value::boolean(success);
+                      successMessageImpl(message, result);
+                  } else {
+                      throw std::invalid_argument("Could not delete query with id " + queryId + ".");
+                  }
+
+                  return;
+              } catch (const std::exception& exc) {
+                  NES_ERROR(
+                      "QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for user request:"
+                          << exc.what());
+                  handleException(message, exc);
+                  return;
+              } catch (...) {
+                  RuntimeUtils::printStackTrace();
+                  internalServerErrorImpl(message);
+              }
+            })
+            .wait();
+    } else {
+        resourceNotFoundImpl(message);
+    }
+}
+
 }// namespace NES
