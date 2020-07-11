@@ -13,6 +13,15 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
+class QueryDeployer;
+typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
+
+class WorkerRPCClient;
+typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
+
+class GlobalExecutionPlan;
+typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queries.
  */
@@ -57,25 +66,11 @@ class QueryService {
     bool deployAndStartQuery(std::string queryId);
 
     /**
-     * @brief method to stop a query
-     * @param queryId
-     * @return bool indicating success
+     * @brief method for stopping and undeploying the query with the given id
+     * @param queryId : id of the query
+     * @return true if successful
      */
-    bool stopQuery(std::string queryId);
-
-//    /**
-//     * @brief ungregisters a query
-//     * @param queryID
-//     * @return bool indicating success
-//     */
-//    bool unregisterQuery(std::string queryId);
-//
-//    /**
-//     * @brief method to deregister, undeploy, and stop a query
-//     * @param queryID
-//     * @return bool indicating success
-//     */
-//    bool removeQuery(std::string queryId);
+    bool stopAndUndeployQuery(const string queryId);
 
   private:
 
@@ -100,7 +95,17 @@ class QueryService {
      */
     bool undeployQuery(std::string queryId);
 
+    /**
+     * @brief method to stop a query
+     * @param queryId
+     * @return bool indicating success
+     */
+    bool stopQuery(std::string queryId);
+
     QueryCatalogPtr queryCatalog;
+    QueryDeployerPtr queryDeployer;
+    WorkerRPCClientPtr workerRPCClient;
+    GlobalExecutionPlanPtr globalExecutionPlan;
 };
 
 };// namespace NES

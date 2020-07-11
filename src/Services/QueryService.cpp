@@ -1,13 +1,19 @@
 #include <Catalogs/QueryCatalog.hpp>
+#include <Deployer/QueryDeployer.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
+#include <Exceptions/QueryDeploymentException.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 namespace NES {
+
+//TODO: Add mutex to make certain blocks synchronized
 
 QueryService::QueryService(QueryCatalogPtr queryCatalog) : queryCatalog(queryCatalog) {
     NES_DEBUG("QueryService()");
@@ -41,136 +47,103 @@ json::value QueryService::getQueryPlanAsJson(std::string queryId) {
     return OperatorJsonUtil::getBasePlan(queryCatalogEntry->getQueryPlan());
 }
 
-//string QueryService::addQuery(const string queryString, const string strategy) {
-//    NES_DEBUG("NesCoordinator:addQuery queryString=" << queryString << " strategy=" << strategy);
-//
-//    NES_DEBUG("NesCoordinator:addQuery: register query");
-//    string queryId = registerQuery(queryString, strategy);
-//    if (queryId != "") {
-//        NES_DEBUG("NesCoordinator:addQuery: register query successful");
-//    } else {
-//        NES_ERROR("NesCoordinator:addQuery: register query failed");
-//        return "";
-//    }
-//
-//    NES_DEBUG("NesCoordinator:addQuery: deploy query");
-//    bool successDeploy = deployQuery(queryId);
-//    if (successDeploy) {
-//        NES_DEBUG("NesCoordinator:addQuery: deploy query successful");
-//    } else {
-//        NES_ERROR("NesCoordinator:addQuery: deploy query failed");
-//        return "";
-//    }
-//
-//    NES_DEBUG("NesCoordinator:addQuery: start query");
-//    bool successStart = startQuery(queryId);
-//    if (successStart) {
-//        NES_DEBUG("NesCoordinator:addQuery: start query successful");
-//    } else {
-//        NES_ERROR("NesCoordinator:addQuery: start query failed");
-//        return "";
-//    }
-//
-//    return queryId;
-//}
+bool QueryService::deployAndStartQuery(std::string queryId) {
+    NES_DEBUG("QueryService: deploy the query");
+    bool successDeploy = deployQuery(queryId);
+    if (successDeploy) {
+        NES_DEBUG("QueryService: deployment for query " + queryId + " successful");
+    } else {
+        NES_ERROR("QueryService: Failed to deploy query " + queryId);
+        throw QueryDeploymentException("QueryService: Failed to deploy query " + queryId);
+    }
+
+    NES_DEBUG("QueryService: start query");
+    bool successStart = startQuery(queryId);
+    if (successStart) {
+        NES_DEBUG("QueryService: Successfully started deployed query " + queryId);
+    } else {
+        NES_ERROR("QueryService: Failed to start the deployed query " + queryId);
+        throw QueryDeploymentException("QueryService: Failed to deploy query " + queryId);
+    }
+    queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+    return true;
+}
+
+bool QueryService::stopAndUndeployQuery(const std::string queryId) {
+    NES_DEBUG("QueryService::stopAndUndeployQuery : queryId=" << queryId);
+
+    //TODO: Throw QueryNotFoundException for non-existing queryId.
+    const QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQuery(queryId);
+    QueryStatus currentStatus = queryCatalogEntry->getQueryStatus();
+    if (currentStatus == QueryStatus::Scheduling) {
+
+        //FIXME: I am not sure if this is secure ... we might end up in a situation that query is marked to be stopped but it is still running in the system.
+        // Or the query is stopped but status is Marked For Stop.
+        NES_INFO("QueryService: Found the query " + queryId + " is being scheduled currently. Marking the query to be stopped later.");
+        queryCatalog->markQueryAs(queryId, QueryStatus::MarkedForStop);
+        return true;
+    } else if (currentStatus == QueryStatus::Running || currentStatus == QueryStatus::MarkedForStop) {
+
+        NES_DEBUG("QueryService:removeQuery: stop query");
+        bool successStop = stopQuery(queryId);
+        if (successStop) {
+            NES_DEBUG("QueryService:removeQuery: stop query successful");
+        } else {
+            NES_ERROR("QueryService:removeQuery: stop query failed");
+            return false;
+        }
+
+        NES_DEBUG("QueryService:removeQuery: undeploy query");
+        bool successUndeploy = undeployQuery(queryId);
+        if (successUndeploy) {
+            NES_DEBUG("QueryService:removeQuery: undeploy query successful");
+            return true;
+        } else {
+            NES_ERROR("QueryService:removeQuery: undeploy query failed");
+            return false;
+        }
+    } else {
+        NES_WARNING("QueryService: Trying to undeploy and stop the query " + queryId + " in " + queryCatalogEntry->getQueryString() + " status.");
+        return false;
+    }
+}
 
 bool QueryService::deployQuery(std::string queryId) {
 
-    NES_DEBUG("QueryProcessingService::deployQuery queryId=" << queryId);
-    NES_DEBUG("QueryProcessingService: preparing for Deployment by adding port information");
+    NES_DEBUG("QueryService::deployQuery queryId=" << queryId);
+    NES_DEBUG("QueryService: preparing for Deployment by adding port information");
     if (!queryDeployer->prepareForDeployment(queryId)) {
-        NES_ERROR("QueryProcessingService: Failed to prepare for Deployment by adding port information");
+        NES_ERROR("QueryService: Failed to prepare for Deployment by adding port information");
         return false;
     }
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     if (executionNodes.empty()) {
-        NES_ERROR("QueryProcessingService: Unable to find execution plan for the query with id " << queryId);
+        NES_ERROR("QueryService: Unable to find execution plan for the query with id " << queryId);
         return false;
     }
 
     for (ExecutionNodePtr executionNode : executionNodes) {
-        NES_DEBUG("QueryProcessingService::registerQueryInNodeEngine serialize id=" << executionNode->getId());
+        NES_DEBUG("QueryService::registerQueryInNodeEngine serialize id=" << executionNode->getId());
         QueryPlanPtr querySubPlan = executionNode->getQuerySubPlan(queryId);
         if (!querySubPlan) {
-            NES_WARNING("QueryProcessingService : unable to find query sub plan with id " << queryId);
+            NES_WARNING("QueryService : unable to find query sub plan with id " << queryId);
             return false;
         }
         //FIXME: we are considering only one root operator
         OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
         std::string nesNodeIp = executionNode->getNesNode()->getIp();
-        NES_DEBUG("QueryProcessingService:deployQuery: " << queryId << " to " << nesNodeIp);
+        NES_DEBUG("QueryService:deployQuery: " << queryId << " to " << nesNodeIp);
         bool success = workerRPCClient->registerQuery(nesNodeIp, queryId, rootOperator);
         if (success) {
-            NES_DEBUG("QueryProcessingService:deployQuery: " << queryId << " to " << nesNodeIp << " successful");
+            NES_DEBUG("QueryService:deployQuery: " << queryId << " to " << nesNodeIp << " successful");
         } else {
-            NES_ERROR("QueryProcessingService:deployQuery: " << queryId << " to " << nesNodeIp << "  failed");
+            NES_ERROR("QueryService:deployQuery: " << queryId << " to " << nesNodeIp << "  failed");
             return false;
         }
     }
     queryCatalog->markQueryAs(queryId, QueryStatus::Running);
-    NES_INFO("QueryProcessingService: Finished deploying execution plan for query with Id " << queryId);
-    return true;
-}
-
-bool QueryService::removeQuery(const std::string queryId) {
-    NES_DEBUG("NesCoordinator:removeQuery queryId=" << queryId);
-
-    NES_DEBUG("NesCoordinator:removeQuery: stop query");
-    bool successStop = stopQuery(queryId);
-    if (successStop) {
-        NES_DEBUG("NesCoordinator:removeQuery: stop query successful");
-    } else {
-        NES_ERROR("NesCoordinator:removeQuery: stop query failed");
-        return false;
-    }
-
-    NES_DEBUG("NesCoordinator:removeQuery: undeploy query");
-    bool successUndeploy = undeployQuery(queryId);
-    if (successUndeploy) {
-        NES_DEBUG("NesCoordinator:removeQuery: undeploy query successful");
-    } else {
-        NES_ERROR("NesCoordinator:removeQuery: undeploy query failed");
-        return false;
-    }
-
-    NES_DEBUG("NesCoordinator:removeQuery: unregister query");
-    bool successUnregister = unregisterQuery(queryId);
-    if (successUnregister) {
-        NES_DEBUG("NesCoordinator:removeQuery: unregister query successful");
-    } else {
-        NES_ERROR("NesCoordinator:removeQuery: unregister query failed");
-        return false;
-    }
-
-    return true;
-}
-
-bool QueryService::unregisterQuery(const std::string queryId) {
-    NES_DEBUG("NesCoordinator:unregisterQuery queryId=" << queryId);
-    return queryCatalog->deleteQuery(queryId);
-}
-
-bool QueryService::undeployQuery(std::string queryId) {
-    NES_DEBUG("NesCoordinator::undeployQuery queryId=" << queryId);
-
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    if (executionNodes.empty()) {
-        NES_ERROR("NesCoordinator: Unable to find execution plan for the query with id " << queryId);
-        return false;
-    }
-
-    for (ExecutionNodePtr executionNode : executionNodes) {
-        string nesNodeIp = executionNode->getNesNode()->getIp();
-        NES_DEBUG("NESCoordinator::undeployQuery query at execution node with id=" << executionNode->getId() << " and IP=" << nesNodeIp);
-        bool success = workerRPCClient->unregisterQuery(nesNodeIp, queryId);
-        if (success) {
-            NES_DEBUG("NESCoordinator::undeployQuery  query " << queryId << " to " << nesNodeIp << " successful");
-        } else {
-            NES_ERROR("NESCoordinator::undeployQuery  " << queryId << " to " << nesNodeIp << "  failed");
-            return false;
-        }
-    }
+    NES_INFO("QueryService: Finished deploying execution plan for query with Id " << queryId);
     return true;
 }
 
@@ -197,7 +170,33 @@ bool QueryService::startQuery(std::string queryId) {
 }
 
 bool QueryService::stopQuery(std::string queryId) {
-    NES_DEBUG("NesCoordinator:stopQuery queryId=" << queryId);
+
+    NES_DEBUG("QueryService:stopQuery queryId=" << queryId);
+    const QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQuery(queryId);
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    if (executionNodes.empty()) {
+        NES_ERROR("QueryService: Unable to find execution plan for the query with id " << queryId);
+        return false;
+    }
+
+    for (ExecutionNodePtr executionNode : executionNodes) {
+        string nesNodeIp = executionNode->getNesNode()->getIp();
+        NES_DEBUG("QueryService::stopQuery at execution node with id=" << executionNode->getId() << " and IP=" << nesNodeIp);
+        bool success = workerRPCClient->stopQuery(nesNodeIp, queryId);
+        if (success) {
+            NES_DEBUG("QueryService::stopQuery " << queryId << " to " << nesNodeIp << " successful");
+        } else {
+            NES_ERROR("QueryService::stopQuery " << queryId << " to " << nesNodeIp << "  failed");
+            return false;
+        }
+    }
+    return true;
+}
+
+bool QueryService::undeployQuery(std::string queryId) {
+    NES_DEBUG("NesCoordinator::undeployQuery queryId=" << queryId);
+
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     if (executionNodes.empty()) {
         NES_ERROR("NesCoordinator: Unable to find execution plan for the query with id " << queryId);
@@ -206,12 +205,12 @@ bool QueryService::stopQuery(std::string queryId) {
 
     for (ExecutionNodePtr executionNode : executionNodes) {
         string nesNodeIp = executionNode->getNesNode()->getIp();
-        NES_DEBUG("NESCoordinator::stopQuery at execution node with id=" << executionNode->getId() << " and IP=" << nesNodeIp);
-        bool success = workerRPCClient->stopQuery(nesNodeIp, queryId);
+        NES_DEBUG("NESCoordinator::undeployQuery query at execution node with id=" << executionNode->getId() << " and IP=" << nesNodeIp);
+        bool success = workerRPCClient->unregisterQuery(nesNodeIp, queryId);
         if (success) {
-            NES_DEBUG("NESCoordinator::stopQuery " << queryId << " to " << nesNodeIp << " successful");
+            NES_DEBUG("NESCoordinator::undeployQuery  query " << queryId << " to " << nesNodeIp << " successful");
         } else {
-            NES_ERROR("NESCoordinator::stopQuery " << queryId << " to " << nesNodeIp << "  failed");
+            NES_ERROR("NESCoordinator::undeployQuery  " << queryId << " to " << nesNodeIp << "  failed");
             return false;
         }
     }

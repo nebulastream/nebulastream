@@ -16,9 +16,8 @@
 
 namespace NES {
 
-QueryProcessingService::QueryProcessingService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog,
-                                               StreamCatalogPtr streamCatalog, QueryDeployerPtr queryDeployer, WorkerRPCClientPtr workerRPCClient)
-    : globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog), queryDeployer(queryDeployer), workerRPCClient(workerRPCClient) {
+QueryProcessingService::QueryProcessingService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog)
+    : globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog) {
 
     NES_INFO("QueryProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -27,8 +26,8 @@ QueryProcessingService::QueryProcessingService(GlobalExecutionPlanPtr globalExec
 }
 
 int QueryProcessingService::operator()() {
-    try {
 
+    try {
         while (true) {
             const std::vector<QueryCatalogEntryPtr> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
             if (queryCatalogEntryBatch.empty()) {
@@ -53,8 +52,7 @@ int QueryProcessingService::operator()() {
                         if (queryCatalogEntry->getQueryStatus() == QueryStatus::MarkedForStop) {
                             NES_WARNING("QueryProcessingService: Found query with Id " + queryId + " stopped after performing the query placement.");
                             NES_WARNING("QueryProcessingService: Rolling back the placement for query with Id " + queryId);
-                            queryService->stopQuery(queryId);
-                            globalExecutionPlan->removeQuerySubPlans(queryId);
+                            queryService->stopAndUndeployQuery(queryId);
                             continue;
                         }
 
@@ -62,14 +60,16 @@ int QueryProcessingService::operator()() {
                         if (!successful) {
                             throw QueryDeploymentException("Failed to deploy query with Id " + queryId);
                         }
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                     } catch (QueryPlacementException ex) {
                         //Rollback if failure happen while placing the query.
+                        globalExecutionPlan->removeQuerySubPlans(queryId);
                         queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                     } catch (QueryDeploymentException ex) {
                         //Rollback if failure happen while placing the query.
+                        globalExecutionPlan->removeQuerySubPlans(queryId);
                         queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                     } catch (Exception ex) {
+                        globalExecutionPlan->removeQuerySubPlans(queryId);
                         queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                     }
                 }
