@@ -31,6 +31,7 @@ typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
 enum QueryStatus { Registered,
                    Scheduling,
                    Running,
+                   MarkedForStop,
                    Stopped,
                    Failed };
 
@@ -38,6 +39,7 @@ static std::map<std::string, QueryStatus> stringToQueryStatusMap{
     {"REGISTERED", Registered},
     {"SCHEDULING", Scheduling},
     {"RUNNING", Running},
+    {"MARKED_FOR_STOP", MarkedForStop},
     {"STOPPED", Stopped},
     {"FAILED", Failed},
 };

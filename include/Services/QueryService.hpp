@@ -24,7 +24,7 @@ class QueryService {
     ~QueryService() = default;
 
     /**
-     * Register the incoming query in the system by add it to a waiting queue for later processing, and return the query Id assigned.
+     * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : query in string form.
      * @param placementStrategyName : name of the placement strategy to be used.
      * @return queryId : query id of the valid input query.
@@ -50,56 +50,56 @@ class QueryService {
     QueryPtr getQueryFromQueryString(std::string userQuery);
 
     /**
-     * @brief ungregisters a query
-     * @param queryID
+     * @brief method for deploying and starting the query
+     * @param queryId : the query Id of the query to be deployed and started
+     * @return true if successful else false
+     */
+    bool deployAndStartQuery(std::string queryId);
+
+    /**
+     * @brief method to stop a query
+     * @param queryId
      * @return bool indicating success
      */
-    bool unregisterQuery(std::string queryId);
+    bool stopQuery(std::string queryId);
+
+//    /**
+//     * @brief ungregisters a query
+//     * @param queryID
+//     * @return bool indicating success
+//     */
+//    bool unregisterQuery(std::string queryId);
+//
+//    /**
+//     * @brief method to deregister, undeploy, and stop a query
+//     * @param queryID
+//     * @return bool indicating success
+//     */
+//    bool removeQuery(std::string queryId);
+
+  private:
+
+    /**
+     * @brief method send query to nodes
+     * @param queryId
+     * @return bool indicating success
+     */
+    bool deployQuery(std::string queryId);
 
     /**
      * @brief method to start a already deployed query
-     * @param queryDeployments
+     * @param queryId
      * @return bool indicating success
      */
     bool startQuery(std::string queryId);
 
     /**
-     * @brief method to stop a query
-     * @param queryDeployments
-     * @return bool indicating success
-     */
-    bool stopQuery(std::string queryId);
-
-    /**
-     * @brief method send query to nodes
-     * @param queryDeployments
-     * @return bool indicating success
-    */
-    bool deployQuery(std::string queryId);
-
-    /**
      * @brief method remove query from nodes
-     * @param queryDeployments
+     * @param queryId
      * @return bool indicating success
      */
     bool undeployQuery(std::string queryId);
 
-    /**
-     * @brief method to register, deploy, and start a query
-     * @param queryString : user query, in string form, to be executed
-     * @param strategy : deployment strategy for the query operators
-     * @return UUID of the submitted user query.
-     */
-    std::string addQuery(std::string queryString, const std::string strategy);
-
-    /**
-     * @brief method to deregister, undeploy, and stop a query
-     * @param queryID
-     * @return bool indicating success
-     */
-    bool removeQuery(std::string queryId);
-
-  private:
     QueryCatalogPtr queryCatalog;
 };
 

@@ -74,6 +74,45 @@ json::value QueryService::getQueryPlanAsJson(std::string queryId) {
 //    return queryId;
 //}
 
+bool QueryService::deployQuery(std::string queryId) {
+
+    NES_DEBUG("QueryProcessingService::deployQuery queryId=" << queryId);
+    NES_DEBUG("QueryProcessingService: preparing for Deployment by adding port information");
+    if (!queryDeployer->prepareForDeployment(queryId)) {
+        NES_ERROR("QueryProcessingService: Failed to prepare for Deployment by adding port information");
+        return false;
+    }
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    if (executionNodes.empty()) {
+        NES_ERROR("QueryProcessingService: Unable to find execution plan for the query with id " << queryId);
+        return false;
+    }
+
+    for (ExecutionNodePtr executionNode : executionNodes) {
+        NES_DEBUG("QueryProcessingService::registerQueryInNodeEngine serialize id=" << executionNode->getId());
+        QueryPlanPtr querySubPlan = executionNode->getQuerySubPlan(queryId);
+        if (!querySubPlan) {
+            NES_WARNING("QueryProcessingService : unable to find query sub plan with id " << queryId);
+            return false;
+        }
+        //FIXME: we are considering only one root operator
+        OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
+        std::string nesNodeIp = executionNode->getNesNode()->getIp();
+        NES_DEBUG("QueryProcessingService:deployQuery: " << queryId << " to " << nesNodeIp);
+        bool success = workerRPCClient->registerQuery(nesNodeIp, queryId, rootOperator);
+        if (success) {
+            NES_DEBUG("QueryProcessingService:deployQuery: " << queryId << " to " << nesNodeIp << " successful");
+        } else {
+            NES_ERROR("QueryProcessingService:deployQuery: " << queryId << " to " << nesNodeIp << "  failed");
+            return false;
+        }
+    }
+    queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+    NES_INFO("QueryProcessingService: Finished deploying execution plan for query with Id " << queryId);
+    return true;
+}
+
 bool QueryService::removeQuery(const std::string queryId) {
     NES_DEBUG("NesCoordinator:removeQuery queryId=" << queryId);
 

@@ -11,6 +11,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryProcessingService.hpp>
+#include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -25,79 +26,66 @@ QueryProcessingService::QueryProcessingService(GlobalExecutionPlanPtr globalExec
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog);
 }
 
-bool QueryProcessingService::deployQuery(std::string queryId) {
-    NES_DEBUG("QueryProcessingService::deployQuery queryId=" << queryId);
-
-    NES_DEBUG("QueryProcessingService: preparing for Deployment by adding port information");
-    if (!queryDeployer->prepareForDeployment(queryId)) {
-        NES_ERROR("QueryProcessingService: Failed to prepare for Deployment by adding port information");
-        return false;
-    }
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-
-    if (executionNodes.empty()) {
-        NES_ERROR("QueryProcessingService: Unable to find execution plan for the query with id " << queryId);
-        return false;
-    }
-
-    for (ExecutionNodePtr executionNode : executionNodes) {
-        NES_DEBUG("QueryProcessingService::registerQueryInNodeEngine serialize id=" << executionNode->getId());
-        QueryPlanPtr querySubPlan = executionNode->getQuerySubPlan(queryId);
-        if (!querySubPlan) {
-            NES_WARNING("QueryProcessingService : unable to find query sub plan with id " << queryId);
-            return false;
-        }
-        //FIXME: we are considering only one root operator
-        OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
-
-        std::string nesNodeIp = executionNode->getNesNode()->getIp();
-
-        NES_DEBUG("QueryProcessingService:deployQuery: " << queryId << " to " << nesNodeIp);
-        bool success = workerRPCClient->registerQuery(nesNodeIp, queryId, rootOperator);
-        if (success) {
-            NES_DEBUG("QueryProcessingService:deployQuery: " << queryId << " to " << nesNodeIp << " successful");
-        } else {
-            NES_ERROR("QueryProcessingService:deployQuery: " << queryId << " to " << nesNodeIp << "  failed");
-            return false;
-        }
-    }
-    queryCatalog->markQueryAs(queryId, QueryStatus::Running);
-    NES_INFO("QueryProcessingService: Finished deploying execution plan for query with Id " << queryId);
-    return true;
-}
-
 int QueryProcessingService::operator()() {
+    try {
 
-    while (true) {
-        const std::vector<QueryCatalogEntryPtr> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
-        if (queryCatalogEntryBatch.empty()) {
-            //process the queries using a-query-at-a-time model
-            for (auto queryCatalogEntry : queryCatalogEntryBatch) {
+        while (true) {
+            const std::vector<QueryCatalogEntryPtr> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
+            if (queryCatalogEntryBatch.empty()) {
+                //process the queries using query-at-a-time model
+                for (auto queryCatalogEntry : queryCatalogEntryBatch) {
 
-                std::string placementStrategy = queryCatalogEntry->getQueryPlacementStrategy();
-                auto queryPlan = queryCatalogEntry->getQueryPlan();
-                std::string queryId = queryPlan->getQueryId();
-                try {
-                    queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
-                    queryPlan = queryRewritePhase->execute(queryPlan);
-                    queryPlan = typeInferencePhase->execute(queryPlan);
-                    queryPlacementPhase->execute(placementStrategy, queryPlan);
-                    if (!deployQuery(queryId)) {
-                        throw QueryDeploymentException("Failed to deploy query with Id " + queryId);
+                    auto queryPlan = queryCatalogEntry->getQueryPlan();
+                    std::string queryId = queryPlan->getQueryId();
+                    if (queryCatalogEntry->getQueryStatus() == QueryStatus::Stopped) {
+                        NES_WARNING("QueryProcessingService: ");
+                        continue;
                     }
-                    queryCatalog->markQueryAs(queryId, QueryStatus::Running);
-                } catch (QueryPlacementException ex) {
-                    //Rollback if failure happen while placing the query.
-                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
-                } catch (QueryDeploymentException ex) {
-                    //Rollback if failure happen while placing the query.
-                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
-                } catch (Exception ex) {
-                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+
+                    std::string placementStrategy = queryCatalogEntry->getQueryPlacementStrategy();
+
+                    try {
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
+                        queryPlan = queryRewritePhase->execute(queryPlan);
+                        queryPlan = typeInferencePhase->execute(queryPlan);
+                        queryPlacementPhase->execute(placementStrategy, queryPlan);
+                        //Check if someone stopped the query meanwhile
+                        if (queryCatalogEntry->getQueryStatus() == QueryStatus::MarkedForStop) {
+                            NES_WARNING("QueryProcessingService: Found query with Id " + queryId + " stopped after performing the query placement.");
+                            NES_WARNING("QueryProcessingService: Rolling back the placement for query with Id " + queryId);
+                            queryService->stopQuery(queryId);
+                            globalExecutionPlan->removeQuerySubPlans(queryId);
+                            continue;
+                        }
+
+                        bool successful = queryService->deployAndStartQuery(queryId);
+                        if (!successful) {
+                            throw QueryDeploymentException("Failed to deploy query with Id " + queryId);
+                        }
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+                    } catch (QueryPlacementException ex) {
+                        //Rollback if failure happen while placing the query.
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                    } catch (QueryDeploymentException ex) {
+                        //Rollback if failure happen while placing the query.
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                    } catch (Exception ex) {
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                    }
                 }
+            } else {
+                NES_INFO("QueryProcessingService: No query to schedule will try again in 5 seconds");
+                sleep(5);
             }
         }
+    } catch (...) {
+        NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queries.");
+        queryProcessorRunning = false;
     }
+}
+
+bool QueryProcessingService::isQueryProcessorRunning() const {
+    return queryProcessorRunning;
 }
 
 }// namespace NES
