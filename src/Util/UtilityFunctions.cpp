@@ -59,7 +59,6 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         //if pattern
         if (pattern) {
             boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
-            boost::replace_all(newQuery, ".sink(", ".map(Attribute(\"PatternId\") = 1).sink(");
         } else {
             // add return statement in front of input query
             // NOTE: This will not work if you have created object of Input query and do further manipulation

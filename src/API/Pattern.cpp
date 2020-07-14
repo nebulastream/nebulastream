@@ -20,16 +20,23 @@ Pattern Pattern::from(const std::string sourceStreamName) {
     NES_DEBUG("Pattern: create query for input stream " << sourceStreamName);
     auto sourceOperator = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceOperator);
+    NES_DEBUG("Pattern: add additional ID column to output");
+    //TODO: update with map function supports string values
+   // OperatorNodePtr opMap = createMapLogicalOperatorNode(Attribute("PatternId") = 1);
+   // queryPlan->appendOperator(opMap);
     return Pattern(queryPlan);
 }
 
-//TODO: add map function before sink
-/*Pattern& Pattern::sink(const SinkDescriptorPtr sinkDescriptor) {
+Pattern& Pattern::sink(const SinkDescriptorPtr sinkDescriptor) {
+    NES_DEBUG("Pattern: enter sink function");
+    NES_DEBUG("Pattern: add additional map operator to pattern");
+    //TODO: replace '1'  with patternId or name after strings are supported by map
+    this->map(Attribute("PatternId") = 1);
     NES_DEBUG("Pattern: add sink operator to query");
     OperatorNodePtr op = createSinkLogicalOperatorNode(sinkDescriptor);
     queryPlan->appendOperator(op);
     return *this;
-}*/
+}
 
 const std::string& Pattern::getPatternName() const {
     return patternName;

@@ -53,7 +53,7 @@ class Pattern : public Query {
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor
      */
-    //Pattern& sink(const SinkDescriptorPtr sinkDescriptor);
+    Pattern& sink(const SinkDescriptorPtr sinkDescriptor) override;
 
     const std::string& getPatternName() const;
     void setPatternName(const std::string& patternName);
