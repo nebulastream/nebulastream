@@ -46,9 +46,9 @@ std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueriesToSchedule() {
         while (currentBatchSize <= batchSize || currentBatchSize == totalQueriesToSchedule) {
             queriesToSchedule.push_back(schedulingQueue.front());
             schedulingQueue.pop();
-            currentBatchSize ++;
+            currentBatchSize++;
         }
-        NES_INFO("QueryCatalog: Scheduling "<< queriesToSchedule.size() <<" queries.");
+        NES_INFO("QueryCatalog: Scheduling " << queriesToSchedule.size() << " queries.");
         return queriesToSchedule;
     }
     NES_INFO("QueryCatalog: Nothing to schedule.");
@@ -70,35 +70,51 @@ std::map<std::string, std::string> QueryCatalog::getAllQueries() {
     return result;
 }
 
-bool QueryCatalog::registerAndAddToSchedulingQueue(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
+bool QueryCatalog::registerAndQueueAddRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
     std::unique_lock<std::mutex> lock(insertDeleteQuery);
     std::string queryId = queryPlan->getQueryId();
     NES_INFO("QueryCatalog: Registering query with id " << queryId);
     try {
-
         NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
         QueryCatalogEntryPtr queryCatalogEntry = std::make_shared<QueryCatalogEntry>(queryId, queryString, queryPlan, QueryStatus::Registered);
         queries[queryId] = queryCatalogEntry;
         NES_INFO("QueryCatalog: Adding query with id " << queryId << " to the scheduling queue");
-        schedulingQueue.push(queryCatalogEntry);
+        schedulingQueue.push_back(queryCatalogEntry);
         return true;
-    } catch (const ExecutionPlanRollbackException e) {
-        throw;
     } catch (const std::exception& exc) {
         NES_ERROR("QueryCatalog:_exception:" << exc.what() << " try to revert changes");
-        //revert changes
-        if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
-            //this a severe error so we should terminate
-            throw ExecutionPlanRollbackException("Unable to remove query with Id " + queryId + " from execution plan.");
-        }
+        NES_ERROR("QueryCatalog: Unable to process input request with: query id " << queryId << "queryString: " << queryString
+                                                                                  << "\n strategy: " << optimizationStrategyName);
         markQueryAs(queryId, QueryStatus::Failed);
-
-        NES_ERROR(
-            "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
-                                                                                << optimizationStrategyName);
-        NES_ERROR("QueryCatalog::registerAndAddToSchedulingQueue insert into query failed with " << exc.what());
         return false;
     }
+}
+
+bool QueryCatalog::queueStopRequest(std::string queryId) {
+    std::unique_lock<std::mutex> lock(insertDeleteQuery);
+    NES_INFO("QueryCatalog: add query stop request to the scheduling queue.");
+
+    NES_INFO("QueryCatalog: Locating a query with same id in the scheduling queue.");
+    auto itr = std::find(schedulingQueue.begin(), schedulingQueue.end(), [queryId](QueryCatalogEntryPtr entry) {
+        return entry->getQueryId() == queryId;
+    });
+
+    if (itr != schedulingQueue.end()) {
+        NES_INFO("QueryCatalog: Found query with same id already present in the scheduling queue.");
+        NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
+        markQueryAs(queryId, QueryStatus::MarkedForStop);
+    } else {
+        QueryCatalogEntryPtr queryCatalogEntry = getQuery(queryId);
+        QueryStatus currentStatus = queryCatalogEntry->getQueryStatus();
+        if (currentStatus == QueryStatus::Stopped || currentStatus == QueryStatus::Failed) {
+            NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString() + ". Ignoring stop query request.");
+            //throw exception that query is in an invalid state for this operation
+        }
+        NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
+        queryCatalogEntry->setQueryStatus(QueryStatus::MarkedForStop);
+        schedulingQueue.push_back(queryCatalogEntry);
+    }
+    return true;
 }
 
 bool QueryCatalog::deleteQuery(const std::string& queryId) {

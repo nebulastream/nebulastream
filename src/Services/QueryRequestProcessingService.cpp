@@ -10,13 +10,13 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Services/QueryProcessingService.hpp>
+#include <Services/QueryRequestProcessingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-QueryProcessingService::QueryProcessingService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog)
+QueryRequestProcessingService::QueryRequestProcessingService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog)
     : globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog) {
 
     NES_INFO("QueryProcessorService()");
@@ -25,7 +25,7 @@ QueryProcessingService::QueryProcessingService(GlobalExecutionPlanPtr globalExec
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog);
 }
 
-int QueryProcessingService::operator()() {
+int QueryRequestProcessingService::operator()() {
 
     try {
         while (true) {
@@ -86,7 +86,7 @@ int QueryProcessingService::operator()() {
     }
 }
 
-bool QueryProcessingService::isQueryProcessorRunning() const {
+bool QueryRequestProcessingService::isQueryProcessorRunning() const {
     return queryProcessorRunning;
 }
 

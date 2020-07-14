@@ -1,5 +1,8 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/QueryNotFoundException.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <REST/Controller/QueryController.hpp>
@@ -37,7 +40,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string optimizationStrategyName = req.at("strategyName").as_string();
 
                     // Call the service
-                    string queryId = queryService->validateAndQueueQueryAddRequest(userQuery, optimizationStrategyName);
+                    string queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
                     std::string executionPlanAsString = globalExecutionPlan->getAsString();
 
                     // Prepare the response
@@ -107,9 +110,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
-                    string queryId = queryService->validateAndQueueQueryAddRequest(userQuery, optimizationStrategyName);
-
-                    //                    string queryId = coordinator->addQuery(userQuery, optimizationStrategyName);
+                    string queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
 
                     //Prepare the response
                     json::value restResponse{};
@@ -136,34 +137,27 @@ void QueryController::handleDelete(std::vector<utility::string_t> path, http_req
 
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
-              try {
-                  //Prepare Input query from user string
-                  std::string payload(body.begin(), body.end());
-                  json::value req = json::value::parse(payload);
-                  std::string queryId = req.at("queryId").as_string();
+                try {
+                    //Prepare Input query from user string
+                    std::string payload(body.begin(), body.end());
+                    json::value req = json::value::parse(payload);
+                    std::string queryId = req.at("queryId").as_string();
 
-                  bool success = queryService->stopAndUndeployQuery(queryId);
-
-                  if (success) {
-                      //Prepare the response
-                      json::value result{};
-                      result["success"] = json::value::boolean(success);
-                      successMessageImpl(message, result);
-                  } else {
-                      throw std::invalid_argument("Could not delete query with id " + queryId + ".");
-                  }
-
-                  return;
-              } catch (const std::exception& exc) {
-                  NES_ERROR(
-                      "QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for user request:"
-                          << exc.what());
-                  handleException(message, exc);
-                  return;
-              } catch (...) {
-                  RuntimeUtils::printStackTrace();
-                  internalServerErrorImpl(message);
-              }
+                    bool success = queryService->validateAndQueueStopRequest(queryId);
+                    //Prepare the response
+                    json::value result{};
+                    result["success"] = json::value::boolean(success);
+                    successMessageImpl(message, result);
+                    return;
+                } catch (QueryNotFoundException  exc) {
+                    NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for user request:"
+                              << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                }
             })
             .wait();
     } else {

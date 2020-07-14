@@ -44,6 +44,15 @@ static std::map<std::string, QueryStatus> stringToQueryStatusMap{
     {"FAILED", Failed},
 };
 
+static std::map<QueryStatus, std::string> queryStatusToStringMap{
+    {Registered, "REGISTERED"},
+    {Scheduling, "SCHEDULING"},
+    {Running, "RUNNING"},
+    {MarkedForStop, "MARKED_FOR_STOP"},
+    {Stopped, "STOPPED"},
+    {Failed, "FAILED"},
+};
+
 /**
  * @brief class to handle the entry in the query catalog
  * @param queryId: id of the query (is also the key in the queries map)
@@ -62,49 +71,57 @@ class QueryCatalogEntry {
     }
 
     /**
-    * @brief method to get the id of the query
-    * @return query id
-    */
+     * @brief method to get the id of the query
+     * @return query id
+     */
     const std::string& getQueryId() const {
         return queryId;
     }
 
     /**
-    * @brief method to get the string of the query
-    * @return query string
-    */
+     * @brief method to get the string of the query
+     * @return query string
+     */
     const std::string& getQueryString() const {
         return queryString;
     }
 
     /**
-    * @brief method to get the query plan
-    * @return pointer to the query plan
-    */
+     * @brief method to get the query plan
+     * @return pointer to the query plan
+     */
     const QueryPlanPtr getQueryPlan() const {
         return queryPlanPtr;
     }
 
     /**
-    * @brief method to get the status of the query
-    * @return query status
-    */
+     * @brief method to get the status of the query
+     * @return query status
+     */
     QueryStatus getQueryStatus() const {
         return queryStatus;
     }
 
     /**
-    * @brief method to set the status of the query
-    * @param query status
-    */
+     * @brief method to get the status of the query as string
+     * @return query status: as string
+     */
+    std::string getQueryStatusAsString() const {
+        return queryStatusToStringMap[queryStatus];
+    }
+
+    /**
+     * @brief method to set the status of the query
+     * @param query status
+     */
     void setQueryStatus(QueryStatus queryStatus) {
         QueryCatalogEntry::queryStatus = queryStatus;
     }
 
     /**
-     * @brief Get name of the query placement strategy
-     * @return query placement strategy
-     */
+      * @brief Get name of the query placement strategy
+      * @return query placement strategy
+      */
     const std::string& getQueryPlacementStrategy() const {
         return queryPlacementStrategy;
     }
