@@ -2,6 +2,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -149,7 +150,12 @@ void QueryController::handleDelete(std::vector<utility::string_t> path, http_req
                     result["success"] = json::value::boolean(success);
                     successMessageImpl(message, result);
                     return;
-                } catch (QueryNotFoundException  exc) {
+                } catch (QueryNotFoundException& exc) {
+                    NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for user request:"
+                              << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (InvalidQueryStatusException& exc) {
                     NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for user request:"
                               << exc.what());
                     handleException(message, exc);

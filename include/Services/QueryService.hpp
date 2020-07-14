@@ -13,15 +13,6 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
-class QueryDeployer;
-typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
-
-class WorkerRPCClient;
-typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
-
-class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
-
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queries.
  */
@@ -58,54 +49,9 @@ class QueryService {
      */
     web::json::value getQueryPlanAsJson(std::string queryId);
 
-    /**
-     * @brief method for deploying and starting the query
-     * @param queryId : the query Id of the query to be deployed and started
-     * @return true if successful else false
-     */
-    bool deployAndStartQuery(std::string queryId);
-
-    /**
-     * @brief method for stopping and undeploying the query with the given id
-     * @param queryId : id of the query
-     * @return true if successful
-     */
-    bool stopAndUndeployQuery(const std::string queryId);
-
   private:
 
-    /**
-     * @brief method send query to nodes
-     * @param queryId
-     * @return bool indicating success
-     */
-    bool deployQuery(std::string queryId);
-
-    /**
-     * @brief method to start a already deployed query
-     * @param queryId
-     * @return bool indicating success
-     */
-    bool startQuery(std::string queryId);
-
-    /**
-     * @brief method remove query from nodes
-     * @param queryId
-     * @return bool indicating success
-     */
-    bool undeployQuery(std::string queryId);
-
-    /**
-     * @brief method to stop a query
-     * @param queryId
-     * @return bool indicating success
-     */
-    bool stopQuery(std::string queryId);
-
     QueryCatalogPtr queryCatalog;
-    QueryDeployerPtr queryDeployer;
-    WorkerRPCClientPtr workerRPCClient;
-    GlobalExecutionPlanPtr globalExecutionPlan;
 };
 
 };// namespace NES

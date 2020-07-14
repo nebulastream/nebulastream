@@ -58,7 +58,7 @@ bool QueryDeployer::prepareForDeployment(const string& queryId) {
         queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
         NES_INFO("QueryDeployer::prepareForDeployment: prepareExecutableTransferObject successfully " << queryId);
         return true;
-    } else if (queryCatalog->getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
+    } else if (queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatus() == QueryStatus::Running) {
         NES_WARNING("QueryDeployer::prepareForDeployment: Query is already running -> " << queryId);
         return false;
     } else {
