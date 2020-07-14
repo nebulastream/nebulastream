@@ -1,5 +1,7 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Exceptions/ExecutionPlanRollbackException.hpp>
+#include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
@@ -92,7 +94,7 @@ bool QueryCatalog::registerAndQueueAddRequest(const std::string& queryString, co
 
 bool QueryCatalog::queueStopRequest(std::string queryId) {
     std::unique_lock<std::mutex> lock(insertDeleteQuery);
-    NES_INFO("QueryCatalog: add query stop request to the scheduling queue.");
+    NES_INFO("QueryCatalog: Queue query stop request to the scheduling queue.");
 
     NES_INFO("QueryCatalog: Locating a query with same id in the scheduling queue.");
     QueryCatalogEntryPtr queryCatalogEntry = getQuery(queryId);
@@ -106,7 +108,7 @@ bool QueryCatalog::queueStopRequest(std::string queryId) {
         QueryStatus currentStatus = queryCatalogEntry->getQueryStatus();
         if (currentStatus == QueryStatus::Stopped || currentStatus == QueryStatus::Failed) {
             NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString() + ". Ignoring stop query request.");
-            //throw exception that query is in an invalid state for this operation
+            throw InvalidQueryStatusException({QueryStatus::Scheduling, QueryStatus::Registered, QueryStatus::Running}, currentStatus);
         }
         NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
         queryCatalogEntry->setQueryStatus(QueryStatus::MarkedForStop);
