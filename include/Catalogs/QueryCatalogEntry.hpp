@@ -74,7 +74,7 @@ class QueryCatalogEntry {
      * @brief method to get the id of the query
      * @return query id
      */
-    const std::string& getQueryId() const {
+    std::string getQueryId(){
         return queryId;
     }
 
@@ -82,7 +82,7 @@ class QueryCatalogEntry {
      * @brief method to get the string of the query
      * @return query string
      */
-    const std::string& getQueryString() const {
+    std::string getQueryString() {
         return queryString;
     }
 

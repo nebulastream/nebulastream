@@ -25,7 +25,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
                     //Prepare the response
                     json::value result{};
-                    map<string, string> queries = queryCatalog->getQueriesWithStatus(queryStatus);
+                    std::map<std::string, std::string> queries = queryCatalog->getQueriesWithStatus(queryStatus);
 
                     for (auto [key, value] : queries) {
                         result[key] = json::value::string(value);
@@ -58,7 +58,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 try {
                     //Prepare the response
                     json::value result{};
-                    map<string, string> queries = queryCatalog->getAllQueries();
+                    std::map<std::string, std::string> queries = queryCatalog->getAllQueries();
 
                     for (auto [key, value] : queries) {
                         result[key] = json::value::string(value);

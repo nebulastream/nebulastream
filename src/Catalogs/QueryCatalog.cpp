@@ -45,7 +45,7 @@ std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueriesToSchedule() {
         //Prepare a batch of queries to schedule
         while (currentBatchSize <= batchSize || currentBatchSize == totalQueriesToSchedule) {
             queriesToSchedule.push_back(schedulingQueue.front());
-            schedulingQueue.pop();
+            schedulingQueue.pop_front();
             currentBatchSize++;
         }
         NES_INFO("QueryCatalog: Scheduling " << queriesToSchedule.size() << " queries.");
@@ -95,16 +95,14 @@ bool QueryCatalog::queueStopRequest(std::string queryId) {
     NES_INFO("QueryCatalog: add query stop request to the scheduling queue.");
 
     NES_INFO("QueryCatalog: Locating a query with same id in the scheduling queue.");
-    auto itr = std::find(schedulingQueue.begin(), schedulingQueue.end(), [queryId](QueryCatalogEntryPtr entry) {
-        return entry->getQueryId() == queryId;
-    });
+    QueryCatalogEntryPtr queryCatalogEntry = getQuery(queryId);
+    auto itr = std::find(schedulingQueue.begin(), schedulingQueue.end(), queryCatalogEntry);
 
     if (itr != schedulingQueue.end()) {
         NES_INFO("QueryCatalog: Found query with same id already present in the scheduling queue.");
         NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
         markQueryAs(queryId, QueryStatus::MarkedForStop);
     } else {
-        QueryCatalogEntryPtr queryCatalogEntry = getQuery(queryId);
         QueryStatus currentStatus = queryCatalogEntry->getQueryStatus();
         if (currentStatus == QueryStatus::Stopped || currentStatus == QueryStatus::Failed) {
             NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString() + ". Ignoring stop query request.");

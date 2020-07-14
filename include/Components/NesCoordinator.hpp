@@ -45,7 +45,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      */
     NesCoordinator();
 
-    NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort);
+    NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort);
 
     /**
      * @brief dtor
@@ -96,7 +96,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     uint16_t restPort;
     uint16_t rpcPort;
     std::shared_ptr<grpc::Server> rpcServer;
-    shared_ptr<std::thread> rpcThread;
+    std::shared_ptr<std::thread> rpcThread;
     NesWorkerPtr worker;
     CoordinatorEnginePtr coordinatorEngine;
     GlobalExecutionPlanPtr globalExecutionPlan;
@@ -104,7 +104,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     StreamCatalogPtr streamCatalog;
     TopologyManagerPtr topologyManager;
     RestServerPtr restServer;
-    shared_ptr<std::thread> restThread;
+    std::shared_ptr<std::thread> restThread;
     std::atomic<bool> stopped;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;

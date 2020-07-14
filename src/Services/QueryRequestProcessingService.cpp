@@ -62,15 +62,15 @@ int QueryRequestProcessingService::operator()() {
                             }
                         }
 
-                    } catch (QueryPlacementException ex) {
+                    } catch (QueryPlacementException& ex) {
                         //Rollback if failure happen while placing the query.
                         globalExecutionPlan->removeQuerySubPlans(queryId);
                         queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
-                    } catch (QueryDeploymentException ex) {
+                    } catch (QueryDeploymentException& ex) {
                         //Rollback if failure happen while placing the query.
                         globalExecutionPlan->removeQuerySubPlans(queryId);
                         queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
-                    } catch (Exception ex) {
+                    } catch (Exception& ex) {
                         globalExecutionPlan->removeQuerySubPlans(queryId);
                         queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                     }
