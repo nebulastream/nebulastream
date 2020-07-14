@@ -38,7 +38,7 @@ NesCoordinator::NesCoordinator() {
     topologyManager = std::make_shared<TopologyManager>();
     streamCatalog = std::make_shared<StreamCatalog>();
     globalExecutionPlan = GlobalExecutionPlan::create();
-    queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
+    queryCatalog = std::make_shared<QueryCatalog>();
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 }
 
@@ -52,7 +52,7 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
     topologyManager = std::make_shared<TopologyManager>();
     streamCatalog = std::make_shared<StreamCatalog>();
     globalExecutionPlan = GlobalExecutionPlan::create();
-    queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
+    queryCatalog = std::make_shared<QueryCatalog>();
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 }
 

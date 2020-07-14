@@ -124,7 +124,7 @@ bool QueryRequestProcessingService::deployAndStartQuery(std::string queryId) {
     }
 
     NES_DEBUG("QueryService: start query");
-    bool successStart = startQuery(queryId);
+    bool successStart = startQuery(queryId, executionNodes);
     if (successStart) {
         NES_DEBUG("QueryService: Successfully started deployed query " + queryId);
     } else {
