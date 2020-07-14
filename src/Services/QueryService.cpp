@@ -2,6 +2,7 @@
 #include <Deployer/QueryDeployer.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
+#include <Exceptions/QueryNotFoundException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -19,7 +20,7 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog) : queryCatalog(queryCat
     NES_DEBUG("QueryService()");
 }
 
-std::string QueryService::validateAndRegisterQuery(std::string queryString, std::string placementStrategyName) {
+std::string QueryService::validateAndQueueQueryAddRequest(std::string queryString, std::string placementStrategyName) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
     if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
@@ -34,6 +35,14 @@ std::string QueryService::validateAndRegisterQuery(std::string queryString, std:
     NES_INFO("QueryService: Queuing the query for the execution");
     queryCatalog->registerAndAddToSchedulingQueue(queryString, queryPlan, placementStrategyName);
     return queryId;
+}
+
+std::string QueryService::validateAndQueueQueryStopRequest(std::string queryId) {
+
+    if (!queryCatalog->queryExists(queryId)) {
+        throw QueryNotFoundException("QueryService: Unable to find query with id " + queryId + " in query catalog.");
+    }
+
 }
 
 json::value QueryService::getQueryPlanAsJson(std::string queryId) {

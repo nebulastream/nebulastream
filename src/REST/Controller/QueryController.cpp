@@ -37,7 +37,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string optimizationStrategyName = req.at("strategyName").as_string();
 
                     // Call the service
-                    string queryId = queryService->validateAndRegisterQuery(userQuery, optimizationStrategyName);
+                    string queryId = queryService->validateAndQueueQueryAddRequest(userQuery, optimizationStrategyName);
                     std::string executionPlanAsString = globalExecutionPlan->getAsString();
 
                     // Prepare the response
@@ -107,7 +107,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
-                    string queryId = queryService->validateAndRegisterQuery(userQuery, optimizationStrategyName);
+                    string queryId = queryService->validateAndQueueQueryAddRequest(userQuery, optimizationStrategyName);
 
                     //                    string queryId = coordinator->addQuery(userQuery, optimizationStrategyName);
 
