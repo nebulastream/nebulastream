@@ -57,14 +57,6 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         // serialize map expression
         ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
         serializedOperator->mutable_details()->PackFrom(mapDetails);
-    } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        // serialize map operator
-        NES_TRACE("OperatorSerializationUtil:: serialize to MergeLogicalOperatorNode");
-        auto mergeDetails = SerializableOperator_MergeDetails();
-        auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
-        // serialize map expression
-        ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mergeDetails.mutable_expression());
-        serializedOperator->mutable_details()->PackFrom(mergeDetails);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
     }
