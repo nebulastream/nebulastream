@@ -16,7 +16,7 @@
 namespace po = boost::program_options;
 using namespace NES;
 
-const string logo = "/********************************************************\n"
+const std::string logo = "/********************************************************\n"
                     " *     _   _   ______    _____\n"
                     " *    | \\ | | |  ____|  / ____|\n"
                     " *    |  \\| | | |__    | (___\n"
@@ -28,7 +28,7 @@ const string logo = "/********************************************************\n
 
 int main(int argc, const char* argv[]) {
     NES::setupLogging("nesCoordinatorStarter.log", NES::LOG_DEBUG);
-    cout << logo << endl;
+    std::cout << logo << std::endl;
 
     // Initializing defaults
     uint16_t restPort = 8081;
@@ -37,7 +37,7 @@ int main(int argc, const char* argv[]) {
 
     po::options_description serverOptions("Nes Coordinator Server Options");
     serverOptions.add_options()(
-        "serverIp", po::value<string>(&serverIp)->default_value(serverIp),
+        "serverIp", po::value<std::string>(&serverIp)->default_value(serverIp),
         "Set NES server ip (default: localhost).")
         (
             "restPort", po::value<uint16_t>(),
@@ -75,21 +75,21 @@ int main(int argc, const char* argv[]) {
         changed = true;
     }
 
-    cout << "creating coordinator" << endl;
+    std::cout << "creating coordinator" << std::endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(serverIp, restPort, rpcPort);
 
     if (changed) {
-        cout << "config changed thus rest params" << endl;
+        std::cout << "config changed thus rest params" << std::endl;
     }
     if (serverIp != "localhost") {
-        cout << "set server ip to " << serverIp << endl;
+        std::cout << "set server ip to " << serverIp << std::endl;
         crd->setServerIp(serverIp);
     }
 
-    cout << "start coordinator ip=" << serverIp  << " with rpc port " << rpcPort << " restPort=" << restPort << endl;
+    std::cout << "start coordinator ip=" << serverIp  << " with rpc port " << rpcPort << " restPort=" << restPort << std::endl;
     crd->startCoordinator(/**blocking**/true); //blocking call
     crd->stopCoordinator(true);
-    cout << "coordinator started" << endl;
+    std::cout << "coordinator started" << std::endl;
 
 }
 
