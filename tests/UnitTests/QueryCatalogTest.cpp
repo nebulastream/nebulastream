@@ -59,7 +59,7 @@ TEST_F(QueryCatalogTest, testAddQuery) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     setupTests(streamCatalog, topologyManager);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     string queryId = queryCatalog->registerAndQueueAddRequest(queryString, "BottomUp");
     map<string, QueryCatalogEntryPtr> reg = queryCatalog->getRegisteredQueries();
     EXPECT_TRUE(reg.size() == 1);
@@ -79,7 +79,7 @@ TEST_F(QueryCatalogTest, testAddQueryAndStartStop) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     setupTests(streamCatalog, topologyManager);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     string queryId = queryCatalog->registerAndQueueAddRequest(queryString,
                                                               "BottomUp");
@@ -111,7 +111,7 @@ TEST_F(QueryCatalogTest, testAddRemoveQuery) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     setupTests(streamCatalog, topologyManager);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     string queryId = queryCatalog->registerAndQueueAddRequest(queryString,
                                                               "BottomUp");
@@ -133,7 +133,7 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     setupTests(streamCatalog, topologyManager);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     string queryId = queryCatalog->registerAndQueueAddRequest(queryString,
                                                               "BottomUp");
@@ -151,7 +151,7 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_without_query_registration) 
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     setupTests(streamCatalog, topologyManager);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     std::map<std::string, std::string> allRegisteredQueries =
         queryCatalog->getAllQueries();
@@ -163,7 +163,7 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     setupTests(streamCatalog, topologyManager);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
@@ -182,13 +182,12 @@ TEST_F(QueryCatalogTest, get_all_running_queries) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     setupTests(streamCatalog, topologyManager);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
 
-    const string queryId = queryCatalog->registerAndQueueAddRequest(queryString,
-                                                                    "BottomUp");
+    const string queryId = queryCatalog->registerAndQueueAddRequest(queryString, "BottomUp");
 
     queryCatalog->markQueryAs(queryId, QueryStatus::Running);
 
@@ -202,7 +201,7 @@ TEST_F(QueryCatalogTest, throw_exception_when_query_status_is_unknown) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     setupTests(streamCatalog, topologyManager);
-    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
     try {
         std::map<std::string, std::string> queries = queryCatalog->getQueriesWithStatus("something_random");
