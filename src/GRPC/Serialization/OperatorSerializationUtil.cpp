@@ -49,7 +49,13 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         // serialize filter expression
         ExpressionSerializationUtil::serializeExpression(filterOperator->getPredicate(), filterDetails.mutable_predicate());
         serializedOperator->mutable_details()->PackFrom(filterDetails);
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
+        // serialize merge operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to MergeLogicalOperatorNode");
+        auto mergeDetails = SerializableOperator_MergeDetails();
+        auto mergeOperator = operatorNode->as<MergeLogicalOperatorNode>();
+        serializedOperator->mutable_details()->PackFrom(mergeDetails);
+    }else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         // serialize map operator
         NES_TRACE("OperatorSerializationUtil:: serialize to MapLogicalOperatorNode");
         auto mapDetails = SerializableOperator_MapDetails();
