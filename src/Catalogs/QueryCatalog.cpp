@@ -1,7 +1,6 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Exceptions/ExecutionPlanRollbackException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
@@ -10,43 +9,37 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan)
-    : topologyManager(topologyManager), streamCatalog(streamCatalog), globalExecutionPlan(globalExecutionPlan), insertDeleteQuery() {
+QueryCatalog::QueryCatalog(): insertQueryRequest() {
     NES_DEBUG("QueryCatalog()");
 }
 
 std::map<std::string, std::string> QueryCatalog::getQueriesWithStatus(std::string status) {
 
     NES_INFO("QueryCatalog : fetching all queries with status " << status);
-
     std::transform(status.begin(), status.end(), status.begin(), ::toupper);
-
     if (stringToQueryStatusMap.find(status) == stringToQueryStatusMap.end()) {
         throw std::invalid_argument("Unknown query status " + status);
     }
-
     QueryStatus queryStatus = stringToQueryStatusMap[status];
     std::map<std::string, QueryCatalogEntryPtr> queries = getQueries(queryStatus);
-
     std::map<std::string, std::string> result;
     for (auto [key, value] : queries) {
         result[key] = value->getQueryString();
     }
-
     NES_INFO("QueryCatalog : found " << result.size() << " all queries with status " << status);
     return result;
 }
 
-std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueriesToSchedule() {
-    std::unique_lock<std::mutex> lock(insertDeleteQuery);
+std::vector<QueryCatalogEntry> QueryCatalog::getQueriesToSchedule() {
+    std::unique_lock<std::mutex> lock(insertQueryRequest);
     NES_INFO("QueryCatalog: Fetching Queries to Schedule");
-    std::vector<QueryCatalogEntryPtr> queriesToSchedule;
+    std::vector<QueryCatalogEntry> queriesToSchedule;
     if (!schedulingQueue.empty()) {
         int64_t currentBatchSize = 1;
         int64_t totalQueriesToSchedule = schedulingQueue.size();
         //Prepare a batch of queries to schedule
         while (currentBatchSize <= batchSize || currentBatchSize == totalQueriesToSchedule) {
-            queriesToSchedule.push_back(schedulingQueue.front());
+            queriesToSchedule.push_back(schedulingQueue.front()->copy());
             schedulingQueue.pop_front();
             currentBatchSize++;
         }
@@ -60,25 +53,22 @@ std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueriesToSchedule() {
 std::map<std::string, std::string> QueryCatalog::getAllQueries() {
 
     NES_INFO("QueryCatalog : get all queries");
-
     std::map<std::string, QueryCatalogEntryPtr> registeredQueries = getRegisteredQueries();
-
     std::map<std::string, std::string> result;
     for (auto [key, value] : registeredQueries) {
         result[key] = value->getQueryString();
     }
-
     NES_INFO("QueryCatalog : found " << result.size() << " queries in catalog.");
     return result;
 }
 
 bool QueryCatalog::registerAndQueueAddRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
-    std::unique_lock<std::mutex> lock(insertDeleteQuery);
+    std::unique_lock<std::mutex> lock(insertQueryRequest);
     std::string queryId = queryPlan->getQueryId();
     NES_INFO("QueryCatalog: Registering query with id " << queryId);
     try {
         NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
-        QueryCatalogEntryPtr queryCatalogEntry = std::make_shared<QueryCatalogEntry>(queryId, queryString, queryPlan, QueryStatus::Registered);
+        QueryCatalogEntryPtr queryCatalogEntry = std::make_shared<QueryCatalogEntry>(queryId, queryString, optimizationStrategyName, queryPlan, QueryStatus::Registered);
         queries[queryId] = queryCatalogEntry;
         NES_INFO("QueryCatalog: Adding query with id " << queryId << " to the scheduling queue");
         schedulingQueue.push_back(queryCatalogEntry);
@@ -93,13 +83,11 @@ bool QueryCatalog::registerAndQueueAddRequest(const std::string& queryString, co
 }
 
 bool QueryCatalog::queueStopRequest(std::string queryId) {
-    std::unique_lock<std::mutex> lock(insertDeleteQuery);
+    std::unique_lock<std::mutex> lock(insertQueryRequest);
     NES_INFO("QueryCatalog: Queue query stop request to the scheduling queue.");
-
     NES_INFO("QueryCatalog: Locating a query with same id in the scheduling queue.");
-    QueryCatalogEntryPtr queryCatalogEntry = getQuery(queryId);
+    QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
     auto itr = std::find(schedulingQueue.begin(), schedulingQueue.end(), queryCatalogEntry);
-
     if (itr != schedulingQueue.end()) {
         NES_INFO("QueryCatalog: Found query with same id already present in the scheduling queue.");
         NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
@@ -117,52 +105,20 @@ bool QueryCatalog::queueStopRequest(std::string queryId) {
     return true;
 }
 
-bool QueryCatalog::deleteQuery(const std::string& queryId) {
-    std::unique_lock<std::mutex> lock(insertDeleteQuery);
-    if (!queryExists(queryId)) {
-        NES_WARNING(
-            "QueryCatalog: No deletion required! Query has neither been registered or deployed->" << queryId);
-        return false;
-    } else {
-        NES_DEBUG("QueryCatalog: De-registering query ...");
-        globalExecutionPlan->removeQuerySubPlans(queryId);
-        if (getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
-            NES_DEBUG("QueryCatalog: query is running, stopping it");
-            markQueryAs(queryId, QueryStatus::Stopped);
-        } else if (getQuery(queryId)->getQueryStatus() == QueryStatus::Stopped) {
-            NES_DEBUG("QueryCatalog:deleteQuery: query already stopped");
-        } else if (getQuery(queryId)->getQueryStatus() == QueryStatus::Scheduling) {
-            NES_WARNING("QueryCatalog:deleteQuery: query is currently scheduled");
-            return false;
-        } else if (getQuery(queryId)->getQueryStatus() == QueryStatus::Registered) {
-            NES_WARNING("QueryCatalog:deleteQuery:  query is just registered but not running");
-        } else if (getQuery(queryId)->getQueryStatus() == QueryStatus::Failed) {
-            NES_WARNING("QueryCatalog:deleteQuery: query status failed");
-            return false;
-        }
+void QueryCatalog::markQueryAs(std::string queryId, QueryStatus newStatus) {
 
-        NES_DEBUG("QueryCatalog: erase query " << queryId);
-        size_t ret = queries.erase(queryId);
-        if (ret == 0) {
-            NES_WARNING("QueryCatalog: query does not exists");
-            return false;
-        } else if (ret > 1) {
-            NES_ERROR("QueryCatalog: query exists two times in the catalog, this should not happen");
-            return false;
-        }
-        return true;
+    NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << newStatus);
+    QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
+    QueryStatus oldStatus = queryCatalogEntry->getQueryStatus();
+    if (oldStatus == QueryStatus::MarkedForStop && newStatus == QueryStatus::Running) {
+        NES_WARNING("QueryCatalog: Skip setting status of a query marked for stop as running.");
+    } else {
+        queries[queryId]->setQueryStatus(newStatus);
     }
 }
 
-void QueryCatalog::markQueryAs(std::string queryId, QueryStatus queryStatus) {
-    //TODO: check if a mutex is required
-    NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << queryStatus);
-    queries[queryId]->setQueryStatus(queryStatus);
-}
-
 bool QueryCatalog::isQueryRunning(std::string queryId) {
-    NES_DEBUG(
-        "QueryCatalog: test if query started with id " << queryId << " running=" << queries[queryId]->getQueryStatus());
+    NES_DEBUG("QueryCatalog: test if query started with id " << queryId << " running=" << queries[queryId]->getQueryStatus());
     return queries[queryId]->getQueryStatus() == QueryStatus::Running;
 }
 
@@ -171,14 +127,13 @@ std::map<std::string, QueryCatalogEntryPtr> QueryCatalog::getRegisteredQueries()
     return queries;
 }
 
-QueryCatalogEntryPtr QueryCatalog::getQuery(std::string queryId) {
-    NES_DEBUG("QueryCatalog: getQuery with id " << queryId);
+QueryCatalogEntryPtr QueryCatalog::getQueryCatalogEntry(std::string queryId) {
+    NES_DEBUG("QueryCatalog: getQueryCatalogEntry with id " << queryId);
     return queries[queryId];
 }
 
 bool QueryCatalog::queryExists(std::string queryId) {
-    NES_DEBUG(
-        "QueryCatalog: queryExists with id=" << queryId << " registered queries=" << printQueries());
+    NES_DEBUG("QueryCatalog: queryExists with id=" << queryId << " registered queries=" << printQueries());
     if (queries.count(queryId) > 0) {
         NES_DEBUG("QueryCatalog: query with id " << queryId << " exists");
         return true;
@@ -189,9 +144,7 @@ bool QueryCatalog::queryExists(std::string queryId) {
 }
 
 std::map<std::string, QueryCatalogEntryPtr> QueryCatalog::getQueries(QueryStatus requestedStatus) {
-    NES_DEBUG(
-        "QueryCatalog: getQueriesWithStatus() registered queries=" << printQueries());
-
+    NES_DEBUG("QueryCatalog: getQueriesWithStatus() registered queries=" << printQueries());
     std::map<std::string, QueryCatalogEntryPtr> runningQueries;
     for (auto q : queries) {
         if (q.second->getQueryStatus() == requestedStatus) {

@@ -63,18 +63,14 @@ static std::map<QueryStatus, std::string> queryStatusToStringMap{
  */
 class QueryCatalogEntry {
   public:
-    QueryCatalogEntry(std::string queryId, std::string queryString, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus)
-        : queryId(queryId),
-          queryString(queryString),
-          queryPlanPtr(queryPlanPtr),
-          queryStatus(queryStatus) {
-    }
+    QueryCatalogEntry(std::string queryId, std::string queryString, std::string queryPlacementStrategy, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus)
+        : queryId(queryId), queryString(queryString), queryPlacementStrategy(queryPlacementStrategy), queryPlanPtr(queryPlanPtr), queryStatus(queryStatus) {}
 
     /**
      * @brief method to get the id of the query
      * @return query id
      */
-    std::string getQueryId(){
+    std::string getQueryId() {
         return queryId;
     }
 
@@ -124,6 +120,14 @@ class QueryCatalogEntry {
       */
     const std::string& getQueryPlacementStrategy() const {
         return queryPlacementStrategy;
+    }
+
+    /**
+     * @brief create a copy of query catalog entry.
+     * @return copy of this query catalog entry
+     */
+    QueryCatalogEntry copy() {
+        return QueryCatalogEntry(queryId, queryString, queryPlacementStrategy, queryPlanPtr, queryStatus);
     }
 
   private:

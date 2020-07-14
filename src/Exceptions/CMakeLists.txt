@@ -6,4 +6,5 @@ add_source_nes(
         QueryPlacementException.cpp
         QueryNotFoundException.cpp
         InvalidQueryStatusException.cpp
+        QueryUndeploymentException.cpp
 )

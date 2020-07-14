@@ -11,12 +11,6 @@
 
 namespace NES {
 
-class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
-
-class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
-
 /**
  * @brief catalog class to handle the queries in the system
  * @limitations:
@@ -25,7 +19,7 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
  */
 class QueryCatalog {
   public:
-    QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan);
+    QueryCatalog();
 
     /**
      * @brief registers a new query into the NES Query catalog and add it to the scheduling queue for later execution.
@@ -44,24 +38,18 @@ class QueryCatalog {
     bool queueStopRequest(std:: string queryId);
 
     /**
-     * @brief Get a batch of query plans to be scheduled
+     * @brief Get a batch of query catalog entries to be scheduled.
+     * Note: This method returns only a copy of the
      * @return a vector of query catalog entry to schedule
      */
-    std::vector<QueryCatalogEntryPtr> getQueriesToSchedule();
-
-    /**
-     * @brief method which is called to unregister an already running query
-     * @param queryId the queryId of the query
-     * @return true if deleted from running queries, otherwise false
-     */
-    bool deleteQuery(const std::string& queryId);
+    std::vector<QueryCatalogEntry> getQueriesToSchedule();
 
     /**
      * @brief method to change status of a query
      * @param id of the query
      * @param status of the query
      */
-    void markQueryAs(std::string queryId, QueryStatus queryStatus);
+    void markQueryAs(std::string queryId, QueryStatus newStatus);
 
     /**
      * @brief method to test if a query is started
@@ -82,7 +70,7 @@ class QueryCatalog {
      * @param id of the query
      * @return pointer to the catalog entry
      */
-    QueryCatalogEntryPtr getQuery(std::string queryID);
+    QueryCatalogEntryPtr getQueryCatalogEntry(std::string queryId);
 
     /**
      * @brief method to test if a query exists
@@ -124,11 +112,9 @@ class QueryCatalog {
     std::map<std::string, std::string> getAllQueries();
 
   private:
-    TopologyManagerPtr topologyManager;
-    StreamCatalogPtr streamCatalog;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+
+    std::mutex insertQueryRequest;
     std::map<std::string, QueryCatalogEntryPtr> queries;
-    std::mutex insertDeleteQuery;
     std::deque<QueryCatalogEntryPtr> schedulingQueue;
     int64_t batchSize=1;
 };
