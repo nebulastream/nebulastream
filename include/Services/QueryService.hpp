@@ -40,7 +40,17 @@ class QueryService {
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
-    std::string validateAndRegisterQuery(std::string queryString, std::string placementStrategyName);
+    std::string validateAndQueueQueryAddRequest(std::string queryString, std::string placementStrategyName);
+
+    /**
+     * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
+     * @param queryId : query in string form.
+     * @param placementStrategyName : name of the placement strategy to be used.
+     * @return queryId : query id of the valid input query.
+     * @throws InvalidQueryException : when query string is not valid.
+     * @throws InvalidArgumentException : when the placement strategy is not valid.
+     */
+    std::string validateAndQueueQueryStopRequest(std::string queryId);
 
     /**
      * This method is used for generating the base query plan from the input query as string.

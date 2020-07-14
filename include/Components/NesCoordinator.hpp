@@ -1,7 +1,6 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
-#include <GRPC/WorkerRPCClient.hpp>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
@@ -99,9 +98,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     std::shared_ptr<grpc::Server> rpcServer;
     shared_ptr<std::thread> rpcThread;
     NesWorkerPtr worker;
-    WorkerRPCClientPtr workerRPCClient;
     CoordinatorEnginePtr coordinatorEngine;
-    QueryDeployerPtr queryDeployer;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;

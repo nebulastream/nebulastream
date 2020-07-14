@@ -36,30 +36,32 @@ int QueryProcessingService::operator()() {
 
                     auto queryPlan = queryCatalogEntry->getQueryPlan();
                     std::string queryId = queryPlan->getQueryId();
-                    if (queryCatalogEntry->getQueryStatus() == QueryStatus::Stopped) {
-                        NES_WARNING("QueryProcessingService: ");
-                        continue;
-                    }
-
-                    std::string placementStrategy = queryCatalogEntry->getQueryPlacementStrategy();
-
                     try {
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
-                        queryPlan = queryRewritePhase->execute(queryPlan);
-                        queryPlan = typeInferencePhase->execute(queryPlan);
-                        queryPlacementPhase->execute(placementStrategy, queryPlan);
-                        //Check if someone stopped the query meanwhile
+
                         if (queryCatalogEntry->getQueryStatus() == QueryStatus::MarkedForStop) {
-                            NES_WARNING("QueryProcessingService: Found query with Id " + queryId + " stopped after performing the query placement.");
-                            NES_WARNING("QueryProcessingService: Rolling back the placement for query with Id " + queryId);
+                            NES_WARNING("QueryProcessingService: Request received for stopping the query " + queryId);
                             queryService->stopAndUndeployQuery(queryId);
-                            continue;
+                        } else if (queryCatalogEntry->getQueryStatus() == QueryStatus::Registered) {
+
+                            queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
+                            std::string placementStrategy = queryCatalogEntry->getQueryPlacementStrategy();
+                            queryPlan = queryRewritePhase->execute(queryPlan);
+                            queryPlan = typeInferencePhase->execute(queryPlan);
+                            queryPlacementPhase->execute(placementStrategy, queryPlan);
+                            //Check if someone stopped the query meanwhile
+                            if (queryCatalogEntry->getQueryStatus() == QueryStatus::MarkedForStop) {
+                                NES_WARNING("QueryProcessingService: Found query with Id " + queryId + " stopped after performing the query placement.");
+                                NES_WARNING("QueryProcessingService: Rolling back the placement for query with Id " + queryId);
+                                queryService->stopAndUndeployQuery(queryId);
+                                continue;
+                            }
+
+                            bool successful = queryService->deployAndStartQuery(queryId);
+                            if (!successful) {
+                                throw QueryDeploymentException("Failed to deploy query with Id " + queryId);
+                            }
                         }
 
-                        bool successful = queryService->deployAndStartQuery(queryId);
-                        if (!successful) {
-                            throw QueryDeploymentException("Failed to deploy query with Id " + queryId);
-                        }
                     } catch (QueryPlacementException ex) {
                         //Rollback if failure happen while placing the query.
                         globalExecutionPlan->removeQuerySubPlans(queryId);

@@ -6,7 +6,7 @@
 namespace NES {
 
 /**
- * @brief Exception indicating problem during operator placement
+ * @brief Exception indicating problem during operator placement phase
  */
 class QueryPlacementException : public std::runtime_error {
 
