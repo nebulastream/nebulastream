@@ -20,7 +20,7 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog) : queryCatalog(queryCat
     NES_DEBUG("QueryService()");
 }
 
-std::string QueryService::validateAndQueueQueryAddRequest(std::string queryString, std::string placementStrategyName) {
+std::string QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
     if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
@@ -33,16 +33,19 @@ std::string QueryService::validateAndQueueQueryAddRequest(std::string queryStrin
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     NES_INFO("QueryService: Queuing the query for the execution");
-    queryCatalog->registerAndAddToSchedulingQueue(queryString, queryPlan, placementStrategyName);
+    queryCatalog->registerAndQueueAddRequest(queryString, queryPlan, placementStrategyName);
     return queryId;
 }
 
-std::string QueryService::validateAndQueueQueryStopRequest(std::string queryId) {
+bool QueryService::validateAndQueueStopRequest(std::string queryId) {
+
+    NES_INFO("QueryService : stopping query " + queryId);
 
     if (!queryCatalog->queryExists(queryId)) {
         throw QueryNotFoundException("QueryService: Unable to find query with id " + queryId + " in query catalog.");
     }
 
+    return queryCatalog->queueStopRequest(queryId);
 }
 
 json::value QueryService::getQueryPlanAsJson(std::string queryId) {

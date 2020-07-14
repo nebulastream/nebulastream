@@ -1,5 +1,5 @@
-#ifndef NES_QUERYPROCESSINGSERVICE_HPP
-#define NES_QUERYPROCESSINGSERVICE_HPP
+#ifndef NES_QUERYREQUESTPROCESSINGSERVICE_HPP
+#define NES_QUERYREQUESTPROCESSINGSERVICE_HPP
 
 #include <memory>
 
@@ -23,9 +23,9 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class NESTopologyPlan;
 typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
 
-class QueryProcessingService {
+class QueryRequestProcessingService {
   public:
-    explicit QueryProcessingService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog);
+    explicit QueryRequestProcessingService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog);
     int operator()();
 
     /**
@@ -44,4 +44,4 @@ class QueryProcessingService {
     QueryServicePtr queryService;
 };
 }// namespace NES
-#endif//NES_QUERYPROCESSINGSERVICE_HPP
+#endif//NES_QUERYREQUESTPROCESSINGSERVICE_HPP

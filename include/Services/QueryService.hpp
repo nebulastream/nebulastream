@@ -40,33 +40,23 @@ class QueryService {
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
-    std::string validateAndQueueQueryAddRequest(std::string queryString, std::string placementStrategyName);
+    std::string validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
-     * @param queryId : query in string form.
-     * @param placementStrategyName : name of the placement strategy to be used.
-     * @return queryId : query id of the valid input query.
-     * @throws InvalidQueryException : when query string is not valid.
-     * @throws InvalidArgumentException : when the placement strategy is not valid.
+     * @param queryId : query id of the query to be stopped.
+     * @returns: true if successful
+     * @throws QueryNotFoundException : when query id is not found in the query catalog.
+     * @throws InvalidQueryStatusException : when the query is found to be in an invalid state.
      */
-    std::string validateAndQueueQueryStopRequest(std::string queryId);
+    bool validateAndQueueStopRequest(std::string queryId);
 
     /**
      * This method is used for generating the base query plan from the input query as string.
-     *
      * @param queryId : user query as string
      * @return a json object representing the query plan
      */
     web::json::value getQueryPlanAsJson(std::string queryId);
-
-    /**
-     * This method is used for generating the query object from the input query as string.
-     *
-     * @param userQuery : user query as string
-     * @return a json object representing the query plan
-     */
-    QueryPtr getQueryFromQueryString(std::string userQuery);
 
     /**
      * @brief method for deploying and starting the query

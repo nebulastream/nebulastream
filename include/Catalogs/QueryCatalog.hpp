@@ -28,13 +28,20 @@ class QueryCatalog {
     QueryCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan);
 
     /**
-     * @brief registers an RPC query into the NES topology to make it deployable
-     * @param queryString : a user query in string form
-     * @param queryPlan : a user query plan to be executed
-     * @param optimizationStrategyName : the optimization strategy (bottomUp or topDown)
+     * @brief registers a new query into the NES Query catalog and add it to the scheduling queue for later execution.
+     * @param queryString: a user query in string form
+     * @param queryPlan: a user query plan to be executed
+     * @param optimizationStrategyName: the optimization strategy (bottomUp or topDown)
      * @return true if registration successful else false
      */
-    bool registerAndAddToSchedulingQueue(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName);
+    bool registerAndQueueAddRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName);
+
+    /**
+     * @brief register a request for stopping a query and add it to the scheduling queue.
+     * @param queryId: id of the user query.
+     * @return true if successful
+     */
+    bool queueStopRequest(std:: string queryId);
 
     /**
      * @brief Get a batch of query plans to be scheduled
@@ -122,7 +129,7 @@ class QueryCatalog {
     GlobalExecutionPlanPtr globalExecutionPlan;
     std::map<std::string, QueryCatalogEntryPtr> queries;
     std::mutex insertDeleteQuery;
-    std::queue<QueryCatalogEntryPtr> schedulingQueue;
+    std::deque<QueryCatalogEntryPtr> schedulingQueue;
     int64_t batchSize=1;
 };
 

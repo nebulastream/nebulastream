@@ -60,7 +60,7 @@ TEST_F(QueryCatalogTest, testAddQuery) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
-    string queryId = queryCatalog->registerAndAddToSchedulingQueue(queryString, "BottomUp");
+    string queryId = queryCatalog->registerAndQueueAddRequest(queryString, "BottomUp");
     map<string, QueryCatalogEntryPtr> reg = queryCatalog->getRegisteredQueries();
     EXPECT_TRUE(reg.size() == 1);
 
@@ -81,8 +81,8 @@ TEST_F(QueryCatalogTest, testAddQueryAndStartStop) {
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
 
-    string queryId = queryCatalog->registerAndAddToSchedulingQueue(queryString,
-                                                                   "BottomUp");
+    string queryId = queryCatalog->registerAndQueueAddRequest(queryString,
+                                                              "BottomUp");
     map<string, QueryCatalogEntryPtr> reg = queryCatalog->getRegisteredQueries();
     EXPECT_TRUE(reg.size() == 1);
 
@@ -113,8 +113,8 @@ TEST_F(QueryCatalogTest, testAddRemoveQuery) {
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
 
-    string queryId = queryCatalog->registerAndAddToSchedulingQueue(queryString,
-                                                                   "BottomUp");
+    string queryId = queryCatalog->registerAndQueueAddRequest(queryString,
+                                                              "BottomUp");
     map<string, QueryCatalogEntryPtr> reg = queryCatalog->getRegisteredQueries();
     EXPECT_TRUE(reg.size() == 1);
 
@@ -135,8 +135,8 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     setupTests(streamCatalog, topologyManager);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>(topologyManager, streamCatalog, globalExecutionPlan);
 
-    string queryId = queryCatalog->registerAndAddToSchedulingQueue(queryString,
-                                                                   "BottomUp");
+    string queryId = queryCatalog->registerAndQueueAddRequest(queryString,
+                                                              "BottomUp");
     map<string, QueryCatalogEntryPtr> reg = queryCatalog->getRegisteredQueries();
     EXPECT_TRUE(reg.size() == 1);
 
@@ -168,8 +168,8 @@ TEST_F(QueryCatalogTest, get_all_registered_queries_after_query_registration) {
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
 
-    const string queryId = queryCatalog->registerAndAddToSchedulingQueue(queryString,
-                                                                         "BottomUp");
+    const string queryId = queryCatalog->registerAndQueueAddRequest(queryString,
+                                                                    "BottomUp");
 
     std::map<std::string, std::string> allRegisteredQueries =
         queryCatalog->getAllQueries();
@@ -187,8 +187,8 @@ TEST_F(QueryCatalogTest, get_all_running_queries) {
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
 
-    const string queryId = queryCatalog->registerAndAddToSchedulingQueue(queryString,
-                                                                         "BottomUp");
+    const string queryId = queryCatalog->registerAndQueueAddRequest(queryString,
+                                                                    "BottomUp");
 
     queryCatalog->markQueryAs(queryId, QueryStatus::Running);
 
