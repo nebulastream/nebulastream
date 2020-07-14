@@ -86,13 +86,14 @@ class Query {
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor
      */
-    Query& sink(const SinkDescriptorPtr sinkDescriptor);
+    virtual Query& sink(const SinkDescriptorPtr sinkDescriptor);
 
     /**
      * @brief Gets the query plan from the current query.
      * @return QueryPlan
      */
     QueryPlanPtr getQueryPlan();
+
     // creates a new query object
     Query(QueryPlanPtr queryPlan);
 
