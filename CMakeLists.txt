@@ -62,7 +62,7 @@ set(gRPC_RELEASE "v1.28.1")
 # Find Protobuf installation
 # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
 set(protobuf_MODULE_COMPATIBLE TRUE)
-find_package(Protobuf CONFIG REQUIRED)
+find_package(Protobuf REQUIRED)
 message(STATUS "Using protobuf ${protobuf_VERSION}")
 
 set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
@@ -288,6 +288,7 @@ set(CPACK_PACKAGE_CONTACT "Team NebulaStream")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Team NebulaStream") #required
 set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "cmake, LLVM, clang, libdwarf-dev, libdwarf1, llvm-dev, binutils-dev, libdw-dev, libboost-all-dev, liblog4cxx-dev, libcpprest-dev, libssl-dev, clang-format, librdkafka1, librdkafka++1, librdkafka-dev")
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}.${CMAKE_SYSTEM_PROCESSOR}")
 INCLUDE(CPack)
 
