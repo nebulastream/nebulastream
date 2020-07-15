@@ -6,8 +6,8 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-#include <SourceSink/DataSink.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <Sinks/DataSink.hpp>
+#include <Sources/DataSource.hpp>
 
 #include <string>
 #include <vector>

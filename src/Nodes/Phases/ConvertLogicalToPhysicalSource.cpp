@@ -8,7 +8,7 @@
 
 #include <Network/NetworkManager.hpp>
 #include <Nodes/Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <SourceSink/SourceCreator.hpp>
+#include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

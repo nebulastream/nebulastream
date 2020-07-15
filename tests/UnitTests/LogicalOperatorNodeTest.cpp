@@ -12,12 +12,12 @@
 #include <iostream>
 
 #include <API/InputQuery.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 #include <Operators/Operator.hpp>
-#include <SourceSink/DefaultSource.hpp>
+#include <Sources/DefaultSource.hpp>
 #include <memory>
 
 #include <API/Expressions/Expressions.hpp>

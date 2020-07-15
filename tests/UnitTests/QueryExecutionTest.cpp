@@ -5,9 +5,9 @@
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
-#include <SourceSink/DefaultSource.hpp>
-#include <SourceSink/SinkCreator.hpp>
-#include <SourceSink/SourceCreator.hpp>
+#include <Sinks/SinkCreator.hpp>
+#include <Sources/DefaultSource.hpp>
+#include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <future>

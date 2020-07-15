@@ -23,9 +23,9 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
-#include <SourceSink/DefaultSource.hpp>
-#include <SourceSink/GeneratorSource.hpp>
-#include <SourceSink/SinkCreator.hpp>
+#include <Sinks/SinkCreator.hpp>
+#include <Sources/DefaultSource.hpp>
+#include <Sources/GeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windows/WindowHandler.hpp>

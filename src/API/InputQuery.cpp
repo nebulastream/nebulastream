@@ -4,9 +4,9 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
-#include <SourceSink/DataSink.hpp>
-#include <SourceSink/SinkCreator.hpp>
-#include <SourceSink/SourceCreator.hpp>
+#include <Sinks/DataSink.hpp>
+#include <Sinks/SinkCreator.hpp>
+#include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <cstddef>
 #include <iostream>

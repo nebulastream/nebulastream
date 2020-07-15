@@ -1,16 +1,16 @@
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkManager.hpp>
-#include <Network/OutputChannel.hpp>
-#include <Network/ZmqServer.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
-#include <Util/ThreadBarrier.hpp>
-#include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <SourceSink/SourceCreator.hpp>
+#include <Network/OutputChannel.hpp>
+#include <Network/ZmqServer.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Sources/SourceCreator.hpp>
+#include <Util/Logger.hpp>
+#include <Util/ThreadBarrier.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <gtest/gtest.h>

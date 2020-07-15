@@ -1,10 +1,10 @@
-#include <NodeEngine/NodeEngine.hpp>
-#include <SourceSink/CSVSink.hpp>
-#include <SourceSink/BinarySink.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <Sinks/BinarySink.hpp>
+#include <Sinks/CSVSink.hpp>
+#include <Sinks/SinkCreator.hpp>
+#include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
-#include <SourceSink/SourceCreator.hpp>
-#include <SourceSink/SinkCreator.hpp>
 
 #include <gtest/gtest.h>
 

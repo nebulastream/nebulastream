@@ -8,10 +8,10 @@
 #ifndef TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
 #define TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
 #include <API/InputQuery.hpp>
-#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
+#include <Sources/GeneratorSource.hpp>
 #include <memory>
-#include <SourceSink/GeneratorSource.hpp>
 
 namespace NES {
 class TupleBuffer;

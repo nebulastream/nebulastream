@@ -8,7 +8,7 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <SourceSink/SourceCreator.hpp>
+#include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

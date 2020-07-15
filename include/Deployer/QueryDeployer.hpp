@@ -2,7 +2,7 @@
 #define NES_INCLUDE_DEPLOYER_QUERYDEPLOYER_HPP_
 
 #include <GRPC/ExecutableTransferObject.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <Sources/DataSource.hpp>
 
 #include <map>
 #include <vector>

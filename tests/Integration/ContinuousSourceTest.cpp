@@ -1,14 +1,14 @@
 #include <cassert>
 #include <iostream>
 
-#include <Util/Logger.hpp>
-#include <gtest/gtest.h>
-#include <SourceSink/SourceCreator.hpp>
-#include <SourceSink/SinkCreator.hpp>
-#include <sstream>
-#include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <Sinks/SinkCreator.hpp>
+#include <Sources/SourceCreator.hpp>
+#include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <gtest/gtest.h>
+#include <sstream>
 
 using namespace std;
 

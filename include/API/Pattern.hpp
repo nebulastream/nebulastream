@@ -10,7 +10,7 @@
 #include <API/Stream.hpp>
 
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <Sources/DataSource.hpp>
 #include <cppkafka/configuration.h>
 #include <string>
 
