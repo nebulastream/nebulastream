@@ -22,7 +22,7 @@ std::string QueryService::validateAndQueueAddRequest(std::string queryString, st
     NES_INFO("QueryService: Validating and registering the user query.");
     if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
         NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
-        throw InvalidArgumentException("BasePlacementStrategy: Unknown placement strategy name", "placementStrategyName", placementStrategyName);
+        throw InvalidArgumentException("placementStrategyName", placementStrategyName);
     }
     NES_INFO("QueryService: Parsing and converting user query string");
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);

@@ -3,15 +3,17 @@
 
 namespace NES {
 
-InvalidQueryStatusException::InvalidQueryStatusException(std::vector<QueryStatus> expectedStatuses, QueryStatus actualStatus)
-    : std::runtime_error(""), expectedStatuses(expectedStatuses), actualStatus(actualStatus) {}
+InvalidQueryStatusException::InvalidQueryStatusException(std::vector<QueryStatus> expectedStatuses, QueryStatus actualStatus) {
 
-const char* InvalidQueryStatusException::what() const throw() {
     std::stringstream expectedStatus;
     for (QueryStatus status : expectedStatuses) {
         expectedStatus << queryStatusToStringMap[status] << " ";
     }
-    return ("InvalidQueryStatusException: Expected query to be in [" + expectedStatus.str() + "] but found to be in " + queryStatusToStringMap[actualStatus]).c_str();
+    message = "InvalidQueryStatusException: Expected query to be in [" + expectedStatus.str() + "] but found to be in " + queryStatusToStringMap[actualStatus];
+}
+
+const char* InvalidQueryStatusException::what() const throw() {
+    return message.c_str();
 }
 
 }// namespace NES

@@ -63,7 +63,7 @@ class QueryCatalog {
      * @note this contain all queries running/not running
      * @return this will return a COPY of the queries in the catalog
      */
-    std::map<std::string, QueryCatalogEntryPtr> getRegisteredQueries();
+    std::map<std::string, QueryCatalogEntryPtr> getAllQueryCatalogEntries();
 
     /**
      * @brief method to get a particular query

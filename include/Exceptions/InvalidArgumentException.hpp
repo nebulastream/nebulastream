@@ -10,12 +10,11 @@ namespace NES {
  */
 class InvalidArgumentException : public std::exception {
   public:
-    explicit InvalidArgumentException(std::string message, std::string name, std::string value);
+    explicit InvalidArgumentException(std::string name, std::string value);
+    const char* what() const noexcept;
 
   private:
     std::string message;
-    std::string name;
-    std::string value;
 };
 }// namespace NES
 #endif//NES_INVALIDARGUMENTEXCEPTION_HPP
