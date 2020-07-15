@@ -874,6 +874,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
 
     /* execute Stage */
 
+    cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
     auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
     stage->execute(inputBuffer, nullptr, nullptr, queryContext);
 

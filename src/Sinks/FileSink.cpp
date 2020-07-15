@@ -20,7 +20,8 @@ FileSink::FileSink(SchemaPtr schema, SinkFormat format, const std::string filePa
                    FileOutputMode mode)
     : DataSink(schema) {
     this->filePath = filePath;
-    fileOutputMode = mode;
+    this->fileOutputMode = mode;
+    this->format = format;
 }
 
 const std::string FileSink::toString() const {

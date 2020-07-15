@@ -38,12 +38,11 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <API/Pattern.hpp>" << std::endl;
         code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
-        code << "#include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
-        code << "#include <SourceSink/DataSource.hpp>" << std::endl;
+        code << "#include <Sources/DataSource.hpp>" << std::endl;
         code << "#include <API/UserAPIExpression.hpp>" << std::endl;
         code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
@@ -107,7 +106,7 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSni
         code << "#include <API/InputQuery.hpp>" << std::endl;
         code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
-        code << "#include <SourceSink/DataSource.hpp>" << std::endl;
+        code << "#include <Sources/DataSource.hpp>" << std::endl;
         code << "#include <API/UserAPIExpression.hpp>" << std::endl;
         code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;

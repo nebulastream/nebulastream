@@ -8,9 +8,9 @@
 
 #include <Util/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <SourceSink/KafkaSink.hpp>
-#include <SourceSink/KafkaSource.hpp>
-#include <SourceSink/SourceCreator.hpp>
+#include <Sources/KafkaSink.hpp>
+#include <Sources/KafkaSource.hpp>
+#include <Sources/SourceCreator.hpp>
 
 constexpr char* KAFKA_BROKER = "localhost:9092";
 
