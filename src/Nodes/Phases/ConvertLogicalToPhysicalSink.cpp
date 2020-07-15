@@ -1,6 +1,5 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
@@ -36,18 +35,17 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink");
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-        return createTextFileSinkWithSchema(schema, fileSinkDescriptor->getFileName());
-    } else if (sinkDescriptor->instanceOf<CsvSinkDescriptor>()) {
-        auto csvSinkDescriptor = sinkDescriptor->as<CsvSinkDescriptor>();
-        if (csvSinkDescriptor->getFileOutputMode() == CsvSinkDescriptor::APPEND) {
-            NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in append mode");
-            return createCSVFileSinkWithSchema(schema, csvSinkDescriptor->getFileName(), FILE_APPEND);
-        } else if (csvSinkDescriptor->getFileOutputMode() == CsvSinkDescriptor::OVERWRITE) {
-            NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in Overwrite mode");
-            return createCSVFileSinkWithSchema(schema, csvSinkDescriptor->getFileName(), FILE_OVERWRITE);
+        if (fileSinkDescriptor->getSinkFormat() == CSV_FORMAT) {
+            return createCSVFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getFileOutputMode());
+        } else if (fileSinkDescriptor->getSinkFormat() == NES_FORMAT) {
+
+            return createBinaryNESFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getFileOutputMode());
+
+        } else if (fileSinkDescriptor->getSinkFormat() == TEXT_FORMAT) {
+            return createTextFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getFileOutputMode());
         } else {
-            NES_ERROR("ConvertLogicalToPhysicalSink: Unknown File Mode");
-            throw std::invalid_argument("Unknown File Mode");
+            NES_ERROR("createDataSink: unsupported format");
+            throw std::invalid_argument("Unknown File format");
         }
     } else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating network sink");

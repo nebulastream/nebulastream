@@ -6,7 +6,7 @@
 #include <memory>
 #include <string>
 
-#include <SourceSink/DataSink.hpp>
+#include <Sources/DataSink.hpp>
 #include <cppkafka/cppkafka.h>
 
 namespace NES {

@@ -4,5 +4,4 @@
 #define NES_VERSION_MINOR 0
 #define NES_VERSION_PATCH 65
 constexpr char const* NES_VERSION      = "0.0.65-8eed2f47-SNAPSHOT";
->>>>>>> first compileable version
 #endif

@@ -1,6 +1,6 @@
 #ifdef ENABLE_KAFKA_BUILD
 #include <NodeEngine/QueryManager.hpp>
-#include <SourceSink/KafkaSink.hpp>
+#include <Sources/KafkaSink.hpp>
 #include <Util/Logger.hpp>
 #include <sstream>
 #include <string>

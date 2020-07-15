@@ -1,5 +1,5 @@
 #ifdef ENABLE_KAFKA_BUILD
-#include <SourceSink/KafkaSource.hpp>
+#include <Sources/KafkaSource.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
