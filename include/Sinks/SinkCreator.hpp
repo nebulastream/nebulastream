@@ -16,13 +16,6 @@ namespace NES {
 const DataSinkPtr createTestSink();
 
 /**
- * @brief create a print test sink without a schema
- * @param output stream
- * @return a data sink pointer
- */
-const DataSinkPtr createPrintSinkWithoutSchema(std::ostream& out);
-
-/**
  * @brief create a print test sink with a schema
  * @param schema of sink
  * @param output stream
@@ -36,15 +29,7 @@ const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out)
  * @param path to file
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVFileSinkWithSchemaAppend(SchemaPtr schema, const std::string& filePath);
-
-/**
- * @brief create a csv test sink without a schema and overwrite existing file
- * @param schema of sink
- * @param path to file
- * @return a data sink pointer
- */
-const DataSinkPtr createCSVFileSinkWithSchemaOverwrite(SchemaPtr schema, const std::string& filePath);
+const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema, const std::string& filePath, FileOutputMode fMode = FILE_APPEND);
 
 /**
  * @brief create a binary test sink with a schema
@@ -52,8 +37,28 @@ const DataSinkPtr createCSVFileSinkWithSchemaOverwrite(SchemaPtr schema, const s
  * @param path to file
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryFileSinkWithSchema(SchemaPtr schema,
-                                                 const std::string& filePath);
+const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema,
+                                               const std::string& filePath, FileOutputMode fMode = FILE_APPEND);
+
+
+/**
+ * @brief create a binary test sink with a schema into the nes
+ * @param schema of sink
+ * @param path to file
+ * @return a data sink pointer
+ */
+const DataSinkPtr createBinaryNESFileSinkWithSchema(SchemaPtr schema,
+                                               const std::string& filePath, FileOutputMode fMode = FILE_APPEND);
+
+/**
+ * @brief create a JSON test sink with a schema int
+ * @param schema of sink
+ * @param path to file
+ * @return a data sink pointer
+ */
+const DataSinkPtr createJSONFileSinkWithSchema(SchemaPtr schema,
+                                                    const std::string& filePath, FileOutputMode fMode = FILE_APPEND);
+
 
 /**
  * @brief create a ZMQ test sink with a schema

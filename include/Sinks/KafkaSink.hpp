@@ -26,7 +26,7 @@ class KafkaSink : public DataSink {
     /**
      * @brief Get sink type
      */
-    SinkType getType() const override;
+    SinkMedium getType() const override;
     bool writeData(TupleBuffer& input_buffer);
     void setup() override;
     void shutdown() override;

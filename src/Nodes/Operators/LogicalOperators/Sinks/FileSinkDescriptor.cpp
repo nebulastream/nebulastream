@@ -3,15 +3,24 @@
 
 namespace NES {
 
-SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName) {
-    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(fileName));
+SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName, FileOutputMode fileOutputMode, SinkFormat sinkFormat) {
+    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(fileName, fileOutputMode, sinkFormat));
 }
 
-FileSinkDescriptor::FileSinkDescriptor(std::string fileName)
-    : fileName(fileName) {}
+FileSinkDescriptor::FileSinkDescriptor(std::string fileName, FileOutputMode fileOutputMode, SinkFormat sinkFormat)
+    : fileName(fileName), fileOutputMode(fileOutputMode), sinkFormat(sinkFormat) {}
 
 const std::string& FileSinkDescriptor::getFileName() const {
     return fileName;
+}
+
+FileOutputMode FileSinkDescriptor::getFileOutputMode()
+{
+    return fileOutputMode;
+}
+SinkFormat FileSinkDescriptor::getSinkFormat()
+{
+    return sinkFormat;
 }
 
 std::string FileSinkDescriptor::toString() {

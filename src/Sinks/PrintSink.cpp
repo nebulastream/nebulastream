@@ -40,7 +40,7 @@ void PrintSink::shutdown() {
     // currently not required
 }
 
-SinkType PrintSink::getType() const {
+SinkMedium PrintSink::getType() const {
     return PRINT_SINK;
 }
 

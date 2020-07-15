@@ -6,14 +6,29 @@
 namespace NES {
 class TupleBuffer;
 
-enum SinkType {
+enum SinkMedium {
     ZMQ_SINK,
     FILE_SINK,
     KAFKA_SINK,
     PRINT_SINK,
-    YSB_SINK,
-    NETWORK_SINK
+    NETWORK_SINK,
+    UNKOWN_SINK_MEDIUM
 };
+
+enum SinkFormat {
+    JSON_FORMAT,
+    CSV_FORMAT,
+    NES_FORMAT,
+    TEXT_FORMAT,
+    UNKNOWN_FORMAT
+};
+
+enum FileOutputMode {
+    FILE_OVERWRITE,
+    FILE_APPEND,
+    FILE_UNKOWN_OUTPUT_MODE
+};
+
 
 /**
  * @brief Base class for all data sinks in NES
@@ -63,6 +78,8 @@ class DataSink {
      */
     virtual bool writeData(TupleBuffer& input_buffer) = 0;
 
+    virtual bool writeSchema() ;// TODO add = 0
+
     /**
      * @brief debug function for testing to get number of sent buffers
      * @return number of sent buffer
@@ -94,9 +111,18 @@ class DataSink {
    */
     void setSchema(SchemaPtr pSchema);
 
-    virtual SinkType getType() const = 0;
+    /**
+     * @brief method to return the type
+     * @return type
+     */
+    virtual SinkMedium getType() const = 0;
+
+    std::string getFormatAsString();
+    std::string getMediumAsString();
 
   protected:
+    SinkMedium medium;
+    SinkFormat format;
     SchemaPtr schema;
     size_t sentBuffer;
     size_t sentTuples;

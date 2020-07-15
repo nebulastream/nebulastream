@@ -2,12 +2,63 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/DataSink.hpp>
 #include <Util/Logger.hpp>
-#include <boost/serialization/export.hpp>
-#include <cassert>
 #include <iostream>
-#include <memory>
 
 namespace NES {
+
+std::string DataSink::getFormatAsString()
+{
+    if(format == JSON_FORMAT)
+    {
+        return "JSON_FORMAT";
+    }
+    else if(format == CSV_FORMAT)
+    {
+        return "CSV_FORMAT";
+    }
+    else if(format == NES_FORMAT)
+    {
+        return "NES_FORMAT";
+    }
+    else if(format == TEXT_FORMAT)
+    {
+        return "NES_FORMAT";
+    }
+    else
+    {
+        return "UNKNOWN";
+    }
+}
+
+std::string DataSink::getMediumAsString()
+{
+    if(format == ZMQ_SINK)
+    {
+        return "ZMQ_SINK";
+    }
+    else if(format == FILE_SINK)
+    {
+        return "FILE_SINK";
+    }
+    else if(format == KAFKA_SINK)
+    {
+        return "KAFKA_SINK";
+    }
+    else if(format == PRINT_SINK)
+    {
+        return "PRINT_SINK";
+    }
+    else if(format == NETWORK_SINK)
+    {
+        return "NETWORK_SINK";
+    }
+    else
+    {
+        return "UNKNOWN";
+    }
+}
+
+
 
 DataSink::DataSink(SchemaPtr _schema)
     : schema(_schema),
@@ -36,6 +87,12 @@ bool DataSink::writeDataInBatch(
     }
     return true;
 }
+
+bool DataSink::writeSchema()
+{
+    NES_NOT_IMPLEMENTED();
+}
+
 
 size_t DataSink::getNumberOfSentBuffers() {
     return sentBuffer;

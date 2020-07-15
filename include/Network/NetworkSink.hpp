@@ -28,7 +28,7 @@ class NetworkSink : public DataSink {
 
     bool writeData(TupleBuffer& inputBuffer) override;
 
-    SinkType getType() const override;
+    SinkMedium getType() const override;
 
     const std::string toString() const override;
 

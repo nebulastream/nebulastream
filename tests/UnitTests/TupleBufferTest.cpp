@@ -134,16 +134,16 @@ TEST_F(TupleBufferTest, testEndianessOneItem)
     cout << "to string=" << endl;
     std::string result = UtilityFunctions::prettyPrintTupleBuffer(testBuf, s);
 
-    cout << "to printTupleBuffer=" << UtilityFunctions::printTupleBuffer(testBuf, s) << endl;
+    cout << "to printTupleBufferAsCSV=" << UtilityFunctions::printTupleBufferAsCSV(testBuf, s) << endl;
 
     testBuf.revertEndianness(s);
-    cout << "after reverse1=" << UtilityFunctions::printTupleBuffer(testBuf, s) << endl;
+    cout << "after reverse1=" << UtilityFunctions::printTupleBufferAsCSV(testBuf, s) << endl;
 
     testBuf.revertEndianness(s);
-    cout << "after reverse2=" << UtilityFunctions::printTupleBuffer(testBuf, s) << endl;
+    cout << "after reverse2=" << UtilityFunctions::printTupleBufferAsCSV(testBuf, s) << endl;
 
     string expected = "1,1,1,1,1,1,-2,-1,1.100000,1.200000\n";
-    EXPECT_EQ(expected, UtilityFunctions::printTupleBuffer(testBuf, s));
+    EXPECT_EQ(expected, UtilityFunctions::printTupleBufferAsCSV(testBuf, s));
 }
 
 TEST_F(TupleBufferTest, testEndianessTwoItems)
@@ -196,17 +196,17 @@ TEST_F(TupleBufferTest, testEndianessTwoItems)
     cout << "to string=" << endl;
     std::string result = UtilityFunctions::prettyPrintTupleBuffer(testBuf, s);
 
-    cout << "to printTupleBuffer=" << UtilityFunctions::printTupleBuffer(testBuf, s) << endl;
+    cout << "to printTupleBufferAsCSV=" << UtilityFunctions::printTupleBufferAsCSV(testBuf, s) << endl;
 
     testBuf.revertEndianness(s);
-    cout << "after reverse1=" << UtilityFunctions::printTupleBuffer(testBuf, s) << endl;
+    cout << "after reverse1=" << UtilityFunctions::printTupleBufferAsCSV(testBuf, s) << endl;
 
     testBuf.revertEndianness(s);
-    cout << "after reverse2=" << UtilityFunctions::printTupleBuffer(testBuf, s) << endl;
+    cout << "after reverse2=" << UtilityFunctions::printTupleBufferAsCSV(testBuf, s) << endl;
 
     string expected = "0,0,0,1,0,1,0,5,3.000000,0.000000\n1,1,1,2,1,1,1,6,4.100000,1.200000\n2,2,2,3,2,1,2,7,5.200000,"
                       "2.400000\n3,3,3,4,3,1,3,8,6.300000,3.600000\n4,4,4,5,4,1,4,9,7.400000,4.800000\n";
-    EXPECT_EQ(expected, UtilityFunctions::printTupleBuffer(testBuf, s));
+    EXPECT_EQ(expected, UtilityFunctions::printTupleBufferAsCSV(testBuf, s));
 }
 
 } // namespace NES

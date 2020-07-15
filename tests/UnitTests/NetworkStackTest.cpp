@@ -95,8 +95,8 @@ class TestSink : public DataSink {
     ~TestSink() override {
     };
 
-    SinkType getType() const override {
-        return SinkType::PRINT_SINK;
+    SinkMedium getType() const override {
+        return SinkMedium::PRINT_SINK;
     }
 
   public:

@@ -21,9 +21,9 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     virtual ~SinkDescriptor() = default;
 
     /**
-    * @brief Checks if the current node is of type SinkType
+    * @brief Checks if the current node is of type SinkMedium
     * @tparam SinkType
-    * @return bool true if node is of SinkType
+    * @return bool true if node is of SinkMedium
     */
     template<class SinkType>
     bool instanceOf() {

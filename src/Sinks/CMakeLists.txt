@@ -1,11 +1,9 @@
 add_source_nes(
         DataSink.cpp
-        BinarySink.cpp
-        ZmqSink.cpp
-        FileOutputSink.cpp
         PrintSink.cpp
-        CSVSink.cpp
         TestSinks.cpp
+        FileSink.cpp
+        ZmqSink.cpp
 )
 
 if(NES_USE_KAFKA)
