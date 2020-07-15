@@ -1,8 +1,6 @@
 #include <Network/NetworkSink.hpp>
-#include <Sinks/BinarySink.hpp>
-#include <Sinks/CSVSink.hpp>
+#include <Sinks/FileSink.hpp>
 #include <Sinks/DataSink.hpp>
-#include <Sinks/FileOutputSink.hpp>
 #include <Sinks/KafkaSink.hpp>
 #include <Sinks/PrintSink.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -16,36 +14,33 @@ const DataSinkPtr createTestSink() {
     NES_NOT_IMPLEMENTED();
 }
 
-const DataSinkPtr createBinaryFileSinkWithSchema(SchemaPtr schema,
-                                                 const std::string& filePath) {
-    return std::make_shared<BinarySink>(schema, filePath);
+const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema,
+                                                 const std::string& filePath, FileOutputMode fMode) {
+    return std::make_shared<FileSink>(schema, TEXT_FORMAT, filePath, fMode);
 }
 
-const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath) {
-    return std::make_shared<BinarySink>(filePath);
+const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema,
+                                                    const std::string& filePath, FileOutputMode fMode) {
+    return std::make_shared<FileSink>(schema, CSV_FORMAT, filePath, fMode);
 }
 
-const DataSinkPtr createCSVFileSinkWithSchemaAppend(SchemaPtr schema,
-                                                    const std::string& filePath) {
-    return std::make_shared<CSVSink>(schema, filePath, FileOutputSink::FILE_APPEND);
+const DataSinkPtr createBinaryNESFileSinkWithSchema(SchemaPtr schema,
+                                              const std::string& filePath, FileOutputMode fMode) {
+    return std::make_shared<FileSink>(schema, NES_FORMAT, filePath, fMode);
 }
 
-const DataSinkPtr createCSVFileSinkWithSchemaOverwrite(SchemaPtr schema,
-                                                       const std::string& filePath) {
-    return std::make_shared<CSVSink>(schema, filePath, FileOutputSink::FILE_OVERWRITE);
-}
-
-const DataSinkPtr createPrintSinkWithoutSchema(std::ostream& out) {
-    return std::make_shared<PrintSink>(out);
-}
-
-const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out) {
-    return std::make_shared<PrintSink>(schema, out);
+const DataSinkPtr createJSONFileSinkWithSchema(SchemaPtr schema,
+                                               const std::string& filePath, FileOutputMode fMode) {
+    return std::make_shared<FileSink>(schema, JSON_FORMAT, filePath, fMode);
 }
 
 const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
                                 const uint16_t port) {
     return std::make_shared<ZmqSink>(schema, host, port);
+}
+
+const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out) {
+    return std::make_shared<PrintSink>(schema, out);
 }
 
 const DataSinkPtr createNetworkSink(SchemaPtr schema, Network::NetworkManagerPtr networkManager, Network::NodeLocation nodeLocation,

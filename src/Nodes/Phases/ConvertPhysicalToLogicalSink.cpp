@@ -7,7 +7,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <Sinks/DataSink.hpp>
-#include <Sinks/FileOutputSink.hpp>
+#include <Sinks/FileSink.hpp>
 #include <Sinks/KafkaSink.hpp>
 #include <Sinks/ZmqSink.hpp>
 #include <Util/Logger.hpp>
@@ -16,7 +16,7 @@ namespace NES {
 
 SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr dataSink) {
 
-    SinkType sinkType = dataSink->getType();
+    SinkMedium sinkType = dataSink->getType();
 
     switch (sinkType) {
 
@@ -39,18 +39,10 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
         }
 #endif
         case FILE_SINK: {
-
-            FileOutputSinkPtr fileOutputSink = std::dynamic_pointer_cast<FileOutputSink>(dataSink);
-            if (fileOutputSink->getOutputType() == FileOutputSink::BINARY_TYPE) {
-                NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink");
-                return FileSinkDescriptor::create(fileOutputSink->getFilePath());
-            } else {
-                NES_INFO("ConvertPhysicalToLogicalSink: Creating CSV sink");
-                auto outputMode = fileOutputSink->getOutputMode() == FileOutputSink::FILE_APPEND
-                    ? CsvSinkDescriptor::APPEND
-                    : CsvSinkDescriptor::OVERWRITE;
-                return CsvSinkDescriptor::create(fileOutputSink->getFilePath(), outputMode);
-            }
+            FileSinkPtr fileSink = std::dynamic_pointer_cast<FileSink>(dataSink);
+            NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode " << fileSink->getFileOutputModeAsString()
+                                                                                         << " format " << fileSink->getFormatAsString());
+            return FileSinkDescriptor::create(fileSink->getFilePath(), fileSink->getOutputMode(), fileSink->getSinkFormat());
         }
         default: {
             NES_ERROR("ConvertPhysicalToLogicalSink: Unknown Data Sink Type");

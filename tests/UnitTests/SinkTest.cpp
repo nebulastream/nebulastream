@@ -1,7 +1,5 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Sinks/BinarySink.hpp>
-#include <Sinks/CSVSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
@@ -62,7 +60,7 @@ TEST_F(SinkTest, testCSVSink) {
     nodeEngine->start();
 
     auto write_thread = std::thread([&]() {
-      const DataSinkPtr csvSink = createCSVFileSinkWithSchemaOverwrite(test_schema, path_to_csv_file);
+      const DataSinkPtr csvSink = createCSVFileSinkWithSchema(test_schema, path_to_csv_file, FILE_OVERWRITE);
       auto buffer_manager = nodeEngine->getBufferManager();
       auto buffer = bufferManager->getBufferBlocking();
       for (size_t i = 0; i < 10; ++i) {
@@ -83,7 +81,7 @@ TEST_F(SinkTest, testBinSink) {
     nodeEngine->start();
 
     auto write_thread = std::thread([&]() {
-      const DataSinkPtr binSink = createBinaryFileSinkWithSchema(test_schema, path_to_csv_file);
+      const DataSinkPtr binSink = createTextFileSinkWithSchema(test_schema, path_to_csv_file);
       auto buffer_manager = nodeEngine->getBufferManager();
       auto buffer = bufferManager->getBufferBlocking();
       for (size_t i = 0; i < 10; ++i) {

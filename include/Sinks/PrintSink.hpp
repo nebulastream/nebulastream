@@ -64,7 +64,7 @@ class PrintSink : public DataSink {
     /**
      * @brief Get sink type
      */
-    SinkType getType() const override;
+    SinkMedium getType() const override;
 
   private:
     std::ostream& outputStream;

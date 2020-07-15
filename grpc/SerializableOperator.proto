@@ -94,17 +94,22 @@ message SerializableOperator{
   Sink Details contains properties for the sink operator, such as the sink descriptor
   */
   message SinkDetails {
-    message SerializableCsvSinkDescriptor {
+    message SerializableFileSinkDescriptor {
       enum FileOutputMode{
         FILE_OVERWRITE = 0;
         FILE_APPEND = 1;
-      }
+        UNKOWN_SINK_MEDIUM = 2;
+      };
+      enum SinkFormat {
+        JSON_FORMAT = 0;
+        CSV_FORMAT = 1;
+        NES_FORMAT = 2;
+        TEXT_FORMAT = 3;
+        UNKNOWN_FORMAT = 4;
+      };
       string filePath = 1;
       FileOutputMode outputMode = 2;
-    }
-
-    message SerializableFileSinkDescriptor {
-      string filePath = 1;
+      SinkFormat sinkFormat = 3;
     }
 
     message SerializableKafkaSinkDescriptor {

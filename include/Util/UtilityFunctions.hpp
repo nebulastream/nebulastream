@@ -67,7 +67,7 @@ class UtilityFunctions {
     * @brief this method creates a string from the content of a tuple buffer
     * @return string of the buffer content
     */
-    static std::string printTupleBuffer(TupleBuffer& buffer, SchemaPtr schema);
+    static std::string printTupleBufferAsCSV(TupleBuffer& tbuffer, SchemaPtr schema);
 };
 }// namespace NES
 

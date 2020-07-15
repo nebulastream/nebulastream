@@ -36,15 +36,15 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink");
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-        return createBinaryFileSinkWithSchema(schema, fileSinkDescriptor->getFileName());
+        return createTextFileSinkWithSchema(schema, fileSinkDescriptor->getFileName());
     } else if (sinkDescriptor->instanceOf<CsvSinkDescriptor>()) {
         auto csvSinkDescriptor = sinkDescriptor->as<CsvSinkDescriptor>();
         if (csvSinkDescriptor->getFileOutputMode() == CsvSinkDescriptor::APPEND) {
             NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in append mode");
-            return createCSVFileSinkWithSchemaAppend(schema, csvSinkDescriptor->getFileName());
+            return createCSVFileSinkWithSchema(schema, csvSinkDescriptor->getFileName(), FILE_APPEND);
         } else if (csvSinkDescriptor->getFileOutputMode() == CsvSinkDescriptor::OVERWRITE) {
             NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in Overwrite mode");
-            return createCSVFileSinkWithSchemaOverwrite(schema, csvSinkDescriptor->getFileName());
+            return createCSVFileSinkWithSchema(schema, csvSinkDescriptor->getFileName(), FILE_OVERWRITE);
         } else {
             NES_ERROR("ConvertLogicalToPhysicalSink: Unknown File Mode");
             throw std::invalid_argument("Unknown File Mode");

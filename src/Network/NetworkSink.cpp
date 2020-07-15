@@ -42,7 +42,7 @@ void NetworkSink::shutdown() {
     }
 }
 
-SinkType NetworkSink::getType() const { return NETWORK_SINK; }
+SinkMedium NetworkSink::getType() const { return NETWORK_SINK; }
 
 const std::string NetworkSink::toString() const {
     return "NetworkSink: " + nesPartition.toString();

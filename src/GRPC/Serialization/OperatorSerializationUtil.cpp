@@ -364,19 +364,25 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
 
         serializedSinkDescriptor.set_filepath(fileSinkDescriptor->getFileName());
-        sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-    } else if (sinkDescriptor->instanceOf<CsvSinkDescriptor>()) {
-        // serialize file sink descriptor. The file sink has different types which have to be set correctly
-        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor");
-        auto fileSinkDescriptor = sinkDescriptor->as<CsvSinkDescriptor>();
-        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor();
-        auto outputMode = fileSinkDescriptor->getFileOutputMode() == CsvSinkDescriptor::APPEND
-            ? SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor_FileOutputMode_FILE_APPEND
-            : SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor_FileOutputMode_FILE_OVERWRITE;
+        auto outputMode = fileSinkDescriptor->getFileOutputMode() == FILE_OVERWRITE
+            ? SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_OVERWRITE
+            : SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_APPEND;
         serializedSinkDescriptor.set_outputmode(outputMode);
-        serializedSinkDescriptor.set_filepath(fileSinkDescriptor->getFileName());
+
+        auto format = fileSinkDescriptor->getSinkFormat();
+        if (format == JSON_FORMAT) {
+            serializedSinkDescriptor.set_sinkformat(SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_JSON_FORMAT);
+        } else if (format == CSV_FORMAT) {
+            serializedSinkDescriptor.set_sinkformat(SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_CSV_FORMAT);
+        } else if (format == NES_FORMAT) {
+            serializedSinkDescriptor.set_sinkformat(SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_NES_FORMAT);
+        } else if (format == TEXT_FORMAT) {
+            serializedSinkDescriptor.set_sinkformat(SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_TEXT_FORMAT);
+        } else {
+            NES_ERROR("serializeSinkDescriptor: format not supported");
+        }
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-    } else {
+    }else {
         NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - " << sinkDescriptor->toString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }
@@ -415,17 +421,37 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as FileSinkDescriptor");
-        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath());
-    } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor>()) {
-        // de-serialize csv sink descriptor
-        auto serializedCsvDescriptor = SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor();
-        deserializedSinkDescriptor.UnpackTo(&serializedCsvDescriptor);
-        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as CSVSinkDescriptor");
-        auto outputmode = serializedCsvDescriptor.outputmode() == SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor_FileOutputMode_FILE_APPEND
-            ? CsvSinkDescriptor::APPEND
-            : CsvSinkDescriptor::OVERWRITE;
-        return CsvSinkDescriptor::create(serializedCsvDescriptor.filepath(), outputmode);
-    } else {
+        auto outputMode = serializedSinkDescriptor.outputmode() == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_OVERWRITE
+                          ? FILE_OVERWRITE
+                          : FILE_APPEND;
+
+        auto format = serializedSinkDescriptor.sinkformat();
+        auto sinkFormat = UNKNOWN_FORMAT;
+        if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_JSON_FORMAT) {
+            sinkFormat == JSON_FORMAT;
+        } else if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_CSV_FORMAT) {
+            sinkFormat == CSV_FORMAT;
+        } else if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_NES_FORMAT) {
+            sinkFormat = NES_FORMAT;
+        } else if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_TEXT_FORMAT) {
+            sinkFormat = TEXT_FORMAT;
+        } else {
+            NES_ERROR("serializeSinkDescriptor: format not supported");
+        }
+
+        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), outputMode, sinkFormat);
+    }
+//    else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor>()) {
+//        // de-serialize csv sink descriptor
+//        auto serializedCsvDescriptor = SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor();
+//        deserializedSinkDescriptor.UnpackTo(&serializedCsvDescriptor);
+//        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as CSVSinkDescriptor");
+//        auto outputmode = serializedCsvDescriptor.outputmode() == SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor_FileOutputMode_FILE_APPEND
+//            ? CsvSinkDescriptor::APPEND
+//            : CsvSinkDescriptor::OVERWRITE;
+//        return CsvSinkDescriptor::create(serializedCsvDescriptor.filepath(), outputmode);
+//    }
+    else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type " << sinkDetails->DebugString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }

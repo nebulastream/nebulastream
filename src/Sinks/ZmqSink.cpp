@@ -139,7 +139,7 @@ bool ZmqSink::disconnect() {
 int ZmqSink::getPort() {
     return this->port;
 }
-SinkType ZmqSink::getType() const {
+SinkMedium ZmqSink::getType() const {
     return ZMQ_SINK;
 }
 const std::string ZmqSink::getHost() const {

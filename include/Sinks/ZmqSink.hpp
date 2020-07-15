@@ -34,7 +34,7 @@ class ZmqSink : public DataSink {
     /**
      * @brief Get Sink type
      */
-    SinkType getType() const override;
+    SinkMedium getType() const override;
 
   private:
     ZmqSink();

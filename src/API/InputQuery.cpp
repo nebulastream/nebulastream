@@ -245,8 +245,8 @@ InputQuery& InputQuery::window(const NES::WindowTypePtr windowType,
 // output operators
 InputQuery& InputQuery::writeToFile(const std::string& file_name) {
     OperatorPtr op = createSinkOperator(
-        createBinaryFileSinkWithSchema(this->sourceStream->getSchema(),
-                                       file_name));
+        createTextFileSinkWithSchema(this->sourceStream->getSchema(),
+                                     file_name));
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
     addChild(op, root);
@@ -260,11 +260,11 @@ InputQuery& InputQuery::writeToCSVFile(const std::string& file_name, const std::
     if (outputMode == "append") {
         NES_DEBUG("InputQuery::writeToCSVFile: with modus append");
         op = createSinkOperator(
-            createCSVFileSinkWithSchemaAppend(this->sourceStream->getSchema(), file_name));
+            createCSVFileSinkWithSchema(this->sourceStream->getSchema(), file_name, FILE_APPEND));
     } else if (outputMode == "truncate") {
         NES_DEBUG("InputQuery::writeToCSVFile: with modus truncate");
         op = createSinkOperator(
-            createCSVFileSinkWithSchemaOverwrite(this->sourceStream->getSchema(), file_name));
+            createCSVFileSinkWithSchema(this->sourceStream->getSchema(), file_name, FILE_OVERWRITE));
     } else {
         NES_ERROR("writeToCSVFile mode not supported " << outputMode);
     }
