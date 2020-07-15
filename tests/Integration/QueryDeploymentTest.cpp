@@ -37,6 +37,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerMergePrint) {
 
     string query = "Query::from(\"default_logical\").merge(Query::from(\"default_logical\")).sink(PrintSinkDescriptor::create());";
 
+
     string queryId = crd->addQuery(query, "BottomUp");
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
