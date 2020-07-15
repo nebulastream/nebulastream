@@ -20,10 +20,6 @@ Pattern Pattern::from(const std::string sourceStreamName) {
     NES_DEBUG("Pattern: create query for input stream " << sourceStreamName);
     auto sourceOperator = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceOperator);
-    NES_DEBUG("Pattern: add additional ID column to output");
-    //TODO: update with map function supports string values
-   // OperatorNodePtr opMap = createMapLogicalOperatorNode(Attribute("PatternId") = 1);
-   // queryPlan->appendOperator(opMap);
     return Pattern(queryPlan);
 }
 
