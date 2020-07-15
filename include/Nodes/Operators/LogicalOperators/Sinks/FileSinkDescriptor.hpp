@@ -17,8 +17,7 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param filePath the path to the output file
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string filePath, FileOutputMode fileOutputMode = FILE_APPEND, SinkFormat sinkFormat = TEXT_FORMAT
-                                    );
+    static SinkDescriptorPtr create(std::string filePath, FileOutputMode fileOutputMode = FILE_APPEND, SinkFormat sinkFormat = TEXT_FORMAT);
 
     /**
      * @brief Get the file name where the data is to be written
@@ -36,7 +35,6 @@ class FileSinkDescriptor : public SinkDescriptor {
     std::string fileName;
     FileOutputMode fileOutputMode;
     SinkFormat sinkFormat;
-
 };
 
 typedef std::shared_ptr<FileSinkDescriptor> FileSinkDescriptorPtr;

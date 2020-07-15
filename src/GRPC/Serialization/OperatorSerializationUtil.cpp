@@ -426,11 +426,12 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
                           : FILE_APPEND;
 
         auto format = serializedSinkDescriptor.sinkformat();
+
         auto sinkFormat = UNKNOWN_FORMAT;
         if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_JSON_FORMAT) {
-            sinkFormat == JSON_FORMAT;
+            sinkFormat = JSON_FORMAT;
         } else if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_CSV_FORMAT) {
-            sinkFormat == CSV_FORMAT;
+            sinkFormat = CSV_FORMAT;
         } else if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_NES_FORMAT) {
             sinkFormat = NES_FORMAT;
         } else if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_TEXT_FORMAT) {
@@ -441,16 +442,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
 
         return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), outputMode, sinkFormat);
     }
-//    else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor>()) {
-//        // de-serialize csv sink descriptor
-//        auto serializedCsvDescriptor = SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor();
-//        deserializedSinkDescriptor.UnpackTo(&serializedCsvDescriptor);
-//        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as CSVSinkDescriptor");
-//        auto outputmode = serializedCsvDescriptor.outputmode() == SerializableOperator_SinkDetails_SerializableCsvSinkDescriptor_FileOutputMode_FILE_APPEND
-//            ? CsvSinkDescriptor::APPEND
-//            : CsvSinkDescriptor::OVERWRITE;
-//        return CsvSinkDescriptor::create(serializedCsvDescriptor.filepath(), outputmode);
-//    }
     else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type " << sinkDetails->DebugString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");

@@ -346,9 +346,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"exdra\\\").sink(CsvSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"exdra\\\").sink(FileSinkDescriptor::create(\\\"";
     ss << testFile;
-    ss << "\\\", CsvSinkDescriptor::OVERWRITE";
+    ss << "\\\", FileOutputMode::FILE_OVERWRITE, SinkFormat::CSV_FORMAT";
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
     cout << "string submit=" << ss.str();

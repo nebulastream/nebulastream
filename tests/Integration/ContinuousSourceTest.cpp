@@ -53,8 +53,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     remove(filePath.c_str());
 
     //register query
-    std::string queryString = "Query::from(\"exdra\").sink(CsvSinkDescriptor::create(\""
-        + filePath + "\" , CsvSinkDescriptor::OVERWRITE));";
+    std::string queryString = "Query::from(\"exdra\").sink(FileSinkDescriptor::create(\""
+        + filePath + "\" , FileOutputMode::FILE_OVERWRITE, SinkFormat::CSV_FORMAT));";
 
     std::string queryId = crd->addQuery(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
@@ -942,8 +942,8 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     remove(outputFilePath.c_str());
 
     //register query
-    std::string queryString = "Query::from(\"exdra\").sink(CsvSinkDescriptor::create(\""
-        + outputFilePath + "\" , CsvSinkDescriptor::OVERWRITE));";
+    std::string queryString = "Query::from(\"exdra\").sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\" , FileOutputMode::FILE_OVERWRITE, SinkFormat::CSV_FORMAT));";
 
     cout << "deploy query" << endl;
     std::string queryId = crd->addQuery(queryString, "BottomUp");
