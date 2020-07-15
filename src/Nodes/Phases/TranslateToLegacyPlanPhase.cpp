@@ -18,6 +18,7 @@
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
@@ -51,21 +52,12 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         const OperatorPtr operatorPtr = createFilterOperator(legacyPredicate);
         operatorPtr->setOperatorId(operatorNode->getId());
         return operatorPtr;
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-        // Translate map operator node.
-        auto mapOperatorNode = operatorNode->as<MapLogicalOperatorNode>();
-        auto mapExpression = mapOperatorNode->getMapExpression();
-        // Translate to the legacy representation
-        auto legacyFieldAccess = transformExpression(mapExpression->getField());
-        auto legacyAssignment = transformExpression(mapExpression->getAssignment());
-        // Cast to the proper type
-        auto legacyPredicate = std::dynamic_pointer_cast<UserAPIExpression>(legacyAssignment);
-        auto legacyField = std::dynamic_pointer_cast<PredicateItem>(legacyFieldAccess);
-        if (legacyPredicate == nullptr || legacyField == nullptr) {
-            NES_FATAL_ERROR("TranslateToLegacyPhase: Error during translating map expression");
-        }
-        // Create legacy map operator
-        const OperatorPtr operatorPtr = createMapOperator(legacyField->getAttributeField(), legacyPredicate);
+    } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
+        // Translate merge operator node.
+        auto mergeOperatorNode = operatorNode->as<MergeLogicalOperatorNode>();
+        // Create legacy merge operator
+        const SchemaPtr schema = mergeOperatorNode->getOutputSchema();
+        const OperatorPtr operatorPtr = createMergeOperator(schema);
         operatorPtr->setOperatorId(operatorNode->getId());
         return operatorPtr;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {

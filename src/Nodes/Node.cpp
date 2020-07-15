@@ -318,9 +318,15 @@ bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::N
     return find(nodes, nodeToFind) != nullptr;
 }
 
+/**
+ * Note that, operators with same description are not necessarily the same object.
+ * @param nodes
+ * @param nodeToFind
+ * @return
+ */
 NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr nodeToFind) {
     for (auto&& currentNode : nodes) {
-        if (nodeToFind->equal(currentNode)) {
+        if (nodeToFind.get() == currentNode.get() && nodeToFind->equal(currentNode)) {
             return currentNode;
         }
     }
