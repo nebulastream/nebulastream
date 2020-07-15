@@ -6,16 +6,12 @@
 #include <vector>
 
 namespace NES{
-class InvalidQueryStatusException : virtual public std::runtime_error {
+class InvalidQueryStatusException : public std::exception {
   public:
-
     explicit InvalidQueryStatusException(std::vector<QueryStatus> expectedStatus, QueryStatus actualStatus);
-
     const char* what() const throw();
-
   private:
-    std::vector<QueryStatus> expectedStatuses;
-    QueryStatus actualStatus;
+    std::string message;
 };
 }
 #endif//NES_INVALIDQUERYSTATUSEXCEPTION_HPP

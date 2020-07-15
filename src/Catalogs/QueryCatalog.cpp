@@ -1,6 +1,6 @@
 #include <Catalogs/QueryCatalog.hpp>
-#include <Exceptions/ExecutionPlanRollbackException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
@@ -18,7 +18,7 @@ std::map<std::string, std::string> QueryCatalog::getQueriesWithStatus(std::strin
     NES_INFO("QueryCatalog : fetching all queries with status " << status);
     std::transform(status.begin(), status.end(), status.begin(), ::toupper);
     if (stringToQueryStatusMap.find(status) == stringToQueryStatusMap.end()) {
-        throw std::invalid_argument("Unknown query status " + status);
+        throw InvalidArgumentException("status", status);
     }
     QueryStatus queryStatus = stringToQueryStatusMap[status];
     std::map<std::string, QueryCatalogEntryPtr> queries = getQueries(queryStatus);
@@ -53,7 +53,7 @@ std::vector<QueryCatalogEntry> QueryCatalog::getQueriesToSchedule() {
 std::map<std::string, std::string> QueryCatalog::getAllQueries() {
 
     NES_INFO("QueryCatalog : get all queries");
-    std::map<std::string, QueryCatalogEntryPtr> registeredQueries = getRegisteredQueries();
+    std::map<std::string, QueryCatalogEntryPtr> registeredQueries = getAllQueryCatalogEntries();
     std::map<std::string, std::string> result;
     for (auto [key, value] : registeredQueries) {
         result[key] = value->getQueryString();
@@ -122,7 +122,7 @@ bool QueryCatalog::isQueryRunning(std::string queryId) {
     return queries[queryId]->getQueryStatus() == QueryStatus::Running;
 }
 
-std::map<std::string, QueryCatalogEntryPtr> QueryCatalog::getRegisteredQueries() {
+std::map<std::string, QueryCatalogEntryPtr> QueryCatalog::getAllQueryCatalogEntries() {
     NES_DEBUG("QueryCatalog: return registered queries=" << printQueries());
     return queries;
 }
