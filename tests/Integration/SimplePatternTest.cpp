@@ -1,10 +1,10 @@
-#include <iostream>
-#include <Util/Logger.hpp>
-#include <gtest/gtest.h>
-#include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
+#include <gtest/gtest.h>
+#include <iostream>
 
 //used tests: QueryCatalogTest, QueryTest
 namespace fs = std::filesystem;
@@ -38,8 +38,7 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
     EXPECT_TRUE(retStart1);
     NES_DEBUG("worker1 started successfully");
 
-    std::string query =
-        "Pattern::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
+    std::string query = "Pattern::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
 
     std::string queryId = crd->addQuery(query, "BottomUp");
 
@@ -57,7 +56,7 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
     NES_DEBUG("test finished");
-    }
+}
 
 /* 2.Test
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
@@ -101,7 +100,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 
     //register query
     std::string query = "Pattern::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\""
-                        + outputFilePath + "\")); ";
+        + outputFilePath + "\")); ";
 
     std::string queryId = crd->addQuery(query, "BottomUp");
     EXPECT_NE(queryId, "");
@@ -126,7 +125,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
                         (std::istreambuf_iterator<char>()));
 
     NES_DEBUG("content=" << content);
-    NES_DEBUG("expContent=" << expectedContent );
+    NES_DEBUG("expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -136,4 +135,4 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     EXPECT_TRUE(retStopCord);
 }
 
-}
+}// namespace NES

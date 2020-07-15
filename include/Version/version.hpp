@@ -3,5 +3,5 @@
 #define NES_VERSION_MAJOR 0
 #define NES_VERSION_MINOR 0
 #define NES_VERSION_PATCH 65
-constexpr char const* NES_VERSION      = "0.0.65-e143201a-SNAPSHOT";
+constexpr char const* NES_VERSION      = "0.0.65-f76b35da-SNAPSHOT";
 #endif

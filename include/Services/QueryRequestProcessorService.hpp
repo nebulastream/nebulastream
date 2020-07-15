@@ -1,5 +1,5 @@
-#ifndef NES_QUERYREQUESTPROCESSINGSERVICE_HPP
-#define NES_QUERYREQUESTPROCESSINGSERVICE_HPP
+#ifndef NES_QUERYREQUESTPROCESSORSERVICE_HPP
+#define NES_QUERYREQUESTPROCESSORSERVICE_HPP
 
 #include <memory>
 
@@ -10,6 +10,12 @@ typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
 class TypeInferencePhase;
 typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
+
+class QueryRewritePhase;
+typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
+
+class QueryPlacementPhase;
+typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
 
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
@@ -26,17 +32,24 @@ typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 class QueryDeployer;
 typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
 
-class QueryRequestProcessingService {
+class QueryRequestProcessorService {
   public:
-    explicit QueryRequestProcessingService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog,
-                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer);
-    int operator()();
+    explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog,
+                                          StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer);
+
+    void start();
 
     /**
      * @brief Indicate if query processor service is running
      * @return true if query processor is running
      */
     bool isQueryProcessorRunning() const;
+
+    /**
+     * @brief Stop query request processor service
+     * @return true if successful
+     */
+    bool stopQueryRequestProcessor() const;
 
   private:
     /**
@@ -91,4 +104,4 @@ class QueryRequestProcessingService {
     QueryDeployerPtr queryDeployer;
 };
 }// namespace NES
-#endif//NES_QUERYREQUESTPROCESSINGSERVICE_HPP
+#endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP

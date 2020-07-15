@@ -1,4 +1,4 @@
 add_source_nes(
         QueryService.cpp
-        QueryRequestProcessingService.cpp
+        QueryRequestProcessorService.cpp
 )
