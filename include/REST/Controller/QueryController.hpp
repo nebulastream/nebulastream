@@ -24,17 +24,12 @@ typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 class TopologyManager;
 typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
 
-class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
-
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class QueryController : public BaseController {
   public:
-
-    explicit QueryController(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager,
-                             StreamCatalogPtr streamCatalog, GlobalExecutionPlanPtr globalExecutionPlan);
+    explicit QueryController(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~QueryController() = default;
 
@@ -63,7 +58,6 @@ class QueryController : public BaseController {
     QueryCatalogPtr queryCatalog;
     TopologyManagerPtr topologyManager;
     QueryServicePtr queryService;
-    StreamCatalogPtr streamCatalog;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 

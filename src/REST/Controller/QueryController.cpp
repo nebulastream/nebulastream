@@ -17,9 +17,8 @@ using namespace http;
 
 namespace NES {
 
-QueryController::QueryController(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog,
-                                 GlobalExecutionPlanPtr globalExecutionPlan) : queryCatalog(queryCatalog), topologyManager(topologyManager),
-                                                                               streamCatalog(streamCatalog), globalExecutionPlan(globalExecutionPlan) {
+QueryController::QueryController(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan)
+    : queryCatalog(queryCatalog), topologyManager(topologyManager), globalExecutionPlan(globalExecutionPlan) {
     queryService = std::make_shared<QueryService>(queryCatalog);
 }
 

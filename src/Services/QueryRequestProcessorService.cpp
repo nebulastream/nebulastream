@@ -13,14 +13,15 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Services/QueryRequestProcessingService.hpp>
+#include <Services/QueryRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-QueryRequestProcessingService::QueryRequestProcessingService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog,
-                                                             StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer)
+QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+                                                           QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
+                                                           QueryDeployerPtr queryDeployer)
     : globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog), workerRPCClient(workerRpcClient), queryDeployer(queryDeployer) {
 
     NES_INFO("QueryProcessorService()");
@@ -29,12 +30,12 @@ QueryRequestProcessingService::QueryRequestProcessingService(GlobalExecutionPlan
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog);
 }
 
-int QueryRequestProcessingService::operator()() {
+void QueryRequestProcessorService::start() {
 
     try {
-        while (true) {
+        while (queryProcessorRunning) {
             const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
-            if (queryCatalogEntryBatch.empty()) {
+            if (!queryCatalogEntryBatch.empty()) {
                 //process the queries using query-at-a-time model
                 for (auto queryCatalogEntry : queryCatalogEntryBatch) {
 
@@ -102,7 +103,7 @@ int QueryRequestProcessingService::operator()() {
     }
 }
 
-bool QueryRequestProcessingService::deployAndStartQuery(std::string queryId) {
+bool QueryRequestProcessorService::deployAndStartQuery(std::string queryId) {
     NES_DEBUG("QueryService: deploy the query");
 
     if (!queryCatalog->queryExists(queryId)) {
@@ -135,7 +136,7 @@ bool QueryRequestProcessingService::deployAndStartQuery(std::string queryId) {
     return true;
 }
 
-bool QueryRequestProcessingService::stopAndUndeployQuery(const std::string queryId) {
+bool QueryRequestProcessorService::stopAndUndeployQuery(const std::string queryId) {
     NES_DEBUG("QueryService::stopAndUndeployQuery : queryId=" << queryId);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -151,7 +152,7 @@ bool QueryRequestProcessingService::stopAndUndeployQuery(const std::string query
         NES_DEBUG("QueryService:removeQuery: stop query successful");
     } else {
         NES_ERROR("QueryService:removeQuery: stop query failed");
-        throw QueryUndeploymentException("Failed to stop the query "+ queryId);
+        throw QueryUndeploymentException("Failed to stop the query " + queryId);
     }
 
     NES_DEBUG("QueryService:removeQuery: undeploy query");
@@ -160,13 +161,13 @@ bool QueryRequestProcessingService::stopAndUndeployQuery(const std::string query
         NES_DEBUG("QueryService:removeQuery: undeploy query successful");
     } else {
         NES_ERROR("QueryService:removeQuery: undeploy query failed");
-        throw QueryUndeploymentException("Failed to undeploy the query "+ queryId);
+        throw QueryUndeploymentException("Failed to undeploy the query " + queryId);
     }
 
     return globalExecutionPlan->removeQuerySubPlans(queryId);
 }
 
-bool QueryRequestProcessingService::deployQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryRequestProcessorService::deployQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
 
     NES_DEBUG("QueryService::deployQuery queryId=" << queryId);
     NES_DEBUG("QueryService: preparing for Deployment by adding port information");
@@ -198,7 +199,7 @@ bool QueryRequestProcessingService::deployQuery(std::string queryId, std::vector
     return true;
 }
 
-bool QueryRequestProcessingService::startQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryRequestProcessorService::startQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
     NES_DEBUG("NesCoordinator::startQuery queryId=" << queryId);
 
     for (ExecutionNodePtr executionNode : executionNodes) {
@@ -215,7 +216,7 @@ bool QueryRequestProcessingService::startQuery(std::string queryId, std::vector<
     return true;
 }
 
-bool QueryRequestProcessingService::stopQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryRequestProcessorService::stopQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
 
     NES_DEBUG("QueryService:stopQuery queryId=" << queryId);
 
@@ -233,7 +234,7 @@ bool QueryRequestProcessingService::stopQuery(std::string queryId, std::vector<E
     return true;
 }
 
-bool QueryRequestProcessingService::undeployQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryRequestProcessorService::undeployQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
 
     NES_DEBUG("NesCoordinator::undeployQuery queryId=" << queryId);
     for (ExecutionNodePtr executionNode : executionNodes) {
@@ -250,7 +251,7 @@ bool QueryRequestProcessingService::undeployQuery(std::string queryId, std::vect
     return true;
 }
 
-bool QueryRequestProcessingService::isQueryProcessorRunning() const {
+bool QueryRequestProcessorService::isQueryProcessorRunning() const {
     return queryProcessorRunning;
 }
 

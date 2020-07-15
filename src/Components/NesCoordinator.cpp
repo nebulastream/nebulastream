@@ -3,15 +3,16 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Deployer/QueryDeployer.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <REST/RestServer.hpp>
 #include <REST/usr_interrupt_handler.hpp>
+#include <Services/QueryRequestProcessorService.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
@@ -40,6 +41,11 @@ NesCoordinator::NesCoordinator() {
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
+    WorkerRPCClientPtr workerRpcClient = std::make_shared<WorkerRPCClient>();
+    QueryDeployerPtr queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, globalExecutionPlan);
+
+    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topologyManager->getNESTopologyPlan(),
+                                                                                  queryCatalog, streamCatalog, workerRpcClient, queryDeployer);
 }
 
 NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort)
@@ -54,6 +60,10 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
+    WorkerRPCClientPtr workerRpcClient = std::make_shared<WorkerRPCClient>();
+    QueryDeployerPtr queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, globalExecutionPlan);
+    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topologyManager->getNESTopologyPlan(),
+                                                                                  queryCatalog, streamCatalog, workerRpcClient, queryDeployer);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -63,17 +73,6 @@ NesCoordinator::~NesCoordinator() {
     streamCatalog->reset();
     queryCatalog->clearQueries();
     topologyManager->resetNESTopologyPlan();
-}
-
-/**
- * @brief this method starts the rest server and then blocks
- */
-void startRestServer(std::shared_ptr<RestServer> restServer, std::string restHost, uint16_t restPort,
-                     NesCoordinatorPtr coordinator, std::promise<bool>& prom) {
-
-    prom.set_value(true);
-    restServer->start();//this call is blocking
-    NES_DEBUG("NesCoordinator: startRestServer thread terminates");
 }
 
 /**
@@ -104,6 +103,12 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     std::string address = serverIp + ":" + ::to_string(rpcPort);
     NES_DEBUG("startCoordinatorRPCServer for address=" << address);
 
+    queryRequestProcessorThread = std::make_shared<std::thread>(([&]() {
+        NES_INFO("NesCoordinator: started queryRequestProcessor");
+        queryRequestProcessorService->start();
+        NES_WARNING("NesCoordinator: finished queryRequestProcessor");
+    }));
+
     //Start RPC server that listen to calls form the clients
     std::promise<bool> promRPC;//promise to make sure we wait until the server is started
     rpcThread = std::make_shared<std::thread>(([&]() {
@@ -114,25 +119,19 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
 
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    worker = std::make_shared<NesWorker>(serverIp,
-                                         std::to_string(rpcPort),
-                                         serverIp,
-                                         std::to_string(rpcPort + 1),
-                                         NESNodeType::Worker);
+    worker = std::make_shared<NesWorker>(serverIp, std::to_string(rpcPort), serverIp,
+                                         std::to_string(rpcPort + 1), NESNodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
-    //Start rest that accepts quiers form the outsides
+    //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
-    std::promise<bool> promRest;
-    std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(),
-                                                                          queryCatalog, streamCatalog, topologyManager, globalExecutionPlan);
-
+    std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(), queryCatalog,
+                                                                          streamCatalog, topologyManager, globalExecutionPlan);
     restThread = std::make_shared<std::thread>(([&]() {
-        startRestServer(restServer, serverIp, restPort, this->shared_from_this(), promRest);
+        restServer->start();//this call is blocking
+        NES_DEBUG("NesCoordinator: startRestServer thread terminates");
     }));
-
-    promRest.get_future().get();//promise to make sure we wait until the server is started
-    NES_DEBUG("NESWorker::startCoordinatorRPCServer: ready");
+    NES_DEBUG("NESWorker::startCoordinatorRESTServer: ready");
 
     stopped = false;
     if (blocking) {//blocking is for the starter to wait here for user to send query
@@ -140,8 +139,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
         restThread->join();
         NES_DEBUG("NesCoordinator Required stopping");
     } else {//non-blocking is used for tests to continue execution
-        NES_DEBUG(
-            "NesCoordinator started, return without blocking on port " << rpcPort);
+        NES_DEBUG("NesCoordinator started, return without blocking on port " << rpcPort);
         return rpcPort;
     }
     NES_DEBUG("NesCoordinator startCoordinator succeed");
@@ -174,6 +172,15 @@ bool NesCoordinator::stopCoordinator(bool force) {
             rpcThread->join();
         } else {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
+            throw Exception("Error while stopping thread->join");
+        }
+
+        queryRequestProcessorService->stopQueryRequestProcessor();
+        if (queryRequestProcessorThread->joinable()) {
+            NES_DEBUG("NesCoordinator: join rpcThread");
+            queryRequestProcessorThread->join();
+        } else {
+            NES_ERROR("NesCoordinator: query processor thread not joinable");
             throw Exception("Error while stopping thread->join");
         }
 

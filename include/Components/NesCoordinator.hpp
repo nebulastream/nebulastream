@@ -35,6 +35,9 @@ typedef std::shared_ptr<NesWorker> NesWorkerPtr;
 class QueryStatistics;
 typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 
+class QueryRequestProcessorService;
+typedef std::shared_ptr<QueryRequestProcessorService> QueryRequestProcessorServicePtr;
+
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
     /**
@@ -97,6 +100,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     uint16_t rpcPort;
     std::shared_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
+    std::shared_ptr<std::thread> queryRequestProcessorThread;
     NesWorkerPtr worker;
     CoordinatorEnginePtr coordinatorEngine;
     GlobalExecutionPlanPtr globalExecutionPlan;
@@ -106,6 +110,8 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;
     std::atomic<bool> stopped;
+    QueryRequestProcessorServicePtr queryRequestProcessorService;
+
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 
