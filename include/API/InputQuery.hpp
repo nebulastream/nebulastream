@@ -6,7 +6,7 @@
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
 
-#include <SourceSink/DataSource.hpp>
+#include <Sources/DataSource.hpp>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP

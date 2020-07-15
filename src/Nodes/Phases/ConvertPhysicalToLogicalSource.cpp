@@ -7,13 +7,13 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Nodes/Phases/ConvertPhysicalToLogicalSource.hpp>
-#include <SourceSink/BinarySource.hpp>
-#include <SourceSink/CSVSource.hpp>
-#include <SourceSink/DataSource.hpp>
-#include <SourceSink/DefaultSource.hpp>
-#include <SourceSink/KafkaSource.hpp>
-#include <SourceSink/SenseSource.hpp>
-#include <SourceSink/ZmqSource.hpp>
+#include <Sources/BinarySource.hpp>
+#include <Sources/CSVSource.hpp>
+#include <Sources/DataSource.hpp>
+#include <Sources/DefaultSource.hpp>
+#include <Sources/KafkaSource.hpp>
+#include <Sources/SenseSource.hpp>
+#include <Sources/ZmqSource.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

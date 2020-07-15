@@ -12,7 +12,7 @@
 #include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
-#include <SourceSink/DataSink.hpp>
+#include <Sinks/DataSink.hpp>
 namespace NES {
 
 class AttributeReference;

@@ -4,7 +4,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
-#include <SourceSink/GeneratorSource.hpp>
+#include <Sources/GeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>

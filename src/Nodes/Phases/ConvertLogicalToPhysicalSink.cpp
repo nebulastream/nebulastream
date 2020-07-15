@@ -8,7 +8,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
-#include <SourceSink/SinkCreator.hpp>
+#include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

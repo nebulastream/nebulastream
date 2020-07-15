@@ -2,7 +2,7 @@
 #define NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SOURCES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <SourceSink/DataSink.hpp>
+#include <Sinks/DataSink.hpp>
 
 namespace NES {
 

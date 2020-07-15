@@ -6,7 +6,7 @@
 #include <Operators/Impl/SinkOperator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <SourceSink/DataSink.hpp>
+#include <Sinks/DataSink.hpp>
 
 namespace NES {
 

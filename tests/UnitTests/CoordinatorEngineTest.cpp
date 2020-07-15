@@ -1,6 +1,6 @@
+#include <Sinks/PrintSink.hpp>
+#include <Sources/ZmqSource.hpp>
 #include <gtest/gtest.h>
-#include <SourceSink/PrintSink.hpp>
-#include <SourceSink/ZmqSource.hpp>
 
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>

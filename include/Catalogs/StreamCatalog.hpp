@@ -3,7 +3,7 @@
 
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <Sources/DataSource.hpp>
 #include <deque>
 #include <map>
 #include <string>

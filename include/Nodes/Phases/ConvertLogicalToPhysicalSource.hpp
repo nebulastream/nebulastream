@@ -2,7 +2,7 @@
 #define NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SINKS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_
 
 #include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES {
 

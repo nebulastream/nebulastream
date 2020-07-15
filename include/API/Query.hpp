@@ -9,7 +9,7 @@
 #include <API/Stream.hpp>
 
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <Sources/DataSource.hpp>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP

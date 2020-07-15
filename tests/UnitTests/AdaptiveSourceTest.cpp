@@ -1,6 +1,6 @@
-#include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <SourceSink/AdaptiveSource.hpp>
+#include <NodeEngine/QueryManager.hpp>
+#include <Sources/AdaptiveSource.hpp>
 
 #include <gtest/gtest.h>
 #include <boost/algorithm/string.hpp>

@@ -4,7 +4,7 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/OutputChannel.hpp>
-#include <SourceSink/DataSink.hpp>
+#include <Sinks/DataSink.hpp>
 
 #include <boost/thread/tss.hpp>
 #include <string>

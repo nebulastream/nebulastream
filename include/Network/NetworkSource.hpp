@@ -3,7 +3,7 @@
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkManager.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES {
 namespace Network {

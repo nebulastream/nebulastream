@@ -1,8 +1,8 @@
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
 #include <QueryCompiler/PipelineStage.hpp>
-#include <SourceSink/DataSink.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <Sinks/DataSink.hpp>
+#include <Sources/DataSource.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <map>
 

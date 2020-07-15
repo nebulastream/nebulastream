@@ -1,15 +1,15 @@
 #include <cassert>
 #include <iostream>
 
-#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
+#include <Sinks/SinkCreator.hpp>
+#include <Sources/DefaultSource.hpp>
+#include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>
-#include <SourceSink/SourceCreator.hpp>
-#include <SourceSink/SinkCreator.hpp>
-#include <SourceSink/DefaultSource.hpp>
-#include <future>
 #include <Util/TestUtils.hpp>
+#include <future>
+#include <gtest/gtest.h>
 
 using namespace std;
 

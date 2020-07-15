@@ -6,10 +6,10 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Phases/ConvertPhysicalToLogicalSink.hpp>
-#include <SourceSink/DataSink.hpp>
-#include <SourceSink/FileOutputSink.hpp>
-#include <SourceSink/KafkaSink.hpp>
-#include <SourceSink/ZmqSink.hpp>
+#include <Sinks/DataSink.hpp>
+#include <Sinks/FileOutputSink.hpp>
+#include <Sinks/KafkaSink.hpp>
+#include <Sinks/ZmqSink.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

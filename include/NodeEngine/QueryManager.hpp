@@ -14,7 +14,7 @@
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 
 #include <NodeEngine/Task.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <Sources/DataSource.hpp>
 #include <Windows/WindowHandler.hpp>
 
 #include <NodeEngine/QueryStatistics.hpp>
