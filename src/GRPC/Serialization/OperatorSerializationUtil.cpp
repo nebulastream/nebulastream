@@ -55,7 +55,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         auto mergeDetails = SerializableOperator_MergeDetails();
         auto mergeOperator = operatorNode->as<MergeLogicalOperatorNode>();
         serializedOperator->mutable_details()->PackFrom(mergeDetails);
-    }else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         // serialize map operator
         NES_TRACE("OperatorSerializationUtil:: serialize to MapLogicalOperatorNode");
         auto mapDetails = SerializableOperator_MapDetails();
@@ -113,6 +113,13 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         // de-serialize filter expression
         auto filterExpression = ExpressionSerializationUtil::deserializeExpression(serializedFilterOperator.mutable_predicate());
         operatorNode = createFilterLogicalOperatorNode(filterExpression);
+    } else if (details.Is<SerializableOperator_MergeDetails>()) {
+        // de-serialize merge operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to MapLogicalOperator");
+        auto serializedMergeDescriptor = SerializableOperator_MergeDetails();
+        details.UnpackTo(&serializedMergeDescriptor);
+        // de-serialize merge descriptor
+        operatorNode = createMergeLogicalOperatorNode();
     } else if (details.Is<SerializableOperator_MapDetails>()) {
         // de-serialize map operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to MapLogicalOperator");
