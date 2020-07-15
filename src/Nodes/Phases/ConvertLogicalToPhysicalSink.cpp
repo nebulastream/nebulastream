@@ -33,14 +33,13 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
                                          kafkaSinkDescriptor->getTimeout());
 #endif
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink");
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink for format=" << fileSinkDescriptor->getSinkFormat());
+
         if (fileSinkDescriptor->getSinkFormat() == CSV_FORMAT) {
             return createCSVFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getFileOutputMode());
         } else if (fileSinkDescriptor->getSinkFormat() == NES_FORMAT) {
-
             return createBinaryNESFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getFileOutputMode());
-
         } else if (fileSinkDescriptor->getSinkFormat() == TEXT_FORMAT) {
             return createTextFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getFileOutputMode());
         } else {

@@ -233,6 +233,34 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     }
 
     {
+        auto sink = FileSinkDescriptor::create("test", FILE_APPEND, TEXT_FORMAT);
+        auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto sink = FileSinkDescriptor::create("test", FILE_OVERWRITE, TEXT_FORMAT);
+        auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto sink = FileSinkDescriptor::create("test", FILE_OVERWRITE, NES_FORMAT);
+        auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        auto sink = FileSinkDescriptor::create("test", FILE_OVERWRITE, CSV_FORMAT);
+        auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+    }
+
+    {
         Network::NodeLocation nodeLocation{1, "localhost", 31337};
         Network::NesPartition nesPartition{1, 22, 33, 44};
         auto sink = Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
