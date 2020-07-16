@@ -7,6 +7,7 @@
 #include "REST/Controller/QueryController.hpp"
 #include "REST/Controller/StreamCatalogController.hpp"
 #include <REST/Controller/QueryCatalogController.hpp>
+#include <REST/Controller/ConnectivityController.hpp>
 #include <cpprest/details/http_server.h>
 #include <cpprest/http_listener.h>
 #include <pplx/pplxtasks.h>
@@ -39,6 +40,8 @@ class RestEngine : public BaseController {
 
     StreamCatalogPtr streamCatalog;
     StreamCatalogControllerPtr streamCatalogController;
+
+    ConnectivityControllerPtr connectivityController;
 
   public:
     RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog,
