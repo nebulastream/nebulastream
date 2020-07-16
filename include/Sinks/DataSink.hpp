@@ -78,8 +78,6 @@ class DataSink {
      */
     virtual bool writeData(TupleBuffer& input_buffer) = 0;
 
-    virtual bool writeSchema() ;// TODO add = 0
-
     /**
      * @brief debug function for testing to get number of sent buffers
      * @return number of sent buffer

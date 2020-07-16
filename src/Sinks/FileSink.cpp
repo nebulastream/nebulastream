@@ -9,11 +9,15 @@
 #include <sstream>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <string>
+#include "SerializableOperator.pb.h"
+
 namespace NES {
 
 FileSink::FileSink()
     : DataSink() {
     fileOutputMode = FILE_APPEND;
+    schemaWritten = false;
+    medium = FILE_SINK;
 }
 
 FileSink::FileSink(SchemaPtr schema, SinkFormat format, const std::string filePath,
@@ -22,6 +26,8 @@ FileSink::FileSink(SchemaPtr schema, SinkFormat format, const std::string filePa
     this->filePath = filePath;
     this->fileOutputMode = mode;
     this->format = format;
+    schemaWritten = false;
+    medium = FILE_SINK;
 }
 
 const std::string FileSink::toString() const {
@@ -49,25 +55,29 @@ bool FileSink::writeSchema() {
     if (format == JSON_FORMAT) {
         NES_NOT_IMPLEMENTED();
     } else if (format == CSV_FORMAT) {
-        outputFile.open(filePath, std::ofstream::out | std::ofstream::trunc);
+        outputFile.open(filePath, std::ofstream::out | std::ofstream::app);
 
         std::stringstream ss;
         for (auto& f : schema->fields) {
             ss << f->toString() << ",";
         }
-        outputFile << ss.str();
+        outputFile << ss.str() << std::endl;
+        NES_DEBUG("FileSink::writeSchema: schema is =" << ss.str());
         outputFile.close();
     } else if (format == NES_FORMAT) {
         size_t idx = filePath.rfind(".");
-        std::string shrinkedPath = filePath.substr(idx+1);
-        std::string schemaFile = shrinkedPath + ".schema";
-        outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
-        SerializableSchema* serializedSchema;
+        std::string shrinkedPath = filePath.substr(0, idx+1);
+        std::string schemaFile = shrinkedPath + "schema";
+        outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::app);
+        SerializableSchema* serializedSchema = new SerializableSchema();
         SerializableSchema* serial = SchemaSerializationUtil::serializeSchema(schema, serializedSchema);
         outputFile.write(reinterpret_cast<char*>(serial), schema->getSchemaSizeInBytes());
     } else {
         NES_ERROR("FileSink::writeSchema: format not supported");
     }
+
+    schemaWritten = true;
+    outputFile.close();
 }
 
 bool FileSink::writeData(TupleBuffer& inputBuffer) {
@@ -75,18 +85,31 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
         NES_ERROR("FileSink::writeData input buffer invalid");
         return false;
     }
+    if(!schemaWritten)
+    {
+        NES_DEBUG("FileSink::writeData: write schema");
+        writeSchema();
+    }
+    else
+    {
+        NES_DEBUG("FileSink::writeData: schema already written");
+    }
 
     std::ofstream outputFile;
     if (fileOutputMode == FILE_APPEND) {
         if (format != NES_FORMAT) {
+            NES_DEBUG("file appending in path=" << filePath);
             outputFile.open(filePath, std::ofstream::out | std::ofstream::app);
         } else {
-            outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+            NES_DEBUG("file binary appending in path=" << filePath);
+            outputFile.open(filePath, std::ofstream::binary | std::ios::out | std::ofstream::app);
         }
     } else if (fileOutputMode == FILE_OVERWRITE) {
         if (format != NES_FORMAT) {
-            outputFile.open(filePath, std::ofstream::out | std::ofstream::trunc);
+            NES_DEBUG("file overwriting in path=" << filePath);
+            outputFile.open(filePath, std::ofstream::out  | std::ios::out | std::ofstream::trunc);
         } else {
+            NES_DEBUG("file binary overwriting in path=" << filePath);
             outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
         }
     } else {
@@ -102,7 +125,7 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
         std::string bufferContent = UtilityFunctions::printTupleBufferAsCSV(inputBuffer, schema);
         outputFile << bufferContent;
     } else if (format == NES_FORMAT) {
-        outputFile.write(reinterpret_cast<char*>(inputBuffer.getBuffer()), sizeof(inputBuffer.getBufferSize()));
+        outputFile.write(reinterpret_cast<char*>(inputBuffer.getBuffer()), inputBuffer.getBufferSize());
     } else if (format == TEXT_FORMAT) {
         std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, schema);
         outputFile << bufferContent;
