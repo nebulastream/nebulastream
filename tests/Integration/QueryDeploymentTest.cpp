@@ -25,7 +25,7 @@ class QueryDeploymentTest : public testing::Test {
 /**
  * TODO: this test requires issue 750 to be addressed. Currently, make it disabled.
  */
-TEST_F(QueryDeploymentTest, DISABLE_testDeployOneWorkerMergePrint) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerMergePrint) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
