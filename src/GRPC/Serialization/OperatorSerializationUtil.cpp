@@ -115,7 +115,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         operatorNode = createFilterLogicalOperatorNode(filterExpression);
     } else if (details.Is<SerializableOperator_MergeDetails>()) {
         // de-serialize merge operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to MapLogicalOperator");
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to MergeLogicalOperator");
         auto serializedMergeDescriptor = SerializableOperator_MergeDetails();
         details.UnpackTo(&serializedMergeDescriptor);
         // de-serialize merge descriptor
