@@ -18,13 +18,8 @@ class RestServer {
     * @param handle to coordinator
      *
    * */
-    RestServer(
-        std::string host, u_int16_t port,
-        NesCoordinatorPtr coordinator,
-        QueryCatalogPtr queryCatalog,
-        StreamCatalogPtr streamCatalog,
-        TopologyManagerPtr topologyManager,
-        GlobalExecutionPlanPtr globalExecutionPlan);
+    RestServer(std::string host, u_int16_t port, NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
+               TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService);
 
     ~RestServer();
     /**
@@ -43,8 +38,6 @@ class RestServer {
     RestEnginePtr restEngine;
     std::string host;
     u_int16_t port;
-    NesCoordinatorPtr coordinator;
-    QueryCatalogPtr queryCatalog;
 };
 }// namespace NES
 

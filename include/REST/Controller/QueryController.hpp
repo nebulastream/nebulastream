@@ -29,7 +29,7 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class QueryController : public BaseController {
   public:
-    explicit QueryController(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan);
+    explicit QueryController(QueryServicePtr queryService, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~QueryController() = default;
 
@@ -55,7 +55,6 @@ class QueryController : public BaseController {
     void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
-    QueryCatalogPtr queryCatalog;
     TopologyManagerPtr topologyManager;
     QueryServicePtr queryService;
     GlobalExecutionPlanPtr globalExecutionPlan;

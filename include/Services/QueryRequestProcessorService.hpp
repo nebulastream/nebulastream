@@ -49,7 +49,7 @@ class QueryRequestProcessorService {
      * @brief Stop query request processor service
      * @return true if successful
      */
-    bool stopQueryRequestProcessor() const;
+    bool stopQueryRequestProcessor();
 
   private:
     /**
@@ -94,7 +94,7 @@ class QueryRequestProcessorService {
      */
     bool stopQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
 
-    bool queryProcessorRunning = true;
+    bool queryProcessorRunning;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     TypeInferencePhasePtr typeInferencePhase;
