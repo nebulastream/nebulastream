@@ -13,6 +13,7 @@
 #include <REST/RestServer.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Services/QueryRequestProcessorService.hpp>
+#include <Services/QueryService.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
@@ -43,9 +44,9 @@ NesCoordinator::NesCoordinator() {
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
     WorkerRPCClientPtr workerRpcClient = std::make_shared<WorkerRPCClient>();
     QueryDeployerPtr queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, globalExecutionPlan);
-
     queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topologyManager->getNESTopologyPlan(),
                                                                                   queryCatalog, streamCatalog, workerRpcClient, queryDeployer);
+    queryService = std::make_shared<QueryService>(queryCatalog);
 }
 
 NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcPort)
@@ -64,6 +65,7 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
     QueryDeployerPtr queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, globalExecutionPlan);
     queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topologyManager->getNESTopologyPlan(),
                                                                                   queryCatalog, streamCatalog, workerRpcClient, queryDeployer);
+    queryService = std::make_shared<QueryService>(queryCatalog);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -125,8 +127,8 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
 
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
-    std::shared_ptr<RestServer> restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(), queryCatalog,
-                                                                          streamCatalog, topologyManager, globalExecutionPlan);
+    restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(), queryCatalog,
+                                                                          streamCatalog, topologyManager, globalExecutionPlan, queryService);
     restThread = std::make_shared<std::thread>(([&]() {
         restServer->start();//this call is blocking
         NES_DEBUG("NesCoordinator: startRestServer thread terminates");
@@ -206,6 +208,14 @@ void NesCoordinator::setServerIp(std::string serverIp) {
 
 QueryStatisticsPtr NesCoordinator::getQueryStatistics(std::string queryId) {
     return worker->getNodeEngine()->getQueryStatistics(queryId);
+}
+
+QueryServicePtr NesCoordinator::getQueryService() {
+    return queryService;
+}
+
+QueryCatalogPtr NesCoordinator::getQueryCatalog() {
+    return queryCatalog;
 }
 
 }// namespace NES

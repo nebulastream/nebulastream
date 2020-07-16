@@ -26,6 +26,9 @@ typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
+class QueryService;
+typedef std::shared_ptr<QueryService> QueryServicePtr;
+
 class RestEngine : public BaseController {
   protected:
     http_listener _listener;// main micro service network endpoint
@@ -38,8 +41,8 @@ class RestEngine : public BaseController {
     StreamCatalogControllerPtr streamCatalogController;
 
   public:
-    RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordinator,
-               QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan);
+    RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog,
+               TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService);
 
     ~RestEngine();
 
@@ -51,9 +54,6 @@ class RestEngine : public BaseController {
     void handleHead(http_request message);
     void handleTrace(http_request message);
     void handleMerge(http_request message);
-
-    void setCoordinator(NesCoordinatorPtr coordinator);
-    void setQueryCatalog(QueryCatalogPtr queryCatalog);
     void initRestOpHandlers();
     void setEndpoint(const std::string& value);
     std::string endpoint() const;

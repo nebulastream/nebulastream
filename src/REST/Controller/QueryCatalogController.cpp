@@ -10,6 +10,7 @@ namespace NES {
 QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorPtr coordinator) {
     NES_DEBUG("QueryCatalogController()");
     this->queryCatalog = queryCatalog;
+    this->coordinator = coordinator;
 }
 
 void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {

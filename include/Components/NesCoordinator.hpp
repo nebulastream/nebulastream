@@ -38,6 +38,9 @@ typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 class QueryRequestProcessorService;
 typedef std::shared_ptr<QueryRequestProcessorService> QueryRequestProcessorServicePtr;
 
+class QueryService;
+typedef std::shared_ptr<QueryService> QueryServicePtr;
+
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
     /**
@@ -94,6 +97,18 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
         return topologyManager;
     }
 
+    /**
+     * @brief Get the instance of query service
+     * @return Query service pointer
+     */
+    QueryServicePtr getQueryService();
+
+    /**
+     * @brief Get instance of query catalog
+     * @return query catalog pointer
+     */
+    QueryCatalogPtr getQueryCatalog();
+
   private:
     std::string serverIp;
     uint16_t restPort;
@@ -111,7 +126,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     std::shared_ptr<std::thread> restThread;
     std::atomic<bool> stopped;
     QueryRequestProcessorServicePtr queryRequestProcessorService;
-
+    QueryServicePtr queryService;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 

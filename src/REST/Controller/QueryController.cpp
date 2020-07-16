@@ -17,10 +17,8 @@ using namespace http;
 
 namespace NES {
 
-QueryController::QueryController(QueryCatalogPtr queryCatalog, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan)
-    : queryCatalog(queryCatalog), topologyManager(topologyManager), globalExecutionPlan(globalExecutionPlan) {
-    queryService = std::make_shared<QueryService>(queryCatalog);
-}
+QueryController::QueryController(QueryServicePtr queryService, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan)
+    : queryService(queryService), topologyManager(topologyManager), globalExecutionPlan(globalExecutionPlan) {}
 
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 

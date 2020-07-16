@@ -22,7 +22,7 @@ namespace NES {
 QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
                                                            QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
                                                            QueryDeployerPtr queryDeployer)
-    : globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog), workerRPCClient(workerRpcClient), queryDeployer(queryDeployer) {
+    : queryProcessorRunning(true), globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog), workerRPCClient(workerRpcClient), queryDeployer(queryDeployer) {
 
     NES_INFO("QueryProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -253,6 +253,11 @@ bool QueryRequestProcessorService::undeployQuery(std::string queryId, std::vecto
 
 bool QueryRequestProcessorService::isQueryProcessorRunning() const {
     return queryProcessorRunning;
+}
+
+bool QueryRequestProcessorService::stopQueryRequestProcessor() {
+    this->queryProcessorRunning = false;
+    return true;
 }
 
 }// namespace NES
