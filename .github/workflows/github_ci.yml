@@ -88,17 +88,14 @@ jobs:
       - name: Build and Release NES Executable Image
         run: |
           echo '${{ steps.file_changes.outputs.files_modified }}'
-          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "executableImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
-              echo "Found changes done to executableImage"
-              cd docker/executableImage/
-              docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:latest
-              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              docker push nebulastream/nes-executable-image:latest
-              echo "Pushed the execution image"
-              docker logout
-          else
-              echo "No changes done in executableImage. Skipping the build and release phase."
-          fi
+          docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/executableImage/entrypoint-prepare-nes-package.sh nebulastream/nes-build-image:latest
+          echo "Found changes done to executableImage"
+          cd docker/executableImage/
+          docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:latest
+          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
+          docker push nebulastream/nes-executable-image:latest
+          echo "Pushed the execution image"
+          docker logout
       - name: Release new version
         env:
           CI_SECRET: ${{ secrets.CI_SECRET }}
