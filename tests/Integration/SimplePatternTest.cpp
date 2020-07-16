@@ -1,5 +1,7 @@
+#include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
@@ -26,36 +28,38 @@ class SimplePatternTest : public testing::Test {
  * Translation of a simple pattern (1 Stream) into a query
  */
 TEST_F(SimplePatternTest, testPatternWithFilter) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG("SimplePatternTest: start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    NES_DEBUG("coordinator started successfully");
+    NES_DEBUG("SimplePatternTest: coordinator started successfully");
 
-    NES_DEBUG("start worker 1");
+    NES_DEBUG("SimplePatternTest: start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("worker1 started successfully");
+    NES_DEBUG("SimplePatternTest: worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     std::string query = "Pattern::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
+    std::string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
-    std::string queryId = crd->addQuery(query, "BottomUp");
+    NES_INFO("SimplePatternTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
-
-    NES_DEBUG("remove query");
-    crd->removeQuery(queryId);
-
-    NES_DEBUG("stop worker 1");
+    NES_DEBUG("SimplePatternTest: stop worker 1");
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("stop coordinator");
+    NES_DEBUG("SimplePatternTest: stop coordinator");
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("test finished");
+    NES_DEBUG("SimplePatternTest: test finished");
 }
 
 /* 2.Test
@@ -73,6 +77,9 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_DEBUG("worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //register logical stream qnv
     //TODO: update CHAR (sensor id is in result set )
@@ -102,13 +109,15 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     std::string query = "Pattern::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\")); ";
 
-    std::string queryId = crd->addQuery(query, "BottomUp");
+    std::string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     EXPECT_NE(queryId, "");
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
-    ASSERT_TRUE(crd->removeQuery(queryId));
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
     //TODO Patternname waiting for String support in map operator
 
     string expectedContent =
