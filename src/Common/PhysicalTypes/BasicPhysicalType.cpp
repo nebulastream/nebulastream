@@ -51,7 +51,10 @@ std::string BasicPhysicalType::convertRawToString(void* data) {
             if (size() == 0) {
                 str << static_cast<char>(*static_cast<char*>(data));
             } else {
-                str << static_cast<char*>(data);
+                auto charData = static_cast<char*>(data);
+                // This char is fixed size, so we have to convert it to a fixed size string.
+                // Otherwise we would copy all data till the termination character.
+                str << std::string(charData, size());
             }
             return str.str();
     }

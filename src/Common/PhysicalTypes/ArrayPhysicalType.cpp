@@ -1,5 +1,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <iostream>
 #include <sstream>
 
 namespace NES {
@@ -33,7 +34,10 @@ std::string ArrayPhysicalType::convertRawToString(void* data) {
     }
     // we print a fixed char directly because the last char terminated the output.
     if (type->isFixedChar()) {
-        return static_cast<char*>(data);
+        auto charData = static_cast<char*>(data);
+        // This char is fixed size, so we have to convert it to a fixed size string.
+        // Otherwise we would copy all data till the termination character.
+        return std::string(charData, size());
     }
 
     char* pointer = static_cast<char*>(data);

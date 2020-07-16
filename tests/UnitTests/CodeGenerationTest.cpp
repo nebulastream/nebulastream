@@ -163,7 +163,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
             for (int j = 0; j < 11; ++j) {
                 tuples[i].text[j] = ((i + 1) % 64) + 64;
             }
-            tuples[i].text[12] = '\0';
+            tuples[i].text[11] = '\0';
 
         }
 
