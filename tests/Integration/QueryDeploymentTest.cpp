@@ -22,7 +22,10 @@ class QueryDeploymentTest : public testing::Test {
     }
 };
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerMergePrint) {
+/**
+ * TODO: this test requires issue 750 to be addressed. Currently, make it disabled.
+ */
+TEST_F(QueryDeploymentTest, DISABLE_testDeployOneWorkerMergePrint) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -36,7 +39,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerMergePrint) {
     cout << "worker1 started successfully" << endl;
 
     string query = "Query::from(\"default_logical\").merge(Query::from(\"default_logical\")).sink(PrintSinkDescriptor::create());";
-
 
     string queryId = crd->addQuery(query, "BottomUp");
 
