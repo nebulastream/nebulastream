@@ -48,11 +48,6 @@ class FileSink : public DataSink {
     bool writeData(TupleBuffer& input_buffer);
 
     /**
-     * @brief method to write the schema of the data
-     */
-    bool writeSchema();
-
-    /**
      * @brief override the toString method for the file output sink
      * @return returns string describing the file output sink
      */
@@ -78,6 +73,12 @@ class FileSink : public DataSink {
     std::string getFileOutputModeAsString();
 
   protected:
+    /**
+    * @brief method to write the schema of the data
+    */
+    bool writeSchema();
+
+    bool schemaWritten;
     std::string filePath;
     FileOutputMode fileOutputMode;
 };

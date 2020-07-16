@@ -32,23 +32,23 @@ std::string DataSink::getFormatAsString()
 
 std::string DataSink::getMediumAsString()
 {
-    if(format == ZMQ_SINK)
+    if(medium == ZMQ_SINK)
     {
         return "ZMQ_SINK";
     }
-    else if(format == FILE_SINK)
+    else if(medium == FILE_SINK)
     {
         return "FILE_SINK";
     }
-    else if(format == KAFKA_SINK)
+    else if(medium == KAFKA_SINK)
     {
         return "KAFKA_SINK";
     }
-    else if(format == PRINT_SINK)
+    else if(medium == PRINT_SINK)
     {
         return "PRINT_SINK";
     }
-    else if(format == NETWORK_SINK)
+    else if(medium == NETWORK_SINK)
     {
         return "NETWORK_SINK";
     }
@@ -87,12 +87,6 @@ bool DataSink::writeDataInBatch(
     }
     return true;
 }
-
-bool DataSink::writeSchema()
-{
-    NES_NOT_IMPLEMENTED();
-}
-
 
 size_t DataSink::getNumberOfSentBuffers() {
     return sentBuffer;
