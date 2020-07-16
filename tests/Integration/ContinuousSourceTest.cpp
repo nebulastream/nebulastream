@@ -1,14 +1,12 @@
-#include <cassert>
 #include <iostream>
 
+#include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Sinks/SinkCreator.hpp>
-#include <Sources/SourceCreator.hpp>
+#include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <sstream>
 
 using namespace std;
 
@@ -27,17 +25,17 @@ class ContinuousSourceTest : public testing::Test {
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
-    cout << "start coordinator" << endl;
+    NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    cout << "coordinator started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
-    cout << "start worker 1" << endl;
+    NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    cout << "worker1 started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     //register physical stream
     PhysicalStreamConfig conf;
@@ -52,15 +50,19 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     std::string filePath = "contTestOut.csv";
     remove(filePath.c_str());
 
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
     //register query
     std::string queryString = "Query::from(\"exdra\").sink(FileSinkDescriptor::create(\"" + filePath + "\" , \"CSV_FORMAT\", \"APPEND\"));";
-
-    std::string queryId = crd->addQuery(queryString, "BottomUp");
+    std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
-    ASSERT_TRUE(crd->removeQuery(queryId));
+    NES_INFO("QueryDeploymentTest: Remove query");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     string expectedContent =
         "type:Char,metadata_generated:INTEGER,metadata_title:Char,metadata_id:Char,features_type:Char,features_properties_capacity:INTEGER,features_properties_efficiency:(Float),features_properties_mag:(Float),features_properties_time:INTEGER,features_properties_updated:INTEGER,features_properties_type:Char,features_geometry_type:Char,features_geometry_coordinates_longitude:(Float),features_geometry_coordinates_latitude:(Float),features_eventId :Char,\n"
@@ -80,8 +82,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
 
-    cout << "content=" << content << endl;
-    cout << "expContent=" << expectedContent << endl;
+    NES_INFO("ContinuousSourceTest: content=" << content);
+    NES_INFO("ContinuousSourceTest: expContent=" << expectedContent);
 
     EXPECT_EQ(content, expectedContent);
 
@@ -93,22 +95,20 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
-    cout << "start coordinator" << endl;
+    NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    cout << "coordinator started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
-    cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port),
-                                                    "localhost", std::to_string(port + 10), NESNodeType::Sensor);
+    NES_INFO("ContinuousSourceTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    cout << "worker1 started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     //register logical stream
-    std::string testSchema =
-        "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -124,15 +124,20 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     conf.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf);
 
-    //register query
-    std::string queryString =
-        "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(PrintSinkDescriptor::create());";
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string queryId = crd->addQuery(queryString, "BottomUp");
+    //register query
+    std::string queryString = "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(PrintSinkDescriptor::create());";
+
+    std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 3));
-    ASSERT_TRUE(crd->removeQuery(queryId));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 3));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
@@ -142,17 +147,17 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
-    cout << "start coordinator" << endl;
+    NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    cout << "coordinator started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
-    cout << "start worker 1" << endl;
+    NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    cout << "worker1 started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     //register logical stream
     std::string testSchema =
@@ -176,17 +181,20 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
         "testMultipleOutputBufferFromDefaultSourceWriteFileOutput.txt";
     remove(outputFilePath.c_str());
 
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
     //register query
-    std::string queryString =
-        "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(FileSinkDescriptor::create(\""
+    std::string queryString = "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\")); ";
-
-    std::string queryId = crd->addQuery(queryString, "BottomUp");
+    std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 3));
 
-    ASSERT_TRUE(crd->removeQuery(queryId));
+    NES_INFO("QueryDeploymentTest: Remove query");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -253,17 +261,18 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
-    cout << "start coordinator" << endl;
+    NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    cout << "coordinator started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
-    cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
+    NES_INFO("ContinuousSourceTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+                                                    std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    cout << "worker1 started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     //register logical stream
     std::string testSchema =
@@ -294,16 +303,19 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     conf.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf);
 
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
     //register query
-    std::string queryString =
-        "Query::from(\"testStream\").filter(Attribute(\"val1\") < 2).sink(PrintSinkDescriptor::create()); ";
-
-    std::string queryId = crd->addQuery(queryString, "BottomUp");
+    std::string queryString = "Query::from(\"testStream\").filter(Attribute(\"val1\") < 2).sink(PrintSinkDescriptor::create()); ";
+    std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 3));
 
-    ASSERT_TRUE(crd->removeQuery(queryId));
+    NES_INFO("QueryDeploymentTest: Remove query");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
@@ -313,17 +325,18 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
-    cout << "start coordinator" << endl;
+    NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    cout << "coordinator started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
-    cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
+    NES_INFO("ContinuousSourceTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+                                                    std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    cout << "worker1 started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     //register logical stream
     std::string testSchema =
@@ -354,21 +367,23 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     conf.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf);
 
-    std::string outputFilePath =
-        "testMultipleOutputBufferFromCSVSourceWriteTest.out";
+    std::string outputFilePath = "testMultipleOutputBufferFromCSVSourceWriteTest.out";
     remove(outputFilePath.c_str());
 
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
     //register query
-    std::string queryString =
-        "Query::from(\"testStream\").filter(Attribute(\"val1\") < 10).sink(FileSinkDescriptor::create(\""
+    std::string queryString = "Query::from(\"testStream\").filter(Attribute(\"val1\") < 10).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\")); ";
-
-    std::string queryId = crd->addQuery(queryString, "BottomUp");
+    std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 3));
 
-    ASSERT_TRUE(crd->removeQuery(queryId));
+    NES_INFO("QueryDeploymentTest: Remove query");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -896,8 +911,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
         "|1|2|4|\n"
         "|4|3|6|\n"
         "+----------------------------------------------------+";
-    cout << "content=" << content << endl;
-    cout << "expContent=" << expectedContent << endl;
+    NES_INFO("ContinuousSourceTest: content=" << content);
+    NES_INFO("ContinuousSourceTest: expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -916,17 +931,18 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
  * */
 
 TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
-    cout << "start coordinator" << endl;
+    NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    cout << "coordinator started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
-    cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
+    NES_INFO("ContinuousSourceTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost",
+                                                    std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    cout << "worker1 started successfully" << endl;
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     PhysicalStreamConfig conf;
     conf.logicalStreamName = "exdra";
@@ -940,24 +956,26 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     std::string outputFilePath = "testExdraUseCaseWithOutput.csv";
     remove(outputFilePath.c_str());
 
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
     //register query
+    NES_INFO("ContinuousSourceTest: Deploy query");
     std::string queryString = "Query::from(\"exdra\").sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\" , \"CSV_FORMAT\", \"APPEND\"));";
-
-    cout << "deploy query" << endl;
-    std::string queryId = crd->addQuery(queryString, "BottomUp");
+    std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
-    cout << "wait on result" << endl;
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 5));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 5));
+    NES_INFO("ContinuousSourceTest: Wait on result");
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 5));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 5));
 
-    cout << "undeploy query" << endl;
-    ASSERT_TRUE(crd->removeQuery(queryId));
+    NES_INFO("ContinuousSourceTest: Undeploy query");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "type:Char,metadata_generated:INTEGER,metadata_title:Char,metadata_id:Char,features_type:Char,features_properties_capacity:INTEGER,features_properties_efficiency:(Float),features_properties_mag:(Float),features_properties_time:INTEGER,features_properties_updated:INTEGER,features_properties_type:Char,features_geometry_type:Char,features_geometry_coordinates_longitude:(Float),features_geometry_coordinates_latitude:(Float),features_eventId :Char,\n"
@@ -1012,8 +1030,8 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
         "FeatureCollection,1262343600000,Wind Turbine Data Generated for Nebula Stream,0609dfe6-2831-4bbf-a889-06dfb1311048,Features,3202,0.373316,183261.390625,1262300400000,1262309963720,electricityGeneration,Point,13.295279,49.204369,7fdd95bc-388f-4d7c-90b1-b6c48db95719\n"
         "FeatureCollection,1262343600000,Wind Turbine Data Generated for Nebula Stream,f8884b58-e72d-476d-9ef3-be2c87d8ace7,Features,3386,0.619704,941008.937500,1262300400000,1262310067980,electricityGeneration,Point,14.851712,48.742081,292af9eb-07a1-41c5-a924-98f881649f67\n";
 
-    cout << "content=" << content << endl;
-    cout << "expContent=" << expectedContent << endl;
+    NES_INFO("Content=" << content);
+    NES_INFO("ExpContent=" << expectedContent);
 
     EXPECT_EQ(content, expectedContent);
 
