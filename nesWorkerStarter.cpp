@@ -14,9 +14,6 @@
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
 
-using std::cout;
-using std::endl;
-using std::string;
 namespace po = boost::program_options;
 
 using namespace NES;
@@ -33,7 +30,7 @@ const string logo = "/********************************************************\n
 
 int main(int argc, char** argv) {
     NES::setupLogging("nesWorkerStarter.log", NES::LOG_DEBUG);
-    cout << logo << endl;
+    NES_INFO(logo);
 
     namespace po = boost::program_options;
     po::options_description desc("Nes Worker Options");
@@ -83,22 +80,20 @@ int main(int argc, char** argv) {
     }
 
     if (vm.count("help")) {
-        std::cout << "Basic Command Line Parameter " << std::endl
-                  << desc
-                  << std::endl;
+        NES_INFO("Basic Command Line Parameter ");
+        NES_INFO(desc);
         return 0;
     }
 
     if (argc == 1) {
-        cout << "Please specify at least the port you want to connect to" << endl;
-        std::cout << "Basic Command Line Parameter " << std::endl
-                  << desc
-                  << std::endl;
+        NES_INFO("Please specify at least the port you want to connect to");
+        NES_INFO("Basic Command Line Parameter");
+        NES_INFO(desc);
         return 0;
     }
 
     size_t localPort = (time(0) * 321) % 10000 * (rand() % 100) + ::getpid();
-    cout << "port=" << localPort << "localport=" << to_string(localPort) << " pid=" << getpid() << endl;
+    NES_INFO("port=" << localPort << "localport=" << to_string(localPort) << " pid=" << getpid());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(
         coordinatorIp,
         coordinatorPort,
@@ -119,11 +114,11 @@ int main(int argc, char** argv) {
 
         wrk->setWitRegister(conf);
     } else if (parentId != "-1") {
-        cout << "start with dedicated parent=" << parentId << endl;
+        NES_INFO("start with dedicated parent=" << parentId);
         wrk->setWithParent(parentId);
     }
 
     wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
     wrk->stop(/**force*/ true);
-    cout << "worker started" << endl;
+    NES_INFO("worker started");
 }

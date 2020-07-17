@@ -1,7 +1,9 @@
 #include <NodeEngine/NodeProperties.hpp>
+#include <Util/Logger.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 namespace NES {
 
 void NodeProperties::readCpuStats() {
@@ -188,17 +190,17 @@ void NodeProperties::readNetworkStats() {
 #endif
 
 void NodeProperties::print() {
-    std::cout << "cpu stats=" << std::endl;
-    std::cout << getCpuStats() << std::endl;
+    NES_INFO("cpu stats=");
+    NES_INFO(getCpuStats());
 
-    std::cout << "network stats=" << std::endl;
-    std::cout << getNetworkStats() << std::endl;
+    NES_INFO("network stats=");
+    NES_INFO(getNetworkStats());
 
-    std::cout << "memory stats=" << std::endl;
-    std::cout << getMemStats() << std::endl;
+    NES_INFO("memory stats=");
+    NES_INFO(getMemStats());
 
-    std::cout << "filesystem stats=" << std::endl;
-    std::cout << getDiskStats() << std::endl;
+    NES_INFO("filesystem stats=");
+    NES_INFO(getDiskStats());
 }
 #if defined(__linux__)
 void NodeProperties::readMemStats() {

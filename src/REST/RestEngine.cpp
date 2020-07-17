@@ -29,7 +29,7 @@ void RestEngine::initRestOpHandlers() {
 }
 
 void RestEngine::setEndpoint(const std::string& value) {
-    std::cout << "Defining endpoint using " + value << std::endl;
+    NES_INFO("Defining endpoint using " + value);
     web::uri endpointURI(value);
     web::uri_builder endpointBuilder;
 
