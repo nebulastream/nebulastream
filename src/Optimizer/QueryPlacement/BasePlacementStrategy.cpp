@@ -1,3 +1,4 @@
+#include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
