@@ -1,10 +1,11 @@
 #include <Catalogs/StreamCatalog.hpp>
+#include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -14,7 +15,7 @@
 namespace NES {
 
 std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
-                                                           TypeInferencePhasePtr typeInferencePhase,StreamCatalogPtr streamCatalog) {
+                                                           TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog) {
     return std::make_unique<BottomUpStrategy>(BottomUpStrategy(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog));
 }
 
@@ -38,12 +39,14 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     const string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
 
     if (!sourceOperator) {
-        NES_THROW_RUNTIME_ERROR("BottomUpStrategy: No source operator found in the query plan wih id: " + queryId);
+        NES_ERROR("BottomUpStrategy: No source operator found in the query plan wih id: " + queryId);
+        throw QueryPlacementException("BottomUpStrategy: No source operator found in the query plan wih id: " + queryId);
     }
 
     const vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
     if (sourceNodes.empty()) {
-        NES_THROW_RUNTIME_ERROR("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + queryId);
+        NES_ERROR("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + queryId);
+        throw QueryPlacementException("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + queryId);
     }
 
     NES_INFO("BottomUpStrategy: Preparing execution plan for query with id : " << queryId);
@@ -71,7 +74,8 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
         NES_INFO("BottomUpStrategy: Find the path between source and sink node for query with id : " << queryId);
         const vector<NESTopologyEntryPtr> path = pathFinder->findPathBetween(sourceNode, sinkNode);
         if (path.empty()) {
-            NES_THROW_RUNTIME_ERROR("BottomUpStrategy: No path exists between sink and source");
+            NES_ERROR("BottomUpStrategy: No path exists between sink and source");
+            throw QueryPlacementException("BottomUpStrategy: No path exists between sink and source");
         }
 
         LogicalOperatorNodePtr operatorToPlace = sourceOperator;
@@ -100,7 +104,8 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
             }
 
             if ((pathItr == path.end()) || (candidateNesNode->getRemainingCpuCapacity() == 0)) {
-                NES_THROW_RUNTIME_ERROR("BottomUpStrategy: No node available for further placement of operators");
+                NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
+                throw QueryPlacementException("BottomUpStrategy: No node available for further placement of operators");
             }
 
             NES_DEBUG("BottomUpStrategy: Checking if execution node for the target worker node already present.");
@@ -118,13 +123,15 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                     } else {
                         NES_DEBUG("BottomUpStrategy: Adding the operator to an existing query sub plan on the Execution node");
                         if (!candidateExecutionNode->appendOperatorToQuerySubPlan(queryId, operatorToPlace->copy())) {
-                            NES_THROW_RUNTIME_ERROR("BottomUpStrategy: failed to add operator" + operatorToPlace->toString() + "node for query " + queryId);
+                            NES_ERROR("BottomUpStrategy: failed to add operator" + operatorToPlace->toString() + "node for query " + queryId);
+                            throw QueryPlacementException("BottomUpStrategy: failed to add operator" + operatorToPlace->toString() + "node for query " + queryId);
                         }
                     }
                 } else {
                     NES_DEBUG("BottomUpStrategy: Adding the operator to an existing execution node");
                     if (!candidateExecutionNode->createNewQuerySubPlan(queryId, operatorToPlace->copy())) {
-                        NES_THROW_RUNTIME_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
+                        NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
+                        throw QueryPlacementException("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
                     }
                 }
             } else {
@@ -133,7 +140,8 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                 ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, operatorToPlace->copy());
                 NES_DEBUG("BottomUpStrategy: Adding new execution node with id: " << candidateNesNode->getId());
                 if (!globalExecutionPlan->addExecutionNode(newExecutionNode)) {
-                    NES_THROW_RUNTIME_ERROR("BottomUpStrategy: failed to add execution node for query " + queryId);
+                    NES_ERROR("BottomUpStrategy: failed to add execution node for query " + queryId);
+                    throw QueryPlacementException("BottomUpStrategy: failed to add execution node for query " + queryId);
                 }
             }
 

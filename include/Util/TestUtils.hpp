@@ -22,6 +22,7 @@ namespace NES {
 class TestUtils {
   public:
     static const size_t timeout = 10;
+
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
      * @param ptr to NodeEngine
@@ -49,22 +50,28 @@ class TestUtils {
         return false;
     }
 
+    /**
+     * @brief This method is used for checking if the submitted query produced the expected result within the timeout
+     * @param queryId: Id of the query
+     * @param expectedResult: The expected value
+     * @return true if matched the expected result within the timeout
+     */
     static bool checkCompleteOrTimeout(std::string queryId, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-
         size_t currentResult = 0;
         web::json::value json_return;
-
         std::string currentStatus = "";
 
+        NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
             web::http::client::http_client clientProc(
                 "http://localhost:8081/v1/nes/queryCatalog/status");
-            clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId).then([](const web::http::http_response& response) {
-                                                                                    cout << "Get query status" << endl;
-                                                                                    return response.extract_json();
-                                                                                })
+            clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
+                .then([](const web::http::http_response& response) {
+                    cout << "Get query status" << endl;
+                    return response.extract_json();
+                })
                 .then([&json_return, &currentStatus](const pplx::task<web::json::value>& task) {
                     try {
                         NES_DEBUG("got status=" << json_return);
@@ -113,18 +120,18 @@ class TestUtils {
     }
 
     /**
-         * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
-         * @param ptr to NesWorker
-         * @param queryId
-         * @param queryCatalog
-         * @param expectedResult
-         * @return bool indicating if the expected results are matched
-         */
+     * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
+     * @param ptr to NesWorker
+     * @param queryId
+     * @param queryCatalog
+     * @param expectedResult
+     * @return bool indicating if the expected results are matched
+     */
     static bool checkCompleteOrTimeout(NesWorkerPtr ptr, std::string queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        auto now = start_timestamp;
-        while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
+
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
             if (queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatus() == QueryStatus::Running
                 && ptr->getQueryStatistics(queryId)->getProcessedBuffers() == expectedResult
@@ -149,8 +156,7 @@ class TestUtils {
     static bool checkCompleteOrTimeout(NesCoordinatorPtr ptr, std::string queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        auto now = start_timestamp;
-        while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr");
             if (queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatus() == QueryStatus::Running
                 && ptr->getQueryStatistics(queryId)->getProcessedBuffers() == expectedResult
@@ -164,11 +170,16 @@ class TestUtils {
         return false;
     }
 
+    /**
+     * @brief Check if the query is been stopped successfully within the timeout.
+     * @param queryId: Id of the query to be stopped
+     * @param queryCatalog: the catalog containig the queries in the system
+     * @return true if successful
+     */
     static bool checkStoppedOrTimeout(std::string queryId, QueryCatalogPtr queryCatalog) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        auto now = start_timestamp;
-        while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkStoppedOrTimeout: check query status");
             if (queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatus() == QueryStatus::Stopped) {
                 NES_DEBUG("checkStoppedOrTimeout: status reached stopped");
