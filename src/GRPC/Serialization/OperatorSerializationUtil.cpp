@@ -364,19 +364,19 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
 
         serializedSinkDescriptor.set_filepath(fileSinkDescriptor->getFileName());
-        auto outputMode = fileSinkDescriptor->getFileOutputMode() == FILE_OVERWRITE
+        auto outputMode = fileSinkDescriptor->getAppend() == false
             ? SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_OVERWRITE
             : SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_APPEND;
         serializedSinkDescriptor.set_outputmode(outputMode);
 
-        auto format = fileSinkDescriptor->getSinkFormat();
-        if (format == JSON_FORMAT) {
+        auto format = fileSinkDescriptor->getSinkFormatAsString();
+        if (format == "JSON_FORMAT") {
             serializedSinkDescriptor.set_sinkformat(SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_JSON_FORMAT);
-        } else if (format == CSV_FORMAT) {
+        } else if (format == "CSV_FORMAT") {
             serializedSinkDescriptor.set_sinkformat(SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_CSV_FORMAT);
-        } else if (format == NES_FORMAT) {
+        } else if (format == "NES_FORMAT") {
             serializedSinkDescriptor.set_sinkformat(SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_NES_FORMAT);
-        } else if (format == TEXT_FORMAT) {
+        } else if (format == "TEXT_FORMAT") {
             serializedSinkDescriptor.set_sinkformat(SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_TEXT_FORMAT);
         } else {
             NES_ERROR("serializeSinkDescriptor: format not supported");
@@ -421,26 +421,26 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as FileSinkDescriptor");
-        auto outputMode = serializedSinkDescriptor.outputmode() == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_OVERWRITE
-                          ? FILE_OVERWRITE
-                          : FILE_APPEND;
+        auto append = serializedSinkDescriptor.outputmode() == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_FileOutputMode_FILE_OVERWRITE
+                          ? false
+                          : true;
 
         auto format = serializedSinkDescriptor.sinkformat();
 
-        auto sinkFormat = UNKNOWN_FORMAT;
+        auto sinkFormat = "";
         if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_JSON_FORMAT) {
-            sinkFormat = JSON_FORMAT;
+            sinkFormat = "JSON_FORMAT";
         } else if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_CSV_FORMAT) {
-            sinkFormat = CSV_FORMAT;
+            sinkFormat = "CSV_FORMAT";
         } else if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_NES_FORMAT) {
-            sinkFormat = NES_FORMAT;
+            sinkFormat = "NES_FORMAT";
         } else if (format == SerializableOperator_SinkDetails_SerializableFileSinkDescriptor_SinkFormat_TEXT_FORMAT) {
-            sinkFormat = TEXT_FORMAT;
+            sinkFormat = "TEXT_FORMAT";
         } else {
             NES_ERROR("serializeSinkDescriptor: format not supported");
         }
 
-        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), outputMode, sinkFormat);
+        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), sinkFormat, append);
     }
     else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type " << sinkDetails->DebugString());

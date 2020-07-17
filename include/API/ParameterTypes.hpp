@@ -61,8 +61,8 @@ struct Sort {
 class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
-class DataSink;
-typedef std::shared_ptr<DataSink> DataSinkPtr;
+class SinkMedium;
+typedef std::shared_ptr<SinkMedium> DataSinkPtr;
 
 const DataSourcePtr copy(const DataSourcePtr);
 const DataSinkPtr copy(const DataSinkPtr);

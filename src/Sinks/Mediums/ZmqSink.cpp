@@ -1,4 +1,4 @@
-#include <Sinks/ZmqSink.hpp>
+#include <Sinks/Mediums/ZmqSink.hpp>
 
 #include <cassert>
 #include <cstdint>
@@ -24,9 +24,14 @@ ZmqSink::ZmqSink()
         "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port);
 }
 
+std::string ZmqSink::getMediumAsString()
+{
+    return "ZMQ_SINK";
+}
+
 ZmqSink::ZmqSink(SchemaPtr schema, const std::string& host,
                  const uint16_t port)
-    : DataSink(schema),
+    : SinkMedium(schema),
       host(host.substr(0, host.find(":"))),
       port(port),
       tupleCnt(0),
@@ -139,9 +144,7 @@ bool ZmqSink::disconnect() {
 int ZmqSink::getPort() {
     return this->port;
 }
-SinkMedium ZmqSink::getType() const {
-    return ZMQ_SINK;
-}
+
 const std::string ZmqSink::getHost() const {
     return host;
 }

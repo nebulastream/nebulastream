@@ -280,8 +280,8 @@ std::string QueryManager::getQueryManagerStatistics() {
         auto sinks = qep.first->getSinks();
         for (auto sink : sinks) {
             ss << "Sink:" << sink;
-            ss << "\t Generated Buffers=" << sink->getNumberOfSentBuffers();
-            ss << "\t Generated Tuples=" << sink->getNumberOfSentTuples();
+            ss << "\t Generated Buffers=" << sink->getNumberOfWrittenOutBuffers();
+            ss << "\t Generated Tuples=" << sink->getNumberOfWrittenOutTuples();
         }
     }
     return ss.str();

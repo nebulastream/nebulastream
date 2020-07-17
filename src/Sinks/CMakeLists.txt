@@ -1,13 +1,12 @@
 add_source_nes(
-        DataSink.cpp
-        PrintSink.cpp
         TestSinks.cpp
-        FileSink.cpp
-        ZmqSink.cpp
 )
+
+add_subdirectory(Mediums)
+add_subdirectory(Formats)
 
 if(NES_USE_KAFKA)
     add_source_nes(
-            KafkaSink.cpp
+            Mediums/KafkaSink.cpp
     )
 endif()

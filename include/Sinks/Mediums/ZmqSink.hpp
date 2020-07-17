@@ -6,11 +6,11 @@
 #include <string>
 #include <zmq.hpp>
 
-#include <Sinks/DataSink.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES {
 
-class ZmqSink : public DataSink {
+class ZmqSink : public SinkMedium {
 
   public:
     ZmqSink(SchemaPtr schema, const std::string& host, uint16_t port);
@@ -34,8 +34,7 @@ class ZmqSink : public DataSink {
     /**
      * @brief Get Sink type
      */
-    SinkMedium getType() const override;
-
+    std::string getMediumAsString() override;
   private:
     ZmqSink();
 

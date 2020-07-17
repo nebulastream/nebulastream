@@ -1,7 +1,7 @@
 #ifndef FileSink_HPP
 #define FileSink_HPP
 
-#include <Sinks/DataSink.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -11,7 +11,7 @@ namespace NES {
 /**
  * @brief this class implements the File sing
  */
-class FileSink : public DataSink {
+class FileSink : public SinkMedium {
 
   public:
     /**
@@ -26,7 +26,7 @@ class FileSink : public DataSink {
      * @param filePath location of file on sink server
      * @param modus of writting (overwrite or append)
      */
-    FileSink(SchemaPtr schema, SinkFormat format, std::string filePath, FileOutputMode mode);
+    FileSink(SchemaPtr schema, SinkFormatPtr format, std::string filePath, bool append);
 
     /**
      * @brief method to override virtual setup function
@@ -59,28 +59,15 @@ class FileSink : public DataSink {
     const std::string getFilePath() const;
 
     /**
-     * @brief Get file output mode
-     */
-    FileOutputMode getOutputMode() const;
-
-    /**
      * @brief Get sink type
      */
-    SinkMedium getType() const override;
-
-    SinkFormat getSinkFormat() const;
+    std::string getMediumAsString() override;
 
     std::string getFileOutputModeAsString();
 
-  protected:
-    /**
-    * @brief method to write the schema of the data
-    */
-    bool writeSchema();
 
-    bool schemaWritten;
+  protected:
     std::string filePath;
-    FileOutputMode fileOutputMode;
 };
 typedef std::shared_ptr<FileSink> FileSinkPtr;
 }// namespace NES

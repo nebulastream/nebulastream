@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-#include <Sinks/DataSink.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <iostream>
 
 namespace NES {
@@ -14,7 +14,7 @@ namespace NES {
 /**
  * @brief this class provides a print sink
  */
-class PrintSink : public DataSink {
+class PrintSink : public SinkMedium {
   public:
     /**
      * @brief Default constructor
@@ -64,7 +64,7 @@ class PrintSink : public DataSink {
     /**
      * @brief Get sink type
      */
-    SinkMedium getType() const override;
+    std::string getMediumAsString() override;
 
   private:
     std::ostream& outputStream;

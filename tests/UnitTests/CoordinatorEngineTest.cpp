@@ -1,4 +1,4 @@
-#include <Sinks/PrintSink.hpp>
+#include <Sinks/Mediums/PrintSink.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <gtest/gtest.h>
 

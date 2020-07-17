@@ -7,8 +7,13 @@ namespace Network {
 
 NetworkSink::NetworkSink(SchemaPtr schema, NetworkManagerPtr networkManager, const NodeLocation nodeLocation,
                          NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes)
-    : DataSink(schema), networkManager(networkManager), nodeLocation(nodeLocation), nesPartition(nesPartition),
+    : SinkMedium(schema), networkManager(networkManager), nodeLocation(nodeLocation), nesPartition(nesPartition),
       waitTime(waitTime), retryTimes(retryTimes) {
+}
+
+std::string NetworkSink::getMediumAsString()
+{
+    return "NETWORK_SINK";
 }
 
 NetworkSink::~NetworkSink() {
@@ -41,8 +46,6 @@ void NetworkSink::shutdown() {
         NES_DEBUG("NetworkSink: Shutdown called, but no OutputChannel has been initialized.");
     }
 }
-
-SinkMedium NetworkSink::getType() const { return NETWORK_SINK; }
 
 const std::string NetworkSink::toString() const {
     return "NetworkSink: " + nesPartition.toString();

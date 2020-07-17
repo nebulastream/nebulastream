@@ -2,55 +2,32 @@
 #define INCLUDE_DATASINK_H_
 
 #include <API/Schema.hpp>
+#include <Sinks/Formats/SinkFormat.hpp>
 
 namespace NES {
 class TupleBuffer;
 
-enum SinkMedium {
-    ZMQ_SINK,
-    FILE_SINK,
-    KAFKA_SINK,
-    PRINT_SINK,
-    NETWORK_SINK,
-    UNKOWN_SINK_MEDIUM
-};
-
-enum SinkFormat {
-    JSON_FORMAT,
-    CSV_FORMAT,
-    NES_FORMAT,
-    TEXT_FORMAT,
-    UNKNOWN_FORMAT
-};
-
-enum FileOutputMode {
-    FILE_OVERWRITE,
-    FILE_APPEND,
-    FILE_UNKOWN_OUTPUT_MODE
-};
-
-
 /**
  * @brief Base class for all data sinks in NES
  */
-class DataSink {
+class SinkMedium {
 
   public:
     /**
      * @brief public constructor for data sink
      */
-    DataSink();
+     SinkMedium();
 
     /**
    * @brief public constructor for data sink with schema provisioning
    */
-    DataSink(SchemaPtr schema);
+    SinkMedium(SchemaPtr schema);
 
     /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
      * @Note must be public because of boost serialize
      */
-    virtual ~DataSink();
+    virtual ~SinkMedium();
 
     /**
      * @brief virtual method to setup sink
@@ -65,13 +42,6 @@ class DataSink {
     virtual void shutdown() = 0;
 
     /**
-     * @brief method to write a vector of TupleBuffers
-     * @param vector of tuple buffers pointer
-     * @return bool indicating if the write was complete
-     */
-    bool writeDataInBatch(std::vector<TupleBuffer>& input_buffers);
-
-    /**
      * @brief method to write a TupleBuffer
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
@@ -79,16 +49,16 @@ class DataSink {
     virtual bool writeData(TupleBuffer& input_buffer) = 0;
 
     /**
-     * @brief debug function for testing to get number of sent buffers
+     * @brief debug function for testing to get number of written buffers
      * @return number of sent buffer
      */
-    size_t getNumberOfSentBuffers();
+    size_t getNumberOfWrittenOutBuffers();
 
     /**
-     * @brief debug function for testing to get number of sent tuples
+     * @brief debug function for testing to get number of written tuples
      * @return number of sent buffer
      */
-    size_t getNumberOfSentTuples();
+    size_t getNumberOfWrittenOutTuples();
 
     /**
      * @brief virtual function to get a string describing the particular sink
@@ -110,23 +80,29 @@ class DataSink {
     void setSchema(SchemaPtr pSchema);
 
     /**
-     * @brief method to return the type
-     * @return type
-     */
-    virtual SinkMedium getType() const = 0;
+      * @brief method to return the type
+      * @return type
+      */
+    virtual std::string getMediumAsString() = 0;
 
-    std::string getFormatAsString();
-    std::string getMediumAsString();
+    std::string getSinkFormat();
+
+    bool getAppend();
+
+    std::string getWriteMode();
 
   protected:
-    SinkMedium medium;
-    SinkFormat format;
+    SinkFormatPtr sinkFormat;
+    bool append;
     SchemaPtr schema;
+    bool schemaWritten;
+
+
     size_t sentBuffer;
     size_t sentTuples;
 };
 
-typedef std::shared_ptr<DataSink> DataSinkPtr;
+typedef std::shared_ptr<SinkMedium> DataSinkPtr;
 
 }// namespace NES
 

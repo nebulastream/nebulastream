@@ -1,5 +1,5 @@
 #include <NodeEngine/QueryManager.hpp>
-#include <Sinks/PrintSink.hpp>
+#include <Sinks/Mediums/PrintSink.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <sstream>
@@ -8,16 +8,21 @@
 namespace NES {
 
 PrintSink::PrintSink(std::ostream& pOutputStream)
-    : DataSink(),
+    : SinkMedium(),
       outputStream(pOutputStream) {
 }
 
 PrintSink::PrintSink(SchemaPtr pSchema, std::ostream& pOutputStream)
-    : DataSink(pSchema),
+    : SinkMedium(pSchema),
       outputStream(pOutputStream) {
 }
 
 PrintSink::~PrintSink() {
+}
+
+std::string PrintSink::getMediumAsString()
+{
+    return "PRINT_SINK";
 }
 
 bool PrintSink::writeData(TupleBuffer& input_buffer) {
@@ -38,10 +43,6 @@ void PrintSink::setup() {
 }
 void PrintSink::shutdown() {
     // currently not required
-}
-
-SinkMedium PrintSink::getType() const {
-    return PRINT_SINK;
 }
 
 }// namespace NES

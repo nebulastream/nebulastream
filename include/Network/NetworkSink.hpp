@@ -4,7 +4,7 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/OutputChannel.hpp>
-#include <Sinks/DataSink.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 #include <boost/thread/tss.hpp>
 #include <string>
@@ -12,7 +12,7 @@
 namespace NES {
 namespace Network {
 
-class NetworkSink : public DataSink {
+class NetworkSink : public SinkMedium {
   public:
     /**
      * @brief constructor for the network sink
@@ -28,12 +28,13 @@ class NetworkSink : public DataSink {
 
     bool writeData(TupleBuffer& inputBuffer) override;
 
-    SinkMedium getType() const override;
-
     const std::string toString() const override;
 
     void setup() override;   // not needed
     void shutdown() override;// not needed
+
+    std::string getMediumAsString() override;
+
   private:
     boost::thread_specific_ptr<OutputChannel> outputChannel;
 

@@ -113,8 +113,8 @@ void QueryExecutionPlan::print() {
     }
     for (auto sink : sinks) {
         NES_INFO("Sink:" << sink);
-        NES_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers());
-        NES_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples());
+        NES_INFO("\t Generated Buffers=" << sink->getNumberOfWrittenOutBuffers());
+        NES_INFO("\t Generated Tuples=" << sink->getNumberOfWrittenOutTuples());
     }
 }
 

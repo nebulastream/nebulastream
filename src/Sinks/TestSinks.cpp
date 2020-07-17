@@ -1,11 +1,15 @@
 #include <Network/NetworkSink.hpp>
-#include <Sinks/FileSink.hpp>
-#include <Sinks/DataSink.hpp>
-#include <Sinks/KafkaSink.hpp>
-#include <Sinks/PrintSink.hpp>
+#include <Sinks/Mediums/FileSink.hpp>
+#include <Sinks/Mediums/KafkaSink.hpp>
+#include <Sinks/Mediums/PrintSink.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
-#include <Sinks/ZmqSink.hpp>
 #include <Util/Logger.hpp>
+#include <Sinks/Formats/TextFormat.hpp>
+#include <Sinks/Formats/CsvFormat.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
+#include <Sinks/Formats/JsonFormat.hpp>
 
 namespace NES {
 
@@ -15,23 +19,27 @@ const DataSinkPtr createTestSink() {
 }
 
 const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema,
-                                                 const std::string& filePath, FileOutputMode fMode) {
-    return std::make_shared<FileSink>(schema, TEXT_FORMAT, filePath, fMode);
+                                                 const std::string& filePath, bool append) {
+    SinkFormatPtr format = std::make_shared<TextFormat>(schema, filePath, append);
+    return std::make_shared<FileSink>(schema, format, filePath, append);
 }
 
 const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema,
-                                                    const std::string& filePath, FileOutputMode fMode) {
-    return std::make_shared<FileSink>(schema, CSV_FORMAT, filePath, fMode);
+                                                    const std::string& filePath, bool append) {
+    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, filePath, append);
+    return std::make_shared<FileSink>(schema, format, filePath, append);
 }
 
 const DataSinkPtr createBinaryNESFileSinkWithSchema(SchemaPtr schema,
-                                              const std::string& filePath, FileOutputMode fMode) {
-    return std::make_shared<FileSink>(schema, NES_FORMAT, filePath, fMode);
+                                              const std::string& filePath, bool append) {
+    SinkFormatPtr format = std::make_shared<NesFormat>(schema, filePath, append);
+    return std::make_shared<FileSink>(schema, format, filePath, append);
 }
 
 const DataSinkPtr createJSONFileSinkWithSchema(SchemaPtr schema,
-                                               const std::string& filePath, FileOutputMode fMode) {
-    return std::make_shared<FileSink>(schema, JSON_FORMAT, filePath, fMode);
+                                               const std::string& filePath, bool append) {
+    SinkFormatPtr format = std::make_shared<JsonFormat>(schema, filePath, append);
+    return std::make_shared<FileSink>(schema, format, filePath, append);
 }
 
 const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
