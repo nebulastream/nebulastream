@@ -22,7 +22,8 @@ namespace NES {
 QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
                                                            QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
                                                            QueryDeployerPtr queryDeployer)
-    : queryProcessorRunning(true), globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog), workerRPCClient(workerRpcClient), queryDeployer(queryDeployer) {
+    : queryProcessorLock(), queryProcessorRunning(true), globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog),
+      workerRPCClient(workerRpcClient), queryDeployer(queryDeployer) {
 
     NES_INFO("QueryProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -33,7 +34,7 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
 void QueryRequestProcessorService::start() {
 
     try {
-        while (queryProcessorRunning) {
+        while (isQueryProcessorRunning()) {
             if (queryCatalog->isNewRequestAvailable()) {
                 const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
                 NES_INFO("QueryProcessingService: Found " << queryCatalogEntryBatch.size() << " query requests to schedule");
@@ -250,11 +251,13 @@ bool QueryRequestProcessorService::undeployQuery(std::string queryId, std::vecto
     return true;
 }
 
-bool QueryRequestProcessorService::isQueryProcessorRunning() const {
+bool QueryRequestProcessorService::isQueryProcessorRunning() {
+    std::unique_lock<std::mutex> lock(queryProcessorLock);
     return queryProcessorRunning;
 }
 
 bool QueryRequestProcessorService::stopQueryRequestProcessor() {
+    std::unique_lock<std::mutex> lock(queryProcessorLock);
     this->queryProcessorRunning = false;
     return true;
 }

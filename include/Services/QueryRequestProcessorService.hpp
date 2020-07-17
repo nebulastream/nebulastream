@@ -49,7 +49,7 @@ class QueryRequestProcessorService {
      * @brief Indicate if query processor service is running
      * @return true if query processor is running
      */
-    bool isQueryProcessorRunning() const;
+    bool isQueryProcessorRunning();
 
     /**
      * @brief Stop query request processor service
@@ -100,6 +100,7 @@ class QueryRequestProcessorService {
      */
     bool stopQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
 
+    std::mutex queryProcessorLock;
     bool queryProcessorRunning;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
