@@ -6,12 +6,12 @@
 #include <memory>
 #include <string>
 
-#include <Sources/DataSink.hpp>
+#include <Sources/SinkMedium.hpp>
 #include <cppkafka/cppkafka.h>
 
 namespace NES {
 
-class KafkaSink : public DataSink {
+class KafkaSink : public SinkMedium {
     constexpr static size_t INVALID_PARTITION_NUMBER = -1;
 
   public:

@@ -66,7 +66,7 @@ class NetworkStackTest : public testing::Test {
     }
 };
 
-class TestSink : public DataSink {
+class TestSink : public SinkMedium {
   public:
 
     bool writeData(TupleBuffer& input_buffer) override {

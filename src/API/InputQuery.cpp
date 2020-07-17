@@ -4,7 +4,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
-#include <Sinks/DataSink.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
@@ -260,11 +260,11 @@ InputQuery& InputQuery::writeToCSVFile(const std::string& file_name, const std::
     if (outputMode == "append") {
         NES_DEBUG("InputQuery::writeToCSVFile: with modus append");
         op = createSinkOperator(
-            createCSVFileSinkWithSchema(this->sourceStream->getSchema(), file_name, FILE_APPEND));
+            createCSVFileSinkWithSchema(this->sourceStream->getSchema(), file_name, true));
     } else if (outputMode == "truncate") {
         NES_DEBUG("InputQuery::writeToCSVFile: with modus truncate");
         op = createSinkOperator(
-            createCSVFileSinkWithSchema(this->sourceStream->getSchema(), file_name, FILE_OVERWRITE));
+            createCSVFileSinkWithSchema(this->sourceStream->getSchema(), file_name, false));
     } else {
         NES_ERROR("writeToCSVFile mode not supported " << outputMode);
     }

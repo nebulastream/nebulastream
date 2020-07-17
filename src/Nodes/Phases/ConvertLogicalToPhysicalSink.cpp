@@ -34,14 +34,14 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
 #endif
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink for format=" << fileSinkDescriptor->getSinkFormat());
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink for format=" << fileSinkDescriptor->getSinkFormatAsString());
 
-        if (fileSinkDescriptor->getSinkFormat() == CSV_FORMAT) {
-            return createCSVFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getFileOutputMode());
-        } else if (fileSinkDescriptor->getSinkFormat() == NES_FORMAT) {
-            return createBinaryNESFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getFileOutputMode());
-        } else if (fileSinkDescriptor->getSinkFormat() == TEXT_FORMAT) {
-            return createTextFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getFileOutputMode());
+        if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {
+            return createCSVFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getAppend());
+        } else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT") {
+            return createBinaryNESFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getAppend());
+        } else if (fileSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
+            return createTextFileSinkWithSchema(schema, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getAppend());
         } else {
             NES_ERROR("createDataSink: unsupported format");
             throw std::invalid_argument("Unknown File format");

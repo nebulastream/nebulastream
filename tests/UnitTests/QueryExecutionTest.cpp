@@ -82,7 +82,7 @@ class WindowSource : public DefaultSource {
 
 typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;
 
-class TestSink : public DataSink {
+class TestSink : public SinkMedium {
   public:
     TestSink(uint64_t expectedBuffer) : expectedBuffer(expectedBuffer){};
     bool writeData(TupleBuffer& input_buffer) override {
@@ -126,9 +126,9 @@ class TestSink : public DataSink {
         cleanupBuffers();
     };
 
-    SinkMedium getType() const override {
-        return SinkMedium::PRINT_SINK;
-    }
+//    SinkMedium getType() const override {
+//        return SinkMedium::PRINT_SINK;
+//    }
 
     uint32_t getNumberOfResultBuffers() {
         std::unique_lock lock(m);
