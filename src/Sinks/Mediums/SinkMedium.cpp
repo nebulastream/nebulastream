@@ -55,8 +55,19 @@ std::string SinkMedium::getWriteMode()
     }
 }
 
-bool SinkMedium::getAppend()
+bool SinkMedium::getAppendAsBool()
 {
     return append;
+}
+
+std::string SinkMedium::getAppendAsString()
+{
+    if(append)
+    {
+        return "APPEND";
+    }
+    else{
+        return "OVERWRITE";
+    }
 }
 }// namespace NES

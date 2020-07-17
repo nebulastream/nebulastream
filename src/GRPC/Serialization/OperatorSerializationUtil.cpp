@@ -418,7 +418,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as FileSinkDescriptor");
-        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), serializedSinkDescriptor.sinkformat(), serializedSinkDescriptor.append());
+        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), serializedSinkDescriptor.sinkformat(), serializedSinkDescriptor.append() == true ? "APPEND" : "OVERWRITE");
     }
     else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type " << sinkDetails->DebugString());

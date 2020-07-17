@@ -20,6 +20,7 @@ const DataSinkPtr createTestSink() {
 
 const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema,
                                                  const std::string& filePath, bool append) {
+    //TODO: this is not nice and should be fixed such that we only provide the paramter once
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, filePath, append);
     return std::make_shared<FileSink>(schema, format, filePath, append);
 }

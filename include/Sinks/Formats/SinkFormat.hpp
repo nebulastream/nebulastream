@@ -9,6 +9,12 @@ namespace NES {
 
 class SinkFormat {
   public:
+    /**
+     * @brief constructor for a sink format
+     * @param schema
+     * @param filePath
+     * @param append
+     */
     SinkFormat(SchemaPtr schema, std::string filePath, bool append);
 
     /**
@@ -20,10 +26,14 @@ class SinkFormat {
 
     /**
     * @brief method to write the schema of the data
-     * @note this will reset the current file
+    * @note this will reset the current file
     */
     virtual bool writeSchema() = 0;
 
+    /**
+     * @brief method to return the format as a string
+     * @return format as string
+     */
     virtual std::string getFormatAsString() = 0;
 
   protected:

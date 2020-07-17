@@ -36,9 +36,9 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
 #endif
         else if (sinkType == "ZMQ_SINK") {
             FileSinkPtr fileSink = std::dynamic_pointer_cast<FileSink>(dataSink);
-            NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode " << fileSink->getAppend()
+            NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode " << fileSink->getAppendAsBool()
                                                                                          << " format " << fileSink->getSinkFormat());
-            return FileSinkDescriptor::create(fileSink->getFilePath(), fileSink->getSinkFormat(), fileSink->getAppend());
+            return FileSinkDescriptor::create(fileSink->getFilePath(), fileSink->getSinkFormat(), fileSink->getAppendAsString());
         }
         else {
             NES_ERROR("ConvertPhysicalToLogicalSink: Unknown Data Sink Type");

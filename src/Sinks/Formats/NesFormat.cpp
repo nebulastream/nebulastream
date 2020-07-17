@@ -22,6 +22,12 @@ bool NesFormat::writeSchema() {
 }
 
 bool NesFormat::writeData(TupleBuffer& inputBuffer) {
+    if(inputBuffer.getNumberOfTuples() == 0)
+    {
+        NES_WARNING("NesFormat::writeData: Try to write empty buffer");
+        return false;
+    }
+
     std::ofstream outputFile;
     if(append)
     {
@@ -33,12 +39,23 @@ bool NesFormat::writeData(TupleBuffer& inputBuffer) {
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
     }
 
+    size_t posBefore = outputFile.tellp();
     outputFile.write(reinterpret_cast<char*>(inputBuffer.getBuffer()), inputBuffer.getBufferSize());
-
+    size_t posAfter = outputFile.tellp();
     outputFile.close();
+
+    if(posAfter > posBefore)
+    {
+        NES_DEBUG("NesFormat::writeData: wrote buffer of length=" << posAfter - posBefore<< " successfully");
+        return true;
+    }
+    else{
+        NES_ERROR("NesFormat::writeData: write buffer failed posBefore=" << posBefore << " posAfter=" << posAfter);
+        return false;
+    }
 }
 
 std::string NesFormat::getFormatAsString() {
-    return "NesFormat";
+    return "CSV_FORMAT";
 }
 }// namespace NES

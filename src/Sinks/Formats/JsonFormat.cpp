@@ -22,6 +22,6 @@ bool JsonFormat::writeData(TupleBuffer& inputBuffer)
 
 std::string JsonFormat::getFormatAsString()
 {
-    return "JsonFormat";
+    return "JSON_FORMAT";
 }
 }// namespace NES
