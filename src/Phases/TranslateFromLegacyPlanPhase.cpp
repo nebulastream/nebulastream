@@ -16,15 +16,15 @@
 #include <Nodes/Node.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Phases/ConvertLogicalToPhysicalSink.hpp>
-#include <Phases/ConvertPhysicalToLogicalSink.hpp>
-#include <Phases/ConvertPhysicalToLogicalSource.hpp>
-#include <Phases/TranslateFromLegacyPlanPhase.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 #include <Operators/Impl/MapOperator.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Operators/Operator.hpp>
+#include <Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <Phases/ConvertPhysicalToLogicalSink.hpp>
+#include <Phases/ConvertPhysicalToLogicalSource.hpp>
+#include <Phases/TranslateFromLegacyPlanPhase.hpp>
 
 namespace NES {
 

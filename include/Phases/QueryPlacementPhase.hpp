@@ -29,7 +29,7 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class QueryPlacementPhase {
   public:
     static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
-                                  TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
+                                         TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Method takes input as a placement strategy name and input query plan
@@ -39,6 +39,7 @@ class QueryPlacementPhase {
      * @throws QueryPlacementException
      */
     bool execute(std::string placementStrategy, QueryPlanPtr queryPlan);
+
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
                                  TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);

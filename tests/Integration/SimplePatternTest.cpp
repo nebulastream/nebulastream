@@ -12,16 +12,27 @@
 namespace fs = std::filesystem;
 namespace NES {
 
+//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
+// by assigning a different RPC port for each test case
+uint64_t rpcPort = 4000;
+
 class SimplePatternTest : public testing::Test {
   public:
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("SimplePatternTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup SimplePatternTest test class.");
+    }
+
+    void SetUp() {
+        rpcPort = rpcPort + 2;
     }
 
     void TearDown() {
         std::cout << "Tear down SimplePatternTest class." << std::endl;
     }
+
+    std::string ipAddress = "localhost";
+    uint64_t restPort = 8081;
 };
 
 /* 1. Test
@@ -29,7 +40,7 @@ class SimplePatternTest : public testing::Test {
  */
 TEST_F(SimplePatternTest, testPatternWithFilter) {
     NES_DEBUG("SimplePatternTest: start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_DEBUG("SimplePatternTest: coordinator started successfully");
@@ -67,7 +78,7 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
  */
 TEST_F(SimplePatternTest, testPatternWithTestStream) {
     NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_DEBUG("coordinator started successfully");

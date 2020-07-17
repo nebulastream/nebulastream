@@ -1,6 +1,6 @@
 #include <Catalogs/QueryCatalog.hpp>
-#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
+#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
@@ -9,7 +9,7 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog(): insertQueryRequest() {
+QueryCatalog::QueryCatalog() : insertQueryRequest(), newRequestAvailable(false) {
     NES_DEBUG("QueryCatalog()");
 }
 
@@ -44,9 +44,11 @@ std::vector<QueryCatalogEntry> QueryCatalog::getQueriesToSchedule() {
             currentBatchSize++;
         }
         NES_INFO("QueryCatalog: Scheduling " << queriesToSchedule.size() << " queries.");
+        setNewRequestAvailable(!schedulingQueue.empty());
         return queriesToSchedule;
     }
     NES_INFO("QueryCatalog: Nothing to schedule.");
+    setNewRequestAvailable(!schedulingQueue.empty());
     return queriesToSchedule;
 }
 
@@ -72,6 +74,8 @@ bool QueryCatalog::registerAndQueueAddRequest(const std::string& queryString, co
         queries[queryId] = queryCatalogEntry;
         NES_INFO("QueryCatalog: Adding query with id " << queryId << " to the scheduling queue");
         schedulingQueue.push_back(queryCatalogEntry);
+        NES_INFO("QueryCatalog: Marking that new request is available to be scheduled");
+        setNewRequestAvailable(true);
         return true;
     } catch (const std::exception& exc) {
         NES_ERROR("QueryCatalog:_exception:" << exc.what() << " try to revert changes");
@@ -102,6 +106,8 @@ bool QueryCatalog::queueStopRequest(std::string queryId) {
         queryCatalogEntry->setQueryStatus(QueryStatus::MarkedForStop);
         schedulingQueue.push_back(queryCatalogEntry);
     }
+    NES_INFO("QueryCatalog: Marking that new request is available to be scheduled");
+    setNewRequestAvailable(true);
     return true;
 }
 
@@ -166,6 +172,14 @@ std::string QueryCatalog::printQueries() {
         ss << "queryID=" << q.first << " running=" << q.second->getQueryStatus() << std::endl;
     }
     return ss.str();
+}
+
+bool QueryCatalog::isNewRequestAvailable() const {
+    return newRequestAvailable;
+}
+
+void QueryCatalog::setNewRequestAvailable(bool newRequestAvailable) {
+    this->newRequestAvailable = newRequestAvailable;
 }
 
 }// namespace NES

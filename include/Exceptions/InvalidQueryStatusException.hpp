@@ -5,13 +5,14 @@
 #include <stdexcept>
 #include <vector>
 
-namespace NES{
+namespace NES {
 class InvalidQueryStatusException : public std::exception {
   public:
     explicit InvalidQueryStatusException(std::vector<QueryStatus> expectedStatus, QueryStatus actualStatus);
     const char* what() const throw();
+
   private:
     std::string message;
 };
-}
+}// namespace NES
 #endif//NES_INVALIDQUERYSTATUSEXCEPTION_HPP

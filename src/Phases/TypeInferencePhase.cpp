@@ -7,13 +7,13 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES {
 
-TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog): streamCatalog(streamCatalog) {}
+TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamCatalog(streamCatalog) {}
 
 TypeInferencePhasePtr TypeInferencePhase::create(StreamCatalogPtr streamCatalog) {
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(streamCatalog));

@@ -1,25 +1,29 @@
-#include <gtest/gtest.h>
-#include <Util/Logger.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <ctime>
-#include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
 #include <Topology/TopologyManager.hpp>
+#include <Util/Logger.hpp>
+#include <ctime>
+#include <gtest/gtest.h>
 
 namespace NES {
 
+//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
+// by assigning a different RPC port for each test case
+uint64_t rpcPort = 4000;
+
 class UpdateTopologyRemoteTest : public testing::Test {
   public:
-    std::string host = "localhost";
-    std::string queryString = 
-        "QueryPtr query = Query::from(\"default_logical\").filter(Attribute(\"id\") < 42).sink(PrintSinkDescriptor::create()); "
-        "return query;";
-
-
+    std::string ipAddress = "localhost";
+    uint64_t restPort = 8081;
 
     static void SetUpTestCase() {
         NES::setupLogging("UpdateTopologyRemoteTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup UpdateTopologyRemoteTest test class.");
+    }
+
+    void SetUp() {
+        rpcPort = rpcPort + 2;
     }
 
     static void TearDownTestCase() {
@@ -28,19 +32,19 @@ class UpdateTopologyRemoteTest : public testing::Test {
 };
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+20), NESNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 20), NESNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;
 
@@ -61,7 +65,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     istringstream f1(firstId);
     size_t firstIdInt;
     f1 >> firstIdInt;
-    cout << "firstId=" << firstId  << " firstint" << firstIdInt << endl;
+    cout << "firstId=" << firstId << " firstint" << firstIdInt << endl;
 
     size_t pos2Beg = retString.find("2[label");
     std::string secondPart1 = retString.substr(pos2Beg + 9);
@@ -113,19 +117,19 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 }
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+20), NESNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 20), NESNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;
 
@@ -146,7 +150,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     istringstream f1(firstId);
     size_t firstIdInt;
     f1 >> firstIdInt;
-    cout << "firstId=" << firstId  << " firstint" << firstIdInt << endl;
+    cout << "firstId=" << firstId << " firstint" << firstIdInt << endl;
 
     size_t pos2Beg = retString.find("2[label");
     std::string secondPart1 = retString.substr(pos2Beg + 9);
@@ -183,5 +187,4 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     EXPECT_TRUE(retStopCord);
 }
 
-}
-
+}// namespace NES

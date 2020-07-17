@@ -3,7 +3,7 @@
 
 namespace NES {
 
-InvalidArgumentException::InvalidArgumentException(std::string name, std::string value){
+InvalidArgumentException::InvalidArgumentException(std::string name, std::string value) {
     message = "Received invalid value " + value + " for input argument " + name;
 }
 

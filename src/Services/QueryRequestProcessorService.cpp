@@ -34,8 +34,9 @@ void QueryRequestProcessorService::start() {
 
     try {
         while (queryProcessorRunning) {
-            const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
-            if (!queryCatalogEntryBatch.empty()) {
+            if (queryCatalog->isNewRequestAvailable()) {
+                const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
+                NES_INFO("QueryProcessingService: Found " << queryCatalogEntryBatch.size() << " query requests to schedule");
                 //process the queries using query-at-a-time model
                 for (auto queryCatalogEntry : queryCatalogEntryBatch) {
 
@@ -92,11 +93,9 @@ void QueryRequestProcessorService::start() {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                     }
                 }
-            } else {
-                NES_INFO("QueryProcessingService: No query to schedule will try again in 5 seconds");
-                sleep(5);
             }
         }
+        NES_WARNING("QueryProcessingService: Terminated");
     } catch (...) {
         NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queries.");
         queryProcessorRunning = false;

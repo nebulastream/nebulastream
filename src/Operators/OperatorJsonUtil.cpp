@@ -1,7 +1,7 @@
 #include <API/Query.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 namespace NES {
 
