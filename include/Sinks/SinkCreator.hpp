@@ -27,6 +27,7 @@ const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out)
  * @brief create a csv test sink without a schema and append to existing file
  * @param schema of sink
  * @param path to file
+ * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
 const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema, const std::string& filePath, bool append = true);
@@ -35,30 +36,31 @@ const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema, const std::strin
  * @brief create a binary test sink with a schema
  * @param schema of sink
  * @param path to file
+ * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
 const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema,
                                                const std::string& filePath, bool append = true);
 
-
 /**
  * @brief create a binary test sink with a schema into the nes
  * @param schema of sink
  * @param path to file
+ * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
 const DataSinkPtr createBinaryNESFileSinkWithSchema(SchemaPtr schema,
-                                               const std::string& filePath, bool append = true);
+                                                    const std::string& filePath, bool append = true);
 
 /**
  * @brief create a JSON test sink with a schema int
  * @param schema of sink
  * @param path to file
+ * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
 const DataSinkPtr createJSONFileSinkWithSchema(SchemaPtr schema,
-                                                    const std::string& filePath, bool append = true);
-
+                                               const std::string& filePath, bool append = true);
 
 /**
  * @brief create a ZMQ test sink with a schema

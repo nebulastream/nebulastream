@@ -16,7 +16,7 @@ class SinkMedium {
     /**
      * @brief public constructor for data sink
      */
-     SinkMedium();
+    SinkMedium();
 
     /**
    * @brief public constructor for data sink with schema provisioning
@@ -85,10 +85,24 @@ class SinkMedium {
       */
     virtual std::string getMediumAsString() = 0;
 
+    /**
+     * @brief method to get the format as string
+     * @return format as string
+     */
     std::string getSinkFormat();
 
-    bool getAppend();
+    /**
+     * @brief method to return if the sink is appended
+     * @return bool indicating append
+     */
+    bool getAppendAsBool();
 
+    std::string getAppendAsString();
+
+    /**
+     * @brief method to return the write mode, either append or overwrite
+     * @return string indicating the write mode
+     */
     std::string getWriteMode();
 
   protected:
@@ -96,7 +110,6 @@ class SinkMedium {
     bool append;
     SchemaPtr schema;
     bool schemaWritten;
-
 
     size_t sentBuffer;
     size_t sentTuples;

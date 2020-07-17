@@ -65,7 +65,7 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
     }
     else
     {
-        NES_ERROR("FileSink::writeData: writing data succeed");
+        NES_DEBUG("FileSink::writeData: writing data succeed");
         return true;
     }
 

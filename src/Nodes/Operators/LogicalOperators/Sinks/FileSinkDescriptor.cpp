@@ -6,11 +6,11 @@ namespace NES {
 
 
 SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName) {
-    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(fileName, "CSV_FORMAT", true));
+    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(fileName, "TEXT_FORMAT", "APPEND"));
 }
 
-SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName, std::string sinkFormat, bool append) {
-    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(fileName, sinkFormat, append));
+SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName, std::string sinkFormat, std::string append) {
+    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(fileName, sinkFormat, append == "APPEND" ? true : false));
 }
 
 FileSinkDescriptor::FileSinkDescriptor(std::string fileName, std::string sinkFormat, bool append)
