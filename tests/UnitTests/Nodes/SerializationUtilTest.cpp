@@ -233,28 +233,28 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     }
 
     {
-        auto sink = FileSinkDescriptor::create("test", FILE_APPEND, TEXT_FORMAT);
+        auto sink = FileSinkDescriptor::create("test", "TEXT_FORMAT", true);
         auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
     {
-        auto sink = FileSinkDescriptor::create("test", FILE_OVERWRITE, TEXT_FORMAT);
+        auto sink = FileSinkDescriptor::create("test", "TEXT_FORMAT", false);
         auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
     {
-        auto sink = FileSinkDescriptor::create("test", FILE_OVERWRITE, NES_FORMAT);
+        auto sink = FileSinkDescriptor::create("test", "NES_FORMAT", false);
         auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
     {
-        auto sink = FileSinkDescriptor::create("test", FILE_OVERWRITE, CSV_FORMAT);
+        auto sink = FileSinkDescriptor::create("test", "CSV_FORMAT", false);
         auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));

@@ -46,7 +46,7 @@ class SinkMedium {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    virtual bool writeData(TupleBuffer& input_buffer) = 0;
+    virtual bool writeData(TupleBuffer& inputBuffer) = 0;
 
     /**
      * @brief debug function for testing to get number of written buffers

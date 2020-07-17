@@ -64,7 +64,7 @@ TEST_F(SinkTest, testCSVSink) {
     TupleBuffer buffer = bufferManager->getBufferBlocking();
 
     auto write_thread = std::thread([&]() {
-        const DataSinkPtr csvSink = createCSVFileSinkWithSchema(test_schema, path_to_csv_file, FILE_APPEND);
+        const DataSinkPtr csvSink = createCSVFileSinkWithSchema(test_schema, path_to_csv_file, true);
         for (size_t i = 0; i < 10; ++i) {
             for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                 buffer.getBuffer<uint64_t>()[j] = j;

@@ -116,6 +116,11 @@ class TestSink : public SinkMedium {
 
     void setup() override{};
 
+    std::string getMediumAsString()
+    {
+        return "Test_Sink";
+    }
+
     void shutdown() override {
         std::unique_lock lock(m);
         cleanupBuffers();
@@ -126,9 +131,6 @@ class TestSink : public SinkMedium {
         cleanupBuffers();
     };
 
-//    SinkMedium getType() const override {
-//        return SinkMedium::PRINT_SINK;
-//    }
 
     uint32_t getNumberOfResultBuffers() {
         std::unique_lock lock(m);

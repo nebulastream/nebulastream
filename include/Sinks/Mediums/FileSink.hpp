@@ -63,9 +63,6 @@ class FileSink : public SinkMedium {
      */
     std::string getMediumAsString() override;
 
-    std::string getFileOutputModeAsString();
-
-
   protected:
     std::string filePath;
 };

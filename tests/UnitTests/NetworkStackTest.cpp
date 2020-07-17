@@ -95,8 +95,8 @@ class TestSink : public SinkMedium {
     ~TestSink() override {
     };
 
-    SinkMedium getType() const override {
-        return SinkMedium::PRINT_SINK;
+    std::string getMediumAsString() override {
+        return "PRINT_SINK";
     }
 
   public:

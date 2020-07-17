@@ -19,6 +19,14 @@ class FileSinkDescriptor : public SinkDescriptor {
     static SinkDescriptorPtr create(std::string filePath, std::string sinkFormat, bool append);
 
     /**
+     * @brief Factory method to create a new file sink descriptor as default
+     * @param schema output schema of this sink descriptor
+     * @param filePath the path to the output file
+     * @return descriptor for file sink
+     */
+    static SinkDescriptorPtr create(std::string filePath);
+
+    /**
      * @brief Get the file name where the data is to be written
      */
     const std::string& getFileName() const;
