@@ -114,6 +114,35 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 }
             })
             .wait();
+    } else if (path[1] == "status") {
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try {
+                    NES_DEBUG("Get current status of the query");
+                    //Prepare Input query from user string
+                    std::string payload(body.begin(), body.end());
+                    NES_DEBUG("status payload=" << payload);
+
+                    //Prepare the response
+                    json::value result{};
+                    const QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(payload);
+                    std::string currentQueryStatus = queryCatalogEntry->getQueryStatusAsString();
+                    NES_DEBUG("Current query status=" << currentQueryStatus);
+
+                    result["status"] = json::value::string(currentQueryStatus);
+                    successMessageImpl(message, result);
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR("QueryCatalogController: handleGet -status: Exception occurred while fetching the query status:"
+                              << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                }
+            })
+            .wait();
     } else {
         resourceNotFoundImpl(message);
     }

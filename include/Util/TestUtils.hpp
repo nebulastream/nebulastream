@@ -52,12 +52,34 @@ class TestUtils {
     static bool checkCompleteOrTimeout(std::string queryId, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        auto now = start_timestamp;
 
         size_t currentResult = 0;
         web::json::value json_return;
 
-        while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
+        std::string currentStatus = "";
+
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
+            web::http::client::http_client clientProc(
+                "http://localhost:8081/v1/nes/queryCatalog/status");
+            clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId).then([](const web::http::http_response& response) {
+                                                                                    cout << "Get query status" << endl;
+                                                                                    return response.extract_json();
+                                                                                })
+                .then([&json_return, &currentStatus](const pplx::task<web::json::value>& task) {
+                    try {
+                        NES_DEBUG("got status=" << json_return);
+                        json_return = task.get();
+                        currentStatus = json_return.at("status").as_string();
+                    } catch (const web::http::http_exception& e) {
+                        NES_ERROR("error while setting return" << e.what());
+                    }
+                })
+                .wait();
+            NES_DEBUG("checkCompleteOrTimeout: sleep because current status =" << currentStatus);
+            sleep(1);
+        }
+
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
 
             web::http::client::http_client clientProc(

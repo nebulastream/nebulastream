@@ -200,15 +200,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     cout << "string submit for query1=" << ssQuery1.str();
 
     std::stringstream ssQuery2;
-    ssQuery2
-        << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
+    ssQuery2 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery2 << pathQuery2;
     ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << endl;
     cout << "string submit for query2=" << ssQuery2.str();
 
     std::stringstream ssQuery3;
-    ssQuery3
-        << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
+    ssQuery3 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery3 << pathQuery3;
     ssQuery3 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << endl;
     cout << "string submit for query2=" << ssQuery3.str();
@@ -234,8 +232,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     cout << "return from q1" << endl;
 
     web::json::value jsonReturnQ2;
-    web::http::client::http_client clientQ2(
-        "http://localhost:8081/v1/nes/query/execute-query");
+    web::http::client::http_client clientQ2("http://localhost:8081/v1/nes/query/execute-query");
     clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then([](const web::http::http_response& response) {
                                                                        cout << "get first then" << endl;
                                                                        return response.extract_json();
@@ -252,11 +249,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
         .wait();
     cout << "return from q2" << endl;
 
-
     cout << "send query 3:" << endl;
     web::json::value jsonReturnQ3;
-    web::http::client::http_client clientQ3(
-        "http://localhost:8081/v1/nes/query/execute-query");
+    web::http::client::http_client clientQ3("http://localhost:8081/v1/nes/query/execute-query");
     clientQ3.request(web::http::methods::POST, "/", ssQuery3.str()).then([](const web::http::http_response& response) {
                                                                        cout << "get first then" << endl;
                                                                        return response.extract_json();
@@ -277,7 +272,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     string queryId1 = jsonReturnQ2.at("queryId").as_string();
     string queryId2 = jsonReturnQ2.at("queryId").as_string();
     string queryId3 = jsonReturnQ2.at("queryId").as_string();
-
 
     EXPECT_TRUE(!queryId1.empty());
     EXPECT_TRUE(!queryId2.empty());
