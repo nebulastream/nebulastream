@@ -1,5 +1,6 @@
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
@@ -130,7 +131,7 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
                         QueryPlanPtr querySubPlan = candidateExecutionNode->getQuerySubPlan(queryId);
                         if (!querySubPlan) {
                             NES_ERROR("TopDownStrategy : unable to find query sub plan with id " + queryId);
-                            throw QueryPlacementException(("TopDownStrategy : unable to find query sub plan with id " + queryId);
+                            throw QueryPlacementException("TopDownStrategy : unable to find query sub plan with id " + queryId);
                         }
                         querySubPlan->prependPreExistingOperator(candidateOperator->copy());
                         if (!candidateExecutionNode->updateQuerySubPlan(queryId, querySubPlan)) {
