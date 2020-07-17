@@ -4,10 +4,10 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -31,14 +31,16 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     if (!sourceOperator->getSourceDescriptor()->hasStreamName()) {
-        NES_THROW_RUNTIME_ERROR("BottomUpStrategy: Source Descriptor need stream name");
+        NES_ERROR("BottomUpStrategy: Source Descriptor need stream name");
+        throw QueryPlacementException("BottomUpStrategy: Source Descriptor need stream name");
     }
     const string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
 
     const vector<NESTopologyEntryPtr>& sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
-        NES_THROW_RUNTIME_ERROR("TopDownStrategy: Unable to find the source node to place the operator");
+        NES_ERROR("TopDownStrategy: Unable to find the source node to place the operator");
+        throw QueryPlacementException("TopDownStrategy: Unable to find the source node to place the operator");
     }
 
     NES_INFO("TopDownStrategy: Placing operators on the nes topology.");
@@ -66,7 +68,8 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
         LogicalOperatorNodePtr candidateOperator = sinkOperator;
         auto path = pathFinder->findPathBetween(nesSourceNode, sinkNode);
         if (path.empty()) {
-            NES_THROW_RUNTIME_ERROR("TopDownStrategy: No path exists between sink and source");
+            NES_ERROR("TopDownStrategy: No path exists between sink and source");
+            throw QueryPlacementException("TopDownStrategy: No path exists between sink and source");
         }
 
         auto pathItr = path.rbegin();
@@ -91,7 +94,8 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
             }
 
             if ((pathItr == path.rend()) || (candidateNesNode->getRemainingCpuCapacity() == 0)) {
-                NES_THROW_RUNTIME_ERROR("TopDownStrategy: No node available for further placement of operators");
+                NES_ERROR("TopDownStrategy: No node available for further placement of operators");
+                throw QueryPlacementException("TopDownStrategy: No node available for further placement of operators");
             }
 
             if (candidateOperator->instanceOf<SinkLogicalOperatorNode>()) {
@@ -125,17 +129,20 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
 
                         QueryPlanPtr querySubPlan = candidateExecutionNode->getQuerySubPlan(queryId);
                         if (!querySubPlan) {
-                            NES_THROW_RUNTIME_ERROR("TopDownStrategy : unable to find query sub plan with id " + queryId);
+                            NES_ERROR("TopDownStrategy : unable to find query sub plan with id " + queryId);
+                            throw QueryPlacementException(("TopDownStrategy : unable to find query sub plan with id " + queryId);
                         }
                         querySubPlan->prependPreExistingOperator(candidateOperator->copy());
                         if (!candidateExecutionNode->updateQuerySubPlan(queryId, querySubPlan)) {
-                            NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + queryId);
+                            NES_ERROR("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + queryId);
+                            throw QueryPlacementException("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + queryId);
                         }
                     }
                 } else {
                     NES_DEBUG("TopDownStrategy: Adding the operator to an existing execution node");
                     if (!candidateExecutionNode->createNewQuerySubPlan(queryId, candidateOperator->copy())) {
-                        NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
+                        NES_ERROR("TopDownStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
+                        throw QueryPlacementException("TopDownStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
                     }
                 }
             } else {
@@ -144,7 +151,8 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
                 ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, candidateOperator->copy());
                 NES_DEBUG("TopDownStrategy: Adding new execution node with id: " << candidateNesNode->getId());
                 if (!globalExecutionPlan->addExecutionNode(newExecutionNode)) {
-                    NES_THROW_RUNTIME_ERROR("TopDownStrategy: failed to add execution node for query " + queryId);
+                    NES_ERROR("TopDownStrategy: failed to add execution node for query " + queryId);
+                    throw QueryPlacementException("TopDownStrategy: failed to add execution node for query " + queryId);
                 }
             }
 

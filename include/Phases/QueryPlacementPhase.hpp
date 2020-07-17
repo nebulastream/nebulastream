@@ -23,10 +23,21 @@ typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
+/**
+ * @brief This class is responsible for placing operators of an input query plan on a global execution plan.
+ */
 class QueryPlacementPhase {
   public:
     static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
                                   TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
+
+    /**
+     * @brief Method takes input as a placement strategy name and input query plan
+     * @param placementStrategy : name of the placement strategy
+     * @param queryPlan : the query plan
+     * @return true is placement successful.
+     * @throws QueryPlacementException
+     */
     bool execute(std::string placementStrategy, QueryPlanPtr queryPlan);
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,

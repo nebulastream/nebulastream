@@ -29,7 +29,7 @@ SOFTWARE.
 #ifndef NLOHMANN_JSON_HPP
 #define NLOHMANN_JSON_HPP
 
-#include <algorithm>       // all_of, for_each, execute
+#include <algorithm>       // all_of, for_each, transform
 #include <array>           // array
 #include <cassert>         // assert
 #include <cctype>          // isdigit
@@ -435,7 +435,7 @@ class basic_json {
 
     [RFC 7159](http://rfc7159.net/rfc7159) states:
     > Software implementations are typically required to test names of object
-    > members for equality. Implementations that execute the textual
+    > members for equality. Implementations that transform the textual
     > representation into sequences of Unicode code units and then perform the
     > comparison numerically, code unit by code unit, are interoperable in the
     > sense that implementations will agree in all cases on equality or
@@ -4399,7 +4399,7 @@ class basic_json {
             throw std::domain_error("cannot use push_back() with " + type_name());
         }
 
-        // execute null object into an array
+        // transform null object into an array
         if (is_null()) {
             m_type = value_t::array;
             m_value = value_t::array;
@@ -4431,7 +4431,7 @@ class basic_json {
             throw std::domain_error("cannot use push_back() with " + type_name());
         }
 
-        // execute null object into an array
+        // transform null object into an array
         if (is_null()) {
             m_type = value_t::array;
             m_value = value_t::array;
@@ -4477,7 +4477,7 @@ class basic_json {
             throw std::domain_error("cannot use push_back() with " + type_name());
         }
 
-        // execute null object into an object
+        // transform null object into an object
         if (is_null()) {
             m_type = value_t::object;
             m_value = value_t::object;
@@ -4568,7 +4568,7 @@ class basic_json {
             throw std::domain_error("cannot use emplace_back() with " + type_name());
         }
 
-        // execute null object into an array
+        // transform null object into an array
         if (is_null()) {
             m_type = value_t::array;
             m_value = value_t::array;
@@ -4613,7 +4613,7 @@ class basic_json {
             throw std::domain_error("cannot use emplace() with " + type_name());
         }
 
-        // execute null object into an object
+        // transform null object into an object
         if (is_null()) {
             m_type = value_t::object;
             m_value = value_t::object;
@@ -10126,9 +10126,9 @@ class basic_json {
 
         /// unescape tilde and slash
         static void unescape(std::string& s) {
-            // first execute any occurrence of the sequence '~1' to '/'
+            // first transform any occurrence of the sequence '~1' to '/'
             replace_substring(s, "~1", "/");
-            // then execute any occurrence of the sequence '~0' to '~'
+            // then transform any occurrence of the sequence '~0' to '~'
             replace_substring(s, "~0", "~");
         }
 
