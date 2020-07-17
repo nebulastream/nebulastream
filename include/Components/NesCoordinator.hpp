@@ -43,15 +43,7 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
-    /**
-     * @brief default constructor
-     * @note this will create the coordinator actor using the default coordinator config
-     * @limitations
-     *    - currently we start rest server always
-     */
-    NesCoordinator();
-
-    NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort);
+    explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort);
 
     /**
      * @brief dtor
@@ -110,6 +102,12 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     QueryCatalogPtr getQueryCatalog();
 
   private:
+    /**
+     * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the
+     * CoordinatorRPCClient
+     */
+    void buildAndStartGRPCServer();
+
     std::string serverIp;
     uint16_t restPort;
     uint16_t rpcPort;

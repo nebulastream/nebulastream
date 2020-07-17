@@ -35,7 +35,7 @@ class QueryCatalog {
      * @param queryId: id of the user query.
      * @return true if successful
      */
-    bool queueStopRequest(std:: string queryId);
+    bool queueStopRequest(std::string queryId);
 
     /**
      * @brief Get a batch of query catalog entries to be scheduled.
@@ -111,12 +111,24 @@ class QueryCatalog {
      */
     std::map<std::string, std::string> getAllQueries();
 
-  private:
+    /**
+     * @brief Check if there are new request available
+     * @return true if there are new requests
+     */
+    bool isNewRequestAvailable() const;
 
+    /**
+     * @brief Change status of new request availability
+     * @param newRequestAvailable: bool indicating if the request is available
+     */
+    void setNewRequestAvailable(bool newRequestAvailable);
+
+  private:
     std::mutex insertQueryRequest;
+    bool newRequestAvailable;
     std::map<std::string, QueryCatalogEntryPtr> queries;
     std::deque<QueryCatalogEntryPtr> schedulingQueue;
-    int64_t batchSize=1;
+    int64_t batchSize = 1;
 };
 
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;

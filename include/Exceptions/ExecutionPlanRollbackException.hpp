@@ -12,6 +12,6 @@ class ExecutionPlanRollbackException : public std::runtime_error {
   public:
     explicit ExecutionPlanRollbackException(std::string message);
 };
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_EXCEPTIONS_EXECUTIONPLANROLLBACKEXCEPTION_HPP_

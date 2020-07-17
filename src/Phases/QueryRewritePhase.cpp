@@ -1,7 +1,7 @@
-#include <Phases/QueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+#include <Phases/QueryRewritePhase.hpp>
 
-namespace NES{
+namespace NES {
 
 QueryRewritePhasePtr QueryRewritePhase::create() {
     return std::make_shared<QueryRewritePhase>(QueryRewritePhase());
@@ -15,4 +15,4 @@ QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     return filterPushDownRule->apply(queryPlan);
 }
 
-}
+}// namespace NES

@@ -21,9 +21,9 @@
 #include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/Operator.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <Operators/Operator.hpp>
 
 namespace NES {
 

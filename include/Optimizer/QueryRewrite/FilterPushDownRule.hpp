@@ -31,7 +31,6 @@ class FilterPushDownRule : public BaseRewriteRule {
     static FilterPushDownRulePtr create();
 
   private:
-
     explicit FilterPushDownRule();
 
     /**

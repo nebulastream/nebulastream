@@ -1,35 +1,47 @@
 #include <iostream>
 
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include <Components/NesWorker.hpp>
-#include <Components/NesCoordinator.hpp>
 
 using namespace std;
 
 #define DEBUG_OUTPUT
 namespace NES {
 
+//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
+// by assigning a different RPC port for each test case
+uint64_t rpcPort = 4000;
+
 class WorkerCoordinatorStarterTest : public testing::Test {
   public:
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("WorkerCoordinatorStarterTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WorkerCoordinatorStarterTest test class.");
     }
+
+    void SetUp() {
+        rpcPort = rpcPort + 2;
+    }
+
     void TearDown() {
         std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl;
     }
+
+    std::string ipAddress = "localhost";
+    uint64_t restPort = 8081;
 };
 
 TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started connected successfully" << endl;
@@ -47,13 +59,13 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
 
 TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started connected successfully" << endl;
@@ -71,13 +83,13 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -95,13 +107,13 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -119,13 +131,13 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -147,13 +159,13 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
 
 TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>("localhost", std::to_string(port), "localhost", std::to_string(port+10), NESNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, std::to_string(port + 10), NESNodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -180,4 +192,4 @@ TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
     EXPECT_TRUE(retStopCord);
 }
 
-}
+}// namespace NES

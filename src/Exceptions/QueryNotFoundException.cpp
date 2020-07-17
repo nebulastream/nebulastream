@@ -2,4 +2,4 @@
 
 namespace NES {
 QueryNotFoundException::QueryNotFoundException(std::string message) : std::runtime_error(message) {}
-}
+}// namespace NES

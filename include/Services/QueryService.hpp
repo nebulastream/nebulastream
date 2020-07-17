@@ -50,7 +50,6 @@ class QueryService {
     web::json::value getQueryPlanAsJson(std::string queryId);
 
   private:
-
     QueryCatalogPtr queryCatalog;
 };
 
