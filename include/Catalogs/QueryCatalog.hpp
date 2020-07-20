@@ -2,6 +2,7 @@
 #define INCLUDE_CATALOGS_QUERYCATALOG_HPP_
 
 #include <Catalogs/QueryCatalogEntry.hpp>
+#include <condition_variable>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -121,10 +122,14 @@ class QueryCatalog {
      * @brief Change status of new request availability
      * @param newRequestAvailable: bool indicating if the request is available
      */
-    void setNewRequestAvailable(bool newRequestAvailable);
+    void setNewRequestAvailableAndNotifyProcessor(bool newRequestAvailable);
+
+    std::condition_variable& getAvailabilityTrigger();
 
   private:
-    std::mutex insertQueryRequest;
+    std::mutex queryStatus;
+    std::mutex queryRequest;
+    std::condition_variable availabilityTrigger;
     bool newRequestAvailable;
     std::map<std::string, QueryCatalogEntryPtr> queries;
     std::deque<QueryCatalogEntryPtr> schedulingQueue;

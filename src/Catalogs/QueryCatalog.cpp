@@ -9,7 +9,7 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog() : insertQueryRequest(), newRequestAvailable(false) {
+QueryCatalog::QueryCatalog() : queryStatus(), queryRequest(), newRequestAvailable(false) {
     NES_DEBUG("QueryCatalog()");
 }
 
@@ -31,7 +31,7 @@ std::map<std::string, std::string> QueryCatalog::getQueriesWithStatus(std::strin
 }
 
 std::vector<QueryCatalogEntry> QueryCatalog::getQueriesToSchedule() {
-    std::unique_lock<std::mutex> lock(insertQueryRequest);
+    std::unique_lock<std::mutex> lock(queryRequest);
     NES_INFO("QueryCatalog: Fetching Queries to Schedule");
     std::vector<QueryCatalogEntry> queriesToSchedule;
     if (!schedulingQueue.empty()) {
@@ -44,11 +44,11 @@ std::vector<QueryCatalogEntry> QueryCatalog::getQueriesToSchedule() {
             currentBatchSize++;
         }
         NES_INFO("QueryCatalog: Scheduling " << queriesToSchedule.size() << " queries.");
-        setNewRequestAvailable(!schedulingQueue.empty());
+        setNewRequestAvailableAndNotifyProcessor(!schedulingQueue.empty());
         return queriesToSchedule;
     }
     NES_INFO("QueryCatalog: Nothing to schedule.");
-    setNewRequestAvailable(!schedulingQueue.empty());
+    setNewRequestAvailableAndNotifyProcessor(!schedulingQueue.empty());
     return queriesToSchedule;
 }
 
@@ -65,7 +65,7 @@ std::map<std::string, std::string> QueryCatalog::getAllQueries() {
 }
 
 bool QueryCatalog::registerAndQueueAddRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
-    std::unique_lock<std::mutex> lock(insertQueryRequest);
+    std::unique_lock<std::mutex> lock(queryRequest);
     std::string queryId = queryPlan->getQueryId();
     NES_INFO("QueryCatalog: Registering query with id " << queryId);
     try {
@@ -75,7 +75,7 @@ bool QueryCatalog::registerAndQueueAddRequest(const std::string& queryString, co
         NES_INFO("QueryCatalog: Adding query with id " << queryId << " to the scheduling queue");
         schedulingQueue.push_back(queryCatalogEntry);
         NES_INFO("QueryCatalog: Marking that new request is available to be scheduled");
-        setNewRequestAvailable(true);
+        setNewRequestAvailableAndNotifyProcessor(true);
         return true;
     } catch (const std::exception& exc) {
         NES_ERROR("QueryCatalog:_exception:" << exc.what() << " try to revert changes");
@@ -87,7 +87,7 @@ bool QueryCatalog::registerAndQueueAddRequest(const std::string& queryString, co
 }
 
 bool QueryCatalog::queueStopRequest(std::string queryId) {
-    std::unique_lock<std::mutex> lock(insertQueryRequest);
+    std::unique_lock<std::mutex> lock(queryRequest);
     NES_INFO("QueryCatalog: Queue query stop request to the scheduling queue.");
     NES_INFO("QueryCatalog: Locating a query with same id in the scheduling queue.");
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
@@ -103,16 +103,16 @@ bool QueryCatalog::queueStopRequest(std::string queryId) {
             throw InvalidQueryStatusException({QueryStatus::Scheduling, QueryStatus::Registered, QueryStatus::Running}, currentStatus);
         }
         NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
-        queryCatalogEntry->setQueryStatus(QueryStatus::MarkedForStop);
+        markQueryAs(queryId, QueryStatus::MarkedForStop);
         schedulingQueue.push_back(queryCatalogEntry);
     }
     NES_INFO("QueryCatalog: Marking that new request is available to be scheduled");
-    setNewRequestAvailable(true);
+    setNewRequestAvailableAndNotifyProcessor(true);
     return true;
 }
 
 void QueryCatalog::markQueryAs(std::string queryId, QueryStatus newStatus) {
-
+    std::unique_lock<std::mutex> lock(queryStatus);
     NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << newStatus);
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
     QueryStatus oldStatus = queryCatalogEntry->getQueryStatus();
@@ -178,8 +178,16 @@ bool QueryCatalog::isNewRequestAvailable() const {
     return newRequestAvailable;
 }
 
-void QueryCatalog::setNewRequestAvailable(bool newRequestAvailable) {
+void QueryCatalog::setNewRequestAvailableAndNotifyProcessor(bool newRequestAvailable) {
     this->newRequestAvailable = newRequestAvailable;
+    if (newRequestAvailable) {
+        NES_INFO("QueryCatalog: Notify processor about a new query request");
+        availabilityTrigger.notify_one();
+    }
+}
+
+std::condition_variable& QueryCatalog::getAvailabilityTrigger() {
+    return availabilityTrigger;
 }
 
 }// namespace NES

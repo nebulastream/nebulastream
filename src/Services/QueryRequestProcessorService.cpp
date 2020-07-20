@@ -22,7 +22,7 @@ namespace NES {
 QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
                                                            QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
                                                            QueryDeployerPtr queryDeployer)
-    : queryProcessorLock(), queryProcessorRunning(true), globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog),
+    : queryProcessorLock(), queryProcessorStatusLock(), queryProcessorRunning(true), globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog),
       workerRPCClient(workerRpcClient), queryDeployer(queryDeployer) {
 
     NES_INFO("QueryProcessorService()");
@@ -34,72 +34,81 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
 void QueryRequestProcessorService::start() {
 
     try {
+        std::condition_variable& availabilityTrigger = queryCatalog->getAvailabilityTrigger();
         while (isQueryProcessorRunning()) {
-            if (queryCatalog->isNewRequestAvailable()) {
-                const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
-                NES_INFO("QueryProcessingService: Found " << queryCatalogEntryBatch.size() << " query requests to schedule");
-                //process the queries using query-at-a-time model
-                for (auto queryCatalogEntry : queryCatalogEntryBatch) {
+            std::unique_lock<std::mutex> lock(queryProcessorLock);
+            NES_INFO("QueryRequestProcessorService: Waiting for new query request trigger");
+            //We are using conditional variable to prevent Lost Wakeup and Spurious Wakeup
+            //ref: https://www.modernescpp.com/index.php/c-core-guidelines-be-aware-of-the-traps-of-condition-variables
+            availabilityTrigger.wait(lock, [&] {
+                return !isQueryProcessorRunning() || queryCatalog->isNewRequestAvailable();
+            });
 
-                    auto queryPlan = queryCatalogEntry.getQueryPlan();
-                    std::string queryId = queryPlan->getQueryId();
-                    try {
-                        if (queryCatalogEntry.getQueryStatus() == QueryStatus::MarkedForStop) {
-                            NES_INFO("QueryProcessingService: Request received for stopping the query " + queryId);
-                            bool successful = stopAndUndeployQuery(queryId);
-                            if (!successful) {
-                                throw QueryUndeploymentException("Unable to stop the query " + queryId);
-                            }
-                            queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
-                        } else if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
-                            NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " + queryId);
-                            queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
-                            std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
-                            queryPlan = queryRewritePhase->execute(queryPlan);
-                            queryPlan = typeInferencePhase->execute(queryPlan);
-                            queryPlacementPhase->execute(placementStrategy, queryPlan);
-                            bool successful = deployAndStartQuery(queryId);
-                            if (!successful) {
-                                throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with Id " + queryId);
-                            }
-                            queryCatalog->markQueryAs(queryId, QueryStatus::Running);
-                        } else {
-                            NES_ERROR("QueryProcessingService: Request received for query with status " << queryCatalogEntry.getQueryStatus() << " ");
-                            throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling}, queryCatalogEntry.getQueryStatus());
+            NES_INFO("QueryRequestProcessorService: New query request triggered");
+            const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
+            NES_INFO("QueryProcessingService: Found " << queryCatalogEntryBatch.size() << " query requests to schedule");
+            //process the queries using query-at-a-time model
+            for (auto queryCatalogEntry : queryCatalogEntryBatch) {
+
+                auto queryPlan = queryCatalogEntry.getQueryPlan();
+                std::string queryId = queryPlan->getQueryId();
+                try {
+                    if (queryCatalogEntry.getQueryStatus() == QueryStatus::MarkedForStop) {
+                        NES_INFO("QueryProcessingService: Request received for stopping the query " + queryId);
+                        bool successful = stopAndUndeployQuery(queryId);
+                        if (!successful) {
+                            throw QueryUndeploymentException("Unable to stop the query " + queryId);
                         }
-                    } catch (QueryPlacementException& ex) {
-                        //Rollback if failure happen while placing the query.
-                        NES_ERROR(ex.what());
-                        globalExecutionPlan->removeQuerySubPlans(queryId);
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
-                    } catch (QueryDeploymentException& ex) {
-                        NES_ERROR("QueryRequestProcessingService: " << ex.what());
-                        //Rollback if failure happen while placing the query.
-                        globalExecutionPlan->removeQuerySubPlans(queryId);
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
-                    } catch (InvalidQueryStatusException& ex) {
-                        //Rollback if failure happen while placing the query.
-                        NES_ERROR("QueryRequestProcessingService: " << ex.what());
-                        globalExecutionPlan->removeQuerySubPlans(queryId);
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
-                    } catch (QueryNotFoundException& ex) {
-                        //Rollback if failure happen while placing the query.
-                        NES_ERROR("QueryRequestProcessingService: " << ex.what());
-                    } catch (QueryUndeploymentException& ex) {
-                        //Rollback if failure happen while placing the query.
-                        NES_ERROR("QueryRequestProcessingService: " << ex.what());
-                    } catch (Exception& ex) {
-                        NES_ERROR("QueryRequestProcessingService: " << ex.what());
-                        globalExecutionPlan->removeQuerySubPlans(queryId);
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
+                    } else if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
+                        NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " + queryId);
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
+                        std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
+                        queryPlan = queryRewritePhase->execute(queryPlan);
+                        queryPlan = typeInferencePhase->execute(queryPlan);
+                        queryPlacementPhase->execute(placementStrategy, queryPlan);
+                        bool successful = deployAndStartQuery(queryId);
+                        if (!successful) {
+                            throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with Id " + queryId);
+                        }
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+                    } else {
+                        NES_ERROR("QueryProcessingService: Request received for query with status " << queryCatalogEntry.getQueryStatus() << " ");
+                        throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling}, queryCatalogEntry.getQueryStatus());
                     }
+                } catch (QueryPlacementException& ex) {
+                    //Rollback if failure happen while placing the query.
+                    NES_ERROR(ex.what());
+                    globalExecutionPlan->removeQuerySubPlans(queryId);
+                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                } catch (QueryDeploymentException& ex) {
+                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                    //Rollback if failure happen while placing the query.
+                    globalExecutionPlan->removeQuerySubPlans(queryId);
+                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                } catch (InvalidQueryStatusException& ex) {
+                    //Rollback if failure happen while placing the query.
+                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                    globalExecutionPlan->removeQuerySubPlans(queryId);
+                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                } catch (QueryNotFoundException& ex) {
+                    //Rollback if failure happen while placing the query.
+                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                } catch (QueryUndeploymentException& ex) {
+                    //Rollback if failure happen while placing the query.
+                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                } catch (Exception& ex) {
+                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                    globalExecutionPlan->removeQuerySubPlans(queryId);
+                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 }
             }
+            lock.unlock();
         }
         NES_WARNING("QueryProcessingService: Terminated");
     } catch (...) {
         NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queries.");
-        queryProcessorRunning = false;
+        stopQueryRequestProcessor();
     }
 }
 
@@ -252,14 +261,15 @@ bool QueryRequestProcessorService::undeployQuery(std::string queryId, std::vecto
 }
 
 bool QueryRequestProcessorService::isQueryProcessorRunning() {
-    std::unique_lock<std::mutex> lock(queryProcessorLock);
+    std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
     return queryProcessorRunning;
 }
 
-bool QueryRequestProcessorService::stopQueryRequestProcessor() {
-    std::unique_lock<std::mutex> lock(queryProcessorLock);
+void QueryRequestProcessorService::stopQueryRequestProcessor() {
+    std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
     this->queryProcessorRunning = false;
-    return true;
+    std::condition_variable& availabilityTrigger = queryCatalog->getAvailabilityTrigger();
+    availabilityTrigger.notify_one();
 }
 
 }// namespace NES
