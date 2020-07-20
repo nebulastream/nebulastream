@@ -121,7 +121,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
         code
             << "Query::from(temperature1).filter(Attribute(\"wrong_field\")==5)"
             << std::endl
-            << ".sink(ZmqSinkDescriptor(\"localhost\", 10));"
+            << ".sink(ZmqSinkDescriptor::create(\"localhost\", 10));"
             << std::endl;
 
         const QueryPtr query = queryService->getQueryFromQueryString(code.str());

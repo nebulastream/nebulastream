@@ -54,7 +54,7 @@ SourceDescriptorPtr TypeInferencePhase::createSourceDescriptor(std::string strea
     auto physicalStreams = streamCatalog->getPhysicalStreams(streamName);
 
     if (physicalStreams.empty()) {
-        NES_ERROR("TypeInferencePhase: the logical stream does not exists in the catalog" << streamName);
+        NES_ERROR("TypeInferencePhase: the logical stream does not exists in the catalog " << streamName);
         throw std::invalid_argument("Non existing logical stream : " + streamName + " provided");
     }
 

@@ -31,6 +31,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
                                                           << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
+    NES_DEBUG("CoordinatorEngine::registerNode: topology before insert");
     topologyManager->printNESTopologyPlan();
 
     //get unique id for the new node
@@ -183,7 +184,8 @@ bool CoordinatorEngine::registerPhysicalStream(size_t nodeId,
                                                size_t numberofbufferstoproduce,
                                                std::string physicalstreamname,
                                                std::string logicalstreamname) {
-    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream id " << nodeId);
+    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id " << nodeId << " physical stream=" << physicalstreamname
+              << " logical stream=" << logicalstreamname);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
     PhysicalStreamConfig streamConf(sourcetype,
