@@ -31,6 +31,7 @@ std::string UtilityFunctions::trim(std::string s) {
 
 QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCodeSnippet) {
     bool pattern = queryCodeSnippet.find("Pattern::") != std::string::npos;
+    bool merge = queryCodeSnippet.find("merge") != std::string::npos;
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
@@ -58,18 +59,29 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         //if pattern
         if (pattern) {
             boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
+        } else if (merge) {//if contains merge
+            auto pos1 = queryCodeSnippet.find("merge(");
+            std::string tmp = queryCodeSnippet.substr(pos1);
+            auto pos2 = tmp.find(").");//find the end bracket of merge query
+            std::string subquery = tmp.substr(6, pos2 - 6);
+            NES_DEBUG("subquery = " << subquery);
+            code << "auto subQuery = " << subquery << ";" << std::endl;
+            newQuery.replace(pos1, pos2, "merge(&subQuery");
+            NES_DEBUG("newQuery = " << newQuery);
+            boost::replace_all(newQuery, "Query::from", "return Query::from");
         } else {
             // add return statement in front of input query
             // NOTE: This will not work if you have created object of Input query and do further manipulation
             boost::replace_all(newQuery, "Query::from", "return Query::from");
         }
-
+        NES_DEBUG("newQuery = " << newQuery);
         code << newQuery << std::endl;
         code << "}" << std::endl;
         code << "}" << std::endl;
+        NES_DEBUG(code.str());
         Compiler compiler;
         CompiledCodePtr compiled_code = compiler.compile(code.str(), true);
-        if (!compiled_code) {
+        if (!code) {
             NES_ERROR("Compilation of query code failed! Code: " << code.str());
         }
 
@@ -98,6 +110,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         throw "Failed to create the query from input code string";
     }
 }
+
 
 SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSnippet) {
     try {

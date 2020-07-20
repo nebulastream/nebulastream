@@ -26,6 +26,7 @@ GlobalExecutionPlanPtr BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr 
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
     // TONY: now, we are removing the assumption of single source operator.
+    // Create multiple query graph by splitting merge operator.
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
