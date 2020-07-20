@@ -18,7 +18,10 @@ bool NesFormat::writeSchema() {
     outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
     SerializableSchema* serializedSchema = new SerializableSchema();
     SerializableSchema* protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema);
-    protoBuff->SerializePartialToOstream(&outputFile);
+    bool success = protoBuff->SerializePartialToOstream(&outputFile);
+    NES_DEBUG("NesFormat::writeSchema: write to " << schemaFile << " success=" << success);
+    outputFile.close();
+
     return true;
 }
 
@@ -57,6 +60,6 @@ bool NesFormat::writeData(TupleBuffer& inputBuffer) {
 }
 
 std::string NesFormat::getFormatAsString() {
-    return "CSV_FORMAT";
+    return "NES_FORMAT";
 }
 }// namespace NES
