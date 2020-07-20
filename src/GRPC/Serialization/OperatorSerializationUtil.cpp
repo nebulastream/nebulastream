@@ -8,7 +8,6 @@
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/CsvSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
