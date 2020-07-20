@@ -131,7 +131,11 @@ bool ZmqSource::disconnect() {
     if (connected) {
         // we put assert here because it d be called anyway from the shutdown method
         // that we commented out
-        assert(zmq_ctx_shutdown(static_cast<void*>(context)) == 0);
+        bool success = zmq_ctx_shutdown(static_cast<void*>(context))  == 0;
+        if(!success)
+        {
+            throw Exception("ZmqSource::disconnect() error");
+        }
         //        context.shutdown();
         connected = false;
     }

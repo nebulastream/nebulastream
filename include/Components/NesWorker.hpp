@@ -147,6 +147,12 @@ class NesWorker {
 
     NESNodeType type;
     bool stopped;
+
+    /**
+     * @brief helper method to ensure client is connected before callin rpcs functions
+     * @return
+     */
+    bool waitForConnect();
 };
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
 

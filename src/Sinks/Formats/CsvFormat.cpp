@@ -12,14 +12,14 @@ CsvFormat::CsvFormat(SchemaPtr schema, std::string filePath, bool append) : Sink
 bool CsvFormat::writeSchema() {
     std::ofstream outputFile;
     outputFile.open(filePath, std::ofstream::out | std::ofstream::trunc);
-
     std::stringstream ss;
     for (auto& f : schema->fields) {
         ss << f->toString() << ",";
     }
     outputFile << ss.str() << std::endl;
-    NES_DEBUG("FileSink::writeSchema: schema is =" << ss.str());
+    NES_DEBUG("CsvFormat::writeSchema: schema is =" << schema->toString());
     outputFile.close();
+    return true;
 }
 
 bool CsvFormat::writeData(TupleBuffer& inputBuffer)
@@ -36,7 +36,7 @@ bool CsvFormat::writeData(TupleBuffer& inputBuffer)
         outputFile.open(filePath, std::ofstream::out | std::ofstream::app);
     } else {
         NES_DEBUG("file overwriting in path=" << filePath);
-        outputFile.open(filePath, std::ofstream::out | std::ios::out | std::ofstream::trunc);
+        outputFile.open(filePath, std::ofstream::out | std::ofstream::trunc);
     }
     size_t posBefore = outputFile.tellp();
     std::string bufferContent = UtilityFunctions::printTupleBufferAsCSV(inputBuffer, schema);

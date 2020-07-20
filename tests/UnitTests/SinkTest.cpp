@@ -4,6 +4,8 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include "SerializableOperator.pb.h"
 
 using namespace std;
 
@@ -62,18 +64,16 @@ TEST_F(SinkTest, testCSVSink) {
     nodeEngine->start();
 
     TupleBuffer buffer = bufferManager->getBufferBlocking();
-
-    auto write_thread = std::thread([&]() {
-        const DataSinkPtr csvSink = createCSVFileSinkWithSchema(test_schema, path_to_csv_file, true);
-        for (size_t i = 0; i < 2; ++i) {
-            for (size_t j = 0; j < 2; ++j) {
-                buffer.getBuffer<uint64_t>()[j] = j;
-            }
-            buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
+    const DataSinkPtr csvSink = createCSVFileSinkWithSchema(test_schema, path_to_csv_file, true);
+    for (size_t i = 0; i < 2; ++i) {
+        for (size_t j = 0; j < 2; ++j) {
+            buffer.getBuffer<uint64_t>()[j] = j;
         }
-        write_result = csvSink->writeData(buffer);
-    });
-    write_thread.join();
+    }
+    buffer.setNumberOfTuples(4);
+    cout << "bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+    write_result = csvSink->writeData(buffer);
+
     EXPECT_TRUE(write_result);
     std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
     cout << "Buffer Content= " << bufferContent << endl;
@@ -109,17 +109,14 @@ TEST_F(SinkTest, testTextSink) {
 
     TupleBuffer buffer = bufferManager->getBufferBlocking();
 
-    auto write_thread = std::thread([&]() {
-        const DataSinkPtr binSink = createTextFileSinkWithSchema(test_schema, path_to_csv_file);
-        for (size_t i = 0; i < 10; ++i) {
-            for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
-                buffer.getBuffer<uint64_t>()[j] = j;
-            }
-            buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
+    const DataSinkPtr binSink = createTextFileSinkWithSchema(test_schema, path_to_csv_file);
+    for (size_t i = 0; i < 10; ++i) {
+        for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+            buffer.getBuffer<uint64_t>()[j] = j;
         }
-        write_result = binSink->writeData(buffer);
-    });
-    write_thread.join();
+    }
+    buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
+    write_result = binSink->writeData(buffer);
     EXPECT_TRUE(write_result);
     std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
     cout << "Buffer Content= " << bufferContent << endl;
@@ -139,55 +136,43 @@ TEST_F(SinkTest, testNESBinarySink) {
     nodeEngine->start();
 
     auto buffer = bufferManager->getBufferBlocking();
-
-    auto write_thread = std::thread([&]() {
-        const DataSinkPtr binSink = createBinaryNESFileSinkWithSchema(test_schema, path_to_bin_file);
-        for (size_t i = 0; i < 2; ++i) {
-            for (size_t j = 0; j < 2; ++j) {
-                buffer.getBuffer<uint64_t>()[j] = j;
-            }
-            buffer.setNumberOfTuples(4);
+    const DataSinkPtr binSink = createBinaryNESFileSinkWithSchema(test_schema, path_to_bin_file);
+    for (size_t i = 0; i < 2; ++i) {
+        for (size_t j = 0; j < 2; ++j) {
+            buffer.getBuffer<uint64_t>()[j] = j;
         }
-        write_result = binSink->writeData(buffer);
-    });
-    write_thread.join();
+    }
+    write_result = binSink->writeData(buffer);
+    buffer.setNumberOfTuples(4);
+
     EXPECT_TRUE(write_result);
     std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
     cout << "Buffer Content= " << bufferContent << endl;
-
-    ifstream testFile(path_to_bin_file.c_str());
-    EXPECT_TRUE(testFile.good());
-    std::ifstream ifs(path_to_bin_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
-                            (std::istreambuf_iterator<char>()));
-
-    cout << "File path = " << path_to_bin_file << " Content=" << fileContent << endl;
 
     //deserialize schema
     size_t idx = path_to_bin_file.rfind(".");
     std::string shrinkedPath = path_to_bin_file.substr(0, idx + 1);
     std::string schemaFile = shrinkedPath + "schema";
-    fstream file;
-    file.open(schemaFile, ios::in | ios::binary);
-    if (!file) {
-        cout << "Error in opening file..." << endl;
-        EXPECT_TRUE(false);
-    }
 
-    //TODO: @Philipp we should test here the loading of the schema and buffer
-//    Schema schema = Schema::create();
-//    if (file.read((char*) &schema, test_schema->getSchemaSizeInBytes())) {
-//        cout << endl
-//             << endl;
-//        cout << "Data extracted from file..\n";
-//        //print the object
-//        cout << "Schema=" << schema.toString() << endl;
-//    } else {
-//        cout << "Error in reading data from file...\n";
-//        EXPECT_TRUE(false);
-//    }
-//
-//    file.close();
+    ifstream testFileSchema(shrinkedPath.c_str());
+    EXPECT_TRUE(testFileSchema.good());
+    SerializableSchema* serializedSchema = new SerializableSchema();
+    serializedSchema->ParsePartialFromIstream(&testFileSchema);
+    SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
+    //test SCHEMA
+    cout << "deserialized schema=" << ptr->toString() << endl;
+
+    auto deszBuffer = bufferManager->getBufferBlocking();
+    std::ifstream ifs(path_to_bin_file.c_str());
+    //
+
+    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
+                            (std::istreambuf_iterator<char>()));
+
+    cout << "File path = " << path_to_bin_file << " Content=" << fileContent << endl;
+
+
+
 
     std::remove(schemaFile.c_str());
 }

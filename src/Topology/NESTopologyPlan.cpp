@@ -1,4 +1,3 @@
-#include <cassert>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -37,7 +36,11 @@ NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(
     size_t id, std::string ipAddr, CPUCapacity cpuCapacity) {
     auto ptr = std::make_shared<NESTopologyCoordinatorNode>(id, ipAddr);
     ptr->setCpuCapacity(cpuCapacity);
-    assert(fGraphPtr->addVertex(ptr));
+    bool success = fGraphPtr->addVertex(ptr);
+    if(!success)
+    {
+        throw Exception("runtime error in fGraphPtr->addVertex(ptr)");
+    }
     return ptr;
 }
 
@@ -46,7 +49,12 @@ NESTopologyWorkerNodePtr NESTopologyPlan::createNESWorkerNode(
     // create worker node
     auto ptr = std::make_shared<NESTopologyWorkerNode>(id, ipAddr);
     ptr->setCpuCapacity(cpuCapacity);
-    assert(fGraphPtr->addVertex(ptr));
+    bool success = fGraphPtr->addVertex(ptr);
+    if(!success)
+    {
+        throw Exception("runtime error in fGraphPtr->addVertex(ptr)");
+    }
+
     return ptr;
 }
 
@@ -58,7 +66,11 @@ NESTopologySensorNodePtr NESTopologyPlan::createNESSensorNode(
     ptr->setCpuCapacity(cpuCapacity);
 
     ptr->setPhysicalStreamName("default_physical");
-    assert(fGraphPtr->addVertex(ptr));
+    bool success = fGraphPtr->addVertex(ptr);
+    if(!success)
+    {
+        throw Exception("runtime error in fGraphPtr->addVertex(ptr)");
+    }
     return ptr;
 }
 

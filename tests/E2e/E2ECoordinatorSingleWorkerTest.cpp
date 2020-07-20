@@ -176,6 +176,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
+
+
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
     cout << " start coordinator" << endl;
     std::string outputFilePath = "UserQueryWithFileOutputWithFilterTestResult.txt";
@@ -342,7 +344,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     cout << "started worker with pid = " << workerProc.id() << endl;
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
-    //sleep(3);
+    sleep(2);
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -405,5 +407,4 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
-
 }
