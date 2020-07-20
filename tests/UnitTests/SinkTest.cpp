@@ -142,8 +142,9 @@ TEST_F(SinkTest, testNESBinarySink) {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
-    write_result = binSink->writeData(buffer);
     buffer.setNumberOfTuples(4);
+    write_result = binSink->writeData(buffer);
+
 
     EXPECT_TRUE(write_result);
     std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
@@ -153,28 +154,32 @@ TEST_F(SinkTest, testNESBinarySink) {
     size_t idx = path_to_bin_file.rfind(".");
     std::string shrinkedPath = path_to_bin_file.substr(0, idx + 1);
     std::string schemaFile = shrinkedPath + "schema";
-
-    ifstream testFileSchema(shrinkedPath.c_str());
+    cout << "load=" << schemaFile << endl;
+    ifstream testFileSchema(schemaFile.c_str());
     EXPECT_TRUE(testFileSchema.good());
     SerializableSchema* serializedSchema = new SerializableSchema();
     serializedSchema->ParsePartialFromIstream(&testFileSchema);
     SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
     //test SCHEMA
     cout << "deserialized schema=" << ptr->toString() << endl;
+    EXPECT_EQ(ptr->toString(), test_schema->toString());
 
     auto deszBuffer = bufferManager->getBufferBlocking();
-    std::ifstream ifs(path_to_bin_file.c_str());
-    //
+    deszBuffer.setNumberOfTuples(4);
 
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
-                            (std::istreambuf_iterator<char>()));
+    ifstream ifs(path_to_bin_file, ios_base::in | ios_base::binary);
+    if (ifs)
+    {
+        // Read all the data
+        ifs.read(reinterpret_cast<char*>(deszBuffer.getBuffer()), deszBuffer.getBufferSize());
+    }
 
-    cout << "File path = " << path_to_bin_file << " Content=" << fileContent << endl;
+    cout << "expected=" << endl << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+    cout << "result=" << endl << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema) << endl;
 
-
-
-
-    std::remove(schemaFile.c_str());
+    cout << "File path = " << path_to_bin_file << " Content=" << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema);
+    EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema), UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
 }
+
 
 }// namespace NES
