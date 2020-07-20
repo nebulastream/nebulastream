@@ -10,7 +10,7 @@ FileSink::FileSink()
     : SinkMedium() {
 }
 
-std::string FileSink::getMediumAsString()
+std::string FileSink::toString()
 {
     return "FILE_SINK";
 }
@@ -37,8 +37,8 @@ void FileSink::shutdown() {
 
 
 bool FileSink::writeData(TupleBuffer& inputBuffer) {
-    NES_DEBUG("FileSink: writeSchema medium " << getMediumAsString() << " format " << sinkFormat->getFormatAsString()
-                                              << " and mode " << this->getWriteMode());
+    NES_DEBUG("FileSink: writeSchema medium " << toString() << " format " << sinkFormat->toString()
+                                              << " and mode " << this->getAppendAsString());
 
     if (!inputBuffer.isValid()) {
         NES_ERROR("FileSink::writeData input buffer invalid");

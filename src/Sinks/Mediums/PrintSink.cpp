@@ -20,7 +20,7 @@ PrintSink::PrintSink(SchemaPtr pSchema, std::ostream& pOutputStream)
 PrintSink::~PrintSink() {
 }
 
-std::string PrintSink::getMediumAsString()
+std::string PrintSink::toString()
 {
     return "PRINT_SINK";
 }

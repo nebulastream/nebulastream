@@ -34,7 +34,7 @@ class SinkFormat {
      * @brief method to return the format as a string
      * @return format as string
      */
-    virtual std::string getFormatAsString() = 0;
+    virtual std::string toString() = 0;
 
   protected:
     SchemaPtr schema;

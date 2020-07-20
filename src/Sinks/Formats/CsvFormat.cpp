@@ -57,7 +57,7 @@ bool CsvFormat::writeData(TupleBuffer& inputBuffer)
 
 }
 
-std::string CsvFormat::getFormatAsString() {
+std::string CsvFormat::toString() {
     return "CSV_FORMAT";
 }
 }// namespace NES

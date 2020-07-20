@@ -33,7 +33,7 @@ class NetworkSink : public SinkMedium {
     void setup() override;   // not needed
     void shutdown() override;// not needed
 
-    std::string getMediumAsString() override;
+    std::string toString() override;
 
   private:
     boost::thread_specific_ptr<OutputChannel> outputChannel;

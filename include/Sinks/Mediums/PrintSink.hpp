@@ -64,7 +64,7 @@ class PrintSink : public SinkMedium {
     /**
      * @brief Get sink type
      */
-    std::string getMediumAsString() override;
+    std::string toString() override;
 
   private:
     std::ostream& outputStream;
