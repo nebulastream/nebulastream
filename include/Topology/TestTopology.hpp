@@ -4,6 +4,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/TopologyManager.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -60,7 +61,11 @@ void createExampleTopology(StreamCatalogPtr streamCatalog, TopologyManagerPtr to
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "temperature1";
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode1);
-    assert(streamCatalog->addPhysicalStream("temperature", e1));
+    bool success = streamCatalog->addPhysicalStream("temperature", e1);
+    if(!success)
+    {
+        NES_THROW_RUNTIME_ERROR("Error while adding stream temperature");
+    }
 
     const NESTopologySensorNodePtr sensorNode2 =
         topologyManager->createNESSensorNode(/**Node Id**/ 20, "localhost", CPUCapacity::LOW);
@@ -68,21 +73,33 @@ void createExampleTopology(StreamCatalogPtr streamCatalog, TopologyManagerPtr to
     streamCatalog->addLogicalStream("humidity", schema);
     streamConf.physicalStreamName = "humidity1";
     StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode2);
-    assert(streamCatalog->addPhysicalStream("humidity", e2));
+    success = streamCatalog->addPhysicalStream("humidity", e2);
+    if(!success)
+    {
+        NES_THROW_RUNTIME_ERROR("Error while adding stream humidity");
+    }
 
     const NESTopologySensorNodePtr sensorNode3 =
         topologyManager->createNESSensorNode(/**Node Id**/ 21, "localhost", CPUCapacity::LOW);
     sensorNode3->setPhysicalStreamName("temperature2");
     streamConf.physicalStreamName = "temperature2";
     StreamCatalogEntryPtr e3 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode3);
-    assert(streamCatalog->addPhysicalStream("temperature", e3));
+    success = streamCatalog->addPhysicalStream("temperature", e3);
+    if(!success)
+    {
+        NES_THROW_RUNTIME_ERROR("Error while adding stream temperature");
+    }
 
     const NESTopologySensorNodePtr sensorNode4 =
         topologyManager->createNESSensorNode(/**Node Id**/ 22, "localhost", CPUCapacity::MEDIUM);
     sensorNode4->setPhysicalStreamName("humidity2");
     streamConf.physicalStreamName = "humidity2";
     StreamCatalogEntryPtr e4 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode4);
-    assert(streamCatalog->addPhysicalStream("humidity", e4));
+    success = streamCatalog->addPhysicalStream("humidity", e4);
+    if(!success)
+    {
+        NES_THROW_RUNTIME_ERROR("Error while adding stream humidity");
+    }
 
     topologyManager->createNESTopologyLink(workerNode1,
                                            sinkNode,

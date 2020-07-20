@@ -66,7 +66,7 @@ bool WorkerRPCClient::registerQuery(std::string address, std::string queryId, Op
     // serialize query operators.
     OperatorSerializationUtil::serializeOperator(queryOperators, request.mutable_operatortree());
 
-    NES_DEBUG("WorkerRPCClient:registerQuery -> " << request.DebugString());
+    NES_TRACE("WorkerRPCClient:registerQuery -> " << request.DebugString());
     RegisterQueryReply reply;
     ClientContext context;
 

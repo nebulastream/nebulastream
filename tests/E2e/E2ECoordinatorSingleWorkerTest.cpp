@@ -239,7 +239,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStream) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithFileOutputAndRegisterPhyStream) {
     cout << " start coordinator" << endl;
     std::string outputFilePath =
         "ValidUserQueryWithFileOutputAndRegisterPhyStreamTestResult.txt";
@@ -327,7 +327,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithFileOutputExdraUseCase) {
     cout << " start coordinator" << endl;
     std::string testFile = "exdra.csv";
     remove(testFile.c_str());

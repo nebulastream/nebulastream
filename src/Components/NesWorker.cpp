@@ -88,11 +88,15 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
     if (withRegisterStream) {
         NES_DEBUG("NesWorker: start with register stream");
-        assert(registerPhysicalStream(conf));
+        bool success = registerPhysicalStream(conf);
+        NES_DEBUG("registered= "<< success);
+        assert(success);
     }
     if (withParent) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
-        assert(addParent(atoi(parentId.c_str())));
+        bool success = addParent(atoi(parentId.c_str()));
+        NES_DEBUG("parent add= "<< success);
+        assert(success);
     }
 
     stopped = false;
