@@ -116,7 +116,7 @@ class TestSink : public SinkMedium {
 
     void setup() override{};
 
-    std::string getMediumAsString()
+    std::string toString()
     {
         return "Test_Sink";
     }

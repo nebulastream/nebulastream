@@ -20,7 +20,7 @@ bool JsonFormat::writeData(TupleBuffer& inputBuffer)
     NES_NOT_IMPLEMENTED();
 }
 
-std::string JsonFormat::getFormatAsString()
+std::string JsonFormat::toString()
 {
     return "JSON_FORMAT";
 }

@@ -51,7 +51,7 @@ bool TextFormat::writeData(TupleBuffer& inputBuffer)
     }
 }
 
-std::string TextFormat::getFormatAsString() {
+std::string TextFormat::toString() {
     return "TEXT_FORMAT";
 }
 

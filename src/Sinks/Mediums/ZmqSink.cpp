@@ -24,7 +24,7 @@ ZmqSink::ZmqSink()
         "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port);
 }
 
-std::string ZmqSink::getMediumAsString()
+std::string ZmqSink::toString()
 {
     return "ZMQ_SINK";
 }

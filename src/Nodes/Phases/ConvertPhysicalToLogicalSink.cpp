@@ -15,7 +15,7 @@ namespace NES {
 
 SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr dataSink) {
 
-    std::string sinkType = dataSink->getMediumAsString();
+    std::string sinkType = dataSink->toString();
 
     if (sinkType == "PRINT_SINK") {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating print sink");

@@ -20,7 +20,7 @@ class JsonFormat : public SinkFormat {
     */
     bool writeSchema();
 
-    std::string getFormatAsString();
+    std::string toString();
 };
 }
 #endif//NES_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_

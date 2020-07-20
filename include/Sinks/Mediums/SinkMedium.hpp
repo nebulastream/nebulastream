@@ -9,6 +9,7 @@ class TupleBuffer;
 
 /**
  * @brief Base class for all data sinks in NES
+ * @note this code is not thread safe
  */
 class SinkMedium {
 
@@ -83,7 +84,7 @@ class SinkMedium {
       * @brief method to return the type
       * @return type
       */
-    virtual std::string getMediumAsString() = 0;
+    virtual std::string toString() = 0;
 
     /**
      * @brief method to get the format as string
@@ -97,13 +98,11 @@ class SinkMedium {
      */
     bool getAppendAsBool();
 
-    std::string getAppendAsString();
-
     /**
-     * @brief method to return the write mode, either append or overwrite
-     * @return string indicating the write mode
+     * @brief method to return if the sink is append or overwrite
+     * @return string of mode
      */
-    std::string getWriteMode();
+    std::string getAppendAsString();
 
   protected:
     SinkFormatPtr sinkFormat;

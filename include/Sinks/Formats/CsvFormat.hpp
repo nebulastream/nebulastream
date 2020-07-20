@@ -20,7 +20,7 @@ class CsvFormat : public SinkFormat {
     */
     bool writeSchema();
 
-    std::string getFormatAsString();
+    std::string toString();
 
 };
 }

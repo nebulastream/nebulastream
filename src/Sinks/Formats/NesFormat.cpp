@@ -59,7 +59,7 @@ bool NesFormat::writeData(TupleBuffer& inputBuffer) {
     }
 }
 
-std::string NesFormat::getFormatAsString() {
+std::string NesFormat::toString() {
     return "NES_FORMAT";
 }
 }// namespace NES

@@ -34,7 +34,7 @@ class ZmqSink : public SinkMedium {
     /**
      * @brief Get Sink type
      */
-    std::string getMediumAsString() override;
+    std::string toString() override;
   private:
     ZmqSink();
 

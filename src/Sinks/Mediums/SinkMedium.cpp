@@ -6,8 +6,8 @@
 
 namespace NES {
 
-SinkMedium::SinkMedium(SchemaPtr _schema)
-    : schema(_schema),
+SinkMedium::SinkMedium(SchemaPtr schema)
+    : schema(schema),
       sentBuffer(0),
       sentTuples(0),
       schemaWritten(false){
@@ -43,18 +43,7 @@ SinkMedium::~SinkMedium() {
 
 std::string SinkMedium::getSinkFormat()
 {
-    return sinkFormat->getFormatAsString();
-}
-
-std::string SinkMedium::getWriteMode()
-{
-    if(append)
-    {
-        return "APPEND";
-    }
-    else{
-        return "OVERWRITE";
-    }
+    return sinkFormat->toString();
 }
 
 bool SinkMedium::getAppendAsBool()

@@ -95,18 +95,6 @@ message SerializableOperator{
   */
   message SinkDetails {
     message SerializableFileSinkDescriptor {
-//      enum FileOutputMode{
-//        FILE_OVERWRITE = 0;
-//        FILE_APPEND = 1;
-//        UNKOWN_SINK_MEDIUM = 2;
-//      };
-//      enum SinkFormat {
-//        JSON_FORMAT = 0;
-//        CSV_FORMAT = 1;
-//        NES_FORMAT = 2;
-//        TEXT_FORMAT = 3;
-//        UNKNOWN_FORMAT = 4;
-//      };
       string filePath = 1;
       bool append = 2;
       string sinkFormat = 3;

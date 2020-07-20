@@ -61,7 +61,7 @@ class FileSink : public SinkMedium {
     /**
      * @brief Get sink type
      */
-    std::string getMediumAsString() override;
+    std::string toString() override;
 
   protected:
     std::string filePath;
