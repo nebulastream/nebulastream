@@ -49,6 +49,8 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
         NES_DEBUG("FileSink::writeData: write schema");
         sinkFormat->writeSchema();
         schemaWritten = true;
+        NES_DEBUG("FileSink::writeData: write written");
+
     }
     else
     {

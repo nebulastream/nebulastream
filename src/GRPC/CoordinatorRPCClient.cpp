@@ -18,7 +18,7 @@ CoordinatorRPCClient::CoordinatorRPCClient(string address)
 }
 
 bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
-    NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf.toString());
+    NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf.toString() << " workerID=" << workerId);
 
     RegisterPhysicalStreamRequest request;
     request.set_id(workerId);
@@ -223,7 +223,7 @@ bool CoordinatorRPCClient::registerNode(std::string localAddress,
         NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a worker");
     } else {
         NES_ERROR("CoordinatorRPCClient::registerNode node type not supported " << type);
-        throw new Exception("CoordinatorRPCClient::registerNode wrong node type");
+        throw Exception("CoordinatorRPCClient::registerNode wrong node type");
     }
 
     RegisterNodeRequest request;

@@ -66,7 +66,11 @@ const std::vector<NESTopologyEntryPtr> NESTopologyGraph::getVertexById(
 const NESTopologyGraph::nesVertex_t NESTopologyGraph::getVertex(
     size_t vertexId) const {
 
-    assert(hasVertex(vertexId));
+    bool success = hasVertex(vertexId);
+    if(!success)
+    {
+        throw Exception("runtime error in hasVertex(vertexId)");
+    }
 
     // build vertice iterator
     nesVertex_iterator vertex, vertex_end, next_vertex;

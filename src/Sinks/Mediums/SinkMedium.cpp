@@ -9,14 +9,16 @@ namespace NES {
 SinkMedium::SinkMedium(SchemaPtr _schema)
     : schema(_schema),
       sentBuffer(0),
-      sentTuples(0) {
+      sentTuples(0),
+      schemaWritten(false){
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 
 SinkMedium::SinkMedium()
     : schema(Schema::create()),
       sentBuffer(0),
-      sentTuples(0) {
+      sentTuples(0),
+      schemaWritten(false){
     NES_DEBUG("SinkMedium:Init Default Data Sink!");
 }
 

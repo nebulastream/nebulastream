@@ -5,6 +5,7 @@
 #define NES_VERSION_PATCH 65
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 constexpr char const* NES_VERSION      = "0.0.65-8eed2f47-SNAPSHOT";
 =======
 constexpr char const* NES_VERSION      = "0.0.65-16feb2cc-SNAPSHOT";
@@ -12,4 +13,7 @@ constexpr char const* NES_VERSION      = "0.0.65-16feb2cc-SNAPSHOT";
 =======
 constexpr char const* NES_VERSION      = "0.0.65-dae78ecd-SNAPSHOT";
 >>>>>>> fix all bugs
+=======
+constexpr char const* NES_VERSION      = "0.0.65-3ece41c3-SNAPSHOT";
+>>>>>>> fix tests
 #endif

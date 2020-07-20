@@ -13,6 +13,7 @@ TextFormat::TextFormat(SchemaPtr schema, std::string filePath, bool append) : Si
 
 bool TextFormat::writeSchema() {
     //noting to do as this is part of pretty print
+    return true;
 }
 
 bool TextFormat::writeData(TupleBuffer& inputBuffer)

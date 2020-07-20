@@ -17,8 +17,9 @@ bool NesFormat::writeSchema() {
     std::string schemaFile = shrinkedPath + "schema";
     outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
     SerializableSchema* serializedSchema = new SerializableSchema();
-    SerializableSchema* serial = SchemaSerializationUtil::serializeSchema(schema, serializedSchema);
-    outputFile.write(reinterpret_cast<char*>(serial), schema->getSchemaSizeInBytes());
+    SerializableSchema* protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema);
+    protoBuff->SerializePartialToOstream(&outputFile);
+    return true;
 }
 
 bool NesFormat::writeData(TupleBuffer& inputBuffer) {
