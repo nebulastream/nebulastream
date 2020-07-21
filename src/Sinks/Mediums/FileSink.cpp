@@ -10,8 +10,7 @@ FileSink::FileSink()
     : SinkMedium() {
 }
 
-std::string FileSink::toString()
-{
+std::string FileSink::toString() {
     return "FILE_SINK";
 }
 
@@ -35,7 +34,6 @@ void FileSink::setup() {
 void FileSink::shutdown() {
 }
 
-
 bool FileSink::writeData(TupleBuffer& inputBuffer) {
     NES_DEBUG("FileSink: writeSchema medium " << toString() << " format " << sinkFormat->toString()
                                               << " and mode " << this->getAppendAsString());
@@ -44,33 +42,26 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
         NES_ERROR("FileSink::writeData input buffer invalid");
         return false;
     }
-    if(!schemaWritten)
-    {
+    if (!schemaWritten) {
         NES_DEBUG("FileSink::writeData: write schema");
         sinkFormat->writeSchema();
         schemaWritten = true;
         NES_DEBUG("FileSink::writeData: write written");
 
-    }
-    else
-    {
+    } else {
         NES_DEBUG("FileSink::writeData: schema already written");
     }
 
     NES_DEBUG("FileSink::writeData: write data");
     bool success = sinkFormat->writeData(inputBuffer);
 
-    if(!success)
-    {
+    if (!success) {
         NES_ERROR("FileSink::writeData: writing data failed");
         return false;
-    }
-    else
-    {
+    } else {
         NES_DEBUG("FileSink::writeData: writing data succeed");
         return true;
     }
-
 }
 
 const std::string FileSink::getFilePath() const {

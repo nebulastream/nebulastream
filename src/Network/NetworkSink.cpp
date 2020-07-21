@@ -11,8 +11,7 @@ NetworkSink::NetworkSink(SchemaPtr schema, NetworkManagerPtr networkManager, con
       waitTime(waitTime), retryTimes(retryTimes) {
 }
 
-std::string NetworkSink::toString()
-{
+std::string NetworkSink::toString() {
     return "NETWORK_SINK";
 }
 

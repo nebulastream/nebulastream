@@ -67,8 +67,7 @@ const NESTopologyGraph::nesVertex_t NESTopologyGraph::getVertex(
     size_t vertexId) const {
 
     bool success = hasVertex(vertexId);
-    if(!success)
-    {
+    if (!success) {
         throw Exception("runtime error in hasVertex(vertexId)");
     }
 

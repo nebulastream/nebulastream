@@ -21,7 +21,6 @@ class CsvFormat : public SinkFormat {
     bool writeSchema();
 
     std::string toString();
-
 };
-}
+}// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_

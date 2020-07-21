@@ -62,8 +62,7 @@ void createExampleTopology(StreamCatalogPtr streamCatalog, TopologyManagerPtr to
     streamConf.physicalStreamName = "temperature1";
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode1);
     bool success = streamCatalog->addPhysicalStream("temperature", e1);
-    if(!success)
-    {
+    if (!success) {
         NES_THROW_RUNTIME_ERROR("Error while adding stream temperature");
     }
 
@@ -74,8 +73,7 @@ void createExampleTopology(StreamCatalogPtr streamCatalog, TopologyManagerPtr to
     streamConf.physicalStreamName = "humidity1";
     StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode2);
     success = streamCatalog->addPhysicalStream("humidity", e2);
-    if(!success)
-    {
+    if (!success) {
         NES_THROW_RUNTIME_ERROR("Error while adding stream humidity");
     }
 
@@ -85,8 +83,7 @@ void createExampleTopology(StreamCatalogPtr streamCatalog, TopologyManagerPtr to
     streamConf.physicalStreamName = "temperature2";
     StreamCatalogEntryPtr e3 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode3);
     success = streamCatalog->addPhysicalStream("temperature", e3);
-    if(!success)
-    {
+    if (!success) {
         NES_THROW_RUNTIME_ERROR("Error while adding stream temperature");
     }
 
@@ -96,8 +93,7 @@ void createExampleTopology(StreamCatalogPtr streamCatalog, TopologyManagerPtr to
     streamConf.physicalStreamName = "humidity2";
     StreamCatalogEntryPtr e4 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode4);
     success = streamCatalog->addPhysicalStream("humidity", e4);
-    if(!success)
-    {
+    if (!success) {
         NES_THROW_RUNTIME_ERROR("Error while adding stream humidity");
     }
 

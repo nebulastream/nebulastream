@@ -83,19 +83,19 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
         bool con = connect();
-        NES_DEBUG("connected= "<< con);
+        NES_DEBUG("connected= " << con);
         assert(con);
     }
     if (withRegisterStream) {
         NES_DEBUG("NesWorker: start with register stream");
         bool success = registerPhysicalStream(conf);
-        NES_DEBUG("registered= "<< success);
+        NES_DEBUG("registered= " << success);
         assert(success);
     }
     if (withParent) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
         bool success = addParent(atoi(parentId.c_str()));
-        NES_DEBUG("parent add= "<< success);
+        NES_DEBUG("parent add= " << success);
         assert(success);
     }
 
@@ -185,7 +185,7 @@ bool NesWorker::disconnect() {
 
 bool NesWorker::registerLogicalStream(std::string name, std::string path) {
     bool con = waitForConnect();
-    NES_DEBUG("connected= "<< con);
+    NES_DEBUG("connected= " << con);
     assert(con);
     bool success = coordinatorRpcClient->registerLogicalStream(name, path);
     NES_DEBUG("NesWorker::registerLogicalStream success=" << success);
@@ -206,7 +206,7 @@ bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string ph
 
 bool NesWorker::registerPhysicalStream(PhysicalStreamConfig conf) {
     bool con = waitForConnect();
-    NES_DEBUG("connected= "<< con);
+    NES_DEBUG("connected= " << con);
     assert(con);
     bool success = coordinatorRpcClient->registerPhysicalStream(conf);
     NES_DEBUG("NesWorker::registerPhysicalStream success=" << success);
@@ -215,7 +215,7 @@ bool NesWorker::registerPhysicalStream(PhysicalStreamConfig conf) {
 
 bool NesWorker::addParent(size_t parentId) {
     bool con = waitForConnect();
-    NES_DEBUG("connected= "<< con);
+    NES_DEBUG("connected= " << con);
     assert(con);
     bool success = coordinatorRpcClient->addParent(parentId);
     NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
@@ -224,7 +224,7 @@ bool NesWorker::addParent(size_t parentId) {
 
 bool NesWorker::removeParent(size_t parentId) {
     bool con = waitForConnect();
-    NES_DEBUG("connected= "<< con);
+    NES_DEBUG("connected= " << con);
     assert(con);
     bool success = coordinatorRpcClient->removeParent(parentId);
     NES_DEBUG("NesWorker::removeLink(parent only) success=" << success);
@@ -242,13 +242,10 @@ bool NesWorker::waitForConnect() {
     auto now = start_timestamp;
     while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
         NES_DEBUG("waitForConnect: check connect");
-        if(!connected)
-        {
+        if (!connected) {
             NES_DEBUG("waitForConnect: not connected, sleep");
             sleep(1);
-        }
-        else
-        {
+        } else {
             NES_DEBUG("waitForConnect: connected");
             return true;
         }

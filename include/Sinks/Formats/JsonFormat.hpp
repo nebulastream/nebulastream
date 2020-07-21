@@ -22,5 +22,5 @@ class JsonFormat : public SinkFormat {
 
     std::string toString();
 };
-}
+}// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_

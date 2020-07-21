@@ -1,10 +1,10 @@
+#include "SerializableOperator.pb.h"
 #include <API/Schema.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include "SerializableOperator.pb.h"
 namespace NES {
 
 NesFormat::NesFormat(SchemaPtr schema, std::string filePath, bool append) : SinkFormat(schema, filePath, append) {
@@ -26,19 +26,16 @@ bool NesFormat::writeSchema() {
 }
 
 bool NesFormat::writeData(TupleBuffer& inputBuffer) {
-    if(inputBuffer.getNumberOfTuples() == 0)
-    {
+    if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("NesFormat::writeData: Try to write empty buffer");
         return false;
     }
 
     std::ofstream outputFile;
-    if(append)
-    {
+    if (append) {
         NES_DEBUG("file binary appending in path=" << filePath);
         outputFile.open(filePath, std::ofstream::binary | std::ios::out | std::ofstream::app);
-    }
-    else{
+    } else {
         NES_DEBUG("file binary overwriting in path=" << filePath);
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
     }
@@ -48,12 +45,10 @@ bool NesFormat::writeData(TupleBuffer& inputBuffer) {
     size_t posAfter = outputFile.tellp();
     outputFile.close();
 
-    if(posAfter > posBefore)
-    {
-        NES_DEBUG("NesFormat::writeData: wrote buffer of length=" << posAfter - posBefore<< " successfully");
+    if (posAfter > posBefore) {
+        NES_DEBUG("NesFormat::writeData: wrote buffer of length=" << posAfter - posBefore << " successfully");
         return true;
-    }
-    else{
+    } else {
         NES_ERROR("NesFormat::writeData: write buffer failed posBefore=" << posBefore << " posAfter=" << posAfter);
         return false;
     }

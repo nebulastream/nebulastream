@@ -1,10 +1,10 @@
 #include <API/Schema.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/Formats/TextFormat.hpp>
 #include <Util/Logger.hpp>
-#include <iostream>
 #include <Util/UtilityFunctions.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <iostream>
 
 namespace NES {
 
@@ -16,10 +16,8 @@ bool TextFormat::writeSchema() {
     return true;
 }
 
-bool TextFormat::writeData(TupleBuffer& inputBuffer)
-{
-    if(inputBuffer.getNumberOfTuples() == 0)
-    {
+bool TextFormat::writeData(TupleBuffer& inputBuffer) {
+    if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("TextFormat::writeData: Try to write empty buffer");
         return false;
     }
@@ -40,12 +38,10 @@ bool TextFormat::writeData(TupleBuffer& inputBuffer)
     size_t posAfter = outputFile.tellp();
     outputFile.close();
 
-    if(bufferContent.length() > 0 && posAfter > posBefore)
-    {
+    if (bufferContent.length() > 0 && posAfter > posBefore) {
         NES_DEBUG("TextFormat::writeData: wrote buffer of length=" << bufferContent.length() << " successfully");
         return true;
-    }
-    else{
+    } else {
         NES_ERROR("TextFormat::writeData: write buffer failed posBefore=" << posBefore << " posAfter=" << posAfter << " bufferContent=" << bufferContent);
         return false;
     }

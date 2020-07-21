@@ -38,6 +38,7 @@ class FileSinkDescriptor : public SinkDescriptor {
     std::string getSinkFormatAsString();
 
     bool getAppend();
+
   private:
     explicit FileSinkDescriptor(std::string fileName, std::string sinkFormat, bool append);
     std::string fileName;
