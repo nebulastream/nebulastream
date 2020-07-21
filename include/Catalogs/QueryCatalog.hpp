@@ -137,7 +137,7 @@ class QueryCatalog {
     bool newRequestAvailable;
     std::map<std::string, QueryCatalogEntryPtr> queries;
     std::deque<QueryCatalogEntryPtr> schedulingQueue;
-    int64_t batchSize = 1;
+    uint64_t batchSize;
 };
 
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;

@@ -3,4 +3,5 @@ add_source_nes(
         QueryCatalog.cpp
         StreamCatalogEntry.cpp
         PhysicalStreamConfig.cpp
+        QueryCatalogEntry.cpp
 )

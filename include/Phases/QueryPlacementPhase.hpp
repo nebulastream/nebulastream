@@ -32,7 +32,8 @@ class QueryPlacementPhase {
                                          TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
     /**
-     * @brief Method takes input as a placement strategy name and input query plan
+     * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
+     * selected query placement strategy
      * @param placementStrategy : name of the placement strategy
      * @param queryPlan : the query plan
      * @return true is placement successful.

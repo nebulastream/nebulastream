@@ -40,7 +40,6 @@ void QueryRequestProcessorService::start() {
             NES_INFO("QueryProcessingService: Found " << queryCatalogEntryBatch.size() << " query requests to schedule");
             //process the queries using query-at-a-time model
             for (auto queryCatalogEntry : queryCatalogEntryBatch) {
-
                 auto queryPlan = queryCatalogEntry.getQueryPlan();
                 std::string queryId = queryPlan->getQueryId();
                 try {
@@ -55,9 +54,21 @@ void QueryRequestProcessorService::start() {
                         NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " + queryId);
                         queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
                         std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
+                        NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " + queryId);
                         queryPlan = queryRewritePhase->execute(queryPlan);
+                        if (!queryPlan) {
+                            throw Exception("QueryProcessingService: Failed during query rewrite phase for query: " + queryId);
+                        }
+                        NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " + queryId);
                         queryPlan = typeInferencePhase->execute(queryPlan);
-                        queryPlacementPhase->execute(placementStrategy, queryPlan);
+                        if (!queryPlan) {
+                            throw Exception("QueryProcessingService: Failed during Type inference phase for query: " + queryId);
+                        }
+                        NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query: " + queryId);
+                        bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+                        if (!placementSuccessful) {
+                            throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for query: " + queryId);
+                        }
                         bool successful = deployAndStartQuery(queryId);
                         if (!successful) {
                             throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with Id " + queryId);

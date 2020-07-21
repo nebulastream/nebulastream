@@ -9,7 +9,7 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog() : queryStatus(), queryRequest(), newRequestAvailable(false) {
+QueryCatalog::QueryCatalog() : queryStatus(), queryRequest(), newRequestAvailable(false), batchSize(1) {
     NES_DEBUG("QueryCatalog()");
 }
 
@@ -40,8 +40,8 @@ std::vector<QueryCatalogEntry> QueryCatalog::getQueriesToSchedule() {
     NES_INFO("QueryCatalog: Fetching Queries to Schedule");
     std::vector<QueryCatalogEntry> queriesToSchedule;
     if (!schedulingQueue.empty()) {
-        int64_t currentBatchSize = 1;
-        int64_t totalQueriesToSchedule = schedulingQueue.size();
+        uint64_t currentBatchSize = 1;
+        uint64_t totalQueriesToSchedule = schedulingQueue.size();
         //Prepare a batch of queries to schedule
         while (currentBatchSize <= batchSize || currentBatchSize == totalQueriesToSchedule) {
             queriesToSchedule.push_back(schedulingQueue.front()->copy());
