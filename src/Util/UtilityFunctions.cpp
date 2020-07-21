@@ -111,7 +111,6 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
     }
 }
 
-
 SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSnippet) {
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
