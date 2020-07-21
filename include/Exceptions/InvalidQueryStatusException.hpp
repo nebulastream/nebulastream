@@ -6,6 +6,9 @@
 #include <vector>
 
 namespace NES {
+/**
+ * @brief Exception is raised when the query is in an Invalid status
+ */
 class InvalidQueryStatusException : public std::exception {
   public:
     explicit InvalidQueryStatusException(std::vector<QueryStatus> expectedStatus, QueryStatus actualStatus);

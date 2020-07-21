@@ -108,11 +108,6 @@ target_link_libraries(kafka-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME kafka-tests COMMAND kafka-tests)
 endif(NES_USE_KAFKA)
 
-###  Optimizer Service Tests ###
-#add_executable(optimizer-service-tests "UnitTests/OptimizerServiceTest.cpp")
-#target_link_libraries(optimizer-service-tests nes ${GTEST_LIBRARIES})
-#add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
-
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/MemoryLayoutTest.cpp")
 target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})

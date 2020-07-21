@@ -83,14 +83,14 @@ class BasePlacementStrategy {
     OperatorNodePtr createNetworkSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
 
     /**
-     * @brief
+     * @brief Add a system generated network sink operator to the input query plan
      * @param queryPlan
      * @param parentNesNode
      */
     void addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode);
 
     /**
-     * @brief
+     * @brief Add a system generated network source operator to the input query plan
      * @param queryPlan
      * @param currentNesNode
      * @param childNesNode

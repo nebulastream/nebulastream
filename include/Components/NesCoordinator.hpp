@@ -43,7 +43,7 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
-    explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort);
+    NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort);
 
     /**
      * @brief dtor
