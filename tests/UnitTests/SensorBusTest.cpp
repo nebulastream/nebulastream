@@ -1,5 +1,5 @@
 #include <NodeEngine/NodeEngine.hpp>
-#include <Util/SensorBus.hpp>
+#include <Sensors/SensorBus.hpp>
 #include <Util/Logger.hpp>
 
 #include <chrono>
