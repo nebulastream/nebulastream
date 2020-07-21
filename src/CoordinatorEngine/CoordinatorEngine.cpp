@@ -185,7 +185,7 @@ bool CoordinatorEngine::registerPhysicalStream(size_t nodeId,
                                                std::string physicalstreamname,
                                                std::string logicalstreamname) {
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id " << nodeId << " physical stream=" << physicalstreamname
-              << " logical stream=" << logicalstreamname);
+                                                                                             << " logical stream=" << logicalstreamname);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
     PhysicalStreamConfig streamConf(sourcetype,

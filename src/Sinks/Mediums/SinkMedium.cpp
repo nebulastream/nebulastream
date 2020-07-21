@@ -10,7 +10,7 @@ SinkMedium::SinkMedium(SchemaPtr schema)
     : schema(schema),
       sentBuffer(0),
       sentTuples(0),
-      schemaWritten(false){
+      schemaWritten(false) {
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 
@@ -18,7 +18,7 @@ SinkMedium::SinkMedium()
     : schema(Schema::create()),
       sentBuffer(0),
       sentTuples(0),
-      schemaWritten(false){
+      schemaWritten(false) {
     NES_DEBUG("SinkMedium:Init Default Data Sink!");
 }
 
@@ -41,23 +41,18 @@ SinkMedium::~SinkMedium() {
     NES_DEBUG("Destroy Data Sink  " << this);
 }
 
-std::string SinkMedium::getSinkFormat()
-{
+std::string SinkMedium::getSinkFormat() {
     return sinkFormat->toString();
 }
 
-bool SinkMedium::getAppendAsBool()
-{
+bool SinkMedium::getAppendAsBool() {
     return append;
 }
 
-std::string SinkMedium::getAppendAsString()
-{
-    if(append)
-    {
+std::string SinkMedium::getAppendAsString() {
+    if (append) {
         return "APPEND";
-    }
-    else{
+    } else {
         return "OVERWRITE";
     }
 }

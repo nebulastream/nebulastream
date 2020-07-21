@@ -22,5 +22,5 @@ class NesFormat : public SinkFormat {
 
     std::string toString();
 };
-}
+}// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_

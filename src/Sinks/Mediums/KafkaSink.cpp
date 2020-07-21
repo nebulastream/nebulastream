@@ -2,9 +2,9 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/KafkaSink.hpp>
 #include <Util/Logger.hpp>
+#include <chrono>
 #include <sstream>
 #include <string>
-#include <chrono>
 using namespace std::chrono_literals;
 
 namespace NES {

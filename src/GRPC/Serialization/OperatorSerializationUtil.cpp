@@ -378,7 +378,7 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
             NES_ERROR("serializeSinkDescriptor: format not supported");
         }
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-    }else {
+    } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - " << sinkDescriptor->toString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }
@@ -418,8 +418,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as FileSinkDescriptor");
         return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), serializedSinkDescriptor.sinkformat(), serializedSinkDescriptor.append() == true ? "APPEND" : "OVERWRITE");
-    }
-    else {
+    } else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type " << sinkDetails->DebugString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }

@@ -2,8 +2,8 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Util/Logger.hpp>
-#include <iostream>
 #include <Util/UtilityFunctions.hpp>
+#include <iostream>
 namespace NES {
 
 CsvFormat::CsvFormat(SchemaPtr schema, std::string filePath, bool append) : SinkFormat(schema, filePath, append) {
@@ -22,10 +22,8 @@ bool CsvFormat::writeSchema() {
     return true;
 }
 
-bool CsvFormat::writeData(TupleBuffer& inputBuffer)
-{
-    if(inputBuffer.getNumberOfTuples() == 0)
-    {
+bool CsvFormat::writeData(TupleBuffer& inputBuffer) {
+    if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("CsvFormat::writeData: Try to write empty buffer");
         return false;
     }
@@ -45,16 +43,13 @@ bool CsvFormat::writeData(TupleBuffer& inputBuffer)
     size_t posAfter = outputFile.tellp();
     outputFile.close();
 
-    if(bufferContent.length() > 0 && posAfter > posBefore)
-    {
+    if (bufferContent.length() > 0 && posAfter > posBefore) {
         NES_DEBUG("CsvFormat::writeData: wrote buffer of length=" << bufferContent.length() << " successfully");
         return true;
-    }
-    else{
+    } else {
         NES_ERROR("CsvFormat::writeData: write buffer failed posBefore=" << posBefore << " posAfter=" << posAfter << " bufferContent=" << bufferContent);
         return false;
     }
-
 }
 
 std::string CsvFormat::toString() {

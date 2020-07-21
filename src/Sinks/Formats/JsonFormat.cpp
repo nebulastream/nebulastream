@@ -6,22 +6,18 @@
 
 namespace NES {
 
-JsonFormat::JsonFormat(SchemaPtr schema, std::string filePath, bool append) : SinkFormat(schema, filePath, append){
-
+JsonFormat::JsonFormat(SchemaPtr schema, std::string filePath, bool append) : SinkFormat(schema, filePath, append) {
 }
 
-bool JsonFormat::writeSchema()
-{
+bool JsonFormat::writeSchema() {
     NES_NOT_IMPLEMENTED();
 }
 
-bool JsonFormat::writeData(TupleBuffer& inputBuffer)
-{
+bool JsonFormat::writeData(TupleBuffer& inputBuffer) {
     NES_NOT_IMPLEMENTED();
 }
 
-std::string JsonFormat::toString()
-{
+std::string JsonFormat::toString() {
     return "JSON_FORMAT";
 }
 }// namespace NES

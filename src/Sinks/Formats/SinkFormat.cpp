@@ -6,9 +6,7 @@
 
 namespace NES {
 
-SinkFormat::SinkFormat(SchemaPtr schema, std::string filePath, bool append): schema(schema), filePath(filePath), append(append)
-{
-
+SinkFormat::SinkFormat(SchemaPtr schema, std::string filePath, bool append) : schema(schema), filePath(filePath), append(append) {
 }
 
-}
+}// namespace NES

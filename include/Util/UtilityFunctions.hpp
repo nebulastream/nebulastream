@@ -69,15 +69,13 @@ class UtilityFunctions {
     */
     static std::string printTupleBufferAsCSV(TupleBuffer& tbuffer, SchemaPtr schema);
 
-
     /**
      * @brief function to replace all string occurrences
      * @param data input string will be replaced in-place
      * @param toSearch search string
      * @param replaceStr replace string
      */
-    static void findAndReplaceAll(std::string & data, std::string toSearch, std::string replaceStr);
-
+    static void findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr);
 };
 }// namespace NES
 

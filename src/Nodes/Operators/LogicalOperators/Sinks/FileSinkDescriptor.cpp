@@ -3,8 +3,6 @@
 
 namespace NES {
 
-
-
 SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName) {
     return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(fileName, "TEXT_FORMAT", "APPEND"));
 }
@@ -31,13 +29,11 @@ bool FileSinkDescriptor::equal(SinkDescriptorPtr other) {
     return fileName == otherSinkDescriptor->fileName;
 }
 
-bool FileSinkDescriptor::getAppend()
-{
+bool FileSinkDescriptor::getAppend() {
     return append;
 }
 
-std::string FileSinkDescriptor::getSinkFormatAsString()
-{
+std::string FileSinkDescriptor::getSinkFormatAsString() {
     return sinkFormat;
 }
 
