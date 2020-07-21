@@ -1,3 +1,4 @@
 add_source_nes(
-        SensorBus.cpp
+        GenericBus.cpp
+        I2CBus.cpp
 )

@@ -1,5 +1,4 @@
-#include <NodeEngine/NodeEngine.hpp>
-#include <Sensors/SensorBus.hpp>
+#include <Sensors/I2CBus.hpp>
 #include <Util/Logger.hpp>
 
 #include <chrono>
@@ -7,9 +6,10 @@
 #include <gtest/gtest.h>
 
 using namespace NES;
+using namespace Sensors;
 
 namespace NES {
-
+namespace Sensors {
 /**
  * Tests for sensor buses. We start with the I2C bus.
  *
@@ -25,8 +25,6 @@ namespace NES {
 class SensorBusTest : public testing::Test {
 
   public:
-    NodeEnginePtr nodeEngine;
-    BufferManagerPtr bufferManager;
     std::string path_to_bus;
     char path_to_bus_str[10];
     int bus_file_descriptor;
@@ -35,17 +33,18 @@ class SensorBusTest : public testing::Test {
     int data_size;
     unsigned char data_buffer[5] = {0};
     int64_t timeStamp;
+    GenericBusPtr sensorBus;
 
-  static void SetUpTestCase() {
-      NES::setupLogging("SensorBusTest.log", NES::LOG_DEBUG);
-      NES_INFO("Setup SourceBusTest test class.");
-  }
+    static void SetUpTestCase() {
+        NES::setupLogging("SensorBusTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup SourceBusTest test class.");
+    }
 
-  static void TearDownTestCase() {
-      std::cout << "Tear down NetworkStackTest class." << std::endl;
-  }
+    static void TearDownTestCase() {
+        std::cout << "Tear down NetworkStackTest class." << std::endl;
+    }
 
-  /**
+    /**
    * Assume file descriptor will be in /dev/i2c-1.
    * This is allocated randomly in a real test.
    *
@@ -54,20 +53,21 @@ class SensorBusTest : public testing::Test {
    * Assume data size to read or write is 4 bytes.
    * Create an int64_t value to write and later read.
    */
-  void SetUp() override {
-      NES_DEBUG("Setup SourceBusTest test case.");
-      bus_file_allocated_id = 1;
-      snprintf(path_to_bus_str, 19,
-               "/dev/i2c-%d",
-               bus_file_allocated_id);
-      sensor_address_in_bus = 0x1c;
-      data_size = 4;
-      timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-  }
+    void SetUp() override {
+        NES_DEBUG("Setup SourceBusTest test case.");
+        bus_file_allocated_id = 1;
+        snprintf(path_to_bus_str, 19,
+                 "/dev/i2c-%d",
+                 bus_file_allocated_id);
+        sensor_address_in_bus = 0x1c;
+        data_size = 4;
+        timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        sensorBus = std::make_shared<I2CBus>(path_to_bus_str);
+    }
 
-  void TearDown() override {
-      NES_DEBUG("Tear down SourceBusTest test case.");
-  }
+    void TearDown() override {
+        NES_DEBUG("Tear down SourceBusTest test case.");
+    }
 };
 
 /**
@@ -76,7 +76,7 @@ class SensorBusTest : public testing::Test {
  * @result true, if ioctl in bus and sensor level succeeds
  */
 TEST_F(SensorBusTest, busMustStartAndSensorControllable) {
-    bool result = SensorBus::initBus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
+    bool result = sensorBus->init(sensor_address_in_bus);
     EXPECT_TRUE(result);
 }
 
@@ -86,8 +86,8 @@ TEST_F(SensorBusTest, busMustStartAndSensorControllable) {
  * @result true, if ioctl in bus and sensor level succeeds writing the timestamp
  */
 TEST_F(SensorBusTest, sensorAddressMustBeWriteable) {
-    SensorBus::initBus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
-    bool result = SensorBus::write(bus_file_descriptor, sensor_address_in_bus, data_size, reinterpret_cast<unsigned char*>(&timeStamp));
+    sensorBus->init(sensor_address_in_bus);
+    bool result = sensorBus->write(sensor_address_in_bus, data_size, reinterpret_cast<unsigned char*>(&timeStamp));
     EXPECT_TRUE(result);
 }
 
@@ -97,8 +97,8 @@ TEST_F(SensorBusTest, sensorAddressMustBeWriteable) {
  * @result true, if ioctl in bus and sensor level succeeds reading the timestamp
  */
 TEST_F(SensorBusTest, sensorAddressMustBeReadable) {
-    SensorBus::initBus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
-    bool result = SensorBus::read(bus_file_descriptor, sensor_address_in_bus, data_size, data_buffer);
+    sensorBus->init(sensor_address_in_bus);
+    bool result = sensorBus->read(sensor_address_in_bus, data_size, reinterpret_cast<unsigned char*>(&timeStamp));
     EXPECT_TRUE(result);
 }
 
@@ -108,12 +108,12 @@ TEST_F(SensorBusTest, sensorAddressMustBeReadable) {
  * @result true, if ioctl in bus and sensor level succeeds reading the timestamp
  */
 TEST_F(SensorBusTest, dataMustBeSameReadAfterWrite) {
-    SensorBus::initBus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
-    SensorBus::write(bus_file_descriptor, sensor_address_in_bus, data_size, reinterpret_cast<unsigned char*>(&timeStamp));
-    SensorBus::read(bus_file_descriptor, sensor_address_in_bus, data_size, data_buffer);
+    sensorBus->init(sensor_address_in_bus);
+    sensorBus->write(sensor_address_in_bus, data_size, reinterpret_cast<unsigned char*>(&timeStamp));
+    sensorBus->read(sensor_address_in_bus, data_size, data_buffer);
     int64_t timestampFromBus;
-    std::memcpy(&timestampFromBus, data_buffer, sizeof(int));
+    memcpy(&timestampFromBus, data_buffer, sizeof(int));
     ASSERT_EQ(timestampFromBus, timeStamp);
 }
-
+}// namespace Sensors
 }// namespace NES
