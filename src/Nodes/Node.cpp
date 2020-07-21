@@ -326,7 +326,7 @@ bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::N
  */
 NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr nodeToFind) {
     for (auto&& currentNode : nodes) {
-        if (nodeToFind->equal(currentNode)) { // TODO: need to check this when merge is used. nodeToFind.get() == currentNode.get()
+        if (nodeToFind->equal(currentNode)) {// TODO: need to check this when merge is used. nodeToFind.get() == currentNode.get()
             return currentNode;
         }
     }
