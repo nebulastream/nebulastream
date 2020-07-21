@@ -22,7 +22,7 @@ namespace NES {
 QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
                                                            QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
                                                            QueryDeployerPtr queryDeployer)
-    : queryProcessorLock(), queryProcessorStatusLock(), queryProcessorRunning(true), globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog),
+    : queryProcessorStatusLock(), queryProcessorRunning(true), globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog),
       workerRPCClient(workerRpcClient), queryDeployer(queryDeployer) {
 
     NES_INFO("QueryProcessorService()");
@@ -34,17 +34,8 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
 void QueryRequestProcessorService::start() {
 
     try {
-        std::condition_variable& availabilityTrigger = queryCatalog->getAvailabilityTrigger();
         while (isQueryProcessorRunning()) {
-            std::unique_lock<std::mutex> lock(queryProcessorLock);
             NES_INFO("QueryRequestProcessorService: Waiting for new query request trigger");
-            //We are using conditional variable to prevent Lost Wakeup and Spurious Wakeup
-            //ref: https://www.modernescpp.com/index.php/c-core-guidelines-be-aware-of-the-traps-of-condition-variables
-            availabilityTrigger.wait(lock, [&] {
-                return !isQueryProcessorRunning() || queryCatalog->isNewRequestAvailable();
-            });
-
-            NES_INFO("QueryRequestProcessorService: New query request triggered");
             const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
             NES_INFO("QueryProcessingService: Found " << queryCatalogEntryBatch.size() << " query requests to schedule");
             //process the queries using query-at-a-time model
@@ -103,12 +94,11 @@ void QueryRequestProcessorService::start() {
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 }
             }
-            lock.unlock();
         }
         NES_WARNING("QueryProcessingService: Terminated");
     } catch (...) {
         NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queries.");
-        stopQueryRequestProcessor();
+        shutDown();
     }
 }
 
@@ -265,11 +255,10 @@ bool QueryRequestProcessorService::isQueryProcessorRunning() {
     return queryProcessorRunning;
 }
 
-void QueryRequestProcessorService::stopQueryRequestProcessor() {
+void QueryRequestProcessorService::shutDown() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
     this->queryProcessorRunning = false;
-    std::condition_variable& availabilityTrigger = queryCatalog->getAvailabilityTrigger();
-    availabilityTrigger.notify_one();
+    queryCatalog->insertPoisonPill();
 }
 
 }// namespace NES

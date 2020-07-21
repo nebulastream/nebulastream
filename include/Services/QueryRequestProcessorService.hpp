@@ -54,7 +54,7 @@ class QueryRequestProcessorService {
     /**
      * @brief Stop query request processor service
      */
-    void stopQueryRequestProcessor();
+    void shutDown();
 
   private:
     /**
@@ -99,7 +99,6 @@ class QueryRequestProcessorService {
      */
     bool stopQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
 
-    std::mutex queryProcessorLock;
     std::mutex queryProcessorStatusLock;
     bool queryProcessorRunning;
     GlobalExecutionPlanPtr globalExecutionPlan;

@@ -133,7 +133,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
             throw Exception("Error while stopping thread->join");
         }
 
-        queryRequestProcessorService->stopQueryRequestProcessor();
+        queryRequestProcessorService->shutDown();
         if (queryRequestProcessorThread->joinable()) {
             NES_DEBUG("NesCoordinator: join rpcThread");
             queryRequestProcessorThread->join();

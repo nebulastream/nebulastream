@@ -122,9 +122,13 @@ class QueryCatalog {
      * @brief Change status of new request availability
      * @param newRequestAvailable: bool indicating if the request is available
      */
-    void setNewRequestAvailableAndNotifyProcessor(bool newRequestAvailable);
+    void setNewRequestAvailable(bool newRequestAvailable);
 
-    std::condition_variable& getAvailabilityTrigger();
+    /**
+     * @brief This method will force trigger the availabilityTrigger conditional variable in order to
+     * interrupt the wait.
+     */
+    void insertPoisonPill();
 
   private:
     std::mutex queryStatus;
