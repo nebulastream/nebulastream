@@ -1,5 +1,5 @@
 add_source_nes(
-
+    MetricCollector.cpp
 )
 
 add_subdirectory(Metrics)

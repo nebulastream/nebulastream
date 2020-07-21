@@ -4,7 +4,8 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Gauge.hpp>
 #include <Monitoring/Metrics/NesMetrics.hpp>
-
+#include <memory>
+#include <Monitoring/Protocols/SamplingProtocol.hpp>
 
 namespace NES {
 class MonitoringStackTest : public testing::Test {
@@ -34,7 +35,7 @@ TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = NesMetrics::CPUStats();
     std::unordered_map<std::string, uint64_t> metrics = cpuStats.readValue();
     ASSERT_TRUE(metrics["cpuCount"] > 0);
-    ASSERT_TRUE(metrics.size()>=11);
+    ASSERT_TRUE(metrics.size() >= 11);
 
     auto cpuIdle = NesMetrics::CPUIdle("cpu1");
     NES_INFO("MonitoringStackTest: Idle " << cpuIdle.readValue());
@@ -43,7 +44,7 @@ TEST_F(MonitoringStackTest, testCPUStats) {
 TEST_F(MonitoringStackTest, testMemoryStats) {
     auto memStats = NesMetrics::MemoryStats();
     std::unordered_map<std::string, uint64_t> metrics = memStats.readValue();
-    ASSERT_TRUE(metrics.size()==13);
+    ASSERT_TRUE(metrics.size() == 13);
 
     NES_INFO("MonitoringStackTest: Total ram " << metrics["totalram"]/(1024*1024) << "gb");
 }
@@ -51,7 +52,7 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
 TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskStats = NesMetrics::DiskStats();
     std::unordered_map<std::string, uint64_t> metrics = diskStats.readValue();
-    ASSERT_TRUE(metrics.size()==5);
+    ASSERT_TRUE(metrics.size() == 5);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
@@ -61,8 +62,29 @@ TEST_F(MonitoringStackTest, testNetworkStats) {
 
     for (auto const& intfs : metrics) {
         NES_INFO("MonitoringStackTest: Received metrics for interface " << intfs.first);
-        ASSERT_TRUE(intfs.second.size()==16);
+        ASSERT_TRUE(intfs.second.size() == 16);
     }
+}
+
+TEST_F(MonitoringStackTest, testMetricCollector) {
+    auto cpuStats = NesMetrics::CPUStats();
+    auto networkStats = NesMetrics::NetworkStats();
+    auto diskStats = NesMetrics::DiskStats();
+    auto memStats = NesMetrics::MemoryStats();
+
+    auto systemMetrics = MetricGroup();
+    systemMetrics.add("cpu", &cpuStats);
+    systemMetrics.add("network", &networkStats);
+    systemMetrics.add("disk", &diskStats);
+    systemMetrics.add("mem", &memStats);
+
+    //static sampling func
+    auto samplingProtocolPtr = std::make_shared<SamplingProtocol>([&systemMetrics]() {
+      sleep(5);
+      return systemMetrics;
+    });
+
+    auto output = samplingProtocolPtr->getSample();
 }
 
 }
