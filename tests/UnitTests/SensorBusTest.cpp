@@ -76,7 +76,7 @@ class SensorBusTest : public testing::Test {
  * @result true, if ioctl in bus and sensor level succeeds
  */
 TEST_F(SensorBusTest, busMustStartAndSensorControllable) {
-    bool result = SensorBus::init_bus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
+    bool result = SensorBus::initBus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
     EXPECT_TRUE(result);
 }
 
@@ -86,7 +86,7 @@ TEST_F(SensorBusTest, busMustStartAndSensorControllable) {
  * @result true, if ioctl in bus and sensor level succeeds writing the timestamp
  */
 TEST_F(SensorBusTest, sensorAddressMustBeWriteable) {
-    SensorBus::init_bus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
+    SensorBus::initBus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
     bool result = SensorBus::write(bus_file_descriptor, sensor_address_in_bus, data_size, reinterpret_cast<unsigned char*>(&timeStamp));
     EXPECT_TRUE(result);
 }
@@ -97,7 +97,7 @@ TEST_F(SensorBusTest, sensorAddressMustBeWriteable) {
  * @result true, if ioctl in bus and sensor level succeeds reading the timestamp
  */
 TEST_F(SensorBusTest, sensorAddressMustBeReadable) {
-    SensorBus::init_bus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
+    SensorBus::initBus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
     bool result = SensorBus::read(bus_file_descriptor, sensor_address_in_bus, data_size, data_buffer);
     EXPECT_TRUE(result);
 }
@@ -108,7 +108,7 @@ TEST_F(SensorBusTest, sensorAddressMustBeReadable) {
  * @result true, if ioctl in bus and sensor level succeeds reading the timestamp
  */
 TEST_F(SensorBusTest, dataMustBeSameReadAfterWrite) {
-    SensorBus::init_bus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
+    SensorBus::initBus(bus_file_descriptor, path_to_bus_str, sensor_address_in_bus);
     SensorBus::write(bus_file_descriptor, sensor_address_in_bus, data_size, reinterpret_cast<unsigned char*>(&timeStamp));
     SensorBus::read(bus_file_descriptor, sensor_address_in_bus, data_size, data_buffer);
     int64_t timestampFromBus;
