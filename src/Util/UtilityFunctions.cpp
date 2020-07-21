@@ -31,7 +31,7 @@ std::string UtilityFunctions::trim(std::string s) {
 
 QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCodeSnippet) {
     bool pattern = queryCodeSnippet.find("Pattern::") != std::string::npos;
-    bool merge = queryCodeSnippet.find("merge") != std::string::npos;
+    bool merge = queryCodeSnippet.find(".merge") != std::string::npos;
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
