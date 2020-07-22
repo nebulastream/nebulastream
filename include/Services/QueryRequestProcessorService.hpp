@@ -17,6 +17,12 @@ typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 class QueryPlacementPhase;
 typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
 
+class QueryDeploymentPhase;
+typedef std::shared_ptr<QueryDeploymentPhase> QueryDeploymentPhasePtr;
+
+class QueryUndeploymentPhase;
+typedef std::shared_ptr<QueryUndeploymentPhase> QueryUndeploymentPhasePtr;
+
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
@@ -57,57 +63,14 @@ class QueryRequestProcessorService {
     void shutDown();
 
   private:
-    /**
-     * @brief method for deploying and starting the query
-     * @param queryId : the query Id of the query to be deployed and started
-     * @return true if successful else false
-     */
-    bool deployAndStartQuery(std::string queryId);
-
-    /**
-     * @brief method for stopping and undeploying the query with the given id
-     * @param queryId : id of the query
-     * @return true if successful
-     */
-    bool stopAndUndeployQuery(const std::string queryId);
-
-    /**
-     * @brief method send query to nodes
-     * @param queryId
-     * @return bool indicating success
-     */
-    bool deployQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
-
-    /**
-     * @brief method to start a already deployed query
-     * @param queryId
-     * @return bool indicating success
-     */
-    bool startQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
-
-    /**
-     * @brief method remove query from nodes
-     * @param queryId
-     * @return bool indicating success
-     */
-    bool undeployQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
-
-    /**
-     * @brief method to stop a query
-     * @param queryId
-     * @return bool indicating success
-     */
-    bool stopQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
-
     std::mutex queryProcessorStatusLock;
     bool queryProcessorRunning;
-    GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
     QueryPlacementPhasePtr queryPlacementPhase;
-    WorkerRPCClientPtr workerRPCClient;
-    QueryDeployerPtr queryDeployer;
+    QueryUndeploymentPhasePtr queryUndeploymentPhase;
+    QueryDeploymentPhasePtr queryDeploymentPhase;
 };
 }// namespace NES
 #endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP
