@@ -8,4 +8,6 @@ add_source_nes(
         TypeInferencePhase.cpp
         QueryPlacementPhase.cpp
         QueryRewritePhase.cpp
+        QueryDeploymentPhase.cpp
+        QueryUndeploymentPhase.cpp
 )
