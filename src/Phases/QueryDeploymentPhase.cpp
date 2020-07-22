@@ -10,7 +10,7 @@
 namespace NES {
 
 QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer)
-    : globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient) {}
+    : globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient), queryDeployer(queryDeployer) {}
 
 QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer) {
     return std::make_shared<QueryDeploymentPhase>(QueryDeploymentPhase(globalExecutionPlan, workerRpcClient, queryDeployer));
@@ -19,10 +19,6 @@ QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr glob
 bool QueryDeploymentPhase::execute(std::string queryId) {
 
     NES_DEBUG("QueryService: deploy the query");
-
-    //    if (!queryCatalog->queryExists(queryId)) {
-    //        throw QueryNotFoundException("QueryRequestProcessingService: Query with id " + queryId + " not found in the catalog.");
-    //    }
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     if (executionNodes.empty()) {
