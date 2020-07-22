@@ -1,14 +1,14 @@
 #ifndef NES_QUERYREQUESTQUEUE_HPP
 #define NES_QUERYREQUESTQUEUE_HPP
 
+#include <condition_variable>
+#include <deque>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace NES {
-
-class QueryRequestQueue;
-typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
 
 class QueryCatalogEntry;
 typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
@@ -16,15 +16,14 @@ typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
 class QueryRequestQueue {
 
   public:
-
-    QueryRequestQueuePtr create();
+    QueryRequestQueue();
 
     /**
      * @brief Add query request into processing queue
      * @param queryCatalogEntry: the query request in form of query catalog entry
      * @return true if successfully added to the queue
      */
-    bool add(QueryCatalogEntry queryCatalogEntry);
+    bool add(QueryCatalogEntryPtr queryCatalogEntry);
 
     /**
      * @brief Get a batch of query catalog entries to be processed.
@@ -52,12 +51,12 @@ class QueryRequestQueue {
     void insertPoisonPill();
 
   private:
-    explicit QueryRequestQueue();
-
+    bool newRequestAvailable;
+    uint64_t batchSize;
     std::mutex queryRequest;
     std::condition_variable availabilityTrigger;
-    bool newRequestAvailable;
-    std::deque<QueryCatalogEntryPtr> schedulingQueue;
+    std::deque<QueryCatalogEntry> schedulingQueue;
 };
+typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
 }// namespace NES
 #endif//NES_QUERYREQUESTQUEUE_HPP

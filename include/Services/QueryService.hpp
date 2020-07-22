@@ -13,13 +13,16 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
+class QueryRequestQueue;
+typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
+
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queries.
  */
 class QueryService {
 
   public:
-    explicit QueryService(QueryCatalogPtr queryCatalog);
+    explicit QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue);
 
     ~QueryService() = default;
 
@@ -51,6 +54,7 @@ class QueryService {
 
   private:
     QueryCatalogPtr queryCatalog;
+    QueryRequestQueuePtr queryRequestQueue;
 };
 
 };// namespace NES

@@ -10,10 +10,11 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <WorkQueues/QueryRequestQueue.hpp>
 
 namespace NES {
 
-QueryService::QueryService(QueryCatalogPtr queryCatalog) : queryCatalog(queryCatalog) {
+QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue) : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue) {
     NES_DEBUG("QueryService()");
 }
 
@@ -30,7 +31,10 @@ std::string QueryService::validateAndQueueAddRequest(std::string queryString, st
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     NES_INFO("QueryService: Queuing the query for the execution");
-    queryCatalog->registerAndQueueAddRequest(queryString, queryPlan, placementStrategyName);
+    QueryCatalogEntryPtr entry = queryCatalog->addNewQueryRequest(queryString, queryPlan, placementStrategyName);
+    if (!entry) {
+        queryRequestQueue->add(entry);
+    }
     return queryId;
 }
 
@@ -40,7 +44,11 @@ bool QueryService::validateAndQueueStopRequest(std::string queryId) {
     if (!queryCatalog->queryExists(queryId)) {
         throw QueryNotFoundException("QueryService: Unable to find query with id " + queryId + " in query catalog.");
     }
-    return queryCatalog->queueStopRequest(queryId);
+    QueryCatalogEntryPtr entry = queryCatalog->addQueryStopRequest(queryId);
+    if (!entry) {
+        return queryRequestQueue->add(entry);
+    }
+    return false;
 }
 
 json::value QueryService::getQueryPlanAsJson(std::string queryId) {

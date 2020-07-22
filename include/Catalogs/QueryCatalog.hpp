@@ -27,16 +27,16 @@ class QueryCatalog {
      * @param queryString: a user query in string form
      * @param queryPlan: a user query plan to be executed
      * @param optimizationStrategyName: the optimization strategy (bottomUp or topDown)
-     * @return true if registration successful else false
+     * @return query catalog entry or nullptr
      */
-    bool registerAndQueueAddRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName);
+    QueryCatalogEntryPtr addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName);
 
     /**
      * @brief register a request for stopping a query and add it to the scheduling queue.
      * @param queryId: id of the user query.
-     * @return true if successful
+     * @return query catalog entry or nullptr
      */
-    bool queueStopRequest(std::string queryId);
+    QueryCatalogEntryPtr addQueryStopRequest(std::string queryId);
 
     /**
      * @brief method to change status of a query
@@ -109,7 +109,6 @@ class QueryCatalog {
     std::mutex queryStatus;
     std::mutex queryRequest;
     std::map<std::string, QueryCatalogEntryPtr> queries;
-    uint64_t batchSize;
 };
 
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
