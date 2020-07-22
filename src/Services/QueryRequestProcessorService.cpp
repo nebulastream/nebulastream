@@ -7,8 +7,10 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Phases/QueryDeploymentPhase.hpp>
 #include <Phases/QueryPlacementPhase.hpp>
 #include <Phases/QueryRewritePhase.hpp>
+#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -22,13 +24,14 @@ namespace NES {
 QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
                                                            QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
                                                            QueryDeployerPtr queryDeployer)
-    : queryProcessorStatusLock(), queryProcessorRunning(true), globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog),
-      workerRPCClient(workerRpcClient), queryDeployer(queryDeployer) {
+    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog) {
 
     NES_INFO("QueryProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryRewritePhase = QueryRewritePhase::create();
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog);
+    queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryDeployer);
+    queryUndeploymentPhase = QueryUndeploymentPhase::create(globalExecutionPlan, workerRpcClient);
 }
 
 void QueryRequestProcessorService::start() {
@@ -45,7 +48,7 @@ void QueryRequestProcessorService::start() {
                 try {
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::MarkedForStop) {
                         NES_INFO("QueryProcessingService: Request received for stopping the query " + queryId);
-                        bool successful = stopAndUndeployQuery(queryId);
+                        bool successful = queryUndeploymentPhase->execute(queryId);
                         if (!successful) {
                             throw QueryUndeploymentException("Unable to stop the query " + queryId);
                         }
@@ -69,7 +72,7 @@ void QueryRequestProcessorService::start() {
                         if (!placementSuccessful) {
                             throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for query: " + queryId);
                         }
-                        bool successful = deployAndStartQuery(queryId);
+                        bool successful = queryDeploymentPhase->execute(queryId);
                         if (!successful) {
                             throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with Id " + queryId);
                         }
@@ -79,29 +82,24 @@ void QueryRequestProcessorService::start() {
                         throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling}, queryCatalogEntry.getQueryStatus());
                     }
                 } catch (QueryPlacementException& ex) {
-                    //Rollback if failure happen while placing the query.
-                    NES_ERROR(ex.what());
-                    globalExecutionPlan->removeQuerySubPlans(queryId);
+                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                    queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (QueryDeploymentException& ex) {
                     NES_ERROR("QueryRequestProcessingService: " << ex.what());
-                    //Rollback if failure happen while placing the query.
-                    globalExecutionPlan->removeQuerySubPlans(queryId);
+                    queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (InvalidQueryStatusException& ex) {
-                    //Rollback if failure happen while placing the query.
                     NES_ERROR("QueryRequestProcessingService: " << ex.what());
-                    globalExecutionPlan->removeQuerySubPlans(queryId);
+                    queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (QueryNotFoundException& ex) {
-                    //Rollback if failure happen while placing the query.
                     NES_ERROR("QueryRequestProcessingService: " << ex.what());
                 } catch (QueryUndeploymentException& ex) {
-                    //Rollback if failure happen while placing the query.
                     NES_ERROR("QueryRequestProcessingService: " << ex.what());
                 } catch (Exception& ex) {
                     NES_ERROR("QueryRequestProcessingService: " << ex.what());
-                    globalExecutionPlan->removeQuerySubPlans(queryId);
+                    queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 }
             }
