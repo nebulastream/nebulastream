@@ -38,13 +38,17 @@ typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 class QueryDeployer;
 typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
 
+class QueryRequestQueue;
+typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
+
 /**
  * @brief This service is started as a thread and is responsible for accessing the scheduling queue in the query catalog and executing the queries requests.
  */
 class QueryRequestProcessorService {
   public:
     explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog,
-                                          StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer);
+                                          StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer,
+                                          QueryRequestQueuePtr queryRequestQueue);
 
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
@@ -71,6 +75,7 @@ class QueryRequestProcessorService {
     QueryPlacementPhasePtr queryPlacementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
+    QueryRequestQueuePtr queryRequestQueue;
 };
 }// namespace NES
 #endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP

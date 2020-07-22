@@ -18,13 +18,14 @@
 #include <Services/QueryRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
+#include <WorkQueues/QueryRequestQueue.hpp>
 
 namespace NES {
 
 QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
                                                            QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                                           QueryDeployerPtr queryDeployer)
-    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog) {
+                                                           QueryDeployerPtr queryDeployer, QueryRequestQueuePtr queryRequestQueue)
+    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue) {
 
     NES_INFO("QueryProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -39,7 +40,7 @@ void QueryRequestProcessorService::start() {
     try {
         while (isQueryProcessorRunning()) {
             NES_INFO("QueryRequestProcessorService: Waiting for new query request trigger");
-            const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryCatalog->getQueriesToSchedule();
+            const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryRequestQueue->getNextBatch();
             NES_INFO("QueryProcessingService: Found " << queryCatalogEntryBatch.size() << " query requests to schedule");
             //process the queries using query-at-a-time model
             for (auto queryCatalogEntry : queryCatalogEntryBatch) {
@@ -119,7 +120,7 @@ bool QueryRequestProcessorService::isQueryProcessorRunning() {
 void QueryRequestProcessorService::shutDown() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
     this->queryProcessorRunning = false;
-    queryCatalog->insertPoisonPill();
+    queryRequestQueue->insertPoisonPill();
 }
 
 }// namespace NES

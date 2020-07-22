@@ -48,16 +48,14 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    bool successful = queryCatalog->registerAndQueueAddRequest(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
 
     //Assert
-    EXPECT_TRUE(successful);
+    EXPECT_TRUE(catalogEntry);
     map<string, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1);
     map<string, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1);
-    const vector<QueryCatalogEntry> queriesToSchedule = queryCatalog->getQueriesToSchedule();
-    EXPECT_EQ(queriesToSchedule.size(), 1);
 }
 
 TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
@@ -70,28 +68,24 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
-    bool successful = queryCatalog->registerAndQueueAddRequest(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
 
     //Assert
-    EXPECT_TRUE(successful);
+    EXPECT_TRUE(catalogEntry);
     map<string, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1);
     map<string, QueryCatalogEntryPtr> registeredQueries = queryCatalog->getQueries(QueryStatus::Registered);
     EXPECT_TRUE(registeredQueries.size() == 1);
-    vector<QueryCatalogEntry> queriesToSchedule = queryCatalog->getQueriesToSchedule();
-    EXPECT_EQ(queriesToSchedule.size(), 1);
 
     //SendStop request
-    successful = queryCatalog->queueStopRequest(queryId);
+    catalogEntry = queryCatalog->addQueryStopRequest(queryId);
 
     //Assert
-    EXPECT_TRUE(successful);
+    EXPECT_TRUE(catalogEntry);
     registeredQueries = queryCatalog->getQueries(QueryStatus::Registered);
     EXPECT_TRUE(registeredQueries.size() == 0);
     map<string, QueryCatalogEntryPtr> queriesMarkedForStop = queryCatalog->getQueries(QueryStatus::MarkedForStop);
     EXPECT_TRUE(queriesMarkedForStop.size() == 1);
-    queriesToSchedule = queryCatalog->getQueriesToSchedule();
-    EXPECT_EQ(queriesToSchedule.size(), 1);
 }
 
 TEST_F(QueryCatalogTest, testPrintQuery) {
@@ -103,10 +97,10 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    bool successful = queryCatalog->registerAndQueueAddRequest(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
 
     //Assert
-    EXPECT_TRUE(successful);
+    EXPECT_TRUE(catalogEntry);
     map<string, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1);
     std::string ret = queryCatalog->printQueries();
@@ -128,10 +122,10 @@ TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
     std::string queryId = UtilityFunctions::generateIdString();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
-    bool successful = queryCatalog->registerAndQueueAddRequest(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
 
     //Assert
-    EXPECT_TRUE(successful);
+    EXPECT_TRUE(catalogEntry);
     std::map<std::string, std::string> allRegisteredQueries = queryCatalog->getAllQueries();
     EXPECT_EQ(allRegisteredQueries.size(), 1);
     EXPECT_TRUE(allRegisteredQueries.find(queryId) != allRegisteredQueries.end());
@@ -146,7 +140,7 @@ TEST_F(QueryCatalogTest, getAllRunningQueries) {
     std::string queryId = UtilityFunctions::generateIdString();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
-    queryCatalog->registerAndQueueAddRequest(queryString, queryPlan, "BottomUp");
+    queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
     queryCatalog->markQueryAs(queryId, QueryStatus::Running);
 
     //Assert

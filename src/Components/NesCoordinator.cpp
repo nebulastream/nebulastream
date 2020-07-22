@@ -17,6 +17,7 @@
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
+#include <WorkQueues/QueryRequestQueue.hpp>
 #include <future>
 #include <thread>
 
@@ -42,9 +43,10 @@ NesCoordinator::NesCoordinator(string serverIp, uint16_t restPort, uint16_t rpcP
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
     WorkerRPCClientPtr workerRpcClient = std::make_shared<WorkerRPCClient>();
     QueryDeployerPtr queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, globalExecutionPlan);
+    QueryRequestQueuePtr queryRequestQueue = std::make_shared<QueryRequestQueue>();
     queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topologyManager->getNESTopologyPlan(),
-                                                                                  queryCatalog, streamCatalog, workerRpcClient, queryDeployer);
-    queryService = std::make_shared<QueryService>(queryCatalog);
+                                                                                  queryCatalog, streamCatalog, workerRpcClient, queryDeployer, queryRequestQueue);
+    queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
 
 NesCoordinator::~NesCoordinator() {

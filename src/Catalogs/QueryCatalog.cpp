@@ -9,7 +9,7 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog() : queryStatus(), queryRequest(), newRequestAvailable(false), batchSize(1) {
+QueryCatalog::QueryCatalog() : queryStatus(), queryRequest(){
     NES_DEBUG("QueryCatalog()");
 }
 
@@ -42,48 +42,28 @@ std::map<std::string, std::string> QueryCatalog::getAllQueries() {
     return result;
 }
 
-bool QueryCatalog::registerAndQueueAddRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
+QueryCatalogEntryPtr QueryCatalog::addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
     std::unique_lock<std::mutex> lock(queryRequest);
     std::string queryId = queryPlan->getQueryId();
     NES_INFO("QueryCatalog: Registering query with id " << queryId);
-    try {
-        NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
-        QueryCatalogEntryPtr queryCatalogEntry = std::make_shared<QueryCatalogEntry>(queryId, queryString, optimizationStrategyName, queryPlan, QueryStatus::Registered);
-        queries[queryId] = queryCatalogEntry;
-        return true;
-    } catch (const std::exception& exc) {
-        NES_ERROR("QueryCatalog:_exception:" << exc.what() << " try to revert changes");
-        NES_ERROR("QueryCatalog: Unable to process input request with: query id " << queryId << "queryString: " << queryString
-                                                                                  << "\n strategy: " << optimizationStrategyName);
-        markQueryAs(queryId, QueryStatus::Failed);
-        return false;
-    }
+    NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
+    QueryCatalogEntryPtr queryCatalogEntry = std::make_shared<QueryCatalogEntry>(queryId, queryString, optimizationStrategyName, queryPlan, QueryStatus::Registered);
+    queries[queryId] = queryCatalogEntry;
+    return queryCatalogEntry;
 }
 
-bool QueryCatalog::queueStopRequest(std::string queryId) {
+QueryCatalogEntryPtr QueryCatalog::addQueryStopRequest(std::string queryId) {
     std::unique_lock<std::mutex> lock(queryRequest);
-    NES_INFO("QueryCatalog: Queue query stop request to the scheduling queue.");
-    NES_INFO("QueryCatalog: Locating a query with same id in the scheduling queue.");
+    NES_INFO("QueryCatalog: Validating with old query status.");
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
-    auto itr = std::find(schedulingQueue.begin(), schedulingQueue.end(), queryCatalogEntry);
-    if (itr != schedulingQueue.end()) {
-        NES_INFO("QueryCatalog: Found query with same id already present in the scheduling queue.");
-        NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
-        markQueryAs(queryId, QueryStatus::MarkedForStop);
-    } else {
-        QueryStatus currentStatus = queryCatalogEntry->getQueryStatus();
-        if (currentStatus == QueryStatus::Stopped || currentStatus == QueryStatus::Failed) {
-            NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString() + ". Ignoring stop query request.");
-            throw InvalidQueryStatusException({QueryStatus::Scheduling, QueryStatus::Registered, QueryStatus::Running}, currentStatus);
-        }
-        NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
-        markQueryAs(queryId, QueryStatus::MarkedForStop);
-        schedulingQueue.push_back(queryCatalogEntry);
+    QueryStatus currentStatus = queryCatalogEntry->getQueryStatus();
+    if (currentStatus == QueryStatus::Stopped || currentStatus == QueryStatus::Failed) {
+        NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString() + ". Ignoring stop query request.");
+        throw InvalidQueryStatusException({QueryStatus::Scheduling, QueryStatus::Registered, QueryStatus::Running}, currentStatus);
     }
-    NES_INFO("QueryCatalog: Marking that new request is available to be scheduled");
-    setNewRequestAvailable(true);
-    availabilityTrigger.notify_one();
-    return true;
+    NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
+    markQueryAs(queryId, QueryStatus::MarkedForStop);
+    return queryCatalogEntry;
 }
 
 void QueryCatalog::markQueryAs(std::string queryId, QueryStatus newStatus) {
