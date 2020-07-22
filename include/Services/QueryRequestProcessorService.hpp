@@ -69,8 +69,8 @@ class QueryRequestProcessorService {
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
     QueryPlacementPhasePtr queryPlacementPhase;
-    QueryUndeploymentPhasePtr queryUndeploymentPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
+    QueryUndeploymentPhasePtr queryUndeploymentPhase;
 };
 }// namespace NES
 #endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP
