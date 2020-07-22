@@ -39,13 +39,6 @@ class QueryCatalog {
     bool queueStopRequest(std::string queryId);
 
     /**
-     * @brief Get a batch of query catalog entries to be scheduled.
-     * Note: This method returns only a copy of the
-     * @return a vector of query catalog entry to schedule
-     */
-    std::vector<QueryCatalogEntry> getQueriesToSchedule();
-
-    /**
      * @brief method to change status of a query
      * @param id of the query
      * @param status of the query
@@ -112,31 +105,10 @@ class QueryCatalog {
      */
     std::map<std::string, std::string> getAllQueries();
 
-    /**
-     * @brief Check if there are new request available
-     * @return true if there are new requests
-     */
-    bool isNewRequestAvailable() const;
-
-    /**
-     * @brief Change status of new request availability
-     * @param newRequestAvailable: bool indicating if the request is available
-     */
-    void setNewRequestAvailable(bool newRequestAvailable);
-
-    /**
-     * @brief This method will force trigger the availabilityTrigger conditional variable in order to
-     * interrupt the wait.
-     */
-    void insertPoisonPill();
-
   private:
     std::mutex queryStatus;
     std::mutex queryRequest;
-    std::condition_variable availabilityTrigger;
-    bool newRequestAvailable;
     std::map<std::string, QueryCatalogEntryPtr> queries;
-    std::deque<QueryCatalogEntryPtr> schedulingQueue;
     uint64_t batchSize;
 };
 

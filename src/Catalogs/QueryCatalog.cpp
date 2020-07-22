@@ -30,33 +30,6 @@ std::map<std::string, std::string> QueryCatalog::getQueriesWithStatus(std::strin
     return result;
 }
 
-std::vector<QueryCatalogEntry> QueryCatalog::getQueriesToSchedule() {
-    std::unique_lock<std::mutex> lock(queryRequest);
-    //We are using conditional variable to prevent Lost Wakeup and Spurious Wakeup
-    //ref: https://www.modernescpp.com/index.php/c-core-guidelines-be-aware-of-the-traps-of-condition-variables
-    availabilityTrigger.wait(lock, [&] {
-        return isNewRequestAvailable();
-    });
-    NES_INFO("QueryCatalog: Fetching Queries to Schedule");
-    std::vector<QueryCatalogEntry> queriesToSchedule;
-    if (!schedulingQueue.empty()) {
-        uint64_t currentBatchSize = 1;
-        uint64_t totalQueriesToSchedule = schedulingQueue.size();
-        //Prepare a batch of queries to schedule
-        while (currentBatchSize <= batchSize || currentBatchSize == totalQueriesToSchedule) {
-            queriesToSchedule.push_back(schedulingQueue.front()->copy());
-            schedulingQueue.pop_front();
-            currentBatchSize++;
-        }
-        NES_INFO("QueryCatalog: Scheduling " << queriesToSchedule.size() << " queries.");
-        setNewRequestAvailable(!schedulingQueue.empty());
-        return queriesToSchedule;
-    }
-    NES_INFO("QueryCatalog: Nothing to schedule.");
-    setNewRequestAvailable(!schedulingQueue.empty());
-    return queriesToSchedule;
-}
-
 std::map<std::string, std::string> QueryCatalog::getAllQueries() {
 
     NES_INFO("QueryCatalog : get all queries");
@@ -77,11 +50,6 @@ bool QueryCatalog::registerAndQueueAddRequest(const std::string& queryString, co
         NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
         QueryCatalogEntryPtr queryCatalogEntry = std::make_shared<QueryCatalogEntry>(queryId, queryString, optimizationStrategyName, queryPlan, QueryStatus::Registered);
         queries[queryId] = queryCatalogEntry;
-        NES_INFO("QueryCatalog: Adding query with id " << queryId << " to the scheduling queue");
-        schedulingQueue.push_back(queryCatalogEntry);
-        NES_INFO("QueryCatalog: Marking that new request is available to be scheduled");
-        setNewRequestAvailable(true);
-        availabilityTrigger.notify_one();
         return true;
     } catch (const std::exception& exc) {
         NES_ERROR("QueryCatalog:_exception:" << exc.what() << " try to revert changes");
@@ -179,21 +147,6 @@ std::string QueryCatalog::printQueries() {
         ss << "queryID=" << q.first << " running=" << q.second->getQueryStatus() << std::endl;
     }
     return ss.str();
-}
-
-bool QueryCatalog::isNewRequestAvailable() const {
-    return newRequestAvailable;
-}
-
-void QueryCatalog::setNewRequestAvailable(bool newRequestAvailable) {
-    this->newRequestAvailable = newRequestAvailable;
-}
-
-void QueryCatalog::insertPoisonPill() {
-    std::unique_lock<std::mutex> lock(queryRequest);
-    NES_INFO("QueryCatalog: Shutdown is called. Inserting Poison pill in the query catalog.");
-    setNewRequestAvailable(true);
-    availabilityTrigger.notify_one();
 }
 
 }// namespace NES
