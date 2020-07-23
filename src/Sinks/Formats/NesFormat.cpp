@@ -8,11 +8,11 @@
 namespace NES {
 
 NesFormat::NesFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
+    serializedSchema = new SerializableSchema();
 }
 
 std::optional<TupleBuffer> NesFormat::getSchema(){
     auto buf = this->bufferManager->getBufferBlocking();
-    SerializableSchema* serializedSchema = new SerializableSchema();
     SerializableSchema* protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema);
     bool success = protoBuff->SerializeToArray(buf.getBuffer(), protoBuff->ByteSize());
     NES_DEBUG("NesFormat::getSchema: write schema" << " success=" << success);

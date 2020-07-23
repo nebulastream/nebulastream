@@ -4,6 +4,8 @@
 #include <Sinks/Formats/SinkFormat.hpp>
 namespace NES {
 
+class SerializableSchema;
+
 class NesFormat : public SinkFormat {
   public:
     NesFormat(SchemaPtr schema, BufferManagerPtr bufferManager);
@@ -27,6 +29,8 @@ class NesFormat : public SinkFormat {
    * @return format as string
    */
     std::string toString();
+  private:
+    SerializableSchema* serializedSchema;
 };
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_
