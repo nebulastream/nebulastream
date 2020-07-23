@@ -2,6 +2,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <assert.h>
 namespace NES {
 
 void StreamCatalog::addDefaultStreams() {

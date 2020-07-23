@@ -3,6 +3,7 @@
 #include <Topology/NESTopologyEntry.hpp>
 #include <memory>
 #include <mutex>
+#include <NodeStats.pb.h>
 
 namespace NES {
 class StreamCatalog;
@@ -24,7 +25,7 @@ class CoordinatorEngine {
      * @param node type
      * @return id of node
      */
-    size_t registerNode(std::string address, size_t numberOfCPUs, std::string nodeProperties, NESNodeType type);
+    size_t registerNode(std::string address, size_t numberOfCPUs, NodeStatsPtr nodeProperties, NESNodeType type);
 
     /**
      * @brief unregister an existing node

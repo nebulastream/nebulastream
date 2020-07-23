@@ -4,6 +4,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager)
@@ -23,11 +24,11 @@ size_t getIdFromIp(std::string ip) {
 
 size_t CoordinatorEngine::registerNode(std::string address,
                                        size_t numberOfCPUs,
-                                       std::string nodeProperties,
+                                       NodeStatsPtr nodeProperties,
                                        NESNodeType type) {
     NES_DEBUG("CoordinatorEngine: Register Node address=" << address
                                                           << " numberOfCpus=" << numberOfCPUs
-                                                          << " nodeProperties=" << nodeProperties
+                                                          << " nodeProperties=" << nodeProperties->DebugString()
                                                           << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -116,7 +117,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
     }
     assert(nodePtr);
 
-    if (nodeProperties != "defaultProperties") {
+    if (nodeProperties->IsInitialized()) {
         nodePtr->setNodeProperty(nodeProperties);
     }
 

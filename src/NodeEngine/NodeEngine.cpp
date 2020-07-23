@@ -15,32 +15,15 @@ namespace NES {
 static constexpr size_t DEFAULT_BUFFER_SIZE = 4096;
 static constexpr size_t DEFAULT_NUM_BUFFERS = 1024;
 
-JSON NodeEngine::getNodePropertiesAsJSON() {
-    props->readMemStats();
-    props->readCpuStats();
-    props->readNetworkStats();
-    props->readDiskStats();
-
-    return props->getExistingMetrics();
-}
-
-std::string NodeEngine::getNodePropertiesAsString() {
-    props->readMemStats();
-    props->readCpuStats();
-    props->readNetworkStats();
-    props->readDiskStats();
-
-    return props->dump();
-}
-
-NodeProperties* NodeEngine::getNodeProperties() {
-    return props.get();
+NodePropertiesPtr NodeEngine::getNodeProperties() {
+    // gather all node properties.
+    nodeProperties->update();
+    return nodeProperties;
 }
 
 NodeEngine::NodeEngine() : registerUnregisterQuery(),
-                           startStopQuery(), deployUndeployQuery() {
+                           startStopQuery(), deployUndeployQuery(), nodeProperties(NodeProperties::create()) {
     NES_DEBUG("NodeEngine()");
-    props = std::make_shared<NodeProperties>();
     isRunning = false;
 }
 

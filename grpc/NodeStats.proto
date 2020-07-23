@@ -1,0 +1,64 @@
+syntax = "proto3";
+package NES;
+
+message NodeStats {
+
+  message DiskStats {
+    uint64 f_bsize = 1;
+    uint64 f_frsize = 2;
+    uint64 f_blocks = 3;
+    uint64 f_bfree = 4;
+    uint64 f_bavail = 5;
+  }
+
+  message MemoryStats {
+    uint64 totalram = 1;
+    uint64 totalswap = 2;
+    uint64 freeram = 3;
+    uint64 sharedram = 4;
+    uint64 freeswap = 5;
+    uint64 totalhigh = 6;
+    uint64 freehigh = 7;
+    uint64 mem_unit = 8;
+    uint64 loads_1min = 9;
+    uint64 loads_5min = 10;
+    uint64 loads_15min = 11;
+    uint64 bufferram = 12;
+    uint64 procs = 13;
+  }
+
+  message NetworkStats {
+    message Interface{
+      string name = 1;
+      string host6 = 2;
+      string host = 3;
+      uint32 tx_packets = 4;
+      uint32 tx_bytes = 5;
+      uint32 tx_dropped = 6;
+      uint32 rx_packets = 7;
+      uint32 rx_bytes = 8;
+      uint32 rx_dropped = 9;
+    }
+    string hostname = 1;
+    string port = 2;
+    repeated Interface interfaces = 3;
+  }
+
+  message CPUStats {
+    string name = 1;
+    uint64 user = 2;
+    uint64 nice = 3;
+    uint64 system = 4;
+    uint64 idle = 5;
+    uint64  iowait = 6;
+    uint64 irq = 7;
+    uint64 softirq = 8;
+    uint64 steal = 9;
+    uint64 gust = 10;
+    uint64 gust_nice = 11;
+  }
+  MemoryStats memoryStats = 1;
+  repeated CPUStats cpuStats = 2;
+  DiskStats diskStats = 3;
+  NetworkStats networkStats = 4;
+}

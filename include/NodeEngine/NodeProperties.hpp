@@ -1,29 +1,19 @@
 #ifndef _METRICS_H
 #define _METRICS_H
 
-#if defined(__linux__)
-#include <ifaddrs.h>
-#include <linux/if_link.h>
-#include <net/if.h>
-#include <netdb.h>
-#include <string>
-#include <sys/ioctl.h>
-#include <sys/statvfs.h>
-#include <sys/sysinfo.h>
-#elif defined(__APPLE__) || defined(__MACH__)
 
-#else
-#error "Unsupported platform"
-#endif
-#include "../Util/json.hpp"
-#include <fstream>
+#include <NodeStats.pb.h>
+#include <memory>
 
 namespace NES {
-using JSON = nlohmann::json;
-//typedef unsigned long uint64_t;
+
+class NodeProperties;
+typedef std::shared_ptr<NodeProperties> NodePropertiesPtr;
+
+typedef std::shared_ptr<NodeStats> NodeStatsPtr;
 
 /**
- * \brief: This class captures the properties of a node which are send to and updated continuously.
+ * @brief: This class captures the properties of a node which are send to and updated continuously.
  */
 class NodeProperties {
   public:
@@ -31,46 +21,25 @@ class NodeProperties {
    * @brief create a new NodeProperties object
    * @param default 0 cpus
    */
-    NodeProperties()
-        : nbrProcessors(0){};
+    NodeProperties();
 
-    NodeProperties(std::string props) {
-        loadExistingProperties(props);
-    }
+    static NodePropertiesPtr create();
+
 
     ~NodeProperties() {
     }
 
-    /**
-   * @brief print cpu,network,memory, and filesstem stats on cout
-   */
-    void print();
-
-    /**
-   * @brief dumbs all metrics into a string
-   * @param indent not set
-   * @return serialized json object as string
-   */
-    std::string dump(int setw = -1);
-
-    /**
-   * @brief set existing serialized node property into nodeProperties.
-   * Load entire _metrics and all sub jsons
-   * @param char pointer to serialized JSON
-   */
-    void set(const char* metricsBuffer);
 
     /**
    * @brief create the properties and return them
    * @return char pointer to serialized JSON
    */
-    JSON getExistingMetrics();
+    NodeStatsPtr getNodeStats();
 
     /**
-   * @brief load existing properties
-   * @param properteis
-   */
-    void loadExistingProperties(std::string props);
+     * @brief gathers CPU, MEM, Disk, and Network state.
+     */
+    void update();
 
     /**
    * @brief gather cpu information from /proc/stat
@@ -106,52 +75,10 @@ class NodeProperties {
     void readNetworkStats();
 
     /**
-   * @brief get CPU stats
-   * @return cpu stats as string
-   */
-    std::string getCpuStats();
-
-    /**
-   * @brief get memory stats
-   * @return memory stats as string
-   */
-    std::string getMemStats();
-
-    /**
-   * @brief get disk stats
-   * @return disk stats as string
-   */
-    std::string getDiskStats();
-
-    /**
-   * @brief get network stats
-   * @return network stats as string
-   */
-    std::string getNetworkStats();
-
-    /**
-   * @brief metric summary
-   * @return all stats in one JSON file
-   */
-    std::string getMetric();
-
-    /**
-   * @brief get CPU stats
-   * @return cpu stats as string
-   */
-    std::string getClientName();
-
-    /**
-   * @brief get CPU stats
-   * @return cpu stats as string
-   */
-    std::string getClientPort();
-
-    /**
    * @brief set client name manually (for testing locally)
    * @param client name as string
    */
-    void setClientName(std::string clientname);
+    void setClientName(std::string clientName);
 
     /**
    * @brief set client port manually (for testing locally)
@@ -159,15 +86,14 @@ class NodeProperties {
    */
     void setClientPort(std::string clientPort);
 
+    std::string getClientName();
+    std::string getClientPort();
   private:
     long nbrProcessors;
-    JSON _metrics;
-    JSON _mem;
-    JSON _disk;
-    JSON _cpus;
-    JSON _nets;
+    NodeStats nodeStats;
     std::string clientName;
     std::string clientPort;
+
 };
 
 typedef std::shared_ptr<NodeProperties> NodePropertiesPtr;
