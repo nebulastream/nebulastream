@@ -31,7 +31,7 @@ class TranslateToLegacyPlanPhase {
     /**
      * @brief Factory method to create a translator phase.
      */
-    static TranslateToLegacyPlanPhasePtr create();
+    static TranslateToLegacyPlanPhasePtr create(BufferManagerPtr bufferManagerPtr);
     /**
      * @brief Translates a operator node and all its children to the legacy representation.
      * @param operatorNode
@@ -40,6 +40,9 @@ class TranslateToLegacyPlanPhase {
     OperatorPtr transform(OperatorNodePtr operatorNode);
 
   private:
+
+    TranslateToLegacyPlanPhase(BufferManagerPtr bufferManager);
+
     /**
      * @brief Translates an individual operator to its legacy representation.
      * @param operatorNode
@@ -66,6 +69,8 @@ class TranslateToLegacyPlanPhase {
      * @return UserAPIExpressionPtr
      */
     UserAPIExpressionPtr transformArithmeticalExpressions(ExpressionNodePtr node);
+
+    BufferManagerPtr bufferManager;
 };
 
 }// namespace NES

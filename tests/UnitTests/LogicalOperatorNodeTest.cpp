@@ -1419,7 +1419,8 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
     filter->addChild(sourceOp);
 
     ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
-    auto translatePhase = TranslateToLegacyPlanPhase::create();
+    // we pass null as the buffer manager as we just want to check if the topology is correct.
+    auto translatePhase = TranslateToLegacyPlanPhase::create(nullptr);
     auto legacySink = translatePhase->transform(sinkOperator->as<OperatorNode>());
     std::cout << legacySink->toString() << std::endl;
     ASSERT_TRUE(legacySink->getOperatorType() == SINK_OP);
