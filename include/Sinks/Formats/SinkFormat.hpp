@@ -18,8 +18,6 @@ enum SinkFormats {
 
 class SinkFormat {
   public:
-
-
     /**
      * @brief constructor for a sink format
      * @param schema

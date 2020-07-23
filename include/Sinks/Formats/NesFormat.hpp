@@ -17,7 +17,6 @@ class NesFormat : public SinkFormat {
      */
     std::vector<TupleBuffer> getData(TupleBuffer& inputBuffer);
 
-
     /**
     * @brief method to write the schema of the data
     * @return TupleBuffer containing the schema
@@ -35,6 +34,7 @@ class NesFormat : public SinkFormat {
      * @return sink format
      */
     SinkFormats getSinkFormat();
+
   private:
     SerializableSchema* serializedSchema;
 };

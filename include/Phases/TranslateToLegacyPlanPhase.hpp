@@ -40,7 +40,6 @@ class TranslateToLegacyPlanPhase {
     OperatorPtr transform(OperatorNodePtr operatorNode);
 
   private:
-
     TranslateToLegacyPlanPhase(BufferManagerPtr bufferManager);
 
     /**

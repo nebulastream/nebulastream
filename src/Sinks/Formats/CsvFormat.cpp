@@ -3,9 +3,9 @@
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cstring><cstring>
 #include <iostream>
 #include <sstream>
-#include <cstring><cstring>
 namespace NES {
 
 CsvFormat::CsvFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
@@ -17,15 +17,13 @@ std::optional<TupleBuffer> CsvFormat::getSchema() {
     size_t numberOfFields = schema->fields.size();
     for (size_t i = 0; i < numberOfFields; i++) {
         ss << schema->fields[i]->toString();
-        if(i < numberOfFields-1)
-        {
+        if (i < numberOfFields - 1) {
             ss << ",";
         }
     }
     ss << std::endl;
     ss.seekg(0, std::ios::end);
-    if(ss.tellg() > buf.getBufferSize())
-    {
+    if (ss.tellg() > buf.getBufferSize()) {
         NES_THROW_RUNTIME_ERROR("Schema buffer is too large");
     }
     std::string schemaString = ss.str();
@@ -43,24 +41,21 @@ std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
     }
     std::string bufferContent = UtilityFunctions::printTupleBufferAsCSV(inputBuffer, schema);
     size_t contentSize = bufferContent.length();
-    if(inputBuffer.getBufferSize() < contentSize)
-    {
+    if (inputBuffer.getBufferSize() < contentSize) {
         NES_DEBUG("CsvFormat::getData: content is larger than one buffer");
         size_t numberOfBuffers = contentSize / inputBuffer.getBufferSize();
-        for (size_t i = 0; i < numberOfBuffers; i++)
-        {
+        for (size_t i = 0; i < numberOfBuffers; i++) {
             std::string copyString = bufferContent.substr(0, contentSize);
-            bufferContent = bufferContent.substr(contentSize, bufferContent.length()- contentSize);
+            bufferContent = bufferContent.substr(contentSize, bufferContent.length() - contentSize);
             NES_DEBUG("CsvFormat::getData: copy string=" << copyString << " new content=" << bufferContent);
             auto buf = this->bufferManager->getBufferBlocking();
             std::copy(copyString.begin(), copyString.end(), buf.getBuffer());
             buf.setNumberOfTuples(contentSize);
             buffers.push_back(buf);
         }
-        NES_DEBUG("CsvFormat::getData: successfully copied buffer=" <<  numberOfBuffers);
+        NES_DEBUG("CsvFormat::getData: successfully copied buffer=" << numberOfBuffers);
 
-    }
-    else{
+    } else {
         NES_DEBUG("CsvFormat::getData: content fits in one buffer");
         auto buf = this->bufferManager->getBufferBlocking();
         std::memcpy(buf.getBufferAs<char>(), bufferContent.c_str(), contentSize);

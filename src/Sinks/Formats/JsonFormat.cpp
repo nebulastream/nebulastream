@@ -9,11 +9,11 @@ namespace NES {
 JsonFormat::JsonFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
 }
 
-std::vector<TupleBuffer> JsonFormat::getData(TupleBuffer& inputBuffer){
+std::vector<TupleBuffer> JsonFormat::getData(TupleBuffer& inputBuffer) {
     NES_NOT_IMPLEMENTED();
 }
 
-std::optional<TupleBuffer> JsonFormat::getSchema(){
+std::optional<TupleBuffer> JsonFormat::getSchema() {
     NES_NOT_IMPLEMENTED();
 }
 

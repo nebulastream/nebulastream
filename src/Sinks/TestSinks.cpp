@@ -26,7 +26,7 @@ const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema,
 }
 
 const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema,
-                                              const std::string& filePath, BufferManagerPtr bufferManager,  bool append) {
+                                              const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, bufferManager);
     return std::make_shared<FileSink>(schema, format, filePath, append);
 }

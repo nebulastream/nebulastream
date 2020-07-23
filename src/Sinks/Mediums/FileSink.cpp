@@ -38,7 +38,7 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
     //TODO add lock?
 
     NES_DEBUG("FileSink: getSchema medium " << toString() << " format " << sinkFormat->toString()
-                                              << " and mode " << this->getAppendAsString());
+                                            << " and mode " << this->getAppendAsString());
 
     if (!inputBuffer.isValid()) {
         NES_ERROR("FileSink::writeData input buffer invalid");
@@ -47,12 +47,11 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
     if (!schemaWritten) {//TODO:atomic
         NES_DEBUG("FileSink::getData: write schema");
         auto schemaBuffer = sinkFormat->getSchema();
-        if(schemaBuffer)
-        {
+        if (schemaBuffer) {
             std::ofstream outputFile;
             outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
 
-            outputFile.write((char*)schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
+            outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
             NES_DEBUG("CsvFormat::writeData: schema is =" << schema->toString());
             outputFile.close();
 
@@ -76,16 +75,12 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
         NES_DEBUG("file overwriting in path=" << filePath);
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
     }
-    for(auto buffer : dataBuffers)
-    {
+    for (auto buffer : dataBuffers) {
         NES_DEBUG("FileSink::getData: write buffer of size " << buffer.getNumberOfTuples());
-        if(sinkFormat->getSinkFormat() == NES_FORMAT)
-        {
-            outputFile.write((char*)buffer.getBuffer(), buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes());
-        }
-        else
-        {
-            outputFile.write((char*)buffer.getBuffer(), buffer.getNumberOfTuples());
+        if (sinkFormat->getSinkFormat() == NES_FORMAT) {
+            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes());
+        } else {
+            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
         }
     }
     outputFile.close();
