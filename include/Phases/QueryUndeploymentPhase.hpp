@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-namespace NES{
+namespace NES {
 
 class WorkerRPCClient;
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
@@ -25,7 +25,6 @@ typedef std::shared_ptr<QueryUndeploymentPhase> QueryUndeploymentPhasePtr;
 class QueryUndeploymentPhase {
 
   public:
-
     /**
      * @brief Returns a smart pointer to the QueryUndeploymentPhase
      * @param globalExecutionPlan : global execution plan
@@ -42,7 +41,6 @@ class QueryUndeploymentPhase {
     bool execute(const std::string queryId);
 
   private:
-
     explicit QueryUndeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
 
     /**
@@ -62,6 +60,6 @@ class QueryUndeploymentPhase {
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
-}
+}// namespace NES
 
 #endif//NES_QUERYUNDEPLOYMENTPHASE_HPP

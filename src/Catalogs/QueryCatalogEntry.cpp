@@ -3,7 +3,7 @@
 namespace NES {
 
 QueryCatalogEntry::QueryCatalogEntry(std::string queryId, std::string queryString, std::string queryPlacementStrategy, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus)
-    : queryId(queryId), queryString(queryString), queryPlacementStrategy(queryPlacementStrategy), queryPlanPtr(queryPlanPtr), queryStatus(queryStatus){}
+    : queryId(queryId), queryString(queryString), queryPlacementStrategy(queryPlacementStrategy), queryPlanPtr(queryPlanPtr), queryStatus(queryStatus) {}
 
 std::string QueryCatalogEntry::getQueryId() {
     return queryId;
@@ -29,7 +29,6 @@ void QueryCatalogEntry::setQueryStatus(QueryStatus queryStatus) {
     this->queryStatus = queryStatus;
 }
 
-
 const std::string& QueryCatalogEntry::getQueryPlacementStrategy() const {
     return queryPlacementStrategy;
 }
@@ -38,4 +37,4 @@ QueryCatalogEntry QueryCatalogEntry::copy() {
     return QueryCatalogEntry(queryId, queryString, queryPlacementStrategy, queryPlanPtr, queryStatus);
 }
 
-}
+}// namespace NES

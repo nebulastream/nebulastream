@@ -35,7 +35,7 @@ std::string QueryService::validateAndQueueAddRequest(std::string queryString, st
     if (entry) {
         queryRequestQueue->add(entry);
         return queryId;
-    } else{
+    } else {
         throw Exception("QueryService: unable to create query catalog entry");
     }
 }
