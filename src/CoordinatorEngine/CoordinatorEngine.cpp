@@ -24,11 +24,11 @@ size_t getIdFromIp(std::string ip) {
 
 size_t CoordinatorEngine::registerNode(std::string address,
                                        size_t numberOfCPUs,
-                                       NodeStatsPtr nodeProperties,
+                                       NodeStats nodeStats,
                                        NESNodeType type) {
     NES_DEBUG("CoordinatorEngine: Register Node address=" << address
                                                           << " numberOfCpus=" << numberOfCPUs
-                                                          << " nodeProperties=" << nodeProperties->DebugString()
+                                                          << " nodeProperties=" << nodeStats.DebugString()
                                                           << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -117,8 +117,8 @@ size_t CoordinatorEngine::registerNode(std::string address,
     }
     assert(nodePtr);
 
-    if (nodeProperties->IsInitialized()) {
-        nodePtr->setNodeProperty(nodeProperties);
+    if (nodeStats.IsInitialized()) {
+        nodePtr->setNodeProperty(nodeStats);
     }
 
     const NESTopologyEntryPtr kRootNode = topologyManager->getRootNode();

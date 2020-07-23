@@ -194,7 +194,7 @@ class TestUtils {
         return false;
     }
 
-    static NESTopologyEntryPtr registerTestNode(size_t id, std::string address, int cpu, NodeStatsPtr nodeProperties,
+    static NESTopologyEntryPtr registerTestNode(size_t id, std::string address, int cpu, NodeStats nodeProperties,
                                                 PhysicalStreamConfig streamConf, NESNodeType type, StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager) {
         NESTopologyEntryPtr nodePtr;
         if (type == NESNodeType::Sensor) {
@@ -254,7 +254,7 @@ class TestUtils {
         }
         assert(nodePtr);
 
-        if (nodeProperties->IsInitialized()) {
+        if (nodeProperties.IsInitialized()) {
             nodePtr->setNodeProperty(nodeProperties);
         }
 

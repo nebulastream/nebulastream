@@ -3,6 +3,7 @@
 
 
 #include <Util/CPUCapacity.hpp>
+#include <NodeStats.pb.h>
 #include <string>
 #include <memory>
 
@@ -15,7 +16,6 @@ class Pattern;
 typedef std::shared_ptr<Pattern> PatternPtr;
 
 class NodeStats;
-typedef std::shared_ptr<NodeStats> NodeStatsPtr;
 
 enum NESNodeType {
     Coordinator,
@@ -127,7 +127,7 @@ class NESTopologyEntry {
    * @brief method to set the property of the node by creating a NodeProperties object
    * @param a string of the serialized json object of the properties
    */
-    void setNodeProperty(NodeStatsPtr nodeStats);
+    void setNodeProperty(NodeStats nodeStats);
 
     /**
    * @brief method to get the node properties
@@ -139,7 +139,7 @@ class NESTopologyEntry {
    * @brief method to get the node properties
    * @NodePropertiesPtr to the properties of this node
    */
-    NodeStatsPtr getNodeProperties();
+    NodeStats getNodeProperties();
 
     /**
    * @brief method to return this node as a string
@@ -152,7 +152,7 @@ class NESTopologyEntry {
     std::string ipAddress;
     uint16_t publish_port;
     uint16_t receive_port;
-    NodeStatsPtr nodeStats;
+    NodeStats nodeStats;
 };
 
 typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;

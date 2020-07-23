@@ -16,8 +16,6 @@ static constexpr size_t DEFAULT_BUFFER_SIZE = 4096;
 static constexpr size_t DEFAULT_NUM_BUFFERS = 1024;
 
 NodePropertiesPtr NodeEngine::getNodeProperties() {
-    // gather all node properties.
-    nodeProperties->update();
     return nodeProperties;
 }
 

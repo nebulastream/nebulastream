@@ -3,8 +3,8 @@
 #include <NodeStats.pb.h>
 namespace NES {
 
-void NESTopologyEntry::setNodeProperty(NodeStatsPtr nodeStats) {
-    NES_DEBUG("setNodeProperty=" << nodeStats->DebugString());
+void NESTopologyEntry::setNodeProperty(NodeStats nodeStats) {
+    NES_DEBUG("setNodeProperty=" << nodeStats.DebugString());
     this->nodeStats = nodeStats;
 }
 
@@ -13,14 +13,14 @@ void NESTopologyEntry::setNodeProperty(NodeStatsPtr nodeStats) {
  * @return serialized json of the node properties object
  */
 std::string NESTopologyEntry::getNodeProperty() {
-    return this->nodeStats->DebugString();
+    return this->nodeStats.DebugString();
 }
 
 std::string NESTopologyEntry::toString() {
     return "id=" + std::to_string(getId()) + " type=" + getEntryTypeString();
 }
 
-NodeStatsPtr NESTopologyEntry::getNodeProperties() {
+NodeStats NESTopologyEntry::getNodeProperties() {
     return nodeStats;
 }
 
