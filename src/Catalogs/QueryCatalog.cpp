@@ -9,7 +9,7 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog() : queryStatus(), queryRequest(){
+QueryCatalog::QueryCatalog() : queryStatus(), queryRequest() {
     NES_DEBUG("QueryCatalog()");
 }
 
