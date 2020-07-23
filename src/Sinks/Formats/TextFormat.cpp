@@ -5,46 +5,55 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
-
+#include <cstring>
 namespace NES {
 
-TextFormat::TextFormat(SchemaPtr schema, std::string filePath, bool append) : SinkFormat(schema, filePath, append) {
+TextFormat::TextFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
+
 }
 
-bool TextFormat::writeSchema() {
+std::optional<TupleBuffer> TextFormat::getSchema() {
     //noting to do as this is part of pretty print
-    return true;
+    return std::nullopt;
 }
 
-bool TextFormat::writeData(TupleBuffer& inputBuffer) {
+std::vector<TupleBuffer> TextFormat::getData(TupleBuffer& inputBuffer) {
+    std::vector<TupleBuffer> buffers;
+
     if (inputBuffer.getNumberOfTuples() == 0) {
-        NES_WARNING("TextFormat::writeData: Try to write empty buffer");
-        return false;
+        NES_WARNING("TextFormat::getData: Try to write empty buffer");
+        return buffers;
     }
-
-    std::ofstream outputFile;
-    if (append) {
-        NES_DEBUG("file appending in path=" << filePath);
-        outputFile.open(filePath, std::ofstream::out | std::ofstream::app);
-    } else {
-        NES_DEBUG("file overwriting in path=" << filePath);
-        outputFile.open(filePath, std::ofstream::out | std::ios::out | std::ofstream::trunc);
-    }
-    size_t posBefore = outputFile.tellp();
-
     std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, schema);
-    outputFile << bufferContent;
+    size_t contentSize = bufferContent.length();
+    NES_DEBUG("TextFormat::getData content size=" << contentSize << " content=" << bufferContent);
 
-    size_t posAfter = outputFile.tellp();
-    outputFile.close();
+    if(inputBuffer.getBufferSize() < contentSize)
+    {
+        NES_DEBUG("CsvFormat::getData: content is larger than one buffer");
+        size_t numberOfBuffers = contentSize / inputBuffer.getBufferSize();
+        for (size_t i = 0; i < numberOfBuffers; i++)
+        {
+            std::string copyString = bufferContent.substr(0, contentSize);
+            bufferContent = bufferContent.substr(contentSize, bufferContent.length()- contentSize);
+            NES_DEBUG("CsvFormat::getData: copy string=" << copyString << " new content=" << bufferContent);
+            auto buf = this->bufferManager->getBufferBlocking();
+            std::copy(copyString.begin(), copyString.end(), buf.getBuffer());
+            buf.setNumberOfTuples(contentSize);
+            buffers.push_back(buf);
+        }
+        NES_DEBUG("CsvFormat::getData: successfully copied buffer=" <<  numberOfBuffers);
 
-    if (bufferContent.length() > 0 && posAfter > posBefore) {
-        NES_DEBUG("TextFormat::writeData: wrote buffer of length=" << bufferContent.length() << " successfully");
-        return true;
-    } else {
-        NES_ERROR("TextFormat::writeData: write buffer failed posBefore=" << posBefore << " posAfter=" << posAfter << " bufferContent=" << bufferContent);
-        return false;
     }
+    else{
+        NES_DEBUG("CsvFormat::getData: content fits in one buffer");
+        auto buf = this->bufferManager->getBufferBlocking();
+        std::memcpy(buf.getBuffer(), bufferContent.c_str(), contentSize);
+        buf.setNumberOfTuples(contentSize);
+        buffers.push_back(buf);
+        return buffers;
+    }
+
 }
 
 std::string TextFormat::toString() {

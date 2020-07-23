@@ -30,7 +30,7 @@ const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out)
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema, const std::string& filePath, bool append = true);
+const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema, const std::string& filePath, BufferManagerPtr bufferManager, bool append);
 
 /**
  * @brief create a binary test sink with a schema
@@ -40,7 +40,7 @@ const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema, const std::strin
  * @return a data sink pointer
  */
 const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema,
-                                               const std::string& filePath, bool append = true);
+                                               const std::string& filePath, BufferManagerPtr bufferManager, bool append);
 
 /**
  * @brief create a binary test sink with a schema into the nes
@@ -50,7 +50,7 @@ const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema,
  * @return a data sink pointer
  */
 const DataSinkPtr createBinaryNESFileSinkWithSchema(SchemaPtr schema,
-                                                    const std::string& filePath, bool append = true);
+                                                    const std::string& filePath, BufferManagerPtr bufferManager, bool append);
 
 /**
  * @brief create a JSON test sink with a schema int
@@ -60,7 +60,7 @@ const DataSinkPtr createBinaryNESFileSinkWithSchema(SchemaPtr schema,
  * @return a data sink pointer
  */
 const DataSinkPtr createJSONFileSinkWithSchema(SchemaPtr schema,
-                                               const std::string& filePath, bool append = true);
+                                               const std::string& filePath, BufferManagerPtr bufferManager, bool append);
 
 /**
  * @brief create a ZMQ test sink with a schema

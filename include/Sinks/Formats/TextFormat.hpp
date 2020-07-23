@@ -6,20 +6,25 @@ namespace NES {
 
 class TextFormat : public SinkFormat {
   public:
-    TextFormat(SchemaPtr schema, std::string filePath, bool append);
+    TextFormat(SchemaPtr schema, BufferManagerPtr bufferManager);
 
     /**
-   * @brief method to write a TupleBuffer in text format
-   * @param a tuple buffers pointer
-    * @return bool indicating if the write was complete
-    */
-    bool writeData(TupleBuffer& inputBuffer);
+    * @brief method to write a TupleBuffer
+    * @param a tuple buffers pointer
+    * @return vector of Tuple buffer containing the content of the tuplebuffer
+     */
+    std::vector<TupleBuffer> getData(TupleBuffer& inputBuffer);
 
     /**
     * @brief method to write the schema of the data
+    * @return TupleBuffer containing the schema
     */
-    bool writeSchema();
+    std::optional<TupleBuffer> getSchema();
 
+    /**
+   * @brief method to return the format as a string
+   * @return format as string
+   */
     std::string toString();
 };
 }// namespace NES

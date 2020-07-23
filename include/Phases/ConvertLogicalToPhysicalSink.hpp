@@ -20,7 +20,7 @@ class ConvertLogicalToPhysicalSink {
      * @param sinkDescriptor: logical sink descriptor
      * @return Data sink pointer representing the physical sink
      */
-    static DataSinkPtr createDataSink(SchemaPtr schema, SinkDescriptorPtr sinkDescriptor);
+    static DataSinkPtr createDataSink(SchemaPtr schema, BufferManagerPtr bufferManager, SinkDescriptorPtr sinkDescriptor);
 
   private:
     ConvertLogicalToPhysicalSink() = default;

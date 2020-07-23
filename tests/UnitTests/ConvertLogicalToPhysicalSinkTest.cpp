@@ -27,15 +27,17 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4*1024, 10);
     SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create("file.log", "CSV_FORMAT", "APPEND");
-    DataSinkPtr fileOutputSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
+    DataSinkPtr fileOutputSink = ConvertLogicalToPhysicalSink::createDataSink(schema, bufferManager, sinkDescriptor);
     EXPECT_EQ(fileOutputSink->toString(), "FILE_SINK");
 }
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4*1024, 10);
     SinkDescriptorPtr sinkDescriptor = ZmqSinkDescriptor::create("loclahost", 2000);
-    DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
+    DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(schema, bufferManager, sinkDescriptor);
     EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK");
 }
 #ifdef ENABLE_KAFKA_BUILD
@@ -50,7 +52,8 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSin
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create();
-    DataSinkPtr printSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4*1024, 10);
+    DataSinkPtr printSink = ConvertLogicalToPhysicalSink::createDataSink(schema, bufferManager, sinkDescriptor);
     EXPECT_EQ(printSink->toString(), "PRINT_SINK");
 }
 
@@ -59,7 +62,8 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalS
     Network::NodeLocation nodeLocation{1, "localhost", 31337};
     Network::NesPartition nesPartition{1, 22, 33, 44};
     SinkDescriptorPtr sinkDescriptor = Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition,std::chrono::seconds(1), 1);
-    DataSinkPtr networkSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4*1024, 10);
+    DataSinkPtr networkSink = ConvertLogicalToPhysicalSink::createDataSink(schema, bufferManager, sinkDescriptor);
     EXPECT_EQ(networkSink->toString(), "NETWORK_SINK");
 }
 
