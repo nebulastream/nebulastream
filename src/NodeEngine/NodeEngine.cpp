@@ -116,7 +116,7 @@ bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr 
 
     // Translate the query operators in their legacy representation
     // todo this is not required if later the query compiler can handle it by it self.
-    auto translationPhase = TranslateToLegacyPlanPhase::create();
+    auto translationPhase = TranslateToLegacyPlanPhase::create(bufferManager);
     auto legacyOperatorPlan = translationPhase->transform(queryOperators);
     // Compile legacy operators with query compiler.
     auto qep = queryCompiler->compile(legacyOperatorPlan);

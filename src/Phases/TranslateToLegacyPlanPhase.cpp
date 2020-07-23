@@ -3,6 +3,7 @@
 #include <Nodes/Node.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 
+#include <NodeEngine/BufferManager.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
@@ -24,12 +25,14 @@
 #include <Operators/Operator.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <NodeEngine/BufferManager.hpp>
+#include <utility>
 namespace NES {
 
-TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create() {
-    return std::make_shared<TranslateToLegacyPlanPhase>();
+TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create(BufferManagerPtr bufferManager) {
+    return std::make_shared<TranslateToLegacyPlanPhase>(TranslateToLegacyPlanPhase(std::move(bufferManager)));
 }
+
+TranslateToLegacyPlanPhase::TranslateToLegacyPlanPhase(BufferManagerPtr bufferManager) : bufferManager(std::move(bufferManager)) {}
 
 OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNodePtr operatorNode) {
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
@@ -78,18 +81,17 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         operatorPtr->setOperatorId(operatorNode->getId());
         return operatorPtr;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-//         Translate sink operator node.
+        //         Translate sink operator node.
         auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
         const SinkDescriptorPtr sinkDescriptor = sinkNodeOperator->getSinkDescriptor();
         const SchemaPtr schema = sinkNodeOperator->getOutputSchema();
-        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(schema, nullptr, sinkDescriptor);
+        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(schema, bufferManager, sinkDescriptor);
         const OperatorPtr operatorPtr = createSinkOperator(dataSink);
         operatorPtr->setOperatorId(operatorNode->getId());
         return operatorPtr;
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED();
-    ;
 }
 /**
  * Translade operator node and all its children to the legacy representation.
@@ -167,7 +169,6 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformArithmeticalExpression
         "TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
         << expression->toString());
     NES_NOT_IMPLEMENTED();
-    ;
 }
 
 UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformLogicalExpressions(ExpressionNodePtr expression) {

@@ -15,7 +15,8 @@ json::value OperatorJsonUtil::getBasePlan(QueryPlanPtr queryPlan) {
     std::vector<json::value> nodes{};
     std::vector<json::value> edges{};
 
-    TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
+    // FIXME this should not be translated to legacy here, Because we are at the coordinator we have no buffermanger.
+    TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create(nullptr /*buffer manager*/);
     //FIXME: this needs to be changed but should be covered in another issue
     const OperatorNodePtr root = queryPlan->getRootOperators()[0];
     OperatorPtr rootLegacyOperator = translator->transform(root);
