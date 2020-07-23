@@ -79,7 +79,7 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
     for(auto buffer : dataBuffers)
     {
         NES_DEBUG("FileSink::getData: write buffer of size " << buffer.getNumberOfTuples());
-        if(sinkFormat->toString() == "NES_FORMAT")
+        if(sinkFormat->getSinkFormat() == NES_FORMAT)
         {
             outputFile.write((char*)buffer.getBuffer(), buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes());
         }
@@ -87,7 +87,6 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
         {
             outputFile.write((char*)buffer.getBuffer(), buffer.getNumberOfTuples());
         }
-
     }
     outputFile.close();
     return true;

@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_SINKS_SINKFORMAT_HPP_
 #define NES_INCLUDE_SINKS_SINKFORMAT_HPP_
-#include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 
 #include <fstream>
 /**
@@ -9,8 +9,17 @@
  */
 namespace NES {
 
+enum SinkFormats {
+    CSV_FORMAT,
+    JSON_FORMAT,
+    NES_FORMAT,
+    TEXT_FORMAT
+};
+
 class SinkFormat {
   public:
+
+
     /**
      * @brief constructor for a sink format
      * @param schema
@@ -36,6 +45,8 @@ class SinkFormat {
      * @return format as string
      */
     virtual std::string toString() = 0;
+
+    virtual SinkFormats getSinkFormat() = 0;
 
   protected:
     SchemaPtr schema;

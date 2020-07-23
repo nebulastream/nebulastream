@@ -29,6 +29,12 @@ class NesFormat : public SinkFormat {
    * @return format as string
    */
     std::string toString();
+
+    /**
+     * @brief return sink format
+     * @return sink format
+     */
+    SinkFormats getSinkFormat();
   private:
     SerializableSchema* serializedSchema;
 };

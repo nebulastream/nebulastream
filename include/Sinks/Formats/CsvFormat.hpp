@@ -26,6 +26,14 @@ class CsvFormat : public SinkFormat {
      * @return format as string
      */
     std::string toString();
+
+
+    /**
+     * @brief return sink format
+     * @return sink format
+     */
+    SinkFormats getSinkFormat();
+
 };
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_

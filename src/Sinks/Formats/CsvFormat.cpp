@@ -22,7 +22,6 @@ std::optional<TupleBuffer> CsvFormat::getSchema() {
             ss << ",";
         }
     }
-
     ss << std::endl;
     ss.seekg(0, std::ios::end);
     if(ss.tellg() > buf.getBufferSize())
@@ -74,4 +73,9 @@ std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
 std::string CsvFormat::toString() {
     return "CSV_FORMAT";
 }
+
+SinkFormats CsvFormat::getSinkFormat() {
+    return CSV_FORMAT;
+}
+
 }// namespace NES

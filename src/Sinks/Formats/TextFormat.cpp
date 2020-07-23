@@ -60,4 +60,8 @@ std::string TextFormat::toString() {
     return "TEXT_FORMAT";
 }
 
+SinkFormats TextFormat::getSinkFormat() {
+    return TEXT_FORMAT;
+}
+
 }// namespace NES
