@@ -1,4 +1,5 @@
 #include <Topology/NESTopologySensorNode.hpp>
+#include <assert.h>
 namespace NES {
 
 size_t NESTopologySensorNode::getCpuCapacity() {

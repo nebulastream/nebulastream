@@ -1,4 +1,5 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <NodeStats.pb.h>
 #include <Util/Logger.hpp>
 #include <boost/filesystem.hpp>
 #include <string>
@@ -216,7 +217,7 @@ bool CoordinatorRPCClient::unregisterNode() {
 bool CoordinatorRPCClient::registerNode(std::string localAddress,
                                         size_t numberOfCpus,
                                         NESNodeType type,
-                                        string nodeProperties) {
+                                        NodeStatsPtr nodeStats) {
     if (type == NESNodeType::Sensor) {
         NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
     } else if (type == NESNodeType::Worker) {
@@ -229,7 +230,7 @@ bool CoordinatorRPCClient::registerNode(std::string localAddress,
     RegisterNodeRequest request;
     request.set_address(localAddress);
     request.set_numberofcpus(numberOfCpus);
-    request.set_nodeproperties(nodeProperties);
+    request.set_allocated_nodeproperties(nodeStats.get());
     request.set_type(type);
     NES_DEBUG("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
 

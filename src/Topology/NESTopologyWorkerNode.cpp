@@ -1,4 +1,5 @@
 #include <Topology/NESTopologyWorkerNode.hpp>
+#include <assert.h>
 
 namespace NES {
 

@@ -11,7 +11,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext* context, const Register
 
     size_t id = coordinatorEngine->registerNode(request->address(),
                                                 request->numberofcpus(),
-                                                request->nodeproperties(),
+                                                std::make_shared<NodeStats>(request->nodeproperties()),
                                                 (NESNodeType) request->type());
     if (id != 0) {
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);

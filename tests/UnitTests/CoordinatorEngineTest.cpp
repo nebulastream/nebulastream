@@ -54,12 +54,14 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 
-    size_t nodeId = coordinatorEngine->registerNode(address, 6, "",
+    auto nodeStats = std::make_shared<NodeStats>();
+    size_t nodeId = coordinatorEngine->registerNode(address, 6, nodeStats,
                                                     NESNodeType::Sensor);
     EXPECT_NE(nodeId, 0);
 
     //test register existing node
-    size_t nodeId2 = coordinatorEngine->registerNode(address, 6, "",
+    auto nodeStats2 = std::make_shared<NodeStats>();
+    size_t nodeId2 = coordinatorEngine->registerNode(address, 6, nodeStats2,
                                                      NESNodeType::Sensor);
     EXPECT_EQ(nodeId2, 0);
 
@@ -109,7 +111,8 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     conf.sourceConfig = "testCSV.csv";
     conf.numberOfBuffersToProduce = 3;
     conf.sourceFrequency = 1;
-    size_t nodeId = coordinatorEngine->registerNode(address, 6, "",
+    auto nodeStats = std::make_shared<NodeStats>();
+    size_t nodeId = coordinatorEngine->registerNode(address, 6, nodeStats,
                                                     NESNodeType::Sensor);
     EXPECT_NE(nodeId, 0);
 

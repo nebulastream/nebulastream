@@ -1,14 +1,11 @@
 #include <Topology/NESTopologyEntry.hpp>
 #include <Util/Logger.hpp>
+#include <NodeStats.pb.h>
 namespace NES {
 
-void NESTopologyEntry::setNodeProperty(std::string nodeProperties) {
-    NES_DEBUG("setNodeProperty=" << nodeProperties);
-    if (nodeProperties != "") {
-        this->nodeProperties = std::make_shared<NodeProperties>(nodeProperties);
-    } else {
-        this->nodeProperties = std::make_shared<NodeProperties>();
-    }
+void NESTopologyEntry::setNodeProperty(NodeStatsPtr nodeStats) {
+    NES_DEBUG("setNodeProperty=" << nodeStats->DebugString());
+    this->nodeStats = nodeStats;
 }
 
 /**
@@ -16,15 +13,15 @@ void NESTopologyEntry::setNodeProperty(std::string nodeProperties) {
  * @return serialized json of the node properties object
  */
 std::string NESTopologyEntry::getNodeProperty() {
-    return this->nodeProperties->dump();
+    return this->nodeStats->DebugString();
 }
 
 std::string NESTopologyEntry::toString() {
     return "id=" + std::to_string(getId()) + " type=" + getEntryTypeString();
 }
 
-NodePropertiesPtr NESTopologyEntry::getNodeProperties() {
-    return nodeProperties;
+NodeStatsPtr NESTopologyEntry::getNodeProperties() {
+    return nodeStats;
 }
 
 void NESTopologyEntry::setId(size_t id) {

@@ -1,5 +1,5 @@
 syntax = "proto3";
-
+import "NodeStats.proto";
 // The greeting service definition.
 service CoordinatorRPCService {
   // Sends a greeting
@@ -21,10 +21,12 @@ service CoordinatorRPCService {
 
 }
 
+
+
 message RegisterNodeRequest {
   string address = 1;
   int32 numberOfCpus = 2;
-  string nodeProperties = 3;
+  NES.NodeStats nodeProperties = 3;
   int32 type = 4;
 }
 

@@ -158,8 +158,12 @@ bool NesWorker::connect() {
     std::string localAddress = localWorkerIp + ":" + localWorkerPort;
 
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddres=" << localAddress);
+    // todo add nodeEngine->getNodePropertiesAsString()
+    auto nodeProperties = nodeEngine->getNodeProperties();
+    nodeProperties->update();
+    auto stats = nodeProperties->getNodeStats();
     bool successPRCRegister = coordinatorRpcClient->registerNode(localAddress, 2,
-                                                                 type, nodeEngine->getNodePropertiesAsString());
+                                                                 type, stats);
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;

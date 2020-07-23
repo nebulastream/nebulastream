@@ -16,7 +16,6 @@
 
 using namespace std;
 namespace NES {
-using JSON = nlohmann::json;
 
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
@@ -112,11 +111,11 @@ class NodeEngine {
      */
     bool stop(bool force);
 
-    JSON getNodePropertiesAsJSON();
-
-    std::string getNodePropertiesAsString();
-
-    NodeProperties* getNodeProperties();
+    /**
+     * @brief gets the node properties.
+     * @return NodePropertiesPtr
+     */
+    NodePropertiesPtr getNodeProperties();
 
     /**
      * @brief getter of query manager
@@ -170,7 +169,7 @@ class NodeEngine {
     QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
   private:
-    NodePropertiesPtr props;
+    NodePropertiesPtr nodeProperties;
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> qepToStatusMap;
     std::map<std::string, QueryExecutionPlanPtr> queryIdToQepMap;
 

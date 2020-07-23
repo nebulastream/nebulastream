@@ -16,6 +16,9 @@ using namespace std;
 
 namespace NES {
 
+class NodeStats;
+typedef std::shared_ptr<NodeStats> NodeStatsPtr;
+
 /**
  * @brief this is a util class for the tests
  */
@@ -191,7 +194,7 @@ class TestUtils {
         return false;
     }
 
-    static NESTopologyEntryPtr registerTestNode(size_t id, std::string address, int cpu, const string& nodeProperties,
+    static NESTopologyEntryPtr registerTestNode(size_t id, std::string address, int cpu, NodeStatsPtr nodeProperties,
                                                 PhysicalStreamConfig streamConf, NESNodeType type, StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager) {
         NESTopologyEntryPtr nodePtr;
         if (type == NESNodeType::Sensor) {
@@ -251,7 +254,7 @@ class TestUtils {
         }
         assert(nodePtr);
 
-        if (nodeProperties != "defaultProperties") {
+        if (nodeProperties->IsInitialized()) {
             nodePtr->setNodeProperty(nodeProperties);
         }
 

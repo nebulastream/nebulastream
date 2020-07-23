@@ -1,4 +1,5 @@
 #include <Topology/NESTopologyCoordinatorNode.hpp>
+#include <assert.h>
 
 namespace NES {
 

@@ -1,9 +1,10 @@
 #ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYENTRY_HPP_
 #define INCLUDE_TOPOLOGY_NESTOPOLOGYENTRY_HPP_
 
-#include <NodeEngine/NodeProperties.hpp>
+
 #include <Util/CPUCapacity.hpp>
 #include <string>
+#include <memory>
 
 namespace NES {
 
@@ -12,6 +13,9 @@ typedef std::shared_ptr<Query> QueryPtr;
 
 class Pattern;
 typedef std::shared_ptr<Pattern> PatternPtr;
+
+class NodeStats;
+typedef std::shared_ptr<NodeStats> NodeStatsPtr;
 
 enum NESNodeType {
     Coordinator,
@@ -123,7 +127,7 @@ class NESTopologyEntry {
    * @brief method to set the property of the node by creating a NodeProperties object
    * @param a string of the serialized json object of the properties
    */
-    void setNodeProperty(std::string nodeProperties);
+    void setNodeProperty(NodeStatsPtr nodeStats);
 
     /**
    * @brief method to get the node properties
@@ -135,7 +139,7 @@ class NESTopologyEntry {
    * @brief method to get the node properties
    * @NodePropertiesPtr to the properties of this node
    */
-    NodePropertiesPtr getNodeProperties();
+    NodeStatsPtr getNodeProperties();
 
     /**
    * @brief method to return this node as a string
@@ -148,7 +152,7 @@ class NESTopologyEntry {
     std::string ipAddress;
     uint16_t publish_port;
     uint16_t receive_port;
-    NodePropertiesPtr nodeProperties;
+    NodeStatsPtr nodeStats;
 };
 
 typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
