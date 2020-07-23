@@ -1,20 +1,23 @@
 #include <Monitoring/Util/SystemResourcesReader.hpp>
+#include <Monitoring/MetricValues/CpuStats.hpp>
+#include <Monitoring/MetricValues/CPU.hpp>
 #include <Util/Logger.hpp>
 #include <fstream>
 #include <vector>
 #include <iterator>
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
+#include <thread>
 
 namespace NES {
 
-std::unordered_map<std::string, uint64_t> SystemResourcesReader::CPUStats() {
-    std::unordered_map<std::string, uint64_t> output;
-
+CPU SystemResourcesReader::ReadCPUStats() {
     std::ifstream fileStat("/proc/stat");
     std::string line;
-    int cpuCount = 0;
+    unsigned int numCPU = std::thread::hardware_concurrency();
+    auto cpu = CPU(numCPU);
 
+    int i = 0;
     while (std::getline(fileStat, line)) {
         // line starts with "cpu"
         if (!line.compare(0, 3, "cpu")) {
@@ -27,27 +30,33 @@ std::unordered_map<std::string, uint64_t> SystemResourcesReader::CPUStats() {
             if (tokens.size() != 11) {
                 NES_THROW_RUNTIME_ERROR("SystemResourcesReader: /proc/stat incorrect");
             }
-            cpuCount++;
 
             char name[8];
             int len = tokens[0].copy(name, tokens[0].size());
             name[len] = '\0';
 
-            output["user" + std::to_string(cpuCount)] = std::stoul(tokens[1]);
-            output["nice" + std::to_string(cpuCount)] = std::stoul(tokens[2]);
-            output["system" + std::to_string(cpuCount)] = std::stoul(tokens[3]);
-            output["idle" + std::to_string(cpuCount)] = std::stoul(tokens[4]);
-            output["iowait" + std::to_string(cpuCount)] = std::stoul(tokens[5]);
-            output["irq" + std::to_string(cpuCount)] = std::stoul(tokens[6]);
-            output["softIrq" + std::to_string(cpuCount)] = std::stoul(tokens[7]);
-            output["steal" + std::to_string(cpuCount)] = std::stoul(tokens[8]);
-            output["guest" + std::to_string(cpuCount)] = std::stoul(tokens[9]);
-            output["guestNice" + std::to_string(cpuCount)] = std::stoul(tokens[10]);
+            auto cpuStats = CpuStats();
+            cpuStats.USER = std::stoul(tokens[1]);
+            cpuStats.NICE = std::stoul(tokens[2]);
+            cpuStats.SYSTEM = std::stoul(tokens[3]);
+            cpuStats.IDLE = std::stoul(tokens[4]);
+            cpuStats.IOWAIT = std::stoul(tokens[5]);
+            cpuStats.IRQ = std::stoul(tokens[6]);
+            cpuStats.SOFTIRQ = std::stoul(tokens[7]);
+            cpuStats.STEAL = std::stoul(tokens[8]);
+            cpuStats.GUEST = std::stoul(tokens[9]);
+            cpuStats.GUESTNICE = std::stoul(tokens[10]);
+            if (i==0) {
+                cpu.TOTAL= cpuStats;
+            }
+            else {
+                cpu[i-1] = cpuStats;
+            }
+            i++;
         }
     }
-    output["cpuCount"] = cpuCount - 1;
-    NES_DEBUG("SystemResourcesReader: CPU stats read for number of CPUs " << output["cpuCount"]);
-    return output;
+    NES_DEBUG("SystemResourcesReader: CPU stats read for number of CPUs " << i-1);
+    return cpu;
 }
 
 std::unordered_map<std::string, std::unordered_map<std::string, uint64_t>> SystemResourcesReader::NetworkStats() {

@@ -3,9 +3,11 @@
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Gauge.hpp>
-#include <Monitoring/Metrics/NesMetrics.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <memory>
 #include <Monitoring/Protocols/SamplingProtocol.hpp>
+#include <Monitoring/MetricValues/CPU.hpp>
+#include <Monitoring/MetricValues/CpuStats.hpp>
 
 namespace NES {
 class MonitoringStackTest : public testing::Test {
@@ -32,17 +34,17 @@ class MonitoringStackTest : public testing::Test {
 };
 
 TEST_F(MonitoringStackTest, testCPUStats) {
-    auto cpuStats = NesMetrics::CPUStats();
-    std::unordered_map<std::string, uint64_t> metrics = cpuStats.readValue();
-    ASSERT_TRUE(metrics["cpuCount"] > 0);
-    ASSERT_TRUE(metrics.size() >= 11);
+    auto cpuStats = MetricUtils::CPUStats();
+    CPU metrics = cpuStats.readValue();
+    ASSERT_TRUE(metrics.size() > 0);
+    ASSERT_TRUE(metrics[0].USER > 0);
 
-    auto cpuIdle = NesMetrics::CPUIdle("cpu1");
+    auto cpuIdle = MetricUtils::CPUIdle(0);
     NES_INFO("MonitoringStackTest: Idle " << cpuIdle.readValue());
 }
 
 TEST_F(MonitoringStackTest, testMemoryStats) {
-    auto memStats = NesMetrics::MemoryStats();
+    auto memStats = MetricUtils::MemoryStats();
     std::unordered_map<std::string, uint64_t> metrics = memStats.readValue();
     ASSERT_TRUE(metrics.size() == 13);
 
@@ -50,13 +52,13 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
 }
 
 TEST_F(MonitoringStackTest, testDiskStats) {
-    auto diskStats = NesMetrics::DiskStats();
+    auto diskStats = MetricUtils::DiskStats();
     std::unordered_map<std::string, uint64_t> metrics = diskStats.readValue();
     ASSERT_TRUE(metrics.size() == 5);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
-    auto networkStats = NesMetrics::NetworkStats();
+    auto networkStats = MetricUtils::NetworkStats();
     auto metrics = networkStats.readValue();
     ASSERT_TRUE(!metrics.empty());
 
@@ -67,13 +69,13 @@ TEST_F(MonitoringStackTest, testNetworkStats) {
 }
 
 TEST_F(MonitoringStackTest, testMetricCollector) {
-    auto cpuStats = NesMetrics::CPUStats();
-    auto networkStats = NesMetrics::NetworkStats();
-    auto diskStats = NesMetrics::DiskStats();
-    auto memStats = NesMetrics::MemoryStats();
+    auto cpuStats = MetricUtils::CPUStats();
+    auto networkStats = MetricUtils::NetworkStats();
+    auto diskStats = MetricUtils::DiskStats();
+    auto memStats = MetricUtils::MemoryStats();
 
     auto systemMetrics = MetricGroup();
-    systemMetrics.add("cpu", &cpuStats);
+    //systemMetrics.add("cpu", cpuStats);
     systemMetrics.add("network", &networkStats);
     systemMetrics.add("disk", &diskStats);
     systemMetrics.add("mem", &memStats);
