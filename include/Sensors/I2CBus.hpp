@@ -22,6 +22,7 @@ class I2CBus : public GenericBus {
      * destructor
      */
     ~I2CBus();
+
   private:
     /**
      * @brief overrides the initBus method
