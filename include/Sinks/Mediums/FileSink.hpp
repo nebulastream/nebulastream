@@ -12,13 +12,7 @@ namespace NES {
  * @brief this class implements the File sing
  */
 class FileSink : public SinkMedium {
-
   public:
-    /**
-     * @brief default constructor that creates an empty file sink
-     */
-    FileSink();
-
     /**
      * @brief constructor that creates an empty file sink using a schema
      * @param schema of the print sink
@@ -26,7 +20,7 @@ class FileSink : public SinkMedium {
      * @param filePath location of file on sink server
      * @param modus of writting (overwrite or append)
      */
-    FileSink(SchemaPtr schema, SinkFormatPtr format, std::string filePath, bool append);
+    FileSink(SinkFormatPtr format, std::string filePath, bool append);
 
     /**
      * @brief method to override virtual setup function
@@ -63,6 +57,11 @@ class FileSink : public SinkMedium {
      */
     std::string toString() override;
 
+    /**
+    * @brief method to return the type of medium
+    * @return type of medium
+    */
+    SinkMediumTypes getSinkMediumType();
   protected:
     std::string filePath;
 };

@@ -7,6 +7,13 @@
 namespace NES {
 class TupleBuffer;
 
+enum SinkMediumTypes{
+    ZMQ_SINK,
+    PRINT_SINK,
+    KAFKA_SINK,
+    FILE_SINK,
+    NETWORK_SINK
+};
 /**
  * @brief Base class for all data sinks in NES
  * @note this code is not thread safe
@@ -14,15 +21,11 @@ class TupleBuffer;
 class SinkMedium {
 
   public:
+
     /**
      * @brief public constructor for data sink
      */
-    SinkMedium();
-
-    /**
-   * @brief public constructor for data sink with schema provisioning
-   */
-    SinkMedium(SchemaPtr schema);
+    SinkMedium(SinkFormatPtr sinkFormat);
 
     /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
@@ -72,13 +75,13 @@ class SinkMedium {
    * @brief method to return the current schema of the sink
    * @return schema description of the sink
    */
-    SchemaPtr getSchema() const;
+    SchemaPtr getSchemaPtr() const;
 
-    /**
-   * @brief method to set the current schema of the sink
-   * @param schema description of the sink
-   */
-    void setSchema(SchemaPtr pSchema);
+//    /**
+//   * @brief method to set the current schema of the sink
+//   * @param schema description of the sink
+//   */
+//    void setSchemaPtr(SchemaPtr pSchema);
 
     /**
       * @brief method to return the type
@@ -92,7 +95,7 @@ class SinkMedium {
      */
     std::string getSinkFormat();
 
-    /**
+    /**T
      * @brief method to return if the sink is appended
      * @return bool indicating append
      */
@@ -104,10 +107,15 @@ class SinkMedium {
      */
     std::string getAppendAsString();
 
+    /**
+      * @brief method to return the type of medium
+      * @return type of medium
+      */
+    virtual SinkMediumTypes getSinkMediumType() = 0;
+
   protected:
     SinkFormatPtr sinkFormat;
     bool append;
-    SchemaPtr schema;
     bool schemaWritten;
 
     size_t sentBuffer;

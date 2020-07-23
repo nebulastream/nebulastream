@@ -69,7 +69,7 @@ std::string CsvFormat::toString() {
     return "CSV_FORMAT";
 }
 
-SinkFormats CsvFormat::getSinkFormat() {
+SinkFormatTypes CsvFormat::getSinkFormat() {
     return CSV_FORMAT;
 }
 

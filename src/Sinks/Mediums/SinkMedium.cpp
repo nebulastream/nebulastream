@@ -6,54 +6,54 @@
 
 namespace NES {
 
-SinkMedium::SinkMedium(SchemaPtr schema)
-    : schema(schema),
+SinkMedium::SinkMedium(SinkFormatPtr sinkFormat)
+    : sinkFormat(sinkFormat),
       sentBuffer(0),
       sentTuples(0),
       schemaWritten(false) {
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 
-SinkMedium::SinkMedium()
-    : schema(Schema::create()),
-      sentBuffer(0),
-      sentTuples(0),
-      schemaWritten(false) {
-    NES_DEBUG("SinkMedium:Init Default Data Sink!");
-}
+//SinkMedium::SinkMedium()
+//    :  sentBuffer(0),
+//        sentTuples(0),
+//        schemaWritten(false) {
+//        NES_DEBUG("SinkMedium:Init Default Data Sink!");
+//    }
 
-SchemaPtr SinkMedium::getSchema() const {
-    return schema;
-}
-
-size_t SinkMedium::getNumberOfWrittenOutBuffers() {
-    return sentBuffer;
-}
-size_t SinkMedium::getNumberOfWrittenOutTuples() {
-    return sentTuples;
-}
-
-void SinkMedium::setSchema(SchemaPtr pSchema) {
-    schema = pSchema;
-}
-
-SinkMedium::~SinkMedium() {
-    NES_DEBUG("Destroy Data Sink  " << this);
-}
-
-std::string SinkMedium::getSinkFormat() {
-    return sinkFormat->toString();
-}
-
-bool SinkMedium::getAppendAsBool() {
-    return append;
-}
-
-std::string SinkMedium::getAppendAsString() {
-    if (append) {
-        return "APPEND";
-    } else {
-        return "OVERWRITE";
+    size_t SinkMedium::getNumberOfWrittenOutBuffers() {
+        return sentBuffer;
     }
-}
+    size_t SinkMedium::getNumberOfWrittenOutTuples() {
+        return sentTuples;
+    }
+
+    SinkMedium::~SinkMedium() {
+        NES_DEBUG("Destroy Data Sink  " << this);
+    }
+
+//    void SinkMedium::setSchemaPtr(SchemaPtr pSchema) {
+//
+//        sinkFormat->setSchemaPtr(pSchema);
+//    }
+//
+    SchemaPtr SinkMedium::getSchemaPtr() const {
+        return sinkFormat->getSchemaPtr();
+    }
+
+    std::string SinkMedium::getSinkFormat() {
+        return sinkFormat->toString();
+    }
+
+    bool SinkMedium::getAppendAsBool() {
+        return append;
+    }
+
+    std::string SinkMedium::getAppendAsString() {
+        if (append) {
+            return "APPEND";
+        } else {
+            return "OVERWRITE";
+        }
+    }
 }// namespace NES

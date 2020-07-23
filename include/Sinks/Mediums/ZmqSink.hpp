@@ -13,8 +13,8 @@ namespace NES {
 class ZmqSink : public SinkMedium {
 
   public:
-    ZmqSink(SchemaPtr schema, const std::string& host, uint16_t port);
-    ~ZmqSink() override;
+    ZmqSink(SinkFormatPtr format, const std::string& host, uint16_t port);
+    ~ZmqSink();
 
     bool writeData(TupleBuffer& input_buffer) override;
     void setup() override { connect(); };
@@ -36,7 +36,14 @@ class ZmqSink : public SinkMedium {
      */
     std::string toString() override;
 
+    /**
+    * @brief method to return the type of medium
+    * @return type of medium
+    */
+    SinkMediumTypes getSinkMediumType();
+
   private:
+
     ZmqSink();
 
     std::string host;

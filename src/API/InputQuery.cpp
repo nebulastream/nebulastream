@@ -281,24 +281,24 @@ InputQuery& InputQuery::writeToCSVFile(const std::string& file_name, const std::
 InputQuery& InputQuery::writeToZmq(const std::string& logicalStreamName,
                                    const std::string& host,
                                    const uint16_t& port) {
-    SchemaPtr ptr = streamCatalog->getSchemaForLogicalStream(
-        logicalStreamName);
-    OperatorPtr op = createSinkOperator(createZmqSink(ptr, host, port));
-    int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
-    addChild(op, root);
-    root = op;
-    return *this;
+//    SchemaPtr ptr = streamCatalog->getSchemaForLogicalStream(
+//        logicalStreamName);
+//    OperatorPtr op = createSinkOperator(createZmqSink(ptr, host, port));
+//    int operatorId = this->getNextOperatorId();
+//    op->setOperatorId(operatorId);
+//    addChild(op, root);
+//    root = op;
+//    return *this;
 }
 
 InputQuery& InputQuery::print(std::ostream& out) {
-    OperatorPtr op = createSinkOperator(
-        createPrintSinkWithSchema(this->sourceStream->getSchema(), out));
-    int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
-    addChild(op, root);
-    root = op;
-    return *this;
+//    OperatorPtr op = createSinkOperator(
+//        createPrintSinkWithSchema(this->sourceStream->getSchema(), out));
+//    int operatorId = this->getNextOperatorId();
+//    op->setOperatorId(operatorId);
+//    addChild(op, root);
+//    root = op;
+//    return *this;
 }
 #ifdef ENABLE_KAFKA_BUILD
 InputQuery& InputQuery::writeToKafka(const std::string& brokers,

@@ -6,16 +6,17 @@
 
 namespace NES {
 
-FileSink::FileSink()
-    : SinkMedium() {
-}
-
 std::string FileSink::toString() {
     return "FILE_SINK";
 }
 
-FileSink::FileSink(SchemaPtr schema, SinkFormatPtr format, const std::string filePath, bool append)
-    : SinkMedium(schema) {
+SinkMediumTypes FileSink::getSinkMediumType()
+{
+    return FILE_SINK;
+}
+
+FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append)
+    : SinkMedium(format) {
     this->filePath = filePath;
     this->sinkFormat = format;
     this->append = append;
@@ -23,8 +24,8 @@ FileSink::FileSink(SchemaPtr schema, SinkFormatPtr format, const std::string fil
 
 const std::string FileSink::toString() const {
     std::stringstream ss;
-    ss << "PRINT_SINK(";
-    ss << "SCHEMA(" << schema->toString() << "), ";
+    ss << "FileSink(";
+    ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
     return ss.str();
 }
 
@@ -51,8 +52,13 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
             std::ofstream outputFile;
             outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
 
+<<<<<<< HEAD
             outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
             NES_DEBUG("CsvFormat::writeData: schema is =" << schema->toString());
+=======
+            outputFile.write((char*)schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
+            NES_DEBUG("CsvFormat::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString());
+>>>>>>> fix tests
             outputFile.close();
 
             schemaWritten = true;
@@ -77,10 +83,14 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
     }
     for (auto buffer : dataBuffers) {
         NES_DEBUG("FileSink::getData: write buffer of size " << buffer.getNumberOfTuples());
-        if (sinkFormat->getSinkFormat() == NES_FORMAT) {
-            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes());
-        } else {
-            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
+        if(sinkFormat->getSinkFormat() == NES_FORMAT)
+        {
+            outputFile.write((char*)buffer.getBuffer(), buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+        }
+        else
+        {
+            outputFile.write((char*)buffer.getBuffer(), buffer.getNumberOfTuples());
+
         }
     }
     outputFile.close();
