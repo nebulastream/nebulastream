@@ -11,11 +11,12 @@ NesFormat::NesFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFor
     serializedSchema = new SerializableSchema();
 }
 
-std::optional<TupleBuffer> NesFormat::getSchema(){
+std::optional<TupleBuffer> NesFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
     SerializableSchema* protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema);
     bool success = protoBuff->SerializeToArray(buf.getBuffer(), protoBuff->ByteSize());
-    NES_DEBUG("NesFormat::getSchema: write schema" << " success=" << success);
+    NES_DEBUG("NesFormat::getSchema: write schema"
+              << " success=" << success);
     return buf;
 }
 
