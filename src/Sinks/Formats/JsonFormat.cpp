@@ -20,4 +20,8 @@ std::optional<TupleBuffer> JsonFormat::getSchema(){
 std::string JsonFormat::toString() {
     return "JSON_FORMAT";
 }
+SinkFormats JsonFormat::getSinkFormat() {
+    return JSON_FORMAT;
+}
+
 }// namespace NES
