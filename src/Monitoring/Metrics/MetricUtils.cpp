@@ -1,21 +1,25 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Monitoring/Util/SystemResourcesReader.hpp>
-#include <Monitoring/MetricValues/CPU.hpp>
-#include <Monitoring/MetricValues/CpuStats.hpp>
+#include <Monitoring/MetricValues/CpuMetrics.hpp>
+#include <Monitoring/MetricValues/CpuValues.hpp>
+#include <Monitoring/MetricValues/NetworkMetrics.hpp>
+#include <Monitoring/MetricValues/NetworkValues.hpp>
+#include <Monitoring/MetricValues/MemoryMetrics.hpp>
+#include <Monitoring/MetricValues/DiscMetrics.hpp>
 
 namespace NES {
 
-Gauge<CPU> MetricUtils::CPUStats() {
-    return Gauge<CPU>(SystemResourcesReader::ReadCPUStats);
+Gauge<CpuMetrics> MetricUtils::CPUStats() {
+    return Gauge<CpuMetrics>(SystemResourcesReader::ReadCPUStats);
 }
 
-Gauge<std::unordered_map<std::string, uint64_t>> MetricUtils::MemoryStats() {
-    return Gauge<std::unordered_map<std::string, uint64_t>>(SystemResourcesReader::MemoryStats);
+Gauge<MemoryMetrics> MetricUtils::MemoryStats() {
+    return Gauge<MemoryMetrics>(SystemResourcesReader::ReadMemoryStats);
 }
 
-Gauge<std::unordered_map<std::string, uint64_t>> MetricUtils::DiskStats() {
-    return Gauge<std::unordered_map<std::string, uint64_t>>(SystemResourcesReader::DiskStats);
+Gauge<DiskMetrics> MetricUtils::DiskStats() {
+    return Gauge<DiskMetrics>(SystemResourcesReader::ReadDiskStats);
 }
 
 Gauge<uint64_t> MetricUtils::CPUIdle(unsigned int cpuNo) {
@@ -25,8 +29,8 @@ Gauge<uint64_t> MetricUtils::CPUIdle(unsigned int cpuNo) {
     });
 }
 
-Gauge<std::unordered_map<std::string, std::unordered_map<std::string, uint64_t>>> MetricUtils::NetworkStats() {
-    return Gauge<std::unordered_map<std::string, std::unordered_map<std::string, uint64_t>>>(SystemResourcesReader::NetworkStats);
+Gauge<NetworkMetrics> MetricUtils::NetworkStats() {
+    return Gauge<NetworkMetrics>(SystemResourcesReader::NetworkStats);
 }
 
 }

@@ -1,17 +1,17 @@
-#include <Monitoring/MetricValues/CPU.hpp>
+#include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
-CPU::CPU(const unsigned int cpuNo): cpuNo(cpuNo) {
+CpuMetrics::CpuMetrics(const unsigned int cpuNo): cpuNo(cpuNo) {
     ptr = nullptr;
     if (cpuNo > 0) {
-        ptr = new CpuStats[cpuNo];
+        ptr = new CpuValues[cpuNo];
     }
 }
 
 // Implementation of [] operator.  This function must return a
 // reference as array element can be put on left side
-CpuStats& CPU::operator[](unsigned int index)
+CpuValues& CpuMetrics::operator[](unsigned int index)
 {
     if (index >= cpuNo) {
         NES_THROW_RUNTIME_ERROR("CPU: Array index out of bound " + std::to_string(index) + ">=" + std::to_string(cpuNo));
@@ -19,7 +19,7 @@ CpuStats& CPU::operator[](unsigned int index)
     return ptr[index];
 }
 
-unsigned int CPU::size() const{
+unsigned int CpuMetrics::size() const{
     return cpuNo;
 }
 

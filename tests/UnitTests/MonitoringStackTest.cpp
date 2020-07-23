@@ -6,8 +6,13 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <memory>
 #include <Monitoring/Protocols/SamplingProtocol.hpp>
-#include <Monitoring/MetricValues/CPU.hpp>
-#include <Monitoring/MetricValues/CpuStats.hpp>
+#include <Monitoring/MetricValues/CpuMetrics.hpp>
+#include <Monitoring/MetricValues/CpuValues.hpp>
+#include <Monitoring/MetricValues/MemoryMetrics.hpp>
+#include <Monitoring/MetricValues/DiscMetrics.hpp>
+#include <Monitoring/MetricValues/NetworkMetrics.hpp>
+#include <Monitoring/MetricValues/NetworkValues.hpp>
+
 
 namespace NES {
 class MonitoringStackTest : public testing::Test {
@@ -35,9 +40,11 @@ class MonitoringStackTest : public testing::Test {
 
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
-    CPU metrics = cpuStats.readValue();
-    ASSERT_TRUE(metrics.size() > 0);
-    ASSERT_TRUE(metrics[0].USER > 0);
+    CpuMetrics cpuMetrics = cpuStats.readValue();
+    ASSERT_TRUE(cpuMetrics.size() > 0);
+    for (int i=0; i<cpuMetrics.size(); i++){
+        ASSERT_TRUE(cpuMetrics[i].USER > 0);
+    }
 
     auto cpuIdle = MetricUtils::CPUIdle(0);
     NES_INFO("MonitoringStackTest: Idle " << cpuIdle.readValue());
@@ -45,26 +52,25 @@ TEST_F(MonitoringStackTest, testCPUStats) {
 
 TEST_F(MonitoringStackTest, testMemoryStats) {
     auto memStats = MetricUtils::MemoryStats();
-    std::unordered_map<std::string, uint64_t> metrics = memStats.readValue();
-    ASSERT_TRUE(metrics.size() == 13);
+    auto memMetrics = memStats.readValue();
+    ASSERT_TRUE(memMetrics.FREE_RAM > 0);
 
-    NES_INFO("MonitoringStackTest: Total ram " << metrics["totalram"]/(1024*1024) << "gb");
+    NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM/(1024*1024) << "gb");
 }
 
 TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskStats = MetricUtils::DiskStats();
-    std::unordered_map<std::string, uint64_t> metrics = diskStats.readValue();
-    ASSERT_TRUE(metrics.size() == 5);
+    auto diskMetrics = diskStats.readValue();
+    ASSERT_TRUE(diskMetrics.F_BAVAIL > 0);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
     auto networkStats = MetricUtils::NetworkStats();
-    auto metrics = networkStats.readValue();
-    ASSERT_TRUE(!metrics.empty());
+    auto networkMetrics = networkStats.readValue();
+    ASSERT_TRUE(!networkMetrics.getInterfaceNames().empty());
 
-    for (auto const& intfs : metrics) {
-        NES_INFO("MonitoringStackTest: Received metrics for interface " << intfs.first);
-        ASSERT_TRUE(intfs.second.size() == 16);
+    for (std::string intfs : networkMetrics.getInterfaceNames()) {
+        NES_INFO("MonitoringStackTest: Received metrics for interface " << intfs);
     }
 }
 
