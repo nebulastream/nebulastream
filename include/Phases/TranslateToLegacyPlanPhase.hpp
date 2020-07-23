@@ -20,6 +20,9 @@ typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
+class BufferManager;
+typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+
 /**
  * @brief Translates a logical query plan to the legacy operator tree
  */

@@ -228,8 +228,9 @@ TEST_F(EngineTest, testStartStopEngineEmpty) {
 
 TEST_F(EngineTest, teststartDeployStop) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
+
+    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     qep->completedPromise.get_future().get();
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
@@ -240,8 +241,9 @@ TEST_F(EngineTest, teststartDeployStop) {
 
 TEST_F(EngineTest, testStartDeployUndeployStop) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
+
+    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     qep->completedPromise.get_future().get();
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
@@ -253,8 +255,9 @@ TEST_F(EngineTest, testStartDeployUndeployStop) {
 
 TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
+
+    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep));
     ASSERT_TRUE(ptr->startQuery(testQueryId));
     qep->completedPromise.get_future().get();
@@ -273,6 +276,8 @@ TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
 
 TEST_F(EngineTest, testParallelDifferentSource) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
+    ASSERT_TRUE(ptr->start());
+
     CompiledTestQueryExecutionPlanPtr qep1 = std::make_shared<CompiledTestQueryExecutionPlan>();
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(), ptr->getQueryManager());
@@ -291,7 +296,6 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     qep2->addDataSink(sink2);
     qep2->setQueryId("2");
 
-    ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
 
@@ -315,6 +319,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
 
 TEST_F(EngineTest, testParallelSameSource) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
+    ASSERT_TRUE(ptr->start());
 
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(),
@@ -331,7 +336,6 @@ TEST_F(EngineTest, testParallelSameSource) {
     qep2->addDataSink(sink2);
     qep2->setQueryId("2");
 
-    ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
 
@@ -363,6 +367,8 @@ TEST_F(EngineTest, testParallelSameSource) {
 
 TEST_F(EngineTest, testParallelSameSink) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
+    ASSERT_TRUE(ptr->start());
+
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(), ptr->getQueryManager());
@@ -380,7 +386,6 @@ TEST_F(EngineTest, testParallelSameSink) {
     qep2->addDataSink(sink1);
     qep2->setQueryId("2");
 
-    ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
 
@@ -402,6 +407,8 @@ TEST_F(EngineTest, testParallelSameSink) {
 
 TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
+    ASSERT_TRUE(ptr->start());
+
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(), ptr->getQueryManager());
@@ -416,7 +423,6 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     qep2->addDataSink(sink1);
     qep2->setQueryId("2");
 
-    ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
 
@@ -439,8 +445,9 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
 
 TEST_F(EngineTest, testStartStopStartStop) {
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
+
+    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     qep->completedPromise.get_future().get();
 
