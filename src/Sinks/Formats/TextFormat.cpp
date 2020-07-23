@@ -55,7 +55,7 @@ std::string TextFormat::toString() {
     return "TEXT_FORMAT";
 }
 
-SinkFormats TextFormat::getSinkFormat() {
+SinkFormatTypes TextFormat::getSinkFormat() {
     return TEXT_FORMAT;
 }
 

@@ -18,43 +18,40 @@ const DataSinkPtr createTestSink() {
     NES_NOT_IMPLEMENTED();
 }
 
-const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema,
-                                               const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
+const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema, const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
     //TODO: this is not nice and should be fixed such that we only provide the paramter once
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, bufferManager);
-    return std::make_shared<FileSink>(schema, format, filePath, append);
+    return std::make_shared<FileSink>(format, filePath, append);
 }
 
-const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema,
-                                              const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
+const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema, const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, bufferManager);
-    return std::make_shared<FileSink>(schema, format, filePath, append);
+    return std::make_shared<FileSink>(format, filePath, append);
 }
 
-const DataSinkPtr createBinaryNESFileSinkWithSchema(SchemaPtr schema,
-                                                    const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
+const DataSinkPtr createBinaryNESFileSinkWithSchema(SchemaPtr schema, const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, bufferManager);
-    return std::make_shared<FileSink>(schema, format, filePath, append);
+    return std::make_shared<FileSink>(format, filePath, append);
 }
 
-const DataSinkPtr createJSONFileSinkWithSchema(SchemaPtr schema,
-                                               const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
+const DataSinkPtr createJSONFileSinkWithSchema(SchemaPtr schema, const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(schema, bufferManager);
-    return std::make_shared<FileSink>(schema, format, filePath, append);
+    return std::make_shared<FileSink>(format, filePath, append);
 }
 
-const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
-                                const uint16_t port) {
-    return std::make_shared<ZmqSink>(schema, host, port);
+const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host, const uint16_t port, BufferManagerPtr bufferManager) {
+    SinkFormatPtr format = std::make_shared<NesFormat>(schema, bufferManager);
+    return std::make_shared<ZmqSink>(format, host, port);
 }
 
-const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out) {
-    return std::make_shared<PrintSink>(schema, out);
+const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out, BufferManagerPtr bufferManager) {
+    SinkFormatPtr format = std::make_shared<TextFormat>(schema, bufferManager);
+    return std::make_shared<PrintSink>(format, out);
 }
 
 const DataSinkPtr createNetworkSink(SchemaPtr schema, Network::NetworkManagerPtr networkManager, Network::NodeLocation nodeLocation,
-                                    Network::NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes) {
-    return std::make_shared<Network::NetworkSink>(schema, networkManager, nodeLocation, nesPartition, waitTime, retryTimes);
+                                    Network::NesPartition nesPartition, BufferManagerPtr bufferManager, std::chrono::seconds waitTime, uint8_t retryTimes) {
+    return std::make_shared<Network::NetworkSink>(schema, networkManager, nodeLocation, nesPartition, bufferManager, waitTime, retryTimes);
 }
 
 #ifdef ENABLE_KAFKA_BUILD

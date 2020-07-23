@@ -12,6 +12,10 @@
 #include <Util/UtilityFunctions.hpp>
 #include <future>
 #include <iostream>
+#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
+
+
 using namespace NES;
 
 class QueryExecutionTest : public testing::Test {
@@ -84,11 +88,13 @@ typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;
 
 class TestSink : public SinkMedium {
   public:
-    TestSink(uint64_t expectedBuffer) : expectedBuffer(expectedBuffer){};
+    TestSink(uint64_t expectedBuffer, SchemaPtr schema, BufferManagerPtr bufferManager) :
+        SinkMedium(std::make_shared<NesFormat>(schema, bufferManager)),
+                                        expectedBuffer(expectedBuffer){};
     bool writeData(TupleBuffer& input_buffer) override {
         std::unique_lock lock(m);
         NES_DEBUG("TestSink: got buffer " << input_buffer);
-        NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchema()));
+        NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
         resultBuffers.emplace_back(std::move(input_buffer));
         if (resultBuffers.size() == expectedBuffer) {
             completed.set_value(true);
@@ -101,8 +107,8 @@ class TestSink : public SinkMedium {
      * @param expectedBuffer number of buffers expected this sink should receive.
      * @return
      */
-    static std::shared_ptr<TestSink> create(uint64_t expectedBuffer) {
-        return std::make_shared<TestSink>(expectedBuffer);
+    static std::shared_ptr<TestSink> create(uint64_t expectedBuffer, SchemaPtr schema, BufferManagerPtr bufferManager) {
+        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
     }
 
     TupleBuffer& get(size_t index) {
@@ -135,6 +141,11 @@ class TestSink : public SinkMedium {
     uint32_t getNumberOfResultBuffers() {
         std::unique_lock lock(m);
         return resultBuffers.size();
+    }
+
+    SinkMediumTypes getSinkMediumType()
+    {
+        return SinkMediumTypes::PRINT_SINK;
     }
 
   private:
@@ -237,7 +248,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
     auto windowScan = createWindowScanOperator(windowResultSchema);
 
     // 3. add sink. We expect that this sink will receive one buffer
-    auto testSink = TestSink::create(/*expected result buffer*/ 1);
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
     auto sink = createSinkOperator(testSink);
 
     // cain all operator to each other

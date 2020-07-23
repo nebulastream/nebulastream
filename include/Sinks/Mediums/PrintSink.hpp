@@ -20,14 +20,7 @@ class PrintSink : public SinkMedium {
      * @brief Default constructor
      * @Note the default output will be written to cout
      */
-    PrintSink(std::ostream& pOutputStream = std::cout);
-
-    /**
-       * @brief Default constructor
-       * @Note the default output will be written to cout
-       * @param schema of the written buffer tuples
-       */
-    PrintSink(SchemaPtr pSchema, std::ostream& pOutputStream = std::cout);
+    PrintSink(SinkFormatPtr format, std::ostream& pOutputStream = std::cout);
 
     /**
      * @brief destructor
@@ -65,6 +58,12 @@ class PrintSink : public SinkMedium {
      * @brief Get sink type
      */
     std::string toString() override;
+
+    /**
+    * @brief method to return the type of medium
+    * @return type of medium
+    */
+    SinkMediumTypes getSinkMediumType();
 
   private:
     std::ostream& outputStream;

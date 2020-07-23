@@ -68,10 +68,14 @@ class NetworkStackTest : public testing::Test {
 
 class TestSink : public SinkMedium {
   public:
+    SinkMediumTypes getSinkMediumType()
+    {
+        return SinkMediumTypes::PRINT_SINK;
+    }
 
     bool writeData(TupleBuffer& input_buffer) override {
         std::unique_lock lock(m);
-        NES_DEBUG("TestSink:\n" <<UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchema()));
+        NES_DEBUG("TestSink:\n" <<UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
 
         uint64_t sum = 0;
         for (size_t i = 0; i < input_buffer.getNumberOfTuples(); ++i) {
@@ -523,7 +527,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
           ASSERT_FALSE(this->partitionManager->isRegistered(nesPartition));
         });
 
-        NetworkSink networkSink{schema, netManager, nodeLocation, nesPartition};
+        NetworkSink networkSink{schema, netManager, nodeLocation, nesPartition, bufferManager};
 
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([this, &networkSink, &totalNumBuffer, threadNr] {
@@ -640,7 +644,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
           ASSERT_TRUE(source.stop());
         });
 
-        NetworkSink networkSink{schema, netManager, nodeLocation, nesPartition};
+        NetworkSink networkSink{schema, netManager, nodeLocation, nesPartition, bufferManager};
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([this, &networkSink, &totalNumBuffer, threadNr] {
               // register the incoming channel

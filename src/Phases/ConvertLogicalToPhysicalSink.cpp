@@ -19,11 +19,11 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, Buffe
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
         const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
-        return createPrintSinkWithSchema(schema, std::cout);
+        return createPrintSinkWithSchema(schema, std::cout, bufferManager);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
-        return createZmqSink(schema, zmqSinkDescriptor->getHost(), zmqSinkDescriptor->getPort());
+        return createZmqSink(schema, zmqSinkDescriptor->getHost(), zmqSinkDescriptor->getPort(), bufferManager);
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
@@ -49,7 +49,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, Buffe
         NES_INFO("ConvertLogicalToPhysicalSink: Creating network sink");
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         return createNetworkSink(schema, networkManager, networkSinkDescriptor->getNodeLocation(),
-                                 networkSinkDescriptor->getNesPartition(), networkSinkDescriptor->getWaitTime(),
+                                 networkSinkDescriptor->getNesPartition(), bufferManager, networkSinkDescriptor->getWaitTime(),
                                  networkSinkDescriptor->getRetryTimes());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");

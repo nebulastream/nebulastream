@@ -33,7 +33,7 @@ class NesFormat : public SinkFormat {
      * @brief return sink format
      * @return sink format
      */
-    SinkFormats getSinkFormat();
+    SinkFormatTypes getSinkFormat();
 
   private:
     SerializableSchema* serializedSchema;

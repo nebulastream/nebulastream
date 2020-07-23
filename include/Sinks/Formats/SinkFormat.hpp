@@ -9,7 +9,7 @@
  */
 namespace NES {
 
-enum SinkFormats {
+enum SinkFormatTypes {
     CSV_FORMAT,
     JSON_FORMAT,
     NES_FORMAT,
@@ -44,7 +44,10 @@ class SinkFormat {
      */
     virtual std::string toString() = 0;
 
-    virtual SinkFormats getSinkFormat() = 0;
+    virtual SinkFormatTypes getSinkFormat() = 0;
+
+    SchemaPtr getSchemaPtr();
+    void setSchemaPtr(SchemaPtr schema);
 
   protected:
     SchemaPtr schema;
@@ -55,3 +58,4 @@ typedef std::shared_ptr<SinkFormat> SinkFormatPtr;
 
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_SINKFORMAT_HPP_
+

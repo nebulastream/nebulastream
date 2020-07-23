@@ -12,25 +12,31 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
-
-ZmqSink::ZmqSink()
-    : host(""),
-      port(0),
-      tupleCnt(0),
-      connected(false),
-      context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_PUSH)) {
-    NES_DEBUG(
-        "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port);
-}
+//
+//ZmqSink::ZmqSink()
+//    : host(""),
+//      port(0),
+//      tupleCnt(0),
+//      connected(false),
+//      context(zmq::context_t(1)),
+//      socket(zmq::socket_t(context, ZMQ_PUSH)) {
+//    NES_DEBUG(
+//        "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port);
+//}
 
 std::string ZmqSink::toString() {
     return "ZMQ_SINK";
 }
 
-ZmqSink::ZmqSink(SchemaPtr schema, const std::string& host,
+SinkMediumTypes ZmqSink::getSinkMediumType()
+{
+    return ZMQ_SINK;
+}
+
+ZmqSink::ZmqSink(SinkFormatPtr format,
+                 const std::string& host,
                  const uint16_t port)
-    : SinkMedium(schema),
+    : SinkMedium(format),
       host(host.substr(0, host.find(":"))),
       port(port),
       tupleCnt(0),
@@ -96,7 +102,7 @@ bool ZmqSink::writeData(TupleBuffer& input_buffer) {
 const std::string ZmqSink::toString() const {
     std::stringstream ss;
     ss << "ZMQ_SINK(";
-    ss << "SCHEMA(" << schema->toString() << "), ";
+    ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
     ss << "HOST=" << host << ", ";
     ss << "PORT=" << port << ", ";
     ss << "TupleCnt=\"" << tupleCnt << "\")";

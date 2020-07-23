@@ -3,11 +3,13 @@
 
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include "Network/NetworkSink.hpp"
 
 namespace NES {
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
+
 
 /**
  * @brief This class is responsible for creating the physical sink from Logical sink description

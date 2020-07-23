@@ -2,13 +2,13 @@
 #define INCLUDE_SOURCESINK_SINKCREATOR_HPP_
 #include <Network/NetworkManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include "Network/NetworkSink.hpp"
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 
 namespace NES {
-
 /**
  * @brief create test sink
  * @Note this method is currently not implemented
@@ -21,7 +21,7 @@ const DataSinkPtr createTestSink();
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out);
+const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out, BufferManagerPtr bufferManager);
 
 /**
  * @brief create a csv test sink without a schema and append to existing file
@@ -70,7 +70,7 @@ const DataSinkPtr createJSONFileSinkWithSchema(SchemaPtr schema,
  * @return a data sink pointer
  */
 const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
-                                const uint16_t port);
+                                const uint16_t port, BufferManagerPtr bufferManager);
 
 /**
  * @brief create a network data sink
@@ -83,7 +83,7 @@ const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
  * @return a data sink pointer
  */
 const DataSinkPtr createNetworkSink(SchemaPtr schema, Network::NetworkManagerPtr networkManager, Network::NodeLocation nodeLocation,
-                                    Network::NesPartition nesPartition, std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes = 5);
+                                    Network::NesPartition nesPartition, BufferManagerPtr bufferManager, std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes = 5);
 
 /**
  * @brief create test sink of YSB benchmark

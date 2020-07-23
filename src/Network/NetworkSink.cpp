@@ -1,18 +1,24 @@
 #include "Network/NetworkSink.hpp"
 #include <Util/UtilityFunctions.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
 
 namespace NES {
 
 namespace Network {
 
 NetworkSink::NetworkSink(SchemaPtr schema, NetworkManagerPtr networkManager, const NodeLocation nodeLocation,
-                         NesPartition nesPartition, std::chrono::seconds waitTime, uint8_t retryTimes)
-    : SinkMedium(schema), networkManager(networkManager), nodeLocation(nodeLocation), nesPartition(nesPartition),
-      waitTime(waitTime), retryTimes(retryTimes) {
+                         NesPartition nesPartition, BufferManagerPtr bufferManager, std::chrono::seconds waitTime, uint8_t retryTimes)
+    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager)), networkManager(networkManager), nodeLocation(nodeLocation), nesPartition(nesPartition),
+      waitTime(waitTime), retryTimes(retryTimes), schema(schema) {
 }
 
 std::string NetworkSink::toString() {
     return "NETWORK_SINK";
+}
+
+SinkMediumTypes NetworkSink::getSinkMediumType()
+{
+    return NETWORK_SINK;
 }
 
 NetworkSink::~NetworkSink() {

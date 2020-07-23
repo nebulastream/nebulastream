@@ -10,6 +10,9 @@
 #include <string>
 
 namespace NES {
+class BufferManager;
+typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+
 namespace Network {
 
 class NetworkSink : public SinkMedium {
@@ -22,7 +25,7 @@ class NetworkSink : public SinkMedium {
      * @param nesPartition
      */
     explicit NetworkSink(SchemaPtr schema, NetworkManagerPtr networkManager, const NodeLocation nodeLocation,
-                         NesPartition nesPartition, std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes = 5);
+                         NesPartition nesPartition, BufferManagerPtr bufferManager, std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes = 5);
 
     ~NetworkSink();
 
@@ -30,11 +33,16 @@ class NetworkSink : public SinkMedium {
 
     const std::string toString() const override;
 
-    void setup() override;   // not needed
-    void shutdown() override;// not needed
+    void setup() override;
+    void shutdown() override;
 
     std::string toString() override;
 
+    /**
+    * @brief method to return the type of medium
+    * @return type of medium
+    */
+    SinkMediumTypes getSinkMediumType();
   private:
     boost::thread_specific_ptr<OutputChannel> outputChannel;
 
@@ -44,6 +52,7 @@ class NetworkSink : public SinkMedium {
 
     const std::chrono::seconds waitTime;
     const uint8_t retryTimes;
+    SchemaPtr schema;
 };
 
 }// namespace Network

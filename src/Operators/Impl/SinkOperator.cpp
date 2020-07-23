@@ -27,8 +27,9 @@ void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context,
 }
 
 void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    sink_->setSchema(context->getResultSchema());
-    codegen->generateCodeForEmit(sink_->getSchema(), context);
+//    sink_->setSchemaPtr(context->getResultSchema());
+//    codegen->generateCodeForEmit(sink_->getSchemaPtr(), context);
+    codegen->generateCodeForEmit(context->getResultSchema(), context);
     /* no call to compileLiftCombine of parent, ends code generation */
 }
 
