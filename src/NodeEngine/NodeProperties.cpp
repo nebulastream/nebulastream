@@ -243,10 +243,8 @@ void NodeProperties::readDiskStats() {
 }
 #endif
 
-NodeStatsPtr NodeProperties::getNodeStats() {
-    auto result = std::make_shared<NodeStats>();
-    result->CopyFrom(nodeStats);
-    return result;
+NodeStats NodeProperties::getNodeStats() {
+    return nodeStats;
 }
 
 }// namespace NES

@@ -10,8 +10,6 @@ namespace NES {
 class NodeProperties;
 typedef std::shared_ptr<NodeProperties> NodePropertiesPtr;
 
-typedef std::shared_ptr<NodeStats> NodeStatsPtr;
-
 /**
  * @brief: This class captures the properties of a node which are send to and updated continuously.
  */
@@ -34,7 +32,7 @@ class NodeProperties {
    * @brief create the properties and return them
    * @return char pointer to serialized JSON
    */
-    NodeStatsPtr getNodeStats();
+    NodeStats getNodeStats();
 
     /**
      * @brief gathers CPU, MEM, Disk, and Network state.

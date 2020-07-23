@@ -17,7 +17,6 @@ using grpc::Status;
 namespace NES {
 
 class NodeStats;
-typedef std::shared_ptr<NodeStats> NodeStatsPtr;
 
 class CoordinatorRPCClient {
   public:
@@ -79,7 +78,7 @@ class CoordinatorRPCClient {
     bool registerNode(std::string localAddress,
                       size_t numberOfCpus,
                       NESNodeType type,
-                      NodeStatsPtr nodeStats);
+                      NodeStats nodeStats);
 
     /**
    * @brief method to unregister a node after the connection is established
