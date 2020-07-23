@@ -1,13 +1,13 @@
-#ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUSTATS_HPP_
-#define NES_INCLUDE_MONITORING_METRICVALUES_CPUSTATS_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
+#define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 
 #include <cstdint>
 
 namespace NES {
 
-class CpuStats {
+class CpuValues {
   public:
-    CpuStats() = default;
+    CpuValues() = default;
 
     uint64_t USER;
     uint64_t NICE;
@@ -23,4 +23,4 @@ class CpuStats {
 
 }
 
-#endif //NES_INCLUDE_MONITORING_METRICVALUES_CPUSTATS_HPP_
+#endif //NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_

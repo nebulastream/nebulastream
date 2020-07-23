@@ -5,7 +5,10 @@
 #include <Monitoring/Metrics/Gauge.hpp>
 
 namespace NES {
-class CPU;
+class CpuMetrics;
+class MemoryMetrics;
+class NetworkMetrics;
+class DiskMetrics;
 
 /**
  * @brief Pre-defined metrics used for NES internally.
@@ -16,25 +19,25 @@ class MetricUtils {
      * @brief Gauge metric for the CPU stats represented as map
      * @return the cpu stats
      */
-    static Gauge<CPU> CPUStats();
+    static Gauge<CpuMetrics> CPUStats();
 
     /**
      * @brief Gauge metric for the memory stats represented as map
      * @return the memory stats
      */
-    static Gauge<std::unordered_map<std::string, uint64_t>> MemoryStats();
+    static Gauge<MemoryMetrics> MemoryStats();
 
     /**
      * @brief Gauge metric for the disk stats represented as map
      * @return the disk stats
      */
-    static Gauge<std::unordered_map<std::string, uint64_t>> DiskStats();
+    static Gauge<DiskMetrics> DiskStats();
 
     /**
      * @brief Gauge metric for the network stats represented as map
      * @return the network stats
      */
-    static Gauge<std::unordered_map<std::string, std::unordered_map<std::string, uint64_t>>> NetworkStats();
+    static Gauge<NetworkMetrics> NetworkStats();
 
     /**
      * @brief

@@ -1,6 +1,11 @@
 #include <Monitoring/Util/SystemResourcesReader.hpp>
-#include <Monitoring/MetricValues/CpuStats.hpp>
-#include <Monitoring/MetricValues/CPU.hpp>
+#include <Monitoring/MetricValues/CpuValues.hpp>
+#include <Monitoring/MetricValues/CpuMetrics.hpp>
+#include <Monitoring/MetricValues/NetworkMetrics.hpp>
+#include <Monitoring/MetricValues/NetworkValues.hpp>
+#include <Monitoring/MetricValues/DiscMetrics.hpp>
+#include <Monitoring/MetricValues/MemoryMetrics.hpp>
+
 #include <Util/Logger.hpp>
 #include <fstream>
 #include <vector>
@@ -11,11 +16,11 @@
 
 namespace NES {
 
-CPU SystemResourcesReader::ReadCPUStats() {
+CpuMetrics SystemResourcesReader::ReadCPUStats() {
     std::ifstream fileStat("/proc/stat");
     std::string line;
     unsigned int numCPU = std::thread::hardware_concurrency();
-    auto cpu = CPU(numCPU);
+    auto cpu = CpuMetrics(numCPU);
 
     int i = 0;
     while (std::getline(fileStat, line)) {
@@ -35,7 +40,7 @@ CPU SystemResourcesReader::ReadCPUStats() {
             int len = tokens[0].copy(name, tokens[0].size());
             name[len] = '\0';
 
-            auto cpuStats = CpuStats();
+            auto cpuStats = CpuValues();
             cpuStats.USER = std::stoul(tokens[1]);
             cpuStats.NICE = std::stoul(tokens[2]);
             cpuStats.SYSTEM = std::stoul(tokens[3]);
@@ -59,9 +64,9 @@ CPU SystemResourcesReader::ReadCPUStats() {
     return cpu;
 }
 
-std::unordered_map<std::string, std::unordered_map<std::string, uint64_t>> SystemResourcesReader::NetworkStats() {
+NetworkMetrics SystemResourcesReader::NetworkStats() {
     // alternatively also /sys/class/net/intf/statistics can be parsed
-    std::unordered_map<std::string, std::unordered_map<std::string, uint64_t>> output;
+    auto output = NetworkMetrics();
 
     FILE* fp = fopen("/proc/net/dev", "r");
     char buf[200], ifname[20];
@@ -77,67 +82,67 @@ std::unordered_map<std::string, std::unordered_map<std::string, uint64_t>> Syste
         sscanf(buf, "%[^:]: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
                ifname, &rBytes, &rPackets, &rErrs, &rDrop, &rFifo, &rFrame, &rCompressed, &rMulticast,
                &tBytes, &tPackets, &tErrs, &tDrop, &tFifo, &tColls, &tCarrier, &tCompressed);
-        output[ifname]["rBytes"] = rBytes;
-        output[ifname]["rPackets"] = rPackets;
-        output[ifname]["rErrs"] = rErrs;
-        output[ifname]["rDrop"] = rDrop;
-        output[ifname]["rFifo"] = rFifo;
-        output[ifname]["rFrame"] = rFrame;
-        output[ifname]["rCompressed"] = rCompressed;
-        output[ifname]["rMulticast"] = rMulticast;
+        output[ifname].rBytes = rBytes;
+        output[ifname].rPackets = rPackets;
+        output[ifname].rErrs = rErrs;
+        output[ifname].rDrop = rDrop;
+        output[ifname].rFifo = rFifo;
+        output[ifname].rFrame = rFrame;
+        output[ifname].rCompressed = rCompressed;
+        output[ifname].rMulticast = rMulticast;
 
-        output[ifname]["tBytes"] = tBytes;
-        output[ifname]["tPackets"] = tPackets;
-        output[ifname]["tErrs"] = tErrs;
-        output[ifname]["tDrop"] = tDrop;
-        output[ifname]["tFifo"] = tFifo;
-        output[ifname]["tColls"] = tColls;
-        output[ifname]["tCarrier"] = tCarrier;
-        output[ifname]["tCompressed"] = tCompressed;
+        output[ifname].tBytes = tBytes;
+        output[ifname].tPackets = tPackets;
+        output[ifname].tErrs = tErrs;
+        output[ifname].tDrop = tDrop;
+        output[ifname].tFifo = tFifo;
+        output[ifname].tColls = tColls;
+        output[ifname].tCarrier = tCarrier;
+        output[ifname].tCompressed = tCompressed;
     }
     fclose(fp);
 
     return output;
 }
 
-std::unordered_map<std::string, uint64_t> SystemResourcesReader::MemoryStats() {
+MemoryMetrics SystemResourcesReader::ReadMemoryStats() {
     auto* sinfo = (struct sysinfo*) malloc(sizeof(struct sysinfo));
-    std::unordered_map<std::string, uint64_t> output;
+    MemoryMetrics output;
 
     int ret = sysinfo(sinfo);
     if (ret == EFAULT)
         NES_THROW_RUNTIME_ERROR("SystemResourcesReader: Error reading memory stats");
 
-    output["totalram"] = sinfo->totalram;
-    output["totalswap"] = sinfo->totalswap;
-    output["freeram"] = sinfo->freeram;
-    output["sharedram"] = sinfo->sharedram;
-    output["bufferram"] = sinfo->bufferram;
-    output["freeswap"] = sinfo->freeswap;
-    output["totalhigh"] = sinfo->totalhigh;
-    output["freehigh"] = sinfo->freehigh;
-    output["procs"] = sinfo->procs;
-    output["mem_unit"] = sinfo->mem_unit;
-    output["loads_1min"] = sinfo->loads[0];
-    output["loads_5min"] = sinfo->loads[1];
-    output["loads_15min"] = sinfo->loads[2];
+    output.TOTAL_RAM = sinfo->totalram;
+    output.TOTAL_SWAP = sinfo->totalswap;
+    output.FREE_RAM = sinfo->freeram;
+    output.SHARED_RAM = sinfo->sharedram;
+    output.BUFFER_RAM = sinfo->bufferram;
+    output.FREE_SWAP = sinfo->freeswap;
+    output.TOTAL_HIGH = sinfo->totalhigh;
+    output.FREE_HIGH = sinfo->freehigh;
+    output.PROCS = sinfo->procs;
+    output.MEM_UNIT = sinfo->mem_unit;
+    output.LOADS_1MIN = sinfo->loads[0];
+    output.LOADS_5MIN = sinfo->loads[1];
+    output.LOADS_15MIN = sinfo->loads[2];
 
     return output;
 }
 
-std::unordered_map<std::string, uint64_t> SystemResourcesReader::DiskStats() {
-    std::unordered_map<std::string, uint64_t> output;
+DiskMetrics SystemResourcesReader::ReadDiskStats() {
+    DiskMetrics output;
     auto* svfs = (struct statvfs*) malloc(sizeof(struct statvfs));
 
     int ret = statvfs("/", svfs);
     if (ret == EFAULT)
         NES_THROW_RUNTIME_ERROR("SystemResourcesReader: Error reading disk stats");
 
-    output["f_bsize"] = svfs->f_bsize;
-    output["f_frsize"] = svfs->f_frsize;
-    output["f_blocks"] = svfs->f_blocks;
-    output["f_bfree"] = svfs->f_bfree;
-    output["f_bavail"] = svfs->f_bavail;
+    output.F_BSIZE = svfs->f_bsize;
+    output.F_FRSIZE = svfs->f_frsize;
+    output.F_BLOCKS = svfs->f_blocks;
+    output.F_BFREE = svfs->f_bfree;
+    output.F_BAVAIL = svfs->f_bavail;
 
     return output;
 }

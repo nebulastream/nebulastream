@@ -1,6 +1,10 @@
 add_source_nes(
-        CPU.cpp
-        CpuStats.cpp
+        CpuMetrics.cpp
+        CpuValues.cpp
+        DiskMetrics.cpp
+        MemoryMetrics.cpp
+        NetworkMetrics.cpp
+        NetworkValues.cpp
 )
 
 
