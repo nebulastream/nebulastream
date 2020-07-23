@@ -1,6 +1,7 @@
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/QueryRequestQueue.hpp>
+#include <algorithm>
 
 namespace NES {
 
