@@ -15,8 +15,6 @@ typedef std::shared_ptr<Query> QueryPtr;
 class Pattern;
 typedef std::shared_ptr<Pattern> PatternPtr;
 
-class NodeStats;
-
 enum NESNodeType {
     Coordinator,
     Worker,

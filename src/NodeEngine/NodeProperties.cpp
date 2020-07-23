@@ -43,7 +43,7 @@ void NodeProperties::readCpuStats() {
     std::ifstream fileStat("/proc/stat");
     std::string line;
     std::string token;
-
+    auto numberOfPreccessors = 0;
     while (std::getline(fileStat, line)) {
         // line starts with "cpu"
         if (!line.compare(0, 3, "cpu")) {
@@ -72,8 +72,10 @@ void NodeProperties::readCpuStats() {
             cpuStat->set_steal(std::stoul(tokens[7]));
             cpuStat->set_gust(std::stoul(tokens[8]));
             cpuStat->set_gust_nice(std::stoul(tokens[9]));
+            numberOfPreccessors++;
         }
     }
+    this->nbrProcessors = numberOfPreccessors;
 }
 
 void NodeProperties::setClientName(std::string clientName) {
