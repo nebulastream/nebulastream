@@ -21,10 +21,10 @@
 
 namespace NES {
 
-NodeProperties::NodeProperties(): nbrProcessors(0), nodeStats(){}
+NodeProperties::NodeProperties(): nbrProcessors(0), nodeStats(NodeStats()){}
 
 NodePropertiesPtr NodeProperties::create() {
-    return std::shared_ptr<NodeProperties>();
+    return std::make_shared<NodeProperties>();
 }
 
 void NodeProperties::update() {
