@@ -1,21 +1,22 @@
-#ifndef NES_INCLUDE_MONITORING_METRICS_NESMETRICS_HPP_
-#define NES_INCLUDE_MONITORING_METRICS_NESMETRICS_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICS_METRICUTILS_HPP_
+#define NES_INCLUDE_MONITORING_METRICS_METRICUTILS_HPP_
 
 #include <unordered_map>
 #include <Monitoring/Metrics/Gauge.hpp>
 
 namespace NES {
+class CPU;
 
 /**
- * @brief NesMetrics are pre-defined metrics used for NES internally.
+ * @brief Pre-defined metrics used for NES internally.
  */
-class NesMetrics {
+class MetricUtils {
   public:
     /**
      * @brief Gauge metric for the CPU stats represented as map
      * @return the cpu stats
      */
-    static Gauge<std::unordered_map<std::string, uint64_t>> CPUStats();
+    static Gauge<CPU> CPUStats();
 
     /**
      * @brief Gauge metric for the memory stats represented as map
@@ -40,13 +41,13 @@ class NesMetrics {
      * @param cpuName
      * @return
      */
-    static Gauge<uint64_t> CPUIdle(std::string cpuName);
+    static Gauge<uint64_t> CPUIdle(unsigned int cpuNo);
 
   private:
-    NesMetrics() = default;
+    MetricUtils() = default;
 
 };
 
 }
 
-#endif //NES_INCLUDE_MONITORING_METRICS_NESMETRICS_HPP_
+#endif //NES_INCLUDE_MONITORING_METRICS_METRICUTILS_HPP_

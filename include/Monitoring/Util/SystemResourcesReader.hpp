@@ -7,6 +7,8 @@
 
 namespace NES {
 
+class CPU;
+
 /**
  * @brief This is a static utility class to collect basic system information
  * Warning: Only Linux distributions are currently supported
@@ -18,7 +20,7 @@ class SystemResourcesReader {
      * @return A map where for each CPU the according /proc/stat information are returned in the form
      * e.g., output["user1"] = 1234, where user is the metric and 1 the cpu core
      */
-    static std::unordered_map<std::string, uint64_t> CPUStats();
+    static CPU ReadCPUStats();
 
     /**
      * @brief This method reads memory information from sysinfo
