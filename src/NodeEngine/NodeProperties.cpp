@@ -105,13 +105,13 @@ void NodeProperties::readNetworkStats() {
     auto networkStats = nodeStats.mutable_networkstats();
     networkStats->Clear();
 
-    networkStats->set_hostname(clientName);
-    networkStats->set_port(clientPort);
+
 
     char hostnameChar[1024];
     gethostname(hostnameChar, 1024);
     std::string s1 = hostnameChar;
-
+    networkStats->set_hostname(hostnameChar);
+    networkStats->set_port(clientPort);
     struct ifaddrs* ifa;
 
     int family, s;
@@ -124,6 +124,8 @@ void NodeProperties::readNetworkStats() {
 
     struct ifreq ifr;
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    // map to keep track of interface names, to assign all properties to the correct interface.
     std::map<std::string, int> keeper;
 
     int n = 0;
@@ -139,18 +141,19 @@ void NodeProperties::readNetworkStats() {
 
         family = ifa->ifa_addr->sa_family;
 
-        auto interface = networkStats->mutable_interfaces()->Add();
-        interface->set_name(ifa->ifa_name);
-
+        NodeStats_NetworkStats_Interface* interface;
+        // check if the interface was already found before
         auto found = keeper.find(ifa->ifa_name);
-        /*
         if (found != keeper.cend()) {
-            net = this->_nets.at(found->second);
+            interface = networkStats->mutable_interfaces(found->second);
         } else {
             keeper[ifa->ifa_name] = n;
             n++;
+            interface = networkStats->mutable_interfaces()->Add();
         }
-         */
+
+        // set the interface name
+        interface->set_name(ifa->ifa_name);
 
         if (family == AF_INET) {
             s = getnameinfo(ifa->ifa_addr,
