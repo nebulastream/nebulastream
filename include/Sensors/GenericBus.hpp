@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_GENERIC_BUS_HPP_
 #define NES_INCLUDE_GENERIC_BUS_HPP_
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace NES {
 namespace Sensors {

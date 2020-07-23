@@ -6,8 +6,8 @@
 namespace NES {
 namespace Sensors {
 
-I2CBus::I2CBus(const char *filename)
-    : GenericBus(filename, BusType::I2C){
+I2CBus::I2CBus(const char* filename)
+    : GenericBus(filename, BusType::I2C) {
     NES_INFO("I2CBus: Creating bus");
 }
 
@@ -31,7 +31,7 @@ bool I2CBus::initBus(int address) {
     return true;
 }
 
-bool I2CBus::writeData(int address, int size, unsigned char *buffer) {
+bool I2CBus::writeData(int address, int size, unsigned char* buffer) {
     return !(rawI2CRdrw(address, I2C_SMBUS_WRITE, size, buffer) < 0);
 }
 
@@ -40,7 +40,7 @@ bool I2CBus::readData(int address, int size, unsigned char* buffer) {
 }
 
 int I2CBus::rawI2CRdrw(uint8_t address, uint8_t readWriteOperation, uint8_t size, unsigned char* buffer) {
-// envelope data for ioctl
+    // envelope data for ioctl
     struct i2c_smbus_ioctl_data ioctlData;
     // the actual data to send over i2c
     union i2c_smbus_data smbusData;
@@ -65,7 +65,7 @@ int I2CBus::rawI2CRdrw(uint8_t address, uint8_t readWriteOperation, uint8_t size
 
     // prepare ioctlData
     ioctlData.read_write = readWriteOperation;// type of operation
-    ioctlData.command = address;     // chip address to read
+    ioctlData.command = address;              // chip address to read
     ioctlData.size = I2C_SMBUS_I2C_BLOCK_DATA;
     ioctlData.data = &smbusData;// buffer with data or buffer to fill (depends on type of rw)
 
