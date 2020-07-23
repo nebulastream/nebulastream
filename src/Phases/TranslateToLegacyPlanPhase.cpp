@@ -24,7 +24,7 @@
 #include <Operators/Operator.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
-
+#include <assert.h>
 namespace NES {
 
 TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create() {
@@ -78,14 +78,16 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         operatorPtr->setOperatorId(operatorNode->getId());
         return operatorPtr;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+        assert(0);
+
         // Translate sink operator node.
-        auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
-        const SinkDescriptorPtr sinkDescriptor = sinkNodeOperator->getSinkDescriptor();
-        const SchemaPtr schema = sinkNodeOperator->getOutputSchema();
-        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor);
-        const OperatorPtr operatorPtr = createSinkOperator(dataSink);
-        operatorPtr->setOperatorId(operatorNode->getId());
-        return operatorPtr;
+//        auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
+//        const SinkDescriptorPtr sinkDescriptor = sinkNodeOperator->getSinkDescriptor();
+//        const SchemaPtr schema = sinkNodeOperator->getOutputSchema();
+//        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(schema, nullptr, sinkDescriptor);
+//        const OperatorPtr operatorPtr = createSinkOperator(dataSink);
+//        operatorPtr->setOperatorId(operatorNode->getId());
+//        return operatorPtr;
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED();

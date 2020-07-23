@@ -20,8 +20,6 @@ const size_t bufferSize = 4 * 1024;
 
 class SinkTest : public testing::Test {
   public:
-    NodeEnginePtr nodeEngine;
-    BufferManagerPtr bufferManager;
     size_t tupleCnt;
     SchemaPtr test_schema;
     size_t test_data_size;
@@ -42,9 +40,6 @@ class SinkTest : public testing::Test {
     /* Called before a single test. */
     void SetUp() override {
         std::cout << "Setup SinkTest test case." << std::endl;
-        nodeEngine = std::make_shared<NodeEngine>();
-        nodeEngine->createBufferManager(bufferSize, buffersManaged);
-        bufferManager = nodeEngine->getBufferManager();
         test_schema = Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
         write_result = false;
         path_to_csv_file = "../tests/test_data/sink.csv";
@@ -63,8 +58,8 @@ TEST_F(SinkTest, testCSVSink) {
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
-    TupleBuffer buffer = bufferManager->getBufferBlocking();
-    const DataSinkPtr csvSink = createCSVFileSinkWithSchema(test_schema, path_to_csv_file, true);
+    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    const DataSinkPtr csvSink = createCSVFileSinkWithSchema(test_schema, path_to_csv_file, nodeEngine->getBufferManager(), true);
     for (size_t i = 0; i < 2; ++i) {
         for (size_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -107,15 +102,15 @@ TEST_F(SinkTest, testTextSink) {
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
-    TupleBuffer buffer = bufferManager->getBufferBlocking();
+    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    const DataSinkPtr binSink = createTextFileSinkWithSchema(test_schema, path_to_csv_file);
-    for (size_t i = 0; i < 10; ++i) {
-        for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+    const DataSinkPtr binSink = createTextFileSinkWithSchema(test_schema, path_to_csv_file, nodeEngine->getBufferManager(), true);
+    for (size_t i = 0; i < 5; ++i) {
+        for (size_t j = 0; j < 5; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
-    buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
+    buffer.setNumberOfTuples(25);
     write_result = binSink->writeData(buffer);
     EXPECT_TRUE(write_result);
     std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
@@ -129,14 +124,15 @@ TEST_F(SinkTest, testTextSink) {
 
     cout << "File Content=" << fileContent << endl;
     EXPECT_EQ(bufferContent, fileContent);
+    buffer.release();
 }
 
 TEST_F(SinkTest, testNESBinarySink) {
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
-    auto buffer = bufferManager->getBufferBlocking();
-    const DataSinkPtr binSink = createBinaryNESFileSinkWithSchema(test_schema, path_to_bin_file);
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    const DataSinkPtr binSink = createBinaryNESFileSinkWithSchema(test_schema, path_to_bin_file, nodeEngine->getBufferManager(), true);
     for (size_t i = 0; i < 2; ++i) {
         for (size_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -144,7 +140,6 @@ TEST_F(SinkTest, testNESBinarySink) {
     }
     buffer.setNumberOfTuples(4);
     write_result = binSink->writeData(buffer);
-
 
     EXPECT_TRUE(write_result);
     std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
@@ -164,14 +159,16 @@ TEST_F(SinkTest, testNESBinarySink) {
     cout << "deserialized schema=" << ptr->toString() << endl;
     EXPECT_EQ(ptr->toString(), test_schema->toString());
 
-    auto deszBuffer = bufferManager->getBufferBlocking();
+    auto deszBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     deszBuffer.setNumberOfTuples(4);
 
     ifstream ifs(path_to_bin_file, ios_base::in | ios_base::binary);
     if (ifs)
     {
-        // Read all the data
         ifs.read(reinterpret_cast<char*>(deszBuffer.getBuffer()), deszBuffer.getBufferSize());
+    }
+    else{
+        FAIL();
     }
 
     cout << "expected=" << endl << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;

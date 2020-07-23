@@ -134,7 +134,7 @@ bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr 
     for (const auto& sink : queryOperators->getNodesByType<SinkLogicalOperatorNode>()) {
         auto sinkDescriptor = sink->getSinkDescriptor();
         // todo use the correct schema
-        auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(sink->getInputSchema(), sinkDescriptor);
+        auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(sink->getInputSchema(), bufferManager, sinkDescriptor);
         qep->addDataSink(legacySink);
         NES_DEBUG("ExecutableTransferObject:: add source" << legacySink->toString());
     }

@@ -6,14 +6,14 @@
 
 namespace NES {
 
-JsonFormat::JsonFormat(SchemaPtr schema, std::string filePath, bool append) : SinkFormat(schema, filePath, append) {
+JsonFormat::JsonFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
 }
 
-bool JsonFormat::writeSchema() {
+std::vector<TupleBuffer> JsonFormat::getData(TupleBuffer& inputBuffer){
     NES_NOT_IMPLEMENTED();
 }
 
-bool JsonFormat::writeData(TupleBuffer& inputBuffer) {
+std::optional<TupleBuffer> JsonFormat::getSchema(){
     NES_NOT_IMPLEMENTED();
 }
 

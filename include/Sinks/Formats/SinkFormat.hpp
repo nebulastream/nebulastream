@@ -1,6 +1,8 @@
 #ifndef NES_INCLUDE_SINKS_SINKFORMAT_HPP_
 #define NES_INCLUDE_SINKS_SINKFORMAT_HPP_
 #include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/BufferManager.hpp>
+
 #include <fstream>
 /**
  * @brief this class covers the different output formats that we offer in NES
@@ -12,23 +14,22 @@ class SinkFormat {
     /**
      * @brief constructor for a sink format
      * @param schema
-     * @param filePath
      * @param append
      */
-    SinkFormat(SchemaPtr schema, std::string filePath, bool append);
+    SinkFormat(SchemaPtr schema, BufferManagerPtr bufferManager);
 
     /**
     * @brief method to write a TupleBuffer
     * @param a tuple buffers pointer
-    * @return bool indicating if the write was complete
+    * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    virtual bool writeData(TupleBuffer& inputBuffer) = 0;
+    virtual std::vector<TupleBuffer> getData(TupleBuffer& inputBuffer) = 0;
 
     /**
     * @brief method to write the schema of the data
-    * @note this will reset the current file
+    * @return TupleBuffer containing the schema
     */
-    virtual bool writeSchema() = 0;
+    virtual std::optional<TupleBuffer> getSchema() = 0;
 
     /**
      * @brief method to return the format as a string
@@ -38,8 +39,7 @@ class SinkFormat {
 
   protected:
     SchemaPtr schema;
-    std::string filePath;
-    bool append;
+    BufferManagerPtr bufferManager;
 };
 
 typedef std::shared_ptr<SinkFormat> SinkFormatPtr;

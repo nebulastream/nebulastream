@@ -19,27 +19,27 @@ const DataSinkPtr createTestSink() {
 }
 
 const DataSinkPtr createTextFileSinkWithSchema(SchemaPtr schema,
-                                               const std::string& filePath, bool append) {
+                                               const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
     //TODO: this is not nice and should be fixed such that we only provide the paramter once
-    SinkFormatPtr format = std::make_shared<TextFormat>(schema, filePath, append);
+    SinkFormatPtr format = std::make_shared<TextFormat>(schema, bufferManager);
     return std::make_shared<FileSink>(schema, format, filePath, append);
 }
 
 const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema,
-                                              const std::string& filePath, bool append) {
-    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, filePath, append);
+                                              const std::string& filePath, BufferManagerPtr bufferManager,  bool append) {
+    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, bufferManager);
     return std::make_shared<FileSink>(schema, format, filePath, append);
 }
 
 const DataSinkPtr createBinaryNESFileSinkWithSchema(SchemaPtr schema,
-                                                    const std::string& filePath, bool append) {
-    SinkFormatPtr format = std::make_shared<NesFormat>(schema, filePath, append);
+                                                    const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
+    SinkFormatPtr format = std::make_shared<NesFormat>(schema, bufferManager);
     return std::make_shared<FileSink>(schema, format, filePath, append);
 }
 
 const DataSinkPtr createJSONFileSinkWithSchema(SchemaPtr schema,
-                                               const std::string& filePath, bool append) {
-    SinkFormatPtr format = std::make_shared<JsonFormat>(schema, filePath, append);
+                                               const std::string& filePath, BufferManagerPtr bufferManager, bool append) {
+    SinkFormatPtr format = std::make_shared<JsonFormat>(schema, bufferManager);
     return std::make_shared<FileSink>(schema, format, filePath, append);
 }
 
