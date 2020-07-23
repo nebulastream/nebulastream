@@ -91,9 +91,11 @@ jobs:
           docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/executableImage/entrypoint-prepare-nes-package.sh nebulastream/nes-build-image:latest
           echo "Found changes done to executableImage"
           cd docker/executableImage/
-          grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
-          docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:latest
+          nes_version="$(grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//')"
+          docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
+          docker tag nebulastream/nes-executable-image:$nes_version nebulastream/nes-executable-image:latest
+          docker push nebulastream/nes-executable-image:$nes_version
           docker push nebulastream/nes-executable-image:latest
           echo "Pushed the execution image"
           docker logout
