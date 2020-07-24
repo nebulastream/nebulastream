@@ -2,7 +2,7 @@
 #define NODE_ENGINE_H
 
 #include <API/Config.hpp>
-#include <NodeEngine/NodeProperties.hpp>
+#include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
@@ -115,7 +115,7 @@ class NodeEngine {
      * @brief gets the node properties.
      * @return NodePropertiesPtr
      */
-    NodePropertiesPtr getNodeProperties();
+    NodeStatsProviderPtr getNodeProperties();
 
     /**
      * @brief getter of query manager
@@ -169,7 +169,7 @@ class NodeEngine {
     QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
   private:
-    NodePropertiesPtr nodeProperties;
+    NodeStatsProviderPtr nodeProperties;
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> qepToStatusMap;
     std::map<std::string, QueryExecutionPlanPtr> queryIdToQepMap;
 

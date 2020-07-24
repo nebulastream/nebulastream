@@ -1,6 +1,6 @@
 #include <GRPC/ExecutableTransferObject.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/NodeProperties.hpp>
+#include <NodeEngine/NodeStatsProvider.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
@@ -15,12 +15,12 @@ namespace NES {
 static constexpr size_t DEFAULT_BUFFER_SIZE = 4096;
 static constexpr size_t DEFAULT_NUM_BUFFERS = 1024;
 
-NodePropertiesPtr NodeEngine::getNodeProperties() {
+NodeStatsProviderPtr NodeEngine::getNodeProperties() {
     return nodeProperties;
 }
 
 NodeEngine::NodeEngine() : registerUnregisterQuery(),
-                           startStopQuery(), deployUndeployQuery(), nodeProperties(NodeProperties::create()) {
+                           startStopQuery(), deployUndeployQuery(), nodeProperties(NodeStatsProvider::create()) {
     NES_DEBUG("NodeEngine()");
     isRunning = false;
 }

@@ -11,23 +11,23 @@
 #else
 #error "Unsupported platform"
 #endif
-#include <NodeEngine/NodeProperties.hpp>
+#include <NodeEngine/NodeStatsProvider.hpp>
 #include <Util/Logger.hpp>
-#include <utility>
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fstream>
+#include <utility>
 
 namespace NES {
 
-NodeProperties::NodeProperties(): nbrProcessors(0), nodeStats(NodeStats()){}
+NodeStatsProvider::NodeStatsProvider(): nbrProcessors(0), nodeStats(NodeStats()){}
 
-NodePropertiesPtr NodeProperties::create() {
-    return std::make_shared<NodeProperties>();
+NodeStatsProviderPtr NodeStatsProvider::create() {
+    return std::make_shared<NodeStatsProvider>();
 }
 
-void NodeProperties::update() {
+void NodeStatsProvider::update() {
     nodeStats.Clear();
     readCpuStats();
     readMemStats();
@@ -35,7 +35,7 @@ void NodeProperties::update() {
     readNetworkStats();
 }
 
-void NodeProperties::readCpuStats() {
+void NodeStatsProvider::readCpuStats() {
 
     auto cpuStats = nodeStats.mutable_cpustats();
     cpuStats->Clear();
@@ -78,22 +78,22 @@ void NodeProperties::readCpuStats() {
     this->nbrProcessors = numberOfPreccessors;
 }
 
-void NodeProperties::setClientName(std::string clientName) {
+void NodeStatsProvider::setClientName(std::string clientName) {
     this->clientName = std::move(clientName);
 };
 
-void NodeProperties::setClientPort(std::string clientPort) {
+void NodeStatsProvider::setClientPort(std::string clientPort) {
     this->clientPort = std::move(clientPort);
 };
 
-std::string NodeProperties::getClientName() {
+std::string NodeStatsProvider::getClientName() {
     std::string host = clientName;
     host.erase(0, 1);
     host.erase(host.length() - 1, 1);
     return host;
 }
 
-std::string NodeProperties::getClientPort() {
+std::string NodeStatsProvider::getClientPort() {
     std::string port = nodeStats.networkstats().port();
     port.erase(0, 1);
     port.erase(port.length() - 1, 1);
@@ -101,7 +101,7 @@ std::string NodeProperties::getClientPort() {
 }
 
 #if defined(__linux__)
-void NodeProperties::readNetworkStats() {
+void NodeStatsProvider::readNetworkStats() {
     auto networkStats = nodeStats.mutable_networkstats();
     networkStats->Clear();
 
@@ -187,7 +187,7 @@ void NodeProperties::readNetworkStats() {
     }
 }
 #elif defined(__APPLE__) || defined(__MACH__)
-void NodeProperties::readNetworkStats() {
+void NodeStatsProvider::readNetworkStats() {
 }
 #else
 #error "Unsupported platform"
@@ -195,7 +195,7 @@ void NodeProperties::readNetworkStats() {
 
 
 #if defined(__linux__)
-void NodeProperties::readMemStats() {
+void NodeStatsProvider::readMemStats() {
     auto memoryStats = nodeStats.mutable_memorystats();
     memoryStats->Clear();
 
@@ -221,12 +221,12 @@ void NodeProperties::readMemStats() {
     }
 }
 #else
-void NodeProperties::readMemStats() {
+void NodeStatsProvider::readMemStats() {
 }
 #endif
 
 #if defined(__linux__)
-void NodeProperties::readDiskStats() {
+void NodeStatsProvider::readDiskStats() {
     auto diskStates = nodeStats.mutable_diskstats();
     diskStates->Clear();
 
@@ -244,11 +244,11 @@ void NodeProperties::readDiskStats() {
     }
 }
 #else
-void NodeProperties::readDiskStats() {
+void NodeStatsProvider::readDiskStats() {
 }
 #endif
 
-NodeStats NodeProperties::getNodeStats() {
+NodeStats NodeStatsProvider::getNodeStats() {
     return nodeStats;
 }
 
