@@ -1,5 +1,5 @@
-//
-// Created by ankit on 24.07.20.
-//
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 
-#include "GlobalQueryPlan.hpp"
+namespace NES {
+
+}
