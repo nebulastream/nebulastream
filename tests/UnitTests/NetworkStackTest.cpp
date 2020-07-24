@@ -11,6 +11,7 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <gtest/gtest.h>
@@ -72,6 +73,10 @@ class TestSink : public SinkMedium {
     {
         return SinkMediumTypes::PRINT_SINK;
     }
+
+    TestSink(SchemaPtr schema, BufferManagerPtr bufferManager) :
+        SinkMedium(std::make_shared<NesFormat>(schema, bufferManager))
+        {};
 
     bool writeData(TupleBuffer& input_buffer) override {
         std::unique_lock lock(m);
@@ -590,7 +595,7 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
                                                          netManager, nesPartition);
     ASSERT_TRUE(networkSource->start());
 
-    auto networkSink = std::make_shared<NetworkSink>(schema, netManager, nodeLocation, nesPartition);
+    auto networkSink = std::make_shared<NetworkSink>(schema, netManager, nodeLocation, nesPartition, bufferManager);
 
     ASSERT_TRUE(networkSource->stop());
 }
@@ -710,7 +715,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSink) {
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema,
                                                                     nodeEngine->getBufferManager(),
                                                                     nodeEngine->getQueryManager());
-    auto networkSink = std::make_shared<NetworkSink>(schema, netManager, nodeLocation, nesPartition);
+    auto networkSink = std::make_shared<NetworkSink>(schema, netManager, nodeLocation, nesPartition, bufferManager);
 
     auto source = createSourceOperator(testSource);
     auto sink = createSinkOperator(networkSink);
@@ -768,7 +773,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSource) {
     // create NetworkSink
     auto networkSource1 = std::make_shared<NetworkSource>(schema, bufferManager, nodeEngine->getQueryManager(),
                                                           netManager, nesPartition);
-    auto testSink = std::make_shared<TestSink>();
+    auto testSink = std::make_shared<TestSink>(schema, bufferManager); //was () before
 
     auto networkSourceOp = createSourceOperator(networkSource1);
     auto testSinkOp = createSinkOperator(testSink);
@@ -784,7 +789,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSource) {
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
                                                                     nodeEngine->getQueryManager());
-    auto networkSink = std::make_shared<NetworkSink>(schema, netManager, nodeLocation, nesPartition);
+    auto networkSink = std::make_shared<NetworkSink>(schema, netManager, nodeLocation, nesPartition, bufferManager);
 
     auto source = createSourceOperator(testSource);
     auto filter = createFilterOperator(createPredicate(Field(schema->get("id")) < 5));
