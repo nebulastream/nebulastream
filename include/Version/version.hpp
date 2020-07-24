@@ -2,6 +2,11 @@
 #define __VERSION_HPP__
 #define NES_VERSION_MAJOR 0
 #define NES_VERSION_MINOR 0
+<<<<<<< HEAD
 #define NES_VERSION_PATCH 78
 constexpr char const* NES_VERSION = "0.0.78";
+=======
+#define NES_VERSION_PATCH 77
+constexpr char const* NES_VERSION      = "0.0.77-ba5ed497-SNAPSHOT";
+>>>>>>> bug fix
 #endif
