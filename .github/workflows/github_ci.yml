@@ -26,9 +26,9 @@ jobs:
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
-#      - name: Run tests
-#        run: |
-#          docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+      - name: Run tests
+        run: |
+          docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
@@ -41,7 +41,7 @@ jobs:
 
   release:
     runs-on: self-hosted
-    #if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
     needs: build-job
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
@@ -95,18 +95,18 @@ jobs:
           cd docker/executableImage/
           docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version
           docker tag nebulastream/nes-executable-image:$nes_version nebulastream/nes-executable-image:latest
-#          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-#          echo "Releasing new executable image with version $nes_version and latest"
-#          docker push nebulastream/nes-executable-image:$nes_version
-#          docker push nebulastream/nes-executable-image:latest
-#          echo "Pushed the execution image"
-#          docker logout
-#      - name: Release new version
-#        env:
-#          CI_SECRET: ${{ secrets.CI_SECRET }}
-#        run: |
-#          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
-#          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
+          echo "Releasing new executable image with version $nes_version and latest"
+          docker push nebulastream/nes-executable-image:$nes_version
+          docker push nebulastream/nes-executable-image:latest
+          echo "Pushed the execution image"
+          docker logout
+      - name: Release new version
+        env:
+          CI_SECRET: ${{ secrets.CI_SECRET }}
+        run: |
+          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
+          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
