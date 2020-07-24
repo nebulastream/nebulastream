@@ -63,6 +63,7 @@ TEST_F(TranslateFromLegacyPlanPhaseTest, testTranslationOfInputQueryToLogicalPla
     setupSensorNodeAndStreamCatalog(topologyManager, streamCatalog);
 
     // Prepare
+    InputQuery::streamCatalog = streamCatalog;
     Stream def = Stream("default_logical", schema);
     InputQuery input = InputQuery::from(def).print();
 

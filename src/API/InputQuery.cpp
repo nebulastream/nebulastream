@@ -260,13 +260,15 @@ InputQuery& InputQuery::writeToZmq(const std::string& logicalStreamName,
 }
 
 InputQuery& InputQuery::print(std::ostream& out) {
-//    OperatorPtr op = createSinkOperator(
-//        createPrintSinkWithSchema(this->sourceStream->getSchema(), out));
-//    int operatorId = this->getNextOperatorId();
-//    op->setOperatorId(operatorId);
-//    addChild(op, root);
-//    root = op;
-//    return *this;
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(1024, 1024);//TODO remove this workaround
+
+    OperatorPtr op = createSinkOperator(
+        createTextPrintSink(this->sourceStream->getSchema(), out, bufferManager));
+    int operatorId = this->getNextOperatorId();
+    op->setOperatorId(operatorId);
+    addChild(op, root);
+    root = op;
+    return *this;
 }
 #ifdef ENABLE_KAFKA_BUILD
 InputQuery& InputQuery::writeToKafka(const std::string& brokers,
