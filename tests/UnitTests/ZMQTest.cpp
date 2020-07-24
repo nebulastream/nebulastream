@@ -123,7 +123,7 @@ TEST_F(ZMQTest, testZmqSinkSendData) {
   // Create ZeroMQ Data Sink.
   auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                        UINT32);
-  auto zmq_sink = createZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT);
+  auto zmq_sink = createBinaryZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_sink->toString() << std::endl;
 
   // Put test data into a TupleBuffer vector.
@@ -189,7 +189,7 @@ TEST_F(ZMQTest, testZmqSinkToSource) {
   tuple_buffer_vec.push_back(tuple_buffer);
 
   // Create ZeroMQ Data Sink.
-  auto zmq_sink = createZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT);
+  auto zmq_sink = createBinaryZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_sink->toString() << std::endl;
 
   // Create ZeroMQ Data Source.

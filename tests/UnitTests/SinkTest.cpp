@@ -59,7 +59,7 @@ TEST_F(SinkTest, testCSVSink) {
     nodeEngine->start();
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr csvSink = createCSVFileSinkWithSchema(test_schema, path_to_csv_file, nodeEngine->getBufferManager(), true);
+    const DataSinkPtr csvSink = createCSVFileSink(test_schema, path_to_csv_file, nodeEngine->getBufferManager(), true);
     for (size_t i = 0; i < 2; ++i) {
         for (size_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -104,7 +104,7 @@ TEST_F(SinkTest, testTextSink) {
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    const DataSinkPtr binSink = createTextFileSinkWithSchema(test_schema, path_to_csv_file, nodeEngine->getBufferManager(), true);
+    const DataSinkPtr binSink = createTextFileSink(test_schema, path_to_csv_file, nodeEngine->getBufferManager(), true);
     for (size_t i = 0; i < 5; ++i) {
         for (size_t j = 0; j < 5; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -132,7 +132,7 @@ TEST_F(SinkTest, testNESBinarySink) {
     nodeEngine->start();
 
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr binSink = createBinaryNESFileSinkWithSchema(test_schema, path_to_bin_file, nodeEngine->getBufferManager(), true);
+    const DataSinkPtr binSink = createBinaryNESFileSink(test_schema, path_to_bin_file, nodeEngine->getBufferManager(), true);
     for (size_t i = 0; i < 2; ++i) {
         for (size_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;

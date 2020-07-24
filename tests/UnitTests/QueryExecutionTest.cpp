@@ -91,6 +91,11 @@ class TestSink : public SinkMedium {
     TestSink(uint64_t expectedBuffer, SchemaPtr schema, BufferManagerPtr bufferManager) :
         SinkMedium(std::make_shared<NesFormat>(schema, bufferManager)),
                                         expectedBuffer(expectedBuffer){};
+
+    static std::shared_ptr<TestSink> create(uint64_t expectedBuffer, SchemaPtr schema, BufferManagerPtr bufferManager) {
+        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
+    }
+
     bool writeData(TupleBuffer& input_buffer) override {
         std::unique_lock lock(m);
         NES_DEBUG("TestSink: got buffer " << input_buffer);
@@ -107,9 +112,7 @@ class TestSink : public SinkMedium {
      * @param expectedBuffer number of buffers expected this sink should receive.
      * @return
      */
-    static std::shared_ptr<TestSink> create(uint64_t expectedBuffer, SchemaPtr schema, BufferManagerPtr bufferManager) {
-        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
-    }
+
 
     TupleBuffer& get(size_t index) {
         std::unique_lock lock(m);
@@ -183,7 +186,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     auto source = createSourceOperator(testSource);
     auto filter = createFilterOperator(
         createPredicate(Field(testSchema->get("id")) < 5));
-    auto testSink = std::make_shared<TestSink>(10);
+    auto testSink = std::make_shared<TestSink>(10, testSchema, nodeEngine->getBufferManager());
     auto sink = createSinkOperator(testSink);
 
     filter->addChild(source);
@@ -329,7 +332,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     mergeOperator->setParent(windowScan);
     windowScan->addChild(mergeOperator);
 
-    auto testSink = std::make_shared<TestSink>(10);
+    auto testSink = std::make_shared<TestSink>(10, testSchema, nodeEngine->getBufferManager());
     auto sink = createSinkOperator(testSink);
 
     windowScan->setParent(sink);

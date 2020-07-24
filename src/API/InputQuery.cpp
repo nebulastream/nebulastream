@@ -245,13 +245,6 @@ InputQuery& InputQuery::window(const NES::WindowTypePtr windowType,
 // output operators
 InputQuery& InputQuery::writeToFile(const std::string& file_name) {
     assert(0);
-    //    OperatorPtr op = createSinkOperator(
-    //        createTextFileSinkWithSchema(this->sourceStream->getSchema(),
-    //                                     file_name));
-    //    int operatorId = this->getNextOperatorId();
-    //    op->setOperatorId(operatorId);
-    //    addChild(op, root);
-    //    root = op;
     return *this;
 }
 
@@ -259,36 +252,11 @@ InputQuery& InputQuery::writeToFile(const std::string& file_name) {
 InputQuery& InputQuery::writeToCSVFile(const std::string& file_name, const std::string& outputMode) {
     OperatorPtr op;
     assert(0);
-    //    if (outputMode == "append") {
-    //        NES_DEBUG("InputQuery::writeToCSVFile: with modus append");
-    //        op = createSinkOperator(
-    //            createCSVFileSinkWithSchema(this->sourceStream->getSchema(), file_name, true));
-    //    } else if (outputMode == "truncate") {
-    //        NES_DEBUG("InputQuery::writeToCSVFile: with modus truncate");
-    //        op = createSinkOperator(
-    //            createCSVFileSinkWithSchema(this->sourceStream->getSchema(), file_name, false));
-    //    } else {
-    //        NES_ERROR("writeToCSVFile mode not supported " << outputMode);
-    //    }
-
-    int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
-    addChild(op, root);
-    root = op;
-    return *this;
 }
 
 InputQuery& InputQuery::writeToZmq(const std::string& logicalStreamName,
                                    const std::string& host,
                                    const uint16_t& port) {
-//    SchemaPtr ptr = streamCatalog->getSchemaForLogicalStream(
-//        logicalStreamName);
-//    OperatorPtr op = createSinkOperator(createZmqSink(ptr, host, port));
-//    int operatorId = this->getNextOperatorId();
-//    op->setOperatorId(operatorId);
-//    addChild(op, root);
-//    root = op;
-//    return *this;
 }
 
 InputQuery& InputQuery::print(std::ostream& out) {
