@@ -52,13 +52,8 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
             std::ofstream outputFile;
             outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
 
-<<<<<<< HEAD
-            outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
-            NES_DEBUG("CsvFormat::writeData: schema is =" << schema->toString());
-=======
             outputFile.write((char*)schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
             NES_DEBUG("CsvFormat::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString());
->>>>>>> fix tests
             outputFile.close();
 
             schemaWritten = true;
