@@ -115,7 +115,7 @@ class NodeEngine {
      * @brief gets the node properties.
      * @return NodePropertiesPtr
      */
-    NodeStatsProviderPtr getNodeProperties();
+    NodeStatsProviderPtr getNodeStatsProvider();
 
     /**
      * @brief getter of query manager
@@ -169,7 +169,7 @@ class NodeEngine {
     QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
   private:
-    NodeStatsProviderPtr nodeProperties;
+    NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> qepToStatusMap;
     std::map<std::string, QueryExecutionPlanPtr> queryIdToQepMap;
 
