@@ -4,7 +4,6 @@
 
 if [ $# -eq 0 ]
 then
-    #cd /home/eleicha/Documents/DFKI/Code/nebulastream/build
     mkdir -p /nebulastream/build
     cd /nebulastream/build
     export CC=/usr/bin/clang
