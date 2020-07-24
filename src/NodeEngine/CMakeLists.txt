@@ -1,6 +1,6 @@
 add_source_nes(
         NodeEngine.cpp
-        NodeProperties.cpp
+        NodeStatsProvider.cpp
         QueryManager.cpp
         BufferManager.cpp
         ThreadPool.cpp

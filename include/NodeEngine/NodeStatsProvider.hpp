@@ -1,5 +1,5 @@
-#ifndef _METRICS_H
-#define _METRICS_H
+#ifndef _NODEENGINE_NODESTATSPROVIDER_HPP
+#define _NODEENGINE_NODESTATSPROVIDER_HPP
 
 
 #include <NodeStats.pb.h>
@@ -7,28 +7,28 @@
 
 namespace NES {
 
-class NodeProperties;
-typedef std::shared_ptr<NodeProperties> NodePropertiesPtr;
+class NodeStatsProvider;
+typedef std::shared_ptr<NodeStatsProvider> NodeStatsProviderPtr;
 
 /**
  * @brief: This class gathers the properties of a node.
  */
-class NodeProperties {
+class NodeStatsProvider {
   public:
     /**
     * @brief create a new NodeProperties object
     * @param default 0 cpus
     */
-    NodeProperties();
+    NodeStatsProvider();
 
     /**
      * @brief Factory to create a node property pointer
      * @return
      */
-    static NodePropertiesPtr create();
+    static NodeStatsProviderPtr create();
 
 
-    ~NodeProperties() = default;
+    ~NodeStatsProvider() = default;
 
 
     /**
@@ -95,7 +95,7 @@ class NodeProperties {
     std::string clientPort;
 };
 
-typedef std::shared_ptr<NodeProperties> NodePropertiesPtr;
+typedef std::shared_ptr<NodeStatsProvider> NodeStatsProviderPtr;
 
 }// namespace NES
 #endif
