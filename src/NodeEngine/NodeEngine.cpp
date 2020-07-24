@@ -15,12 +15,12 @@ namespace NES {
 static constexpr size_t DEFAULT_BUFFER_SIZE = 4096;
 static constexpr size_t DEFAULT_NUM_BUFFERS = 1024;
 
-NodeStatsProviderPtr NodeEngine::getNodeProperties() {
-    return nodeProperties;
+NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() {
+    return nodeStatsProvider;
 }
 
 NodeEngine::NodeEngine() : registerUnregisterQuery(),
-                           startStopQuery(), deployUndeployQuery(), nodeProperties(NodeStatsProvider::create()) {
+                           startStopQuery(), deployUndeployQuery(), nodeStatsProvider(NodeStatsProvider::create()) {
     NES_DEBUG("NodeEngine()");
     isRunning = false;
 }
