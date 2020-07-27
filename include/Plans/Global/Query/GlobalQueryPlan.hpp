@@ -11,6 +11,12 @@ namespace NES {
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
+class QueryPlan;
+typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+
+class GlobalQueryNode;
+typedef std::shared_ptr<GlobalQueryNode> GlobalQueryNodePtr;
+
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
@@ -30,11 +36,10 @@ class GlobalQueryPlan {
     static GlobalQueryPlanPtr create();
 
     /**
-     * @brief Add operator of a query to the global queryPlan
-     * @param queryId: Id of the query
-     * @param operatorNode: logical operator to be added
+     * @brief Add query plan to the global query plan
+     * @param queryPlan : new query plan to be added.
      */
-    void addOperator(std::string queryId, OperatorNodePtr operatorNode);
+    void addQueryPlan(QueryPlanPtr queryPlan);
 
     /**
      * @brief remove the operators belonging to the query with input query Id from the global query plan
@@ -55,23 +60,22 @@ class GlobalQueryPlan {
     std::vector<SourceLogicalOperatorNodePtr> getAllSourceOperators();
 
     /**
-     * @brief Get all sink operators that are newly added to the global query plan
-     * @return vector of newly added sink operators
+     * @brief Get all newly added sink operators in the global query plan
+     * @return vector of sink operators
      */
-    std::vector<SinkLogicalOperatorNodePtr> getNewSinkOperators();
+    std::vector<SinkLogicalOperatorNodePtr> getAllNewSinkOperators();
 
     /**
-     * @brief Get all source operators that are newly added to the global query plan
-     * @return vector of newly added source operators
+     * @brief Get all newly added source operators in the global query plan
+     * @return vector of source operators
      */
-    std::vector<SourceLogicalOperatorNodePtr> getNewSourceOperators();
-
+    std::vector<SourceLogicalOperatorNodePtr> getAllNewSourceOperators();
 
   private:
     GlobalQueryPlan();
-    OperatorNodePtr root;
-    std::map<std::string, std::vector<OperatorNodePtr>> queryIdToOperatorMap;
-    std::map<OperatorNodePtr, std::vector<std::string>> operatorToQueryIdMap;
+    GlobalQueryNodePtr root;
+    std::map<std::string, std::vector<GlobalQueryNodePtr>> queryToGlobalQueryNodeMap;
+    std::map<GlobalQueryNodePtr, std::vector<std::string>> globalQueryNodeToQueryMap;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP
