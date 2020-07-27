@@ -1,5 +1,4 @@
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -14,13 +13,6 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat)
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 
-//SinkMedium::SinkMedium()
-//    :  sentBuffer(0),
-//        sentTuples(0),
-//        schemaWritten(false) {
-//        NES_DEBUG("SinkMedium:Init Default Data Sink!");
-//    }
-
     size_t SinkMedium::getNumberOfWrittenOutBuffers() {
         return sentBuffer;
     }
@@ -32,11 +24,6 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat)
         NES_DEBUG("Destroy Data Sink  " << this);
     }
 
-//    void SinkMedium::setSchemaPtr(SchemaPtr pSchema) {
-//
-//        sinkFormat->setSchemaPtr(pSchema);
-//    }
-//
     SchemaPtr SinkMedium::getSchemaPtr() const {
         return sinkFormat->getSchemaPtr();
     }
