@@ -1,7 +1,6 @@
 #ifndef _NODEENGINE_NODESTATSPROVIDER_HPP
 #define _NODEENGINE_NODESTATSPROVIDER_HPP
 
-
 #include <NodeStats.pb.h>
 #include <memory>
 
@@ -27,9 +26,7 @@ class NodeStatsProvider {
      */
     static NodeStatsProviderPtr create();
 
-
     ~NodeStatsProvider() = default;
-
 
     /**
     * @brief gets the node stats.
@@ -88,6 +85,7 @@ class NodeStatsProvider {
 
     std::string getClientName();
     std::string getClientPort();
+
   private:
     long nbrProcessors;
     NodeStats nodeStats;

@@ -1,6 +1,6 @@
+#include <NodeStats.pb.h>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Util/Logger.hpp>
-#include <NodeStats.pb.h>
 namespace NES {
 
 void NESTopologyEntry::setNodeProperty(NodeStats nodeStats) {

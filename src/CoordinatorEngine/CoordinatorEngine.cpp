@@ -4,7 +4,6 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager)

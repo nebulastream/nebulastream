@@ -21,7 +21,7 @@
 
 namespace NES {
 
-NodeStatsProvider::NodeStatsProvider(): nbrProcessors(0), nodeStats(NodeStats()){}
+NodeStatsProvider::NodeStatsProvider() : nbrProcessors(0), nodeStats(NodeStats()) {}
 
 NodeStatsProviderPtr NodeStatsProvider::create() {
     return std::make_shared<NodeStatsProvider>();
@@ -104,8 +104,6 @@ std::string NodeStatsProvider::getClientPort() {
 void NodeStatsProvider::readNetworkStats() {
     auto networkStats = nodeStats.mutable_networkstats();
     networkStats->Clear();
-
-
 
     char hostnameChar[1024];
     gethostname(hostnameChar, 1024);
@@ -192,7 +190,6 @@ void NodeStatsProvider::readNetworkStats() {
 #else
 #error "Unsupported platform"
 #endif
-
 
 #if defined(__linux__)
 void NodeStatsProvider::readMemStats() {
