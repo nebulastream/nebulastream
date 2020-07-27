@@ -43,6 +43,7 @@ class NetworkSink : public SinkMedium {
     * @return type of medium
     */
     SinkMediumTypes getSinkMediumType();
+
   private:
     boost::thread_specific_ptr<OutputChannel> outputChannel;
 

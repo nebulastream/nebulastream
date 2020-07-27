@@ -9,13 +9,11 @@ namespace NES {
 SinkFormat::SinkFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : schema(schema), bufferManager(bufferManager) {
 }
 
-SchemaPtr SinkFormat::getSchemaPtr()
-{
+SchemaPtr SinkFormat::getSchemaPtr() {
     return schema;
 }
 
-void SinkFormat::setSchemaPtr(SchemaPtr schema)
-{
+void SinkFormat::setSchemaPtr(SchemaPtr schema) {
     this->schema = schema;
 }
 

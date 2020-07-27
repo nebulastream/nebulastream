@@ -39,7 +39,6 @@ const DataSinkPtr createJSONFileSink(SchemaPtr schema, BufferManagerPtr bufferMa
     return std::make_shared<FileSink>(format, filePath, append);
 }
 
-
 const DataSinkPtr createTextZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host, const uint16_t port) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, bufferManager);
     return std::make_shared<ZmqSink>(format, host, port);

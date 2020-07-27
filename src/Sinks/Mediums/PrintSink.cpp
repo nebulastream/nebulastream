@@ -18,8 +18,7 @@ std::string PrintSink::toString() {
     return "PRINT_SINK";
 }
 
-SinkMediumTypes PrintSink::getSinkMediumType()
-{
+SinkMediumTypes PrintSink::getSinkMediumType() {
     return PRINT_SINK;
 }
 

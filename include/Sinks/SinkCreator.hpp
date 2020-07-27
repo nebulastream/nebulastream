@@ -1,7 +1,7 @@
 #ifndef INCLUDE_SOURCESINK_SINKCREATOR_HPP_
 #define INCLUDE_SOURCESINK_SINKCREATOR_HPP_
-#include <Network/NetworkSink.hpp>
 #include <Network/NetworkManager.hpp>
+#include <Network/NetworkSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
@@ -35,7 +35,7 @@ const DataSinkPtr createCSVFileSink(SchemaPtr schema, BufferManagerPtr bufferMan
  * @return a data sink pointer
  */
 const DataSinkPtr createTextFileSink(SchemaPtr schema, BufferManagerPtr bufferManager,
-                                               const std::string& filePath, bool append);
+                                     const std::string& filePath, bool append);
 
 /**
  * @brief create a binary test sink with a schema into the nes
@@ -46,7 +46,7 @@ const DataSinkPtr createTextFileSink(SchemaPtr schema, BufferManagerPtr bufferMa
  * @return a data sink pointer
  */
 const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, BufferManagerPtr bufferManager,
-                                                    const std::string& filePath, bool append);
+                                          const std::string& filePath, bool append);
 
 /**
  * @brief create a JSON test sink with a schema int
@@ -57,7 +57,7 @@ const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, BufferManagerPtr buf
  * @return a data sink pointer
  */
 const DataSinkPtr createJSONFileSink(SchemaPtr schema, BufferManagerPtr bufferManager,
-                                               const std::string& filePath, bool append);
+                                     const std::string& filePath, bool append);
 
 /**
  * @brief create a ZMQ test sink with a schema and Text format output
@@ -79,7 +79,7 @@ const DataSinkPtr createTextZmqSink(SchemaPtr schema, const std::string& host,
  * @return a data sink pointer
  */
 const DataSinkPtr createCSVZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host,
-                                    const uint16_t port);
+                                   const uint16_t port);
 
 /**
  * @brief create a ZMQ test sink with a schema and NES_FORMAT format output
@@ -90,8 +90,7 @@ const DataSinkPtr createCSVZmqSink(SchemaPtr schema, BufferManagerPtr bufferMana
  * @return a data sink pointer
  */
 const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host,
-                                    const uint16_t port);
-
+                                      const uint16_t port);
 
 /**
  * @brief create a print test sink with a schema
@@ -102,8 +101,6 @@ const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, BufferManagerPtr bufferM
  */
 const DataSinkPtr createTextPrintSink(SchemaPtr schema, BufferManagerPtr bufferManager, std::ostream& out);
 
-
-
 /**
  * @brief create a print test sink with a schema
  * @param schema of sink
@@ -112,8 +109,6 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, BufferManagerPtr bufferM
  * @return a data sink pointer
  */
 const DataSinkPtr createCSVPrintSink(SchemaPtr schema, BufferManagerPtr bufferManager, std::ostream& out);
-
-
 
 /**
  * @brief create a print test sink with a schema

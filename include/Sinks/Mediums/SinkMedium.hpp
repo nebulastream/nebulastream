@@ -7,7 +7,7 @@
 namespace NES {
 class TupleBuffer;
 
-enum SinkMediumTypes{
+enum SinkMediumTypes {
     ZMQ_SINK,
     PRINT_SINK,
     KAFKA_SINK,
@@ -21,7 +21,6 @@ enum SinkMediumTypes{
 class SinkMedium {
 
   public:
-
     /**
      * @brief public constructor for data sink
      */

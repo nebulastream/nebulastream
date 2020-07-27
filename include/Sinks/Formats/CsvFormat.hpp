@@ -32,7 +32,6 @@ class CsvFormat : public SinkFormat {
      * @return sink format
      */
     SinkFormatTypes getSinkFormat();
-
 };
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_

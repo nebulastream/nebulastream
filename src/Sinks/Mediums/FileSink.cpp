@@ -10,8 +10,7 @@ std::string FileSink::toString() {
     return "FILE_SINK";
 }
 
-SinkMediumTypes FileSink::getSinkMediumType()
-{
+SinkMediumTypes FileSink::getSinkMediumType() {
     return FILE_SINK;
 }
 
@@ -52,7 +51,7 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
             std::ofstream outputFile;
             outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
 
-            outputFile.write((char*)schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
+            outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
             NES_DEBUG("CsvFormat::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString());
             outputFile.close();
 
@@ -78,14 +77,10 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
     }
     for (auto buffer : dataBuffers) {
         NES_DEBUG("FileSink::getData: write buffer of size " << buffer.getNumberOfTuples());
-        if(sinkFormat->getSinkFormat() == NES_FORMAT)
-        {
-            outputFile.write((char*)buffer.getBuffer(), buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
-        }
-        else
-        {
-            outputFile.write((char*)buffer.getBuffer(), buffer.getNumberOfTuples());
-
+        if (sinkFormat->getSinkFormat() == NES_FORMAT) {
+            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+        } else {
+            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
         }
     }
     outputFile.close();

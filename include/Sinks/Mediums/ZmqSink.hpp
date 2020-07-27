@@ -43,7 +43,6 @@ class ZmqSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType();
 
   private:
-
     ZmqSink();
 
     std::string host;

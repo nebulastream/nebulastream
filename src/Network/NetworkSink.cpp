@@ -1,6 +1,6 @@
 #include "Network/NetworkSink.hpp"
-#include <Util/UtilityFunctions.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -16,8 +16,7 @@ std::string NetworkSink::toString() {
     return "NETWORK_SINK";
 }
 
-SinkMediumTypes NetworkSink::getSinkMediumType()
-{
+SinkMediumTypes NetworkSink::getSinkMediumType() {
     return NETWORK_SINK;
 }
 
