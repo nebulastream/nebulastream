@@ -1,15 +1,14 @@
 #ifndef NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SOURCES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 #define NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SOURCES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 
+#include "Network/NetworkSink.hpp"
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include "Network/NetworkSink.hpp"
 
 namespace NES {
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
-
 
 /**
  * @brief This class is responsible for creating the physical sink from Logical sink description

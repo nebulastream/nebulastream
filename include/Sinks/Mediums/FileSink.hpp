@@ -62,6 +62,7 @@ class FileSink : public SinkMedium {
     * @return type of medium
     */
     SinkMediumTypes getSinkMediumType();
+
   protected:
     std::string filePath;
 };

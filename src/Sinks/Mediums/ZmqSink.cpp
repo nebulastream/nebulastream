@@ -16,8 +16,7 @@ std::string ZmqSink::toString() {
     return "ZMQ_SINK";
 }
 
-SinkMediumTypes ZmqSink::getSinkMediumType()
-{
+SinkMediumTypes ZmqSink::getSinkMediumType() {
     return ZMQ_SINK;
 }
 

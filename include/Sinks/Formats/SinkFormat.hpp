@@ -58,4 +58,3 @@ typedef std::shared_ptr<SinkFormat> SinkFormatPtr;
 
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_SINKFORMAT_HPP_
-
