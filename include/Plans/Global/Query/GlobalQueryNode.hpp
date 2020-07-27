@@ -31,7 +31,7 @@ class GlobalQueryNode : public Node {
      * @param operatorNode: logical operator
      * @return Shared pointer to the instance of Global Query Operator instance
      */
-    static GlobalQueryNodePtr create(std::string queryId, OperatorNodePtr operatorNode);
+    static GlobalQueryNodePtr create(std::string queryId, NodePtr operatorNode);
 
     /**
      * @brief Add the id of a new query to the Global Query Operator
@@ -65,8 +65,15 @@ class GlobalQueryNode : public Node {
      */
     bool wasUpdated();
 
+    /**
+     * @brief Check if logical operator already present in the node
+     * @param operatorNode : logical operator to check
+     * @return true if logical operator already present.
+     */
+    bool hasOperator(OperatorNodePtr operatorNode);
+
   private:
-    GlobalQueryNode(std::string queryId, OperatorNodePtr operatorNode);
+    GlobalQueryNode(std::string queryId, NodePtr operatorNode);
     GlobalQueryNode();
     std::vector<std::string> queryIds;
     std::vector<OperatorNodePtr> logicalOperators;
