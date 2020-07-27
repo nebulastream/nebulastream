@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
+#include <NodeStats.pb.h>
 #include <Topology/NESTopologyEntry.hpp>
 #include <memory>
 #include <mutex>
-#include <NodeStats.pb.h>
 
 namespace NES {
 class StreamCatalog;

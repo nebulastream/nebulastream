@@ -1,11 +1,10 @@
 #ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYENTRY_HPP_
 #define INCLUDE_TOPOLOGY_NESTOPOLOGYENTRY_HPP_
 
-
-#include <Util/CPUCapacity.hpp>
 #include <NodeStats.pb.h>
-#include <string>
+#include <Util/CPUCapacity.hpp>
 #include <memory>
+#include <string>
 
 namespace NES {
 
