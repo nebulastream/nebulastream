@@ -77,12 +77,6 @@ class SinkMedium {
    */
     SchemaPtr getSchemaPtr() const;
 
-//    /**
-//   * @brief method to set the current schema of the sink
-//   * @param schema description of the sink
-//   */
-//    void setSchemaPtr(SchemaPtr pSchema);
-
     /**
       * @brief method to return the type
       * @return type

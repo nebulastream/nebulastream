@@ -12,18 +12,6 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
-//
-//ZmqSink::ZmqSink()
-//    : host(""),
-//      port(0),
-//      tupleCnt(0),
-//      connected(false),
-//      context(zmq::context_t(1)),
-//      socket(zmq::socket_t(context, ZMQ_PUSH)) {
-//    NES_DEBUG(
-//        "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port);
-//}
-
 std::string ZmqSink::toString() {
     return "ZMQ_SINK";
 }

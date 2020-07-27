@@ -1,6 +1,6 @@
 #ifndef INCLUDE_SOURCESINK_SINKCREATOR_HPP_
 #define INCLUDE_SOURCESINK_SINKCREATOR_HPP_
-#include "Network/NetworkSink.hpp"
+#include <Network/NetworkSink.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
@@ -18,46 +18,51 @@ const DataSinkPtr createTestSink();
 /**
  * @brief create a csv test sink without a schema and append to existing file
  * @param schema of sink
+ * @param bufferManager
  * @param path to file
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
 
-const DataSinkPtr createCSVFileSink(SchemaPtr schema, const std::string& filePath, BufferManagerPtr bufferManager, bool append);
+const DataSinkPtr createCSVFileSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& filePath, bool append);
 
 /**
  * @brief create a binary test sink with a schema
  * @param schema of sink
+ * @param bufferManager
  * @param path to file
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createTextFileSink(SchemaPtr schema,
-                                               const std::string& filePath, BufferManagerPtr bufferManager, bool append);
+const DataSinkPtr createTextFileSink(SchemaPtr schema, BufferManagerPtr bufferManager,
+                                               const std::string& filePath, bool append);
 
 /**
  * @brief create a binary test sink with a schema into the nes
  * @param schema of sink
+ * @param bufferManager
  * @param path to file
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema,
-                                                    const std::string& filePath, BufferManagerPtr bufferManager, bool append);
+const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, BufferManagerPtr bufferManager,
+                                                    const std::string& filePath, bool append);
 
 /**
  * @brief create a JSON test sink with a schema int
  * @param schema of sink
+ * @param bufferManager
  * @param path to file
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createJSONFileSink(SchemaPtr schema,
-                                               const std::string& filePath, BufferManagerPtr bufferManager, bool append);
+const DataSinkPtr createJSONFileSink(SchemaPtr schema, BufferManagerPtr bufferManager,
+                                               const std::string& filePath, bool append);
 
 /**
  * @brief create a ZMQ test sink with a schema and Text format output
  * @param schema of sink
+ * @param bufferManager
  * @param hostname as sting
  * @param port at uint16
  * @return a data sink pointer
@@ -68,22 +73,46 @@ const DataSinkPtr createTextZmqSink(SchemaPtr schema, const std::string& host,
 /**
  * @brief create a ZMQ test sink with a schema and CSV format output
  * @param schema of sink
+ * @param bufferManager
  * @param hostname as sting
  * @param port at uint16
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVZmqSink(SchemaPtr schema, const std::string& host,
-                                    const uint16_t port, BufferManagerPtr bufferManager);
+const DataSinkPtr createCSVZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host,
+                                    const uint16_t port);
 
 /**
  * @brief create a ZMQ test sink with a schema and NES_FORMAT format output
  * @param schema of sink
+ * @param bufferManager
  * @param hostname as sting
  * @param port at uint16
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, const std::string& host,
-                                    const uint16_t port, BufferManagerPtr bufferManager);
+const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host,
+                                    const uint16_t port);
+
+
+/**
+ * @brief create a print test sink with a schema
+ * @param schema of sink
+ * @param bufferManager
+ * @param output stream
+ * @return a data sink pointer
+ */
+const DataSinkPtr createTextPrintSink(SchemaPtr schema, BufferManagerPtr bufferManager, std::ostream& out);
+
+
+
+/**
+ * @brief create a print test sink with a schema
+ * @param schema of sink
+ * @param bufferManager
+ * @param output stream
+ * @return a data sink pointer
+ */
+const DataSinkPtr createCSVPrintSink(SchemaPtr schema, BufferManagerPtr bufferManager, std::ostream& out);
+
 
 
 /**
@@ -92,27 +121,7 @@ const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, const std::string& host,
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createTextPrintSink(SchemaPtr schema, std::ostream& out, BufferManagerPtr bufferManager);
-
-
-
-/**
- * @brief create a print test sink with a schema
- * @param schema of sink
- * @param output stream
- * @return a data sink pointer
- */
-const DataSinkPtr createCSVPrintSink(SchemaPtr schema, std::ostream& out, BufferManagerPtr bufferManager);
-
-
-
-/**
- * @brief create a print test sink with a schema
- * @param schema of sink
- * @param output stream
- * @return a data sink pointer
- */
-const DataSinkPtr createBinaryPrintSink(SchemaPtr schema, std::ostream& out, BufferManagerPtr bufferManager);
+const DataSinkPtr createBinaryPrintSink(SchemaPtr schema, BufferManagerPtr bufferManager, std::ostream& out);
 
 /**
  * @brief create a network data sink

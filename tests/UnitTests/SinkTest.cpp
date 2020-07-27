@@ -6,7 +6,8 @@
 #include <gtest/gtest.h>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include "SerializableOperator.pb.h"
-
+#include <ostream>
+#include <fstream>
 using namespace std;
 
 /**
@@ -27,6 +28,7 @@ class SinkTest : public testing::Test {
     bool write_result;
     std::string path_to_csv_file;
     std::string path_to_bin_file;
+    std::string path_to_osfile_file;
 
     static void SetUpTestCase() {
         NES::setupLogging("SinkTest.log", NES::LOG_DEBUG);
@@ -44,6 +46,8 @@ class SinkTest : public testing::Test {
         write_result = false;
         path_to_csv_file = "../tests/test_data/sink.csv";
         path_to_bin_file = "../tests/test_data/sink.bin";
+        path_to_osfile_file = "../tests/test_data/testOs.txt";
+
     }
 
     /* Called after a single test. */
@@ -51,15 +55,17 @@ class SinkTest : public testing::Test {
         std::cout << "Tear down SinkTest test case." << std::endl;
         std::remove(path_to_csv_file.c_str());
         std::remove(path_to_bin_file.c_str());
+        std::remove(path_to_osfile_file.c_str());
+
     }
 };
 
-TEST_F(SinkTest, testCSVSink) {
+TEST_F(SinkTest, testCSVFileSink) {
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr csvSink = createCSVFileSink(test_schema, path_to_csv_file, nodeEngine->getBufferManager(), true);
+    const DataSinkPtr csvSink = createCSVFileSink(test_schema, nodeEngine->getBufferManager(), path_to_csv_file, true);
     for (size_t i = 0; i < 2; ++i) {
         for (size_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -98,13 +104,13 @@ TEST_F(SinkTest, testCSVSink) {
     }
 }
 
-TEST_F(SinkTest, testTextSink) {
+TEST_F(SinkTest, testTextFileSink) {
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    const DataSinkPtr binSink = createTextFileSink(test_schema, path_to_csv_file, nodeEngine->getBufferManager(), true);
+    const DataSinkPtr binSink = createTextFileSink(test_schema, nodeEngine->getBufferManager(), path_to_csv_file, true);
     for (size_t i = 0; i < 5; ++i) {
         for (size_t j = 0; j < 5; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -127,12 +133,12 @@ TEST_F(SinkTest, testTextSink) {
     buffer.release();
 }
 
-TEST_F(SinkTest, testNESBinarySink) {
+TEST_F(SinkTest, testNESBinaryFileSink) {
     NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
     nodeEngine->start();
 
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr binSink = createBinaryNESFileSink(test_schema, path_to_bin_file, nodeEngine->getBufferManager(), true);
+    const DataSinkPtr binSink = createBinaryNESFileSink(test_schema, nodeEngine->getBufferManager(), path_to_bin_file, true);
     for (size_t i = 0; i < 2; ++i) {
         for (size_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -178,5 +184,88 @@ TEST_F(SinkTest, testNESBinarySink) {
     EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema), UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
 }
 
+TEST_F(SinkTest, testCSVPrintSink) {
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
+
+    std::filebuf fb;
+    fb.open (path_to_osfile_file ,std::ios::out);
+    std::ostream os(&fb);
+
+    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    const DataSinkPtr csvSink = createCSVPrintSink(test_schema, nodeEngine->getBufferManager(), os);
+    for (size_t i = 0; i < 2; ++i) {
+        for (size_t j = 0; j < 2; ++j) {
+            buffer.getBuffer<uint64_t>()[j] = j;
+        }
+    }
+    buffer.setNumberOfTuples(4);
+    cout << "bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+    write_result = csvSink->writeData(buffer);
+
+    EXPECT_TRUE(write_result);
+    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    cout << "Buffer Content= " << bufferContent << endl;
+
+    ifstream testFile(path_to_osfile_file.c_str());
+    EXPECT_TRUE(testFile.good());
+    std::ifstream ifs(path_to_osfile_file.c_str());
+    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
+                            (std::istreambuf_iterator<char>()));
+
+    cout << "File Content=" << fileContent << endl;
+    //search for each value
+    string contentWOHeader = fileContent.erase(0, fileContent.find("\n") + 1);
+    UtilityFunctions::findAndReplaceAll(contentWOHeader, "\n", ",");
+    cout << "File Content shrinked=" << contentWOHeader << endl;
+
+    stringstream ss(contentWOHeader);
+    string item;
+    while (getline(ss, item, ',')) {
+        cout << item << endl;
+        if (bufferContent.find(item) != std::string::npos) {
+            cout << "found token=" << item << endl;
+        } else {
+            cout << "NOT found token=" << item << endl;
+            EXPECT_TRUE(false);
+        }
+    }
+    fb.close();
+}
+
+
+TEST_F(SinkTest, testTextPrintSink) {
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
+
+    std::filebuf fb;
+    fb.open (path_to_osfile_file ,std::ios::out);
+    std::ostream os(&fb);
+
+    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+
+    const DataSinkPtr binSink = createTextPrintSink(test_schema, nodeEngine->getBufferManager(), os);
+    for (size_t i = 0; i < 5; ++i) {
+        for (size_t j = 0; j < 5; ++j) {
+            buffer.getBuffer<uint64_t>()[j] = j;
+        }
+    }
+    buffer.setNumberOfTuples(25);
+    write_result = binSink->writeData(buffer);
+    EXPECT_TRUE(write_result);
+    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    cout << "Buffer Content= " << bufferContent << endl;
+
+    ifstream testFile(path_to_osfile_file.c_str());
+    EXPECT_TRUE(testFile.good());
+    std::ifstream ifs(path_to_osfile_file   .c_str());
+    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
+                            (std::istreambuf_iterator<char>()));
+
+    cout << "File Content=" << fileContent << endl;
+    EXPECT_EQ(bufferContent, fileContent.substr(0, fileContent.size()-1));
+    buffer.release();
+    fb.close();
+}
 
 }// namespace NES

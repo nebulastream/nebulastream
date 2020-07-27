@@ -244,14 +244,12 @@ InputQuery& InputQuery::window(const NES::WindowTypePtr windowType,
 
 // output operators
 InputQuery& InputQuery::writeToFile(const std::string& file_name) {
-    assert(0);
     return *this;
 }
 
 // output operators
 InputQuery& InputQuery::writeToCSVFile(const std::string& file_name, const std::string& outputMode) {
     OperatorPtr op;
-    assert(0);
 }
 
 InputQuery& InputQuery::writeToZmq(const std::string& logicalStreamName,
@@ -263,7 +261,7 @@ InputQuery& InputQuery::print(std::ostream& out) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(1024, 1024);//TODO remove this workaround
 
     OperatorPtr op = createSinkOperator(
-        createTextPrintSink(this->sourceStream->getSchema(), out, bufferManager));
+        createTextPrintSink(this->sourceStream->getSchema(), bufferManager, out));
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
     addChild(op, root);
