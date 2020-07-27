@@ -19,26 +19,13 @@ class ConnectivityController : public BaseController {
     explicit ConnectivityController();
 
     ~ConnectivityController() = default;
-
     /**
      * Handling the Get requests for the query
      * @param path : the url of the rest request
      * @param message : the user message
      */
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
-
-    /**
-     * Handling the POST requests for the query
-     * @param path: the url of the rest request
-     * @param message: the user message
-     */
-    void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
-
-  private:
-
 };
 
 typedef std::shared_ptr<ConnectivityController> ConnectivityControllerPtr;
-
-
 }// namespace NES

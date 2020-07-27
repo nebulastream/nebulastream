@@ -37,10 +37,8 @@ class RestEngine : public BaseController {
   private:
     QueryControllerPtr queryController;
     QueryCatalogControllerPtr queryCatalogController;
-
     StreamCatalogPtr streamCatalog;
     StreamCatalogControllerPtr streamCatalogController;
-
     ConnectivityControllerPtr connectivityController;
 
   public:
