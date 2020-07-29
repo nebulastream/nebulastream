@@ -111,14 +111,6 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, BufferManagerPtr bufferM
 const DataSinkPtr createCSVPrintSink(SchemaPtr schema, BufferManagerPtr bufferManager, std::ostream& out);
 
 /**
- * @brief create a print test sink with a schema
- * @param schema of sink
- * @param output stream
- * @return a data sink pointer
- */
-const DataSinkPtr createBinaryPrintSink(SchemaPtr schema, BufferManagerPtr bufferManager, std::ostream& out);
-
-/**
  * @brief create a network data sink
  * @param schema
  * @param networkManager

@@ -64,11 +64,6 @@ const DataSinkPtr createCSVPrintSink(SchemaPtr schema, BufferManagerPtr bufferMa
     return std::make_shared<PrintSink>(format, out);
 }
 
-const DataSinkPtr createBinaryPrintSink(SchemaPtr schema, BufferManagerPtr bufferManager, std::ostream& out) {
-    SinkFormatPtr format = std::make_shared<NesFormat>(schema, bufferManager);
-    return std::make_shared<PrintSink>(format, out);
-}
-
 const DataSinkPtr createNetworkSink(SchemaPtr schema, Network::NetworkManagerPtr networkManager, Network::NodeLocation nodeLocation,
                                     Network::NesPartition nesPartition, BufferManagerPtr bufferManager, std::chrono::seconds waitTime, uint8_t retryTimes) {
     return std::make_shared<Network::NetworkSink>(schema, networkManager, nodeLocation, nesPartition, bufferManager, waitTime, retryTimes);
