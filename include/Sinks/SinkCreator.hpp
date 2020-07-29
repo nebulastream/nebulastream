@@ -67,8 +67,8 @@ const DataSinkPtr createJSONFileSink(SchemaPtr schema, BufferManagerPtr bufferMa
  * @param port at uint16
  * @return a data sink pointer
  */
-const DataSinkPtr createTextZmqSink(SchemaPtr schema, const std::string& host,
-                                    const uint16_t port, BufferManagerPtr bufferManager);
+const DataSinkPtr createTextZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host,
+                                    const uint16_t port);
 
 /**
  * @brief create a ZMQ test sink with a schema and CSV format output

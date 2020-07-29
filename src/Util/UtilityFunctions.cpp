@@ -189,6 +189,9 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
 
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
+std::string UtilityFunctions::prettyPrintTupleBufferAsText(TupleBuffer& buffer, SchemaPtr schema) {
+
+}
 
 std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, SchemaPtr schema) {
     if (!buffer.isValid()) {

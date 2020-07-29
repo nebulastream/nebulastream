@@ -12,7 +12,11 @@ constexpr char const* NES_VERSION = "0.0.82";
 constexpr char const* NES_VERSION = "0.0.81";
 =======
 #define NES_VERSION_PATCH 80
+<<<<<<< HEAD
 constexpr char const* NES_VERSION      = "0.0.80-84cb5518-SNAPSHOT";
 >>>>>>> fix print tests
+=======
+constexpr char const* NES_VERSION      = "0.0.80-3d7e0531-SNAPSHOT";
+>>>>>>> missing once
 #endif
 >>>>>>> fix print tests

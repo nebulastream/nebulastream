@@ -64,6 +64,14 @@ class UtilityFunctions {
     static std::string prettyPrintTupleBuffer(TupleBuffer& buffer, SchemaPtr schema);
 
     /**
+   * @brief Outputs a tuple buffer accordingly to a specific schema but in text format
+   * @param buffer the tuple buffer
+   * @param schema
+   * @return
+   */
+    static std::string prettyPrintTupleBufferAsText(TupleBuffer& buffer, SchemaPtr schema);
+
+    /**
     * @brief this method creates a string from the content of a tuple buffer
     * @return string of the buffer content
     */

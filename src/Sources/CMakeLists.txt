@@ -4,7 +4,7 @@ add_source_nes(
         BinarySource.cpp
         ZmqSource.cpp
         CSVSource.cpp
-        TestSources.cpp
+        SourceCreator.cpp
         DefaultSource.cpp
         SenseSource.cpp
         AdaptiveSource.cpp

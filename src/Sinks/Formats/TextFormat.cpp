@@ -28,21 +28,21 @@ std::vector<TupleBuffer> TextFormat::getData(TupleBuffer& inputBuffer) {
     NES_DEBUG("TextFormat::getData content size=" << contentSize << " content=" << bufferContent);
 
     if (inputBuffer.getBufferSize() < contentSize) {
-        NES_DEBUG("CsvFormat::getData: content is larger than one buffer");
+        NES_DEBUG("TextFormat::getData: content is larger than one buffer");
         size_t numberOfBuffers = contentSize / inputBuffer.getBufferSize();
         for (size_t i = 0; i < numberOfBuffers; i++) {
             std::string copyString = bufferContent.substr(0, contentSize);
             bufferContent = bufferContent.substr(contentSize, bufferContent.length() - contentSize);
-            NES_DEBUG("CsvFormat::getData: copy string=" << copyString << " new content=" << bufferContent);
+            NES_DEBUG("TextFormat::getData: copy string=" << copyString << " new content=" << bufferContent);
             auto buf = this->bufferManager->getBufferBlocking();
             std::copy(copyString.begin(), copyString.end(), buf.getBuffer());
             buf.setNumberOfTuples(contentSize);
             buffers.push_back(buf);
         }
-        NES_DEBUG("CsvFormat::getData: successfully copied buffer=" << numberOfBuffers);
+        NES_DEBUG("TextFormat::getData: successfully copied buffer=" << numberOfBuffers);
 
     } else {
-        NES_DEBUG("CsvFormat::getData: content fits in one buffer");
+        NES_DEBUG("TextFormat::getData: content fits in one buffer");
         auto buf = this->bufferManager->getBufferBlocking();
         std::memcpy(buf.getBuffer(), bufferContent.c_str(), contentSize);
         buf.setNumberOfTuples(contentSize);
