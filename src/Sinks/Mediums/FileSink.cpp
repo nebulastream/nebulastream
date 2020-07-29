@@ -35,8 +35,6 @@ void FileSink::shutdown() {
 }
 
 bool FileSink::writeData(TupleBuffer& inputBuffer) {
-    //TODO add lock?
-
     NES_DEBUG("FileSink: getSchema medium " << toString() << " format " << sinkFormat->toString()
                                             << " and mode " << this->getAppendAsString());
 
@@ -52,7 +50,7 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
             outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
 
             outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
-            NES_DEBUG("CsvFormat::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString());
+            NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString());
             outputFile.close();
 
             schemaWritten = true;

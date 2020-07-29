@@ -1,5 +1,5 @@
 add_source_nes(
-        TestSinks.cpp
+        SinkCreator.cpp
 )
 
 add_subdirectory(Mediums)

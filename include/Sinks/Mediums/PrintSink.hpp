@@ -46,7 +46,7 @@ class PrintSink : public SinkMedium {
      * @param tuple buffer to write
      * @return bool indicating success of the write
      */
-    bool writeData(TupleBuffer& input_buffer) override;
+    bool writeData(TupleBuffer& inputBuffer) override;
 
     /**
      * @brief override the toString method for the print sink
