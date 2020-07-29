@@ -125,6 +125,16 @@ const std::string Schema::toString() const {
     return ss.str();
 }
 
+const std::string Schema::toCSVString() const {
+    std::stringstream ss;
+    for (auto& f : fields) {
+        ss << f->toString() << ",";
+    }
+    ss.seekp(-1, std::ios_base::end);
+    ss << std::endl;
+    return ss.str();
+}
+
 AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
 };

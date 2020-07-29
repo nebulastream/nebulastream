@@ -69,7 +69,7 @@ std::optional<TupleBuffer> ZmqSource::receiveData() {
             buffer.setNumberOfTuples(tupleCnt);
 
             if (buffer.getBufferSize() == new_data2.size()) {
-                NES_WARNING("ZMQSource  " << this << ": return buffer ");
+                NES_WARNING("ZMQSource  " << this << ": return buffer");
             }
             return buffer;
         } catch (const zmq::error_t& ex) {

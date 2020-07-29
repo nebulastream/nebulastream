@@ -47,7 +47,6 @@ class ZmqSink : public SinkMedium {
 
     std::string host;
     uint16_t port;
-    size_t tupleCnt;
 
     bool connected;
     zmq::context_t context;

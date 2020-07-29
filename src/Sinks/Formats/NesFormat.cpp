@@ -17,6 +17,7 @@ std::optional<TupleBuffer> NesFormat::getSchema() {
     bool success = protoBuff->SerializeToArray(buf.getBuffer(), protoBuff->ByteSize());
     NES_DEBUG("NesFormat::getSchema: write schema"
               << " success=" << success);
+    buf.setNumberOfTuples(protoBuff->ByteSize());
     return buf;
 }
 
