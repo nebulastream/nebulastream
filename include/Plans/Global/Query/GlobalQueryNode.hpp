@@ -72,6 +72,18 @@ class GlobalQueryNode : public Node {
      */
     bool hasOperator(OperatorNodePtr operatorNode);
 
+    /**
+     * @brief Check if the Global query node is empty or not.
+     * @return true if there exists no logical query operator in the node.
+     */
+    bool isEmpty();
+
+    /**
+     * @brief helper function of get global query nodes with specific logical operator type
+     */
+    template<class NodeType>
+    void getNodesWithTypeHelper(std::vector<GlobalQueryNodePtr>& foundNodes);
+
   private:
     GlobalQueryNode(std::string queryId, NodePtr operatorNode);
     GlobalQueryNode();

@@ -48,28 +48,20 @@ class GlobalQueryPlan {
     void removeQuery(std::string queryId);
 
     /**
-     * @brief Get all sink operators in the query plan
-     * @return vector of sink operators
+     * @brief Get all newly added Global Query Nodes with NodeType operators
+     * @tparam NodeType: type of logical operator
+     * @return vector of global query nodes
      */
-    std::vector<SinkLogicalOperatorNodePtr> getAllSinkOperators();
+    template<class NodeType>
+    std::vector<GlobalQueryNodePtr> getAllNewGlobalQueryNodesWithOperatorType();
 
     /**
-     * @brief Get all source operators in the query plan
-     * @return vector of source operators
+     * @brief Get all Global Query Nodes with NodeType operators
+     * @tparam NodeType: type of logical operator
+     * @return vector of global query nodes
      */
-    std::vector<SourceLogicalOperatorNodePtr> getAllSourceOperators();
-
-    /**
-     * @brief Get all newly added sink operators in the global query plan
-     * @return vector of sink operators
-     */
-    std::vector<SinkLogicalOperatorNodePtr> getAllNewSinkOperators();
-
-    /**
-     * @brief Get all newly added source operators in the global query plan
-     * @return vector of source operators
-     */
-    std::vector<SourceLogicalOperatorNodePtr> getAllNewSourceOperators();
+    template<class NodeType>
+    std::vector<GlobalQueryNodePtr> getAllGlobalQueryNodesWithOperatorType();
 
   private:
     GlobalQueryPlan();
