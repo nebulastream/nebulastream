@@ -24,6 +24,8 @@ class MemoryMetrics {
     uint64_t LOADS_15MIN;
 };
 
+typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
+
 }
 
 

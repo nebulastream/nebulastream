@@ -5,12 +5,17 @@
 
 namespace NES {
 
-bool MetricGroup::add(const std::string& name, Metric* metric) {
-    metricMap[name] = metric;
+std::shared_ptr<MetricGroup> MetricGroup::create() {
+    return std::shared_ptr<MetricGroup>();
 }
 
-std::unordered_map<std::string, Metric*> MetricGroup::getRegisteredMetrics() const {
-    return this->metricMap;
+bool MetricGroup::addMetric(const std::string& name, Metric* metric) {
+    metricMap.insert(std::make_pair(name, metric));
+    return true;
+}
+
+MetricPtr MetricGroup::getRegisteredMetric(const std::string& name) const {
+    return this->metricMap.at(name);
 }
 
 }

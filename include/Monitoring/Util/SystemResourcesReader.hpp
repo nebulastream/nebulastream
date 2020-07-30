@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_RUNTIME_UTIL_SYSTEMRESOURCESCOUNTER_HPP_
 #define NES_INCLUDE_RUNTIME_UTIL_SYSTEMRESOURCESCOUNTER_HPP_
 
-#include <Monitoring/Metrics/Gauge.hpp>
 #include <string>
 #include <unordered_map>
+#include <memory>
 
 namespace NES {
 
@@ -42,7 +42,7 @@ class SystemResourcesReader {
      * separate map
      * @return a map where each interface is mapping the according network statistics map.
      */
-    static NetworkMetrics NetworkStats();
+    static NetworkMetrics ReadNetworkStats();
 
 
   private:

@@ -1,18 +1,14 @@
 #include <gtest/gtest.h>
 #include <Util/Logger.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
-#include <Monitoring/Metrics/Metric.hpp>
-#include <Monitoring/Metrics/Gauge.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <memory>
 #include <Monitoring/Protocols/SamplingProtocol.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Monitoring/MetricValues/CpuValues.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/DiscMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
-
 
 namespace NES {
 class MonitoringStackTest : public testing::Test {
@@ -40,19 +36,20 @@ class MonitoringStackTest : public testing::Test {
 
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
-    CpuMetrics cpuMetrics = cpuStats.readValue();
+    CpuMetrics cpuMetrics = cpuStats->readValue();
     ASSERT_TRUE(cpuMetrics.size() > 0);
     for (int i=0; i<cpuMetrics.size(); i++){
-        ASSERT_TRUE(cpuMetrics[i].USER > 0);
+        ASSERT_TRUE(cpuMetrics.getValues(i).USER > 0);
     }
+    ASSERT_TRUE(cpuMetrics.getTotal().USER > 0);
 
     auto cpuIdle = MetricUtils::CPUIdle(0);
-    NES_INFO("MonitoringStackTest: Idle " << cpuIdle.readValue());
+    NES_INFO("MonitoringStackTest: Idle " << cpuIdle->readValue());
 }
 
 TEST_F(MonitoringStackTest, testMemoryStats) {
     auto memStats = MetricUtils::MemoryStats();
-    auto memMetrics = memStats.readValue();
+    auto memMetrics = memStats->readValue();
     ASSERT_TRUE(memMetrics.FREE_RAM > 0);
 
     NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM/(1024*1024) << "gb");
@@ -60,13 +57,13 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
 
 TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskStats = MetricUtils::DiskStats();
-    auto diskMetrics = diskStats.readValue();
+    auto diskMetrics = diskStats->readValue();
     ASSERT_TRUE(diskMetrics.F_BAVAIL > 0);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
     auto networkStats = MetricUtils::NetworkStats();
-    auto networkMetrics = networkStats.readValue();
+    auto networkMetrics = networkStats->readValue();
     ASSERT_TRUE(!networkMetrics.getInterfaceNames().empty());
 
     for (std::string intfs : networkMetrics.getInterfaceNames()) {
@@ -75,19 +72,20 @@ TEST_F(MonitoringStackTest, testNetworkStats) {
 }
 
 TEST_F(MonitoringStackTest, testMetricCollector) {
+    //TODO: Will be solved by issue #886
     auto cpuStats = MetricUtils::CPUStats();
     auto networkStats = MetricUtils::NetworkStats();
     auto diskStats = MetricUtils::DiskStats();
     auto memStats = MetricUtils::MemoryStats();
 
-    auto systemMetrics = MetricGroup();
-    //systemMetrics.add("cpu", cpuStats);
-    systemMetrics.add("network", &networkStats);
-    systemMetrics.add("disk", &diskStats);
-    systemMetrics.add("mem", &memStats);
+    auto systemMetrics = MetricGroup::create();
+    //systemMetrics->addMetric("cpu", new IntCounter());
+    //systemMetrics.addGauge("network", &networkStats);
+    //systemMetrics.addGauge("disk", &diskStats);
+    //systemMetrics.addGauge("mem", &memStats);
 
     //static sampling func
-    auto samplingProtocolPtr = std::make_shared<SamplingProtocol>([&systemMetrics]() {
+    auto samplingProtocolPtr = std::make_shared<SamplingProtocol>([systemMetrics]() {
       sleep(5);
       return systemMetrics;
     });

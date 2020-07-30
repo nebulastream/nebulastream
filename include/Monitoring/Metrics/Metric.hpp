@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 
+#include <memory>
 namespace NES {
 
 /**
@@ -34,6 +35,8 @@ class Metric {
   private:
     MetricType metricType;
 };
+
+typedef std::shared_ptr<Metric> MetricPtr;
 
 }
 

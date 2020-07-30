@@ -2,6 +2,7 @@
 #define NES_INCLUDE_MONITORING_METRICS_COUNTER_HPP_
 
 #include <Monitoring/Metrics/Metric.hpp>
+#include <memory>
 
 namespace NES {
 
@@ -23,6 +24,8 @@ class Counter: public Metric {
      */
      virtual void dec() = 0;
 };
+
+typedef std::shared_ptr<Counter> CounterPtr;
 
 }
 
