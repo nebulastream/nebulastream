@@ -81,6 +81,11 @@ class GlobalQueryNode : public Node {
     bool isEmpty();
 
     /**
+     * @brief Mark the GlobalQueryNode as updated
+     */
+    void markAsUpdated();
+
+    /**
      * @brief helper function of get global query nodes with specific logical operator type
      */
     template<class T>

@@ -55,6 +55,7 @@ bool GlobalQueryNode::removeQuery(const std::string& queryId) {
     OperatorNodePtr logicalOperator = queryToOperatorMap[queryId];
     if (logicalOperator) {
         queryToOperatorMap.erase(queryId);
+        querySetUpdated = true;
         std::vector<std::string> associatedQueries = operatorToQueryMap[logicalOperator];
         if (associatedQueries.size() > 1) {
             auto itr = std::find(associatedQueries.begin(), associatedQueries.end(), queryId);
@@ -64,6 +65,7 @@ bool GlobalQueryNode::removeQuery(const std::string& queryId) {
             operatorToQueryMap.erase(logicalOperator);
             auto iterator = std::find(logicalOperators.begin(), logicalOperators.end(), logicalOperator);
             logicalOperators.erase(iterator);
+            operatorSetUpdated = true;
         }
         return true;
     }
@@ -74,9 +76,10 @@ bool GlobalQueryNode::hasNewUpdate() {
     return querySetUpdated || operatorSetUpdated;
 }
 
-//void GlobalQueryNode::markAsUpdated() {
-//
-//}
+void GlobalQueryNode::markAsUpdated() {
+    querySetUpdated = false;
+    operatorSetUpdated = false;
+}
 
 const std::string GlobalQueryNode::toString() const {
     std::stringstream operatorString;
