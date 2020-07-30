@@ -1,6 +1,8 @@
 #ifndef NES_INCLUDE_RUNTIME_METRICQUERYSERVICE_HPP_
 #define NES_INCLUDE_RUNTIME_METRICQUERYSERVICE_HPP_
 
+#include <Util/Logger.hpp>
+
 namespace NES {
 
 /**
@@ -8,7 +10,9 @@ namespace NES {
  */
 class MetricQueryService {
   public:
-    MetricQueryService();
+    MetricQueryService() {
+        NES_NOT_IMPLEMENTED();
+    };
 
 };
 
