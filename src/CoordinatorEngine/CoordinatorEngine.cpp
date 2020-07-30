@@ -25,7 +25,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
                                        size_t numberOfCPUs,
                                        NodeStats nodeStats,
                                        NESNodeType type) {
-    NES_DEBUG("CoordinatorEngine: Register Node address=" << address
+    NES_TRACE("CoordinatorEngine: Register Node address=" << address
                                                           << " numberOfCpus=" << numberOfCPUs
                                                           << " nodeProperties=" << nodeStats.DebugString()
                                                           << " type=" << type);

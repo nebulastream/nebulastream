@@ -232,7 +232,7 @@ bool CoordinatorRPCClient::registerNode(std::string localAddress,
     request.set_numberofcpus(numberOfCpus);
     request.mutable_nodeproperties()->CopyFrom(nodeStats);
     request.set_type(type);
-    NES_DEBUG("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
+    NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
 
     RegisterNodeReply reply;
     ClientContext context;
