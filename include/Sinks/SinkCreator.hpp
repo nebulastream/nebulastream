@@ -65,6 +65,7 @@ const DataSinkPtr createJSONFileSink(SchemaPtr schema, BufferManagerPtr bufferMa
  * @param bufferManager
  * @param hostname as sting
  * @param port at uint16
+ * @param internal refers to the usage of this zmq sink as a fwd operator such that we dont have to send the schema, only the data
  * @return a data sink pointer
  */
 const DataSinkPtr createTextZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host,
@@ -90,7 +91,7 @@ const DataSinkPtr createCSVZmqSink(SchemaPtr schema, BufferManagerPtr bufferMana
  * @return a data sink pointer
  */
 const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host,
-                                      const uint16_t port);
+                                      const uint16_t port, bool internal);
 
 /**
  * @brief create a print test sink with a schema

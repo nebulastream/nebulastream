@@ -19,6 +19,13 @@ FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append
     this->filePath = filePath;
     this->sinkFormat = format;
     this->append = append;
+    if(!append)
+    {
+        std::ofstream outputFile;
+        //TODO: append cannot be done here and has to be done once during initialization
+        outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
+        outputFile.close();
+    }
 }
 
 const std::string FileSink::toString() const {
@@ -47,16 +54,19 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
         auto schemaBuffer = sinkFormat->getSchema();
         if (schemaBuffer) {
             std::ofstream outputFile;
-            outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
+            size_t idx = filePath.rfind(".");
+            std::string shrinkedPath = filePath.substr(0, idx + 1);
+            std::string schemaFile = shrinkedPath + "schema";
+            NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString()  << " to file=" << schemaFile);
+
+            outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
 
             outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
-            NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString());
             outputFile.close();
 
             schemaWritten = true;
             NES_DEBUG("FileSink::writeData: write written");
-        }
-        {
+        } else {
             NES_DEBUG("FileSink::writeData: no schema written");
         }
     } else {
@@ -66,13 +76,9 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
     NES_DEBUG("FileSink::getData: write data");
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     std::ofstream outputFile;
-    if (append) {
-        NES_DEBUG("file appending in path=" << filePath);
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
-    } else {
-        NES_DEBUG("file overwriting in path=" << filePath);
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
-    }
+    //TODO: append cannot be done here and has to be done once during initialization
+    outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+
     for (auto buffer : dataBuffers) {
         NES_DEBUG("FileSink::getData: write buffer of size " << buffer.getNumberOfTuples());
         if (sinkFormat->getSinkFormat() == NES_FORMAT) {

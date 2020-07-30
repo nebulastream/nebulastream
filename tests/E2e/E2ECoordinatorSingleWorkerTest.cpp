@@ -178,7 +178,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 }
 
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithFileOutputWithFilter) {
     cout << " start coordinator" << endl;
     std::string outputFilePath = "UserQueryWithFileOutputWithFilterTestResult.txt";
     remove(outputFilePath.c_str());
@@ -196,7 +196,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"default_logical\\\").filter(Attribute(\\\"id\\\") > 3).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"default_logical\\\").filter(Attribute(\\\"id\\\") > 1).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
@@ -227,7 +227,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::cout << "Query ID: " << queryId << std::endl;
     EXPECT_TRUE(!queryId.empty());
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 0));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
     // if filter is applied correctly, no output is generated
     ifstream outFile(outputFilePath);

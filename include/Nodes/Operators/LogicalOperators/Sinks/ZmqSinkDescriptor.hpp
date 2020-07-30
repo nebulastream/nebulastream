@@ -12,7 +12,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
 
   public:
     /**
-     * @brief Creates the ZMQ sink descriptot
+     * @brief Creates the ZMQ sink description
      * @param host: host name for connecting to zmq
      * @param port: port number for connecting to zmq
      * @return descriptor for ZMQ sink

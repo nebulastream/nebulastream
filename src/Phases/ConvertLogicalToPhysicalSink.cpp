@@ -23,7 +23,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, Buffe
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
-        return createBinaryZmqSink(schema, bufferManager, zmqSinkDescriptor->getHost(), zmqSinkDescriptor->getPort());
+        return createBinaryZmqSink(schema, bufferManager, zmqSinkDescriptor->getHost(), zmqSinkDescriptor->getPort(), true);
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
