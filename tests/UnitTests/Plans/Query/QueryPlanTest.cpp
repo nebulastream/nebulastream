@@ -4,7 +4,6 @@
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>

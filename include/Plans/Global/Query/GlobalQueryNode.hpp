@@ -22,16 +22,24 @@ class GlobalQueryNode : public Node {
   public:
     /**
      * @brief Creates empty global query node
+     * @param id: id of the global query node
      */
-    static GlobalQueryNodePtr createEmpty();
+    static GlobalQueryNodePtr createEmpty(uint64_t id);
 
     /**
      * @brief Global Query Operator builder
+     * @param id: id of the global query node
      * @param queryId: query id of the query
      * @param operatorNode: logical operator
      * @return Shared pointer to the instance of Global Query Operator instance
      */
-    static GlobalQueryNodePtr create(std::string queryId, OperatorNodePtr operatorNode);
+    static GlobalQueryNodePtr create(uint64_t id, std::string queryId, OperatorNodePtr operatorNode);
+
+    /**
+     * @brief Get id of the node
+     * @return node id
+     */
+    uint64_t getId();
 
     /**
      * @brief Add the id of a new query to the Global Query Operator
@@ -51,13 +59,13 @@ class GlobalQueryNode : public Node {
      * @param queryId
      * @return true if successful
      */
-    bool removeQuery(std::string queryId);
+    bool removeQuery(const std::string& queryId);
 
     /**
      * @brief Check if the global query node was updated.
      * @return true if updated else false.
      */
-    bool wasUpdated();
+    bool hasNewUpdate();
 
     /**
      * @brief Check if logical operator already present in the node
@@ -75,17 +83,35 @@ class GlobalQueryNode : public Node {
     /**
      * @brief helper function of get global query nodes with specific logical operator type
      */
-    template<class NodeType>
-    void getNodesWithTypeHelper(std::vector<GlobalQueryNodePtr>& foundNodes);
+    template<class T>
+    void getNodesWithTypeHelper(std::vector<GlobalQueryNodePtr>& foundNodes) {
+
+        if (logicalOperators.empty()) {
+            return;
+        }
+
+        for (auto logicalOperator : logicalOperators) {
+            if (logicalOperators[0]->instanceOf<T>()) {
+                foundNodes.push_back(shared_from_this()->as<GlobalQueryNode>());
+                break;
+            }
+        }
+
+        for (auto& successor : this->children) {
+            successor->as<GlobalQueryNode>()->getNodesWithTypeHelper<T>(foundNodes);
+        }
+    }
 
     const std::string toString() const override;
 
   private:
-    GlobalQueryNode(std::string queryId, OperatorNodePtr operatorNode);
+    GlobalQueryNode(uint64_t id);
+    GlobalQueryNode(uint64_t id, std::string queryId, OperatorNodePtr operatorNode);
+    uint64_t id;
     std::vector<std::string> queryIds;
     std::vector<OperatorNodePtr> logicalOperators;
     std::map<std::string, OperatorNodePtr> queryToOperatorMap;
-    std::map<OperatorNodePtr,std::vector<std::string>> operatorToQueryMap;
+    std::map<OperatorNodePtr, std::vector<std::string>> operatorToQueryMap;
     bool scheduled;
     bool querySetUpdated;
     bool operatorSetUpdated;

@@ -7,8 +7,8 @@
 
 namespace NES {
 
-GlobalQueryPlan::GlobalQueryPlan() {
-    root = GlobalQueryNode::createEmpty();
+GlobalQueryPlan::GlobalQueryPlan() : freeGlobalQueryNodeId(0) {
+    root = GlobalQueryNode::createEmpty(getNextFreeId());
 }
 
 GlobalQueryPlanPtr GlobalQueryPlan::create() {
@@ -52,7 +52,7 @@ std::vector<GlobalQueryNodePtr> GlobalQueryPlan::getAllNewGlobalQueryNodesWithOp
     std::vector<GlobalQueryNodePtr> vector = getAllGlobalQueryNodesWithOperatorType<NodeType>();
     NES_DEBUG("GlobalQueryPlan: filter all pre-existing Global query nodes");
     std::remove_if(vector.begin(), vector.end(), [](GlobalQueryNodePtr globalQueryNode) {
-        return globalQueryNode->wasUpdated();
+        return globalQueryNode->hasNewUpdate();
     });
     return vector;
 }
@@ -83,7 +83,7 @@ void GlobalQueryPlan::addNewGlobalOperatorNodeAsChild(GlobalQueryNodePtr parentN
         }
     }
     NES_TRACE("GlobalQueryPlan: Creating a new global query node for query operator with id " << operatorNode->getId() << " of query " << queryId);
-    GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(queryId, operatorNode);
+    GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(getNextFreeId(), queryId, operatorNode);
     parentNode->addChild(globalQueryNode);
     NES_DEBUG("GlobalQueryPlan: adding new global query node for the children of query operator with id " << operatorNode->getId() << " of query " << queryId);
     std::vector<NodePtr> children = operatorNode->getChildren();
@@ -101,6 +101,10 @@ std::vector<GlobalQueryNodePtr> GlobalQueryPlan::getGlobalQueryNodesForQuery(std
         NES_TRACE("GlobalQueryPlan: Found GlobalQueryNodes for query: " << queryId);
         return queryToGlobalQueryNodeMap[queryId];
     }
+}
+
+uint64_t GlobalQueryPlan::getNextFreeId() {
+    return freeGlobalQueryNodeId++;
 }
 
 }// namespace NES

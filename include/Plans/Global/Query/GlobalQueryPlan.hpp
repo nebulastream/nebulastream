@@ -67,6 +67,12 @@ class GlobalQueryPlan {
     GlobalQueryPlan();
 
     /**
+     * @brief Get next free node id
+     * @return next free id
+     */
+    uint64_t getNextFreeId();
+
+    /**
      * @brief Add a new logical operator of a query as child to a given GlobalQueryNode.
      * @param parentNode: the global query node to which a new global query node is to be added as child.
      * @param queryId: the query id to which the logical operator belongs
@@ -81,6 +87,7 @@ class GlobalQueryPlan {
      */
     std::vector<GlobalQueryNodePtr> getGlobalQueryNodesForQuery(std::string queryId);
 
+    uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;
     std::map<std::string, std::vector<GlobalQueryNodePtr>> queryToGlobalQueryNodeMap;
     std::map<GlobalQueryNodePtr, std::vector<std::string>> globalQueryNodeToQueryMap;
