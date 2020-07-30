@@ -7,6 +7,7 @@ namespace NES {
 MetricCollector::MetricCollector(const MetricGroup& metricGroup, SamplingProtocolPtr samplingProtocol):
 metricGroup(metricGroup), samplingProtocol(samplingProtocol){
     NES_DEBUG("MetricCollector: Init()");
+    NES_NOT_IMPLEMENTED();
 }
 
 }
