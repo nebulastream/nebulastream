@@ -101,6 +101,8 @@ TEST_F(SinkTest, testCSVFileSink) {
             EXPECT_TRUE(false);
         }
     }
+    buffer.release();
+    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testTextFileSink) {
@@ -130,6 +132,7 @@ TEST_F(SinkTest, testTextFileSink) {
     cout << "File Content=" << fileContent << endl;
     EXPECT_EQ(bufferContent, fileContent);
     buffer.release();
+    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testNESBinaryFileSink) {
@@ -181,6 +184,8 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
 
     cout << "File path = " << path_to_bin_file << " Content=" << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema);
     EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema), UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+    buffer.release();
+    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testCSVPrintSink) {
@@ -230,6 +235,8 @@ TEST_F(SinkTest, testCSVPrintSink) {
         }
     }
     fb.close();
+    buffer.release();
+    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testTextPrintSink) {
@@ -264,6 +271,8 @@ TEST_F(SinkTest, testTextPrintSink) {
     EXPECT_EQ(bufferContent, fileContent.substr(0, fileContent.size() - 1));
     buffer.release();
     fb.close();
+    buffer.release();
+    nodeEngine->stop(true);
 }
 
 TEST_F(SinkTest, testCSVZMQSink) {
@@ -290,24 +299,28 @@ TEST_F(SinkTest, testCSVZMQSink) {
         // Receive data.
         auto schemaData = zmq_source->receiveData();
         TupleBuffer bufSchema = schemaData.value();
-        cout << "Schema=" << bufSchema.getBufferAs<char>() << endl;
-        EXPECT_EQ(test_schema->toCSVString(), bufSchema.getBufferAs<char>());
+        std::string schemaStr;
+        schemaStr.assign(bufSchema.getBufferAs<char>(), bufSchema.getNumberOfTuples());
+        cout << "Schema=" << schemaStr << endl;
+        EXPECT_EQ(test_schema->toCSVString(), schemaStr);
 
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
         cout << "Buffer=" << bufData.getBufferAs<char>() << endl;
 
         std::string bufferContent = UtilityFunctions::printTupleBufferAsCSV(buffer, test_schema);
+        std::string dataStr;
+        dataStr.assign(bufData.getBufferAs<char>(), bufData.getNumberOfTuples());
         cout << "Buffer Content received= " << bufferContent << endl;
-        EXPECT_EQ(bufferContent, bufData.getBufferAs<char>());
+        EXPECT_EQ(bufferContent, dataStr);
         receiving_finished = true;
     });
 
     // Wait until receiving is complete.
     zmq_sink->writeData(buffer);
     receiving_thread.join();
+    buffer.release();
     nodeEngine->stop(true);
-
 }
 
 TEST_F(SinkTest, testTextZMQSink) {
@@ -331,23 +344,20 @@ TEST_F(SinkTest, testTextZMQSink) {
     // Start thread for receivingh the data.
     bool receiving_finished = false;
     auto receiving_thread = std::thread([&]() {
-      auto bufferData = zmq_source->receiveData();
-      TupleBuffer bufData = bufferData.value();
+        auto bufferData = zmq_source->receiveData();
+        TupleBuffer bufData = bufferData.value();
 
-      cout << "Buffer size=" << bufData.getNumberOfTuples() << " content=" << bufData.getBufferAs<char>() << endl;
-
-      assert(0);
-      std::string bufferContent = UtilityFunctions::prettyPrintTupleBufferAsText(buffer, test_schema);
-      cout << "Buffer Content received= " << bufferContent << endl;
-      EXPECT_EQ(bufferContent, bufData.getBufferAs<char>());
-      receiving_finished = true;
+        std::string bufferContent = UtilityFunctions::printTupleBufferAsText(bufData);
+        cout << "Buffer Content received= " << bufferContent << endl;
+        EXPECT_EQ(bufferContent, UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+        receiving_finished = true;
     });
 
     // Wait until receiving is complete.
     zmq_sink->writeData(buffer);
     receiving_thread.join();
+    buffer.release();
     nodeEngine->stop(true);
-
 }
 
 TEST_F(SinkTest, testBinaryZMQSink) {
@@ -355,7 +365,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
     nodeEngine->start();
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, nodeEngine->getBufferManager(), "localhost", 666555);
+    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, nodeEngine->getBufferManager(), "localhost", 666555, false);
     for (size_t i = 1; i < 3; ++i) {
         for (size_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
@@ -371,22 +381,24 @@ TEST_F(SinkTest, testBinaryZMQSink) {
     // Start thread for receivingh the data.
     bool receiving_finished = false;
     auto receiving_thread = std::thread([&]() {
-      auto schemaData = zmq_source->receiveData();
-      TupleBuffer bufSchema = schemaData.value();
-      SerializableSchema* serializedSchema = new SerializableSchema();
-      serializedSchema->ParseFromArray(bufSchema.getBuffer(), bufSchema.getNumberOfTuples());
-      SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
-      EXPECT_EQ(ptr->toString(), test_schema->toString());
+        auto schemaData = zmq_source->receiveData();
+        TupleBuffer bufSchema = schemaData.value();
+        SerializableSchema* serializedSchema = new SerializableSchema();
+        serializedSchema->ParseFromArray(bufSchema.getBuffer(), bufSchema.getNumberOfTuples());
+        SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
+        EXPECT_EQ(ptr->toString(), test_schema->toString());
 
-      auto bufferData = zmq_source->receiveData();
-      TupleBuffer bufData = bufferData.value();
-      cout << "rec buffer tups=" << bufData.getNumberOfTuples() << " content=" << UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema) << endl;
-      cout << "ref buffer tups=" << buffer.getNumberOfTuples() << " content=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-      EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema), UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+        auto bufferData = zmq_source->receiveData();
+        TupleBuffer bufData = bufferData.value();
+        cout << "rec buffer tups=" << bufData.getNumberOfTuples() << " content=" << UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema) << endl;
+        cout << "ref buffer tups=" << buffer.getNumberOfTuples() << " content=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+        EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema), UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
     });
 
     // Wait until receiving is complete.
     zmq_sink->writeData(buffer);
     receiving_thread.join();
+    buffer.release();
+    nodeEngine->stop(true);
 }
 }// namespace NES

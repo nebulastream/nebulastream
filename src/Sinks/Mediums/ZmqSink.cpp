@@ -22,11 +22,13 @@ SinkMediumTypes ZmqSink::getSinkMediumType() {
 
 ZmqSink::ZmqSink(SinkFormatPtr format,
                  const std::string& host,
-                 const uint16_t port)
+                 const uint16_t port,
+                 bool internal)
     : SinkMedium(format),
       host(host.substr(0, host.find(":"))),
       port(port),
       connected(false),
+      internal(internal),
       context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG(
@@ -60,12 +62,11 @@ bool ZmqSink::writeData(TupleBuffer& inputBuffer) {
         return false;
     }
 
-    if (!schemaWritten) {//TODO:atomic
+    if (!schemaWritten && !internal) {//TODO:atomic
         NES_DEBUG("FileSink::getData: write schema");
         auto schemaBuffer = sinkFormat->getSchema();
         if (schemaBuffer) {
-
-            NES_DEBUG("ZmqSink  " << this << ": writes schema buffer ");
+            NES_DEBUG("ZmqSink writes schema buffer");
             try {
                 //	size_t usedBufferSize = inputBuffer->num_tuples * inputBuffer->tuple_size_bytes;
                 zmq::message_t msg(schemaBuffer->getBufferSize());

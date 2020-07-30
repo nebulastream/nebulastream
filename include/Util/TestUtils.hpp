@@ -88,6 +88,8 @@ class TestUtils {
             NES_DEBUG("checkCompleteOrTimeout: sleep because current status =" << currentStatus);
             sleep(1);
         }
+        NES_DEBUG("checkCompleteOrTimeout: end with status =" << currentStatus);
+
 
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
@@ -169,7 +171,11 @@ class TestUtils {
             }
             sleep(1);
         }
-        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout");
+        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout expected result=" << expectedResult
+                  << " query status=" << queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatusAsString()
+                  << " processedBuffer=" << ptr->getQueryStatistics(queryId)->getProcessedBuffers()
+                  << " processedTasks=" << ptr->getQueryStatistics(queryId)->getProcessedTasks()
+                  );
         return false;
     }
 

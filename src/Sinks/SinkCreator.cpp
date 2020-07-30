@@ -41,17 +41,17 @@ const DataSinkPtr createJSONFileSink(SchemaPtr schema, BufferManagerPtr bufferMa
 
 const DataSinkPtr createTextZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host, const uint16_t port) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, bufferManager);
-    return std::make_shared<ZmqSink>(format, host, port);
+    return std::make_shared<ZmqSink>(format, host, port, false);
 }
 
 const DataSinkPtr createCSVZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host, const uint16_t port) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, bufferManager);
-    return std::make_shared<ZmqSink>(format, host, port);
+    return std::make_shared<ZmqSink>(format, host, port, false);
 }
 
-const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host, const uint16_t port) {
+const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, BufferManagerPtr bufferManager, const std::string& host, const uint16_t port, bool internal) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, bufferManager);
-    return std::make_shared<ZmqSink>(format, host, port);
+    return std::make_shared<ZmqSink>(format, host, port, internal);
 }
 
 const DataSinkPtr createTextPrintSink(SchemaPtr schema, BufferManagerPtr bufferManager, std::ostream& out) {

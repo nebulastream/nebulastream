@@ -189,8 +189,13 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
 
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
-std::string UtilityFunctions::prettyPrintTupleBufferAsText(TupleBuffer& buffer, SchemaPtr schema) {
-
+std::string UtilityFunctions::printTupleBufferAsText(TupleBuffer& buffer) {
+    stringstream ss;
+    for(size_t i = 0; i < buffer.getNumberOfTuples(); i++)
+    {
+        ss << buffer.getBufferAs<char>()[i];
+    }
+    return ss.str();
 }
 
 std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, SchemaPtr schema) {

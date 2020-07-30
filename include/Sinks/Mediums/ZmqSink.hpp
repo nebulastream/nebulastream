@@ -13,7 +13,7 @@ namespace NES {
 class ZmqSink : public SinkMedium {
 
   public:
-    ZmqSink(SinkFormatPtr format, const std::string& host, uint16_t port);
+    ZmqSink(SinkFormatPtr format, const std::string& host, uint16_t port, bool internal);
     ~ZmqSink();
 
     bool writeData(TupleBuffer& input_buffer) override;
@@ -51,6 +51,7 @@ class ZmqSink : public SinkMedium {
     bool connected;
     zmq::context_t context;
     zmq::socket_t socket;
+    bool internal;
 
     bool connect();
     bool disconnect();
