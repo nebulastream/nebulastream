@@ -19,7 +19,6 @@ void ConnectivityController::handleGet(std::vector<utility::string_t> path, http
     } else {
         resourceNotFoundImpl(message);
     }
-
 }
 
 }// namespace NES

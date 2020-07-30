@@ -6,8 +6,8 @@
 #include "REST/Controller/BaseController.hpp"
 #include "REST/Controller/QueryController.hpp"
 #include "REST/Controller/StreamCatalogController.hpp"
-#include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
+#include <REST/Controller/QueryCatalogController.hpp>
 #include <cpprest/details/http_server.h>
 #include <cpprest/http_listener.h>
 #include <pplx/pplxtasks.h>
