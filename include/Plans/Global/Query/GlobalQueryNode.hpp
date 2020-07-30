@@ -31,7 +31,7 @@ class GlobalQueryNode : public Node {
      * @param operatorNode: logical operator
      * @return Shared pointer to the instance of Global Query Operator instance
      */
-    static GlobalQueryNodePtr create(std::string queryId, NodePtr operatorNode);
+    static GlobalQueryNodePtr create(std::string queryId, OperatorNodePtr operatorNode);
 
     /**
      * @brief Add the id of a new query to the Global Query Operator
@@ -40,24 +40,18 @@ class GlobalQueryNode : public Node {
     void addQuery(std::string queryId);
 
     /**
-     * @brief Add the id of the new query tot he Global Query Operator and
-     * @param queryId
-     * @param operatorNode
-     */
-    void addQueryAndOperator(std::string queryId, OperatorNodePtr operatorNode);
-
-    /**
      * @brief add a new query Id and a new logical operator
      * @param queryId : query to be added.
      * @param operatorNode : logical operator to be grouped together.
      */
-    void addQuery(std::string queryId, OperatorNodePtr operatorNode);
+    void addQueryAndOperator(std::string queryId, OperatorNodePtr operatorNode);
 
     /**
      * @brief Remove the query
      * @param queryId
+     * @return true if successful
      */
-    void removeQuery(std::string queryId);
+    bool removeQuery(std::string queryId);
 
     /**
      * @brief Check if the global query node was updated.
@@ -84,14 +78,17 @@ class GlobalQueryNode : public Node {
     template<class NodeType>
     void getNodesWithTypeHelper(std::vector<GlobalQueryNodePtr>& foundNodes);
 
+    const std::string toString() const override;
+
   private:
-    GlobalQueryNode(std::string queryId, NodePtr operatorNode);
-    GlobalQueryNode();
+    GlobalQueryNode(std::string queryId, OperatorNodePtr operatorNode);
     std::vector<std::string> queryIds;
     std::vector<OperatorNodePtr> logicalOperators;
     std::map<std::string, OperatorNodePtr> queryToOperatorMap;
+    std::map<OperatorNodePtr,std::vector<std::string>> operatorToQueryMap;
     bool scheduled;
-    bool operatorListUpdated;
+    bool querySetUpdated;
+    bool operatorSetUpdated;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYNODE_HPP
