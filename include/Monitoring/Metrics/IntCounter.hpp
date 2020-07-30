@@ -1,17 +1,17 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_INTCOUNTER_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_INTCOUNTER_HPP_
 
-#include <cstdint>
 #include <Monitoring/Metrics/Counter.hpp>
+#include <cstdint>
 
 namespace NES {
 
 /**
  * @brief A monitoring metric class that represents counters.
  */
-class IntCounter: public Counter {
+class IntCounter : public Counter {
   public:
-    explicit IntCounter(uint64_t initCount=0);
+    explicit IntCounter(uint64_t initCount = 0);
 
     /**
 	 * Increment the current count by 1.
@@ -47,9 +47,8 @@ class IntCounter: public Counter {
 
   private:
     uint64_t count;
-
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICS_INTCOUNTER_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICS_INTCOUNTER_HPP_

@@ -18,4 +18,4 @@ MetricPtr MetricGroup::getRegisteredMetric(const std::string& name) const {
     return this->metricMap.at(name);
 }
 
-}
+}// namespace NES

@@ -11,11 +11,10 @@ namespace NES {
  */
 class Histogram : public Metric {
   public:
-    Histogram(): Metric(MetricType::HistogramType) {
+    Histogram() : Metric(MetricType::HistogramType) {
         NES_NOT_IMPLEMENTED();
     }
-
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICS_HISTOGRAM_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICS_HISTOGRAM_HPP_

@@ -38,6 +38,6 @@ class Metric {
 
 typedef std::shared_ptr<Metric> MetricPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_

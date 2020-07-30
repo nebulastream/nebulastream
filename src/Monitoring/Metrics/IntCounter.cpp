@@ -25,8 +25,7 @@ void IntCounter::dec() {
 uint64_t IntCounter::dec(uint64_t val) {
     if (count > val) {
         count -= val;
-    }
-    else {
+    } else {
         count = 0;
     }
     return count;
@@ -35,4 +34,4 @@ uint64_t IntCounter::dec(uint64_t val) {
 uint64_t IntCounter::getCount() const {
     return count;
 }
-}
+}// namespace NES

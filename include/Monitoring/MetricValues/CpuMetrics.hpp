@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
 
-#include <vector>
 #include <Monitoring/MetricValues/CpuValues.hpp>
 #include <memory>
+#include <vector>
 
 namespace NES {
 
@@ -36,6 +36,6 @@ class CpuMetrics {
     const unsigned int cpuNo;
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_

@@ -3,11 +3,10 @@
 
 namespace NES {
 
-CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::unique_ptr<CpuValues[]> arr): total(total), cpuNo(size) {
+CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::unique_ptr<CpuValues[]> arr) : total(total), cpuNo(size) {
     if (cpuNo > 0) {
         ptr = std::move(arr);
-    }
-    else {
+    } else {
         NES_THROW_RUNTIME_ERROR("CpuMetrics: Object cannot be allocated with less than 0 cores.");
     }
     NES_DEBUG("CpuMetrics: Allocating memory for " + std::to_string(cpuNo) + " metrics.");
@@ -20,15 +19,14 @@ CpuMetrics::~CpuMetrics() {
 
 // Implementation of [] operator.  This function must return a
 // reference as array element can be put on left side
-CpuValues& CpuMetrics::operator[](unsigned int index)
-{
+CpuValues& CpuMetrics::operator[](unsigned int index) {
     if (index >= cpuNo) {
         NES_THROW_RUNTIME_ERROR("CPU: Array index out of bound " + std::to_string(index) + ">=" + std::to_string(cpuNo));
     }
     return ptr[index];
 }
 
-unsigned int CpuMetrics::size() const{
+unsigned int CpuMetrics::size() const {
     return cpuNo;
 }
 
@@ -40,4 +38,4 @@ CpuValues CpuMetrics::getTotal() const {
     return total;
 }
 
-}
+}// namespace NES

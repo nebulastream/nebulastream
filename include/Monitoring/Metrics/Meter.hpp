@@ -10,11 +10,11 @@ namespace NES {
  * @brief TODO: WIP
  */
 class Meter : public Metric {
-    Meter(): Metric(MetricType::MeterType) {
+    Meter() : Metric(MetricType::MeterType) {
         NES_NOT_IMPLEMENTED();
     }
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICS_METER_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICS_METER_HPP_

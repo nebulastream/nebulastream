@@ -21,4 +21,4 @@ std::vector<std::string> NetworkMetrics::getInterfaceNames() {
     return keys;
 }
 
-}
+}// namespace NES

@@ -13,8 +13,7 @@ namespace NES {
  */
 class SamplingProtocol {
   public:
-    explicit SamplingProtocol(std::function<MetricGroupPtr()>&& samplingFunc) : samplingFunc(samplingFunc) {
-    };
+    explicit SamplingProtocol(std::function<MetricGroupPtr()>&& samplingFunc) : samplingFunc(samplingFunc){};
 
     MetricGroupPtr getSample() {
         return samplingFunc();
@@ -22,11 +21,10 @@ class SamplingProtocol {
 
   private:
     std::function<MetricGroupPtr()> samplingFunc;
-
 };
 
 typedef std::shared_ptr<SamplingProtocol> SamplingProtocolPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_SAMPLINGPROTOCOL_HPP_
+#endif//NES_INCLUDE_MONITORING_SAMPLINGPROTOCOL_HPP_

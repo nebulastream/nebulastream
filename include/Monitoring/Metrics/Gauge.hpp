@@ -1,21 +1,21 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_GAUGE_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_GAUGE_HPP_
 
-#include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Gauge.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
 #include <Util/Logger.hpp>
 #include <functional>
 #include <memory>
 
 namespace NES {
 
-template <typename T>
+template<typename T>
 /**
  * A Gauge is a metric that calculates a specific value at a point in time.
  */
-class Gauge: public Metric {
+class Gauge : public Metric {
   public:
-    explicit Gauge(std::function<T()>&& probingFunc): Metric(MetricType::GaugeType), probingFunc(probingFunc) {
+    explicit Gauge(std::function<T()>&& probingFunc) : Metric(MetricType::GaugeType), probingFunc(probingFunc) {
         NES_DEBUG("Gauge: Initializing");
     }
 
@@ -31,6 +31,6 @@ class Gauge: public Metric {
     std::function<T()> probingFunc;
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICS_GAUGE_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICS_GAUGE_HPP_

@@ -13,9 +13,8 @@ class MetricValue {
 
   private:
     void* value;
-
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICS_METRICVALUE_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICS_METRICVALUE_HPP_

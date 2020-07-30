@@ -15,6 +15,6 @@ class MetricStore {
     }
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_RUNTIME_METRICSTORE_HPP_
+#endif//NES_INCLUDE_RUNTIME_METRICSTORE_HPP_

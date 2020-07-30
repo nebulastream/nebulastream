@@ -13,10 +13,8 @@ class MetricQueryService {
     MetricQueryService() {
         NES_NOT_IMPLEMENTED();
     };
-
 };
 
+}// namespace NES
 
-}
-
-#endif //NES_INCLUDE_RUNTIME_METRICQUERYSERVICE_HPP_
+#endif//NES_INCLUDE_RUNTIME_METRICQUERYSERVICE_HPP_

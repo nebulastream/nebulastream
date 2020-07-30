@@ -1,19 +1,18 @@
-#include <Monitoring/Util/SystemResourcesReader.hpp>
+#include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>
-#include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/MetricValues/DiscMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
-#include <Monitoring/MetricValues/CpuMetrics.hpp>
-
+#include <Monitoring/MetricValues/NetworkMetrics.hpp>
+#include <Monitoring/MetricValues/NetworkValues.hpp>
+#include <Monitoring/Util/SystemResourcesReader.hpp>
 
 #include <Util/Logger.hpp>
 #include <fstream>
-#include <vector>
 #include <iterator>
-#include <sys/sysinfo.h>
 #include <sys/statvfs.h>
+#include <sys/sysinfo.h>
 #include <thread>
+#include <vector>
 
 namespace NES {
 
@@ -53,16 +52,15 @@ CpuMetrics SystemResourcesReader::ReadCPUStats() {
             cpuStats.STEAL = std::stoul(tokens[8]);
             cpuStats.GUEST = std::stoul(tokens[9]);
             cpuStats.GUESTNICE = std::stoul(tokens[10]);
-            if (i==0) {
+            if (i == 0) {
                 totalCpu = cpuStats;
-            }
-            else {
-                cpu[i-1] = cpuStats;
+            } else {
+                cpu[i - 1] = cpuStats;
             }
             i++;
         }
     }
-    NES_DEBUG("SystemResourcesReader: CPU stats read for number of CPUs " << i-1);
+    NES_DEBUG("SystemResourcesReader: CPU stats read for number of CPUs " << i - 1);
     return CpuMetrics{totalCpu, numCPU, std::move(cpu)};
 }
 
@@ -149,4 +147,4 @@ DiskMetrics SystemResourcesReader::ReadDiskStats() {
     return output;
 }
 
-}
+}// namespace NES
