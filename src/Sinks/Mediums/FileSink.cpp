@@ -54,18 +54,24 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
         auto schemaBuffer = sinkFormat->getSchema();
         if (schemaBuffer) {
             std::ofstream outputFile;
-            size_t idx = filePath.rfind(".");
-            std::string shrinkedPath = filePath.substr(0, idx + 1);
-            std::string schemaFile = shrinkedPath + "schema";
-            NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString()  << " to file=" << schemaFile);
+            if (sinkFormat->getSinkFormat() == NES_FORMAT) {
+                size_t idx = filePath.rfind(".");
+                std::string shrinkedPath = filePath.substr(0, idx + 1);
+                std::string schemaFile = shrinkedPath + "schema";
+                NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString()  << " to file=" << schemaFile);
+                outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
+            }
+            else
+            {
+                outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
 
-            outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
+            }
 
             outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
             outputFile.close();
 
             schemaWritten = true;
-            NES_DEBUG("FileSink::writeData: write written");
+            NES_DEBUG("FileSink::writeData: schema written");
         } else {
             NES_DEBUG("FileSink::writeData: no schema written");
         }
