@@ -3,9 +3,9 @@
 
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 namespace NES {
 
@@ -27,6 +27,6 @@ class NetworkMetrics {
 
 typedef std::shared_ptr<NetworkMetrics> NetworkMetricsPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_

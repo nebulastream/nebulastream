@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRICUTILS_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRICUTILS_HPP_
 
-#include <unordered_map>
 #include <Monitoring/Metrics/Gauge.hpp>
+#include <unordered_map>
 
 namespace NES {
 
@@ -49,9 +49,8 @@ class MetricUtils {
 
   private:
     MetricUtils() = default;
-
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICS_METRICUTILS_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICS_METRICUTILS_HPP_

@@ -13,9 +13,8 @@ class MetricReporter {
     MetricReporter() {
         NES_NOT_IMPLEMENTED();
     }
-
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICREPORTER_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICREPORTER_HPP_

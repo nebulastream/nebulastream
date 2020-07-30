@@ -18,6 +18,6 @@ class MetricCollector {
     SamplingProtocolPtr samplingProtocol;
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICCOLLECTOR_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICCOLLECTOR_HPP_

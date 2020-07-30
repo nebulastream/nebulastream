@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_
 
-#include <unordered_map>
-#include <Monitoring/Metrics/Gauge.hpp>
 #include <Monitoring/Metrics/Counter.hpp>
+#include <Monitoring/Metrics/Gauge.hpp>
+#include <unordered_map>
 
 namespace NES {
 
@@ -41,6 +41,6 @@ class MetricGroup {
 };
 
 typedef std::shared_ptr<MetricGroup> MetricGroupPtr;
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_

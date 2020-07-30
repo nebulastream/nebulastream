@@ -18,7 +18,6 @@ class DiskMetrics {
 
 typedef std::shared_ptr<DiskMetrics> DiskMetricsPtr;
 
-}
+}// namespace NES
 
-
-#endif //NES_INCLUDE_MONITORING_METRICVALUES_DISCMETRICS_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICVALUES_DISCMETRICS_HPP_

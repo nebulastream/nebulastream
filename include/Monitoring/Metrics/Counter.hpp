@@ -9,10 +9,9 @@ namespace NES {
 /**
  * @brief A monitoring metric class that represents counters.
  */
-class Counter: public Metric {
+class Counter : public Metric {
   public:
-    Counter(): Metric(MetricType::CounterType) {
-    };
+    Counter() : Metric(MetricType::CounterType){};
 
     /**
 	 * Increment the current count by 1.
@@ -22,11 +21,11 @@ class Counter: public Metric {
     /**
      * Decrement the current count by 1.
      */
-     virtual void dec() = 0;
+    virtual void dec() = 0;
 };
 
 typedef std::shared_ptr<Counter> CounterPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_MONITORING_METRICS_COUNTER_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICS_COUNTER_HPP_

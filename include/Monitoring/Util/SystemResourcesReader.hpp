@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_RUNTIME_UTIL_SYSTEMRESOURCESCOUNTER_HPP_
 #define NES_INCLUDE_RUNTIME_UTIL_SYSTEMRESOURCESCOUNTER_HPP_
 
+#include <memory>
 #include <string>
 #include <unordered_map>
-#include <memory>
 
 namespace NES {
 
@@ -44,11 +44,10 @@ class SystemResourcesReader {
      */
     static NetworkMetrics ReadNetworkStats();
 
-
   private:
     SystemResourcesReader() = default;
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_RUNTIME_UTIL_SYSTEMRESOURCESCOUNTER_HPP_
+#endif//NES_INCLUDE_RUNTIME_UTIL_SYSTEMRESOURCESCOUNTER_HPP_

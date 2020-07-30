@@ -26,7 +26,6 @@ class MemoryMetrics {
 
 typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
 
-}
+}// namespace NES
 
-
-#endif //NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
+#endif//NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_

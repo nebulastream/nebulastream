@@ -1,11 +1,11 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 
-#include <Monitoring/Util/SystemResourcesReader.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>
-#include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/MetricValues/DiscMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
+#include <Monitoring/MetricValues/NetworkMetrics.hpp>
+#include <Monitoring/Util/SystemResourcesReader.hpp>
 
 namespace NES {
 
@@ -27,10 +27,10 @@ std::shared_ptr<Gauge<NetworkMetrics>> MetricUtils::NetworkStats() {
 
 std::shared_ptr<Gauge<uint64_t>> MetricUtils::CPUIdle(unsigned int cpuNo) {
     auto gaugeIdle = std::make_shared<Gauge<uint64_t>>([cpuNo]() {
-      NES_DEBUG("MetricUtils: Reading CPU Idle for cpu " << cpuNo);
-      return SystemResourcesReader::ReadCPUStats().getValues(cpuNo).IDLE;
+        NES_DEBUG("MetricUtils: Reading CPU Idle for cpu " << cpuNo);
+        return SystemResourcesReader::ReadCPUStats().getValues(cpuNo).IDLE;
     });
     return gaugeIdle;
 }
 
-}
+}// namespace NES

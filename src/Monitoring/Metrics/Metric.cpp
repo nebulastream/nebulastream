@@ -3,11 +3,11 @@
 
 namespace NES {
 
-Metric::Metric(MetricType metricType): metricType(metricType) {
+Metric::Metric(MetricType metricType) : metricType(metricType) {
 }
 
 MetricType Metric::getMetricType() const {
     return metricType;
 }
 
-}
+}// namespace NES
