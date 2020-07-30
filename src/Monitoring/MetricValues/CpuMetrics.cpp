@@ -2,11 +2,20 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
-CpuMetrics::CpuMetrics(const unsigned int cpuNo): cpuNo(cpuNo) {
-    ptr = nullptr;
+
+CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::unique_ptr<CpuValues[]> arr): total(total), cpuNo(size) {
     if (cpuNo > 0) {
-        ptr = new CpuValues[cpuNo];
+        ptr = std::move(arr);
     }
+    else {
+        NES_THROW_RUNTIME_ERROR("CpuMetrics: Object cannot be allocated with less than 0 cores.");
+    }
+    NES_DEBUG("CpuMetrics: Allocating memory for " + std::to_string(cpuNo) + " metrics.");
+}
+
+CpuMetrics::~CpuMetrics() {
+    ptr.reset();
+    NES_DEBUG("CpuMetrics: Freeing memory for metrics.");
 }
 
 // Implementation of [] operator.  This function must return a
@@ -21,6 +30,14 @@ CpuValues& CpuMetrics::operator[](unsigned int index)
 
 unsigned int CpuMetrics::size() const{
     return cpuNo;
+}
+
+CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const {
+    return ptr[cpuCore];
+}
+
+CpuValues CpuMetrics::getTotal() const {
+    return total;
 }
 
 }

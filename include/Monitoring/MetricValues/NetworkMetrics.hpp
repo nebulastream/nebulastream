@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 namespace NES {
 
@@ -23,6 +24,8 @@ class NetworkMetrics {
   private:
     std::unordered_map<std::string, NetworkValues> interfaceMap;
 };
+
+typedef std::shared_ptr<NetworkMetrics> NetworkMetricsPtr;
 
 }
 

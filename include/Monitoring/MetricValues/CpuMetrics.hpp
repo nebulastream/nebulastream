@@ -3,24 +3,37 @@
 
 #include <vector>
 #include <Monitoring/MetricValues/CpuValues.hpp>
+#include <memory>
 
 namespace NES {
 
 class CpuMetrics {
   public:
-    explicit CpuMetrics(const unsigned int size);
+    explicit CpuMetrics(CpuValues total, unsigned int size, std::unique_ptr<CpuValues[]> arr);
 
-    // Overloading [] operator to access elements in array style
-    CpuValues& operator[](unsigned int);
+    CpuValues getValues(unsigned int cpuCore) const;
 
+    CpuValues getTotal() const;
+
+    /**
+     * @brief The destructor to deallocate space.
+     */
+    ~CpuMetrics();
+
+    /**
+     * @brief
+     * @return
+     */
     unsigned int size() const;
 
   private:
-    CpuValues* ptr;
-    const unsigned int cpuNo;
+    // Overloading [] operator to access elements in array style
+    CpuValues& operator[](unsigned int);
 
-  public:
-    CpuValues TOTAL;
+  private:
+    CpuValues total;
+    std::unique_ptr<CpuValues[]> ptr;
+    const unsigned int cpuNo;
 };
 
 }

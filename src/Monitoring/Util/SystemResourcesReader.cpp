@@ -1,10 +1,11 @@
 #include <Monitoring/Util/SystemResourcesReader.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>
-#include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/MetricValues/DiscMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
+#include <Monitoring/MetricValues/CpuMetrics.hpp>
+
 
 #include <Util/Logger.hpp>
 #include <fstream>
@@ -20,7 +21,8 @@ CpuMetrics SystemResourcesReader::ReadCPUStats() {
     std::ifstream fileStat("/proc/stat");
     std::string line;
     unsigned int numCPU = std::thread::hardware_concurrency();
-    auto cpu = CpuMetrics(numCPU);
+    auto cpu = std::unique_ptr<CpuValues[]>(new CpuValues[numCPU]);
+    CpuValues totalCpu{};
 
     int i = 0;
     while (std::getline(fileStat, line)) {
@@ -52,7 +54,7 @@ CpuMetrics SystemResourcesReader::ReadCPUStats() {
             cpuStats.GUEST = std::stoul(tokens[9]);
             cpuStats.GUESTNICE = std::stoul(tokens[10]);
             if (i==0) {
-                cpu.TOTAL= cpuStats;
+                totalCpu = cpuStats;
             }
             else {
                 cpu[i-1] = cpuStats;
@@ -61,10 +63,10 @@ CpuMetrics SystemResourcesReader::ReadCPUStats() {
         }
     }
     NES_DEBUG("SystemResourcesReader: CPU stats read for number of CPUs " << i-1);
-    return cpu;
+    return CpuMetrics{totalCpu, numCPU, std::move(cpu)};
 }
 
-NetworkMetrics SystemResourcesReader::NetworkStats() {
+NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
     // alternatively also /sys/class/net/intf/statistics can be parsed
     auto output = NetworkMetrics();
 
@@ -107,12 +109,12 @@ NetworkMetrics SystemResourcesReader::NetworkStats() {
 
 MemoryMetrics SystemResourcesReader::ReadMemoryStats() {
     auto* sinfo = (struct sysinfo*) malloc(sizeof(struct sysinfo));
-    MemoryMetrics output;
 
     int ret = sysinfo(sinfo);
     if (ret == EFAULT)
         NES_THROW_RUNTIME_ERROR("SystemResourcesReader: Error reading memory stats");
 
+    MemoryMetrics output{};
     output.TOTAL_RAM = sinfo->totalram;
     output.TOTAL_SWAP = sinfo->totalswap;
     output.FREE_RAM = sinfo->freeram;

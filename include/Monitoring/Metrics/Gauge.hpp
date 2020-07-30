@@ -2,8 +2,10 @@
 #define NES_INCLUDE_MONITORING_METRICS_GAUGE_HPP_
 
 #include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/Metrics/Gauge.hpp>
 #include <Util/Logger.hpp>
 #include <functional>
+#include <memory>
 
 namespace NES {
 

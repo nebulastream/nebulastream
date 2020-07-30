@@ -13,15 +13,15 @@ namespace NES {
  */
 class SamplingProtocol {
   public:
-    explicit SamplingProtocol(std::function<MetricGroup()>&& samplingFunc) : samplingFunc(samplingFunc) {
+    explicit SamplingProtocol(std::function<MetricGroupPtr()>&& samplingFunc) : samplingFunc(samplingFunc) {
     };
 
-    MetricGroup getSample() {
+    MetricGroupPtr getSample() {
         return samplingFunc();
     };
 
   private:
-    std::function<MetricGroup()> samplingFunc;
+    std::function<MetricGroupPtr()> samplingFunc;
 
 };
 

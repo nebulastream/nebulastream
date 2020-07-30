@@ -3,6 +3,7 @@ add_source_nes(
         MetricGroup.cpp
         MetricUtils.cpp
         IntCounter.cpp
+        MetricValue.cpp
 )
 
 

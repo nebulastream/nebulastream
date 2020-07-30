@@ -16,6 +16,8 @@ class DiskMetrics {
     uint64_t F_BAVAIL;
 };
 
+typedef std::shared_ptr<DiskMetrics> DiskMetricsPtr;
+
 }
 
 
