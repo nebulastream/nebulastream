@@ -42,12 +42,6 @@ class GlobalQueryNode : public Node {
     uint64_t getId();
 
     /**
-     * @brief Add the id of a new query to the Global Query Operator
-     * @param queryId : query id
-     */
-    void addQuery(std::string queryId);
-
-    /**
      * @brief add a new query Id and a new logical operator
      * @param queryId : query to be added.
      * @param operatorNode : logical operator to be grouped together.
@@ -70,9 +64,9 @@ class GlobalQueryNode : public Node {
     /**
      * @brief Check if logical operator already present in the node
      * @param operatorNode : logical operator to check
-     * @return true if logical operator already present.
+     * @return returns an operator which is same as input operator else nullptr.
      */
-    bool hasOperator(OperatorNodePtr operatorNode);
+    OperatorNodePtr hasOperator(OperatorNodePtr operatorNode);
 
     /**
      * @brief Check if the Global query node is empty or not.

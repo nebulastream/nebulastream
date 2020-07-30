@@ -25,49 +25,63 @@ uint64_t GlobalQueryNode::getId() {
     return id;
 }
 
-void GlobalQueryNode::addQuery(std::string queryId) {
-    queryIds.push_back(queryId);
-    operatorSetUpdated = true;
-}
-
 void GlobalQueryNode::addQueryAndOperator(std::string queryId, OperatorNodePtr operatorNode) {
-    queryIds.push_back(queryId);
-    logicalOperators.push_back(operatorNode);
+
+    if (queryToOperatorMap.find(queryId) != queryToOperatorMap.end()) {
+        //Throw exception that query id already present
+    }
     queryToOperatorMap[queryId] = operatorNode;
-    operatorSetUpdated = true;
+    queryIds.push_back(queryId);
+    if (operatorToQueryMap.find(operatorNode) != operatorToQueryMap.end()) {
+        std::vector<std::string>& queryIds = operatorToQueryMap[operatorNode];
+        queryIds.push_back(queryId);
+    } else {
+        operatorToQueryMap[operatorNode] = {queryId};
+        logicalOperators.push_back(operatorNode);
+    }
     querySetUpdated = true;
+    operatorSetUpdated = true;
 }
 
 bool GlobalQueryNode::isEmpty() {
     return logicalOperators.empty();
 }
 
-bool GlobalQueryNode::hasOperator(OperatorNodePtr operatorNode) {
+OperatorNodePtr GlobalQueryNode::hasOperator(OperatorNodePtr operatorNode) {
     auto found = std::find_if(logicalOperators.begin(), logicalOperators.end(), [&](OperatorNodePtr optr) {
         return operatorNode->equal(optr);
     });
-    return found != logicalOperators.end();
+    if (found != logicalOperators.end()) {
+        return *found;
+    }
+    return nullptr;
 }
 
 bool GlobalQueryNode::removeQuery(const std::string& queryId) {
     auto itr = std::find(queryIds.begin(), queryIds.end(), queryId);
-    queryIds.erase(itr);
-    OperatorNodePtr logicalOperator = queryToOperatorMap[queryId];
-    if (logicalOperator) {
-        queryToOperatorMap.erase(queryId);
-        querySetUpdated = true;
-        std::vector<std::string> associatedQueries = operatorToQueryMap[logicalOperator];
-        if (associatedQueries.size() > 1) {
-            auto itr = std::find(associatedQueries.begin(), associatedQueries.end(), queryId);
-            associatedQueries.erase(itr);
-            operatorToQueryMap[logicalOperator] = associatedQueries;
-        } else {
-            operatorToQueryMap.erase(logicalOperator);
-            auto iterator = std::find(logicalOperators.begin(), logicalOperators.end(), logicalOperator);
-            logicalOperators.erase(iterator);
-            operatorSetUpdated = true;
+    if(itr != queryIds.end()) {
+        queryIds.erase(itr);
+        OperatorNodePtr logicalOperator = queryToOperatorMap[queryId];
+        if (logicalOperator) {
+            queryToOperatorMap.erase(queryId);
+            querySetUpdated = true;
+            std::vector<std::string> associatedQueries = operatorToQueryMap[logicalOperator];
+            if (associatedQueries.size() > 1) {
+                auto itr = std::find(associatedQueries.begin(), associatedQueries.end(), queryId);
+                associatedQueries.erase(itr);
+                operatorToQueryMap[logicalOperator] = associatedQueries;
+            } else {
+                operatorToQueryMap.erase(logicalOperator);
+                auto iterator = std::find(logicalOperators.begin(), logicalOperators.end(), logicalOperator);
+                if(iterator == logicalOperators.end()){
+                    //ADD log
+                    return false;
+                }
+                logicalOperators.erase(iterator);
+                operatorSetUpdated = true;
+            }
+            return true;
         }
-        return true;
     }
     return false;
 }
