@@ -60,17 +60,68 @@ TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNode) {
 }
 
 /**
- * @brief This test is for validating different behaviours of a regular global query node
+ * @brief This test is for validating different behaviours of a regular global query node for new operator addition
  */
 TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndAddOperator) {
 
-    const ExpressionNodePtr& ptr = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
-    const LogicalOperatorNodePtr& filterOptr = createFilterLogicalOperatorNode(ptr);
-    GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(1, "Q1", filterOptr);
+    const ExpressionNodePtr ptr1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const LogicalOperatorNodePtr filterOptr1 = createFilterLogicalOperatorNode(ptr1);
+    GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(1, "Q1", filterOptr1);
     NES_DEBUG("GlobalQueryNodeTest: A newly created  global query node should return false when asked if it is empty");
     EXPECT_FALSE(globalQueryNode->isEmpty());
     NES_DEBUG("GlobalQueryNodeTest: A newly created global query node should have something to update");
     EXPECT_TRUE(globalQueryNode->hasNewUpdate());
+    globalQueryNode->markAsUpdated();
+    NES_DEBUG("GlobalQueryNodeTest: A global query node should no have anything to update once it is marked as updated");
+    EXPECT_FALSE(globalQueryNode->hasNewUpdate());
 
-    globalQueryNode->addQuery("2");
+    const ExpressionNodePtr ptr2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const LogicalOperatorNodePtr& filterOptr2 = createFilterLogicalOperatorNode(ptr2);
+    globalQueryNode->addQueryAndOperator("Q2", filterOptr2);
+    NES_DEBUG("GlobalQueryNodeTest: Global query node should have something to update after a new query and operator is added");
+    EXPECT_TRUE(globalQueryNode->hasNewUpdate());
+}
+
+/**
+ * @brief This test is for validating different behaviours of a regular global query node for new query addition
+ */
+TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndAddNewQuery) {
+
+    const ExpressionNodePtr ptr1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const LogicalOperatorNodePtr filterOptr1 = createFilterLogicalOperatorNode(ptr1);
+    GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(1, "Q1", filterOptr1);
+    NES_DEBUG("GlobalQueryNodeTest: A newly created  global query node should return false when asked if it is empty");
+    EXPECT_FALSE(globalQueryNode->isEmpty());
+    NES_DEBUG("GlobalQueryNodeTest: A newly created global query node should have something to update");
+    EXPECT_TRUE(globalQueryNode->hasNewUpdate());
+    globalQueryNode->markAsUpdated();
+    NES_DEBUG("GlobalQueryNodeTest: A global query node should no have anything to update once it is marked as updated");
+    EXPECT_FALSE(globalQueryNode->hasNewUpdate());
+
+    globalQueryNode->addQuery("Q2");
+    NES_DEBUG("GlobalQueryNodeTest: Global query node should have something to update after a new query is added");
+    EXPECT_TRUE(globalQueryNode->hasNewUpdate());
+}
+
+/**
+ * @brief This test is for validating different behaviours of a regular global query node for deletion of query
+ */
+TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndRemoveQuery) {
+
+    const ExpressionNodePtr ptr1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const LogicalOperatorNodePtr filterOptr1 = createFilterLogicalOperatorNode(ptr1);
+    GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(1, "Q1", filterOptr1);
+    NES_DEBUG("GlobalQueryNodeTest: A newly created  global query node should return false when asked if it is empty");
+    EXPECT_FALSE(globalQueryNode->isEmpty());
+    NES_DEBUG("GlobalQueryNodeTest: A newly created global query node should have something to update");
+    EXPECT_TRUE(globalQueryNode->hasNewUpdate());
+    globalQueryNode->markAsUpdated();
+    NES_DEBUG("GlobalQueryNodeTest: A global query node should no have anything to update once it is marked as updated");
+    EXPECT_FALSE(globalQueryNode->hasNewUpdate());
+
+    bool success = globalQueryNode->removeQuery("Q1");
+    EXPECT_TRUE(success);
+    NES_DEBUG("GlobalQueryNodeTest: Global query node should have something to update after a query deletion");
+    EXPECT_TRUE(globalQueryNode->hasNewUpdate());
+    EXPECT_TRUE(globalQueryNode->isEmpty());
 }
