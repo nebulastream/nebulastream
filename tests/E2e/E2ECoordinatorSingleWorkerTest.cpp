@@ -178,7 +178,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 }
 
 
-TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithFileOutputWithFilter) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
     cout << " start coordinator" << endl;
     std::string outputFilePath = "UserQueryWithFileOutputWithFilterTestResult.txt";
     remove(outputFilePath.c_str());
@@ -196,7 +196,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithF
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"default_logical\\\").filter(Attribute(\\\"id\\\") > 1).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"default_logical\\\").filter(Attribute(\\\"id\\\") >= 1).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
@@ -230,8 +230,28 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithF
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
     // if filter is applied correctly, no output is generated
+    cout << "read file=" << outputFilePath << endl;
     ifstream outFile(outputFilePath);
-    EXPECT_TRUE(!outFile.good());
+    EXPECT_TRUE(outFile.good());
+    std::string content((std::istreambuf_iterator<char>(outFile)),
+                          (std::istreambuf_iterator<char>()));
+    cout << "content=" << content << endl;
+    std::string expected = "+----------------------------------------------------+\n"
+                           "|id:UINT32|value:UINT64|\n"
+                           "+----------------------------------------------------+\n"
+                           "|1|1|\n"
+                           "|1|1|\n"
+                           "|1|1|\n"
+                           "|1|1|\n"
+                           "|1|1|\n"
+                           "|1|1|\n"
+                           "|1|1|\n"
+                           "|1|1|\n"
+                           "|1|1|\n"
+                           "|1|1|\n"
+                           "+----------------------------------------------------+";
+    cout << "expected=" << expected << endl;
+    EXPECT_EQ(expected, content);
 
     cout << "Killing worker process->PID: " << workerPid << endl;
     workerProc.terminate();

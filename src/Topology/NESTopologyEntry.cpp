@@ -4,7 +4,7 @@
 namespace NES {
 
 void NESTopologyEntry::setNodeProperty(NodeStats nodeStats) {
-    NES_DEBUG("setNodeProperty=" << nodeStats.DebugString());
+    NES_TRACE("setNodeProperty=" << nodeStats.DebugString());
     this->nodeStats = nodeStats;
 }
 

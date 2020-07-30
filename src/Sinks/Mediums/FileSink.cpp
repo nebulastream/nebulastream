@@ -73,7 +73,7 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
         NES_DEBUG("FileSink::getData: schema already written");
     }
 
-    NES_DEBUG("FileSink::getData: write data");
+    NES_DEBUG("FileSink::getData: write data to file=" << filePath);
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     std::ofstream outputFile;
     //TODO: append cannot be done here and has to be done once during initialization
