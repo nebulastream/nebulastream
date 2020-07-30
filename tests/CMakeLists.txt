@@ -208,6 +208,11 @@ add_executable(adaptive-source-tests "UnitTests/AdaptiveSourceTest.cpp")
 target_link_libraries(adaptive-source-tests nes ${GTEST_LIBRARIES})
 add_test(NAME adaptive-source-tests COMMAND adaptive-source-tests)
 
+### Global Query Node Tests ###
+add_executable(global-query-node-tests "UnitTests/Plans/Global/Query/GlobalQueryNodeTest.cpp")
+target_link_libraries(global-query-node-tests nes ${GTEST_LIBRARIES})
+add_test(NAME global-query-node-tests COMMAND global-query-node-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

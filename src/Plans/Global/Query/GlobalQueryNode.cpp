@@ -4,28 +4,25 @@
 
 namespace NES {
 
-GlobalQueryNode::GlobalQueryNode(std::string queryId, OperatorNodePtr operatorNode) : scheduled(false), querySetUpdated(true), operatorSetUpdated(true) {
+GlobalQueryNode::GlobalQueryNode(uint64_t id) : id(id), scheduled(false), querySetUpdated(false), operatorSetUpdated(false) {}
+
+GlobalQueryNode::GlobalQueryNode(uint64_t id, std::string queryId, OperatorNodePtr operatorNode) : id(id), scheduled(false), querySetUpdated(true), operatorSetUpdated(true) {
     queryIds.push_back(queryId);
     logicalOperators.push_back(operatorNode);
     queryToOperatorMap[queryId] = operatorNode;
+    operatorToQueryMap[operatorNode] = {queryId};
 }
 
-GlobalQueryNodePtr GlobalQueryNode::createEmpty() {
-    return std::shared_ptr<GlobalQueryNode>();
+GlobalQueryNodePtr GlobalQueryNode::createEmpty(uint64_t id) {
+    return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id));
 }
 
-GlobalQueryNodePtr GlobalQueryNode::create(std::string queryId, OperatorNodePtr operatorNode) {
-    return std::shared_ptr<GlobalQueryNode>(GlobalQueryNode(queryId, operatorNode));
+GlobalQueryNodePtr GlobalQueryNode::create(uint64_t id, std::string queryId, OperatorNodePtr operatorNode) {
+    return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id, queryId, operatorNode));
 }
 
-template<class NodeType>
-void GlobalQueryNode::getNodesWithTypeHelper(std::vector<GlobalQueryNodePtr>& foundNodes) {
-    if (logicalOperators[0]->instanceOf<NodeType>()) {
-        foundNodes.push_back(std::shared_ptr<GlobalQueryNode>(this));
-    }
-    for (auto& successor : this->children) {
-        successor->as<GlobalQueryNode>()->getNodesWithTypeHelper<GlobalQueryNode>(foundNodes);
-    }
+uint64_t GlobalQueryNode::getId() {
+    return id;
 }
 
 void GlobalQueryNode::addQuery(std::string queryId) {
@@ -46,26 +43,26 @@ bool GlobalQueryNode::isEmpty() {
 }
 
 bool GlobalQueryNode::hasOperator(OperatorNodePtr operatorNode) {
-    auto found = std::find_if(logicalOperators.begin(), logicalOperators.end(), [&](OperatorNodePtr optr){
+    auto found = std::find_if(logicalOperators.begin(), logicalOperators.end(), [&](OperatorNodePtr optr) {
         return operatorNode->equal(optr);
     });
     return found != logicalOperators.end();
 }
 
-bool GlobalQueryNode::removeQuery(std::string queryId) {
-    auto iterator = std::remove_if(queryIds.begin(), queryIds.end(), queryId);
-    queryIds.erase(iterator);
+bool GlobalQueryNode::removeQuery(const std::string& queryId) {
+    auto itr = std::find(queryIds.begin(), queryIds.end(), queryId);
+    queryIds.erase(itr);
     OperatorNodePtr logicalOperator = queryToOperatorMap[queryId];
-    if(logicalOperator){
+    if (logicalOperator) {
         queryToOperatorMap.erase(queryId);
         std::vector<std::string> associatedQueries = operatorToQueryMap[logicalOperator];
-        if(associatedQueries.size() > 1){
-            auto iterator = std::remove_if(associatedQueries.begin(), associatedQueries.end(), queryId);
-            associatedQueries.erase(iterator);
+        if (associatedQueries.size() > 1) {
+            auto itr = std::find(associatedQueries.begin(), associatedQueries.end(), queryId);
+            associatedQueries.erase(itr);
             operatorToQueryMap[logicalOperator] = associatedQueries;
-        } else{
+        } else {
             operatorToQueryMap.erase(logicalOperator);
-            auto iterator = std::remove_if(logicalOperators.begin(), logicalOperators.end(), logicalOperator);
+            auto iterator = std::find(logicalOperators.begin(), logicalOperators.end(), logicalOperator);
             logicalOperators.erase(iterator);
         }
         return true;
@@ -73,9 +70,13 @@ bool GlobalQueryNode::removeQuery(std::string queryId) {
     return false;
 }
 
-bool GlobalQueryNode::wasUpdated() {
+bool GlobalQueryNode::hasNewUpdate() {
     return querySetUpdated || operatorSetUpdated;
 }
+
+//void GlobalQueryNode::markAsUpdated() {
+//
+//}
 
 const std::string GlobalQueryNode::toString() const {
     std::stringstream operatorString;
