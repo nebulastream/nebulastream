@@ -70,5 +70,10 @@ macro(project_enable_version)
         message(AUTHOR_WARNING " -- Disabled version target as git not configured.")
     else()
         add_custom_target(version COMMAND echo "version: ${${PROJECT_NAME}_VERSION}")
+        add_custom_command(TARGET version COMMAND cp -f ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp
+                COMMAND sed -i 's/@NES_VERSION_MAJOR@/${${PROJECT_NAME}_VERSION_MAJOR}/g' ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp
+                COMMAND sed -i 's/@NES_VERSION_MINOR@/${${PROJECT_NAME}_VERSION_MINOR}/g' ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp
+                COMMAND sed -i 's/@NES_VERSION_PATCH@/${${PROJECT_NAME}_VERSION_PATCH}/g' ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp
+                COMMAND sed -i 's/@NES_VERSION@/${${PROJECT_NAME}_VERSION}/g' ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp)
     endif ()
 endmacro(project_enable_version)

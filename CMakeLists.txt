@@ -8,12 +8,12 @@ endif ()
 # Find project version
 include(cmake/GetSemanticVersion.cmake)
 
-# Update version
-if (IS_GIT_DIRECTORY)
-    configure_file(cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp)
-endif ()
+# Update Version Automatically
+#if (IS_GIT_DIRECTORY)
+#    configure_file(cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp)
+#endif ()
 
-# Custome CMake find instructions and macros
+# Custom CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 include(cmake/macros.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
