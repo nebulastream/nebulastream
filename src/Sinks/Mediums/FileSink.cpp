@@ -22,7 +22,6 @@ FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append
     if(!append)
     {
         std::ofstream outputFile;
-        //TODO: append cannot be done here and has to be done once during initialization
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
         outputFile.close();
     }

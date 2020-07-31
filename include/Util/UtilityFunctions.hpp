@@ -83,7 +83,15 @@ class UtilityFunctions {
      * @param replaceStr replace string
      */
     static void findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr);
-};
+
+    /**
+     * @brief method to get the schema as a csv string
+     * @param schema
+     * @return schema as csv string
+     */
+    static const std::string toCSVString(SchemaPtr schema);
+
+    };
 }// namespace NES
 
 #endif /* UTILITY_FUNCTIONS_HPP */

@@ -109,7 +109,6 @@ class Schema {
     bool equals(SchemaPtr schema, bool considerOrder = true);
 
     const std::string toString() const;
-    const std::string toCSVString() const;
 
     std::vector<AttributeFieldPtr> fields;
 };
