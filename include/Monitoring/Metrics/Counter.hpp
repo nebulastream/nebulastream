@@ -9,9 +9,9 @@ namespace NES {
 /**
  * @brief A monitoring metric class that represents counters.
  */
-class Counter : public Metric {
+class Counter {
   public:
-    Counter() : Metric(MetricType::CounterType){};
+    Counter(){};
 
     /**
 	 * Increment the current count by 1.
