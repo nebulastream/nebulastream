@@ -2,16 +2,7 @@
 #define __VERSION_HPP__
 #define NES_VERSION_MAJOR 0
 #define NES_VERSION_MINOR 0
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define NES_VERSION_PATCH 82
 constexpr char const* NES_VERSION = "0.0.82";
 #endif
-=======
-<<<<<<< HEAD
-=======
->>>>>>> rebase
-#define NES_VERSION_PATCH 81
-constexpr char const* NES_VERSION = "0.0.81";
-#endif
->>>>>>> fix print tests
+
