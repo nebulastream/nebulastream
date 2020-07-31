@@ -13,9 +13,9 @@ template<typename T>
 /**
  * A Gauge is a metric that calculates a specific value at a point in time.
  */
-class Gauge : public Metric {
+class Gauge {
   public:
-    explicit Gauge(std::function<T()>&& probingFunc) : Metric(MetricType::GaugeType), probingFunc(probingFunc) {
+    explicit Gauge(std::function<T()>&& probingFunc): probingFunc(probingFunc) {
         NES_DEBUG("Gauge: Initializing");
     }
 

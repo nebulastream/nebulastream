@@ -9,6 +9,7 @@
 #include <Monitoring/MetricValues/DiscMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
+#include <Monitoring/Metrics/IntCounter.hpp>
 
 namespace NES {
 class MonitoringStackTest : public testing::Test {
@@ -79,14 +80,30 @@ TEST_F(MonitoringStackTest, testMetricCollector) {
     auto memStats = MetricUtils::MemoryStats();
 
     auto systemMetrics = MetricGroup::create();
-    //systemMetrics->addMetric("cpu", new IntCounter());
+
+    //TODO: change that no shared_ptr are used here
+
+    auto metrics = std::vector<Metric>();
+    metrics.emplace_back(1);
+    auto cpuValues = cpuStats->readValue();
+    //metrics.emplace_back(cpuValues);
+
+    Metric m = metrics[0];
+    int value = m.getValue<int>();
+    NES_INFO(value);
+
+    //Metric cpu = metrics[2];
+    //std::shared_ptr<Gauge<CpuMetrics>> v = cpu.getValue<std::shared_ptr<Gauge<CpuMetrics>>>();
+    //NES_INFO(v->readValue().size());
+
+    //metricMap.emplace_back(cpuStats);
     //systemMetrics.addGauge("network", &networkStats);
     //systemMetrics.addGauge("disk", &diskStats);
     //systemMetrics.addGauge("mem", &memStats);
 
     //static sampling func
     auto samplingProtocolPtr = std::make_shared<SamplingProtocol>([systemMetrics]() {
-      sleep(5);
+      sleep(1);
       return systemMetrics;
     });
 

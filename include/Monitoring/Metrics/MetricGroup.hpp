@@ -3,7 +3,6 @@
 
 #include <Monitoring/Metrics/Counter.hpp>
 #include <Monitoring/Metrics/Gauge.hpp>
-#include <unordered_map>
 
 namespace NES {
 
@@ -26,18 +25,18 @@ class MetricGroup {
      * @param metric metric to register
      * @return true if successful, else false
      */
-    bool addMetric(const std::string& name, Metric* metric);
+    bool addMetric(std::shared_ptr<Metric> metric);
 
     /**
      * @brief returns a map of the registered metrics
      * @return the metrics map
      */
-    MetricPtr getRegisteredMetric(const std::string& name) const;
+    Metric getRegisteredMetric(const std::string& name) const;
 
   private:
     MetricGroup() = default;
 
-    std::unordered_map<std::string, MetricPtr> metricMap;
+    std::vector<Metric> metricMap;
 };
 
 typedef std::shared_ptr<MetricGroup> MetricGroupPtr;

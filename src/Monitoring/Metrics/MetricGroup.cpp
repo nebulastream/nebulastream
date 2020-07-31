@@ -9,13 +9,13 @@ std::shared_ptr<MetricGroup> MetricGroup::create() {
     return std::shared_ptr<MetricGroup>();
 }
 
-bool MetricGroup::addMetric(const std::string& name, Metric* metric) {
-    metricMap.insert(std::make_pair(name, metric));
+bool MetricGroup::addMetric(std::shared_ptr<Metric> metric) {
+    //metricMap.emplace_back(std::move(metric));
     return true;
 }
 
-MetricPtr MetricGroup::getRegisteredMetric(const std::string& name) const {
-    return this->metricMap.at(name);
+Metric MetricGroup::getRegisteredMetric(const std::string& name) const {
+    //return this->metricMap.at(name);
 }
 
 }// namespace NES

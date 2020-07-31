@@ -3,6 +3,7 @@
 
 #include <memory>
 namespace NES {
+class MetricValue;
 
 /**
  * @brief The metric types of NES
@@ -24,19 +25,43 @@ enum MetricType {
  */
 class Metric {
   public:
-    explicit Metric(MetricType metricType);
+    template<typename T>
+    Metric(T x): self_(std::make_unique<model<T>>(std::move(x))){
+    }
 
-    /**
-     * @brief Returns the type a metric is representing, e.g., CounterType, GaugeType..
-     * @return the metric type
-     */
-    MetricType getMetricType() const;
+    Metric(const Metric& x): self_(x.self_->copy_()){};
+
+    Metric(Metric&&) noexcept = default;
+
+    Metric& operator=(const Metric& x) {
+        return *this=Metric(x);
+    }
+    Metric& operator=(Metric&& x) noexcept = default;
+
+    template<typename T>
+    T& getValue() const{
+        return dynamic_cast<model<T>*>(self_.get())->data_;
+    }
 
   private:
-    MetricType metricType;
-};
+    struct concept_t {
+        virtual ~concept_t() = default;
+        virtual std::unique_ptr<concept_t> copy_() const = 0;
+    };
 
-typedef std::shared_ptr<Metric> MetricPtr;
+    template<typename T>
+    struct model final : concept_t {
+        explicit model(T x): data_(std::move(x)) { };
+
+        std::unique_ptr<concept_t> copy_() const override {
+            return std::make_unique<model>(*this);
+        }
+
+        T data_;
+    };
+
+    std::unique_ptr<concept_t> self_;
+};
 
 }// namespace NES
 
