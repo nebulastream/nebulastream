@@ -1,7 +1,7 @@
 #ifndef NES_GLOBALQUERYNODE_HPP
 #define NES_GLOBALQUERYNODE_HPP
 
-#include <Nodes/Node.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -90,7 +90,7 @@ class GlobalQueryNode : public Node {
         }
 
         for (auto logicalOperator : logicalOperators) {
-            if (logicalOperators[0]->instanceOf<T>()) {
+            if (logicalOperator->instanceOf<T>()) {
                 foundNodes.push_back(shared_from_this()->as<GlobalQueryNode>());
                 break;
             }

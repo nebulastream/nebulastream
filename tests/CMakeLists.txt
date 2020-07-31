@@ -213,6 +213,11 @@ add_executable(global-query-node-tests "UnitTests/Plans/Global/Query/GlobalQuery
 target_link_libraries(global-query-node-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-query-node-tests COMMAND global-query-node-tests)
 
+### Global Query Plan Tests ###
+add_executable(global-query-plan-tests "UnitTests/Plans/Global/Query/GlobalQueryPlanTest.cpp")
+target_link_libraries(global-query-plan-tests nes ${GTEST_LIBRARIES})
+add_test(NAME global-query-plan-tests COMMAND global-query-plan-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

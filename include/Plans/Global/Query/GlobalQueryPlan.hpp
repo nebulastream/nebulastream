@@ -1,6 +1,7 @@
 #ifndef NES_GLOBALQUERYPLAN_HPP
 #define NES_GLOBALQUERYPLAN_HPP
 
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -52,16 +53,31 @@ class GlobalQueryPlan {
      * @tparam NodeType: type of logical operator
      * @return vector of global query nodes
      */
-    template<class NodeType>
-    std::vector<GlobalQueryNodePtr> getAllNewGlobalQueryNodesWithOperatorType();
+    template<class T>
+    std::vector<GlobalQueryNodePtr> getAllNewGlobalQueryNodesWithOperatorType() {
+        NES_DEBUG("GlobalQueryPlan: Get all New Global query nodes with specific logical operators");
+        std::vector<GlobalQueryNodePtr> vector = getAllGlobalQueryNodesWithOperatorType<T>();
+        NES_DEBUG("GlobalQueryPlan: filter all pre-existing Global query nodes");
+        std::remove_if(vector.begin(), vector.end(), [](GlobalQueryNodePtr globalQueryNode) {
+            return globalQueryNode->hasNewUpdate();
+        });
+        return vector;
+    }
 
     /**
      * @brief Get all Global Query Nodes with NodeType operators
      * @tparam NodeType: type of logical operator
      * @return vector of global query nodes
      */
-    template<class NodeType>
-    std::vector<GlobalQueryNodePtr> getAllGlobalQueryNodesWithOperatorType();
+    template<class T>
+    std::vector<GlobalQueryNodePtr> getAllGlobalQueryNodesWithOperatorType() {
+        NES_DEBUG("GlobalQueryPlan: Get all Global query nodes with specific logical operators");
+        std::vector<GlobalQueryNodePtr> vector;
+        for (const auto& rootQueryNodes : root->getChildren()) {
+            rootQueryNodes->as<GlobalQueryNode>()->getNodesWithTypeHelper<T>(vector);
+        }
+        return vector;
+    }
 
   private:
     GlobalQueryPlan();
@@ -78,7 +94,7 @@ class GlobalQueryPlan {
      * @param queryId: the query id to which the logical operator belongs
      * @param operatorNode: the logical operator
      */
-    void addNewGlobalOperatorNodeAsChild(GlobalQueryNodePtr parentNode, std::string queryId, OperatorNodePtr operatorNode);
+    void addUpstreamLogicalOperatorsAsNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, std::string queryId, OperatorNodePtr operatorNode);
 
     /**
      * @brief Get all global query nodes containing given queryId

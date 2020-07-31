@@ -113,7 +113,7 @@ class QueryPlan {
      * Set the query Id for the plan
      * @param queryId
      */
-    void setQueryId(std::string& queryId);
+    void setQueryId(std::string queryId);
 
     /**
      * Get the queryId for the plan
