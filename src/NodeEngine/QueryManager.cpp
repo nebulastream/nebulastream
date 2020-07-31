@@ -251,7 +251,7 @@ void QueryManager::addWork(const string& sourceId, TupleBuffer& buf) {
 
 void QueryManager::completedWork(TaskPtr task) {
     std::unique_lock<std::mutex> lock(workMutex);// TODO is necessary?
-    NES_INFO("Complete Work for task=" << task);
+    NES_INFO("QueryManager::completedWork: Work for task=" << task);
 
     auto statistics = queryToStatisticsMap[task->getQep()];
     statistics->incProcessedTasks();

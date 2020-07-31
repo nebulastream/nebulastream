@@ -286,4 +286,16 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch
     }
 }
 
+
+const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
+    std::stringstream ss;
+    for (auto& f : schema->fields) {
+        ss << f->toString() << ",";
+    }
+    ss.seekp(-1, std::ios_base::end);
+    ss << std::endl;
+    return ss.str();
+}
+
+
 }// namespace NES

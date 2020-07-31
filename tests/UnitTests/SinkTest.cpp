@@ -302,7 +302,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
         std::string schemaStr;
         schemaStr.assign(bufSchema.getBufferAs<char>(), bufSchema.getNumberOfTuples());
         cout << "Schema=" << schemaStr << endl;
-        EXPECT_EQ(test_schema->toCSVString(), schemaStr);
+        EXPECT_EQ(UtilityFunctions::toCSVString(test_schema), schemaStr);
 
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
