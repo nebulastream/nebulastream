@@ -157,7 +157,7 @@ const std::string& QueryPlan::getQueryId() const {
     return queryId;
 }
 
-void QueryPlan::setQueryId(std::string& queryId) {
+void QueryPlan::setQueryId(std::string queryId) {
     QueryPlan::queryId = queryId;
 }
 
