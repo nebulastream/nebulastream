@@ -21,10 +21,18 @@ FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append
     this->append = append;
     if(!append)
     {
-        std::ofstream outputFile;
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
-        outputFile.close();
+        int success = std::remove(filePath.c_str());
+        NES_DEBUG("FileSink: remove existing file=" << success);
     }
+    NES_DEBUG("FileSink: open file=" << filePath);
+    if(!outputFile.is_open())
+    {
+        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+    }
+}
+FileSink::~FileSink() {
+    NES_DEBUG("~FileSink: close file=" << filePath);
+    outputFile.close();
 }
 
 const std::string FileSink::toString() const {
@@ -48,7 +56,7 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
         NES_ERROR("FileSink::writeData input buffer invalid");
         return false;
     }
-    if (!schemaWritten) {//TODO:atomic
+    if (!schemaWritten) {
         NES_DEBUG("FileSink::getData: write schema");
         auto schemaBuffer = sinkFormat->getSchema();
         if (schemaBuffer) {
@@ -63,7 +71,6 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
             else
             {
                 outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
-
             }
 
             outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
@@ -80,9 +87,6 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
 
     NES_DEBUG("FileSink::getData: write data to file=" << filePath);
     auto dataBuffers = sinkFormat->getData(inputBuffer);
-    std::ofstream outputFile;
-    //TODO: append cannot be done here and has to be done once during initialization
-    outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
 
     for (auto buffer : dataBuffers) {
         NES_DEBUG("FileSink::getData: write buffer of size " << buffer.getNumberOfTuples());
@@ -92,7 +96,8 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
             outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
         }
     }
-    outputFile.close();
+    outputFile.flush();
+
     return true;
 }
 

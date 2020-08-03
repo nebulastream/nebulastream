@@ -103,13 +103,12 @@ bool ZmqSink::writeData(TupleBuffer& inputBuffer) {
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {
         try {
-            //	size_t usedBufferSize = inputBuffer->num_tuples * inputBuffer->tuple_size_bytes;
-            zmq::message_t msg(buffer.getBufferSize());
-            // TODO: If possible only copy the content not the empty part
-            std::memcpy(msg.data(), buffer.getBuffer(), buffer.getBufferSize());
             size_t tupleCnt = buffer.getNumberOfTuples();
             zmq::message_t envelope(sizeof(tupleCnt));
             memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
+
+            zmq::message_t msg(buffer.getBufferSize());
+            std::memcpy(msg.data(), buffer.getBuffer(), buffer.getBufferSize());
 
             bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
             bool rc_msg = socket.send(msg);

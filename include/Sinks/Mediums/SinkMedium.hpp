@@ -109,7 +109,7 @@ class SinkMedium {
   protected:
     SinkFormatPtr sinkFormat;
     bool append;
-    bool schemaWritten;
+    std::atomic_bool schemaWritten;
 
     size_t sentBuffer;
     size_t sentTuples;
