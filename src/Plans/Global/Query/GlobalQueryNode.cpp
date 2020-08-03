@@ -59,7 +59,7 @@ OperatorNodePtr GlobalQueryNode::hasOperator(OperatorNodePtr operatorNode) {
 
 bool GlobalQueryNode::removeQuery(const std::string& queryId) {
     auto itr = std::find(queryIds.begin(), queryIds.end(), queryId);
-    if(itr != queryIds.end()) {
+    if (itr != queryIds.end()) {
         queryIds.erase(itr);
         OperatorNodePtr logicalOperator = queryToOperatorMap[queryId];
         if (logicalOperator) {
@@ -73,7 +73,7 @@ bool GlobalQueryNode::removeQuery(const std::string& queryId) {
             } else {
                 operatorToQueryMap.erase(logicalOperator);
                 auto iterator = std::find(logicalOperators.begin(), logicalOperators.end(), logicalOperator);
-                if(iterator == logicalOperators.end()){
+                if (iterator == logicalOperators.end()) {
                     //ADD log
                     return false;
                 }
