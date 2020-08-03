@@ -94,7 +94,7 @@ class GlobalQueryPlan {
      * @param queryId: the query id to which the logical operator belongs
      * @param operatorNode: the logical operator
      */
-    void addUpstreamLogicalOperatorsAsNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, std::string queryId, OperatorNodePtr operatorNode);
+    void addUpstreamLogicalOperatorsAsNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const std::string& queryId, const OperatorNodePtr& operatorNode);
 
     /**
      * @brief Get all global query nodes containing given queryId
@@ -103,10 +103,17 @@ class GlobalQueryPlan {
      */
     std::vector<GlobalQueryNodePtr> getGlobalQueryNodesForQuery(std::string queryId);
 
+    /**
+     * @brief Add global query node entry to the input query Id
+     * @param queryId : query id to which global query node belongs to
+     * @param globalQueryNode : global query node entry
+     * @return true if successful
+     */
+    bool addGlobalQueryNodeToQuery(std::string queryId, GlobalQueryNodePtr globalQueryNode);
+
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;
     std::map<std::string, std::vector<GlobalQueryNodePtr>> queryToGlobalQueryNodeMap;
-    std::map<GlobalQueryNodePtr, std::vector<std::string>> globalQueryNodeToQueryMap;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP
