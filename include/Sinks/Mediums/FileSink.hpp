@@ -23,6 +23,11 @@ class FileSink : public SinkMedium {
     FileSink(SinkFormatPtr format, std::string filePath, bool append);
 
     /**
+     * @brief dtor
+     */
+    ~FileSink();
+
+    /**
      * @brief method to override virtual setup function
      * @Note currently the method does nothing
      */
@@ -65,6 +70,7 @@ class FileSink : public SinkMedium {
 
   protected:
     std::string filePath;
+    std::ofstream outputFile;
 };
 typedef std::shared_ptr<FileSink> FileSinkPtr;
 }// namespace NES
