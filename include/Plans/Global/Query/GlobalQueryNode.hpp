@@ -84,18 +84,14 @@ class GlobalQueryNode : public Node {
      */
     template<class T>
     void getNodesWithTypeHelper(std::vector<GlobalQueryNodePtr>& foundNodes) {
-
-        if (logicalOperators.empty()) {
-            return;
-        }
-
+        NES_INFO("GlobalQueryNode: Get the global query node containing operator of specific type");
         for (auto logicalOperator : logicalOperators) {
             if (logicalOperator->instanceOf<T>()) {
                 foundNodes.push_back(shared_from_this()->as<GlobalQueryNode>());
                 break;
             }
         }
-
+        NES_INFO("GlobalQueryNode: Find if the child global query nodes of this node containing operator of specific type");
         for (auto& successor : this->children) {
             successor->as<GlobalQueryNode>()->getNodesWithTypeHelper<T>(foundNodes);
         }
