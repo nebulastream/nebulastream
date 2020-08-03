@@ -191,8 +191,7 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
 }
 std::string UtilityFunctions::printTupleBufferAsText(TupleBuffer& buffer) {
     stringstream ss;
-    for(size_t i = 0; i < buffer.getNumberOfTuples(); i++)
-    {
+    for (size_t i = 0; i < buffer.getNumberOfTuples(); i++) {
         ss << buffer.getBufferAs<char>()[i];
     }
     return ss.str();
@@ -286,7 +285,6 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch
     }
 }
 
-
 const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
     std::stringstream ss;
     for (auto& f : schema->fields) {
@@ -296,6 +294,5 @@ const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
     ss << std::endl;
     return ss.str();
 }
-
 
 }// namespace NES
