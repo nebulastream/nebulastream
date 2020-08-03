@@ -37,7 +37,7 @@ void GlobalQueryNode::addQueryAndOperator(std::string queryId, OperatorNodePtr o
     NES_INFO("GlobalQueryNode: Marking the query set as updated");
     querySetUpdated = true;
     NES_DEBUG("GlobalQueryNode: Finding if the logical operator already present in the global query node");
-    if (operatorToQueryMap.find(operatorNode) != operatorToQueryMap.end()) {
+    if (hasOperator(operatorNode)) {
         NES_INFO("GlobalQueryNode: The logical operator already present in the global query node. Linking the logical operator and the new query Id");
         std::vector<std::string>& queryIds = operatorToQueryMap[operatorNode];
         queryIds.push_back(queryId);
