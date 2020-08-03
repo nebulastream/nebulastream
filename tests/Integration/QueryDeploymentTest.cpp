@@ -39,7 +39,7 @@ class QueryDeploymentTest : public testing::Test {
 /**
  * TODO: this test requires issue 750 to be addressed. Currently, make it disabled.
  */
-TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerMergePrint) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerMergePrint) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -51,6 +51,25 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerMergePrint) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    //register logical stream
+    std::string testSchema =
+        "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+        "\"value\", BasicType::UINT64);";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+    wrk1->registerLogicalStream("testStream", testSchemaFileName);
+
+    //register physical stream
+    PhysicalStreamConfig conf;
+    conf.logicalStreamName = "testStream";
+    conf.physicalStreamName = "physical_test";
+    conf.sourceType = "DefaultSource";
+    conf.numberOfBuffersToProduce = 3;
+    conf.sourceFrequency = 1;
+    wrk1->registerPhysicalStream(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
