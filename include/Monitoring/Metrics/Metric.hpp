@@ -2,6 +2,8 @@
 #define NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 
 #include <memory>
+#include <Util/Logger.hpp>
+
 namespace NES {
 class MetricValue;
 
@@ -16,7 +18,8 @@ enum MetricType {
     CounterType,
     GaugeType,
     HistogramType,
-    MeterType
+    MeterType,
+    UnknownType
 };
 
 /**
@@ -26,10 +29,12 @@ enum MetricType {
 class Metric {
   public:
     template<typename T>
-    Metric(T x): self_(std::make_unique<model<T>>(std::move(x))){
+    Metric(T x, MetricType metricType=UnknownType): self_(std::make_unique<model<T>>(std::move(x))), metricType(metricType){
     }
 
-    Metric(const Metric& x): self_(x.self_->copy_()){};
+    Metric(const Metric& x): self_(x.self_->copy_()){
+        NES_DEBUG("Metric: Calling copy ctor");
+    };
 
     Metric(Metric&&) noexcept = default;
 
@@ -41,6 +46,10 @@ class Metric {
     template<typename T>
     T& getValue() const{
         return dynamic_cast<model<T>*>(self_.get())->data_;
+    }
+
+    MetricType getType() const {
+        return this->metricType;
     }
 
   private:
@@ -61,6 +70,7 @@ class Metric {
     };
 
     std::unique_ptr<concept_t> self_;
+    MetricType metricType;
 };
 
 }// namespace NES

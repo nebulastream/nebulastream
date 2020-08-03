@@ -25,8 +25,6 @@ class NetworkMetrics {
     std::unordered_map<std::string, NetworkValues> interfaceMap;
 };
 
-typedef std::shared_ptr<NetworkMetrics> NetworkMetricsPtr;
-
 }// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
