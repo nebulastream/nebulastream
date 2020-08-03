@@ -19,14 +19,12 @@ FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append
     this->filePath = filePath;
     this->sinkFormat = format;
     this->append = append;
-    if(!append)
-    {
+    if (!append) {
         int success = std::remove(filePath.c_str());
         NES_DEBUG("FileSink: remove existing file=" << success);
     }
     NES_DEBUG("FileSink: open file=" << filePath);
-    if(!outputFile.is_open())
-    {
+    if (!outputFile.is_open()) {
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
 }
@@ -65,11 +63,9 @@ bool FileSink::writeData(TupleBuffer& inputBuffer) {
                 size_t idx = filePath.rfind(".");
                 std::string shrinkedPath = filePath.substr(0, idx + 1);
                 std::string schemaFile = shrinkedPath + "schema";
-                NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString()  << " to file=" << schemaFile);
+                NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString() << " to file=" << schemaFile);
                 outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
-            }
-            else
-            {
+            } else {
                 outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
             }
 

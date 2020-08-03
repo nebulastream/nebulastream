@@ -90,8 +90,7 @@ class UtilityFunctions {
      * @return schema as csv string
      */
     static const std::string toCSVString(SchemaPtr schema);
-
-    };
+};
 }// namespace NES
 
 #endif /* UTILITY_FUNCTIONS_HPP */

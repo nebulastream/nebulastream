@@ -40,9 +40,7 @@ bool PrintSink::writeData(TupleBuffer& inputBuffer) {
                 ret = ret + bufferAsChar[i];
             }
             outputStream << ret << std::endl;
-        }
-        else
-        {
+        } else {
             NES_DEBUG("PrintSink::getData: no schema buffer to write");
         }
         NES_DEBUG("PrintSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString());
