@@ -37,7 +37,7 @@ class MonitoringStackTest : public testing::Test {
 
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
-    CpuMetrics cpuMetrics = cpuStats->readValue();
+    CpuMetrics cpuMetrics = cpuStats.getValue();
     ASSERT_TRUE(cpuMetrics.size() > 0);
     for (int i=0; i<cpuMetrics.size(); i++){
         ASSERT_TRUE(cpuMetrics.getValues(i).USER > 0);
@@ -45,12 +45,12 @@ TEST_F(MonitoringStackTest, testCPUStats) {
     ASSERT_TRUE(cpuMetrics.getTotal().USER > 0);
 
     auto cpuIdle = MetricUtils::CPUIdle(0);
-    NES_INFO("MonitoringStackTest: Idle " << cpuIdle->readValue());
+    NES_INFO("MonitoringStackTest: Idle " << cpuIdle.getValue());
 }
 
 TEST_F(MonitoringStackTest, testMemoryStats) {
     auto memStats = MetricUtils::MemoryStats();
-    auto memMetrics = memStats->readValue();
+    auto memMetrics = memStats.getValue();
     ASSERT_TRUE(memMetrics.FREE_RAM > 0);
 
     NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM/(1024*1024) << "gb");
@@ -58,13 +58,13 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
 
 TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskStats = MetricUtils::DiskStats();
-    auto diskMetrics = diskStats->readValue();
+    auto diskMetrics = diskStats.getValue();
     ASSERT_TRUE(diskMetrics.F_BAVAIL > 0);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
     auto networkStats = MetricUtils::NetworkStats();
-    auto networkMetrics = networkStats->readValue();
+    auto networkMetrics = networkStats.getValue();
     ASSERT_TRUE(!networkMetrics.getInterfaceNames().empty());
 
     for (std::string intfs : networkMetrics.getInterfaceNames()) {
@@ -72,39 +72,58 @@ TEST_F(MonitoringStackTest, testNetworkStats) {
     }
 }
 
-TEST_F(MonitoringStackTest, testMetricCollector) {
-    //TODO: Will be solved by issue #886
+TEST_F(MonitoringStackTest, testMetricGroup) {
     auto cpuStats = MetricUtils::CPUStats();
     auto networkStats = MetricUtils::NetworkStats();
     auto diskStats = MetricUtils::DiskStats();
     auto memStats = MetricUtils::MemoryStats();
 
-    auto systemMetrics = MetricGroup::create();
-
-    //TODO: change that no shared_ptr are used here
-
     auto metrics = std::vector<Metric>();
+
+    // test with simple data types
     metrics.emplace_back(1);
-    auto cpuValues = cpuStats->readValue();
-    //metrics.emplace_back(cpuValues);
+    Metric m0 = metrics[0];
+    int valueInt = m0.getValue<int>();
+    ASSERT_TRUE(valueInt == 1);
 
-    Metric m = metrics[0];
-    int value = m.getValue<int>();
-    NES_INFO(value);
+    metrics.emplace_back(std::string("test"));
+    Metric m1 = metrics[1];
+    std::string valueString = m1.getValue<std::string>();
+    ASSERT_TRUE(valueString == "test");
 
-    //Metric cpu = metrics[2];
-    //std::shared_ptr<Gauge<CpuMetrics>> v = cpu.getValue<std::shared_ptr<Gauge<CpuMetrics>>>();
-    //NES_INFO(v->readValue().size());
+    // test cpu stats
+    metrics.emplace_back(cpuStats, MetricType::GaugeType);
+    Metric m2 = metrics[2];
+    auto cpuMetrics = m2.getValue<Gauge<CpuMetrics>>();
+    ASSERT_TRUE(cpuStats.getValue().size() == cpuMetrics.getValue().size());
+    //ASSERT_TRUE(m2.getType() == MetricType::GaugeType);
 
-    //metricMap.emplace_back(cpuStats);
-    //systemMetrics.addGauge("network", &networkStats);
-    //systemMetrics.addGauge("disk", &diskStats);
-    //systemMetrics.addGauge("mem", &memStats);
+    /**
+    // test network stats
+    metrics.emplace_back(networkStats);
+    auto networkMetrics = metrics[3].getValue<Gauge<NetworkMetrics>>();
+    ASSERT_TRUE(networkStats.readValue().size() == networkMetrics.readValue().size());
+
+    // test disk stats
+    metrics.emplace_back(diskStats);
+    auto diskMetrics = metrics[4].getValue<Gauge<DiskMetrics>>();
+    ASSERT_TRUE(diskStats.readValue().F_BAVAIL == diskMetrics.readValue().F_BAVAIL);
+
+    // test mem stats
+    metrics.emplace_back(memStats);
+    auto memMetrics = metrics[5].getValue<Gauge<MemoryMetrics>>();
+    ASSERT_TRUE(memStats.readValue().TOTAL_RAM == memMetrics.readValue().TOTAL_RAM);
+     **/
+}
+
+TEST_F(MonitoringStackTest, testSamplingProtocol) {
+    auto cpuStats = MetricUtils::CPUStats();
+    int systemMetrics = 22;
 
     //static sampling func
     auto samplingProtocolPtr = std::make_shared<SamplingProtocol>([systemMetrics]() {
       sleep(1);
-      return systemMetrics;
+      return MetricGroup::create();
     });
 
     auto output = samplingProtocolPtr->getSample();

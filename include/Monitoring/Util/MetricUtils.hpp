@@ -20,32 +20,32 @@ class MetricUtils {
      * @brief Gauge metric for the CPU stats represented as map
      * @return the cpu stats
      */
-    static std::shared_ptr<Gauge<CpuMetrics>> CPUStats();
+    static Gauge<CpuMetrics> CPUStats();
 
     /**
      * @brief Gauge metric for the memory stats represented as map
      * @return the memory stats
      */
-    static std::shared_ptr<Gauge<MemoryMetrics>> MemoryStats();
+    static Gauge<MemoryMetrics> MemoryStats();
 
     /**
      * @brief Gauge metric for the disk stats represented as map
      * @return the disk stats
      */
-    static std::shared_ptr<Gauge<DiskMetrics>> DiskStats();
+    static Gauge<DiskMetrics> DiskStats();
 
     /**
      * @brief Gauge metric for the network stats represented as map
      * @return the network stats
      */
-    static std::shared_ptr<Gauge<NetworkMetrics>> NetworkStats();
+    static Gauge<NetworkMetrics> NetworkStats();
 
     /**
      * @brief
      * @param cpuName
      * @return
      */
-    static std::shared_ptr<Gauge<uint64_t>> CPUIdle(unsigned int cpuNo);
+    static Gauge<uint64_t> CPUIdle(unsigned int cpuNo);
 
   private:
     MetricUtils() = default;
