@@ -268,6 +268,9 @@ endif ()
 enable_testing()
 add_subdirectory(tests)
 
+#Add benchmarks with command
+add_subdirectory(benchmark)
+
 configure_file(include/QueryLib/WindowManagerLib.hpp ${CMAKE_CURRENT_BINARY_DIR}/tests)
 configure_file(include/QueryLib/WindowManagerLib.hpp ${CMAKE_CURRENT_BINARY_DIR})
 
