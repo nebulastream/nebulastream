@@ -1,11 +1,11 @@
 #include <API/Query.hpp>
-#include <Exceptions/QueryMergerException.hpp>
+#include <Catalogs/QueryCatalogEntry.hpp>
+#include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/QueryCatalogEntry.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -49,7 +49,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
         auto resultPlan = phase->execute(batchOfQueryRequests);
         //Assert
         FAIL();
-    } catch (QueryMergerException ex) {
+    } catch (GlobalQueryPlanUpdateException ex) {
         //Assert
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: received QueryMergerException exception as expected with message: " << ex.what());
         SUCCEED();
@@ -95,7 +95,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForDuplicateValidQ
         auto resultPlan = phase->execute(batchOfQueryRequests);
         //Assert
         FAIL();
-    } catch (QueryMergerException ex) {
+    } catch (GlobalQueryPlanUpdateException ex) {
         //Assert
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: received QueryMergerException exception as expected with message: " << ex.what());
         SUCCEED();
@@ -144,7 +144,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForAValidQueryPlan
         auto resultPlan = phase->execute(batchOfQueryRequests);
         //Assert
         FAIL();
-    } catch (QueryMergerException ex) {
+    } catch (GlobalQueryPlanUpdateException ex) {
         //Assert
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: received QueryMergerException exception as expected with message: " << ex.what());
         SUCCEED();
