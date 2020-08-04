@@ -7,12 +7,10 @@
 
 namespace NES {
 
-GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase() {
-    globalQueryPlan = GlobalQueryPlan::create();
-}
+GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(GlobalQueryPlanPtr globalQueryPlan) : globalQueryPlan(globalQueryPlan) {}
 
-QueryMergerPhasePtr GlobalQueryPlanUpdatePhase::create() {
-    return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase());
+GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(GlobalQueryPlanPtr globalQueryPlan) {
+    return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(globalQueryPlan));
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry> queryRequests) {
