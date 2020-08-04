@@ -6,6 +6,8 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <Util/Logger.hpp>
+#include <Plans/Global/Query/GlobalQueryNode.hpp>
 
 namespace NES {
 
@@ -14,9 +16,6 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
-
-class GlobalQueryNode;
-typedef std::shared_ptr<GlobalQueryNode> GlobalQueryNodePtr;
 
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;

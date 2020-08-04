@@ -23,7 +23,7 @@ GlobalQueryPlanPtr QueryMergerPhase::execute(std::vector<QueryPlanPtr> batchOfQu
         }
         NES_DEBUG("QueryMergerPhase: Successfully merged batch of queries");
         return globalQueryPlan;
-    } catch (std::exception ex) {
+    } catch (std::exception& ex) {
         NES_ERROR("QueryMergerPhase: Exception occurred while merging batch of queries: " << ex.what());
         throw QueryMergerException("QueryMergerPhase: Exception occurred while merging batch of queries");
     }

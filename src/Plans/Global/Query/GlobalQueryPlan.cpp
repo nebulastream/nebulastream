@@ -1,8 +1,6 @@
 #include <Nodes/Operators/OperatorNode.hpp>
-#include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger.hpp>
 
 namespace NES {
 
