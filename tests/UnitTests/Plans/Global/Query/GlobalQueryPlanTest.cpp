@@ -50,16 +50,13 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlan) {
  * @brief This test is for creation of a global query plan and adding a query plan with empty query id
  */
 TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddingQueryPlanWithEmptyId) {
-    try {
-        NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
-        GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
-        NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without id to the global query plan");
-        QueryPlanPtr queryPlan = QueryPlan::create();
-        globalQueryPlan->addQueryPlan(queryPlan);
-        FAIL();
-    } catch (Exception ex) {
-        SUCCEED();
-    }
+
+    NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
+    GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
+    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without id to the global query plan");
+    QueryPlanPtr queryPlan = QueryPlan::create();
+    //Assert
+    EXPECT_THROW(globalQueryPlan->addQueryPlan(queryPlan), Exception);
 }
 
 /**
@@ -87,19 +84,16 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndGetAllNewGlobalQueryNodesWi
  * @brief This test is for creation of a global query plan and adding query plan twice
  */
 TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanByAddingSameQueryPlanTwice) {
-    try{
-        NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
-        GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
-        NES_DEBUG("GlobalQueryPlanTest: Adding same query plan twice to the global query plan");
-        auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
-        auto plan = query.getQueryPlan();
-        plan->setQueryId("Q1");
-        globalQueryPlan->addQueryPlan(plan);
-        globalQueryPlan->addQueryPlan(plan);
-        FAIL();
-    }catch (Exception ex) {
-        SUCCEED();
-    }
+
+    NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
+    GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
+    NES_DEBUG("GlobalQueryPlanTest: Adding same query plan twice to the global query plan");
+    auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    auto plan = query.getQueryPlan();
+    plan->setQueryId("Q1");
+    globalQueryPlan->addQueryPlan(plan);
+    //Assert
+    EXPECT_THROW(globalQueryPlan->addQueryPlan(plan), Exception);
 }
 
 /**

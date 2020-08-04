@@ -38,22 +38,15 @@ class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
  */
 TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleInvalidQueryPlan) {
 
-    try {
-        //Prepare
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query without assigning it a query id.");
-        auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-        auto phase = GlobalQueryPlanUpdatePhase::create();
-        auto catalogEntry1 = QueryCatalogEntry("", "", "topdown", q1.getQueryPlan(), Scheduling);
-        std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1};
-        auto resultPlan = phase->execute(batchOfQueryRequests);
-        //Assert
-        FAIL();
-    } catch (GlobalQueryPlanUpdateException ex) {
-        //Assert
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: received QueryMergerException exception as expected with message: " << ex.what());
-        SUCCEED();
-    }
+    //Prepare
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query without assigning it a query id.");
+    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    auto phase = GlobalQueryPlanUpdatePhase::create();
+    auto catalogEntry1 = QueryCatalogEntry("", "", "topdown", q1.getQueryPlan(), Scheduling);
+    std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1};
+    //Assert
+    EXPECT_THROW(phase->execute(batchOfQueryRequests), GlobalQueryPlanUpdateException);
 }
 
 /**
@@ -82,24 +75,17 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
  */
 TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForDuplicateValidQueryPlan) {
 
-    try {
-        //Prepare
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new valid query.");
-        auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
-        q1.getQueryPlan()->setQueryId("Q1");
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-        auto phase = GlobalQueryPlanUpdatePhase::create();
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
-        auto catalogEntry1 = QueryCatalogEntry("Q1", "", "topdown", q1.getQueryPlan(), Scheduling);
-        std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1, catalogEntry1};
-        auto resultPlan = phase->execute(batchOfQueryRequests);
-        //Assert
-        FAIL();
-    } catch (GlobalQueryPlanUpdateException ex) {
-        //Assert
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: received QueryMergerException exception as expected with message: " << ex.what());
-        SUCCEED();
-    }
+    //Prepare
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new valid query.");
+    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    q1.getQueryPlan()->setQueryId("Q1");
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    auto phase = GlobalQueryPlanUpdatePhase::create();
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
+    auto catalogEntry1 = QueryCatalogEntry("Q1", "", "topdown", q1.getQueryPlan(), Scheduling);
+    std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1, catalogEntry1};
+    //Assert
+    EXPECT_THROW(phase->execute(batchOfQueryRequests), GlobalQueryPlanUpdateException);
 }
 
 /**
@@ -131,24 +117,18 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
  */
 TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForAValidQueryPlanInInvalidState) {
 
-    try {
-        //Prepare
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new valid query.");
-        auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
-        q1.getQueryPlan()->setQueryId("Q1");
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-        auto phase = GlobalQueryPlanUpdatePhase::create();
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
-        auto catalogEntry1 = QueryCatalogEntry("Q1", "", "topdown", q1.getQueryPlan(), Failed);
-        std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1};
-        auto resultPlan = phase->execute(batchOfQueryRequests);
-        //Assert
-        FAIL();
-    } catch (GlobalQueryPlanUpdateException ex) {
-        //Assert
-        NES_INFO("GlobalQueryPlanUpdatePhaseTest: received QueryMergerException exception as expected with message: " << ex.what());
-        SUCCEED();
-    }
+    //Prepare
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new valid query.");
+    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    q1.getQueryPlan()->setQueryId("Q1");
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    auto phase = GlobalQueryPlanUpdatePhase::create();
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
+    auto catalogEntry1 = QueryCatalogEntry("Q1", "", "topdown", q1.getQueryPlan(), Failed);
+    std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1};
+
+    //Assert
+    EXPECT_THROW(phase->execute(batchOfQueryRequests), GlobalQueryPlanUpdateException);
 }
 
 /**
@@ -167,7 +147,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto catalogEntry1 = QueryCatalogEntry("Q1", "", "topdown", q1.getQueryPlan(), Scheduling);
     auto catalogEntry2 = QueryCatalogEntry("Q2", "", "topdown", q2.getQueryPlan(), Scheduling);
     auto catalogEntry3 = QueryCatalogEntry("Q2", "", "topdown", q2.getQueryPlan(), MarkedForStop);
-    std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1, catalogEntry2,catalogEntry3};
+    std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1, catalogEntry2, catalogEntry3};
     auto resultPlan = phase->execute(batchOfQueryRequests);
 
     //Assert
