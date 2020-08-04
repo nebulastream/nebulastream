@@ -7,7 +7,9 @@ ExternalProject_Add(
         # Disable install step
         INSTALL_COMMAND ""
         URL_HASH SHA256=3e266b49f73ee08625837ea5b1fabc4056b7f5e809b29c49670527326f4f4379
-        CMAKE_ARGS -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DCMAKE_BUILD_TYPE=Release
+        #Line below is only necessary if someone wants to run the provided tests by gtests
+        #CMAKE_ARGS -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DCMAKE_BUILD_TYPE=Release
+        CMAKE_ARGS -DBENCHMARK_ENABLE_GTEST_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 )
 
 # Get GBenchmark source and binary directories from CMake project
