@@ -1,5 +1,5 @@
 #include <Catalogs/QueryCatalogEntry.hpp>
-#include <Exceptions/QueryMergerException.hpp>
+#include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -19,7 +19,6 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
     NES_INFO("GlobalQueryPlanUpdatePhase: Updating global query plan using a query request batch of size " << queryRequests.size());
     try {
         for (auto queryRequest : queryRequests) {
-
             std::string queryId = queryRequest.getQueryId();
             if (queryRequest.getQueryStatus() == MarkedForStop) {
                 NES_TRACE("GlobalQueryPlanUpdatePhase: Removing query plan for the query: " << queryId);
@@ -36,7 +35,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
         return globalQueryPlan;
     } catch (std::exception& ex) {
         NES_ERROR("GlobalQueryPlanUpdatePhase: Exception occurred while updating global query plan with: " << ex.what());
-        throw QueryMergerException("GlobalQueryPlanUpdatePhase: Exception occurred while updating Global Query Plan");
+        throw GlobalQueryPlanUpdateException("GlobalQueryPlanUpdatePhase: Exception occurred while updating Global Query Plan");
     }
 }
 
