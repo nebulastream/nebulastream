@@ -25,7 +25,7 @@ class QueryMergerPhase {
      * @brief Create an instance of the QueryMergerPhase
      * @return Shared pointer for the query merger phase
      */
-    QueryMergerPhasePtr create();
+    static QueryMergerPhasePtr create();
 
     /**
      * @brief This method executes the Query merger phase on a batch of query plans

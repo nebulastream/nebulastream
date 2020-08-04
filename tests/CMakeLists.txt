@@ -218,6 +218,11 @@ add_executable(global-query-plan-tests "UnitTests/Plans/Global/Query/GlobalQuery
 target_link_libraries(global-query-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-query-plan-tests COMMAND global-query-plan-tests)
 
+### Query Merger Phase Tests ###
+add_executable(query-merger-phase-tests "UnitTests/Phases/QueryMergerPhaseTest.cpp")
+target_link_libraries(query-merger-phase-tests nes ${GTEST_LIBRARIES})
+add_test(NAME query-merger-phase-tests COMMAND query-merger-phase-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
