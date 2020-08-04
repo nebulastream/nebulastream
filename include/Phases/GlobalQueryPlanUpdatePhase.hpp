@@ -12,7 +12,7 @@ class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 class GlobalQueryPlanUpdatePhase;
-typedef std::shared_ptr<GlobalQueryPlanUpdatePhase> QueryMergerPhasePtr;
+typedef std::shared_ptr<GlobalQueryPlanUpdatePhase> GlobalQueryPlanUpdatePhasePtr;
 
 /**
  * @brief This class is responsible for accepting a batch of query requests and then updating the Global Query Plan accordingly.
@@ -21,9 +21,10 @@ class GlobalQueryPlanUpdatePhase {
   public:
     /**
      * @brief Create an instance of the GlobalQueryPlanUpdatePhase
+     * @param globalQueryPlan: the input global query plan
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
-    static QueryMergerPhasePtr create();
+    static GlobalQueryPlanUpdatePhasePtr create(GlobalQueryPlanPtr globalQueryPlan);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -33,7 +34,7 @@ class GlobalQueryPlanUpdatePhase {
     GlobalQueryPlanPtr execute(const std::vector<QueryCatalogEntry> queryRequests);
 
   private:
-    GlobalQueryPlanUpdatePhase();
+    explicit GlobalQueryPlanUpdatePhase(GlobalQueryPlanPtr globalQueryPlan);
 
     GlobalQueryPlanPtr globalQueryPlan;
 };

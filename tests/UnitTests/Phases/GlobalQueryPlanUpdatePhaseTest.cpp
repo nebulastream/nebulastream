@@ -42,7 +42,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query without assigning it a query id.");
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto phase = GlobalQueryPlanUpdatePhase::create();
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto phase = GlobalQueryPlanUpdatePhase::create(globalQueryPlan);
     auto catalogEntry1 = QueryCatalogEntry("", "", "topdown", q1.getQueryPlan(), Scheduling);
     std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1};
     //Assert
@@ -59,7 +60,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId("Q1");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto phase = GlobalQueryPlanUpdatePhase::create();
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto phase = GlobalQueryPlanUpdatePhase::create(globalQueryPlan);
     auto catalogEntry1 = QueryCatalogEntry("Q1", "", "topdown", q1.getQueryPlan(), Scheduling);
     std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1};
     auto resultPlan = phase->execute(batchOfQueryRequests);
@@ -80,7 +82,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForDuplicateValidQ
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId("Q1");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto phase = GlobalQueryPlanUpdatePhase::create();
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto phase = GlobalQueryPlanUpdatePhase::create(globalQueryPlan);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = QueryCatalogEntry("Q1", "", "topdown", q1.getQueryPlan(), Scheduling);
     std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1, catalogEntry1};
@@ -99,7 +102,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto q2 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId("Q2");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto phase = GlobalQueryPlanUpdatePhase::create();
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto phase = GlobalQueryPlanUpdatePhase::create(globalQueryPlan);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = QueryCatalogEntry("Q1", "", "topdown", q1.getQueryPlan(), Scheduling);
     auto catalogEntry2 = QueryCatalogEntry("Q2", "", "topdown", q2.getQueryPlan(), Scheduling);
@@ -122,7 +126,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForAValidQueryPlan
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId("Q1");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto phase = GlobalQueryPlanUpdatePhase::create();
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto phase = GlobalQueryPlanUpdatePhase::create(globalQueryPlan);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = QueryCatalogEntry("Q1", "", "topdown", q1.getQueryPlan(), Failed);
     std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1};
@@ -142,7 +147,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto q2 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId("Q2");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto phase = GlobalQueryPlanUpdatePhase::create();
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto phase = GlobalQueryPlanUpdatePhase::create(globalQueryPlan);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = QueryCatalogEntry("Q1", "", "topdown", q1.getQueryPlan(), Scheduling);
     auto catalogEntry2 = QueryCatalogEntry("Q2", "", "topdown", q2.getQueryPlan(), Scheduling);
