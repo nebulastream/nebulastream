@@ -23,13 +23,18 @@ class Gauge {
      * @brief Calculates and returns the measured value.
      * @return the value
      */
-    T getValue() {
+    T makeReading() {
         return probingFunc();
     }
 
   private:
     std::function<T()> probingFunc;
 };
+
+template<typename T>
+MetricType getMetricType(const Gauge<T>& x)  {
+    return MetricType::GaugeType;
+}
 
 }// namespace NES
 

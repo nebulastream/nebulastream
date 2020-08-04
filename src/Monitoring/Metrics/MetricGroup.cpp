@@ -6,16 +6,15 @@
 namespace NES {
 
 std::shared_ptr<MetricGroup> MetricGroup::create() {
-    return std::shared_ptr<MetricGroup>();
+    return std::make_shared<MetricGroup>(MetricGroup());
 }
 
-bool MetricGroup::addMetric(std::shared_ptr<Metric> metric) {
-    //metricMap.emplace_back(std::move(metric));
-    return true;
+bool MetricGroup::add(const std::string& desc, const Metric& metric) {
+    return metricMap.insert(std::make_pair(desc, metric)).second;
 }
 
-Metric MetricGroup::getRegisteredMetric(const std::string& name) const {
-    //return this->metricMap.at(name);
+bool MetricGroup::removeMetric(const std::string& name) {
+    return metricMap.erase(name);
 }
 
 }// namespace NES
