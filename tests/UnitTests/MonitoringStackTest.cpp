@@ -37,7 +37,7 @@ class MonitoringStackTest : public testing::Test {
 
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
-    CpuMetrics cpuMetrics = cpuStats.getValue();
+    CpuMetrics cpuMetrics = cpuStats.makeReading();
     ASSERT_TRUE(cpuMetrics.size() > 0);
     for (int i=0; i<cpuMetrics.size(); i++){
         ASSERT_TRUE(cpuMetrics.getValues(i).USER > 0);
@@ -45,12 +45,12 @@ TEST_F(MonitoringStackTest, testCPUStats) {
     ASSERT_TRUE(cpuMetrics.getTotal().USER > 0);
 
     auto cpuIdle = MetricUtils::CPUIdle(0);
-    NES_INFO("MonitoringStackTest: Idle " << cpuIdle.getValue());
+    NES_INFO("MonitoringStackTest: Idle " << cpuIdle.makeReading());
 }
 
 TEST_F(MonitoringStackTest, testMemoryStats) {
     auto memStats = MetricUtils::MemoryStats();
-    auto memMetrics = memStats.getValue();
+    auto memMetrics = memStats.makeReading();
     ASSERT_TRUE(memMetrics.FREE_RAM > 0);
 
     NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM/(1024*1024) << "gb");
@@ -58,13 +58,13 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
 
 TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskStats = MetricUtils::DiskStats();
-    auto diskMetrics = diskStats.getValue();
+    auto diskMetrics = diskStats.makeReading();
     ASSERT_TRUE(diskMetrics.F_BAVAIL > 0);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
     auto networkStats = MetricUtils::NetworkStats();
-    auto networkMetrics = networkStats.getValue();
+    auto networkMetrics = networkStats.makeReading();
     ASSERT_TRUE(!networkMetrics.getInterfaceNames().empty());
 
     for (std::string intfs : networkMetrics.getInterfaceNames()) {
@@ -72,19 +72,22 @@ TEST_F(MonitoringStackTest, testNetworkStats) {
     }
 }
 
-TEST_F(MonitoringStackTest, testMetricGroup) {
-    auto cpuStats = MetricUtils::CPUStats();
-    auto networkStats = MetricUtils::NetworkStats();
-    auto diskStats = MetricUtils::DiskStats();
-    auto memStats = MetricUtils::MemoryStats();
+TEST_F(MonitoringStackTest, testMetric) {
+    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
+    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
+    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
+    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
 
     auto metrics = std::vector<Metric>();
+    auto metricsMap = std::unordered_map<std::string, Metric>();
 
     // test with simple data types
     metrics.emplace_back(1);
     Metric m0 = metrics[0];
+    ASSERT_TRUE(getMetricType(m0)==MetricType::UnknownType);
     int valueInt = m0.getValue<int>();
     ASSERT_TRUE(valueInt == 1);
+    metricsMap.insert({"sdf", 1});
 
     metrics.emplace_back(std::string("test"));
     Metric m1 = metrics[1];
@@ -92,28 +95,70 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     ASSERT_TRUE(valueString == "test");
 
     // test cpu stats
-    metrics.emplace_back(cpuStats, MetricType::GaugeType);
+    metrics.emplace_back(cpuStats);
     Metric m2 = metrics[2];
-    auto cpuMetrics = m2.getValue<Gauge<CpuMetrics>>();
-    ASSERT_TRUE(cpuStats.getValue().size() == cpuMetrics.getValue().size());
-    //ASSERT_TRUE(m2.getType() == MetricType::GaugeType);
+    ASSERT_TRUE(getMetricType(m2) == MetricType::GaugeType);
+    Gauge<CpuMetrics> cpuMetrics = m2.getValue<Gauge<CpuMetrics>>();
+    ASSERT_TRUE(cpuStats.makeReading().size() == cpuMetrics.makeReading().size());
 
-    /**
     // test network stats
     metrics.emplace_back(networkStats);
     auto networkMetrics = metrics[3].getValue<Gauge<NetworkMetrics>>();
-    ASSERT_TRUE(networkStats.readValue().size() == networkMetrics.readValue().size());
+    ASSERT_TRUE(networkStats.makeReading().size() == networkMetrics.makeReading().size());
 
     // test disk stats
     metrics.emplace_back(diskStats);
     auto diskMetrics = metrics[4].getValue<Gauge<DiskMetrics>>();
-    ASSERT_TRUE(diskStats.readValue().F_BAVAIL == diskMetrics.readValue().F_BAVAIL);
+    ASSERT_TRUE(diskStats.makeReading().F_BAVAIL == diskMetrics.makeReading().F_BAVAIL);
 
     // test mem stats
     metrics.emplace_back(memStats);
     auto memMetrics = metrics[5].getValue<Gauge<MemoryMetrics>>();
-    ASSERT_TRUE(memStats.readValue().TOTAL_RAM == memMetrics.readValue().TOTAL_RAM);
-     **/
+    ASSERT_TRUE(memStats.makeReading().TOTAL_RAM == memMetrics.makeReading().TOTAL_RAM);
+}
+
+TEST_F(MonitoringStackTest, testMetricGroup) {
+    MetricGroupPtr metricGroup = MetricGroup::create();
+
+    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
+    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
+    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
+    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
+
+    // test with simple data types
+    auto intS = "simpleInt";
+    metricGroup->add(intS, 1);
+    int valueInt = metricGroup->getAs<int>(intS);
+    ASSERT_TRUE(valueInt == 1);
+
+    auto stringS = "simpleString";
+    metricGroup->add(stringS, std::string("test"));
+    std::string valueString = metricGroup->getAs<std::string>(stringS);
+    ASSERT_TRUE(valueString == "test");
+
+    // test cpu stats
+    auto cpuS = "cpuStats";
+    metricGroup->add(cpuS, cpuStats);
+    Gauge<CpuMetrics> cpuMetrics = metricGroup->getAs<Gauge<CpuMetrics>>(cpuS);
+    ASSERT_TRUE(cpuStats.makeReading().size() == cpuMetrics.makeReading().size());
+
+    // test network stats
+    auto networkS = "networkStats";
+    metricGroup->add(networkS, networkStats);
+    auto networkMetrics = metricGroup->getAs<Gauge<NetworkMetrics>>(networkS);
+    ASSERT_TRUE(networkStats.makeReading().size() == networkMetrics.makeReading().size());
+
+    // test disk stats
+    auto diskS = "diskStats";
+    metricGroup->add(diskS, diskStats);
+    auto diskMetrics = metricGroup->getAs<Gauge<DiskMetrics>>(diskS);
+    ASSERT_TRUE(diskStats.makeReading().F_BAVAIL == diskMetrics.makeReading().F_BAVAIL);
+
+    // test mem stats
+    auto memS = "memStats";
+    metricGroup->add(memS, memStats);
+    auto memMetrics = metricGroup->getAs<Gauge<MemoryMetrics>>(memS);
+    ASSERT_TRUE(memStats.makeReading().TOTAL_RAM == memMetrics.makeReading().TOTAL_RAM);
 }
 
 TEST_F(MonitoringStackTest, testSamplingProtocol) {

@@ -22,6 +22,11 @@ enum MetricType {
     UnknownType
 };
 
+template <typename T>
+MetricType getMetricType(const T& x)  {
+    return UnknownType;
+}
+
 /**
  * @brief The metric class is a conceptual superclass that represents all metrics in NES.
  * Currently existing metrics are Counter, Gauge, Histogram and Meter.
@@ -29,7 +34,7 @@ enum MetricType {
 class Metric {
   public:
     template<typename T>
-    Metric(T x, MetricType metricType=UnknownType): self_(std::make_unique<model<T>>(std::move(x))), metricType(metricType){
+    Metric(T x): self_(std::make_unique<model<T>>(std::move(x))){
     }
 
     Metric(const Metric& x): self_(x.self_->copy_()){
@@ -48,29 +53,34 @@ class Metric {
         return dynamic_cast<model<T>*>(self_.get())->data_;
     }
 
-    MetricType getType() const {
-        return this->metricType;
+    friend MetricType getMetricType(const Metric& x) {
+        return x.self_->getType();
     }
 
   private:
     struct concept_t {
         virtual ~concept_t() = default;
         virtual std::unique_ptr<concept_t> copy_() const = 0;
+        virtual MetricType getType() const = 0;
     };
 
     template<typename T>
     struct model final : concept_t {
-        explicit model(T x): data_(std::move(x)) { };
+        explicit model(T x): data_(std::move(x)){ };
 
         std::unique_ptr<concept_t> copy_() const override {
             return std::make_unique<model>(*this);
         }
 
+        MetricType getType() const override {
+            return getMetricType(data_);
+        }
+
         T data_;
+        MetricType type_;
     };
 
     std::unique_ptr<concept_t> self_;
-    MetricType metricType;
 };
 
 }// namespace NES

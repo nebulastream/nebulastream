@@ -25,18 +25,27 @@ class MetricGroup {
      * @param metric metric to register
      * @return true if successful, else false
      */
-    bool addMetric(std::shared_ptr<Metric> metric);
+    bool add(const std::string& desc, const Metric& metric);
 
     /**
      * @brief returns a map of the registered metrics
      * @return the metrics map
      */
-    Metric getRegisteredMetric(const std::string& name) const;
+    template<typename T>
+    T& getAs(const std::string& name) const {
+        return metricMap.at(name).getValue<T>();
+    }
+
+    /**
+     * @brief This metric removes a registered metric.
+     * @param name of metric
+     * @return true if successful, else false
+     */
+    bool removeMetric(const std::string& name);
 
   private:
     MetricGroup() = default;
-
-    std::vector<Metric> metricMap;
+    std::unordered_map<std::string, Metric> metricMap;
 };
 
 typedef std::shared_ptr<MetricGroup> MetricGroupPtr;
