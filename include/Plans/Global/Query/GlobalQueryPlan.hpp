@@ -1,13 +1,13 @@
 #ifndef NES_GLOBALQUERYPLAN_HPP
 #define NES_GLOBALQUERYPLAN_HPP
 
+#include <Plans/Global/Query/GlobalQueryNode.hpp>
+#include <Util/Logger.hpp>
 #include <algorithm>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <vector>
-#include <Util/Logger.hpp>
-#include <Plans/Global/Query/GlobalQueryNode.hpp>
 
 namespace NES {
 
