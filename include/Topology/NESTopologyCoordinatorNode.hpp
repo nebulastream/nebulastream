@@ -1,7 +1,7 @@
 #ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYCOORDINATORNODE_HPP_
 #define INCLUDE_TOPOLOGY_NESTOPOLOGYCOORDINATORNODE_HPP_
 
-#include <API/InputQuery.hpp>
+
 
 #include "NESTopologyEntry.hpp"
 #include <memory>
