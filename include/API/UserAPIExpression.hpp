@@ -12,7 +12,7 @@ namespace NES {
 
 
 /**
- * @brief TODO this is deprecated and will be removed as soon as the the new physical operators are in place.
+ * @deprecated TODO this is deprecated and will be removed as soon as the the new physical operators are in place.
  */
 
 class ValueType;
