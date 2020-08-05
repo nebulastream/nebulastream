@@ -3,7 +3,6 @@ add_source_nes(
         Schema.cpp
         ParameterTypes.cpp
         UserAPIExpression.cpp
-        Stream.cpp
         Query.cpp
         Pattern.cpp
         AttributeField.cpp

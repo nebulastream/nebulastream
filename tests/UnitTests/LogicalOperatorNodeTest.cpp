@@ -13,6 +13,7 @@
 
 #include <API/UserAPIExpression.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/LogicalStream.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 #include <Operators/Operator.hpp>
@@ -95,7 +96,7 @@ class LogicalOperatorNodeTest : public testing::Test {
   protected:
     bool removed;
     bool replaced;
-    StreamPtr sPtr;
+    LogicalStreamPtr sPtr;
     DumpContextPtr dumpContext;
 
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
