@@ -11,7 +11,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-#include <API/InputQuery.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>

@@ -173,11 +173,6 @@ add_executable(filter-push-down-test "UnitTests/Optimizer/QueryRewrite/FilterPus
 target_link_libraries(filter-push-down-test nes ${GTEST_LIBRARIES})
 add_test(NAME filter-push-down-test COMMAND filter-push-down-test)
 
-# TranslateFromLegacyPlanPhaseTest
-add_executable(translate-from-legacy-plan-phase-test "UnitTests/Phases/TranslateFromLegacyPlanPhaseTest.cpp")
-target_link_libraries(translate-from-legacy-plan-phase-test nes ${GTEST_LIBRARIES})
-add_test(NAME translate-from-legacy-plan-phase-test COMMAND translate-from-legacy-plan-phase-test)
-
 # SerializationUtilTest
 add_executable(serialize-operator-test "UnitTests/Nodes/SerializationUtilTest.cpp")
 target_link_libraries(serialize-operator-test nes ${GTEST_LIBRARIES})

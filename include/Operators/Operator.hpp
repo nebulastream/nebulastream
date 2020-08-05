@@ -1,15 +1,20 @@
 #ifndef OPERATOR_OPERATOR_H
 #define OPERATOR_OPERATOR_H
 
-#include <API/InputQuery.hpp>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
+#include <API/UserAPIExpression.hpp>
+#include <API/ParameterTypes.hpp>
+
 
 namespace NES {
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
 
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
@@ -107,13 +112,10 @@ class Operator {
     std::set<OperatorType> traverseOpTree(bool traverse_children);
 };
 
-const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec);
 const OperatorPtr createFilterOperator(const PredicatePtr predicate);
-const OperatorPtr createJoinOperator(const JoinPredicatePtr join_spec);
 const OperatorPtr createKeyByOperator(const Attributes& keyby_spec);
 const OperatorPtr createMapOperator(AttributeFieldPtr attr, UserAPIExpressionPtr ptr);
 const OperatorPtr createSinkOperator(const DataSinkPtr sink);
-const OperatorPtr createSortOperator(const Sort& sort_spec);
 const OperatorPtr createSourceOperator(const DataSourcePtr source);
 const OperatorPtr createWindowOperator(const WindowDefinitionPtr window_definition);
 const OperatorPtr createWindowScanOperator(const SchemaPtr schema);

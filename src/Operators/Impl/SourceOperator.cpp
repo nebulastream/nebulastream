@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <Operators/Impl/SourceOperator.hpp>
+#include <Sources/DataSource.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 
 namespace NES {

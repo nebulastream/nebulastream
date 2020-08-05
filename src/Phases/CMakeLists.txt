@@ -1,6 +1,5 @@
 add_source_nes(
         TranslateToLegacyPlanPhase.cpp
-        TranslateFromLegacyPlanPhase.cpp
         ConvertLogicalToPhysicalSource.cpp
         ConvertLogicalToPhysicalSink.cpp
         ConvertPhysicalToLogicalSource.cpp

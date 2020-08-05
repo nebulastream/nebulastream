@@ -1,8 +1,6 @@
 #ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYWORKERNODE_HPP_
 #define INCLUDE_TOPOLOGY_NESTOPOLOGYWORKERNODE_HPP_
 
-#include <API/InputQuery.hpp>
-
 #include "NESTopologyEntry.hpp"
 #include <Util/CPUCapacity.hpp>
 #include <memory>

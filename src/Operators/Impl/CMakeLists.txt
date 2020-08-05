@@ -6,8 +6,6 @@ add_source_nes(
         WindowScanOperator.cpp
         KeyByOperator.cpp
         MapOperator.cpp
-        AggregationOperator.cpp
-        JoinOperator.cpp
         SampleOperator.cpp
         MergeOperator.cpp
 )

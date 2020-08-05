@@ -6,7 +6,6 @@ add_source_nes(
         Stream.cpp
         Query.cpp
         Pattern.cpp
-        InputQuery.cpp
         AttributeField.cpp
 )
 add_subdirectory(Window)
