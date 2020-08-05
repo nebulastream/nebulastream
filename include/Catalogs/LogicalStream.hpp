@@ -9,12 +9,21 @@ namespace NES {
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
+/**
+ * @brief The LogicalStream wraps the stream name and the schema.
+ */
 class LogicalStream {
   public:
     LogicalStream(std::string name, SchemaPtr schema);
 
+    /**
+     * @brief Gets the stream name
+     */
     std::string getName();
 
+    /**
+     * @brief Gets the stream schema
+     */
     SchemaPtr getSchema();
 
   private:
