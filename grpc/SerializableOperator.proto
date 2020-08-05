@@ -112,6 +112,7 @@ message SerializableOperator{
     message SerializableZMQSinkDescriptor {
       string host = 1;
       uint32 port = 2;
+      bool isInternal = 3;
     }
 
     message SerializableNetworkSinkDescriptor {

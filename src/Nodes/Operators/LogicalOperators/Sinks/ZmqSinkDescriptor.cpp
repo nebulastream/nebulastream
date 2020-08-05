@@ -2,8 +2,8 @@
 
 namespace NES {
 
-ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port)
-    : host(host), port(port) {}
+ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port, bool internal)
+    : host(host), port(port), internal(internal) {}
 
 const std::string& ZmqSinkDescriptor::getHost() const {
     return host;
@@ -12,8 +12,8 @@ const std::string& ZmqSinkDescriptor::getHost() const {
 uint16_t ZmqSinkDescriptor::getPort() const {
     return port;
 }
-SinkDescriptorPtr ZmqSinkDescriptor::create(std::string host, uint16_t port) {
-    return std::make_shared<ZmqSinkDescriptor>(ZmqSinkDescriptor(host, port));
+SinkDescriptorPtr ZmqSinkDescriptor::create(std::string host, uint16_t port, bool internal) {
+    return std::make_shared<ZmqSinkDescriptor>(ZmqSinkDescriptor(host, port, internal));
 }
 
 std::string ZmqSinkDescriptor::toString() {
@@ -28,6 +28,12 @@ bool ZmqSinkDescriptor::equal(SinkDescriptorPtr other) {
 
 void ZmqSinkDescriptor::setPort(uint16_t port) {
     this->port = port;
+}
+bool ZmqSinkDescriptor::isInternal() const {
+    return internal;
+}
+void ZmqSinkDescriptor::setInternal(bool internal) {
+    ZmqSinkDescriptor::internal = internal;
 }
 
 }// namespace NES
