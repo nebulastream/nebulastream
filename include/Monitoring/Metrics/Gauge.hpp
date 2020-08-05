@@ -15,7 +15,7 @@ template<typename T>
  */
 class Gauge {
   public:
-    explicit Gauge(std::function<T()>&& probingFunc): probingFunc(probingFunc) {
+    explicit Gauge(std::function<T()>&& probingFunc) : probingFunc(probingFunc) {
         NES_DEBUG("Gauge: Initializing");
     }
 
@@ -32,7 +32,7 @@ class Gauge {
 };
 
 template<typename T>
-MetricType getMetricType(const Gauge<T>& x)  {
+MetricType getMetricType(const Gauge<T>& x) {
     return MetricType::GaugeType;
 }
 

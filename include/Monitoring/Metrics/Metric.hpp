@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 
-#include <memory>
 #include <Util/Logger.hpp>
+#include <memory>
 
 namespace NES {
 class MetricValue;
@@ -22,8 +22,8 @@ enum MetricType {
     UnknownType
 };
 
-template <typename T>
-MetricType getMetricType(const T& x)  {
+template<typename T>
+MetricType getMetricType(const T& x) {
     return UnknownType;
 }
 
@@ -38,14 +38,14 @@ class Metric {
      * @param arbitrary parameter of any type
      */
     template<typename T>
-    Metric(T x): self(std::make_unique<model<T>>(std::move(x))){
+    Metric(T x) : self(std::make_unique<model<T>>(std::move(x))) {
     }
 
     /**
      * @brief copy ctor to properly handle the templated values
      * @param the metric
      */
-    Metric(const Metric& x): self(x.self->copy()){
+    Metric(const Metric& x) : self(x.self->copy()) {
         NES_DEBUG("Metric: Calling copy ctor");
     };
     Metric(Metric&&) noexcept = default;
@@ -54,7 +54,7 @@ class Metric {
      * @brief assign operator for metrics to avoid unnecessary copies
      */
     Metric& operator=(const Metric& x) {
-        return *this=Metric(x);
+        return *this = Metric(x);
     }
     Metric& operator=(Metric&& x) noexcept = default;
 
@@ -64,7 +64,7 @@ class Metric {
      * @return the value
      */
     template<typename T>
-    T& getValue() const{
+    T& getValue() const {
         return dynamic_cast<model<T>*>(self.get())->data;
     }
 
@@ -94,7 +94,7 @@ class Metric {
      */
     template<typename T>
     struct model final : concept_t {
-        explicit model(T x): data(std::move(x)){ };
+        explicit model(T x) : data(std::move(x)){};
 
         std::unique_ptr<concept_t> copy() const override {
             return std::make_unique<model>(*this);

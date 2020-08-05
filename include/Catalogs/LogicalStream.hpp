@@ -2,8 +2,8 @@
 #define STREAM_HPP
 
 #include <iostream>
-#include <string>
 #include <memory>
+#include <string>
 
 namespace NES {
 
