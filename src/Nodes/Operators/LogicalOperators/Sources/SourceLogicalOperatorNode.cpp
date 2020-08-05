@@ -1,6 +1,6 @@
 
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <API/Schema.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 
 namespace NES {
 
