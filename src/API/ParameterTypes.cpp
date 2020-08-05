@@ -4,7 +4,6 @@
 
 namespace NES {
 
-
 const DataSourcePtr copy(const DataSourcePtr param) { return param; }
 const DataSinkPtr copy(const DataSinkPtr param) { return param; }
 const PredicatePtr copy(const PredicatePtr param) { return param; }

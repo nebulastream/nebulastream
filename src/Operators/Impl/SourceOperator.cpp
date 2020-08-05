@@ -1,8 +1,8 @@
 #include <iostream>
 
 #include <Operators/Impl/SourceOperator.hpp>
-#include <Sources/DataSource.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES {
 

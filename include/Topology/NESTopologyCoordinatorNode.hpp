@@ -1,8 +1,6 @@
 #ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYCOORDINATORNODE_HPP_
 #define INCLUDE_TOPOLOGY_NESTOPOLOGYCOORDINATORNODE_HPP_
 
-
-
 #include "NESTopologyEntry.hpp"
 #include <memory>
 #include <string>

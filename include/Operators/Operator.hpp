@@ -1,15 +1,14 @@
 #ifndef OPERATOR_OPERATOR_H
 #define OPERATOR_OPERATOR_H
 
+#include <API/ParameterTypes.hpp>
+#include <API/UserAPIExpression.hpp>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
-#include <API/UserAPIExpression.hpp>
-#include <API/ParameterTypes.hpp>
-
 
 namespace NES {
 
