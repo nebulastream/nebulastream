@@ -115,7 +115,7 @@ static void BM_FilterPushDown(benchmark::State& state){
 // Register the function as a benchmark
 BENCHMARK(BM_SetInsert)->Ranges({{1<<10, 8<<10}, {128, 512}})->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_StringCreation)->RangeMultiplier(2)->Range(8, 1024);
-BENCHMARK(BM_FilterPushDown)->Repetitions(10)->ReportAggregatesOnly(true);
+BENCHMARK(BM_FilterPushDown)->Repetitions(20)->ReportAggregatesOnly(true);
 BENCHMARK(BM_QueryTest);
 
 BENCHMARK_MAIN();
