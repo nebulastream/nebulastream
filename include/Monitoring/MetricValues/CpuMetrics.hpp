@@ -7,12 +7,24 @@
 
 namespace NES {
 
+/**
+ * @brief Wrapper class to represent the metrics read from the OS about cpu data.
+ */
 class CpuMetrics {
   public:
     explicit CpuMetrics(CpuValues total, unsigned int size, std::unique_ptr<CpuValues[]> arr);
 
+    /**
+     * @brief Returns the cpu metrics for a given core
+     * @param cpuCore core number
+     * @return the cpu metrics
+     */
     CpuValues getValues(unsigned int cpuCore) const;
 
+    /**
+     * @brief Returns the total cpu metrics summed up across all cores
+     * @return The cpu values for all cores
+     */
     CpuValues getTotal() const;
 
     /**
@@ -21,10 +33,10 @@ class CpuMetrics {
     ~CpuMetrics();
 
     /**
-     * @brief
-     * @return
+     * @brief Returns the number of cores of the node
+     * @return core numbers
      */
-    unsigned int size() const;
+    unsigned int getCpuNo() const;
 
   private:
     // Overloading [] operator to access elements in array style

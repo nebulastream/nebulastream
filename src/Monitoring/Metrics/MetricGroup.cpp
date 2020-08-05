@@ -13,7 +13,7 @@ bool MetricGroup::add(const std::string& desc, const Metric& metric) {
     return metricMap.insert(std::make_pair(desc, metric)).second;
 }
 
-bool MetricGroup::removeMetric(const std::string& name) {
+bool MetricGroup::remove(const std::string& name) {
     return metricMap.erase(name);
 }
 
