@@ -41,7 +41,7 @@ class MetricGroup {
      * @param name of metric
      * @return true if successful, else false
      */
-    bool removeMetric(const std::string& name);
+    bool remove(const std::string& name);
 
   private:
     MetricGroup() = default;

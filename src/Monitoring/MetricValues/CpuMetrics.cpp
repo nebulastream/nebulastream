@@ -26,7 +26,7 @@ CpuValues& CpuMetrics::operator[](unsigned int index) {
     return ptr[index];
 }
 
-unsigned int CpuMetrics::size() const {
+unsigned int CpuMetrics::getCpuNo() const {
     return cpuNo;
 }
 

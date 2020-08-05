@@ -38,8 +38,8 @@ class MonitoringStackTest : public testing::Test {
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
     CpuMetrics cpuMetrics = cpuStats.makeReading();
-    ASSERT_TRUE(cpuMetrics.size() > 0);
-    for (int i=0; i<cpuMetrics.size(); i++){
+    ASSERT_TRUE(cpuMetrics.getCpuNo() > 0);
+    for (int i=0; i< cpuMetrics.getCpuNo(); i++){
         ASSERT_TRUE(cpuMetrics.getValues(i).USER > 0);
     }
     ASSERT_TRUE(cpuMetrics.getTotal().USER > 0);
@@ -99,7 +99,7 @@ TEST_F(MonitoringStackTest, testMetric) {
     Metric m2 = metrics[2];
     ASSERT_TRUE(getMetricType(m2) == MetricType::GaugeType);
     Gauge<CpuMetrics> cpuMetrics = m2.getValue<Gauge<CpuMetrics>>();
-    ASSERT_TRUE(cpuStats.makeReading().size() == cpuMetrics.makeReading().size());
+    ASSERT_TRUE(cpuStats.makeReading().getCpuNo() == cpuMetrics.makeReading().getCpuNo());
 
     // test network stats
     metrics.emplace_back(networkStats);
@@ -140,7 +140,7 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     auto cpuS = "cpuStats";
     metricGroup->add(cpuS, cpuStats);
     Gauge<CpuMetrics> cpuMetrics = metricGroup->getAs<Gauge<CpuMetrics>>(cpuS);
-    ASSERT_TRUE(cpuStats.makeReading().size() == cpuMetrics.makeReading().size());
+    ASSERT_TRUE(cpuStats.makeReading().getCpuNo() == cpuMetrics.makeReading().getCpuNo());
 
     // test network stats
     auto networkS = "networkStats";
