@@ -1,6 +1,4 @@
-//
-// Created by nils on 8/3/20.
-//
+
 #include <benchmark/benchmark.h>
 #include <cstring>
 #include <set>
@@ -13,8 +11,6 @@
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyManager.hpp>
-
-#include "SandBoxBenchmark.h"
 
 using namespace NES;
 
@@ -113,9 +109,9 @@ static void BM_FilterPushDown(benchmark::State& state){
 
 
 // Register the function as a benchmark
-BENCHMARK(BM_SetInsert)->Ranges({{1<<10, 8<<10}, {128, 512}})->Unit(benchmark::kMillisecond);
-BENCHMARK(BM_StringCreation)->RangeMultiplier(2)->Range(8, 1024);
-BENCHMARK(BM_FilterPushDown)->Repetitions(20)->ReportAggregatesOnly(true);
-BENCHMARK(BM_QueryTest);
+BENCHMARK(BM_SetInsert)->Ranges({{1024, 8192}, {128, 1024}, {12, 24}})->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_StringCreation)->DenseRange(8, 26, 3);
+BENCHMARK(BM_FilterPushDown)->Repetitions(20);//->ReportAggregatesOnly(true);
+BENCHMARK(BM_QueryTest)->Args();
 
 BENCHMARK_MAIN();
