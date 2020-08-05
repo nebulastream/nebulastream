@@ -116,7 +116,6 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSni
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
-        code << "#include <API/InputQuery.hpp>" << std::endl;
         code << "#include <API/Config.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
         code << "#include <Sources/DataSource.hpp>" << std::endl;
