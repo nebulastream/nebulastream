@@ -2,7 +2,6 @@
 #define INCLUDE_CATALOGS_STREAMCATALOG_HPP_
 
 #include <API/Schema.hpp>
-#include <API/Stream.hpp>
 #include <Sources/DataSource.hpp>
 #include <deque>
 #include <map>
@@ -13,6 +12,9 @@
 using namespace std;
 namespace NES {
 
+class LogicalStream;
+typedef std::shared_ptr<LogicalStream> LogicalStreamPtr;
+
 /**
  * @brief the stream catalog handles the mapping of logical to physical streams
  * @Limitations
@@ -20,8 +22,7 @@ namespace NES {
  *    - TODO: add mutex to make it secure
  *    - TODO: delete methods only delete catalog entries not the entries in the topology
  */
-class
-    StreamCatalog {
+class StreamCatalog {
   public:
     /**
    * @brief method to add a logical stream
@@ -97,7 +98,7 @@ class
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
-    StreamPtr getStreamForLogicalStream(std::string logicalStreamName);
+    LogicalStreamPtr getStreamForLogicalStream(std::string logicalStreamName);
 
     /**
    * @brief method to return the stream for an existing logical stream or throw exception
@@ -105,7 +106,7 @@ class
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
-    StreamPtr getStreamForLogicalStreamOrThrowException(
+    LogicalStreamPtr getStreamForLogicalStreamOrThrowException(
         std::string logicalStreamName);
 
     /**

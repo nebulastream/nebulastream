@@ -1,4 +1,5 @@
 #include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/LogicalStream.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -236,15 +237,15 @@ SchemaPtr StreamCatalog::getSchemaForLogicalStream(std::string logicalStreamName
     return logicalStreamToSchemaMapping[logicalStreamName];
 }
 
-StreamPtr StreamCatalog::getStreamForLogicalStream(std::string logicalStreamName) {
-    return std::make_shared<Stream>(
+LogicalStreamPtr StreamCatalog::getStreamForLogicalStream(std::string logicalStreamName) {
+    return std::make_shared<LogicalStream>(
         logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
 }
 
-StreamPtr StreamCatalog::getStreamForLogicalStreamOrThrowException(std::string logicalStreamName) {
+LogicalStreamPtr StreamCatalog::getStreamForLogicalStreamOrThrowException(std::string logicalStreamName) {
     if (logicalStreamToSchemaMapping.find(logicalStreamName)
         != logicalStreamToSchemaMapping.end()) {
-        return std::make_shared<Stream>(
+        return std::make_shared<LogicalStream>(
             logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
     } else {
         NES_ERROR(

@@ -7,7 +7,6 @@
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <API/Stream.hpp>
 
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sources/DataSource.hpp>
