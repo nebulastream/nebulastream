@@ -59,7 +59,7 @@ MemorySegment::~MemorySegment() {
 }
 
 BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback) : referenceCounter(0), numberOfTuples(0), owner(owner),
-                                                                                                                      recycleCallback(recycleCallback) {
+                                                                                                                      recycleCallback(recycleCallback), watermark(0) {
 }
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
@@ -67,6 +67,7 @@ BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     numberOfTuples.store(that.numberOfTuples.load());
     recycleCallback = that.recycleCallback;
     owner = that.owner;
+    watermark.store(that.watermark.load());
 }
 
 BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that) {
@@ -74,6 +75,7 @@ BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that
     numberOfTuples.store(that.numberOfTuples.load());
     recycleCallback = that.recycleCallback;
     owner = that.owner;
+    watermark.store(that.watermark.load());
     return *this;
 }
 
@@ -180,6 +182,15 @@ size_t BufferControlBlock::getNumberOfTuples() const {
 void BufferControlBlock::setNumberOfTuples(size_t numberOfTuples) {
     this->numberOfTuples = numberOfTuples;
 }
+
+size_t BufferControlBlock::getWatermark() const {
+    return watermark;
+}
+
+void BufferControlBlock::setWatermark(size_t watermark) {
+    this->watermark = watermark;
+}
+
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack)
