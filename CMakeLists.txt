@@ -184,6 +184,12 @@ if (NES_USE_KAFKA)
     add_compile_definitions(ENABLE_KAFKA_BUILD)
 endif (NES_USE_KAFKA)
 
+if (NES_USE_OPC)
+    find_package(open62541 REQUIRED)
+    set(LIBRARIES ${LIBRARIES} ${open62541_LIBRARIES})
+    add_compile_definitions(ENABLE_OPC_BUILD)
+endif (NES_USE_OPC)
+
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
