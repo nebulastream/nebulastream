@@ -47,6 +47,8 @@ void FileSink::shutdown() {
 }
 
 bool FileSink::writeData(TupleBuffer& inputBuffer) {
+    std::unique_lock lock(writeMutex);
+
     NES_DEBUG("FileSink: getSchema medium " << toString() << " format " << sinkFormat->toString()
                                             << " and mode " << this->getAppendAsString());
 
