@@ -14,6 +14,20 @@
 
 namespace NES{
 
+    // Helper Functions
+    void setupSensorNodeAndStreamCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog) {
+        NES_INFO("Setup FilterPushDownTest test case.");
+        NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+
+        PhysicalStreamConfig streamConf;
+        streamConf.physicalStreamName = "test2";
+        streamConf.logicalStreamName = "test_stream";
+
+        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
+        streamCatalog->addPhysicalStream("default_logical", sce);
+    }
+
+
     /**
      *
      * @brief dummy benchmark, that times a simple memcpy
@@ -22,7 +36,7 @@ namespace NES{
         char* src = new char[state.range(0)];
         char* dst = new char[state.range(0)];
         memset(src, 'x', state.range(0));
-        for (auto _ : state) {
+        for (auto singleState : state) {
             memcpy(dst, src, state.range(0));
         }
         state.SetBytesProcessed(int64_t(state.iterations()) * int64_t(state.range(0)));
@@ -36,7 +50,7 @@ namespace NES{
      */
     static void BM_SetInsert(benchmark::State& state) {
         std::set<int> data;
-        for (auto _ : state) {
+        for (auto singleState : state) {
             for (int i = 0; i < state.range(0); ++i)
                 for (int j = 0; j < state.range(1); ++j)
                     data.insert(std::rand());
@@ -45,53 +59,11 @@ namespace NES{
 
     /**
      *
-     * @brief dummy benchmark, that times a simple query
-     */
-    static void BM_QueryTest(benchmark::State& state){
-        TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-
-        NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
-
-        PhysicalStreamConfig streamConf;
-        streamConf.physicalStreamName = "test2";
-        streamConf.logicalStreamName = "test_stream";
-
-        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                         sensorNode);
-
-        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-        streamCatalog->addPhysicalStream("default_logical", sce);
-
-        SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-
-        auto lessExpression = Attribute("field_1") <= 10;
-        auto printSinkDescriptor = PrintSinkDescriptor::create();
-        Query query = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
-        auto plan = query.getQueryPlan();
-        const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
-    }
-
-
-
-    void setupSensorNodeAndStreamCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog) {
-        NES_INFO("Setup FilterPushDownTest test case.");
-        NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
-
-        PhysicalStreamConfig streamConf;
-        streamConf.physicalStreamName = "test2";
-        streamConf.logicalStreamName = "test_stream";
-
-        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
-        streamCatalog->addPhysicalStream("default_logical", sce);
-    }
-
-    /**
-     *
      * @brief dummy benchmark, that times a simple query compilation filter push down
      */
     static void BM_FilterPushDown(benchmark::State& state){
         //NES::setupLogging("FilterPushDownTest.log", NES::LOG_DEBUG);
-        for (auto _ : state){
+        for (auto singleState : state){
             TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
             StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
             setupSensorNodeAndStreamCatalog(topologyManager, streamCatalog);
@@ -126,12 +98,10 @@ namespace NES{
     }
 
 
-
     // Register the function as a benchmark
-    BENCHMARK(BM_SetInsert)->Ranges({{1024, 8192}, {128, 1024}, {12, 24}})->Unit(benchmark::kMillisecond);
-    BENCHMARK(BM_Memcpy)->DenseRange(8, 26, 3)->Repetitions(10);
+    BENCHMARK(BM_SetInsert)->Ranges({{1024, 8192}, {128, 1024}})->Unit(benchmark::kMillisecond);
+    BENCHMARK(BM_Memcpy)->DenseRange(8, 16, 3)->Repetitions(10);
     BENCHMARK(BM_FilterPushDown)->Repetitions(20)->ReportAggregatesOnly(true);
-    BENCHMARK(BM_QueryTest);
 
     BENCHMARK_MAIN();
 }

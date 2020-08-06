@@ -4,7 +4,7 @@
 static void BM_SkeletonFunction(benchmark::State& state){
     // Initialize and set up benchmark function
 
-    for(auto _ : state){
+    for(auto singleState : state){
         // Everything here gets timed
     }
 }
