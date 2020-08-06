@@ -80,7 +80,7 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr& code) 
         auto tf = CompilerTypesFactory();
         return ConstantExpressionStatement(tf.createValueType(value)).copy();
     }
-    NES_THROW_RUNTIME_ERROR("UserAPIExpression: PredicateItem has only NULL Pointers!");
+    return nullptr;
 }
 
 const std::string Predicate::toString() const {

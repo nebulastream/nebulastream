@@ -11,7 +11,8 @@ namespace NES {
 enum LinkType {
     NodeToNode,
     NodeToSensor,
-    SensorToNode
+    SensorToNode,
+    UnkownLinkType
 };
 
 /**

@@ -62,6 +62,7 @@ std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
         buffers.push_back(buf);
     }
     return buffers;
+
 }
 
 std::string CsvFormat::toString() {

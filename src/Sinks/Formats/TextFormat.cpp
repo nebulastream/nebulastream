@@ -40,7 +40,6 @@ std::vector<TupleBuffer> TextFormat::getData(TupleBuffer& inputBuffer) {
             buffers.push_back(buf);
         }
         NES_DEBUG("TextFormat::getData: successfully copied buffer=" << numberOfBuffers);
-
     } else {
         NES_DEBUG("TextFormat::getData: content fits in one buffer");
         auto buf = this->bufferManager->getBufferBlocking();
