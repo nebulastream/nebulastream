@@ -384,4 +384,43 @@ TEST_F(SinkTest, testBinaryZMQSink) {
     receiving_thread.join();
     buffer.release();
 }
+
+TEST_F(SinkTest, testWatermark) {
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+
+    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, nodeEngine->getBufferManager(), "localhost", 666555, false);
+    for (size_t i = 1; i < 3; ++i) {
+        for (size_t j = 0; j < 2; ++j) {
+            buffer.getBuffer<uint64_t>()[j * i] = j;
+        }
+    }
+    buffer.setNumberOfTuples(4);
+    cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+
+    // Create ZeroMQ Data Source.
+    auto zmq_source = createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555);
+    std::cout << zmq_source->toString() << std::endl;
+
+    // Start thread for receivingh the data.
+    auto receiving_thread = std::thread([&]() {
+        auto schemaData = zmq_source->receiveData();
+        TupleBuffer bufSchema = schemaData.value();
+        SerializableSchema* serializedSchema = new SerializableSchema();
+        serializedSchema->ParseFromArray(bufSchema.getBuffer(), bufSchema.getNumberOfTuples());
+        SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
+        EXPECT_EQ(ptr->toString(), test_schema->toString());
+
+        auto bufferData = zmq_source->receiveData();
+        TupleBuffer bufData = bufferData.value();
+        cout << "rec buffer tups=" << bufData.getNumberOfTuples() << " content=" << UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema) << endl;
+        cout << "ref buffer tups=" << buffer.getNumberOfTuples() << " content=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+        EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema), UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+    });
+
+    // Wait until receiving is complete.
+    zmq_sink->writeData(buffer);
+    receiving_thread.join();
+    buffer.release();
+}
 }// namespace NES
