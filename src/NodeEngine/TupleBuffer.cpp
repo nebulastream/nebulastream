@@ -4,17 +4,17 @@
 
 namespace NES {
 
-TupleBuffer::TupleBuffer() noexcept : ptr(nullptr), size(0), controlBlock(nullptr), watermark(0) {
+TupleBuffer::TupleBuffer() noexcept : ptr(nullptr), size(0), controlBlock(nullptr) {
     //nop
 }
 
 TupleBuffer::TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size)
-    : controlBlock(controlBlock), ptr(ptr), size(size), watermark(0) {
+    : controlBlock(controlBlock), ptr(ptr), size(size) {
     // nop
 }
 
 TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr),
-                                                              size(other.size), watermark(other.watermark) {
+                                                              size(other.size) {
     if (controlBlock) {
         controlBlock->retain();
     }
@@ -25,7 +25,6 @@ TupleBuffer::TupleBuffer(TupleBuffer&& other) noexcept
     other.controlBlock = nullptr;
     other.ptr = nullptr;
     other.size = 0;
-    other.watermark = 0;
 }
 
 TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) {
@@ -99,12 +98,12 @@ void TupleBuffer::revertEndianness(SchemaPtr schema) {
 
 size_t TupleBuffer::getWatermark()
 {
-    return watermark;
+    return controlBlock->getWatermark();
 }
 
 void TupleBuffer::setWatermark(size_t value)
 {
-    watermark = value;
+    controlBlock->setWatermark(value);
 }
 
 

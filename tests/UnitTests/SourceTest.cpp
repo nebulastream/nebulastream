@@ -183,6 +183,60 @@ TEST_F(SourceTest, testCSVSource) {
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
 }
 
+
+TEST_F(SourceTest, testCSVSourceWaterMark) {
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    std::string path_to_file =
+        "../tests/test_data/ysb-tuples-100-campaign-100.csv";
+
+    const std::string& del = ",";
+    size_t num = 1;
+    size_t frequency = 1;
+    SchemaPtr schema =
+        Schema::create()
+            ->addField("user_id", DataTypeFactory::createFixedChar(16))
+            ->addField("page_id", DataTypeFactory::createFixedChar(16))
+            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+            ->addField("event_type", DataTypeFactory::createFixedChar(9))
+            ->addField("current_ms", UINT64)
+            ->addField("ip", INT32);
+
+    uint64_t tuple_size = schema->getSchemaSizeInBytes();
+    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
+    size_t num_of_buffers = 10;
+    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
+
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
+                                                     frequency);
+
+    while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
+        auto optBuf = source->receiveData();
+        auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::cout << "watermark is=" << optBuf->getWatermark() << " now is="  << now << std::endl;
+
+        EXPECT_NE(optBuf->getWatermark(), 0);
+        EXPECT_GE(now, optBuf->getWatermark());
+
+        size_t i = 0;
+        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
+            ysbRecord record(
+                *((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: "
+                      << record.event_type << std::endl;
+            EXPECT_STREQ(record.ad_type, "banner78");
+            EXPECT_TRUE(
+                (!strcmp(record.event_type, "view")
+                    || !strcmp(record.event_type, "click")
+                    || !strcmp(record.event_type, "purchase")));
+            i++;
+        }
+    }
+
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
+    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
+
+}
 TEST_F(SourceTest, testCSVSourceIntTypes) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 

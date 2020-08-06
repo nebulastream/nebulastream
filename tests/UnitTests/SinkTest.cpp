@@ -385,10 +385,11 @@ TEST_F(SinkTest, testBinaryZMQSink) {
     buffer.release();
 }
 
-TEST_F(SinkTest, testWatermark) {
+TEST_F(SinkTest, testWatermarkForZMQ) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    buffer.setWatermark(1234567);
     const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, nodeEngine->getBufferManager(), "localhost", 666555, false);
     for (size_t i = 1; i < 3; ++i) {
         for (size_t j = 0; j < 2; ++j) {
@@ -396,7 +397,6 @@ TEST_F(SinkTest, testWatermark) {
         }
     }
     buffer.setNumberOfTuples(4);
-    cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
 
     // Create ZeroMQ Data Source.
     auto zmq_source = createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555);
@@ -405,17 +405,10 @@ TEST_F(SinkTest, testWatermark) {
     // Start thread for receivingh the data.
     auto receiving_thread = std::thread([&]() {
         auto schemaData = zmq_source->receiveData();
-        TupleBuffer bufSchema = schemaData.value();
-        SerializableSchema* serializedSchema = new SerializableSchema();
-        serializedSchema->ParseFromArray(bufSchema.getBuffer(), bufSchema.getNumberOfTuples());
-        SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
-        EXPECT_EQ(ptr->toString(), test_schema->toString());
 
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
-        cout << "rec buffer tups=" << bufData.getNumberOfTuples() << " content=" << UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema) << endl;
-        cout << "ref buffer tups=" << buffer.getNumberOfTuples() << " content=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-        EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema), UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+        EXPECT_EQ(bufData.getWatermark(), 1234567);
     });
 
     // Wait until receiving is complete.
@@ -423,4 +416,26 @@ TEST_F(SinkTest, testWatermark) {
     receiving_thread.join();
     buffer.release();
 }
+
+
+TEST_F(SinkTest, testWatermarkCsvSource) {
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+
+    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    buffer.setWatermark(1234567);
+
+    const DataSinkPtr csvSink = createCSVFileSink(test_schema, nodeEngine->getBufferManager(), path_to_csv_file, true);
+    for (size_t i = 0; i < 2; ++i) {
+        for (size_t j = 0; j < 2; ++j) {
+            buffer.getBuffer<uint64_t>()[j] = j;
+        }
+    }
+    buffer.setNumberOfTuples(4);
+    cout << "watermark=" << buffer.getWatermark() << endl;
+    write_result = csvSink->writeData(buffer);
+
+    EXPECT_EQ(buffer.getWatermark(), 1234567);
+    buffer.release();
+}
+
 }// namespace NES
