@@ -34,6 +34,8 @@ std::optional<TupleBuffer> CSVSource::receiveData() {
     fillBuffer(buf);
     NES_DEBUG(
         "CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
+    buf.setWatermark(std::chrono::duration_cast<std::chrono::milliseconds>
+                         (std::chrono::system_clock::now().time_since_epoch()).count());
     return buf;
 }
 

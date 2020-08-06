@@ -46,15 +46,14 @@ std::optional<TupleBuffer> ZmqSource::receiveData() {
             zmq::message_t new_data;
             socket.recv(&new_data);// envelope - not needed at the moment
             size_t tupleCnt = *((size_t*) new_data.data());
-            NES_DEBUG("ZMQSource received #tups " << tupleCnt);
+            size_t currentTs = *((size_t*) new_data.data() + 1);
+            NES_DEBUG("ZMQSource received #tups " << tupleCnt << " watermark=" << currentTs);
 
             zmq::message_t new_data2;
             socket.recv(&new_data2);// actual data
 
-            // Get some information about received data
-            //            size_t tuple_size = schema->getSchemaSizeInBytes();
-            // Create new TupleBuffer and copy data
             auto buffer = bufferManager->getBufferBlocking();
+            buffer.setWatermark(currentTs);
             NES_DEBUG("ZMQSource  " << this << ": got buffer ");
 
             // TODO: If possible only copy the content not the empty part
