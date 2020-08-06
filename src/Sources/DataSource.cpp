@@ -131,6 +131,7 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                 lastGatheringTimeStamp = currentTime;
                 if (cnt < numBuffersToProcess) {
                     auto optBuf = receiveData();
+                    optBuf->setWatermark(std::chrono::system_clock::now().time_since_epoch());
                     if (!!optBuf) {
                         auto& buf = optBuf.value();
                         NES_DEBUG("DataSource " << this->getSourceId() << " type=" << getType()

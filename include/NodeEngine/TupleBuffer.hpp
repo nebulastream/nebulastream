@@ -111,10 +111,23 @@ class TupleBuffer {
     */
     void revertEndianness(SchemaPtr schema);
 
+    /**
+     * @brief method to get the watermark as a timestamp
+     * @return watermark
+     */
+    size_t getWatermark();
+
+    /**
+     * @brief method to set the watermark with a timestamp
+     * @param value timestamp
+     */
+    void setWatermark(size_t value);
+
   private:
     detail::BufferControlBlock* controlBlock;
     uint8_t* ptr;
     uint32_t size;
+    size_t watermark;
 };
 
 }// namespace NES
