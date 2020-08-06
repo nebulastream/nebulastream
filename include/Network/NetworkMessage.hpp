@@ -10,8 +10,6 @@ namespace NES {
 namespace Network {
 namespace Messages {
 
-
-
 /**
  * @brief This magic number is written as first 64bits of every NES network message.
  * We use this as a checksum to validate that we are not transferring garbage data.

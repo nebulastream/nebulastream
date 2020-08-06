@@ -54,7 +54,7 @@ WindowTypePtr SessionWindow::withGap(TimeCharacteristicPtr timeCharacteristic, T
 }
 
 void SessionWindow::triggerWindows(WindowListPtr,
-                                   uint64_t ,
+                                   uint64_t,
                                    uint64_t) const {
     NES_NOT_IMPLEMENTED();
 }

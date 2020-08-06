@@ -50,12 +50,13 @@ std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint
             std::move(bufferManager),
             std::move(queryManager),
             [hostname, port](std::shared_ptr<NodeEngine> engine) {
-              return Network::NetworkManager::create(
-                  hostname,
-                  port,
-                  Network::ExchangeProtocol(engine->getPartitionManager(), engine),
-                  engine->getBufferManager());
-            }, std::move(partitionManager), std::move(compiler));
+                return Network::NetworkManager::create(
+                    hostname,
+                    port,
+                    Network::ExchangeProtocol(engine->getPartitionManager(), engine),
+                    engine->getBufferManager());
+            },
+            std::move(partitionManager), std::move(compiler));
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
@@ -68,7 +69,7 @@ NodeEngine::NodeEngine(
     std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
     Network::PartitionManagerPtr&& partitionManager,
     QueryCompilerPtr&& queryCompiler)
-        : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>() {
+    : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>() {
     NES_TRACE("NodeEngine()");
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
     this->queryCompiler = std::move(queryCompiler);
@@ -79,7 +80,8 @@ NodeEngine::NodeEngine(
     // here shared_from_this() does not work because of the machinery behind make_shared
     // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
     // plz make sure that ExchangeProtocol never leaks the impl pointer
-    networkManager = networkManagerCreator(std::shared_ptr<NodeEngine>(this, [](NodeEngine*){}));
+    networkManager = networkManagerCreator(std::shared_ptr<NodeEngine>(this, [](NodeEngine*) {
+    }));
 }
 
 NodeEngine::~NodeEngine() {
@@ -118,11 +120,11 @@ bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr 
 
         // Compile legacy operators with qep builder.
         auto qepBuilder = GeneratedQueryExecutionPlanBuilder::create()
-            .setQueryManager(queryManager)
-            .setBufferManager(bufferManager)
-            .setCompiler(queryCompiler)
-            .setQueryId(queryId)
-            .addOperatorQueryPlan(legacyOperatorPlan);
+                              .setQueryManager(queryManager)
+                              .setBufferManager(bufferManager)
+                              .setCompiler(queryCompiler)
+                              .setQueryId(queryId)
+                              .addOperatorQueryPlan(legacyOperatorPlan);
 
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : queryOperators->getNodesByType<SourceLogicalOperatorNode>()) {
@@ -147,7 +149,6 @@ bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr 
         NES_ERROR("Error while building query execution plan " << error.what());
         return false;
     }
-
 }
 
 bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr qep) {
@@ -329,7 +330,7 @@ void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& b
         // partition is not registered, discard the buffer
         buffer.release();
         NES_ERROR("DataBuffer for " + nesPartition.toString()
-                      + " is not registered and was discarded!");
+                  + " is not registered and was discarded!");
         NES_THROW_RUNTIME_ERROR("NES Network Error: unhandled message");
     }
 }

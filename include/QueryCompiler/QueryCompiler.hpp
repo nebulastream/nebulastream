@@ -49,7 +49,6 @@ class QueryCompiler {
     void compile(GeneratedQueryExecutionPlanBuilder&, OperatorPtr queryPlan);
 
   private:
-
     void compilePipelineStages(
         GeneratedQueryExecutionPlanBuilder& queryExecutionPlanBuilder,
         CodeGeneratorPtr codeGenerator,

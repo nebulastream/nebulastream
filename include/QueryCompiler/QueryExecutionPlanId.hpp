@@ -6,7 +6,6 @@
 
 #include <string>
 
-
 /**
  * @brief this alias represent a locally running query execution plan
  */

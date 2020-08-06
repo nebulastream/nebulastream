@@ -67,7 +67,6 @@ class TranslateToLegacyPlanPhase {
      * @return UserAPIExpressionPtr
      */
     UserAPIExpressionPtr transformArithmeticalExpressions(ExpressionNodePtr node);
-
 };
 
 }// namespace NES

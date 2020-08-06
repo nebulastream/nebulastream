@@ -71,7 +71,7 @@ class NetworkManager {
      * @return
      */
     OutputChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
-                                                std::chrono::seconds waitTime, uint8_t retryTimes);
+                                                  std::chrono::seconds waitTime, uint8_t retryTimes);
 
     explicit NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocol&& exchangeProtocol, BufferManagerPtr bufferManager,
                             uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);

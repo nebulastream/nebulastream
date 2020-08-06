@@ -1,6 +1,9 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
+#include <Common/ForwardDeclaration.hpp>
+#include <Network/ExchangeProtocolListener.hpp>
+#include <Network/NetworkManager.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
@@ -12,9 +15,6 @@
 #include <unordered_set>
 #include <vector>
 #include <zmq.hpp>
-#include <Network/NetworkManager.hpp>
-#include <Common/ForwardDeclaration.hpp>
-#include <Network/ExchangeProtocolListener.hpp>
 
 namespace NES {
 
@@ -28,6 +28,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
 
     static constexpr auto DEFAULT_BUFFER_SIZE = 4096;
     static constexpr auto DEFAULT_NUM_BUFFERS = 1024;
+
   public:
     enum NodeEngineQueryStatus {
         started,

@@ -1,5 +1,6 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
@@ -9,7 +10,6 @@
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 
 namespace NES {
 

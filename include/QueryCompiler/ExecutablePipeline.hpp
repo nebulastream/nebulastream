@@ -27,7 +27,7 @@ class ExecutablePipeline {
      * @brief Executes the pipeline given the input
      * @return error code: 1 for valid execution, 0 for error
      */
-     // TODO use dedicate type for return
+    // TODO use dedicate type for return
     virtual uint32_t execute(TupleBuffer& input_buffers,
                              void* state,
                              WindowManagerPtr window_manager,

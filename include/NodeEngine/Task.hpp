@@ -56,7 +56,6 @@ class Task {
      */
     bool operator!() const;
 
-
     friend std::ostream& operator<<(std::ostream& os, const Task&) {
         os << "Task()";
         return os;

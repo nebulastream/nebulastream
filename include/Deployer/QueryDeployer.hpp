@@ -27,7 +27,6 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
-
 class QueryDeployer {
 
   public:

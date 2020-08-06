@@ -24,7 +24,6 @@ DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, 
     NES_ASSERT(this->queryManager, "Invalid query manager");
 }
 
-
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                        std::string sourceId)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),

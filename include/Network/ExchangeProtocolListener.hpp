@@ -30,6 +30,6 @@ class ExchangeProtocolListener {
      */
     virtual void onChannelError(Messages::ErrorMessage) = 0;
 };
-}
-}
+}// namespace Network
+}// namespace NES
 #endif//NES_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_

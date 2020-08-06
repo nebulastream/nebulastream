@@ -102,7 +102,8 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
             // handle
             if (zmqError.num() == ETERM) {
                 shutdownComplete = true;
-                NES_INFO("ZmqServer: Shutdown completed! address: " << "tcp://" + hostname + ":" + std::to_string(port));
+                NES_INFO("ZmqServer: Shutdown completed! address: "
+                         << "tcp://" + hostname + ":" + std::to_string(port));
             } else {
                 NES_ERROR("ZmqServer: " << zmqError.what());
                 errorPromise.set_exception(eptr);

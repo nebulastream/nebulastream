@@ -2,13 +2,12 @@
 #define INCLUDE_UTIL_LOGGER_HPP_
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
 
+#include <Util/StacktraceLoader.hpp>
 #include <iostream>
 #include <log4cxx/consoleappender.h>
 #include <log4cxx/fileappender.h>
 #include <log4cxx/logger.h>
 #include <log4cxx/patternlayout.h>
-#include <Util/StacktraceLoader.hpp>
-
 
 using namespace log4cxx;
 using namespace log4cxx::helpers;
@@ -72,20 +71,20 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         LOG4CXX_ERROR(NESLogger, TEXT); \
     } while (0)
 
-#define NES_THROW_RUNTIME_ERROR(TEXT)   \
-    do {                                \
+#define NES_THROW_RUNTIME_ERROR(TEXT)     \
+    do {                                  \
         NES::collectAndPrintStacktrace(); \
-        NES_FATAL_ERROR(TEXT);          \
-        throw std::runtime_error(TEXT); \
+        NES_FATAL_ERROR(TEXT);            \
+        throw std::runtime_error(TEXT);   \
     } while (0)
 
-#define NES_ASSERT(CONDITION, TEXT)           \
-    do {                                      \
-        if (!CONDITION) {                     \
-            NES::collectAndPrintStacktrace(); \
-            NES_FATAL_ERROR(TEXT);            \
-            throw std::runtime_error("NES Runtime Error on condition " #CONDITION);       \
-        }                                     \
+#define NES_ASSERT(CONDITION, TEXT)                                                 \
+    do {                                                                            \
+        if (!CONDITION) {                                                           \
+            NES::collectAndPrintStacktrace();                                       \
+            NES_FATAL_ERROR(TEXT);                                                  \
+            throw std::runtime_error("NES Runtime Error on condition " #CONDITION); \
+        }                                                                           \
     } while (0)
 
 static void setupLogging(std::string logFileName, DebugLevel level) {

@@ -115,5 +115,4 @@ void QueryExecutionPlan::print() {
     }
 }
 
-
 }// namespace NES

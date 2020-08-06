@@ -12,13 +12,12 @@ PipelineStage::PipelineStage(
     ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineExecutionContext,
     PipelineStagePtr nextPipelineStage,
-    WindowHandlerPtr windowHandler) :
-      pipelineStageId(pipelineStageId),
-      qepId(std::move(qepId)),
-      executablePipeline(std::move(executablePipeline)),
-      windowHandler(std::move(windowHandler)),
-      nextStage(std::move(nextPipelineStage)),
-      pipelineContext(std::move(pipelineExecutionContext)) {
+    WindowHandlerPtr windowHandler) : pipelineStageId(pipelineStageId),
+                                      qepId(std::move(qepId)),
+                                      executablePipeline(std::move(executablePipeline)),
+                                      windowHandler(std::move(windowHandler)),
+                                      nextStage(std::move(nextPipelineStage)),
+                                      pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
 }
@@ -26,11 +25,11 @@ PipelineStage::PipelineStage(
 bool PipelineStage::execute(TupleBuffer& inputBuffer) {
     NES_DEBUG("Execute Pipeline Stage!");
     // only get the window manager and state if the pipeline has a window handler.
-    auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr; // TODO Philipp, do we need this check?
-    auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : WindowManagerPtr(); // TODO Philipp, do we need this check?
+    auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;               // TODO Philipp, do we need this check?
+    auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : WindowManagerPtr();// TODO Philipp, do we need this check?
     auto result = executablePipeline->execute(inputBuffer, windowStage, windowManager, pipelineContext);
-    if (result) { // TODO, Philipp, true on failure? aint a bit counterintuitive?
-        NES_ERROR("Execution of PipelineStage Failed!"); // TODO Philipp, do we need this check? cant we postpone NES_ERROR?
+    if (result) {                                       // TODO, Philipp, true on failure? aint a bit counterintuitive?
+        NES_ERROR("Execution of PipelineStage Failed!");// TODO Philipp, do we need this check? cant we postpone NES_ERROR?
         return false;
     }
     return true;
@@ -79,7 +78,7 @@ PipelineStagePtr PipelineStage::create(
     const ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineContext,
     const PipelineStagePtr nextPipelineStage,
-    const WindowHandlerPtr &windowHandler) {
+    const WindowHandlerPtr& windowHandler) {
 
     return std::make_shared<PipelineStage>(pipelineStageId, queryExecutionPlanId, executablePipeline, pipelineContext, nextPipelineStage, windowHandler);
 }

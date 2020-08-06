@@ -66,7 +66,6 @@ class ExchangeProtocol {
      */
     std::shared_ptr<PartitionManager> getPartitionManager() const;
 
-
   private:
     std::shared_ptr<PartitionManager> partitionManager;
     std::shared_ptr<ExchangeProtocolListener> protocolListener;

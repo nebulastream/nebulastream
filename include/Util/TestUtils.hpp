@@ -12,9 +12,9 @@
 
 using Seconds = std::chrono::seconds;
 using Clock = std::chrono::high_resolution_clock;
-using std::string;
 using std::cout;
 using std::endl;
+using std::string;
 namespace NES {
 
 class NodeStats;
@@ -132,7 +132,7 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    template <typename Predicate = std::equal_to<size_t>>
+    template<typename Predicate = std::equal_to<size_t>>
     static bool checkCompleteOrTimeout(NesWorkerPtr ptr, std::string queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
@@ -164,7 +164,7 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    template <typename Predicate = std::equal_to<size_t>>
+    template<typename Predicate = std::equal_to<size_t>>
     static bool checkCompleteOrTimeout(NesCoordinatorPtr ptr, std::string queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();

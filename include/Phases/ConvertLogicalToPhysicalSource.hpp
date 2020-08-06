@@ -9,7 +9,6 @@ namespace NES {
 class NodeEngine;
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
-
 /**
  * @brief This class is responsible for creating logical source descriptor to physical source.
  */

@@ -1,11 +1,11 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_
 
+#include <Common/ForwardDeclaration.hpp>
 #include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <map>
 #include <memory>
 #include <vector>
-#include <Common/ForwardDeclaration.hpp>
 
 namespace NES {
 
@@ -119,7 +119,6 @@ class GeneratedQueryExecutionPlanBuilder {
      */
     GeneratedQueryExecutionPlanBuilder& addSink(DataSinkPtr sink);
 
-
   private:
     GeneratedQueryExecutionPlanBuilder();
 
@@ -133,5 +132,5 @@ class GeneratedQueryExecutionPlanBuilder {
     std::vector<PipelineStagePtr> stages;
     std::vector<OperatorPtr> leaves;
 };
-}
+}// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_
