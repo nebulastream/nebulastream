@@ -114,7 +114,6 @@ class SinkMedium {
     size_t sentBuffer;
     size_t sentTuples;
     std::mutex writeMutex;
-
 };
 
 typedef std::shared_ptr<SinkMedium> DataSinkPtr;
