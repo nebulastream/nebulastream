@@ -11,7 +11,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat)
       sentBuffer(0),
       sentTuples(0),
       schemaWritten(false),
-      append(false) {
+      append(false),
       writeMutex(){
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
