@@ -34,8 +34,9 @@ uint64_t BasicPhysicalType::size() const {
 }
 std::string BasicPhysicalType::convertRawToString(void* data) {
 
-    if (!data)
+    if (!data) {
         return std::string();
+    }
     std::stringstream str;
     switch (nativeType) {
         case INT_8: return std::to_string(*reinterpret_cast<int8_t*>(data));
@@ -59,6 +60,7 @@ std::string BasicPhysicalType::convertRawToString(void* data) {
                 str << std::string(charData, size());
             }
             return str.str();
+        default: return "invalid native type";
     }
     return "invalid";
 }
