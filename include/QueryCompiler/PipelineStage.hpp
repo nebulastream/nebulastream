@@ -1,7 +1,7 @@
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
-#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <memory>
 #include <vector>
 
@@ -74,14 +74,12 @@ class PipelineStage {
     ~PipelineStage() = default;
 
   public:
-
     static PipelineStagePtr create(uint32_t pipelineStageId,
-            const QueryExecutionPlanId queryExecutionPlanId,
-            const ExecutablePipelinePtr compiledCode,
-            QueryExecutionContextPtr pipelineContext,
-            const PipelineStagePtr nextPipelineStage,
-            const WindowHandlerPtr& windowHandler = WindowHandlerPtr());
-
+                                   const QueryExecutionPlanId queryExecutionPlanId,
+                                   const ExecutablePipelinePtr compiledCode,
+                                   QueryExecutionContextPtr pipelineContext,
+                                   const PipelineStagePtr nextPipelineStage,
+                                   const WindowHandlerPtr& windowHandler = WindowHandlerPtr());
 
   private:
     uint32_t pipelineStageId;

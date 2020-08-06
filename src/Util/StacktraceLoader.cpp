@@ -1,6 +1,6 @@
-#include <Util/StacktraceLoader.hpp>
-#include <Util/Logger.hpp>
 #include <NodeEngine/internal/backtrace.hpp>
+#include <Util/Logger.hpp>
+#include <Util/StacktraceLoader.hpp>
 
 #define CALLSTACK_MAX_SIZE 32
 
@@ -17,4 +17,4 @@ void collectAndPrintStacktrace() {
     printer.print(stackTrace, os);
     NES_ERROR("Stacktrace:\n " << buffer.str());
 }
-}
+}// namespace NES

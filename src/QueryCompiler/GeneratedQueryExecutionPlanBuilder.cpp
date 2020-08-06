@@ -1,8 +1,8 @@
+#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
-#include <QueryCompiler/QueryCompiler.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 namespace NES {
 
 GeneratedQueryExecutionPlanBuilder::GeneratedQueryExecutionPlanBuilder() {
@@ -56,7 +56,7 @@ QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
             queryCompiler->compile(*this, operatorPlan);
         }
         NES_ASSERT(!stages.empty(), "GeneratedQueryExecutionPlanBuilder: No stages after query compilation");
-        std::reverse(stages.begin(), stages.end()); // this is necessary, check plan generator documentation
+        std::reverse(stages.begin(), stages.end());// this is necessary, check plan generator documentation
     }
     return std::make_shared<GeneratedQueryExecutionPlan>(std::move(queryId), std::move(sources), std::move(stages), std::move(queryManager), std::move(bufferManager));
 }

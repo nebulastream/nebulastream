@@ -13,7 +13,6 @@ OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelI
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
 }
 
-
 std::unique_ptr<OutputChannel> OutputChannel::create(
     std::shared_ptr<zmq::context_t> zmqContext,
     const std::string socketAddr,
@@ -54,8 +53,8 @@ std::unique_ptr<OutputChannel> OutputChannel::create(
                     // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
                     if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
                         NES_ERROR("OutputChannel: Connection failed with server "
-                                      << socketAddr << " for " << channelId.getNesPartition().toString()
-                                      << "->Wrong server ready message! Reason: Partitions are not matching");
+                                  << socketAddr << " for " << channelId.getNesPartition().toString()
+                                  << "->Wrong server ready message! Reason: Partitions are not matching");
                         break;
                     }
 
@@ -135,7 +134,6 @@ void OutputChannel::close() {
     NES_DEBUG("OutputChannel: Socket closed for " << channelId);
     isClosed = true;
 }
-
 
 }// namespace Network
 }// namespace NES

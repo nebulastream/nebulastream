@@ -87,7 +87,6 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      */
     virtual bool equal(SourceDescriptorPtr other) = 0;
 
-
     /**
      * @brief Destructor
      */

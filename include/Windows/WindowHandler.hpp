@@ -90,11 +90,10 @@ class WindowHandler {
     BufferManagerPtr bufferManager;
 };
 
-
 // TODO Maybe we could define template specialization of this method when generating compiled code so that we dont need casting
 template<class FinalAggregateType, class PartialAggregateType>
 void WindowHandler::aggregateWindows(WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
-                      TupleBuffer& tupleBuffer) {
+                                     TupleBuffer& tupleBuffer) {
 
     // For event time we use the maximal records ts as watermark.
     // For processing time we use the current wall clock as watermark.

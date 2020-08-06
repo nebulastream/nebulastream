@@ -1,6 +1,10 @@
 #ifndef INCLUDE_QUERY_MANAGER__H_
 #define INCLUDE_QUERY_MANAGER__H_
 
+#include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/ThreadPool.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -9,15 +13,11 @@
 #include <shared_mutex>
 #include <thread>
 #include <unordered_set>
-#include <QueryCompiler/QueryExecutionPlanId.hpp>
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/ThreadPool.hpp>
-#include <QueryCompiler/QueryExecutionPlan.hpp>
 
+#include <NodeEngine/QueryStatistics.hpp>
 #include <NodeEngine/Task.hpp>
 #include <Sources/DataSource.hpp>
 #include <Windows/WindowHandler.hpp>
-#include <NodeEngine/QueryStatistics.hpp>
 namespace NES {
 
 class TupleBuffer;

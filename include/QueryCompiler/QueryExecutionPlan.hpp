@@ -1,7 +1,7 @@
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
-#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
+#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Windows/WindowHandler.hpp>
@@ -24,16 +24,15 @@ class QueryExecutionPlan {
   public:
     enum QueryExecutionPlanStatus {
         Created,
-        Deployed, // Created->Deployed when calling setup()
+        Deployed,// Created->Deployed when calling setup()
         Running, // Deployed->Running when calling start()
         Finished,
-        Stopped, // Running->Stopped when calling stop() and in Running state
+        Stopped,// Running->Stopped when calling stop() and in Running state
         ErrorState,
         Invalid
     };
 
   protected:
-
     explicit QueryExecutionPlan(
         QueryExecutionPlanId queryId,
         std::vector<DataSourcePtr> sources,
@@ -70,7 +69,6 @@ class QueryExecutionPlan {
      * @brief Get data sinks.
      */
     std::vector<DataSinkPtr> getSinks() const;
-
 
     /**
      * @brief Get i-th stage.

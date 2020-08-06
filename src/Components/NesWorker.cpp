@@ -2,8 +2,8 @@
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Util/Logger.hpp>
 #include <future>
-#include <utility>
 #include <signal.h>
+#include <utility>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;

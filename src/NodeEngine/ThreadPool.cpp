@@ -1,7 +1,7 @@
-#include <NodeEngine/WorkerContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/Task.hpp>
 #include <NodeEngine/ThreadPool.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <functional>

@@ -228,7 +228,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr 
 }
 
 void QueryManager::addWork(const std::string& sourceId, TupleBuffer& buf) {
-    std::shared_lock queryLock(queryMutex); // we need this lock because sourceIdToQueryMap can be concurrently modified
+    std::shared_lock queryLock(queryMutex);// we need this lock because sourceIdToQueryMap can be concurrently modified
     std::unique_lock workQueueLock(workMutex);
     for (const auto& qep : sourceIdToQueryMap[sourceId]) {
         // for each respective source, create new task and put it into queue

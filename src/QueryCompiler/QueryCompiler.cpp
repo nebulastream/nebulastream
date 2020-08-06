@@ -1,16 +1,16 @@
 #include <NodeEngine/QueryManager.hpp>
 
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
-#include <QueryCompiler/PipelineContext.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
+#include <QueryCompiler/PipelineExecutionContext.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 #include <utility>
 namespace NES {
 
-QueryCompiler::QueryCompiler(){
+QueryCompiler::QueryCompiler() {
     // nop
 }
 
@@ -43,14 +43,14 @@ class PipelineStageHolder {
     WindowHandlerPtr windowHandler;
     std::set<uint32_t> producers;
     std::set<uint32_t> consumers;
+
   public:
     PipelineStageHolder() = default;
 
     PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline, WindowHandlerPtr windowHandler = WindowHandlerPtr())
-        :  currentStageId(currentStageId), executablePipeline(std::move(executablePipeline)), windowHandler(std::move(windowHandler)) {
+        : currentStageId(currentStageId), executablePipeline(std::move(executablePipeline)), windowHandler(std::move(windowHandler)) {
         // nop
     }
-
 };
 
 void generateExecutablePipelines(
@@ -95,7 +95,7 @@ void generateExecutablePipelines(
         }
     }
 }
-}
+}// namespace detail
 void QueryCompiler::compilePipelineStages(
     GeneratedQueryExecutionPlanBuilder& builder,
     CodeGeneratorPtr codeGenerator,

@@ -1,7 +1,6 @@
 #ifndef API_PATTERN_H
 #define API_PATTERN_H
 
-
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>

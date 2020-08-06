@@ -14,8 +14,8 @@ typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
  */
 class CompiledExecutablePipeline : public ExecutablePipeline {
     typedef uint32_t (*PipelineFunctionPtr)(TupleBuffer&, void*, WindowManager*, QueryExecutionContextPtr::element_type&);
-  public:
 
+  public:
     CompiledExecutablePipeline(CompiledCodePtr compiled_code);
 
     static ExecutablePipelinePtr create(CompiledCodePtr compiledCode);
@@ -28,7 +28,6 @@ class CompiledExecutablePipeline : public ExecutablePipeline {
   private:
     CompiledCodePtr compiledCode;
     PipelineFunctionPtr pipelineFunc;
-
 };
 }// namespace NES
 

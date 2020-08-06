@@ -52,7 +52,7 @@ std::optional<TupleBuffer> ZmqSource::receiveData() {
             socket.recv(&new_data2);// actual data
 
             // Get some information about received data
-//            size_t tuple_size = schema->getSchemaSizeInBytes();
+            //            size_t tuple_size = schema->getSchemaSizeInBytes();
             // Create new TupleBuffer and copy data
             auto buffer = bufferManager->getBufferBlocking();
             NES_DEBUG("ZMQSource  " << this << ": got buffer ");

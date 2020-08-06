@@ -6,7 +6,6 @@
 
 namespace NES {
 
-
 class TopDownStrategy : public BasePlacementStrategy {
 
   public:

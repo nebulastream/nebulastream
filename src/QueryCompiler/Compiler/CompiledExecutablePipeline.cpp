@@ -12,7 +12,6 @@ CompiledExecutablePipeline::CompiledExecutablePipeline(CompiledCodePtr compiled_
     // nop
 }
 
-
 uint32_t CompiledExecutablePipeline::execute(TupleBuffer& inputBuffer,
                                              void* state,
                                              WindowManagerPtr windowManager,

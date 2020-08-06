@@ -35,6 +35,6 @@ typedef std::shared_ptr<SinkMedium> DataSinkPtr;
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_COMMON_FORWARDDECLARATION_HPP_

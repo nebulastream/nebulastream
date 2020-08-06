@@ -4,9 +4,9 @@
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <zmq.hpp>
 #include <iostream>
 #include <memory>
+#include <zmq.hpp>
 
 namespace NES {
 namespace Network {
@@ -36,8 +36,8 @@ class OutputChannel {
     OutputChannel(const OutputChannel&) = delete;
 
     OutputChannel& operator=(const OutputChannel&) = delete;
-  public:
 
+  public:
     /**
      * @brief Creates an output channe instance with the given parameters
      * @param zmqContext the local zmq server context
@@ -50,13 +50,12 @@ class OutputChannel {
      * @return
      */
     static OutputChannelPtr create(std::shared_ptr<zmq::context_t> zmqContext,
-                                 const std::string address,
-                                 NesPartition nesPartition,
-                                 ExchangeProtocol& protocol,
-                                 std::chrono::seconds waitTime,
-                                 uint8_t retryTimes,
-                                 size_t threadId = std::hash<std::thread::id>{}(std::this_thread::get_id()));
-
+                                   const std::string address,
+                                   NesPartition nesPartition,
+                                   ExchangeProtocol& protocol,
+                                   std::chrono::seconds waitTime,
+                                   uint8_t retryTimes,
+                                   size_t threadId = std::hash<std::thread::id>{}(std::this_thread::get_id()));
 
     /**
      * @brief Send buffer to the destination defined in the constructor. Note that this method will internally
@@ -83,7 +82,6 @@ class OutputChannel {
     zmq::socket_t zmqSocket;
     const ChannelId channelId;
     bool isClosed;
-
 };
 
 }// namespace Network

@@ -5,7 +5,6 @@
 
 namespace NES {
 
-
 /**
  * @brief This class is work in progress and is not documented
  */
@@ -18,5 +17,5 @@ class WorkerContext {
         // nop
     }
 };
-}
+}// namespace NES
 #endif//NES_WORKERCONTEXT_HPP_
