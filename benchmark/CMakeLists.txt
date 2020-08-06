@@ -44,8 +44,14 @@ if (NES_BUILD_BENCHMARKS)
     ### SandBox Benchmark ###
     add_executable(sandbox-benchmark "BenchmarkSuite/SandBoxBenchmark.cpp")
     target_link_libraries(sandbox-benchmark  nes ${GBENCHMARK_LIBRARIES})
-    add_test(NAME sandbox-benchmark COMMAND sandbox-benchmark)
+    add_test(NAME sandbox-benchmark COMMAND sandbox-benchmark --benchmark_out=sandbox_benchmark.log --benchmark_out_format=json)
 
+    ### Statemanager Benchmark ###
+    add_executable(statemanager-benchmark "BenchmarkSuite/StatemanagerBenchmark.cpp")
+    target_link_libraries(statemanager-benchmark  nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
+
+    add_custom_target(run_benchmark COMMAND ${CMAKE_CTEST_COMMAND})
 
     message("---Done building benchmarks")
 
