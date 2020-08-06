@@ -49,7 +49,7 @@ ZmqSink::~ZmqSink() {
 }
 
 bool ZmqSink::writeData(TupleBuffer& inputBuffer) {
-    //    bool connected =
+    std::unique_lock lock(writeMutex);
     connect();
     if (!connected) {
         NES_DEBUG(
