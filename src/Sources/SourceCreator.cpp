@@ -13,6 +13,12 @@
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <Sources/OPCSource.hpp>
+
+
+#include <open62541/client_config_default.h>
+#include <open62541/client_highlevel.h>
+#include <open62541/plugin/log_stdout.h>
 
 namespace NES {
 
@@ -66,4 +72,21 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
     return std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, groupId, autoCommit, kafkaConsumerTimeout);
 }
 #endif
+
+//#ifdef ENABLE_OPC_BUILD
+
+const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& url,
+                                    UA_UInt16 nsIndex,
+                                    char *nsId) {
+    return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nsIndex, nsId);
+}
+
+const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& url,
+                                    UA_UInt16 nsIndex,
+                                    char *nsId,
+                                    const std::string& user,
+                                    const std::string& password) {
+    return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nsIndex, nsId, user, password);
+}
+//#endif
 }// namespace NES

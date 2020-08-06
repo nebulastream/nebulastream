@@ -40,6 +40,7 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(Buf
  */
 const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& host, const uint16_t port);
 
+
 /**
  * @brief function to create a binary file source
  * @param schema of data source
@@ -97,5 +98,38 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
                                       bool autoCommit,
                                       uint64_t kafkaConsumerTimeout);
 #endif
+
+#ifdef ENABLE_OPC_BUILD
+/**
+ * @brief Create OPC source
+ * @param schema schema of the elements
+ * @param url the url of the OPC server
+ * @param nsIndex an int with the depth of the node on the server
+ * @param nsId the name of the server node
+ * @return
+ */
+const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                    const std::string& url,
+                                    UA_UInt16 nsIndex,
+                                    char *nsId);
+
+/**
+ * @brief Create OPC source
+ * @param schema schema of the elements
+ * @param url the url of the OPC server
+ * @param nsIndex an int with the depth of the node on the server
+ * @param nsId the name of the server node
+ * @param user name if connecting with a server with authentication
+ * @param password for authentication if needed
+ * @return
+ */
+const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                    const std::string& url,
+                                    UA_UInt16 nsIndex,
+                                    char *nsId,
+                                    const std::string& user,
+                                    const std::string& password);
+#endif
+
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_SOURCECREATOR_HPP_ */

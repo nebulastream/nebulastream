@@ -9,4 +9,5 @@ add_source_nes(
         DefaultSourceDescriptor.cpp
         LogicalStreamSourceDescriptor.cpp
         NetworkSourceDescriptor.cpp
+        OPCSourceDescriptor.cpp
 )

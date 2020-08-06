@@ -15,3 +15,8 @@ if(NES_USE_KAFKA)
             KafkaSource.cpp
     )
 endif()
+if(NES_USE_OPC)
+    add_source_nes(
+            OPCSource.cpp
+    )
+endif()
