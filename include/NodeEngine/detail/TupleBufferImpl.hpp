@@ -94,7 +94,7 @@ class BufferControlBlock {
   private:
     std::atomic<uint32_t> referenceCounter;
     std::atomic<uint32_t> numberOfTuples;
-    std::atomic<int64_t>  watermark;
+    std::atomic<int64_t> watermark;
     MemorySegment* owner;
     std::function<void(MemorySegment*)> recycleCallback;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

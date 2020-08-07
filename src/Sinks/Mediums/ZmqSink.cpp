@@ -108,7 +108,7 @@ bool ZmqSink::writeData(TupleBuffer& inputBuffer) {
 
             zmq::message_t envelope(sizeof(tupleCnt) + sizeof(currentTs));
             memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
-            memcpy((void*)((char*)envelope.data() + sizeof(currentTs)),  &currentTs, sizeof(currentTs));
+            memcpy((void*) ((char*) envelope.data() + sizeof(currentTs)), &currentTs, sizeof(currentTs));
 
             zmq::message_t msg(buffer.getBufferSize());
             std::memcpy(msg.data(), buffer.getBuffer(), buffer.getBufferSize());
