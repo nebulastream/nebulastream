@@ -6,6 +6,9 @@
 #include <vector>
 
 namespace NES {
+class TupleBuffer;
+class Schema;
+class BufferManager;
 
 /**
  * @brief Wrapper class to represent the metrics read from the OS about cpu data.
@@ -36,7 +39,13 @@ class CpuMetrics {
      * @brief Returns the number of cores of the node
      * @return core numbers
      */
-    unsigned int getCpuNo() const;
+    uint16_t getCpuNo() const;
+
+    /**
+     * @brief
+     * @return
+     */
+    std::pair<std::shared_ptr<Schema>, TupleBuffer> serialize(std::shared_ptr<BufferManager>);
 
   private:
     // Overloading [] operator to access elements in array style
@@ -45,7 +54,7 @@ class CpuMetrics {
   private:
     CpuValues total;
     std::unique_ptr<CpuValues[]> ptr;
-    const unsigned int cpuNo;
+    const uint16_t cpuNo;
 };
 
 }// namespace NES

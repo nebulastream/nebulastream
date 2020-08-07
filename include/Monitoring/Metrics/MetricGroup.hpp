@@ -1,10 +1,13 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_
 
-#include <Monitoring/Metrics/Counter.hpp>
-#include <Monitoring/Metrics/Gauge.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
+
+#include <memory>
+#include <unordered_map>
 
 namespace NES {
+class Schema;
 
 /**
  * A MetricGroup is a named container for Metrics and further metric subgroups.
@@ -43,9 +46,12 @@ class MetricGroup {
      */
     bool remove(const std::string& name);
 
+    std::shared_ptr<Schema> getSchema();
+
   private:
-    MetricGroup() = default;
+    MetricGroup();
     std::unordered_map<std::string, Metric> metricMap;
+    std::shared_ptr<Schema> schema;
 };
 
 typedef std::shared_ptr<MetricGroup> MetricGroupPtr;

@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
-#include <Util/Logger.hpp>
+
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <memory>
 #include <Monitoring/Protocols/SamplingProtocol.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
@@ -11,9 +10,18 @@
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/Metrics/IntCounter.hpp>
 
+#include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+
+#include <Util/UtilityFunctions.hpp>
+#include <Util/Logger.hpp>
+
+#include <memory>
+
 namespace NES {
 class MonitoringStackTest : public testing::Test {
   public:
+    BufferManagerPtr bufferManager;
 
     static void SetUpTestCase() {
         NES::setupLogging("MonitoringStackTest.log", NES::LOG_DEBUG);
@@ -27,6 +35,7 @@ class MonitoringStackTest : public testing::Test {
     /* Will be called before a  test is executed. */
     void SetUp() override {
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
+        bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
 
     /* Will be called before a test is executed. */
@@ -159,6 +168,24 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     metricGroup->add(memS, memStats);
     auto memMetrics = metricGroup->getAs<Gauge<MemoryMetrics>>(memS);
     ASSERT_TRUE(memStats.makeReading().TOTAL_RAM == memMetrics.makeReading().TOTAL_RAM);
+}
+
+TEST_F(MonitoringStackTest, testSerializationMetrics) {
+    auto cpuStats = MetricUtils::CPUStats();
+
+    //test serialize method with empty buffer
+    auto pair = cpuStats.makeReading().getTotal().serialize(bufferManager, "TOTAL_");
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(pair.second, pair.first));
+
+    //test serialize method to append to existing schema and buffer
+    auto schema = Schema::create();
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    cpuStats.makeReading().getTotal().serialize(schema, tupleBuffer, "TOTAL_");
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+
+    //TODO: Fixme
+    //auto statsPair = cpuStats.makeReading().serialize(bufferManager);
+    //NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(statsPair.second, statsPair.first));
 }
 
 TEST_F(MonitoringStackTest, testSamplingProtocol) {
