@@ -183,11 +183,11 @@ void BufferControlBlock::setNumberOfTuples(size_t numberOfTuples) {
     this->numberOfTuples = numberOfTuples;
 }
 
-size_t BufferControlBlock::getWatermark() const {
+int64_t BufferControlBlock::getWatermark() const {
     return watermark;
 }
 
-void BufferControlBlock::setWatermark(size_t watermark) {
+void BufferControlBlock::setWatermark(int64_t watermark) {
     this->watermark = watermark;
 }
 
