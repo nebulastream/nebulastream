@@ -1,5 +1,10 @@
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Util/Logger.hpp>
+#include <API/Schema.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <cstring>
 
 namespace NES {
 
@@ -26,7 +31,7 @@ CpuValues& CpuMetrics::operator[](unsigned int index) {
     return ptr[index];
 }
 
-unsigned int CpuMetrics::getCpuNo() const {
+uint16_t CpuMetrics::getCpuNo() const {
     return cpuNo;
 }
 
@@ -36,6 +41,19 @@ CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const {
 
 CpuValues CpuMetrics::getTotal() const {
     return total;
+}
+
+std::pair<std::shared_ptr<Schema>, TupleBuffer> CpuMetrics::serialize(BufferManagerPtr bm) {
+    SchemaPtr outputSchema = Schema::create();
+    outputSchema->addField("CPU_NO", BasicType::UINT16);
+    TupleBuffer outputBuf = bm->getBufferBlocking();
+    outputBuf.setNumberOfTuples(1);
+
+    auto layout = createRowLayout(outputSchema);
+    layout->getValueField<uint64_t>(0, 0)->write(outputBuf, cpuNo);
+    total.serialize(outputSchema, outputBuf);
+
+    return std::make_pair(outputSchema, outputBuf);
 }
 
 }// namespace NES
