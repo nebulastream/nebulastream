@@ -191,7 +191,6 @@ void BufferControlBlock::setWatermark(int64_t watermark) {
     this->watermark = watermark;
 }
 
-
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack)
     : threadName(threadName), callstack(callstack) {

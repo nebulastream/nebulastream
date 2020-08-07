@@ -96,15 +96,12 @@ void TupleBuffer::revertEndianness(SchemaPtr schema) {
     detail::revertEndianness(*this, schema);
 }
 
-int64_t TupleBuffer::getWatermark()
-{
+int64_t TupleBuffer::getWatermark() {
     return controlBlock->getWatermark();
 }
 
-void TupleBuffer::setWatermark(int64_t value)
-{
+void TupleBuffer::setWatermark(int64_t value) {
     controlBlock->setWatermark(value);
 }
-
 
 }// namespace NES
