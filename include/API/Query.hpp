@@ -30,6 +30,14 @@ typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
+
+class WindowType;
+typedef std::shared_ptr<WindowType> WindowTypePtr;
+
+
+class WindowAggregation;
+typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;
+
 /**
  * User interface to create stream processing queries.
  * The current api exposes method to create queries using all currently supported operators.
@@ -70,6 +78,26 @@ class Query {
      * @return the query
      */
     Query& filter(const ExpressionNodePtr filterExpression);
+
+    /**
+     * @brief: Creates a window aggregation.
+     * @param windowType Window definition.
+     * @param aggregation Window aggregation function.
+     * @return query.
+     */
+    Query& windowByKey(const ExpressionItem onKey,
+                            const WindowTypePtr windowType,
+                            const WindowAggregationPtr aggregation);
+
+    /**
+     * @brief: Creates a window aggregation.
+     * @param windowType Window definition.
+     * @param aggregation Window aggregation function.
+     * @return query.
+     */
+    Query& window(const WindowTypePtr windowType,
+                       const WindowAggregationPtr aggregation);
+
 
     /**
      * @brief: Map records according to a map expression.

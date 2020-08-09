@@ -31,8 +31,11 @@ class TumblingWindow : public WindowType {
     uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
         return currentTs + size.getTime() - (currentTs % size.getTime());
     }
+    bool isTumblingWindow() override;
 
     void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
+
+    TimeMeasure getSize();
 
   private:
     TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);

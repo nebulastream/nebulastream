@@ -11,6 +11,10 @@ WindowDefinition::WindowDefinition(const AttributeFieldPtr onKey,
     : windowAggregation(windowAggregation), windowType(windowType), onKey(onKey) {
 }
 
+bool WindowDefinition::isKeyed() {
+    return onKey != nullptr;
+}
+
 WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType) {
     return std::make_shared<WindowDefinition>(windowAggregation, windowType);
 }

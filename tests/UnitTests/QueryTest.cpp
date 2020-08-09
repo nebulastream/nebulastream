@@ -1,6 +1,9 @@
 #include "gtest/gtest.h"
 
 #include <API/Query.hpp>
+#include <API/Window/TimeCharacteristic.hpp>
+#include <API/Window/WindowAggregation.hpp>
+#include <API/Window/WindowType.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -61,6 +64,44 @@ TEST_F(QueryTest, testQueryFilter) {
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
+    auto plan = query.getQueryPlan();
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
+    EXPECT_EQ(sourceOperators.size(), 1);
+
+    SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+
+    const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
+    EXPECT_EQ(sinkOperators.size(), 1);
+
+    SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
+    EXPECT_EQ(sinkOperators.size(), 1);
+}
+
+TEST_F(QueryTest, testQueryWindow) {
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+
+    PhysicalStreamConfig streamConf;
+    streamConf.physicalStreamName = "test2";
+    streamConf.logicalStreamName = "test_stream";
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
+                                                                     sensorNode);
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("default_logical")
+                      .window(
+                          TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+                          Sum::on(Attribute("value")))
+                      .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 1);

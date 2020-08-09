@@ -50,6 +50,10 @@ class WindowType {
      */
     TimeCharacteristicPtr getTimeCharacteristic() const;
 
+    virtual bool isTumblingWindow();
+    virtual bool isSlidingWindow();
+    virtual bool isSessionWindow();
+
   private:
     TimeCharacteristicPtr timeCharacteristic;
 };
@@ -73,6 +77,8 @@ class WindowDefinition {
     const WindowAggregationPtr windowAggregation;
     const WindowTypePtr windowType;
     const AttributeFieldPtr onKey;
+
+    bool isKeyed();
 };
 
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
