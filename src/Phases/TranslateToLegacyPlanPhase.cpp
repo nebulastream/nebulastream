@@ -92,20 +92,7 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         return operatorPtr;
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         //         Translate window operator node.
-        auto windowNodeOperator = operatorNode->as<WindowLogicalOperatorNode>();
-        const auto windowDefinition = windowNodeOperator->getWindowDefinition();
-        OperatorPtr op = createWindowOperator(windowDefinition);
-        op->setOperatorId(this->getNextOperatorId());
-        addChild(op, root);
-        root = op;
-        // add a window scan operator with the window result schema.
-        SchemaPtr schemaPtr = Schema::create()->addField(aggregation->asField());
-        OperatorPtr windowScan = createWindowScanOperator(schemaPtr);
-        windowScan->setOperatorId(this->getNextOperatorId());
-        addChild(windowScan, root);
-        root = windowScan;
-        operatorPtr->setOperatorId(operatorNode->getId());
-        return operatorPtr;
+        NES_NOT_IMPLEMENTED();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED();
