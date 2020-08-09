@@ -22,6 +22,7 @@
 #include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Operators/Operator.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -89,6 +90,22 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         const OperatorPtr operatorPtr = createSinkOperator(dataSink);
         operatorPtr->setOperatorId(operatorNode->getId());
         return operatorPtr;
+    } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+        //         Translate window operator node.
+        auto windowNodeOperator = operatorNode->as<WindowLogicalOperatorNode>();
+        const auto windowDefinition = windowNodeOperator->getWindowDefinition();
+        OperatorPtr op = createWindowOperator(windowDefinition);
+        op->setOperatorId(this->getNextOperatorId());
+        addChild(op, root);
+        root = op;
+        // add a window scan operator with the window result schema.
+        SchemaPtr schemaPtr = Schema::create()->addField(aggregation->asField());
+        OperatorPtr windowScan = createWindowScanOperator(schemaPtr);
+        windowScan->setOperatorId(this->getNextOperatorId());
+        addChild(windowScan, root);
+        root = windowScan;
+        operatorPtr->setOperatorId(operatorNode->getId());
+        return operatorPtr;
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED();
@@ -107,6 +124,8 @@ OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode, 
     NES_DEBUG("TranslateToLegacyPhase: got " << legacyOperator);
     return legacyOperator;
 }
+
+
 
 /**
  * Translate the expression node into the corresponding user api expression of the legacy api.

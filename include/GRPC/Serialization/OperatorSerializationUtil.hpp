@@ -11,6 +11,9 @@ typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 class SinkLogicalOperatorNode;
 typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 
+class WindowLogicalOperatorNode;
+typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
+
 class SourceDescriptor;
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
 
@@ -23,6 +26,7 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 class SerializableOperator;
 class SerializableOperator_SourceDetails;
 class SerializableOperator_SinkDetails;
+class SerializableOperator_WindowDetails;
 
 /**
  * @brief The OperatorSerializationUtil offers functionality to serialize and de-serialize logical operator trees to a
@@ -67,11 +71,25 @@ class OperatorSerializationUtil {
     static SerializableOperator_SinkDetails serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator);
 
     /**
+     * @brief Serializes an window operator and all its properties to a SerializableOperator_WindowDetails object.
+     * @param windowOperator The window operator node.
+     * @return the serialized SerializableOperator_SinkDetails.
+     */
+    static SerializableOperator_WindowDetails serializeWindowOperator(WindowLogicalOperatorNodePtr windowOperator);
+
+    /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
      * @param sinkDetails The serialized sink operator details.
      * @return SinkLogicalOperatorNodePtr
      */
     static OperatorNodePtr deserializeSinkOperator(SerializableOperator_SinkDetails* sinkDetails);
+
+    /**
+     * @brief De-serializes the SerializableOperator_WindowDetails and all its properties back to a window operatorNodePtr
+     * @param sinkDetails The serialized sink operator details.
+     * @return SinkLogicalOperatorNodePtr
+     */
+    static WindowLogicalOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails);
 
     /**
      * @brief Serializes an source descriptor and all its properties to a SerializableOperator_SourceDetails object.
@@ -102,6 +120,8 @@ class OperatorSerializationUtil {
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr deserializeSinkDescriptor(SerializableOperator_SinkDetails* sinkDetails);
+
+
 };
 
 }// namespace NES

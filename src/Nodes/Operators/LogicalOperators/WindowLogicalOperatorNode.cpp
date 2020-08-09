@@ -1,4 +1,5 @@
 #include <API/Schema.hpp>
+#include <API/Window/WindowDefinition.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <sstream>
 
@@ -32,6 +33,34 @@ OperatorNodePtr WindowLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
+}
+
+bool WindowLogicalOperatorNode::inferSchema() {
+
+    // infer the default input and output schema
+    OperatorNode::inferSchema();
+
+    auto windowType = windowDefinition->windowType;
+    if (windowDefinition->isKeyed()) {
+        // check if key exist on input schema
+        auto key = windowDefinition->onKey;
+        if (!inputSchema->has(key->name)) {
+            NES_ERROR("Window Operator: key field dose not exist!");
+            return false;
+        }
+    }
+    // check if aggregation field exist
+    auto windowAggregation = windowDefinition->windowAggregation;
+    if (!inputSchema->has(windowAggregation->on()->name)) {
+        NES_ERROR("Window Operator: aggregation field dose not exist!");
+        return false;
+    }
+    
+    // create result schema
+    auto aggregationField = inputSchema->get(windowAggregation->on()->name);
+    outputSchema = Schema::create();
+    outputSchema->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
+    return true;
 }
 
 LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinitionPtr) {

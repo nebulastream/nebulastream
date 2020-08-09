@@ -12,6 +12,18 @@ TimeCharacteristicPtr WindowType::getTimeCharacteristic() const {
     return this->timeCharacteristic;
 }
 
+bool WindowType::isSlidingWindow(){
+    return false;
+}
+
+bool WindowType::isTumblingWindow() {
+    return false;
+}
+
+bool WindowType::isSessionWindow() {
+    return false;
+}
+
 TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
     : size(size), WindowType(timeCharacteristic) {}
 
@@ -27,6 +39,13 @@ void TumblingWindow::triggerWindows(WindowListPtr windows,
          windowStart += size.getTime()) {
         windows->emplace_back(windowStart, windowStart + size.getTime());
     }
+}
+bool TumblingWindow::isTumblingWindow() {
+    return true;
+}
+
+TimeMeasure TumblingWindow::getSize() {
+    return size;
 }
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)

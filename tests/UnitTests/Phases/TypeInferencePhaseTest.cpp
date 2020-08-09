@@ -1,4 +1,7 @@
 #include <API/Query.hpp>
+#include <API/Window/TimeCharacteristic.hpp>
+#include <API/Window/WindowAggregation.hpp>
+#include <API/Window/WindowType.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -11,6 +14,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -89,6 +93,38 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
 
     ASSERT_TRUE(map->getOutputSchema()->equals(mappedSchema));
     ASSERT_TRUE(sink->getOutputSchema()->equals(mappedSchema));
+}
+
+/**
+ * @brief In this test we infer the output and input schemas of each operator in a query.
+ */
+TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
+
+    auto query = Query::from("default_logical")
+        .window(
+            TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+            Sum::on(Attribute("value")))
+        .sink(FileSinkDescriptor::create(""));
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+
+    PhysicalStreamConfig streamConf;
+    streamConf.physicalStreamName = "test2";
+    streamConf.logicalStreamName = "test_stream";
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
+                                                                     sensorNode);
+    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto resultPlan = phase->execute(query.getQueryPlan());
+
+    // we just access the old references
+
+    ASSERT_TRUE(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize() == 1);
+
 }
 
 /**

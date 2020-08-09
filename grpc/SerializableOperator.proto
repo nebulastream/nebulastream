@@ -144,6 +144,41 @@ message SerializableOperator{
     SerializableExpression predicate = 1;
   }
 
+  /**
+    Window Details contains properties for the window operator
+  */
+  message WindowDetails {
+
+    message TimeCharacteristic {
+      enum Type{
+        EventTime = 0;
+        ProcessingTime = 1;
+      }
+      Type type = 1;
+      string field = 2;
+    }
+    message TumblingWindow {
+      TimeCharacteristic timeCharacteristic = 1;
+      uint32 size = 2;
+    }
+    message SlidingWindow {
+      TimeCharacteristic timeCharacteristic = 1;
+      uint32 size = 2;
+      uint32 slide = 3;
+    }
+    message Aggregation {
+      enum Type{
+        SUM = 0;
+      }
+      Type type = 1;
+      string onField = 2;
+      string asField = 3;
+    }
+    google.protobuf.Any windowType = 1;
+    Aggregation windowAggregation = 2;
+    string onKey = 3;
+
+  }
   google.protobuf.Any details = 1;
   repeated SerializableOperator children = 2;
   SerializableSchema inputSchema = 3;

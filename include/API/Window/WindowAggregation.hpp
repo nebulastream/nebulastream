@@ -1,6 +1,7 @@
 #ifndef INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 #define INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 #include <API/AbstractWindowDefinition.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <API/AttributeField.hpp>
 #include <API/UserAPIExpression.hpp>
 
@@ -36,17 +37,26 @@ class WindowAggregation {
    * Returns the result field of the aggregation
    * @return
    */
-    AttributeFieldPtr asField() {
-        if (_asField == nullptr)
-            return _onField;
-        return _asField;
+    AttributeFieldPtr as() {
+        if (asField == nullptr)
+            return onField;
+        return asField;
+    }
+
+    /**
+  * Returns the result field of the aggregation
+  * @return
+  */
+    AttributeFieldPtr on() {
+        return onField;
     }
 
   protected:
     WindowAggregation(const AttributeFieldPtr onField);
+    WindowAggregation(const AttributeFieldPtr onField, const AttributeFieldPtr asField);
     WindowAggregation() = default;
-    const AttributeFieldPtr _onField;
-    AttributeFieldPtr _asField;
+    const AttributeFieldPtr onField;
+    AttributeFieldPtr asField;
 };
 
 /**
@@ -57,7 +67,11 @@ class Sum : public WindowAggregation {
     /**
    * Factory method to creates a sum aggregation on a particular field.
    */
-    static WindowAggregationPtr on(Field onField);
+    static WindowAggregationPtr on(ExpressionItem onField);
+
+    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField){
+        return std::make_shared<Sum>(Sum(onField, asField));
+    }
     void compileLiftCombine(CompoundStatementPtr currentCode,
                             BinaryOperatorStatement partialRef,
                             StructDeclaration inputStruct,
@@ -65,7 +79,7 @@ class Sum : public WindowAggregation {
 
     template<class InputType, class PartialAggregateType>
     PartialAggregateType lift(InputType input) {
-        auto input_type = this->_onField->getDataType();
+        auto input_type = this->onField->getDataType();
         return input;
     }
 
@@ -80,7 +94,8 @@ class Sum : public WindowAggregation {
     }
 
   private:
-    Sum(Field onField);
+    Sum(NES::AttributeFieldPtr onField);
+    Sum(AttributeFieldPtr onField, AttributeFieldPtr asField);
 };
 }// namespace NES
 
