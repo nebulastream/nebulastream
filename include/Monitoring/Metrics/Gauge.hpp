@@ -23,7 +23,7 @@ class Gauge {
      * @brief Calculates and returns the measured value.
      * @return the value
      */
-    T makeReading() {
+    T measure() {
         return probingFunc();
     }
 

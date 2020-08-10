@@ -45,7 +45,7 @@ class CpuMetrics {
      * @brief
      * @return
      */
-    std::pair<std::shared_ptr<Schema>, TupleBuffer> serialize(std::shared_ptr<BufferManager>);
+    void serialize(std::shared_ptr<Schema> schema, TupleBuffer buf, const std::string& prefix="");
 
   private:
     // Overloading [] operator to access elements in array style
