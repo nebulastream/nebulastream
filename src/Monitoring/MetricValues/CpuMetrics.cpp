@@ -43,17 +43,17 @@ CpuValues CpuMetrics::getTotal() const {
     return total;
 }
 
-std::pair<std::shared_ptr<Schema>, TupleBuffer> CpuMetrics::serialize(BufferManagerPtr bm) {
-    SchemaPtr outputSchema = Schema::create();
-    outputSchema->addField("CPU_NO", BasicType::UINT16);
-    TupleBuffer outputBuf = bm->getBufferBlocking();
-    outputBuf.setNumberOfTuples(1);
+void CpuMetrics::serialize(std::shared_ptr<Schema> schema, TupleBuffer buf, const std::string& prefix) {
+    schema->addField(prefix + "CPU_NO", BasicType::UINT16);
+    buf.setNumberOfTuples(1);
 
-    auto layout = createRowLayout(outputSchema);
-    layout->getValueField<uint64_t>(0, 0)->write(outputBuf, cpuNo);
-    total.serialize(outputSchema, outputBuf);
+    auto layout = createRowLayout(schema);
+    layout->getValueField<uint16_t>(0, 0)->write(buf, cpuNo);
+    total.serialize(schema, buf, prefix + "CPU[TOTAL]_");
 
-    return std::make_pair(outputSchema, outputBuf);
+    for (int i=0; i<cpuNo; i++) {
+        getValues(i).serialize(schema, buf, prefix + "CPU[" + std::to_string(i+1) + "]_");
+    }
 }
 
 }// namespace NES

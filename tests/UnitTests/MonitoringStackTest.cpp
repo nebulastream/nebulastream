@@ -46,7 +46,7 @@ class MonitoringStackTest : public testing::Test {
 
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
-    CpuMetrics cpuMetrics = cpuStats.makeReading();
+    CpuMetrics cpuMetrics = cpuStats.measure();
     ASSERT_TRUE(cpuMetrics.getCpuNo() > 0);
     for (int i=0; i< cpuMetrics.getCpuNo(); i++){
         ASSERT_TRUE(cpuMetrics.getValues(i).USER > 0);
@@ -54,12 +54,12 @@ TEST_F(MonitoringStackTest, testCPUStats) {
     ASSERT_TRUE(cpuMetrics.getTotal().USER > 0);
 
     auto cpuIdle = MetricUtils::CPUIdle(0);
-    NES_INFO("MonitoringStackTest: Idle " << cpuIdle.makeReading());
+    NES_INFO("MonitoringStackTest: Idle " << cpuIdle.measure());
 }
 
 TEST_F(MonitoringStackTest, testMemoryStats) {
     auto memStats = MetricUtils::MemoryStats();
-    auto memMetrics = memStats.makeReading();
+    auto memMetrics = memStats.measure();
     ASSERT_TRUE(memMetrics.FREE_RAM > 0);
 
     NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM/(1024*1024) << "gb");
@@ -67,13 +67,13 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
 
 TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskStats = MetricUtils::DiskStats();
-    auto diskMetrics = diskStats.makeReading();
+    auto diskMetrics = diskStats.measure();
     ASSERT_TRUE(diskMetrics.F_BAVAIL > 0);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
     auto networkStats = MetricUtils::NetworkStats();
-    auto networkMetrics = networkStats.makeReading();
+    auto networkMetrics = networkStats.measure();
     ASSERT_TRUE(!networkMetrics.getInterfaceNames().empty());
 
     for (std::string intfs : networkMetrics.getInterfaceNames()) {
@@ -108,22 +108,22 @@ TEST_F(MonitoringStackTest, testMetric) {
     Metric m2 = metrics[2];
     ASSERT_TRUE(getMetricType(m2) == MetricType::GaugeType);
     Gauge<CpuMetrics> cpuMetrics = m2.getValue<Gauge<CpuMetrics>>();
-    ASSERT_TRUE(cpuStats.makeReading().getCpuNo() == cpuMetrics.makeReading().getCpuNo());
+    ASSERT_TRUE(cpuStats.measure().getCpuNo() == cpuMetrics.measure().getCpuNo());
 
     // test network stats
     metrics.emplace_back(networkStats);
     auto networkMetrics = metrics[3].getValue<Gauge<NetworkMetrics>>();
-    ASSERT_TRUE(networkStats.makeReading().size() == networkMetrics.makeReading().size());
+    ASSERT_TRUE(networkStats.measure().size() == networkMetrics.measure().size());
 
     // test disk stats
     metrics.emplace_back(diskStats);
     auto diskMetrics = metrics[4].getValue<Gauge<DiskMetrics>>();
-    ASSERT_TRUE(diskStats.makeReading().F_BAVAIL == diskMetrics.makeReading().F_BAVAIL);
+    ASSERT_TRUE(diskStats.measure().F_BAVAIL == diskMetrics.measure().F_BAVAIL);
 
     // test mem stats
     metrics.emplace_back(memStats);
     auto memMetrics = metrics[5].getValue<Gauge<MemoryMetrics>>();
-    ASSERT_TRUE(memStats.makeReading().TOTAL_RAM == memMetrics.makeReading().TOTAL_RAM);
+    ASSERT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
 
 TEST_F(MonitoringStackTest, testMetricGroup) {
@@ -149,43 +149,48 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     auto cpuS = "cpuStats";
     metricGroup->add(cpuS, cpuStats);
     Gauge<CpuMetrics> cpuMetrics = metricGroup->getAs<Gauge<CpuMetrics>>(cpuS);
-    ASSERT_TRUE(cpuStats.makeReading().getCpuNo() == cpuMetrics.makeReading().getCpuNo());
+    ASSERT_TRUE(cpuStats.measure().getCpuNo() == cpuMetrics.measure().getCpuNo());
 
     // test network stats
     auto networkS = "networkStats";
     metricGroup->add(networkS, networkStats);
     auto networkMetrics = metricGroup->getAs<Gauge<NetworkMetrics>>(networkS);
-    ASSERT_TRUE(networkStats.makeReading().size() == networkMetrics.makeReading().size());
+    ASSERT_TRUE(networkStats.measure().size() == networkMetrics.measure().size());
 
     // test disk stats
     auto diskS = "diskStats";
     metricGroup->add(diskS, diskStats);
     auto diskMetrics = metricGroup->getAs<Gauge<DiskMetrics>>(diskS);
-    ASSERT_TRUE(diskStats.makeReading().F_BAVAIL == diskMetrics.makeReading().F_BAVAIL);
+    ASSERT_TRUE(diskStats.measure().F_BAVAIL == diskMetrics.measure().F_BAVAIL);
 
     // test mem stats
     auto memS = "memStats";
     metricGroup->add(memS, memStats);
     auto memMetrics = metricGroup->getAs<Gauge<MemoryMetrics>>(memS);
-    ASSERT_TRUE(memStats.makeReading().TOTAL_RAM == memMetrics.makeReading().TOTAL_RAM);
+    ASSERT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
 
-TEST_F(MonitoringStackTest, testSerializationMetrics) {
+TEST_F(MonitoringStackTest, testSerializationMetricsSingle) {
     auto cpuStats = MetricUtils::CPUStats();
 
     //test serialize method with empty buffer
-    auto pair = cpuStats.makeReading().getTotal().serialize(bufferManager, "TOTAL_");
+    auto pair = cpuStats.measure().getTotal().serialize(bufferManager, "TOTAL_");
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(pair.second, pair.first));
 
     //test serialize method to append to existing schema and buffer
     auto schema = Schema::create();
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    cpuStats.makeReading().getTotal().serialize(schema, tupleBuffer, "TOTAL_");
+    cpuStats.measure().getTotal().serialize(schema, tupleBuffer, "TOTAL_");
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+}
 
-    //TODO: Fixme
-    //auto statsPair = cpuStats.makeReading().serialize(bufferManager);
-    //NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(statsPair.second, statsPair.first));
+TEST_F(MonitoringStackTest, testSerializationMetricsNested) {
+    auto schema = Schema::create();
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+
+    auto cpuStats = MetricUtils::CPUStats();
+    cpuStats.measure().serialize(schema, tupleBuffer);
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
 TEST_F(MonitoringStackTest, testSamplingProtocol) {
