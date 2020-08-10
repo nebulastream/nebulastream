@@ -112,8 +112,6 @@ OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode, 
     return legacyOperator;
 }
 
-
-
 /**
  * Translate the expression node into the corresponding user api expression of the legacy api.
  * To this end we first cast the expression node in the right subtype and then translate it.

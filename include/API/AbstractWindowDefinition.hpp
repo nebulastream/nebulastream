@@ -50,8 +50,18 @@ class WindowType {
      */
     TimeCharacteristicPtr getTimeCharacteristic() const;
 
+    /**
+     * @return true if this is a tumbling window
+     */
     virtual bool isTumblingWindow();
+
+    /**
+    * @return true if this is a sliding window
+    */
     virtual bool isSlidingWindow();
+    /**
+    * @return true if this is a sliding window
+    */
     virtual bool isSessionWindow();
 
   private:
@@ -78,6 +88,9 @@ class WindowDefinition {
     const WindowTypePtr windowType;
     const AttributeFieldPtr onKey;
 
+    /**
+     * @brief Returns true if this window is keyed.
+     */
     bool isKeyed();
 };
 
