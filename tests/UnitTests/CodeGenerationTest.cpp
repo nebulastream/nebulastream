@@ -802,7 +802,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
 
     codeGenerator->generateCodeForScan(source->getSchema(), context);
 
-    auto sum = Sum::on(Field(input_schema->get("value")));
+    auto sum = Sum::on(Attribute("value"));
     auto windowDefinition = createWindowDefinition(
         input_schema->get("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)));
