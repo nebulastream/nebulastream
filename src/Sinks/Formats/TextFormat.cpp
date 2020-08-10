@@ -20,9 +20,11 @@ std::vector<TupleBuffer> TextFormat::getData(TupleBuffer& inputBuffer) {
     std::vector<TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
-        NES_WARNING("TextFormat::getData: Try to write empty buffer");
+        NES_WARNING("TextFormat::getData: write watermark-only buffer");
+        buffers.push_back(inputBuffer);
         return buffers;
     }
+
     std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, schema);
     size_t contentSize = bufferContent.length();
     NES_DEBUG("TextFormat::getData content size=" << contentSize << " content=" << bufferContent);

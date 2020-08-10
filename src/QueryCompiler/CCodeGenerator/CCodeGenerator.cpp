@@ -262,7 +262,12 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
     code->cleanupStmts.push_back(setNumberOfTuples(code->varDeclarationResultBuffer,
                                                    code->varDeclarationNumberOfResultTuples)
                                      .copy());
-    // 2. emit the buffer to the runtime.
+    // 2. copy watermark
+    code->cleanupStmts.push_back(setWaterMark(code->varDeclarationResultBuffer,
+                                                   code->varDeclarationInputBuffer)
+                                     .copy());
+
+    // 3. emit the buffer to the runtime.
     code->cleanupStmts.push_back(emitTupleBuffer(code->varDeclarationExecutionContext,
                                                  code->varDeclarationResultBuffer)
                                      .copy());
@@ -491,6 +496,14 @@ BinaryOperatorStatement CCodeGenerator::setNumberOfTuples(VariableDeclaration tu
     return VarRef(tupleBufferVariable).accessRef(setNumberOfTupleFunctionCall);
 }
 
+BinaryOperatorStatement CCodeGenerator::setWaterMark(VariableDeclaration tupleBufferVariable,
+                                                          VariableDeclaration inputBufferVariable) {
+    auto setWaterMarkFunctionCall = FunctionCallStatement("setWaterMark");
+    setWaterMarkFunctionCall.addParameter(getWaterMark(inputBufferVariable));
+    /* copy watermark */
+    return VarRef(tupleBufferVariable).accessRef(setWaterMarkFunctionCall);
+}
+
 CCodeGenerator::~CCodeGenerator(){};
 
 BinaryOperatorStatement CCodeGenerator::emitTupleBuffer(VariableDeclaration pipelineContext,
@@ -503,6 +516,11 @@ BinaryOperatorStatement CCodeGenerator::getBuffer(VariableDeclaration tupleBuffe
     auto getBufferFunctionCall = FunctionCallStatement("getBuffer");
     return VarRef(tupleBufferVariable).accessRef(getBufferFunctionCall);
 }
+BinaryOperatorStatement CCodeGenerator::getWaterMark(VariableDeclaration tupleBufferVariable) {
+    auto getWaterMarkFunctionCall = FunctionCallStatement("getWaterMark");
+    return VarRef(tupleBufferVariable).accessRef(getWaterMarkFunctionCall);
+}
+
 TypeCastExprStatement CCodeGenerator::getTypedBuffer(VariableDeclaration tupleBufferVariable,
                                                      StructDeclaration structDeclaraton) {
     auto tf = getTypeFactory();

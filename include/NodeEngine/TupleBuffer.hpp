@@ -115,13 +115,13 @@ class TupleBuffer {
      * @brief method to get the watermark as a timestamp
      * @return watermark
      */
-    int64_t getWatermark();
+    int64_t getWaterMark();
 
     /**
      * @brief method to set the watermark with a timestamp
      * @param value timestamp
      */
-    void setWatermark(int64_t value);
+    void setWaterMark(int64_t value);
 
   private:
     detail::BufferControlBlock* controlBlock;
