@@ -183,7 +183,6 @@ TEST_F(SourceTest, testCSVSource) {
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
 }
 
-
 TEST_F(SourceTest, testCSVSourceWaterMark) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
     std::string path_to_file =
@@ -191,7 +190,7 @@ TEST_F(SourceTest, testCSVSourceWaterMark) {
 
     const std::string& del = ",";
     size_t num = 1;
-    size_t frequency = 1;
+    size_t frequency = 3;
     SchemaPtr schema =
         Schema::create()
             ->addField("user_id", DataTypeFactory::createFixedChar(16))
@@ -212,12 +211,6 @@ TEST_F(SourceTest, testCSVSourceWaterMark) {
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
-        auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::cout << "watermark is=" << optBuf->getWatermark() << " now is="  << now << std::endl;
-
-        EXPECT_NE(optBuf->getWatermark(), 0);
-        EXPECT_GE(now, optBuf->getWatermark());
-
         size_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(
@@ -235,8 +228,8 @@ TEST_F(SourceTest, testCSVSourceWaterMark) {
 
     EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
-
 }
+
 TEST_F(SourceTest, testCSVSourceIntTypes) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 

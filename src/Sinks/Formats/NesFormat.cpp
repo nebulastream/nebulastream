@@ -25,7 +25,8 @@ std::vector<TupleBuffer> NesFormat::getData(TupleBuffer& inputBuffer) {
     std::vector<TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
-        NES_WARNING("NesFormat::getData: Try to write empty buffer");
+        NES_WARNING("NesFormat::getData: write watermark-only buffer");
+        buffers.push_back(inputBuffer);
         return buffers;
     }
 

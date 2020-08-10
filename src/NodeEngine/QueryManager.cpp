@@ -244,8 +244,16 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
     NES_INFO("QueryManager::completedWork: Work for task=" << task);
     std::unique_lock lock(statisticsMutex);
     auto statistics = queryToStatisticsMap[task.getPipelineStage()->getQepParentId()];
+
     statistics->incProcessedTasks();
-    statistics->incProcessedBuffers();
+    if(task.isWaterMarkOnly())
+    {
+        statistics->incProcessedWaterMarks();
+    }
+    else
+    {
+        statistics->incProcessedBuffers();
+    }
     statistics->incProcessedTuple(task.getNumberOfTuples());
 }
 
@@ -259,6 +267,7 @@ std::string QueryManager::getQueryManagerStatistics() {
         ss << "\t processedTasks =" << stats->getProcessedTasks();
         ss << "\t processedTuple =" << stats->getProcessedTuple();
         ss << "\t processedBuffers =" << stats->getProcessedBuffers();
+        ss << "\t processedWaterMarks =" << stats->getProcessedWaterMarks();
 
         ss << "Source Statistics:";
         for (const auto& source : qep->getSources()) {

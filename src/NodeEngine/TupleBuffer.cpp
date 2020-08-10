@@ -96,11 +96,11 @@ void TupleBuffer::revertEndianness(SchemaPtr schema) {
     detail::revertEndianness(*this, schema);
 }
 
-int64_t TupleBuffer::getWatermark() {
+int64_t TupleBuffer::getWaterMark() {
     return controlBlock->getWatermark();
 }
 
-void TupleBuffer::setWatermark(int64_t value) {
+void TupleBuffer::setWaterMark(int64_t value) {
     controlBlock->setWatermark(value);
 }
 

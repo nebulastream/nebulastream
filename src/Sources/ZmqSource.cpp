@@ -53,7 +53,7 @@ std::optional<TupleBuffer> ZmqSource::receiveData() {
             socket.recv(&new_data2);// actual data
 
             auto buffer = bufferManager->getBufferBlocking();
-            buffer.setWatermark(currentTs);
+            buffer.setWaterMark(currentTs);
             NES_DEBUG("ZMQSource  " << this << ": got buffer ");
 
             // TODO: If possible only copy the content not the empty part

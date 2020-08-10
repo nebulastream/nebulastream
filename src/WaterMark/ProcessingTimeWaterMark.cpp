@@ -8,7 +8,9 @@ ProcessingTimeWaterMark::ProcessingTimeWaterMark() {
 
 uint64_t ProcessingTimeWaterMark::getWaterMark()
 {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_DEBUG("ProcessingTimeWaterMark::getWaterMark generate ts=" << ts);
+    return ts;
 }
 
 

@@ -36,7 +36,8 @@ std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
     std::vector<TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
-        NES_WARNING("CsvFormat::getData: Try to write empty buffer");
+        NES_WARNING("CsvFormat::getData: write watermark-only buffer");
+        buffers.push_back(inputBuffer);
         return buffers;
     }
     std::string bufferContent = UtilityFunctions::printTupleBufferAsCSV(inputBuffer, schema);

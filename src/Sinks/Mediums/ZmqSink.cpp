@@ -90,21 +90,22 @@ bool ZmqSink::writeData(TupleBuffer& inputBuffer) {
                 }
             }
             schemaWritten = true;
-            NES_DEBUG("FileSink::writeData: schema written");
+            NES_DEBUG("ZmqSink::writeData: schema written");
         }
         {
-            NES_DEBUG("FileSink::writeData: no schema written");
+            NES_DEBUG("ZmqSink::writeData: no schema written");
         }
     } else {
-        NES_DEBUG("FileSink::getData: schema already written");
+        NES_DEBUG("ZmqSink::getData: schema already written");
     }
 
-    NES_DEBUG("ZmqSink  " << this << ": writes buffer " << inputBuffer);
+    NES_DEBUG("ZmqSink  " << this << ": writes buffer " << inputBuffer
+                          << " with tupleCnt =" << inputBuffer.getNumberOfTuples() << " watermark=" << inputBuffer.getWaterMark());
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {
         try {
             size_t tupleCnt = buffer.getNumberOfTuples();
-            size_t currentTs = buffer.getWatermark();
+            size_t currentTs = buffer.getWaterMark();
 
             zmq::message_t envelope(sizeof(tupleCnt) + sizeof(currentTs));
             memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));

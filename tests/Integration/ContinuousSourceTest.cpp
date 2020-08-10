@@ -71,8 +71,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     std::string queryString = R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout<std::greater_equal<size_t>>(wrk1, queryId, queryCatalog, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout<std::greater_equal<size_t>>(crd, queryId, queryCatalog, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
@@ -137,6 +137,59 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     conf.sourceType = "DefaultSource";
     conf.numberOfBuffersToProduce = 3;
     conf.sourceFrequency = 1;
+    wrk1->registerPhysicalStream(conf);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    //register query
+    std::string queryString = "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(PrintSinkDescriptor::create());";
+
+    std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+    EXPECT_NE(queryId, "");
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 3));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    bool retStopWrk = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
+    NES_INFO("ContinuousSourceTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
+
+    NES_INFO("ContinuousSourceTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
+                                                    port + 10, port + 11, NESNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
+
+    //register logical stream
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+    wrk1->registerLogicalStream("testStream", testSchemaFileName);
+
+    //register physical stream
+    PhysicalStreamConfig conf;
+    conf.logicalStreamName = "testStream";
+    conf.physicalStreamName = "physical_test";
+    conf.sourceType = "DefaultSource";
+    conf.numberOfBuffersToProduce = 3;
+    conf.sourceFrequency = 3;
     wrk1->registerPhysicalStream(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -276,6 +329,122 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     EXPECT_TRUE(retStopCord);
 }
 
+TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
+    NES_INFO("ContinuousSourceTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
+
+    NES_INFO("ContinuousSourceTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
+                                                    port + 10, port + 11, NESNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
+
+    //register logical stream
+    std::string testSchema =
+        "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+    wrk1->registerLogicalStream("testStream", testSchemaFileName);
+
+    //register physical stream
+    PhysicalStreamConfig conf;
+    conf.logicalStreamName = "testStream";
+    conf.physicalStreamName = "physical_test";
+    conf.sourceType = "DefaultSource";
+    conf.numberOfBuffersToProduce = 3;
+    conf.sourceFrequency = 3;
+    wrk1->registerPhysicalStream(conf);
+
+    std::string outputFilePath =
+        "testMultipleOutputBufferFromDefaultSourceWriteFileOutput.txt";
+    remove(outputFilePath.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    //register query
+    std::string queryString = "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\")); ";
+    std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+    EXPECT_NE(queryId, "");
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 3));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    std::ifstream ifs(outputFilePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|campaign_id:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|campaign_id:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|campaign_id:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "|1|\n"
+        "+----------------------------------------------------+";
+
+    cout << "content=" << content << endl;
+    cout << "expContent=" << expectedContent << endl;
+
+    std::string testOut = "expect.txt";
+    std::ofstream outT(testOut);
+    outT << expectedContent;
+    outT.close();
+
+    EXPECT_EQ(content, expectedContent);
+
+    bool retStopWrk = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
@@ -394,8 +563,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
         + outputFilePath + "\")); ";
     std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout<std::greater_equal<size_t>>(wrk1, queryId, queryCatalog, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout<std::greater_equal<size_t>>(crd, queryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
@@ -982,8 +1151,8 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     std::string queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, "");
     NES_INFO("ContinuousSourceTest: Wait on result");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout<std::greater_equal<size_t>>(wrk1, queryId, queryCatalog, 5));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout<std::greater_equal<size_t>>(crd, queryId, queryCatalog, 5));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 5));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 5));
 
     NES_INFO("ContinuousSourceTest: Undeploy query");
     ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));

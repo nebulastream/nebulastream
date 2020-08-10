@@ -22,7 +22,7 @@ std::optional<TupleBuffer> SenseSource::receiveData() {
     auto buf = bufferManager->getBufferBlocking();
     fillBuffer(buf);
     NES_DEBUG("SenseSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
-    buf.setWatermark(this->waterMark->getWaterMark());
+    buf.setWaterMark(this->waterMark->getWaterMark());
     return buf;
 }
 

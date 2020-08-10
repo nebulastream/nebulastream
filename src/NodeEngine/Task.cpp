@@ -21,6 +21,11 @@ size_t Task::getNumberOfTuples() {
     return buf.getNumberOfTuples();
 }
 
+bool Task::isWaterMarkOnly()
+{
+    return buf.getNumberOfTuples() == 0;
+}
+
 PipelineStagePtr Task::getPipelineStage() {
     return pipeline;
 }
