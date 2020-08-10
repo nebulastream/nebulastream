@@ -120,8 +120,6 @@ class OperatorSerializationUtil {
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr deserializeSinkDescriptor(SerializableOperator_SinkDetails* sinkDetails);
-
-
 };
 
 }// namespace NES
