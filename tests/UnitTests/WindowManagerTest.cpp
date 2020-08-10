@@ -51,7 +51,7 @@ class TestAggregation : public WindowAggregation {
 TEST_F(WindowManagerTest, testSumAggregation)
 {
     auto field = AttributeField::create("test", DataTypeFactory::createInt64());
-    const WindowAggregationPtr aggregation = Sum::on(Field(field));
+    const WindowAggregationPtr aggregation = Sum::on(Attribute("test"));
     if (Sum* store = dynamic_cast<Sum*>(aggregation.get())) {
         auto partial = store->lift<int64_t, int64_t>(1L);
         auto partial2 = store->lift<int64_t, int64_t>(2L);
@@ -90,7 +90,7 @@ TEST_F(WindowManagerTest, testWindowTrigger) {
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
-    auto aggregation = Sum::on(schema->get("id"));
+    auto aggregation = Sum::on(Attribute("id"));
 
     auto windowDef = std::make_shared<WindowDefinition>(
         WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(AttributeField::create("test", DataTypeFactory::createUInt64())), Milliseconds(10))));
