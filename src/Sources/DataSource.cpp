@@ -12,7 +12,7 @@
 #include <Util/ThreadBarrier.hpp>
 
 #include <Sources/DataSource.hpp>
-
+#include <WaterMark/ProcessingTimeWaterMark.hpp>
 namespace NES {
 
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager)
@@ -22,6 +22,8 @@ DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, 
     NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source with schema");
     NES_ASSERT(this->bufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
+    waterMark = std::make_shared<ProcessingTimeWaterMark>();
+
 }
 
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,

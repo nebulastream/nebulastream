@@ -71,7 +71,7 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
     NES_DEBUG("Source: Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes()
                                                << "\n"
                                                << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
-    buf.setWatermark(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    buf.setWatermark(this->waterMark->getWaterMark());
     return buf;
 }
 

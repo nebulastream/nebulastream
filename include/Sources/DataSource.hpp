@@ -6,7 +6,8 @@
 #include <mutex>
 #include <optional>
 #include <thread>
-//#include <NodeEngine/QueryManager.hpp>
+#include <WaterMark/WaterMark.hpp>
+
 namespace NES {
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
@@ -167,6 +168,7 @@ class DataSource {
     SourceType type;
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;
+    WaterMarkPtr waterMark;
 
   private:
     //bool indicating if the source is currently running'
