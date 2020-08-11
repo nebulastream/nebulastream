@@ -21,8 +21,7 @@ size_t Task::getNumberOfTuples() {
     return buf.getNumberOfTuples();
 }
 
-bool Task::isWatermarkOnly()
-{
+bool Task::isWatermarkOnly() {
     return buf.getNumberOfTuples() == 0;
 }
 

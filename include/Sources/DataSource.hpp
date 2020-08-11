@@ -2,11 +2,11 @@
 #define INCLUDE_DATASOURCE_H_
 
 #include <API/Schema.hpp>
+#include <Windows/Watermark/Watermark.hpp>
 #include <atomic>
 #include <mutex>
 #include <optional>
 #include <thread>
-#include <Windows/Watermark/Watermark.hpp>
 
 namespace NES {
 class BufferManager;
@@ -163,7 +163,7 @@ class DataSource {
     size_t generatedBuffers;
     size_t numBuffersToProcess;
     std::atomic<size_t> gatheringInterval;
-//    size_t lastGatheringTimeStamp;
+    //    size_t lastGatheringTimeStamp;
     std::string sourceId;
     SourceType type;
     BufferManagerPtr bufferManager;

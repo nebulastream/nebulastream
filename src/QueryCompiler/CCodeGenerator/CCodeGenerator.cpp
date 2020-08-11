@@ -264,7 +264,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
                                      .copy());
     // 2. copy watermark
     code->cleanupStmts.push_back(setWatermark(code->varDeclarationResultBuffer,
-                                                   code->varDeclarationInputBuffer)
+                                              code->varDeclarationInputBuffer)
                                      .copy());
 
     // 3. emit the buffer to the runtime.
@@ -497,7 +497,7 @@ BinaryOperatorStatement CCodeGenerator::setNumberOfTuples(VariableDeclaration tu
 }
 
 BinaryOperatorStatement CCodeGenerator::setWatermark(VariableDeclaration tupleBufferVariable,
-                                                          VariableDeclaration inputBufferVariable) {
+                                                     VariableDeclaration inputBufferVariable) {
     auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
     setWatermarkFunctionCall.addParameter(getWatermark(inputBufferVariable));
     /* copy watermark */

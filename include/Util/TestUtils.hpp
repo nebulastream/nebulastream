@@ -186,7 +186,7 @@ class TestUtils {
                 continue;
             }
             bool isQueryRunning = query->getQueryStatus() == QueryStatus::Running;
-            if (isQueryRunning && cmp(statistics->getProcessedBuffers(), expectedResult)){
+            if (isQueryRunning && cmp(statistics->getProcessedBuffers(), expectedResult)) {
                 NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct isQueryRunning=" << isQueryRunning << " stats=" << statistics->getProcessedBuffers()
                                                                                                           << " procTasks=" << statistics->getProcessedTasks()
                                                                                                           << " procWatermarks=" << statistics->getProcessedWatermarks());

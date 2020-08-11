@@ -36,7 +36,6 @@ class QueryStatistics {
     */
     const std::atomic<size_t> getProcessedWatermarks() const;
 
-
     /**
     * @brief setter for processedTasks
     * @return processedTasks
