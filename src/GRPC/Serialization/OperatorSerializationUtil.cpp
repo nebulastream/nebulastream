@@ -163,28 +163,28 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
 
     auto serializedWindowAggregation = sinkDetails->windowaggregation();
     WindowAggregationPtr aggregation;
-    if(serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM){
+    if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM) {
         aggregation = Sum::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
-                    AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
+                                  AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: " << serializedWindowAggregation.DebugString());
     }
     auto serializedWindowType = sinkDetails->windowtype();
     WindowTypePtr window;
-    if(serializedWindowType.Is<SerializableOperator_WindowDetails_TumblingWindow>()){
+    if (serializedWindowType.Is<SerializableOperator_WindowDetails_TumblingWindow>()) {
         auto serializedTumblingWindow = SerializableOperator_WindowDetails_TumblingWindow();
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
         auto serializedTimeCharacterisitc = serializedTumblingWindow.timecharacteristic();
-        if(serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime){
+        if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime) {
             auto eventTimeField = AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             window = TumblingWindow::of(TimeCharacteristic::createEventTime(eventTimeField), Milliseconds(serializedTumblingWindow.size()));
-        }   else{
+        } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
         }
-    }else{
+    } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: " << serializedWindowType.DebugString());
     }
-    return createWindowLogicalOperatorNode(createWindowDefinition(aggregation,window))->as<WindowLogicalOperatorNode>();
+    return createWindowLogicalOperatorNode(createWindowDefinition(aggregation, window))->as<WindowLogicalOperatorNode>();
 }
 
 SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator) {

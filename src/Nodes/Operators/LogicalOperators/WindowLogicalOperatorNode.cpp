@@ -55,7 +55,7 @@ bool WindowLogicalOperatorNode::inferSchema() {
         NES_ERROR("Window Operator: aggregation field dose not exist!");
         return false;
     }
-    
+
     // create result schema
     auto aggregationField = inputSchema->get(windowAggregation->on()->name);
     outputSchema = Schema::create();

@@ -1,8 +1,8 @@
 #ifndef INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 #define INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 #include <API/AbstractWindowDefinition.hpp>
-#include <API/Expressions/Expressions.hpp>
 #include <API/AttributeField.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <API/UserAPIExpression.hpp>
 
 namespace NES {
@@ -69,7 +69,7 @@ class Sum : public WindowAggregation {
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
-    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField){
+    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
         return std::make_shared<Sum>(Sum(onField, asField));
     }
     void compileLiftCombine(CompoundStatementPtr currentCode,

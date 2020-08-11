@@ -1,8 +1,8 @@
 #include <API/AbstractWindowDefinition.hpp>
-#include <API/Query.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <API/Expressions/Expressions.hpp>
+#include <API/Query.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -42,10 +42,10 @@ Query& Query::window(const WindowTypePtr windowType, const WindowAggregationPtr 
 Query& Query::windowByKey(ExpressionItem onKey, const WindowTypePtr windowType, const WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add keyed window operator");
     auto keyExpression = onKey.getExpressionNode();
-    if(!keyExpression->instanceOf<FieldAccessExpressionNode>()){
+    if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
-    auto fieldAccess  = keyExpression->as<FieldAccessExpressionNode>();
+    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
     auto windowDefinition = createWindowDefinition(keyField, aggregation, windowType);
     auto windowOperator = createWindowLogicalOperatorNode(windowDefinition);
