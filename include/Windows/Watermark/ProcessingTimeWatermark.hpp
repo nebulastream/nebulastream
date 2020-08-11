@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace NES{
+namespace NES {
 
 class ProcessingTimeWatermark : public Watermark {
   public:
@@ -17,5 +17,5 @@ class ProcessingTimeWatermark : public Watermark {
     uint64_t getWatermark();
 };
 
-}
+}// namespace NES
 #endif//NES_INCLUDE_WATERMARK_PROCESSINGTIMEWATERMARK_HPP_

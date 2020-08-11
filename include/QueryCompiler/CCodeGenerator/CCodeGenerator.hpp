@@ -71,7 +71,7 @@ class CCodeGenerator : public CodeGenerator {
     BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable,
                                               VariableDeclaration numberOfResultTuples);
     BinaryOperatorStatement setWatermark(VariableDeclaration tupleBufferVariable,
-                                              VariableDeclaration numberOfResultTuples);
+                                         VariableDeclaration numberOfResultTuples);
     BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
     BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,
                                             VariableDeclaration tupleBufferVariable);

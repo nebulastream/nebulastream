@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_WATERMARK_WATERMARK_HPP_
 #define NES_INCLUDE_WATERMARK_WATERMARK_HPP_
 
-#include <memory>
 #include <cstdint>
-namespace NES{
+#include <memory>
+namespace NES {
 
 class Watermark {
   public:
@@ -17,11 +17,5 @@ class Watermark {
 };
 
 typedef std::shared_ptr<Watermark> WatermarkPtr;
-}
+}// namespace NES
 #endif//NES_INCLUDE_WATERMARK_WATERMARK_HPP_
-
-
-
-
-
-

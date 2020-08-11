@@ -16,5 +16,5 @@ class EventTimeWatermark : public Watermark {
     */
     uint64_t getWatermark();
 };
-}
+}// namespace NES
 #endif//NES_INCLUDE_WATERMARK_EVENTTIMEWATERMARK_HPP_

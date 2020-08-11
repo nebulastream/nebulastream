@@ -246,12 +246,9 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
     auto statistics = queryToStatisticsMap[task.getPipelineStage()->getQepParentId()];
 
     statistics->incProcessedTasks();
-    if(task.isWatermarkOnly())
-    {
+    if (task.isWatermarkOnly()) {
         statistics->incProcessedWatermarks();
-    }
-    else
-    {
+    } else {
         statistics->incProcessedBuffers();
     }
     statistics->incProcessedTuple(task.getNumberOfTuples());
