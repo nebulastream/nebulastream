@@ -65,12 +65,12 @@ class CCodeGenerator : public CodeGenerator {
 
   private:
     BinaryOperatorStatement getBuffer(VariableDeclaration tupleBufferVariable);
-    BinaryOperatorStatement getWaterMark(VariableDeclaration tupleBufferVariable);
+    BinaryOperatorStatement getWatermark(VariableDeclaration tupleBufferVariable);
     TypeCastExprStatement getTypedBuffer(VariableDeclaration tupleBufferVariable, StructDeclaration structDeclaration);
     BinaryOperatorStatement getBufferSize(VariableDeclaration tupleBufferVariable);
     BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable,
                                               VariableDeclaration numberOfResultTuples);
-    BinaryOperatorStatement setWaterMark(VariableDeclaration tupleBufferVariable,
+    BinaryOperatorStatement setWatermark(VariableDeclaration tupleBufferVariable,
                                               VariableDeclaration numberOfResultTuples);
     BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
     BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,

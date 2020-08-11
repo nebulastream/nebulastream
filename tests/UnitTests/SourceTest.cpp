@@ -183,7 +183,7 @@ TEST_F(SourceTest, testCSVSource) {
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
 }
 
-TEST_F(SourceTest, testCSVSourceWaterMark) {
+TEST_F(SourceTest, testCSVSourceWatermark) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.csv";

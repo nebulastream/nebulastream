@@ -71,7 +71,7 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
     NES_DEBUG("Source: Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes()
                                                << "\n"
                                                << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
-    buf.setWaterMark(this->waterMark->getWaterMark());
+    buf.setWatermark(this->watermark->getWatermark());
     return buf;
 }
 

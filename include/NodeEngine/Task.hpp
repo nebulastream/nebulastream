@@ -50,7 +50,7 @@ class Task {
      * @brief method to check if it is a watermark-only buffer
      * @retun bool indicating if this buffer is for watermarks only
      */
-     bool isWaterMarkOnly();
+     bool isWatermarkOnly();
 
     /**
      * @return true if this Task is valid and it is safe to execute

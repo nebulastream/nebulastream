@@ -152,12 +152,12 @@ class TestUtils {
             if (isQueryRunning && cmp(statistics->getProcessedBuffers(), expectedResult)) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics->getProcessedBuffers()
                                                                                         << " procTasks=" << statistics->getProcessedTasks()
-                                                                                        << " procWaterMarks=" << statistics->getProcessedWaterMarks());
+                                                                                        << " procWatermarks=" << statistics->getProcessedWatermarks());
                 return true;
             } else {
                 NES_DEBUG("checkCompleteOrTimeout: results are incomplete isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics->getProcessedBuffers()
                                                                                            << " procTasks=" << statistics->getProcessedTasks()
-                                                                                           << " procWaterMarks=" << statistics->getProcessedWaterMarks());
+                                                                                           << " procWatermarks=" << statistics->getProcessedWatermarks());
             }
             sleep(1);
         }
@@ -189,7 +189,7 @@ class TestUtils {
             if (isQueryRunning && cmp(statistics->getProcessedBuffers(), expectedResult)){
                 NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct isQueryRunning=" << isQueryRunning << " stats=" << statistics->getProcessedBuffers()
                                                                                                           << " procTasks=" << statistics->getProcessedTasks()
-                                                                                                          << " procWaterMarks=" << statistics->getProcessedWaterMarks());
+                                                                                                          << " procWatermarks=" << statistics->getProcessedWatermarks());
                 return true;
             } else {
                 NES_DEBUG("checkCompleteOrTimeout: results are incomplete isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics->getProcessedBuffers()
@@ -201,7 +201,7 @@ class TestUtils {
                                                                                                             << " query status=" << queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatusAsString()
                                                                                                             << " processedBuffer=" << ptr->getQueryStatistics(queryId)->getProcessedBuffers()
                                                                                                             << " processedTasks=" << ptr->getQueryStatistics(queryId)->getProcessedTasks()
-                                                                                                            << " procWaterMarks=" << ptr->getQueryStatistics(queryId)->getProcessedWaterMarks());
+                                                                                                            << " procWatermarks=" << ptr->getQueryStatistics(queryId)->getProcessedWatermarks());
         return false;
     }
 

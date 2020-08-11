@@ -100,12 +100,12 @@ bool ZmqSink::writeData(TupleBuffer& inputBuffer) {
     }
 
     NES_DEBUG("ZmqSink  " << this << ": writes buffer " << inputBuffer
-                          << " with tupleCnt =" << inputBuffer.getNumberOfTuples() << " watermark=" << inputBuffer.getWaterMark());
+                          << " with tupleCnt =" << inputBuffer.getNumberOfTuples() << " watermark=" << inputBuffer.getWatermark());
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {
         try {
             size_t tupleCnt = buffer.getNumberOfTuples();
-            size_t currentTs = buffer.getWaterMark();
+            size_t currentTs = buffer.getWatermark();
 
             zmq::message_t envelope(sizeof(tupleCnt) + sizeof(currentTs));
             memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));

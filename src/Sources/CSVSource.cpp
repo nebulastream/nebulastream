@@ -34,7 +34,7 @@ std::optional<TupleBuffer> CSVSource::receiveData() {
     fillBuffer(buf);
     NES_DEBUG(
         "CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
-    buf.setWaterMark(this->waterMark->getWaterMark());
+    buf.setWatermark(this->watermark->getWatermark());
     return buf;
 }
 
