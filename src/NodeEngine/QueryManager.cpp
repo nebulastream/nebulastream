@@ -246,9 +246,9 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
     auto statistics = queryToStatisticsMap[task.getPipelineStage()->getQepParentId()];
 
     statistics->incProcessedTasks();
-    if(task.isWaterMarkOnly())
+    if(task.isWatermarkOnly())
     {
-        statistics->incProcessedWaterMarks();
+        statistics->incProcessedWatermarks();
     }
     else
     {
@@ -267,7 +267,7 @@ std::string QueryManager::getQueryManagerStatistics() {
         ss << "\t processedTasks =" << stats->getProcessedTasks();
         ss << "\t processedTuple =" << stats->getProcessedTuple();
         ss << "\t processedBuffers =" << stats->getProcessedBuffers();
-        ss << "\t processedWaterMarks =" << stats->getProcessedWaterMarks();
+        ss << "\t processedWatermarks =" << stats->getProcessedWatermarks();
 
         ss << "Source Statistics:";
         for (const auto& source : qep->getSources()) {

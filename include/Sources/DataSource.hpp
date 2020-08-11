@@ -6,7 +6,7 @@
 #include <mutex>
 #include <optional>
 #include <thread>
-#include <WaterMark/WaterMark.hpp>
+#include <Windows/Watermark/Watermark.hpp>
 
 namespace NES {
 class BufferManager;
@@ -163,12 +163,12 @@ class DataSource {
     size_t generatedBuffers;
     size_t numBuffersToProcess;
     std::atomic<size_t> gatheringInterval;
-    size_t lastGatheringTimeStamp;
+//    size_t lastGatheringTimeStamp;
     std::string sourceId;
     SourceType type;
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;
-    WaterMarkPtr waterMark;
+    WatermarkPtr watermark;
 
   private:
     //bool indicating if the source is currently running'

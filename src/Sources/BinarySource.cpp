@@ -25,7 +25,7 @@ BinarySource::BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, Que
 std::optional<TupleBuffer> BinarySource::receiveData() {
     auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
-    buf.setWaterMark(this->waterMark->getWaterMark());
+    buf.setWatermark(this->watermark->getWatermark());
     return buf;
 }
 

@@ -48,6 +48,8 @@ class AdaptiveSource : public DataSource {
      * @brief decision of new frequency, implemented by derived
      */
     virtual void decideNewGatheringInterval() = 0;
+
+    size_t lastGatheringTimeStamp;
 };
 
 typedef std::shared_ptr<AdaptiveSource> AdaptiveSourcePtr;

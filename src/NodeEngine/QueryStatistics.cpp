@@ -2,20 +2,20 @@
 #include <sstream>
 namespace NES {
 
-const std::atomic<size_t>& QueryStatistics::getProcessedTasks() const {
-    return processedTasks;
+const std::atomic<size_t> QueryStatistics::getProcessedTasks() const {
+    return processedTasks.load();
 }
 
-const std::atomic<size_t>& QueryStatistics::getProcessedTuple() const {
-    return processedTuple;
+const std::atomic<size_t> QueryStatistics::getProcessedTuple() const {
+    return processedTuple.load();
 }
 
-const std::atomic<size_t>& QueryStatistics::getProcessedBuffers() const {
-    return processedBuffers;
+const std::atomic<size_t> QueryStatistics::getProcessedBuffers() const {
+    return processedBuffers.load();
 }
 
-const std::atomic<size_t>& QueryStatistics::getProcessedWaterMarks() const {
-    return processedWaterMarks;
+const std::atomic<size_t> QueryStatistics::getProcessedWatermarks() const {
+    return processedWatermarks.load();
 }
 
 void QueryStatistics::setProcessedTasks(const std::atomic<size_t>& processedTasks) {
@@ -34,8 +34,8 @@ void QueryStatistics::incProcessedTasks() {
     this->processedTasks++;
 }
 
-void QueryStatistics::incProcessedWaterMarks() {
-    this->processedWaterMarks++;
+void QueryStatistics::incProcessedWatermarks() {
+    this->processedWatermarks++;
 }
 void QueryStatistics::incProcessedTuple(size_t tupleCnt) {
     this->processedTuple += tupleCnt;
@@ -50,7 +50,7 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << "processedTasks=" << processedTasks;
     ss << " processedTuple=" << processedTuple;
     ss << " processedBuffers=" << processedBuffers;
-    ss << " processedWaterMarks=" << processedWaterMarks;
+    ss << " processedWatermarks=" << processedWatermarks;
     return ss.str();
 }
 }
