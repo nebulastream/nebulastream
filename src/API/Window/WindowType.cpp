@@ -12,7 +12,7 @@ TimeCharacteristicPtr WindowType::getTimeCharacteristic() const {
     return this->timeCharacteristic;
 }
 
-bool WindowType::isSlidingWindow(){
+bool WindowType::isSlidingWindow() {
     return false;
 }
 

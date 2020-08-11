@@ -30,10 +30,8 @@ typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
-
 class WindowType;
 typedef std::shared_ptr<WindowType> WindowTypePtr;
-
 
 class WindowAggregation;
 typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;
@@ -86,8 +84,8 @@ class Query {
      * @return query.
      */
     Query& windowByKey(const ExpressionItem onKey,
-                            const WindowTypePtr windowType,
-                            const WindowAggregationPtr aggregation);
+                       const WindowTypePtr windowType,
+                       const WindowAggregationPtr aggregation);
 
     /**
      * @brief: Creates a window aggregation.
@@ -96,8 +94,7 @@ class Query {
      * @return query.
      */
     Query& window(const WindowTypePtr windowType,
-                       const WindowAggregationPtr aggregation);
-
+                  const WindowAggregationPtr aggregation);
 
     /**
      * @brief: Map records according to a map expression.
