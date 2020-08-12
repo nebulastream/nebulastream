@@ -17,6 +17,9 @@ typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 class QueryPlacementPhase;
 typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
 
+class QueryPlacementRefinementPhase;
+typedef std::shared_ptr<QueryPlacementRefinementPhase> QueryPlacementRefinementPhasePtr;
+
 class QueryDeploymentPhase;
 typedef std::shared_ptr<QueryDeploymentPhase> QueryDeploymentPhasePtr;
 
@@ -27,6 +30,7 @@ class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 class GlobalExecutionPlan;
+
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class NESTopologyPlan;
@@ -73,6 +77,7 @@ class QueryRequestProcessorService {
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
     QueryPlacementPhasePtr queryPlacementPhase;
+    QueryPlacementRefinementPhasePtr queryPlacementRefinementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     QueryRequestQueuePtr queryRequestQueue;

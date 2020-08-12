@@ -1,5 +1,6 @@
-#ifndef NES_IMPL_OPTIMIZER_QUERYREWRITE_BASERULE_HPP_
-#define NES_IMPL_OPTIMIZER_QUERYREWRITE_BASERULE_HPP_
+#ifndef NES_IMPL_OPTIMIZER_QUERYREFINEMENT_BASERULE_HPP_
+#define NES_IMPL_OPTIMIZER_QUERYREFINEMENT_BASERULE_HPP_
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 
 #include <Util/Logger.hpp>
 #include <memory>
@@ -13,16 +14,15 @@ class BaseRefinementRule : public std::enable_shared_from_this<BaseRefinementRul
 
   public:
     /**
-     * @brief Apply the rule to the Query plan
-     * @param queryPlanPtr : The original query plan
-     * @return The updated query plan
+     * @brief Apply the refinement to the global query plan
+     * @param queryId
      */
-    virtual QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) = 0;
+    virtual void execute(std::string queryId) = 0;
 
     /**
-     * @brief Checks if the current node is of type RuleType
+     * @brief Checks if the current node is of type RefinementType
      * @tparam RefinementType
-     * @return bool true if node is of RuleType
+     * @return bool true if node is of RefinementType
      */
     template<class RefinementType>
     const bool instanceOf() {
@@ -33,9 +33,9 @@ class BaseRefinementRule : public std::enable_shared_from_this<BaseRefinementRul
     };
 
     /**
-    * @brief Dynamically casts the node to a RuleType
-    * @tparam RefinementType
-    * @return returns a shared pointer of the RuleType
+    * @brief Dynamically casts the node to a RefinementType
+    * @tparam RuleType
+    * @return returns a shared pointer of the RefinementType
     */
     template<class RefinementType>
     std::shared_ptr<RefinementType> as() {
@@ -49,4 +49,4 @@ class BaseRefinementRule : public std::enable_shared_from_this<BaseRefinementRul
 };
 }// namespace NES
 
-#endif//NES_IMPL_OPTIMIZER_QUERYREWRITE_BASERULE_HPP_
+#endif//NES_IMPL_OPTIMIZER_QUERYREFINEMENT_BASERULE_HPP_
