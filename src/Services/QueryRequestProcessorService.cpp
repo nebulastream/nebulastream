@@ -11,6 +11,7 @@
 #include <Phases/QueryPlacementPhase.hpp>
 #include <Phases/QueryRewritePhase.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/QueryPlacementRefinementPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -33,6 +34,7 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryDeployer);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(globalExecutionPlan, workerRpcClient);
+    queryPlacementRefinementPhase = QueryPlacementRefinementPhase::create(globalExecutionPlan);
 }
 
 void QueryRequestProcessorService::start() {
@@ -76,6 +78,11 @@ void QueryRequestProcessorService::start() {
                         bool successful = queryDeploymentPhase->execute(queryId);
                         if (!successful) {
                             throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with Id " + queryId);
+                        }
+                        NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query: " + queryId);
+                        bool refinementSuccessful = queryPlacementRefinementPhase->execute(queryPlan->getQueryId());
+                        if (!refinementSuccessful) {
+                            throw QueryPlacementException("QueryProcessingService: Failed to perform query refinement for query: " + queryId);
                         }
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                     } else {

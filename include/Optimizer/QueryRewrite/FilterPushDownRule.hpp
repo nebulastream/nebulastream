@@ -23,7 +23,7 @@ typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
  *  3.) If their exists another filter operator next to the target filter operator then it can't be pushed down below that
  *      specific filter operator.
  */
-class FilterPushDownRule : public BaseRewriteRule {
+class FilterPushDownRule : public BaseRefinementRule {
 
   public:
     QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
