@@ -1,7 +1,8 @@
 #include <Exceptions/QueryPlacementException.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
@@ -31,8 +32,9 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
 }
 
 OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(NESTopologyEntryPtr nesNode) {
-    // TODO remove internal flag if we introduced the network stack.
-    auto sinkOperator = createSinkLogicalOperatorNode(ZmqSinkDescriptor::create(nesNode->getIp(), ZMQ_DEFAULT_PORT, /* internal */ true));
+
+//    auto sinkOperator = createSinkLogicalOperatorNode(Network::NetworkSinkDescriptor::create(nodeLocation, ));
+    auto sinkOperator = createSinkLogicalOperatorNode( ZmqSinkDescriptor::create(nesNode->getIp(), ZMQ_DEFAULT_PORT, /* internal */ true));
     sinkOperator->setId(SYS_SINK_OPERATOR_ID);// all sink operators will have MAX64-1 as Id
     return sinkOperator;
 }
@@ -44,6 +46,8 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(NESTopologyEn
 }
 
 void BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode) {
+    Network::NodeLocation nodeLocation(parentNesNode->getId(), parentNesNode->getIp(), parentNesNode->getReceivePort());
+//    Network::NesPartition nesPartition(queryPlan->getQueryId(), );
     const OperatorNodePtr sysSinkOperator = createNetworkSinkOperator(parentNesNode);
     queryPlan->appendPreExistingOperator(sysSinkOperator);
 }

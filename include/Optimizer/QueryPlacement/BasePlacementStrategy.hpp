@@ -53,7 +53,7 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 class BasePlacementStrategy {
 
   private:
-    static const int ZMQ_DEFAULT_PORT = 5555;
+    static constexpr auto ZMQ_DEFAULT_PORT = 5555;
 
   public:
     explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
