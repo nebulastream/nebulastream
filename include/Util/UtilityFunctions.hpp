@@ -90,6 +90,13 @@ class UtilityFunctions {
      * @return schema as csv string
      */
     static const std::string toCSVString(SchemaPtr schema);
+
+    /**
+     * @brief Returns the next free operator id
+     * @return operator id
+     */
+    static uint64_t getNextOperatorId();
+
 };
 }// namespace NES
 

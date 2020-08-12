@@ -7,6 +7,8 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <set>
 #include <utility>
+#include <Util/UtilityFunctions.hpp>
+
 
 namespace NES {
 
@@ -19,8 +21,7 @@ QueryPlanPtr QueryPlan::create() {
 }
 
 QueryPlan::QueryPlan(OperatorNodePtr rootOperator) {
-    currentOperatorId = 0;
-    rootOperator->setId(getNextOperatorId());
+    rootOperator->setId(UtilityFunctions::getNextOperatorId());
     rootOperators.push_back(std::move(rootOperator));
 }
 
@@ -48,14 +49,10 @@ std::vector<SinkLogicalOperatorNodePtr> QueryPlan::getSinkOperators() {
     return sinkOperators;
 }
 
-size_t QueryPlan::getNextOperatorId() {
-    return currentOperatorId++;
-}
-
 void QueryPlan::appendOperator(OperatorNodePtr operatorNode) {
     NES_DEBUG("QueryPlan: Appending operator " << operatorNode->toString() << " as new root of the plan.");
     for (auto rootOperator : rootOperators) {
-        operatorNode->setId(getNextOperatorId());
+        operatorNode->setId(UtilityFunctions::getNextOperatorId());
         rootOperator->addParent(operatorNode);
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
@@ -161,10 +158,10 @@ std::vector<OperatorNodePtr> QueryPlan::getWindowOperators() {
 bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
 
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
-    if (operatorNode->getId() == SYS_SOURCE_OPERATOR_ID || operatorNode->getId() == SYS_SINK_OPERATOR_ID) {
-        NES_DEBUG("QueryPlan: If the operator is a system generated one then we ignore this check");
-        return false;
-    }
+//    if (operatorNode->getId() == SYS_SOURCE_OPERATOR_ID || operatorNode->getId() == SYS_SINK_OPERATOR_ID) {
+//        NES_DEBUG("QueryPlan: If the operator is a system generated one then we ignore this check");
+//        return false;
+//    }
 
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator");
     for (auto rootOperator : rootOperators) {

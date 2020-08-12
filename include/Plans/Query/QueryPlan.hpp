@@ -140,13 +140,7 @@ class QueryPlan {
      */
     QueryPlan() = default;
 
-    /**
-     * @brief Get next free operator id
-     */
-    uint64_t getNextOperatorId();
-
     std::vector<OperatorNodePtr> rootOperators;
-    uint64_t currentOperatorId;
     std::string queryId;
 };
 }// namespace NES
