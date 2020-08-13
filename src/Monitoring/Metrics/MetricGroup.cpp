@@ -1,11 +1,12 @@
 #include <Monitoring/Metrics/MetricGroup.hpp>
 
-#include <Util/Logger.hpp>
 #include <API/Schema.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
-MetricGroup::MetricGroup(): schema(Schema::create()) {
+MetricGroup::MetricGroup() {
     NES_INFO("MetricGroup: Ctor called");
 }
 
@@ -21,8 +22,11 @@ bool MetricGroup::remove(const std::string& name) {
     return metricMap.erase(name);
 }
 
-std::shared_ptr<Schema> MetricGroup::getSchema() {
-    return schema;
+void MetricGroup::getSample(std::shared_ptr<Schema> schema, TupleBuffer& buf) {
+    NES_DEBUG("MetricGroup: Collecting sample via serialize(..)");
+    for (auto const& x: metricMap) {
+        serialize(x.second, schema, buf, x.first);
+    }
 }
 
 }// namespace NES

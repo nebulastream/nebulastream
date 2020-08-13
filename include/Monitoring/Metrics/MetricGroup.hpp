@@ -8,6 +8,7 @@
 
 namespace NES {
 class Schema;
+class TupleBuffer;
 
 /**
  * A MetricGroup is a named container for Metrics and further metric subgroups.
@@ -46,12 +47,11 @@ class MetricGroup {
      */
     bool remove(const std::string& name);
 
-    std::shared_ptr<Schema> getSchema();
+    void getSample(std::shared_ptr<Schema>, TupleBuffer&);
 
   private:
     MetricGroup();
     std::unordered_map<std::string, Metric> metricMap;
-    std::shared_ptr<Schema> schema;
 };
 
 typedef std::shared_ptr<MetricGroup> MetricGroupPtr;

@@ -1,13 +1,15 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_GAUGE_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_GAUGE_HPP_
 
-#include <Monitoring/Metrics/Gauge.hpp>
-#include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/Metrics/MetricType.hpp>
 #include <Util/Logger.hpp>
+
 #include <functional>
 #include <memory>
 
 namespace NES {
+class Schema;
+class TupleBuffer;
 
 template<typename T>
 /**
@@ -34,6 +36,11 @@ class Gauge {
 template<typename T>
 MetricType getMetricType(const Gauge<T>&) {
     return MetricType::GaugeType;
+}
+
+template<typename T>
+void serialize(Gauge<T>& metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    serialize(metric.measure(), schema, buf, prefix);
 }
 
 }// namespace NES

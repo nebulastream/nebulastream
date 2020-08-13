@@ -8,7 +8,6 @@
 namespace NES {
 class TupleBuffer;
 class Schema;
-class BufferManager;
 
 /**
  * @brief Wrapper class to represent the metrics read from the OS about cpu data.
@@ -41,12 +40,6 @@ class CpuMetrics {
      */
     uint16_t getCpuNo() const;
 
-    /**
-     * @brief
-     * @return
-     */
-    void serialize(std::shared_ptr<Schema> schema, TupleBuffer buf, const std::string& prefix="");
-
   private:
     // Overloading [] operator to access elements in array style
     CpuValues& operator[](unsigned int);
@@ -56,6 +49,8 @@ class CpuMetrics {
     std::unique_ptr<CpuValues[]> ptr;
     const uint16_t cpuNo;
 };
+
+void serialize(CpuMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix="");
 
 }// namespace NES
 

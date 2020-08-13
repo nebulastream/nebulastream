@@ -1,22 +1,15 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 
-#include <cstdint>
 #include <memory>
-#include <vector>
 
 namespace NES {
 class Schema;
-class BufferManager;
 class TupleBuffer;
 
 class CpuValues {
   public:
     CpuValues() = default;
-
-    std::pair<std::shared_ptr<Schema>, TupleBuffer> serialize(std::shared_ptr<BufferManager> bm, const std::string& prefix="") const;
-
-    void serialize(std::shared_ptr<Schema>, TupleBuffer, const std::string& prefix="") const;
 
     static std::shared_ptr<Schema> getSchema(const std::string& prefix);
 
@@ -31,6 +24,8 @@ class CpuValues {
     uint64_t GUEST;
     uint64_t GUESTNICE;
 };
+
+void serialize(CpuValues, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix="");
 
 }// namespace NES
 

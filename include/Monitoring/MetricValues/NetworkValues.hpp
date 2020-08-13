@@ -1,10 +1,17 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
 #include <cstdint>
+#include <memory>
+
+namespace NES {
+class Schema;
+class TupleBuffer;
 
 class NetworkValues {
   public:
     NetworkValues() = default;
+
+    static std::shared_ptr<Schema> getSchema(const std::string& prefix);
 
     uint64_t rBytes;
     uint64_t rPackets;
@@ -24,5 +31,9 @@ class NetworkValues {
     uint64_t tCarrier;
     uint64_t tCompressed;
 };
+
+void serialize(NetworkValues, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix="");
+
+}
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_

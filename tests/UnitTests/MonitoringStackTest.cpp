@@ -113,7 +113,7 @@ TEST_F(MonitoringStackTest, testMetric) {
     // test network stats
     metrics.emplace_back(networkStats);
     auto networkMetrics = metrics[3].getValue<Gauge<NetworkMetrics>>();
-    ASSERT_TRUE(networkStats.measure().size() == networkMetrics.measure().size());
+    ASSERT_TRUE(networkStats.measure().getIntfsNo() == networkMetrics.measure().getIntfsNo());
 
     // test disk stats
     metrics.emplace_back(diskStats);
@@ -155,7 +155,7 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     auto networkS = "networkStats";
     metricGroup->add(networkS, networkStats);
     auto networkMetrics = metricGroup->getAs<Gauge<NetworkMetrics>>(networkS);
-    ASSERT_TRUE(networkStats.measure().size() == networkMetrics.measure().size());
+    ASSERT_TRUE(networkStats.measure().getIntfsNo() == networkMetrics.measure().getIntfsNo());
 
     // test disk stats
     auto diskS = "diskStats";
@@ -173,23 +173,54 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
 TEST_F(MonitoringStackTest, testSerializationMetricsSingle) {
     auto cpuStats = MetricUtils::CPUStats();
 
-    //test serialize method with empty buffer
-    auto pair = cpuStats.measure().getTotal().serialize(bufferManager, "TOTAL_");
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(pair.second, pair.first));
-
     //test serialize method to append to existing schema and buffer
     auto schema = Schema::create();
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    cpuStats.measure().getTotal().serialize(schema, tupleBuffer, "TOTAL_");
+    serialize(cpuStats.measure().getTotal(), schema, tupleBuffer, "TOTAL_");
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
 TEST_F(MonitoringStackTest, testSerializationMetricsNested) {
+    NES_INFO("Starting test");
     auto schema = Schema::create();
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     auto cpuStats = MetricUtils::CPUStats();
-    cpuStats.measure().serialize(schema, tupleBuffer);
+    serialize(cpuStats.measure(), schema, tupleBuffer);
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+}
+
+TEST_F(MonitoringStackTest, testSerializationGroups) {
+    MetricGroupPtr metricGroup = MetricGroup::create();
+
+    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
+    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
+    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
+    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
+
+    // add with simple data types
+    auto intS = "simpleInt";
+    metricGroup->add(intS, 1);
+
+    // add cpu stats
+    auto cpuS = "cpuStats";
+    metricGroup->add(cpuS, cpuStats);
+
+    // add cpu stats
+    auto networkS = "networkStats";
+    metricGroup->add(networkS, networkStats);
+
+    // add cpu stats
+    auto diskS = "diskStats";
+    metricGroup->add(diskS, diskStats);
+
+    // add cpu stats
+    auto memS = "memStats";
+    metricGroup->add(memS, memStats);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto schema = Schema::create();
+    metricGroup->getSample(schema, tupleBuffer);
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
