@@ -14,13 +14,13 @@ QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(GlobalExecutionPlanPtr 
     return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(globalExecutionPlan, workerRpcClient));
 }
 
-bool QueryUndeploymentPhase::execute(const std::string queryId) {
+bool QueryUndeploymentPhase::execute(const uint64_t queryId) {
     NES_DEBUG("QueryService::stopAndUndeployQuery : queryId=" << queryId);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     if (executionNodes.empty()) {
-        NES_ERROR("QueryRequestProcessingService: Unable to find ExecutionNodes where the query " + queryId + " is deployed");
+        NES_ERROR("QueryRequestProcessingService: Unable to find ExecutionNodes where the query " + std::to_string(queryId) + " is deployed");
         return false;
     }
 
@@ -45,7 +45,7 @@ bool QueryUndeploymentPhase::execute(const std::string queryId) {
     return globalExecutionPlan->removeQuerySubPlans(queryId);
 }
 
-bool QueryUndeploymentPhase::stopQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryUndeploymentPhase::stopQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes) {
 
     NES_DEBUG("QueryService:stopQuery queryId=" << queryId);
 
@@ -63,7 +63,7 @@ bool QueryUndeploymentPhase::stopQuery(std::string queryId, std::vector<Executio
     return true;
 }
 
-bool QueryUndeploymentPhase::undeployQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryUndeploymentPhase::undeployQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes) {
 
     NES_DEBUG("NesCoordinator::undeployQuery queryId=" << queryId);
     for (ExecutionNodePtr executionNode : executionNodes) {

@@ -5,7 +5,7 @@
 
 namespace NES {
 
-QueryExecutionPlan::QueryExecutionPlan(std::string queryId,
+QueryExecutionPlan::QueryExecutionPlan(uint64_t queryId,
                                        std::vector<DataSourcePtr> sources,
                                        std::vector<PipelineStagePtr> stages,
                                        QueryManagerPtr queryManager,

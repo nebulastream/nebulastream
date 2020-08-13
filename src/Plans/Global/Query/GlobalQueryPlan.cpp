@@ -14,15 +14,15 @@ GlobalQueryPlanPtr GlobalQueryPlan::create() {
 
 void GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
     NES_ERROR("GlobalQueryPlan: Adding new query plan to the Global query plan");
-    std::string queryId = queryPlan->getQueryId();
-    if (queryId.empty()) {
+    uint64_t queryId = queryPlan->getQueryId();
+    if (queryId == -1) {
         NES_ERROR("GlobalQueryPlan: Found query plan with empty query id");
         throw Exception("GlobalQueryPlan: Found query plan without id");
     }
 
     if (queryToGlobalQueryNodeMap.find(queryId) != queryToGlobalQueryNodeMap.end()) {
         NES_ERROR("GlobalQueryPlan: Found existing entry for the query Id " + queryId);
-        throw Exception("GlobalQueryPlan: Entry for the queryId " + queryId + " already present. Can't add same query multiple time.");
+        throw Exception("GlobalQueryPlan: Entry for the queryId " + std::to_string(queryId) + " already present. Can't add same query multiple time.");
     }
 
     NES_INFO("GlobalQueryPlan: adding the query plan for query: " << queryId << " to the global query plan.");
@@ -33,7 +33,7 @@ void GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
     }
 }
 
-void GlobalQueryPlan::removeQuery(std::string queryId) {
+void GlobalQueryPlan::removeQuery(uint64_t queryId) {
     NES_INFO("GlobalQueryPlan: Remove the query plan for query " << queryId);
     const std::vector<GlobalQueryNodePtr>& globalQueryNodes = getGlobalQueryNodesForQuery(queryId);
     for (GlobalQueryNodePtr globalQueryNode : globalQueryNodes) {
@@ -42,7 +42,7 @@ void GlobalQueryPlan::removeQuery(std::string queryId) {
     queryToGlobalQueryNodeMap.erase(queryId);
 }
 
-void GlobalQueryPlan::addUpstreamLogicalOperatorsAsNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const std::string& queryId, const OperatorNodePtr& operatorNode) {
+void GlobalQueryPlan::addUpstreamLogicalOperatorsAsNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const uint64_t queryId, const OperatorNodePtr& operatorNode) {
 
     NES_DEBUG("GlobalQueryPlan: Creating a new global query node for operator of query " << queryId << " and adding it as child to global query node with id " << parentNode->getId());
     GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(getNextFreeId(), queryId, operatorNode);
@@ -55,7 +55,7 @@ void GlobalQueryPlan::addUpstreamLogicalOperatorsAsNewGlobalQueryNode(const Glob
     }
 }
 
-std::vector<GlobalQueryNodePtr> GlobalQueryPlan::getGlobalQueryNodesForQuery(std::string queryId) {
+std::vector<GlobalQueryNodePtr> GlobalQueryPlan::getGlobalQueryNodesForQuery(uint64_t queryId) {
     NES_DEBUG("GlobalQueryPlan: get vector of GlobalQueryNodes for query: " << queryId);
     if (queryToGlobalQueryNodeMap.find(queryId) == queryToGlobalQueryNodeMap.end()) {
         NES_TRACE("GlobalQueryPlan: Unable to find GlobalQueryNodes for query: " << queryId);
@@ -66,7 +66,7 @@ std::vector<GlobalQueryNodePtr> GlobalQueryPlan::getGlobalQueryNodesForQuery(std
     }
 }
 
-bool GlobalQueryPlan::addGlobalQueryNodeToQuery(std::string queryId, GlobalQueryNodePtr globalQueryNode) {
+bool GlobalQueryPlan::addGlobalQueryNodeToQuery(uint64_t queryId, GlobalQueryNodePtr globalQueryNode) {
     NES_DEBUG("GlobalQueryPlan: get vector of GlobalQueryNodes for query: " << queryId);
     if (queryToGlobalQueryNodeMap.find(queryId) == queryToGlobalQueryNodeMap.end()) {
         NES_TRACE("GlobalQueryPlan: Unable to find GlobalQueryNodes for query: " << queryId << " . Creating a new entry.");

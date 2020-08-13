@@ -104,7 +104,7 @@ class BasePlacementStrategy {
      * @param queryId query Id of the sub plan for which the operators have to be placed
      * @param path vector of nodes where operators could be placed
      */
-    void addSystemGeneratedOperators(std::string queryId, std::vector<NESTopologyEntryPtr> path);
+    void addSystemGeneratedOperators(uint64_t queryId, std::vector<NESTopologyEntryPtr> path);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     NESTopologyPlanPtr nesTopologyPlan;

@@ -6,7 +6,7 @@ namespace NES {
 
 GlobalQueryNode::GlobalQueryNode(uint64_t id) : id(id), scheduled(false), querySetUpdated(false), operatorSetUpdated(false) {}
 
-GlobalQueryNode::GlobalQueryNode(uint64_t id, std::string queryId, OperatorNodePtr operatorNode) : id(id), scheduled(false), querySetUpdated(true), operatorSetUpdated(true) {
+GlobalQueryNode::GlobalQueryNode(uint64_t id, uint64_t queryId, OperatorNodePtr operatorNode) : id(id), scheduled(false), querySetUpdated(true), operatorSetUpdated(true) {
     queryIds.push_back(queryId);
     logicalOperators.push_back(operatorNode);
     queryToOperatorMap[queryId] = operatorNode;
@@ -17,7 +17,7 @@ GlobalQueryNodePtr GlobalQueryNode::createEmpty(uint64_t id) {
     return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id));
 }
 
-GlobalQueryNodePtr GlobalQueryNode::create(uint64_t id, std::string queryId, OperatorNodePtr operatorNode) {
+GlobalQueryNodePtr GlobalQueryNode::create(uint64_t id, uint64_t queryId, OperatorNodePtr operatorNode) {
     return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id, queryId, operatorNode));
 }
 
@@ -25,11 +25,11 @@ uint64_t GlobalQueryNode::getId() {
     return id;
 }
 
-void GlobalQueryNode::addQueryAndOperator(std::string queryId, OperatorNodePtr operatorNode) {
+void GlobalQueryNode::addQueryAndOperator(uint64_t queryId, OperatorNodePtr operatorNode) {
     NES_INFO("GlobalQueryNode: Add a new query id " << queryId << " and a logical operator in the global query node " << id);
     if (queryToOperatorMap.find(queryId) != queryToOperatorMap.end()) {
         NES_ERROR("GlobalQueryNode: Can't add query which is already present in the global query node");
-        throw Exception("GlobalQueryNode: An entry for query id " + queryId + " already present in the global query node");
+        throw Exception("GlobalQueryNode: An entry for query id " + std::to_string(queryId) + " already present in the global query node");
     }
     NES_DEBUG("GlobalQueryNode: Creating new entry for the input query id in the global query node");
     queryToOperatorMap[queryId] = operatorNode;
@@ -39,7 +39,7 @@ void GlobalQueryNode::addQueryAndOperator(std::string queryId, OperatorNodePtr o
     NES_DEBUG("GlobalQueryNode: Finding if the logical operator already present in the global query node");
     if (hasOperator(operatorNode)) {
         NES_INFO("GlobalQueryNode: The logical operator already present in the global query node. Linking the logical operator and the new query Id");
-        std::vector<std::string>& queryIds = operatorToQueryMap[operatorNode];
+        std::vector<uint64_t>& queryIds = operatorToQueryMap[operatorNode];
         queryIds.push_back(queryId);
     } else {
         NES_INFO("GlobalQueryNode: Creating new entry for the logical operator in the global query node");
@@ -68,7 +68,7 @@ OperatorNodePtr GlobalQueryNode::hasOperator(OperatorNodePtr operatorNode) {
     return nullptr;
 }
 
-bool GlobalQueryNode::removeQuery(const std::string& queryId) {
+bool GlobalQueryNode::removeQuery(const uint64_t queryId) {
     NES_INFO("GlobalQueryNode: Removing entries for the query " << queryId << " from the global query node " << id);
     auto itr = std::find(queryIds.begin(), queryIds.end(), queryId);
     if (itr != queryIds.end()) {
@@ -78,7 +78,7 @@ bool GlobalQueryNode::removeQuery(const std::string& queryId) {
             return false;
         }
         NES_DEBUG("GlobalQueryNode: Find if there are more than 1 query ID associated with the logical operator");
-        std::vector<std::string>& associatedQueries = operatorToQueryMap[logicalOperator];
+        std::vector<uint64_t>& associatedQueries = operatorToQueryMap[logicalOperator];
         if (associatedQueries.size() > 1) {
             NES_DEBUG("GlobalQueryNode: Found " << associatedQueries.size() << " query Ids associated with the logical operator");
             auto itr = std::find(associatedQueries.begin(), associatedQueries.end(), queryId);

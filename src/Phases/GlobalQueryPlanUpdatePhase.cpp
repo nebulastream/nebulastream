@@ -17,7 +17,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
     NES_INFO("GlobalQueryPlanUpdatePhase: Updating global query plan using a query request batch of size " << queryRequests.size());
     try {
         for (auto queryRequest : queryRequests) {
-            std::string queryId = queryRequest.getQueryId();
+            uint64_t queryId = queryRequest.getQueryId();
             if (queryRequest.getQueryStatus() == MarkedForStop) {
                 NES_TRACE("GlobalQueryPlanUpdatePhase: Removing query plan for the query: " << queryId);
                 globalQueryPlan->removeQuery(queryId);

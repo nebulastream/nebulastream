@@ -18,7 +18,7 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr qu
     NES_DEBUG("QueryService()");
 }
 
-std::string QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName) {
+uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
     if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
@@ -27,7 +27,7 @@ std::string QueryService::validateAndQueueAddRequest(std::string queryString, st
     }
     NES_INFO("QueryService: Parsing and converting user query string");
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    std::string queryId = UtilityFunctions::generateIdString();
+    uint64_t queryId = UtilityFunctions::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     NES_INFO("QueryService: Queuing the query for the execution");
@@ -40,11 +40,11 @@ std::string QueryService::validateAndQueueAddRequest(std::string queryString, st
     }
 }
 
-bool QueryService::validateAndQueueStopRequest(std::string queryId) {
+bool QueryService::validateAndQueueStopRequest(uint64_t queryId) {
 
     NES_INFO("QueryService : stopping query " + queryId);
     if (!queryCatalog->queryExists(queryId)) {
-        throw QueryNotFoundException("QueryService: Unable to find query with id " + queryId + " in query catalog.");
+        throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
     }
     QueryCatalogEntryPtr entry = queryCatalog->addQueryStopRequest(queryId);
     if (entry) {
@@ -53,7 +53,7 @@ bool QueryService::validateAndQueueStopRequest(std::string queryId) {
     return false;
 }
 
-json::value QueryService::getQueryPlanAsJson(std::string queryId) {
+json::value QueryService::getQueryPlanAsJson(uint64_t queryId) {
 
     NES_INFO("QueryService: Get the registered query");
     QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);

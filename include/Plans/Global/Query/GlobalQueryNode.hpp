@@ -33,7 +33,7 @@ class GlobalQueryNode : public Node {
      * @param operatorNode: logical operator
      * @return Shared pointer to the instance of Global Query Operator instance
      */
-    static GlobalQueryNodePtr create(uint64_t id, std::string queryId, OperatorNodePtr operatorNode);
+    static GlobalQueryNodePtr create(uint64_t id, uint64_t queryId, OperatorNodePtr operatorNode);
 
     /**
      * @brief Get id of the node
@@ -46,14 +46,14 @@ class GlobalQueryNode : public Node {
      * @param queryId : query to be added.
      * @param operatorNode : logical operator to be grouped together.
      */
-    void addQueryAndOperator(std::string queryId, OperatorNodePtr operatorNode);
+    void addQueryAndOperator(uint64_t queryId, OperatorNodePtr operatorNode);
 
     /**
      * @brief Remove the query
      * @param queryId
      * @return true if successful
      */
-    bool removeQuery(const std::string& queryId);
+    bool removeQuery(const uint64_t queryId);
 
     /**
      * @brief Check if the global query node was updated.
@@ -101,12 +101,12 @@ class GlobalQueryNode : public Node {
 
   private:
     GlobalQueryNode(uint64_t id);
-    GlobalQueryNode(uint64_t id, std::string queryId, OperatorNodePtr operatorNode);
+    GlobalQueryNode(uint64_t id, uint64_t queryId, OperatorNodePtr operatorNode);
     uint64_t id;
-    std::vector<std::string> queryIds;
+    std::vector<uint64_t> queryIds;
     std::vector<OperatorNodePtr> logicalOperators;
-    std::map<std::string, OperatorNodePtr> queryToOperatorMap;
-    std::map<OperatorNodePtr, std::vector<std::string>> operatorToQueryMap;
+    std::map<uint64_t, OperatorNodePtr> queryToOperatorMap;
+    std::map<OperatorNodePtr, std::vector<uint64_t>> operatorToQueryMap;
     bool scheduled;
     bool querySetUpdated;
     bool operatorSetUpdated;

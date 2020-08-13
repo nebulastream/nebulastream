@@ -34,7 +34,7 @@ class QueryService {
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
-    std::string validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName);
+    uint64_t validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -43,14 +43,14 @@ class QueryService {
      * @throws QueryNotFoundException : when query id is not found in the query catalog.
      * @throws InvalidQueryStatusException : when the query is found to be in an invalid state.
      */
-    bool validateAndQueueStopRequest(std::string queryId);
+    bool validateAndQueueStopRequest(uint64_t queryId);
 
     /**
      * This method is used for generating the base query plan from the input query as string.
      * @param queryId : user query as string
      * @return a json object representing the query plan
      */
-    web::json::value getQueryPlanAsJson(std::string queryId);
+    web::json::value getQueryPlanAsJson(uint64_t queryId);
 
   private:
     QueryCatalogPtr queryCatalog;

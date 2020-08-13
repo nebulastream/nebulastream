@@ -27,7 +27,7 @@ typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 class ExecutionNode : public Node {
 
   public:
-    static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode, std::string queryId, OperatorNodePtr operatorNode);
+    static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode, uint64_t queryId, OperatorNodePtr operatorNode);
     static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode);
 
     ~ExecutionNode() = default;
@@ -37,7 +37,7 @@ class ExecutionNode : public Node {
      * @param queryId : Id of the sub plan
      * @return true if the plan exists else false
      */
-    bool hasQuerySubPlan(std::string queryId);
+    bool hasQuerySubPlan(uint64_t queryId);
 
     /**
      * Check if the query sub plan consists of operator node or not.
@@ -45,21 +45,21 @@ class ExecutionNode : public Node {
      * @param operatorNode : operator node
      * @return true if the operator exists else false
      */
-    bool checkIfQuerySubPlanContainsOperator(std::string queryId, OperatorNodePtr operatorNode);
+    bool checkIfQuerySubPlanContainsOperator(uint64_t queryId, OperatorNodePtr operatorNode);
 
     /**
      * Get Query subPlan for the given Id
      * @param queryId
      * @return Query sub plan
      */
-    QueryPlanPtr getQuerySubPlan(std::string queryId);
+    QueryPlanPtr getQuerySubPlan(uint64_t queryId);
 
     /**
      * Remove existing subPlan
      * @param queryId
      * @return true if operation succeeds
      */
-    bool removeQuerySubPlan(std::string queryId);
+    bool removeQuerySubPlan(uint64_t queryId);
 
     /**
      * add new query sub plan to the execution node
@@ -67,7 +67,7 @@ class ExecutionNode : public Node {
      * @param querySubPlan: query sub plan graph
      * @return true if operation succeeds
      */
-    bool createNewQuerySubPlan(std::string queryId, OperatorNodePtr operatorNode);
+    bool createNewQuerySubPlan(uint64_t queryId, OperatorNodePtr operatorNode);
 
     /**
      * Append the Operators to the query sub plan
@@ -75,7 +75,7 @@ class ExecutionNode : public Node {
      * @param querySubPlan: query sub plan graph
      * @return true if operation succeeds
      */
-    bool appendOperatorToQuerySubPlan(std::string queryId, OperatorNodePtr operatorNode);
+    bool appendOperatorToQuerySubPlan(uint64_t queryId, OperatorNodePtr operatorNode);
 
     /**
      * Get execution node id
@@ -95,7 +95,7 @@ class ExecutionNode : public Node {
      * @param querySubPlan : the query sub plan
      * @return true if operation is successful
      */
-    bool createNewQuerySubPlan(std::string queryId, QueryPlanPtr querySubPlan);
+    bool createNewQuerySubPlan(uint64_t queryId, QueryPlanPtr querySubPlan);
 
     /**
      * Update an existing query sub plan
@@ -103,20 +103,20 @@ class ExecutionNode : public Node {
      * @param querySubPlan : the new query sub plan
      * @return true if successful
      */
-    bool updateQuerySubPlan(std::string queryId, QueryPlanPtr querySubPlan);
+    bool updateQuerySubPlan(uint64_t queryId, QueryPlanPtr querySubPlan);
 
     /**
      * Get the map of all query sub plans
      * @return
      */
-    std::map<std::string, QueryPlanPtr> getAllQuerySubPlans();
+    std::map<uint64_t, QueryPlanPtr> getAllQuerySubPlans();
 
     bool equal(NodePtr rhs) const override;
 
     const std::string toString() const override;
 
   private:
-    explicit ExecutionNode(NESTopologyEntryPtr nesNode, std::string queryId, OperatorNodePtr operatorNode);
+    explicit ExecutionNode(NESTopologyEntryPtr nesNode, uint64_t queryId, OperatorNodePtr operatorNode);
 
     explicit ExecutionNode(NESTopologyEntryPtr nesNode);
 
@@ -134,7 +134,7 @@ class ExecutionNode : public Node {
     /**
      * map of queryPlans
      */
-    std::map<std::string, QueryPlanPtr> mapOfQuerySubPlans;
+    std::map<uint64_t, QueryPlanPtr> mapOfQuerySubPlans;
 
     /**
      * Free the resources occupied by the query sub plan.

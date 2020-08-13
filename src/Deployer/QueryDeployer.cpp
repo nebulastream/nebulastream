@@ -23,7 +23,7 @@ QueryDeployer::~QueryDeployer() {
     queryToPort.clear();
 }
 
-bool QueryDeployer::prepareForDeployment(const std::string& queryId) {
+bool QueryDeployer::prepareForDeployment(const uint64_t queryId) {
     if (queryCatalog->queryExists(queryId) && !queryCatalog->isQueryRunning(queryId)) {
         NES_INFO("QueryDeployer:: prepareForDeployment for query " << queryId);
         const auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -67,7 +67,7 @@ bool QueryDeployer::prepareForDeployment(const std::string& queryId) {
     }
 }
 
-int QueryDeployer::assignPort(const std::string& queryId) {
+int QueryDeployer::assignPort(const uint64_t queryId) {
     if (this->queryToPort.find(queryId) != this->queryToPort.end()) {
         NES_DEBUG("QueryDeployer::assignPort query found with id=" << queryId << " return port=" << this->queryToPort.at(queryId));
         return this->queryToPort.at(queryId);

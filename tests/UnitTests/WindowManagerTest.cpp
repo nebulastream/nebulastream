@@ -110,7 +110,7 @@ TEST_F(WindowManagerTest, testWindowTrigger) {
     };
     auto executable = std::make_shared<MockedExecutablePipeline>();
     auto context = std::make_shared<MockedPipelineExecutionContext>();
-    auto nextPipeline = PipelineStage::create(0, "1", executable, context, nullptr);
+    auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
     w.setup(nextPipeline, 0);
 
     auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w.getWindowState();

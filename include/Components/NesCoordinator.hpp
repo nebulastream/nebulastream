@@ -70,7 +70,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     * @param id of the query
     * @return queryStatistics
     */
-    QueryStatisticsPtr getQueryStatistics(std::string queryId);
+    QueryStatisticsPtr getQueryStatistics(uint64_t queryId);
 
     /**
      * @brief method to overwrite server ip

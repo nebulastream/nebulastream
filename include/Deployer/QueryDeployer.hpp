@@ -38,17 +38,17 @@ class QueryDeployer {
      * @brief prepare for a query deployment
      * @param query a queryId of the query
      */
-    bool prepareForDeployment(const std::string& queryId);
+    bool prepareForDeployment(const uint64_t queryId);
 
     /**
      * @brief helper method to get an automatically assigned receive port where ZMQs are communicating.
      * Currently only server/client architecture, i.e., only one layer, is supported
      * @param query the descriptor of the query
      */
-    int assignPort(const std::string& queryId);
+    int assignPort(const uint64_t queryId);
 
   private:
-    std::unordered_map<std::string, int> queryToPort;
+    std::unordered_map<uint64_t, int> queryToPort;
     QueryCatalogPtr queryCatalog;
     TopologyManagerPtr topologyManager;
     GlobalExecutionPlanPtr globalExecutionPlan;

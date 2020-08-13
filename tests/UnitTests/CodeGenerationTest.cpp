@@ -817,7 +817,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
         new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
 
-    auto nextPipeline = std::make_shared<PipelineStage>(1, "0", nullptr, nullptr, nullptr); // TODO Philipp, plz add pass-through pipeline here
+    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, nullptr, nullptr, nullptr); // TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nextPipeline, 0);
 
     /* prepare input tuple buffer */

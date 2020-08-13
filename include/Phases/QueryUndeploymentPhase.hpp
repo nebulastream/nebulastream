@@ -38,7 +38,7 @@ class QueryUndeploymentPhase {
      * @param queryId : id of the query
      * @return true if successful
      */
-    bool execute(const std::string queryId);
+    bool execute(const uint64_t queryId);
 
   private:
     explicit QueryUndeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
@@ -48,14 +48,14 @@ class QueryUndeploymentPhase {
      * @param queryId
      * @return bool indicating success
      */
-    bool undeployQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool undeployQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes);
 
     /**
      * @brief method to stop a query
      * @param queryId
      * @return bool indicating success
      */
-    bool stopQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool stopQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes);
 
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;

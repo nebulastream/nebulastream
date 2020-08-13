@@ -12,7 +12,7 @@ service WorkerRPCService {
 }
 
 message DeployQueryRequest {
-  string queryId = 1;
+  uint64 queryId = 1;
   NES.SerializableOperator operatorTree = 2;
 }
 
@@ -21,7 +21,7 @@ message DeployQueryReply {
 }
 
 message UndeployQueryRequest {
-  string queryId = 1;
+  uint64 queryId = 1;
 }
 
 message UndeployQueryReply {
@@ -29,7 +29,7 @@ message UndeployQueryReply {
 }
 
 message RegisterQueryRequest {
-  string queryId = 1;
+  uint64 queryId = 1;
   NES.SerializableOperator operatorTree = 2;
 
 }
@@ -39,7 +39,7 @@ message RegisterQueryReply {
 }
 
 message UnregisterQueryRequest {
-  string queryId = 1;
+  uint64 queryId = 1;
 }
 
 message UnregisterQueryReply {
@@ -47,7 +47,7 @@ message UnregisterQueryReply {
 }
 
 message StartQueryRequest {
-  string queryId = 1;
+  uint64 queryId = 1;
 }
 
 message StartQueryReply {
@@ -55,7 +55,7 @@ message StartQueryReply {
 }
 
 message StopQueryRequest {
-  string queryId = 1;
+  uint64 queryId = 1;
 }
 
 message StopQueryReply {

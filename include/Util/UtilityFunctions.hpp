@@ -92,6 +92,12 @@ class UtilityFunctions {
     static const std::string toCSVString(SchemaPtr schema);
 
     /**
+     * @brief Returns the next free query Id
+     * @return query id
+     */
+    static uint64_t getNextQueryId();
+
+    /**
      * @brief Returns the next free operator id
      * @return operator id
      */

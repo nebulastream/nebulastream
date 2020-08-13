@@ -120,13 +120,13 @@ class QueryPlan {
      * Set the query Id for the plan
      * @param queryId
      */
-    void setQueryId(std::string queryId);
+    void setQueryId(uint64_t queryId);
 
     /**
      * Get the queryId for the plan
      * @return query Id of the plan
      */
-    const std::string& getQueryId() const;
+    const uint64_t getQueryId() const;
 
   private:
     /**
@@ -138,10 +138,10 @@ class QueryPlan {
     /**
      * @brief initialize an empty query plan
      */
-    QueryPlan() = default;
+    QueryPlan();
 
     std::vector<OperatorNodePtr> rootOperators;
-    std::string queryId;
+    uint64_t queryId;
 };
 }// namespace NES
 #endif//NES_INCLUDE_PLANS_QUERY_HPP_

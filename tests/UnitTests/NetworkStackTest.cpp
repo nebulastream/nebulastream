@@ -872,7 +872,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
         .addSource(networkSource1)
         .setBufferManager(nodeEngine->getBufferManager())
         .setQueryManager(nodeEngine->getQueryManager())
-        .setQueryId("1");
+        .setQueryId(1);
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
@@ -895,7 +895,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
         .addSource(testSource)
         .setBufferManager(nodeEngine->getBufferManager())
         .setQueryManager(nodeEngine->getQueryManager())
-        .setQueryId("2");
+        .setQueryId(2);
 
     //    auto generatorQep = nodeEngine->getCompiler()->compile(sink);
     //    generatorQep->addDataSink(networkSink);
@@ -907,13 +907,13 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     nodeEngine->registerQueryInNodeEngine(builderGeneratorQEP.build());
     nodeEngine->registerQueryInNodeEngine(builderReceiverQEP.build());
 
-    nodeEngine->startQuery("2");
-    nodeEngine->startQuery("1");
+    nodeEngine->startQuery(2);
+    nodeEngine->startQuery(1);
 
     ASSERT_EQ(10, testSink->completed.get_future().get());
 
-    nodeEngine->undeployQuery("1");
-    nodeEngine->undeployQuery("2");
+    nodeEngine->undeployQuery(1);
+    nodeEngine->undeployQuery(2);
 }
 
 } // namespace Network

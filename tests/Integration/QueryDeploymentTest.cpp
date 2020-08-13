@@ -56,7 +56,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerMergePrint) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").merge(Query::from(\"default_logical\")).sink(PrintSinkDescriptor::create());";
-    string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    uint64_t queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
@@ -92,7 +92,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerPrint) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
-    string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    uint64_t queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
@@ -242,7 +242,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerPrint) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
-    string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    uint64_t queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));
@@ -285,7 +285,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\"));";
-    std::string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    uint64_t queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
@@ -351,7 +351,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\"));";
-    std::string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    uint64_t queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
@@ -398,7 +398,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\"));";
-    string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    uint64_t queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));

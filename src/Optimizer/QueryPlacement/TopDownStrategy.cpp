@@ -45,7 +45,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     }
 
     NES_INFO("TopDownStrategy: Placing operators on the nes topology.");
-    const string& queryId = queryPlan->getQueryId();
+    const uint64_t queryId = queryPlan->getQueryId();
     placeOperators(queryId, sinkOperator, sourceNodes);
 
     NESTopologyEntryPtr rootNode = nesTopologyPlan->getRootNode();
@@ -60,7 +60,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     return true;
 }
 
-void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes) {
+void TopDownStrategy::placeOperators(uint64_t queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes) {
 
     const NESTopologyEntryPtr sinkNode = nesTopologyPlan->getRootNode();
 
@@ -135,8 +135,8 @@ void TopDownStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr
                         }
                         querySubPlan->prependPreExistingOperator(candidateOperator->copy());
                         if (!candidateExecutionNode->updateQuerySubPlan(queryId, querySubPlan)) {
-                            NES_ERROR("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + queryId);
-                            throw QueryPlacementException("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + queryId);
+                            NES_ERROR("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + std::to_string(queryId));
+                            throw QueryPlacementException("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + std::to_string(queryId));
                         }
                     }
                 } else {

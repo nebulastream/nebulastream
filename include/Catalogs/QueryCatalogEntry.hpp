@@ -63,13 +63,13 @@ static std::map<QueryStatus, std::string> queryStatusToStringMap{
  */
 class QueryCatalogEntry {
   public:
-    QueryCatalogEntry(std::string queryId, std::string queryString, std::string queryPlacementStrategy, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus);
+    QueryCatalogEntry(uint64_t queryId, std::string queryString, std::string queryPlacementStrategy, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus);
 
     /**
      * @brief method to get the id of the query
      * @return query id
      */
-    std::string getQueryId();
+    uint64_t getQueryId();
 
     /**
      * @brief method to get the string of the query
@@ -114,7 +114,7 @@ class QueryCatalogEntry {
     QueryCatalogEntry copy();
 
   private:
-    std::string queryId;
+    uint64_t queryId;
     std::string queryString;
     std::string queryPlacementStrategy;
     QueryPlanPtr queryPlanPtr;

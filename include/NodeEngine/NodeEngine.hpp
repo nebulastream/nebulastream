@@ -70,7 +70,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param queryId to undeploy
      * @return true if succeeded, else false
      */
-    bool undeployQuery(std::string queryId);
+    bool undeployQuery(QueryExecutionPlanId queryId);
 
     /**
      * @brief registers a query
@@ -81,18 +81,18 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
 
     /**
     * @brief registers a query
-    * @param queryId
-    * @param query plan to register as eto
+    * @param queryId: id of the query sub plan to be registered
+    * @param operatorTree: query sub plan to register
     * @return true if succeeded, else false
     */
-    bool registerQueryInNodeEngine(std::string executableTransferObject, OperatorNodePtr operatorTree);
+    bool registerQueryInNodeEngine(QueryExecutionPlanId queryId, OperatorNodePtr operatorTree);
 
     /**
      * @brief ungregisters a query
      * @param queryIdto unregister query
      * @return true if succeeded, else false
      */
-    bool unregisterQuery(std::string queryId);
+    bool unregisterQuery(QueryExecutionPlanId queryId);
 
     /**
      * @brief method to start a already deployed query
@@ -154,7 +154,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     * @param id of the query
     * @return queryStatistics
     */
-    QueryStatisticsPtr getQueryStatistics(const std::string& queryId);
+    QueryStatisticsPtr getQueryStatistics(const QueryExecutionPlanId queryId);
 
     Network::PartitionManagerPtr getPartitionManager();
 
