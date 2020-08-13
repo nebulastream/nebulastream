@@ -64,7 +64,7 @@ class TestUtils {
      * @param expectedResult: The expected value
      * @return true if matched the expected result within the timeout
      */
-    static bool checkCompleteOrTimeout(std::string queryId, size_t expectedResult) {
+    static bool checkCompleteOrTimeout(uint64_t queryId, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         size_t currentResult = 0;

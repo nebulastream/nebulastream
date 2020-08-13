@@ -1,14 +1,14 @@
-#include <gtest/gtest.h>
 #include <Util/Logger.hpp>
+#include <gtest/gtest.h>
 #include <string>
 #include <unistd.h>
 #define GetCurrentDir getcwd
-#include <cpprest/http_client.h>
-#include <cpprest/filestream.h>
+#include <Util/TestUtils.hpp>
 #include <boost/process.hpp>
+#include <cpprest/filestream.h>
+#include <cpprest/http_client.h>
 #include <cstdio>
 #include <sstream>
-#include <Util/TestUtils.hpp>
 
 using namespace std;
 using namespace utility;
@@ -33,13 +33,12 @@ class E2ECoordinatorWorkerTest : public testing::Test {
     }
 
     static void TearDownTestCase() {
-        std::cout << "Tear down ActorCoordinatorWorkerTest test class."
-                  << std::endl;
+        NES_INFO("Tear down ActorCoordinatorWorkerTest test class.");
     }
 };
 
 TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
-    cout << " start coordinator" << endl;
+    NES_INFO(" start coordinator");
     std::string outputFilePath =
         "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
@@ -47,16 +46,16 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
     string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
     bp::child coordinatorProc(cmdCoord.c_str());
 
-    cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
 
     string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352";
     bp::child workerProc1(cmdWrk1.c_str());
-    cout << "started worker 1 with pid = " << workerProc1.id() << endl;
+    NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
     string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354";
     bp::child workerProc2(cmdWrk2.c_str());
-    cout << "started worker 2 with pid = " << workerProc2.id() << endl;
+    NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid1 = workerProc1.id();
@@ -68,7 +67,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
-    cout << "string submit=" << ss.str();
+    NES_INFO( "string submit=" << ss.str());
     string body = ss.str();
 
     web::json::value json_return;
@@ -76,25 +75,25 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
     web::http::client::http_client client(
         "http://127.0.0.1:8081/v1/nes/query/execute-query");
     client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-                                                              cout << "get first then" << endl;
-                                                              return response.extract_json();
-                                                          })
+        NES_INFO("get first then");
+        return response.extract_json();
+                                                                  })
         .then([&json_return](const pplx::task<web::json::value>& task) {
-            try {
-                cout << "set return" << endl;
-                json_return = task.get();
-            } catch (const web::http::http_exception& e) {
-                cout << "error while setting return" << endl;
-                std::cout << "error " << e.what() << std::endl;
-            }
+        try {
+            NES_INFO("set return");
+            json_return = task.get();
+        } catch (const web::http::http_exception& e) {
+            NES_INFO("error while setting return");
+                NES_INFO( "error " << e.what());
+        }
         })
         .wait();
 
-    string queryId = json_return.at("queryId").as_string();
+    uint64_t queryId = json_return.at("queryId").as_integer();
 
-    std::cout << "try to acc return" << std::endl;
-    std::cout << "Query ID: " << queryId << std::endl;
-    EXPECT_TRUE(!queryId.empty());
+    NES_INFO( "try to acc return");
+    NES_INFO( "Query ID: " << queryId);
+    EXPECT_TRUE(queryId != -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2));
 
@@ -131,18 +130,18 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------+";
-    cout << "content=" << content << endl;
-    cout << "expContent=" << expectedContent << endl;
+    NES_INFO( "content=" << content );
+    NES_INFO( "expContent=" << expectedContent );
     EXPECT_EQ(content, expectedContent);
 
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
 
-    cout << "Killing worker 1 process->PID: " << workerPid1 << endl;
+    NES_INFO( "Killing worker 1 process->PID: " << workerPid1 );
     workerProc1.terminate();
-    cout << "Killing worker 2 process->PID: " << workerPid2 << endl;
+    NES_INFO( "Killing worker 2 process->PID: " << workerPid2 );
     workerProc2.terminate();
-    cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
+    NES_INFO( "Killing coordinator process->PID: " << coordinatorPid );
     coordinatorProc.terminate();
 }
-}
+}// namespace NES

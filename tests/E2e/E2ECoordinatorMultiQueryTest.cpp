@@ -10,7 +10,6 @@
 #include <cstdio>
 #include <sstream>
 
-using namespace std;
 using namespace utility;
 // Common utilities like string conversions
 using namespace web;
@@ -33,8 +32,7 @@ class E2ECoordinatorMultiQueryTest : public testing::Test {
     }
 
     static void TearDownTestCase() {
-        std::cout << "Tear down ActorCoordinatorWorkerTest test class."
-                  << std::endl;
+        NES_INFO("Tear down ActorCoordinatorWorkerTest test class.");
     }
 };
 
@@ -42,88 +40,86 @@ class E2ECoordinatorMultiQueryTest : public testing::Test {
  * @brief This test starts two workers and a coordinator and submit the same query but will output the results in different files
  */
 TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFileOutputTwoQueries) {
-    cout << " start coordinator" << endl;
+    NES_INFO(" start coordinator");
     std::string pathQuery1 = "query1.out";
     std::string pathQuery2 = "query2.out";
 
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
 
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12346";
+    string cmdCoord = "../nesCoordinator --coordinatorPort=12346";
     bp::child coordinatorProc(cmdCoord.c_str());
-    cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
 
-    string cmdWrk = "./nesWorker --coordinatorPort=12346";
+    string cmdWrk = "../nesWorker --coordinatorPort=12346";
     bp::child workerProc(cmdWrk.c_str());
-    cout << "started worker with pid = " << workerProc.id() << endl;
+    NES_INFO("started worker with pid = " << workerProc.id());
 
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
     sleep(3);
 
     std::stringstream ssQuery1;
-    ssQuery1
-        << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
+    ssQuery1 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery1 << pathQuery1;
-    ssQuery1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << endl;
-    cout << "string submit for query1=" << ssQuery1.str();
+    ssQuery1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    NES_INFO("string submit for query1=" << ssQuery1.str());
 
     std::stringstream ssQuery2;
-    ssQuery2
-        << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
+    ssQuery2 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery2 << pathQuery2;
-    ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << endl;
-    cout << "string submit for query2=" << ssQuery2.str();
+    ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
+    NES_INFO("string submit for query2=" << ssQuery2.str());
 
     web::json::value jsonReturnQ1;
     web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
     clientQ1.request(web::http::methods::POST, "/query/execute-query", ssQuery1.str())
         .then([](const web::http::http_response& response) {
-            cout << "get first then" << endl;
+            NES_INFO("get first then");
             return response.extract_json();
         })
         .then([&jsonReturnQ1](const pplx::task<web::json::value>& task) {
             try {
-                cout << "set return" << endl;
+                NES_INFO("set return");
                 jsonReturnQ1 = task.get();
             } catch (const web::http::http_exception& e) {
-                cout << "error while setting return" << endl;
-                std::cout << "error " << e.what() << std::endl;
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
             }
         })
         .wait();
 
-    cout << "return from q1" << endl;
-    std::cout << "try to acc return Q1=" << jsonReturnQ1 << std::endl;
-    string queryId1 = jsonReturnQ1.at("queryId").as_string();
-    std::cout << "Query ID1: " << queryId1 << std::endl;
-    EXPECT_TRUE(!queryId1.empty());
+    NES_INFO("return from q1");
+    NES_INFO("try to acc return Q1=" << jsonReturnQ1);
+    uint64_t queryId1 = jsonReturnQ1.at("queryId").as_integer();
+    NES_INFO("Query ID1: " << queryId1);
+    EXPECT_TRUE(queryId1 != -1);
 
     web::json::value jsonReturnQ2;
     web::http::client::http_client clientQ2(
         "http://127.0.0.1:8081/v1/nes/query/execute-query");
     clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then([](const web::http::http_response& response) {
-                                                                       cout << "get first then" << endl;
+                                                                       NES_INFO("get first then");
                                                                        return response.extract_json();
                                                                    })
         .then([&jsonReturnQ2](const pplx::task<web::json::value>& task) {
             try {
-                cout << "set return" << endl;
+                NES_INFO("set return");
                 jsonReturnQ2 = task.get();
             } catch (const web::http::http_exception& e) {
-                cout << "error while setting return" << endl;
-                std::cout << "error " << e.what() << std::endl;
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
             }
         })
         .wait();
-    cout << "return from q2" << endl;
+    NES_INFO("return from q2");
 
-    std::cout << "try to acc return Q2=" << jsonReturnQ2 << std::endl;
+    NES_INFO("try to acc return Q2=" << jsonReturnQ2);
 
-    string queryId2 = jsonReturnQ2.at("queryId").as_string();
-    std::cout << "Query ID2: " << queryId2 << std::endl;
-    EXPECT_TRUE(!queryId2.empty());
+    uint64_t queryId2 = jsonReturnQ2.at("queryId").as_integer();
+    NES_INFO("Query ID2: " << queryId2);
+    EXPECT_TRUE(queryId2 != -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
@@ -148,21 +144,21 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
     EXPECT_TRUE(ifsQ1.good());
     std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
                           (std::istreambuf_iterator<char>()));
-    cout << "content Q1=" << contentQ1 << endl;
-    cout << "expContent=" << expectedContent << endl;
+    NES_INFO("content Q1=" << contentQ1);
+    NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ1, expectedContent);
 
     std::ifstream ifsQ2(pathQuery2.c_str());
     EXPECT_TRUE(ifsQ2.good());
     std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)),
                           (std::istreambuf_iterator<char>()));
-    cout << "content Q2=" << contentQ2 << endl;
-    cout << "expContent=" << expectedContent << endl;
+    NES_INFO("content Q2=" << contentQ2);
+    NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ2, expectedContent);
 
-    cout << "Killing worker process->PID: " << workerPid << endl;
+    NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
-    cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
+    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
     coordinatorProc.terminate();
 }
 
@@ -170,7 +166,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
  * @brief This test starts two workers and a coordinator and submit too many queries such that we test if the error-prone process
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest) {
-    cout << " start coordinator" << endl;
+    NES_INFO(" start coordinator");
     std::string pathQuery1 = "query1.out";
     std::string pathQuery2 = "query2.out";
     std::string pathQuery3 = "query3.out";
@@ -179,14 +175,14 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     remove(pathQuery2.c_str());
     remove(pathQuery3.c_str());
 
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12346";
+    string cmdCoord = "../nesCoordinator --coordinatorPort=12346";
     bp::child coordinatorProc(cmdCoord.c_str());
-    cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
 
-    string cmdWrk = "./nesWorker --coordinatorPort=12346";
+    string cmdWrk = "../nesWorker --coordinatorPort=12346";
     bp::child workerProc(cmdWrk.c_str());
-    cout << "started worker with pid = " << workerProc.id() << endl;
+    NES_INFO("started worker with pid = " << workerProc.id());
 
     size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
@@ -196,86 +192,86 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     ssQuery1
         << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery1 << pathQuery1;
-    ssQuery1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << endl;
-    cout << "string submit for query1=" << ssQuery1.str();
+    ssQuery1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
+    NES_INFO("string submit for query1=" << ssQuery1.str());
 
     std::stringstream ssQuery2;
     ssQuery2 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery2 << pathQuery2;
-    ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << endl;
-    cout << "string submit for query2=" << ssQuery2.str();
+    ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
+    NES_INFO("string submit for query2=" << ssQuery2.str());
 
     std::stringstream ssQuery3;
     ssQuery3 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery3 << pathQuery3;
-    ssQuery3 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << endl;
-    cout << "string submit for query2=" << ssQuery3.str();
+    ssQuery3 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
+    NES_INFO("string submit for query2=" << ssQuery3.str());
 
     web::json::value jsonReturnQ1;
     web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
     clientQ1.request(web::http::methods::POST, "/query/execute-query", ssQuery1.str())
         .then([](const web::http::http_response& response) {
-            cout << "get first then" << endl;
+            NES_INFO("get first then");
             return response.extract_json();
         })
         .then([&jsonReturnQ1](const pplx::task<web::json::value>& task) {
             try {
-                cout << "set return" << task.get().to_string() << endl;
+                NES_INFO("set return" << task.get().to_string());
                 jsonReturnQ1 = task.get();
             } catch (const web::http::http_exception& e) {
-                cout << "error while setting return" << endl;
-                std::cout << "error " << e.what() << std::endl;
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
             }
         })
         .wait();
 
-    cout << "return from q1" << endl;
+    NES_INFO("return from q1");
 
     web::json::value jsonReturnQ2;
     web::http::client::http_client clientQ2("http://127.0.0.1:8081/v1/nes/query/execute-query");
     clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then([](const web::http::http_response& response) {
-                                                                       cout << "get first then" << endl;
+                                                                       NES_INFO("get first then");
                                                                        return response.extract_json();
                                                                    })
         .then([&jsonReturnQ2](const pplx::task<web::json::value>& task) {
             try {
-                cout << "set return" << task.get().to_string() << endl;
+                NES_INFO("set return" << task.get().to_string());
                 jsonReturnQ2 = task.get();
             } catch (const web::http::http_exception& e) {
-                cout << "error while setting return" << endl;
-                std::cout << "error " << e.what() << std::endl;
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
             }
         })
         .wait();
-    cout << "return from q2" << endl;
+    NES_INFO("return from q2");
 
-    cout << "send query 3:" << endl;
+    NES_INFO("send query 3:");
     web::json::value jsonReturnQ3;
     web::http::client::http_client clientQ3("http://127.0.0.1:8081/v1/nes/query/execute-query");
     clientQ3.request(web::http::methods::POST, "/", ssQuery3.str()).then([](const web::http::http_response& response) {
-                                                                       cout << "get first then" << endl;
+                                                                       NES_INFO("get first then");
                                                                        return response.extract_json();
                                                                    })
         .then([&jsonReturnQ3](const pplx::task<web::json::value>& task) {
             try {
-                cout << "set return" << task.get().to_string() << endl;
+                NES_INFO("set return" << task.get().to_string());
                 jsonReturnQ3 = task.get();
             } catch (const web::http::http_exception& e) {
-                cout << "error while setting return" << endl;
-                std::cout << "error " << e.what() << std::endl;
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
             }
         })
         .wait();
 
-    cout << "return from q3" << endl;
+    NES_INFO("return from q3");
 
-    string queryId1 = jsonReturnQ2.at("queryId").as_string();
-    string queryId2 = jsonReturnQ2.at("queryId").as_string();
-    string queryId3 = jsonReturnQ2.at("queryId").as_string();
+    uint64_t queryId1 = jsonReturnQ2.at("queryId").as_integer();
+    uint64_t queryId2 = jsonReturnQ2.at("queryId").as_integer();
+    uint64_t queryId3 = jsonReturnQ2.at("queryId").as_integer();
 
-    EXPECT_TRUE(!queryId1.empty());
-    EXPECT_TRUE(!queryId2.empty());
-    EXPECT_TRUE(!queryId3.empty());
+    EXPECT_TRUE(queryId1 != -1);
+    EXPECT_TRUE(queryId2 != -1);
+    EXPECT_TRUE(queryId3 != -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
@@ -301,21 +297,21 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     EXPECT_TRUE(ifsQ1.good());
     std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
                           (std::istreambuf_iterator<char>()));
-    cout << "content Q1=" << contentQ1 << endl;
-    cout << "expContent=" << expectedContent << endl;
+    NES_INFO("content Q1=" << contentQ1);
+    NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ1, expectedContent);
 
     std::ifstream ifsQ2(pathQuery2.c_str());
     EXPECT_TRUE(ifsQ2.good());
     std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)),
                           (std::istreambuf_iterator<char>()));
-    cout << "content Q2=" << contentQ2 << endl;
-    cout << "expContent=" << expectedContent << endl;
+    NES_INFO("content Q2=" << contentQ2);
+    NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ2, expectedContent);
 
-    cout << "Killing worker process->PID: " << workerPid << endl;
+    NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
-    cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
+    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
     coordinatorProc.terminate();
 }
 
