@@ -8,6 +8,8 @@
 #include <vector>
 
 namespace NES {
+class Schema;
+class TupleBuffer;
 
 class NetworkMetrics {
 
@@ -19,11 +21,14 @@ class NetworkMetrics {
 
     std::vector<std::string> getInterfaceNames();
 
-    unsigned int size() const;
+    unsigned int getIntfsNo() const;
 
   private:
     std::unordered_map<std::string, NetworkValues> interfaceMap;
 };
+
+void serialize(NetworkMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix="");
+
 
 }// namespace NES
 

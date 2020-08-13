@@ -1,31 +1,21 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 
+#include <Monitoring/Metrics/MetricType.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 
 namespace NES {
-class MetricValue;
+class TupleBuffer;
+class Schema;
 
-/**
- * @brief The metric types of NES
- * Counter for incrementing and decrementing values
- * Gauge for reading and returning a specific value
- * Histogram that creates a histogram over time
- * Meter that measures an interval between two points in time
- */
-enum MetricType {
-    CounterType,
-    GaugeType,
-    HistogramType,
-    MeterType,
-    UnknownType
-};
-
-template<typename T>
-MetricType getMetricType(const T&) {
+template <typename T>
+MetricType getMetricType(const T& x)  {
     return UnknownType;
 }
+
+void serialize(uint64_t metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(std::string metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 
 /**
  * @brief The metric class is a conceptual superclass that represents all metrics in NES.
@@ -38,15 +28,14 @@ class Metric {
      * @param arbitrary parameter of any type
      */
     template<typename T>
-    Metric(T x) : self(std::make_unique<model<T>>(std::move(x))) {
+    Metric(T x): self(std::make_unique<model<T>>(std::move(x))){
     }
 
     /**
      * @brief copy ctor to properly handle the templated values
      * @param the metric
      */
-    Metric(const Metric& x) : self(x.self->copy()) {
-        NES_DEBUG("Metric: Calling copy ctor");
+    Metric(const Metric& x): self(x.self->copy()){
     };
     Metric(Metric&&) noexcept = default;
 
@@ -54,7 +43,7 @@ class Metric {
      * @brief assign operator for metrics to avoid unnecessary copies
      */
     Metric& operator=(const Metric& x) {
-        return *this = Metric(x);
+        return *this=Metric(x);
     }
     Metric& operator=(Metric&& x) noexcept = default;
 
@@ -64,7 +53,7 @@ class Metric {
      * @return the value
      */
     template<typename T>
-    T& getValue() const {
+    T& getValue() const{
         return dynamic_cast<model<T>*>(self.get())->data;
     }
 
@@ -78,6 +67,16 @@ class Metric {
         return x.self->getType();
     }
 
+    /**
+     * @brief This method returns the type of the stored metric. Note that the according function needs to be
+     * defined, otherwise it will be categorized as UnknownType
+     * @param the metric
+     * @return the type of the metric
+     */
+    friend void serialize(const Metric& x, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+        x.self->serializeC(schema, buf, prefix);
+    }
+
   private:
     /**
      * @brief Abstract superclass that represents the conceptual features of a metric
@@ -86,6 +85,8 @@ class Metric {
         virtual ~concept_t() = default;
         virtual std::unique_ptr<concept_t> copy() const = 0;
         virtual MetricType getType() const = 0;
+
+        virtual void serializeC(std::shared_ptr<Schema>, TupleBuffer&, std::string) = 0;
     };
 
     /**
@@ -94,7 +95,7 @@ class Metric {
      */
     template<typename T>
     struct model final : concept_t {
-        explicit model(T x) : data(std::move(x)){};
+        explicit model(T x): data(std::move(x)){ };
 
         std::unique_ptr<concept_t> copy() const override {
             return std::make_unique<model>(*this);
@@ -102,6 +103,10 @@ class Metric {
 
         MetricType getType() const override {
             return getMetricType(data);
+        }
+
+        void serializeC(std::shared_ptr<Schema> schema, TupleBuffer& buf, std::string prefix) override {
+            serialize(data, schema, buf, prefix);
         }
 
         T data;

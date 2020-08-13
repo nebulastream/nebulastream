@@ -2,9 +2,7 @@
 #include <Util/Logger.hpp>
 #include <API/Schema.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
-#include <cstring>
 
 namespace NES {
 
@@ -22,8 +20,7 @@ CpuMetrics::~CpuMetrics() {
     NES_DEBUG("CpuMetrics: Freeing memory for metrics.");
 }
 
-// Implementation of [] operator.  This function must return a
-// reference as array element can be put on left side
+// Implementation of [] operator.  This function must return a reference as array element can be put on left side
 CpuValues& CpuMetrics::operator[](unsigned int index) {
     if (index >= cpuNo) {
         NES_THROW_RUNTIME_ERROR("CPU: Array index out of bound " + std::to_string(index) + ">=" + std::to_string(cpuNo));
@@ -43,16 +40,17 @@ CpuValues CpuMetrics::getTotal() const {
     return total;
 }
 
-void CpuMetrics::serialize(std::shared_ptr<Schema> schema, TupleBuffer buf, const std::string& prefix) {
-    schema->addField(prefix + "CPU_NO", BasicType::UINT16);
+void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    auto noFields = schema->getSize();
+    schema->addField(prefix + "_CPU_NO", BasicType::UINT16);
     buf.setNumberOfTuples(1);
 
     auto layout = createRowLayout(schema);
-    layout->getValueField<uint16_t>(0, 0)->write(buf, cpuNo);
-    total.serialize(schema, buf, prefix + "CPU[TOTAL]_");
+    layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getCpuNo());
+    serialize(metrics.getTotal(), schema, buf, prefix + "_CPU[TOTAL]_");
 
-    for (int i=0; i<cpuNo; i++) {
-        getValues(i).serialize(schema, buf, prefix + "CPU[" + std::to_string(i+1) + "]_");
+    for (int i=0; i<metrics.getCpuNo(); i++) {
+        serialize(metrics.getValues(i), schema, buf, prefix + "_CPU[" + std::to_string(i+1) + "]_");
     }
 }
 

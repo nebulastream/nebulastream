@@ -2,12 +2,17 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_DISCMETRICS_HPP_
 
 #include <cstdint>
+#include <memory>
 
 namespace NES {
+class Schema;
+class TupleBuffer;
 
 class DiskMetrics {
   public:
     DiskMetrics() = default;
+
+    static std::shared_ptr<Schema> getSchema(const std::string& prefix);
 
     uint64_t F_BSIZE;
     uint64_t F_FRSIZE;
@@ -17,6 +22,8 @@ class DiskMetrics {
 };
 
 typedef std::shared_ptr<DiskMetrics> DiskMetricsPtr;
+
+void serialize(DiskMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix="");
 
 }// namespace NES
 
