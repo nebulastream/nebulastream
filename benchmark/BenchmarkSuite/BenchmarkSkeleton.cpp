@@ -13,4 +13,8 @@ static void BM_SkeletonFunction(benchmark::State& state){
 BENCHMARK(BM_SkeletonFunction);
 
 // A benchmark main is needed
-BENCHMARK_MAIN();
+int main(int argc, char** argv) {
+    benchmark::Initialize(&argc, argv);
+    benchmark::RunSpecifiedBenchmarks();
+    return 0;
+}

@@ -1,8 +1,8 @@
-#include <benchmark/benchmark.h>
 #include <State/StateManager.hpp>
 
 #include <random>
 #include <boost/math/distributions/skew_normal.hpp>
+#include <benchmark/benchmark.h>
 
 namespace NES{
 
@@ -155,7 +155,6 @@ static void BM_Multithreaded_Key_Updates(benchmark::State& state){
         }
     }
 
-    std::mutex mutex;
     std::vector<std::thread> t;
 
     for(auto singleState : state){
@@ -190,7 +189,7 @@ static void BM_Multithreaded_Key_Updates(benchmark::State& state){
 
 // Register benchmark
 BENCHMARK(BM_Statemanager_SingleKey_Updates)
-    ->RangeMultiplier(10)->Range(1e6, 1e7)
+    ->RangeMultiplier(10)->Range(1e4, 1e7)
     ->Repetitions(5)->ReportAggregatesOnly(true)
     ->Unit(benchmark::kMillisecond);
 
@@ -206,7 +205,6 @@ BENCHMARK(BM_Statemanager_KeyRange_Skewed_Distribution)
 
 BENCHMARK(BM_Multithreaded_Key_Updates)
     ->RangeMultiplier(10)->Ranges({{1e6, 1e7}, {1e5, 1e6}, {0, 2}, {1, 1}})
-    ->RangeMultiplier(10)->Ranges({{1e6, 1e7}, {1e5, 1e6}, {0, 2}, {1, 1}})
     ->RangeMultiplier(10)->Ranges({{1e6, 1e7}, {1e5, 1e6}, {1, 2}, {2, 2}})
     ->RangeMultiplier(10)->Ranges({{1e6, 1e7}, {1e5, 1e6}, {1, 2}, {3, 3}})
     ->RangeMultiplier(10)->Ranges({{1e6, 1e7}, {1e5, 1e6}, {1, 2}, {4, 4}})
@@ -215,5 +213,10 @@ BENCHMARK(BM_Multithreaded_Key_Updates)
 
 
 // A benchmark main is needed
-BENCHMARK_MAIN();
+//BENCHMARK_MAIN();
+int main(int argc, char** argv) {
+    benchmark::Initialize(&argc, argv);
+    benchmark::RunSpecifiedBenchmarks();
+    return 0;
+}
 };
