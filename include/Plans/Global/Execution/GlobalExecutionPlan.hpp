@@ -58,7 +58,7 @@ class GlobalExecutionPlan {
      * @param queryId : the query id used for removing the input query
      * @return true if successful else false
      */
-    bool removeQuerySubPlans(std::string queryId);
+    bool removeQuerySubPlans(uint64_t queryId);
 
     /**
      * Find is execution node exists.
@@ -91,7 +91,7 @@ class GlobalExecutionPlan {
      * @param queryId : Id of the query
      * @return vector containing execution nodes
      */
-    std::vector<ExecutionNodePtr> getExecutionNodesByQueryId(std::string queryId);
+    std::vector<ExecutionNodePtr> getExecutionNodesByQueryId(uint64_t queryId);
 
     /**
      * Get the execution plan as string representation
@@ -122,7 +122,7 @@ class GlobalExecutionPlan {
     /**
      * Index based on query Id for faster access to the execution nodes
      */
-    std::map<std::string, std::vector<ExecutionNodePtr>> queryIdIndex;
+    std::map<uint64_t, std::vector<ExecutionNodePtr>> queryIdIndex;
 
     /**
      * List Of ExecutionNodes to be deployed. This list contains all nodes with the scheduled flag as false.

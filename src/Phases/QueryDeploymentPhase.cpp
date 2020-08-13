@@ -16,7 +16,7 @@ QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr glob
     return std::make_shared<QueryDeploymentPhase>(QueryDeploymentPhase(globalExecutionPlan, workerRpcClient, queryDeployer));
 }
 
-bool QueryDeploymentPhase::execute(std::string queryId) {
+bool QueryDeploymentPhase::execute(uint64_t queryId) {
 
     NES_DEBUG("QueryService: deploy the query");
 
@@ -28,7 +28,7 @@ bool QueryDeploymentPhase::execute(std::string queryId) {
 
     bool successDeploy = deployQuery(queryId, executionNodes);
     if (successDeploy) {
-        NES_DEBUG("QueryService: deployment for query " + queryId + " successful");
+        NES_DEBUG("QueryService: deployment for query " + std::to_string(queryId) + " successful");
     } else {
         NES_ERROR("QueryService: Failed to deploy query " + queryId);
         throw QueryDeploymentException("QueryService: Failed to deploy query " + queryId);
@@ -45,7 +45,7 @@ bool QueryDeploymentPhase::execute(std::string queryId) {
     return true;
 }
 
-bool QueryDeploymentPhase::deployQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryDeploymentPhase::deployQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes) {
 
     NES_DEBUG("QueryService::deployQuery queryId=" << queryId);
     NES_DEBUG("QueryService: preparing for Deployment by adding port information");
@@ -77,7 +77,7 @@ bool QueryDeploymentPhase::deployQuery(std::string queryId, std::vector<Executio
     return true;
 }
 
-bool QueryDeploymentPhase::startQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryDeploymentPhase::startQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes) {
     NES_DEBUG("NesCoordinator::startQuery queryId=" << queryId);
 
     for (ExecutionNodePtr executionNode : executionNodes) {

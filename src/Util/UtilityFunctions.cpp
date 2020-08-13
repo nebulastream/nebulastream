@@ -296,6 +296,11 @@ const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
     return ss.str();
 }
 
+uint64_t UtilityFunctions::getNextQueryId() {
+    static std::atomic_uint64_t id = 0;
+    return id++;
+}
+
 uint64_t UtilityFunctions::getNextOperatorId() {
     static std::atomic_uint64_t id = 0;
     return id++;

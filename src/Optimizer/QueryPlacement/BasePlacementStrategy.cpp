@@ -8,6 +8,7 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Phases/TypeInferencePhase.hpp>
+#include <Util/UtilityFunctions.hpp>
 //#include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
 //#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
 //#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
@@ -33,27 +34,29 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
 
 OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(NESTopologyEntryPtr nesNode) {
 
-//    auto sinkOperator = createSinkLogicalOperatorNode(Network::NetworkSinkDescriptor::create(nodeLocation, ));
-    auto sinkOperator = createSinkLogicalOperatorNode( ZmqSinkDescriptor::create(nesNode->getIp(), ZMQ_DEFAULT_PORT, /* internal */ true));
-    sinkOperator->setId(SYS_SINK_OPERATOR_ID);// all sink operators will have MAX64-1 as Id
+    //    auto sinkOperator = createSinkLogicalOperatorNode(Network::NetworkSinkDescriptor::create(nodeLocation, ));
+    auto sinkOperator = createSinkLogicalOperatorNode(ZmqSinkDescriptor::create(nesNode->getIp(), ZMQ_DEFAULT_PORT, /* internal */ true));
+    sinkOperator->setId(UtilityFunctions::getNextOperatorId());
     return sinkOperator;
 }
 
-OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema) {
-    auto sourceOperator = createSourceLogicalOperatorNode(ZmqSourceDescriptor::create(schema, nesNode->getIp(), ZMQ_DEFAULT_PORT));
-    sourceOperator->setId(SYS_SOURCE_OPERATOR_ID);// all source operators will have MAX64-2 as Id
+OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(NESTopologyEntryPtr, SchemaPtr schema) {
+    uint64_t operatorId = UtilityFunctions::getNextOperatorId();
+    const Network::NesPartition nesPartition = Network::NesPartition(1, operatorId, 0, 0);
+    auto sourceOperator =  createSourceLogicalOperatorNode(Network::NetworkSourceDescriptor::create(schema, nesPartition));
+    sourceOperator->setId(operatorId);
     return sourceOperator;
 }
 
 void BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode) {
     Network::NodeLocation nodeLocation(parentNesNode->getId(), parentNesNode->getIp(), parentNesNode->getReceivePort());
-//    Network::NesPartition nesPartition(queryPlan->getQueryId(), );
+    //    Network::NesPartition nesPartition(queryPlan->getQueryId(), );
     const OperatorNodePtr sysSinkOperator = createNetworkSinkOperator(parentNesNode);
     queryPlan->appendPreExistingOperator(sysSinkOperator);
 }
 
 void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr currentNesNode, NESTopologyEntryPtr childNesNode) {
-    std::string queryId = queryPlan->getQueryId();
+    uint64_t queryId = queryPlan->getQueryId();
     const ExecutionNodePtr childExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(childNesNode->getId());
     if (!(childExecutionNode)) {
         NES_ERROR("BasePlacementStrategy: Unable to find child execution node");
@@ -83,7 +86,7 @@ void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, NES
 // FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
 // that there could be more than one child. Once the code generator able to deal with it this logic need to be
 // fixed.
-void BasePlacementStrategy::addSystemGeneratedOperators(std::string queryId, std::vector<NESTopologyEntryPtr> path) {
+void BasePlacementStrategy::addSystemGeneratedOperators(uint64_t queryId, std::vector<NESTopologyEntryPtr> path) {
     NES_DEBUG("BasePlacementStrategy: Adding system generated operators");
 
     auto pathItr = path.begin();

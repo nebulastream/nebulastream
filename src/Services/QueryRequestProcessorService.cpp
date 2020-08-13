@@ -47,7 +47,7 @@ void QueryRequestProcessorService::start() {
             //process the queries using query-at-a-time model
             for (auto queryCatalogEntry : queryCatalogEntryBatch) {
                 auto queryPlan = queryCatalogEntry.getQueryPlan();
-                std::string queryId = queryPlan->getQueryId();
+                uint64_t queryId = queryPlan->getQueryId();
                 try {
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::MarkedForStop) {
                         NES_INFO("QueryProcessingService: Request received for stopping the query " + queryId);

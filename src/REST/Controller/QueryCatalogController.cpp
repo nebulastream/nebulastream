@@ -26,7 +26,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
                     //Prepare the response
                     json::value result{};
-                    std::map<std::string, std::string> queries = queryCatalog->getQueriesWithStatus(queryStatus);
+                    std::map<uint64_t, std::string> queries = queryCatalog->getQueriesWithStatus(queryStatus);
 
                     for (auto [key, value] : queries) {
                         result[key] = json::value::string(value);
@@ -55,11 +55,11 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
             .wait();
     } else if (path[1] == "allRegisteredQueries") {
         message.extract_string(true)
-            .then([this, message](utility::string_t) {
+            .then([this, message](const utility::string_t&) {
                 try {
                     //Prepare the response
                     json::value result{};
-                    std::map<std::string, std::string> queries = queryCatalog->getAllQueries();
+                    std::map<uint64_t, std::string> queries = queryCatalog->getAllQueries();
 
                     for (auto [key, value] : queries) {
                         result[key] = json::value::string(value);
@@ -90,12 +90,12 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 try {
                     NES_DEBUG("getNumberOfProducedBuffers called");
                     //Prepare Input query from user string
-                    std::string payload(body.begin(), body.end());
-                    NES_DEBUG("getNumberOfProducedBuffers payload=" << payload);
+                    std::string queryId(body.begin(), body.end());
+                    NES_DEBUG("getNumberOfProducedBuffers payload=" << queryId);
 
                     //Prepare the response
                     json::value result{};
-                    size_t processedBuffers = coordinator->getQueryStatistics(payload)->getProcessedBuffers();
+                    size_t processedBuffers = coordinator->getQueryStatistics( std::stoi(queryId))->getProcessedBuffers();
                     NES_DEBUG("getNumberOfProducedBuffers processedBuffers=" << processedBuffers);
 
                     result["producedBuffers"] = processedBuffers;
@@ -125,7 +125,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
                     //Prepare the response
                     json::value result{};
-                    const QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(payload);
+                    const QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(std::stoi(payload));
                     std::string currentQueryStatus = queryCatalogEntry->getQueryStatusAsString();
                     NES_DEBUG("Current query status=" << currentQueryStatus);
 

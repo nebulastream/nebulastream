@@ -36,7 +36,7 @@ class WorkerRPCClient {
      * @param queryId to undeploy
      * @return true if succeeded, else false
      */
-    bool undeployQuery(std::string address, std::string queryId);
+    bool undeployQuery(std::string address, uint64_t queryId);
 
     /**
     * @brief gregisters a query
@@ -44,14 +44,14 @@ class WorkerRPCClient {
     * @param query plan to register as eto
     * @return true if succeeded, else false
     */
-    bool registerQuery(std::string address, std::string queryId, OperatorNodePtr queryOperators);
+    bool registerQuery(std::string address, uint64_t queryId, OperatorNodePtr queryOperators);
 
     /**
      * @brief ungregisters a query
      * @param queryIdto unregister query
      * @return true if succeeded, else false
      */
-    bool unregisterQuery(std::string address, std::string queryId);
+    bool unregisterQuery(std::string address, uint64_t queryId);
 
     /**
      * @brief method to start a already deployed query
@@ -59,14 +59,14 @@ class WorkerRPCClient {
      * @param queryId to start
      * @return bool indicating success
      */
-    bool startQuery(std::string address, std::string queryId);
+    bool startQuery(std::string address, uint64_t queryId);
 
     /**
      * @brief method to stop a query
      * @param queryId to stop
      * @return bool indicating success
      */
-    bool stopQuery(std::string address, std::string queryId);
+    bool stopQuery(std::string address, uint64_t queryId);
 
   private:
 };

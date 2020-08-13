@@ -71,7 +71,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndGetAllNewGlobalQueryNodesWi
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto query = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
-    plan->setQueryId("Q1");
+    plan->setQueryId(1);
     globalQueryPlan->addQueryPlan(plan);
 
     //Assert
@@ -90,7 +90,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanByAddingSameQueryPlanTwice) {
     NES_DEBUG("GlobalQueryPlanTest: Adding same query plan twice to the global query plan");
     auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     auto plan = query.getQueryPlan();
-    plan->setQueryId("Q1");
+    plan->setQueryId(1);
     globalQueryPlan->addQueryPlan(plan);
     //Assert
     EXPECT_THROW(globalQueryPlan->addQueryPlan(plan), Exception);
@@ -108,7 +108,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddMultipleQueries) {
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto query1 = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
-    plan1->setQueryId("Q1");
+    plan1->setQueryId(1);
     globalQueryPlan->addQueryPlan(plan1);
 
     //Assert
@@ -119,7 +119,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddMultipleQueries) {
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the global query plan");
     auto query2 = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
-    plan2->setQueryId("Q2");
+    plan2->setQueryId(2);
     globalQueryPlan->addQueryPlan(plan2);
 
     //Assert
@@ -139,7 +139,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
     auto lessExpression = Attribute("field_1") <= 10;
     auto query = Query::from("default_logical").filter(lessExpression).sink(PrintSinkDescriptor::create());
     auto plan = query.getQueryPlan();
-    plan->setQueryId("Q1");
+    plan->setQueryId(1);
     globalQueryPlan->addQueryPlan(plan);
 
     //Assert
@@ -148,7 +148,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
     EXPECT_TRUE(logicalSinkNodes.size() == 1);
 
     NES_DEBUG("GlobalQueryPlanTest: Removing the query plan for the query with id Q1");
-    globalQueryPlan->removeQuery("Q1");
+    globalQueryPlan->removeQuery(1);
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: Should return empty global query nodes");

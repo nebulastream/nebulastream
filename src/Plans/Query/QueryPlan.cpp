@@ -20,7 +20,9 @@ QueryPlanPtr QueryPlan::create() {
     return std::make_shared<QueryPlan>(QueryPlan());
 }
 
-QueryPlan::QueryPlan(OperatorNodePtr rootOperator) {
+QueryPlan::QueryPlan(): queryId(-1) {}
+
+QueryPlan::QueryPlan(OperatorNodePtr rootOperator): queryId(-1) {
     rootOperator->setId(UtilityFunctions::getNextOperatorId());
     rootOperators.push_back(std::move(rootOperator));
 }
@@ -174,11 +176,11 @@ bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
     return false;
 }
 
-const std::string& QueryPlan::getQueryId() const {
+const uint64_t QueryPlan::getQueryId() const {
     return queryId;
 }
 
-void QueryPlan::setQueryId(std::string queryId) {
+void QueryPlan::setQueryId(uint64_t queryId) {
     QueryPlan::queryId = queryId;
 }
 

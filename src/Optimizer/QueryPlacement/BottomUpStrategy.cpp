@@ -26,7 +26,7 @@ BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan, N
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
-    const string& queryId = queryPlan->getQueryId();
+    const uint64_t queryId = queryPlan->getQueryId();
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
     // TONY: now, we are removing the assumption of single source operator.
@@ -46,8 +46,8 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     const std::vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
     if (sourceNodes.empty()) {
-        NES_ERROR("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + queryId);
-        throw QueryPlacementException("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + queryId);
+        NES_ERROR("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
+        throw QueryPlacementException("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
     }
 
     NES_INFO("BottomUpStrategy: Preparing execution plan for query with id : " << queryId);
@@ -65,7 +65,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     return true;
 }
 
-void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
+void BottomUpStrategy::placeOperators(uint64_t queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
     NESTopologyEntryPtr sinkNode = nesTopologyPlan->getRootNode();
 
@@ -124,8 +124,8 @@ void BottomUpStrategy::placeOperators(std::string queryId, LogicalOperatorNodePt
                     } else {
                         NES_DEBUG("BottomUpStrategy: Adding the operator to an existing query sub plan on the Execution node");
                         if (!candidateExecutionNode->appendOperatorToQuerySubPlan(queryId, operatorToPlace->copy())) {
-                            NES_ERROR("BottomUpStrategy: failed to add operator" + operatorToPlace->toString() + "node for query " + queryId);
-                            throw QueryPlacementException("BottomUpStrategy: failed to add operator" + operatorToPlace->toString() + "node for query " + queryId);
+                            NES_ERROR("BottomUpStrategy: failed to add operator" + operatorToPlace->toString() + "node for query " + std::to_string(queryId));
+                            throw QueryPlacementException("BottomUpStrategy: failed to add operator" + operatorToPlace->toString() + "node for query " + std::to_string(queryId));
                         }
                     }
                 } else {

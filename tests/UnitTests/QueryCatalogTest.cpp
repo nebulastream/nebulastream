@@ -50,7 +50,7 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
     //Prepare
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    std::string queryId = UtilityFunctions::generateIdString();
+    uint64_t queryId = UtilityFunctions::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
@@ -58,9 +58,9 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
 
     //Assert
     EXPECT_TRUE(catalogEntry);
-    map<string, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
+    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1);
-    map<string, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1);
 }
 
@@ -69,7 +69,7 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     //Prepare
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    std::string queryId = UtilityFunctions::generateIdString();
+    uint64_t queryId = UtilityFunctions::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
@@ -78,9 +78,9 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
 
     //Assert
     EXPECT_TRUE(catalogEntry);
-    map<string, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
+    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1);
-    map<string, QueryCatalogEntryPtr> registeredQueries = queryCatalog->getQueries(QueryStatus::Registered);
+    std::map<uint64_t, QueryCatalogEntryPtr> registeredQueries = queryCatalog->getQueries(QueryStatus::Registered);
     EXPECT_TRUE(registeredQueries.size() == 1);
 
     //SendStop request
@@ -90,7 +90,7 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     EXPECT_TRUE(catalogEntry);
     registeredQueries = queryCatalog->getQueries(QueryStatus::Registered);
     EXPECT_TRUE(registeredQueries.size() == 0);
-    map<string, QueryCatalogEntryPtr> queriesMarkedForStop = queryCatalog->getQueries(QueryStatus::MarkedForStop);
+    std::map<uint64_t, QueryCatalogEntryPtr> queriesMarkedForStop = queryCatalog->getQueries(QueryStatus::MarkedForStop);
     EXPECT_TRUE(queriesMarkedForStop.size() == 1);
 }
 
@@ -99,7 +99,7 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     //Prepare
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    std::string queryId = UtilityFunctions::generateIdString();
+    uint64_t queryId = UtilityFunctions::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
@@ -107,7 +107,7 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
 
     //Assert
     EXPECT_TRUE(catalogEntry);
-    map<string, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
+    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1);
     std::string ret = queryCatalog->printQueries();
     cout << "ret=" << ret << endl;
@@ -115,7 +115,7 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
 
 TEST_F(QueryCatalogTest, getAllQueriesWithoutAnyQueryRegistration) {
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    std::map<std::string, std::string> allRegisteredQueries = queryCatalog->getAllQueries();
+    std::map<uint64_t, std::string> allRegisteredQueries = queryCatalog->getAllQueries();
     EXPECT_TRUE(allRegisteredQueries.empty());
 }
 
@@ -125,14 +125,14 @@ TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    std::string queryId = UtilityFunctions::generateIdString();
+    uint64_t queryId = UtilityFunctions::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
-    std::map<std::string, std::string> allRegisteredQueries = queryCatalog->getAllQueries();
+    std::map<uint64_t, std::string> allRegisteredQueries = queryCatalog->getAllQueries();
     EXPECT_EQ(allRegisteredQueries.size(), 1);
     EXPECT_TRUE(allRegisteredQueries.find(queryId) != allRegisteredQueries.end());
 }
@@ -143,14 +143,14 @@ TEST_F(QueryCatalogTest, getAllRunningQueries) {
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    std::string queryId = UtilityFunctions::generateIdString();
+    uint64_t queryId = UtilityFunctions::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
     queryCatalog->markQueryAs(queryId, QueryStatus::Running);
 
     //Assert
-    std::map<std::string, std::string> queries = queryCatalog->getQueriesWithStatus("running");
+    std::map<uint64_t, std::string> queries = queryCatalog->getQueriesWithStatus("running");
     EXPECT_EQ(queries.size(), 1);
     EXPECT_TRUE(queries.find(queryId) != queries.end());
 }
@@ -159,7 +159,7 @@ TEST_F(QueryCatalogTest, throInvalidArgumentExceptionWhenQueryStatusIsUnknown) {
     try {
         //Prepare
         QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-        std::map<std::string, std::string> queries = queryCatalog->getQueriesWithStatus("something_random");
+        std::map<uint64_t, std::string> queries = queryCatalog->getQueriesWithStatus("something_random");
         NES_WARNING("Should have thrown invalid argument exception");
         //Assert for Failure
         FAIL();

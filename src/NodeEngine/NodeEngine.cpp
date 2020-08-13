@@ -109,7 +109,7 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool NodeEngine::registerQueryInNodeEngine(std::string queryId, OperatorNodePtr queryOperators) {
+bool NodeEngine::registerQueryInNodeEngine(uint64_t queryId, OperatorNodePtr queryOperators) {
     std::unique_lock lock(engineMutex);
     NES_INFO("Creating QueryExecutionPlan for " << queryId);
     try {
@@ -207,7 +207,7 @@ bool NodeEngine::undeployQuery(QueryExecutionPlanId queryId) {
     }
 }
 
-bool NodeEngine::unregisterQuery(std::string queryId) {
+bool NodeEngine::unregisterQuery(uint64_t queryId) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: unregisterQuery query=" << queryId);
     if (deployedQEPs.find(queryId) != deployedQEPs.end()) {
@@ -225,7 +225,7 @@ bool NodeEngine::unregisterQuery(std::string queryId) {
     }
 }
 
-bool NodeEngine::stopQuery(std::string queryId) {
+bool NodeEngine::stopQuery(uint64_t queryId) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine:stopQuery for qep" << queryId);
     if (deployedQEPs.find(queryId) != deployedQEPs.end()) {
@@ -347,7 +347,7 @@ void NodeEngine::onChannelError(Network::Messages::ErrorMessage err) {
     NES_THROW_RUNTIME_ERROR(err.getErrorTypeAsString());
 }
 
-QueryStatisticsPtr NodeEngine::getQueryStatistics(const std::string& queryId) {
+QueryStatisticsPtr NodeEngine::getQueryStatistics(const uint64_t queryId) {
     std::unique_lock lock(engineMutex);
     auto it = deployedQEPs.find(queryId);
     if (it == deployedQEPs.end()) {

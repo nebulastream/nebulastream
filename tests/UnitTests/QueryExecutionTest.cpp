@@ -276,13 +276,13 @@ TEST_F(QueryExecutionTest, windowQuery) {
                        .setQueryManager(nodeEngine->getQueryManager())
                        .setBufferManager(nodeEngine->getBufferManager())
                        .setCompiler(nodeEngine->getCompiler())
-                       .setQueryId("1")
+                       .setQueryId(1)
                        .addSource(windowSource)
                        .addSink(testSink)
                        .addOperatorQueryPlan(sink);
 
     nodeEngine->registerQueryInNodeEngine(builder.build());
-    nodeEngine->startQuery("1");
+    nodeEngine->startQuery(1);
 
     // wait till all buffers have been produced
     testSink->completed.get_future().get();
@@ -296,7 +296,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
         auto windowAggregationValue = resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer);
         EXPECT_EQ(windowAggregationValue, 5);
     }
-    nodeEngine->stopQuery("1");
+    nodeEngine->stopQuery(1);
 }
 
 // P1 = Source1 -> filter1
@@ -348,7 +348,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
         .setBufferManager(nodeEngine->getBufferManager())
         .setCompiler(nodeEngine->getCompiler())
         .addOperatorQueryPlan(sink)
-        .setQueryId("1")
+        .setQueryId(1)
         .addSource(testSource1)
         .addSource(testSource2)
         .addSink(testSink);

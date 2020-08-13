@@ -117,7 +117,7 @@ class NesWorker {
     * @param id of the query
     * @return queryStatistics
     */
-    QueryStatisticsPtr getQueryStatistics(std::string queryId);
+    QueryStatisticsPtr getQueryStatistics(uint64_t queryId);
 
     /**
      * @brief method to get a ptr to the node engine

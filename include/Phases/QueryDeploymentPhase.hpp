@@ -41,7 +41,7 @@ class QueryDeploymentPhase {
      * @param queryId : the query Id of the query to be deployed and started
      * @return true if successful else false
      */
-    bool execute(std::string queryId);
+    bool execute(uint64_t queryId);
 
   private:
     explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer);
@@ -51,14 +51,14 @@ class QueryDeploymentPhase {
      * @param queryId
      * @return bool indicating success
      */
-    bool deployQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool deployQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes);
 
     /**
      * @brief method to start a already deployed query
      * @param queryId
      * @return bool indicating success
      */
-    bool startQuery(std::string queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool startQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes);
 
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;

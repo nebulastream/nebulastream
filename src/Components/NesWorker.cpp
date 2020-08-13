@@ -248,7 +248,7 @@ bool NesWorker::removeParent(size_t parentId) {
     return success;
 }
 
-QueryStatisticsPtr NesWorker::getQueryStatistics(std::string queryId) {
+QueryStatisticsPtr NesWorker::getQueryStatistics(uint64_t queryId) {
     return nodeEngine->getQueryStatistics(queryId);
 }
 

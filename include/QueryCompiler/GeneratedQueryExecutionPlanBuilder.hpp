@@ -96,7 +96,7 @@ class GeneratedQueryExecutionPlanBuilder {
      * @param queryId
      * @return this
      */
-    GeneratedQueryExecutionPlanBuilder& setQueryId(std::string queryId);
+    GeneratedQueryExecutionPlanBuilder& setQueryId(uint64_t queryId);
 
     /**
      * @brief add operator to the plan (check compiler/code generator documentation)

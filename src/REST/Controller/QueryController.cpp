@@ -39,12 +39,12 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string optimizationStrategyName = req.at("strategyName").as_string();
 
                     // Call the service
-                    string queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
+                    uint64_t queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
                     std::string executionPlanAsString = globalExecutionPlan->getAsString();
 
                     // Prepare the response
                     json::value restResponse{};
-                    restResponse["queryId"] = json::value::string(queryId);
+                    restResponse["queryId"] = json::value::number(queryId);
                     restResponse["executionPlan"] = json::value::string(executionPlanAsString);
                     successMessageImpl(message, restResponse);
                     return;
@@ -67,10 +67,10 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
 
                     json::value req = json::value::parse(userRequest);
 
-                    string userQuery = req.at("userQuery").as_string();
+                    uint64_t queryId = req.at("userQuery").as_integer();
 
                     //Call the service
-                    auto basePlan = queryService->getQueryPlanAsJson(userQuery);
+                    auto basePlan = queryService->getQueryPlanAsJson(queryId);
 
                     //Prepare the response
                     successMessageImpl(message, basePlan);
@@ -109,11 +109,11 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
-                    string queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
+                    uint64_t queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
 
                     //Prepare the response
                     json::value restResponse{};
-                    restResponse["queryId"] = json::value::string(queryId);
+                    restResponse["queryId"] = json::value::number(queryId);
                     successMessageImpl(message, restResponse);
                     return;
                 } catch (const std::exception& exc) {
@@ -140,7 +140,7 @@ void QueryController::handleDelete(std::vector<utility::string_t> path, http_req
                     //Prepare Input query from user string
                     std::string payload(body.begin(), body.end());
                     json::value req = json::value::parse(payload);
-                    std::string queryId = req.at("queryId").as_string();
+                    uint64_t queryId = req.at("queryId").as_integer();
 
                     bool success = queryService->validateAndQueueStopRequest(queryId);
                     //Prepare the response
