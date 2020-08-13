@@ -1,4 +1,3 @@
-
 #include <benchmark/benchmark.h>
 #include <cstring>
 #include <set>
@@ -103,6 +102,10 @@ namespace NES{
     BENCHMARK(BM_Memcpy)->DenseRange(8, 16, 3)->Repetitions(10);
     BENCHMARK(BM_FilterPushDown)->Repetitions(20)->ReportAggregatesOnly(true);
 
-    BENCHMARK_MAIN();
+    int main(int argc, char** argv) {
+        benchmark::Initialize(&argc, argv);
+        benchmark::RunSpecifiedBenchmarks();
+        return 0;
+    }
 }
 
