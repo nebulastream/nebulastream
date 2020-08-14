@@ -16,9 +16,6 @@ typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
-class QueryDeployer;
-typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
-
 class QueryDeploymentPhase;
 typedef std::shared_ptr<QueryDeploymentPhase> QueryDeploymentPhasePtr;
 
@@ -31,10 +28,9 @@ class QueryDeploymentPhase {
      * @brief Returns a smart pointer to the QueryDeploymentPhase
      * @param globalExecutionPlan : global execution plan
      * @param workerRpcClient : rpc client to communicate with workers
-     * @param queryDeployer:
      * @return shared pointer to the instance of QueryDeploymentPhase
      */
-    static QueryDeploymentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer);
+    static QueryDeploymentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
 
     /**
      * @brief method for deploying and starting the query
@@ -44,7 +40,7 @@ class QueryDeploymentPhase {
     bool execute(uint64_t queryId);
 
   private:
-    explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer);
+    explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
 
     /**
      * @brief method send query to nodes
@@ -62,7 +58,6 @@ class QueryDeploymentPhase {
 
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;
-    QueryDeployerPtr queryDeployer;
 };
 }// namespace NES
 #endif//NES_QUERYDEPLOYMENTPHASE_HPP
