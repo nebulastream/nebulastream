@@ -32,10 +32,8 @@ NESTopologyEntryPtr NESTopologyPlan::getRootNode() const {
     return fGraphPtr->getRoot();
 }
 
-NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(
-    size_t id, std::string ipAddr, CPUCapacity cpuCapacity) {
-    auto ptr = std::make_shared<NESTopologyCoordinatorNode>(id, ipAddr);
-    ptr->setCpuCapacity(cpuCapacity);
+NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(size_t id, std::string ip, CPUCapacity cpuCapacity) {
+    auto ptr = std::make_shared<NESTopologyCoordinatorNode>(id, ip, cpuCapacity.toInt());
     bool success = fGraphPtr->addVertex(ptr);
     if (!success) {
         throw Exception("runtime error in fGraphPtr->addVertex(ptr)");
@@ -43,11 +41,9 @@ NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(
     return ptr;
 }
 
-NESTopologyWorkerNodePtr NESTopologyPlan::createNESWorkerNode(
-    size_t id, std::string ipAddr, CPUCapacity cpuCapacity) {
+NESTopologyWorkerNodePtr NESTopologyPlan::createNESWorkerNode(size_t id, std::string ip, int32_t grpcPort, int32_t dataPort, CPUCapacity cpuCapacity) {
     // create worker node
-    auto ptr = std::make_shared<NESTopologyWorkerNode>(id, ipAddr);
-    ptr->setCpuCapacity(cpuCapacity);
+    auto ptr = std::make_shared<NESTopologyWorkerNode>(id, ip, grpcPort, dataPort, cpuCapacity.toInt());
     bool success = fGraphPtr->addVertex(ptr);
     if (!success) {
         throw Exception("runtime error in fGraphPtr->addVertex(ptr)");
@@ -56,14 +52,10 @@ NESTopologyWorkerNodePtr NESTopologyPlan::createNESWorkerNode(
     return ptr;
 }
 
-NESTopologySensorNodePtr NESTopologyPlan::createNESSensorNode(
-    size_t id, std::string ip, CPUCapacity cpuCapacity) {
+NESTopologySensorNodePtr NESTopologyPlan::createNESSensorNode(size_t id, std::string ip, int32_t grpcPort, int32_t dataPort, CPUCapacity cpuCapacity) {
     NES_DEBUG("NESTopologyPlan::createNESSensorNode: id=" << id << " ip=" << ip);
     // create sensor node
-    auto ptr = std::make_shared<NESTopologySensorNode>(id, ip);
-    ptr->setCpuCapacity(cpuCapacity);
-
-    ptr->setPhysicalStreamName("default_physical");
+    auto ptr = std::make_shared<NESTopologySensorNode>(id, ip, grpcPort, dataPort, cpuCapacity.toInt());
     bool success = fGraphPtr->addVertex(ptr);
     if (!success) {
         throw Exception("runtime error in fGraphPtr->addVertex(ptr)");
@@ -88,9 +80,9 @@ NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(
     size_t pLinkCapacity, size_t pLinkLatency) {
 
     NES_DEBUG("NESTopologyPlan::createNESTopologyLink: "
-              << " sourceip=" << pSourceNode->getIp()
+              << " sourceip=" << pSourceNode->getIpAddress()
               << " sourceid=" << pSourceNode->getId()
-              << " destip=" << pDestNode->getIp()
+              << " destip=" << pDestNode->getIpAddress()
               << " destid=" << pDestNode->getId());
 
     // check if link already exists

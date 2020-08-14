@@ -34,28 +34,29 @@ class TopologyManager {
      * @param CPUCapacity of the node
      * @return NESTopologyCoordinatorNodePtr to the created coordinator
      */
-    NESTopologyCoordinatorNodePtr createNESCoordinatorNode(size_t id,
-                                                           const std::string ipAddr, CPUCapacity cpuCapacity);
+    NESTopologyCoordinatorNodePtr createNESCoordinatorNode(size_t id, const std::string ipAddr, CPUCapacity cpuCapacity);
 
     /**
      * @brief create a nes worker node
      * @param actor id of the node
      * @param ip of worker node as string
+     * @param grpcPort: grpc port number
+     * @param dataPort: data port number
      * @param CPUCapacity of the node
      * @return NESTopologyWorkerNodePtr to the created worker
      */
-    NESTopologyWorkerNodePtr createNESWorkerNode(size_t id, const std::string ipAddr,
-                                                 CPUCapacity cpuCapacity);
+    NESTopologyWorkerNodePtr createNESWorkerNode(size_t id, const std::string ipAddr, int32_t grpcPort, int32_t dataPort, CPUCapacity cpuCapacity);
 
     /**
      * @brief create a nes sensor node
      * @param id of the node
      * @param ip of sensor node as string
+     * @param grpcPort: grpc port number
+     * @param dataPort: data port number
      * @param CPUCapacity of the node
      * @return NESTopologySensorNodePtr to the created sensor
      */
-    NESTopologySensorNodePtr createNESSensorNode(size_t id, const std::string ipAddr,
-                                                 CPUCapacity cpuCapacity);
+    NESTopologySensorNodePtr createNESSensorNode(size_t id, const std::string ipAddr, int32_t grpcPort, int32_t dataPort, CPUCapacity cpuCapacity);
 
     /**
      * @brief remove a nes worker node
