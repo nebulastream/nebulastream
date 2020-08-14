@@ -36,15 +36,17 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(NESTopologyEntr
 
     //    auto sinkOperator = createSinkLogicalOperatorNode(Network::NetworkSinkDescriptor::create(nodeLocation, ));
     auto sinkOperator = createSinkLogicalOperatorNode(ZmqSinkDescriptor::create(nesNode->getIp(), ZMQ_DEFAULT_PORT, /* internal */ true));
-    sinkOperator->setId(UtilityFunctions::getNextOperatorId());
+    sinkOperator->setId(SYS_SINK_OPERATOR_ID);
     return sinkOperator;
 }
 
-OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(NESTopologyEntryPtr, SchemaPtr schema) {
-    uint64_t operatorId = UtilityFunctions::getNextOperatorId();
-    const Network::NesPartition nesPartition = Network::NesPartition(1, operatorId, 0, 0);
-    auto sourceOperator =  createSourceLogicalOperatorNode(Network::NetworkSourceDescriptor::create(schema, nesPartition));
-    sourceOperator->setId(operatorId);
+OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema) {
+//    uint64_t operatorId = UtilityFunctions::getNextOperatorId();
+//    const Network::NesPartition nesPartition = Network::NesPartition(1, operatorId, 0, 0);
+//    auto sourceOperator =  createSourceLogicalOperatorNode(Network::NetworkSourceDescriptor::create(schema, nesPartition));
+//    sourceOperator->setId(operatorId);
+    auto sourceOperator = createSourceLogicalOperatorNode(ZmqSourceDescriptor::create(schema, nesNode->getIp(), ZMQ_DEFAULT_PORT));
+    sourceOperator->setId(SYS_SOURCE_OPERATOR_ID);
     return sourceOperator;
 }
 
