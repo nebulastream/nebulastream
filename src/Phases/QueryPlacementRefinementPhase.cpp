@@ -12,7 +12,7 @@ QueryPlacementRefinementPhase::QueryPlacementRefinementPhase(GlobalExecutionPlan
 }
 
 bool QueryPlacementRefinementPhase::execute(std::string queryId) {
-    windowDistributionRefinement->execute(queryId);
+    windowDistributionRefinement->execute(globalPlan, queryId);
 
     return true;
 }

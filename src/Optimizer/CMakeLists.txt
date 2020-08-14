@@ -1,3 +1,4 @@
 add_subdirectory(QueryPlacement)
 add_subdirectory(QueryRewrite)
+add_subdirectory(QueryRefinement)
 add_subdirectory(Utils)

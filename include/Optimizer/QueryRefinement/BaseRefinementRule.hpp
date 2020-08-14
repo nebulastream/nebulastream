@@ -15,9 +15,10 @@ class BaseRefinementRule : public std::enable_shared_from_this<BaseRefinementRul
   public:
     /**
      * @brief Apply the refinement to the global query plan
+     * @param globalPlan
      * @param queryId
      */
-    virtual void execute(std::string queryId) = 0;
+    virtual bool execute(GlobalExecutionPlanPtr globalPlan, std::string queryId) = 0;
 
     /**
      * @brief Checks if the current node is of type RefinementType
