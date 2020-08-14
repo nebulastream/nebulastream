@@ -1,15 +1,15 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
-#include <Windows/WindowHandler.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <utility>
+
 namespace NES {
 
 PipelineExecutionContext::PipelineExecutionContext(
     BufferManagerPtr bufferManager,
-    std::function<void(TupleBuffer&)>&& emitFunctionHandler)
-    : bufferManager(std::move(bufferManager)),
-      emitFunctionHandler(std::move(emitFunctionHandler)) {
+    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction)
+    : bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)) {
     // nop
 }
 
@@ -17,9 +17,9 @@ TupleBuffer PipelineExecutionContext::allocateTupleBuffer() {
     return bufferManager->getBufferBlocking();
 }
 
-void PipelineExecutionContext::emitBuffer(TupleBuffer& outputBuffer) {
+void PipelineExecutionContext::emitBuffer(TupleBuffer& outputBuffer, WorkerContextRef workerContext) {
     // call the function handler
-    emitFunctionHandler(outputBuffer);
+    emitFunctionHandler(outputBuffer, workerContext);
 }
 WindowDefinitionPtr PipelineExecutionContext::getWindowDef() {
     return windowDef;

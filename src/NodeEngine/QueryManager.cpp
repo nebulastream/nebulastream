@@ -172,6 +172,10 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
     return true;
 }
 
+bool QueryManager::addReconfigurationTask() {
+    return true;
+}
+
 Task QueryManager::getWork(std::atomic<bool>& threadPool_running) {
     NES_DEBUG("QueryManager: QueryManager::getWork wait get lock");
     std::unique_lock<std::mutex> lock(workMutex);

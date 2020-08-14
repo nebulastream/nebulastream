@@ -95,14 +95,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
-        uint32_t execute(TupleBuffer&, void*, WindowManagerPtr, QueryExecutionContextPtr) override {
+        uint32_t execute(TupleBuffer&, void*, WindowManagerPtr, QueryExecutionContextPtr, WorkerContextRef) override {
             return 0;
         }
     };
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&, WorkerContextRef) {
                                            }) {
             // nop
         }

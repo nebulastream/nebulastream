@@ -12,6 +12,7 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <string.h>" << std::endl;
     builder.declations << "#include <QueryLib/WindowManagerLib.hpp>" << std::endl;
     builder.declations << "#include <NodeEngine/TupleBuffer.hpp>" << std::endl;
+    builder.declations << "#include <NodeEngine/WorkerContext.hpp>" << std::endl;
     builder.declations << "#include <QueryCompiler/PipelineExecutionContext.hpp>" << std::endl;
     return builder;
 }

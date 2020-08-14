@@ -226,7 +226,8 @@ TEST_F(QueryExecutionTest, filterQuery) {
     ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Deployed);
     plan->start();
     ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Running);
-    plan->getStage(0)->execute(buffer);
+    WorkerContext workerContext{1};
+    plan->getStage(0)->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
@@ -387,12 +388,13 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     // ingest test data
     plan->setup();
     plan->start();
+    WorkerContext workerContext{1};
     auto stage_0 = plan->getStage(0);
     auto stage_1 = plan->getStage(1);
     for (int i = 0; i < 10; i++) {
 
-        stage_0->execute(buffer);// P1
-        stage_1->execute(buffer);// P2
+        stage_0->execute(buffer, workerContext);// P1
+        stage_1->execute(buffer, workerContext);// P2
         // Contfext -> Context 1 and Context 2;
         //
         // P1 -> P2 -> P3

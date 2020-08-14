@@ -18,8 +18,8 @@ Task::Task() : pipeline(nullptr), buf() {
     id = UtilityFunctions::generateIdInt();
 }
 
-bool Task::operator()(WorkerContext&) {
-    return pipeline->execute(buf);
+bool Task::operator()(WorkerContextRef workerContext) {
+    return pipeline->execute(buf, workerContext);
 }
 
 size_t Task::getNumberOfTuples() {

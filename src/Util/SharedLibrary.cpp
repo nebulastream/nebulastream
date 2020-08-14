@@ -24,6 +24,7 @@ void* SharedLibrary::getSymbol(const std::string& mangeled_symbol_name) const {
     if (error) {
         NES_ERROR(
             "Could not load symbol: " << mangeled_symbol_name << " Error:" << error);
+        NES_THROW_RUNTIME_ERROR("Could not load symbol");
     }
 
     return symbol;

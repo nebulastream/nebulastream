@@ -3,11 +3,11 @@
 #include <functional>
 #include <memory>
 namespace NES {
+class WorkerContext;
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+typedef WorkerContext& WorkerContextRef;
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
@@ -31,7 +31,7 @@ class PipelineExecutionContext {
      */
     explicit PipelineExecutionContext(
         BufferManagerPtr bufferManager,
-        std::function<void(TupleBuffer&)>&& emitFunctionHandler);
+        std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler);
 
     /**
      * @brief Allocates a new tuple buffer.
@@ -43,7 +43,7 @@ class PipelineExecutionContext {
      * @brief Emits a output tuple buffer to the runtime. Internally we call the emit function which is a callback to the correct handler.
      * @param outputBuffer the output tuple buffer that is passed to the runtime
      */
-    void emitBuffer(TupleBuffer& outputBuffer);
+    void emitBuffer(TupleBuffer& outputBuffer, WorkerContext&);
 
     /**
      * @brief getter/setter window definition
@@ -68,9 +68,6 @@ class PipelineExecutionContext {
      * @brief The emit function handler to react on an emitted tuple buffer.
      */
     std::function<void(TupleBuffer&)> emitFunctionHandler;
-
-    WindowDefinitionPtr windowDef;
-    SchemaPtr inputSchema;
 };
 
 }// namespace NES

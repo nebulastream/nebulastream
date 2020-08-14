@@ -40,6 +40,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      */
     QueryManager(uint64_t nodeEngineId);
     ~QueryManager();
+
     /**
      * @brief register a query by extracting sources, windows and sink and add them to
      * respective map
@@ -60,7 +61,6 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      * @param bool indicating if the thread pool is still running
      * @return Pointer to task to execute
      * if thread pool was shut down while waiting, pointer points to empty task
-     * TODO: how is an empty task defined?
      */
     Task getWork(std::atomic<bool>& threadPool_running);
 
@@ -127,6 +127,14 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
 
     size_t getNodeId() const;
 
+    /**
+     * @brief this methods adds a reconfiguration task on the worker queue
+     * @return true if the reconfiguration task was added correctly on the worker queue
+     * N.B.: this does not not mean that the reconfiguration took place but it means that it
+     * was scheduled to be executed!
+     */
+    bool addReconfigurationTask();
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;
@@ -137,8 +145,8 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     */
     bool startThreadPool();
 
-    QueryManager(const QueryManager&);
-    QueryManager& operator=(const QueryManager&);
+    QueryManager(const QueryManager&) = delete;
+    QueryManager& operator=(const QueryManager&) = delete;
 
     void cleanup();
     void cleanupUnsafe();

@@ -3,6 +3,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
@@ -64,7 +65,7 @@ class CodeGenerationTest : public testing::Test {
 
 class TestPipelineExecutionContext : public PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(BufferManagerPtr bufferManager) : PipelineExecutionContext(std::move(bufferManager), [this](TupleBuffer& buffer) {
+    TestPipelineExecutionContext(BufferManagerPtr bufferManager) : PipelineExecutionContext(std::move(bufferManager), [this](TupleBuffer& buffer, WorkerContextRef) {
                                                                        this->buffers.emplace_back(std::move(buffer));
                                                                    }){};
 
@@ -595,6 +596,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto tf = CompilerTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NES::TupleBuffer");
     auto pipelineExecutionContextType = tf.createAnonymusDataType("NES::PipelineExecutionContext");
+    auto workerContextType = tf.createAnonymusDataType("NES::WorkerContext");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
     auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
 
@@ -615,6 +617,9 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto varDeclPipelineExecutionContext =
         VariableDeclaration::create(tf.createReference(pipelineExecutionContextType),
                                     "pipelineExecutionContext");
+    auto varDeclWorkerContext =
+        VariableDeclaration::create(tf.createReference(workerContextType),
+                                    "workerContext");
     auto varDeclWindow = VariableDeclaration::create(
         tf.createPointer(tf.createAnonymusDataType("void")), "stateVar");
     VariableDeclaration varDeclWindowManager = VariableDeclaration::create(
@@ -683,12 +688,14 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
      */
     auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
     emitTupleBuffer.addParameter(VarRef(resultTupleBufferDeclaration));
+    emitTupleBuffer.addParameter(VarRef(varDeclWorkerContext));
     auto mainFunction = FunctionBuilder::create("compiled_query")
                             .returns(tf.createDataType(DataTypeFactory::createInt32()))
                             .addParameter(varDeclTupleBuffers)
                             .addParameter(varDeclWindow)
                             .addParameter(varDeclWindowManager)
                             .addParameter(varDeclPipelineExecutionContext)
+                            .addParameter(varDeclWorkerContext)
                             .addVariableDeclaration(varDeclReturn)
                             .addVariableDeclaration(varDeclTuple)
                             .addVariableDeclaration(varDeclResultTuple)
@@ -730,10 +737,9 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     inputBuffer.setNumberOfTuples(100);
 
     /* execute code */
+    auto wctx = WorkerContext{0};
     auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
-    if (!stage->execute(inputBuffer, nullptr, nullptr, context)) {
-        std::cout << "Error!" << std::endl;
-    }
+    ASSERT_EQ(stage->execute(inputBuffer, nullptr, nullptr, context, wctx), 0);
     auto outputBuffer = context->buffers[0];
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
     /* check result for correctness */
@@ -771,7 +777,8 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* execute Stage */
     NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
-    stage->execute(buffer, nullptr, nullptr, queryContext);
+    WorkerContext wctx{0};
+    stage->execute(buffer, nullptr, nullptr, queryContext, wctx);
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
@@ -817,7 +824,8 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
-    stage->execute(inputBuffer, nullptr, NULL, queryContext);
+    WorkerContext wctx{0};
+    stage->execute(inputBuffer, nullptr, NULL, queryContext, wctx);
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
     NES_INFO(
@@ -947,6 +955,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
+    WorkerContext wctx{0};
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     stage1->execute(inputBuffer, windowHandler->getWindowState(),
                     windowHandler->getWindowManager(), queryContext);
@@ -1109,7 +1118,8 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
-    stage->execute(inputBuffer, nullptr, nullptr, queryContext);
+    WorkerContext wctx{0};
+    stage->execute(inputBuffer, nullptr, nullptr, queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
 
@@ -1157,8 +1167,9 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
+    WorkerContext wctx{0};
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
-    stage->execute(inputBuffer, nullptr, nullptr, queryContext);
+    stage->execute(inputBuffer, nullptr, nullptr, queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
 
