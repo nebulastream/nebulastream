@@ -2,13 +2,13 @@
 #include <Sources/ZmqSource.hpp>
 #include <gtest/gtest.h>
 
+#include "../../include/Topology/TopologyManager.hpp"
+#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/Logger.hpp>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include "../../include/Topology/TopologyManager.hpp"
 
 #include <string>
 using namespace std;
@@ -55,14 +55,12 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 
     auto nodeStats = NodeStats();
-    size_t nodeId = coordinatorEngine->registerNode(address, 6, nodeStats,
-                                                    NESNodeType::Sensor);
+    size_t nodeId = coordinatorEngine->registerNode(address, 4000, 5000, 6, nodeStats, NESNodeType::Sensor);
     EXPECT_NE(nodeId, 0);
 
     //test register existing node
     auto nodeStats2 = NodeStats();
-    size_t nodeId2 = coordinatorEngine->registerNode(address, 6, nodeStats2,
-                                                     NESNodeType::Sensor);
+    size_t nodeId2 = coordinatorEngine->registerNode(address, 4002, 5002, 6, nodeStats2, NESNodeType::Sensor);
     EXPECT_EQ(nodeId2, 0);
 
     //test unregister not existing node
@@ -112,8 +110,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     conf.numberOfBuffersToProduce = 3;
     conf.sourceFrequency = 1;
     auto nodeStats = NodeStats();
-    size_t nodeId = coordinatorEngine->registerNode(address, 6, nodeStats,
-                                                    NESNodeType::Sensor);
+    size_t nodeId = coordinatorEngine->registerNode(address, 4000, 5000, 6, nodeStats, NESNodeType::Sensor);
     EXPECT_NE(nodeId, 0);
 
     //setup test

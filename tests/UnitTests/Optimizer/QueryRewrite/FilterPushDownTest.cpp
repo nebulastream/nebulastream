@@ -40,7 +40,7 @@ class FilterPushDownTest : public testing::Test {
 
 void setupSensorNodeAndStreamCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog) {
     NES_INFO("Setup FilterPushDownTest test case.");
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost",4000, 5000, CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";

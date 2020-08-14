@@ -25,9 +25,11 @@ service CoordinatorRPCService {
 
 message RegisterNodeRequest {
   string address = 1;
-  int32 numberOfCpus = 2;
-  NES.NodeStats nodeProperties = 3;
-  int32 type = 4;
+  int64 grpcPort = 2;
+  int64 dataPort = 3;
+  int32 numberOfCpus = 4;
+  NES.NodeStats nodeProperties = 5;
+  int32 type = 6;
 }
 
 message RegisterNodeReply {

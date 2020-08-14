@@ -175,8 +175,7 @@ bool NesWorker::connect() {
     auto nodeStatsProvider = nodeEngine->getNodeStatsProvider();
     nodeStatsProvider->update();
     auto nodeStats = nodeStatsProvider->getNodeStats();
-    bool successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp, 2,
-                                                                 type, nodeStats);
+    bool successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, 2, type, nodeStats);
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;

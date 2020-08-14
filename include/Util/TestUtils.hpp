@@ -234,7 +234,7 @@ class TestUtils {
         NESTopologyEntryPtr nodePtr;
         if (type == NESNodeType::Sensor) {
             NES_DEBUG("CoordinatorService::registerNode: register sensor node");
-            nodePtr = topologyManager->createNESSensorNode(id, address, CPUCapacity::Value(cpu));
+            nodePtr = topologyManager->createNESSensorNode(id, address, 4000, 4002, CPUCapacity::Value(cpu));
             NESTopologySensorNode* sensor = dynamic_cast<NESTopologySensorNode*>(nodePtr.get());
             sensor->setPhysicalStreamName(streamConf.physicalStreamName);
 
@@ -282,7 +282,7 @@ class TestUtils {
 
         } else if (type == NESNodeType::Worker) {
             NES_DEBUG("CoordinatorService::registerNode: register worker node");
-            nodePtr = topologyManager->createNESWorkerNode(id, address, CPUCapacity::Value(cpu));
+            nodePtr = topologyManager->createNESWorkerNode(id, address, 4004, 4006, CPUCapacity::Value(cpu));
         } else {
             NES_ERROR("CoordinatorService::registerNode: type not supported " << type);
             assert(0);

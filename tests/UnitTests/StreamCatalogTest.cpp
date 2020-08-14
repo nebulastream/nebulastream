@@ -2,11 +2,11 @@
 
 #include <iostream>
 
-#include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 
-#include <Topology/TopologyManager.hpp>
 #include <API/Schema.hpp>
+#include <Topology/TopologyManager.hpp>
 
 #include <Util/Logger.hpp>
 using namespace std;
@@ -64,7 +64,6 @@ TEST_F(StreamCatalogTest, testAddGetLogStream) {
 TEST_F(StreamCatalogTest, testAddRemoveLogStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 
-
     streamCatalog->addLogicalStream(
         "test_stream", Schema::create());
 
@@ -98,18 +97,17 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
     streamCatalog->addLogicalStream(
         "test_stream", Schema::create());
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                     sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
 
     EXPECT_TRUE(
         streamCatalog->addPhysicalStream(streamConf.logicalStreamName,
-                                                    sce));
+                                         sce));
 
     std::string expected =
         "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=test_stream sourceType=DefaultSource sourceConfig=1 sourceFrequency=0 numberOfBuffersToProduce=1 on node=1\n";
@@ -130,16 +128,14 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
     streamCatalog->addLogicalStream(
         "test_stream", Schema::create());
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                     sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
 
     EXPECT_TRUE(
-        streamCatalog->addPhysicalStream(streamConf.logicalStreamName,
-                                                    sce));
+        streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce));
 
     EXPECT_TRUE(
         streamCatalog->removePhysicalStream(
@@ -154,15 +150,13 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                     sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
 
     EXPECT_TRUE(
-        streamCatalog->addPhysicalStream(streamConf.logicalStreamName,
-                                                    sce));
+        streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce));
 
     std::string expected =
         "stream name=default_logical with 1 elements:physicalName=default_physical logicalStreamName=default_logical sourceType=DefaultSource sourceConfig=1 sourceFrequency=0 numberOfBuffersToProduce=1 on node=1\n";
@@ -176,7 +170,7 @@ TEST_F(StreamCatalogTest, testGetAllLogicalStream) {
     const map<std::string, std::string>& allLogicalStream =
         streamCatalog->getAllLogicalStreamAsString();
     EXPECT_EQ(allLogicalStream.size(), 2);
-    for (auto const[key, value] : allLogicalStream) {
+    for (auto const [key, value] : allLogicalStream) {
         bool cmp = key != defaultLogicalStreamName && key != "exdra";
         EXPECT_EQ(cmp, false);
     }
@@ -198,26 +192,21 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     std::string newLogicalStreamName = "test_stream";
 
     streamCatalog->addLogicalStream(newLogicalStreamName,
-                                               testSchema);
+                                    testSchema);
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(
-        1, "127.0.0.1", CPUCapacity::LOW);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "127.0.0.1", 4000, 4002, CPUCapacity::LOW);
 
     PhysicalStreamConfig conf;
     conf.sourceType = "sensor";
-    StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(
-        conf, sensorNode);
-    streamCatalog->addPhysicalStream(newLogicalStreamName,
-                                                catalogEntryPtr);
-    const vector<StreamCatalogEntryPtr>& allPhysicalStream =
-        streamCatalog->getPhysicalStreams(newLogicalStreamName);
+    StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(conf, sensorNode);
+    streamCatalog->addPhysicalStream(newLogicalStreamName, catalogEntryPtr);
+    const vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(newLogicalStreamName);
     EXPECT_EQ(allPhysicalStream.size(), 1);
 }
 
 TEST_F(StreamCatalogTest, testDeleteLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 
-    bool success = streamCatalog->removeLogicalStream(
-        defaultLogicalStreamName);
+    bool success = streamCatalog->removeLogicalStream(defaultLogicalStreamName);
     EXPECT_TRUE(success);
 }

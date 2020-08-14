@@ -47,7 +47,7 @@ class QueryTest : public testing::Test {
 TEST_F(QueryTest, testQueryFilter) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -81,7 +81,7 @@ TEST_F(QueryTest, testQueryFilter) {
 TEST_F(QueryTest, testQueryWindow) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -121,7 +121,7 @@ TEST_F(QueryTest, testQueryWindow) {
  */
 TEST_F(QueryTest, testQueryMerge) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
