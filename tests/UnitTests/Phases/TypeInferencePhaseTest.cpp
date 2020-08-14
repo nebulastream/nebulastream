@@ -15,8 +15,8 @@
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
 #include <Topology/TopologyManager.hpp>
@@ -69,14 +69,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                     sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
 
     auto phase = TypeInferencePhase::create(streamCatalog);
@@ -101,21 +100,20 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
 TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
 
     auto query = Query::from("default_logical")
-        .window(
-            TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-            Sum::on(Attribute("value")))
-        .sink(FileSinkDescriptor::create(""));
+                     .window(
+                         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+                         Sum::on(Attribute("value")))
+                     .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                     sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
 
     auto phase = TypeInferencePhase::create(streamCatalog);
@@ -124,7 +122,6 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
     // we just access the old references
 
     ASSERT_TRUE(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize() == 1);
-
 }
 
 /**
@@ -146,14 +143,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                     sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
     auto phase = TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
@@ -165,15 +161,14 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
 TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
 
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                     sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
 
     SchemaPtr schema = Schema::create()

@@ -38,12 +38,11 @@ TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
     PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(
-        0, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
 
-    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
+    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(3, "localhost", 4000, 4002, CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature", schema);
     PhysicalStreamConfig conf;
@@ -81,15 +80,13 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
     PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr sinkNode =
-        topologyManager->createNESWorkerNode(
-            0, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode3 = topologyManager->createNESWorkerNode(3, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode4 = topologyManager->createNESWorkerNode(4, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode3 = topologyManager->createNESWorkerNode(3, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode4 = topologyManager->createNESWorkerNode(4, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
 
-    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(5, "localhost", CPUCapacity::HIGH);
+    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(5, "localhost", 4000, 4002, CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature",
                                     schema);
@@ -136,13 +133,11 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
     PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr sinkNode =
-        topologyManager->createNESWorkerNode(
-            0, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
 
-    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
+    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(3, "localhost", 4000, 4002, CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature",
                                     schema);
@@ -189,15 +184,13 @@ TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
     SchemaPtr schema = Schema::create()
                            ->addField("id", BasicType::UINT32)
                            ->addField("value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr sinkNode =
-        topologyManager->createNESWorkerNode(
-            0, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode3 = topologyManager->createNESWorkerNode(3, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode4 = topologyManager->createNESWorkerNode(4, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode3 = topologyManager->createNESWorkerNode(3, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode4 = topologyManager->createNESWorkerNode(4, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
 
-    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(5, "localhost", CPUCapacity::HIGH);
+    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(5, "localhost", 4000, 4002, CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature", schema);
     PhysicalStreamConfig conf;
@@ -244,13 +237,11 @@ TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
 
     //prepare
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr sinkNode =
-        topologyManager->createNESWorkerNode(
-            0, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
 
-    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
+    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(3, "localhost", 4000, 4002, CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature", schema);
     PhysicalStreamConfig conf;
@@ -259,15 +250,11 @@ TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
                                                                     sensorNode1);
     assert(streamCatalog->addPhysicalStream("temperature", e1));
 
-    topologyManager->createNESTopologyLink(workerNode1, sinkNode,
-                                           3, 1);
-    topologyManager->createNESTopologyLink(workerNode2, sinkNode,
-                                           3, 1);
+    topologyManager->createNESTopologyLink(workerNode1, sinkNode, 3, 1);
+    topologyManager->createNESTopologyLink(workerNode2, sinkNode, 3, 1);
 
-    topologyManager->createNESTopologyLink(sensorNode1,
-                                           workerNode1, 1, 3);
-    topologyManager->createNESTopologyLink(sensorNode1,
-                                           workerNode2, 1, 3);
+    topologyManager->createNESTopologyLink(sensorNode1, workerNode1, 1, 3);
+    topologyManager->createNESTopologyLink(sensorNode1, workerNode2, 1, 3);
 
     //execute
     auto paths = pathFinder->findAllPathsBetween(sensorNode1, sinkNode);
@@ -283,19 +270,17 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
 
     //prepare
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr sinkNode =
-        topologyManager->createNESWorkerNode(
-            0, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode3 = topologyManager->createNESWorkerNode(3, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode4 = topologyManager->createNESWorkerNode(4, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode5 = topologyManager->createNESWorkerNode(5, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode6 = topologyManager->createNESWorkerNode(6, "localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr workerNode7 = topologyManager->createNESWorkerNode(7, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr workerNode8 = topologyManager->createNESWorkerNode(8, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode3 = topologyManager->createNESWorkerNode(3, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode4 = topologyManager->createNESWorkerNode(4, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode5 = topologyManager->createNESWorkerNode(5, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode6 = topologyManager->createNESWorkerNode(6, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr workerNode7 = topologyManager->createNESWorkerNode(7, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr workerNode8 = topologyManager->createNESWorkerNode(8, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
 
-    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(9, "localhost", CPUCapacity::HIGH);
+    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(9, "localhost", 4000, 4002, CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature", schema);
     PhysicalStreamConfig conf;
@@ -304,7 +289,7 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
                                                                     sensorNode1);
     assert(streamCatalog->addPhysicalStream("temperature", e1));
 
-    const NESTopologySensorNodePtr sensorNode2 = topologyManager->createNESSensorNode(10, "localhost", CPUCapacity::LOW);
+    const NESTopologySensorNodePtr sensorNode2 = topologyManager->createNESSensorNode(10, "localhost", 4000, 4002, CPUCapacity::LOW);
     sensorNode2->setPhysicalStreamName("humidity1");
     streamCatalog->addLogicalStream("humidity1", schema);
     conf.physicalStreamName = "humidity1";
@@ -312,7 +297,7 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
                                                                     sensorNode2);
     assert(streamCatalog->addPhysicalStream("humidity1", e2));
 
-    const NESTopologySensorNodePtr sensorNode3 = topologyManager->createNESSensorNode(11, "localhost", CPUCapacity::LOW);
+    const NESTopologySensorNodePtr sensorNode3 = topologyManager->createNESSensorNode(11, "localhost", 4000, 4002, CPUCapacity::LOW);
     sensorNode3->setPhysicalStreamName("temperature2");
 
     conf.physicalStreamName = "temperature2";
@@ -320,7 +305,7 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
                                                                     sensorNode3);
     assert(streamCatalog->addPhysicalStream("temperature", e3));
 
-    const NESTopologySensorNodePtr sensorNode4 = topologyManager->createNESSensorNode(12, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologySensorNodePtr sensorNode4 = topologyManager->createNESSensorNode(12, "localhost", 4000, 4002, CPUCapacity::MEDIUM);
     sensorNode4->setPhysicalStreamName("humidity2");
     streamCatalog->addLogicalStream("humidity2", schema);
 
@@ -376,9 +361,9 @@ TEST_F(PathFinderTest, find_path_from_non_linked_source) {
     PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
     try {
         SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-        const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", CPUCapacity::HIGH);
+        const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
-        const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+        const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
         sensorNode1->setPhysicalStreamName("temperature1");
         streamCatalog->addLogicalStream("temperature", schema);
 
@@ -401,9 +386,9 @@ TEST_F(PathFinderTest, find_path_between_non_linked_source_and_destination) {
     PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::HIGH);
-    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(2, "localhost", CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(2, "localhost", 4000, 4002, CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature", schema);
 
@@ -424,11 +409,11 @@ TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
     PathFinderPtr pathFinder = PathFinder::create(topologyManager->getNESTopologyPlan());
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr sinkNode = topologyManager->createNESWorkerNode(0, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr workerNode1 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr workerNode2 = topologyManager->createNESWorkerNode(2, "localhost", 4000, 4002, CPUCapacity::HIGH);
 
-    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
+    const NESTopologySensorNodePtr sensorNode1 = topologyManager->createNESSensorNode(3, "localhost", 4000, 4002, CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     streamCatalog->addLogicalStream("temperature", schema);
     PhysicalStreamConfig conf;

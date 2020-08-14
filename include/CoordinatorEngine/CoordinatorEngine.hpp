@@ -25,7 +25,7 @@ class CoordinatorEngine {
      * @param node type
      * @return id of node
      */
-    size_t registerNode(std::string address, size_t numberOfCPUs, NodeStats nodeStats, NESNodeType type);
+    size_t registerNode(std::string address, int64_t grpcPort, int64_t dataPort, int8_t numberOfCPUs, NodeStats nodeStats, NESNodeType type);
 
     /**
      * @brief unregister an existing node

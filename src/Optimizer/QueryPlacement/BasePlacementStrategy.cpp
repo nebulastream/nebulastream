@@ -35,7 +35,7 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
 uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode) {
     uint64_t operatorId = UtilityFunctions::getNextOperatorId();
     uint64_t nextNetworkSourceOperatorId = UtilityFunctions::getNextOperatorId();
-    Network::NodeLocation nodeLocation(parentNesNode->getId(), parentNesNode->getIp(), parentNesNode->getReceivePort());
+    Network::NodeLocation nodeLocation(parentNesNode->getId(), parentNesNode->getIpAddress(), parentNesNode->getDataPort());
     Network::NesPartition nesPartition(queryPlan->getQueryId(), nextNetworkSourceOperatorId, nextNetworkSourceOperatorId, 0);
     const OperatorNodePtr sysSinkOperator = createSinkLogicalOperatorNode(
         Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));

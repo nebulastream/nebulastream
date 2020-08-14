@@ -19,24 +19,24 @@ NodeStats NESTopologyEntry::getNodeStats() {
     return nodeStats;
 }
 
-size_t NESTopologyEntry::getId() {
+uint64_t NESTopologyEntry::getId() {
     return id;
 }
 
-uint8_t NESTopologyEntry::getCpuCapacity() {
+int8_t NESTopologyEntry::getCpuCapacity() {
     return cpuCapacity;
 }
 
-void NESTopologyEntry::reduceCpuCapacity(size_t usedCapacity) {
+void NESTopologyEntry::reduceCpuCapacity(int8_t usedCapacity) {
     assert(usedCapacity <= remainingCPUCapacity);
     this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
 }
 
-void NESTopologyEntry::increaseCpuCapacity(size_t freedCapacity) {
+void NESTopologyEntry::increaseCpuCapacity(int8_t freedCapacity) {
     this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
 }
 
-uint8_t NESTopologyEntry::getRemainingCpuCapacity() {
+int8_t NESTopologyEntry::getRemainingCpuCapacity() {
     return remainingCPUCapacity;
 }
 
@@ -44,11 +44,11 @@ const std::string& NESTopologyEntry::getIpAddress() const {
     return ipAddress;
 }
 
-uint32_t NESTopologyEntry::getGrpcPort() const {
+int32_t NESTopologyEntry::getGrpcPort() const {
     return grpcPort;
 }
 
-uint32_t NESTopologyEntry::getDataPort() const {
+int32_t NESTopologyEntry::getDataPort() const {
     return dataPort;
 }
 

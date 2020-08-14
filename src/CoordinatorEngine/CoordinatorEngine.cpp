@@ -15,7 +15,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyMan
     NES_DEBUG("CoordinatorEngine()");
 }
 
-size_t CoordinatorEngine::registerNode(std::string address, size_t numberOfCPUs, NodeStats nodeStats, NESNodeType type) {
+size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, int8_t numberOfCPUs, NodeStats nodeStats, NESNodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address
                                                           << " numberOfCpus=" << numberOfCPUs
                                                           << " nodeProperties=" << nodeStats.DebugString()
@@ -37,7 +37,7 @@ size_t CoordinatorEngine::registerNode(std::string address, size_t numberOfCPUs,
     NESTopologyEntryPtr nodePtr;
     if (type == NESNodeType::Sensor) {
         NES_DEBUG("CoordinatorEngine::registerNode: register sensor node");
-        nodePtr = topologyManager->createNESSensorNode(id, address, CPUCapacity::Value(numberOfCPUs));
+        nodePtr = topologyManager->createNESSensorNode(id, address, grpcPort, dataPort, CPUCapacity::Value(numberOfCPUs));
 
         if (!nodePtr) {
             NES_ERROR("CoordinatorEngine::RegisterNode : node not created");
@@ -83,7 +83,7 @@ size_t CoordinatorEngine::registerNode(std::string address, size_t numberOfCPUs,
 
     } else if (type == NESNodeType::Worker) {
         NES_DEBUG("CoordinatorEngine::registerNode: register worker node");
-        nodePtr = topologyManager->createNESWorkerNode(id, address, CPUCapacity::Value(numberOfCPUs));
+        nodePtr = topologyManager->createNESWorkerNode(id, address, grpcPort, dataPort, CPUCapacity::Value(numberOfCPUs));
 
         if (!nodePtr) {
             NES_ERROR("CoordinatorEngine::RegisterNode : node not created");

@@ -46,25 +46,25 @@ class NESTopologyEntry {
      * @brief method to get the overall cpu capacity of the node
      * @return size_t cpu capacity
      */
-    uint8_t getCpuCapacity();
+    int8_t getCpuCapacity();
 
     /**
      * @brief method to get the actual cpu capacity
      * @param size_t of the current capacity
      */
-    uint8_t getRemainingCpuCapacity();
+    int8_t getRemainingCpuCapacity();
 
     /**
      * @brief method to reduce the cpu capacity of the node
      * @param size_t of the value that has to be subtracted
      */
-    void reduceCpuCapacity(size_t usedCapacity);
+    void reduceCpuCapacity(int8_t usedCapacity);
 
     /**
      * @brief method to increase CPU capacity
      * @param size_t of the vlaue that has to be added
      */
-    void increaseCpuCapacity(size_t freedCapacity);
+    void increaseCpuCapacity(int8_t freedCapacity);
 
     /**
      * @brief method to set the property of the node by creating a NodeProperties object
@@ -94,13 +94,13 @@ class NESTopologyEntry {
      * @brief Get grpc port for the node
      * @return grpc port
      */
-    uint32_t getGrpcPort() const;
+    int32_t getGrpcPort() const;
 
     /**
      * @brief Get the data port for the node
      * @return data port
      */
-    uint32_t getDataPort() const;
+    int32_t getDataPort() const;
 
   protected:
     uint64_t id;
