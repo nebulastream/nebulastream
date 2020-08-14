@@ -25,11 +25,15 @@ ThreadPool::~ThreadPool() {
 void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
     while (running) {
         Task task;
-        //TODO: check if TaskPtr() will really return a task that is skipped in if statement
         if (!!(task = queryManager->getWork(running))) {
-            task(workerContext);
-            queryManager->completedWork(task, workerContext);
-            NES_TRACE("Threadpool: finished task " << task);
+            auto success = task(workerContext);
+            if (success) {
+                queryManager->completedWork(task, workerContext);
+                NES_TRACE("Threadpool: finished task " << task << " with success");
+            } else {
+                // TODO add here error handling (see issues 524 and 463)
+                NES_TRACE("Threadpool: finished task " << task << " with error");
+            }
         } else {
             NES_ERROR("Threadpool: task invalid");
             running = false;
