@@ -1,7 +1,8 @@
 #include <Components/NesWorker.hpp>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
-#include <Deployer/QueryDeployer.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -79,7 +80,23 @@ void ExecutionNode::freeOccupiedResources(QueryPlanPtr querySubPlan) {
                 break;
             }
             // If the visiting operator is not a system operator then count the resource and add it to the visited operator list.
-            if (visitingOp->getId() != SYS_SOURCE_OPERATOR_ID && visitingOp->getId() != SYS_SINK_OPERATOR_ID) {
+            if (visitingOp->instanceOf<SourceLogicalOperatorNode>()) {
+                auto srcOperator = visitingOp->as<SourceLogicalOperatorNode>();
+                if (!srcOperator->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
+                    // increase the resource count
+                    resourceToFree++;
+                    // add operator id to the already visited operator id collection
+                    visitedOpIds.insert(visitingOp->getId());
+                }
+            } else if (visitingOp->instanceOf<SinkLogicalOperatorNode>()) {
+                auto sinkOperator = visitingOp->as<SinkLogicalOperatorNode>();
+                if (!sinkOperator->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+                    // increase the resource count
+                    resourceToFree++;
+                    // add operator id to the already visited operator id collection
+                    visitedOpIds.insert(visitingOp->getId());
+                }
+            } else {
                 // increase the resource count
                 resourceToFree++;
                 // add operator id to the already visited operator id collection

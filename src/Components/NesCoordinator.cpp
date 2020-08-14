@@ -2,7 +2,6 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Deployer/QueryDeployer.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -42,10 +41,9 @@ NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t
     queryCatalog = std::make_shared<QueryCatalog>();
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
     WorkerRPCClientPtr workerRpcClient = std::make_shared<WorkerRPCClient>();
-    QueryDeployerPtr queryDeployer = std::make_shared<QueryDeployer>(queryCatalog, topologyManager, globalExecutionPlan);
     QueryRequestQueuePtr queryRequestQueue = std::make_shared<QueryRequestQueue>();
     queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topologyManager->getNESTopologyPlan(),
-                                                                                  queryCatalog, streamCatalog, workerRpcClient, queryDeployer, queryRequestQueue);
+                                                                                  queryCatalog, streamCatalog, workerRpcClient, queryRequestQueue);
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
 

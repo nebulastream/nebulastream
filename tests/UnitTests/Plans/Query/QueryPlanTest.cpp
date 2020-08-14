@@ -42,16 +42,6 @@ TEST_F(QueryPlanTest, testHasOperator) {
     EXPECT_TRUE(exists);
 }
 
-TEST_F(QueryPlanTest, testHasOperatorForSysOperators) {
-    QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr op1 = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create("test_stream"));
-    op1->setId(SYS_SOURCE_OPERATOR_ID);
-    queryPlan->appendPreExistingOperator(op1);
-
-    bool exists = queryPlan->hasOperator(op1);
-    EXPECT_FALSE(exists);
-}
-
 TEST_F(QueryPlanTest, testLeafOperators) {
     LogicalOperatorNodePtr op1 = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create("test_stream"));
     QueryPlanPtr queryPlan = QueryPlan::create(op1);
