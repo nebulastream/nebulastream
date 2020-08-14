@@ -28,12 +28,6 @@ RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git &&
   cd cppkafka && mkdir -p build && cd build && \
   cmake -DCPPKAFKA_BUILD_SHARED=ON -DCPPKAFKA_DISABLE_TESTS=ON -DCPPKAFKA_DISABLE_EXAMPLES=ON -DCPPKAFKA_RDKAFKA_STATIC_LIB=OFF .. && \
   make -j -w && make install && cd ${HOME} && rm -rf cppkafka* && \
-  cd ${HOME} && git clone --single-branch --branch v4.3.2 https://github.com/zeromq/libzmq.git && cd libzmq && \
-  mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make -j2 && make install && \
-  cd ${HOME} && rm -rf libzmq && \
-  cd ${HOME} && git clone --single-branch --branch v4.6.0 https://github.com/zeromq/cppzmq.git && cd cppzmq && \
-  mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make -j2 && make install && \
-  cd ${HOME} && rm -rf cppzmq && \
   apt-get purge -y wget && apt autoremove -y
 
 ADD ./entrypoint-nes-build.sh /entrypoint.sh
