@@ -10,12 +10,13 @@ class WindowDistributionRefinement;
 typedef std::shared_ptr<WindowDistributionRefinement> WindowDistributionRefinementPtr;
 
 /**
- * @brief This class is responsible for adding system generated operators once data have to be transfered from one node to another
+ * @brief This class is responsible for adding system generated operators once data have to be transferred from one node to another
+ * @rule current rule, if global executionPlan has more than three nodes, use the distributed window operator
  */
 class WindowDistributionRefinement : public BaseRefinementRule {
 
   public:
-    void execute(std::string queryId) override;
+    bool execute(GlobalExecutionPlanPtr globalPlan, std::string queryId) override;
 
     static WindowDistributionRefinementPtr create();
 

@@ -256,6 +256,18 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     NodePtr findRecursively(const NodePtr root, const NodePtr nodeToFind);
 
+    /**
+    * @brief helper function of getNodeType() function
+    */
+    template<class NodeType>
+    void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes) {
+        if (this->instanceOf<NodeType>()) {
+            foundNodes.push_back(this->as<NodeType>());
+        }
+        for (auto& successor : this->children) {
+            successor->getNodesByTypeHelper(foundNodes);
+        }
+    };
   protected:
     /**
      * @brief the parents of this node. There is no equal nodes
@@ -303,19 +315,6 @@ class Node : public std::enable_shared_from_this<Node> {
     void getAndFlattenAllChildrenHelper(const NodePtr node,
                                         std::vector<NodePtr>& allChildren,
                                         const NodePtr excludednode);
-
-    /**
-     * @brief helper function of getNodeType() function
-     */
-    template<class NodeType>
-    void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes) {
-        if (this->instanceOf<NodeType>()) {
-            foundNodes.push_back(this->as<NodeType>());
-        }
-        for (auto& successor : this->children) {
-            successor->getNodesByTypeHelper(foundNodes);
-        }
-    };
 
     /**
      * @brief helper function of cycle detector
