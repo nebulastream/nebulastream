@@ -15,16 +15,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyMan
     NES_DEBUG("CoordinatorEngine()");
 }
 
-size_t getIdFromIp(std::string ip) {
-    std::hash<std::string> hashFn;
-    std::string uidString = UtilityFunctions::generateIdString();
-    return hashFn(uidString + ip);
-}
-
-size_t CoordinatorEngine::registerNode(std::string address,
-                                       size_t numberOfCPUs,
-                                       NodeStats nodeStats,
-                                       NESNodeType type) {
+size_t CoordinatorEngine::registerNode(std::string address, size_t numberOfCPUs, NodeStats nodeStats, NESNodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address
                                                           << " numberOfCpus=" << numberOfCPUs
                                                           << " nodeProperties=" << nodeStats.DebugString()
@@ -35,7 +26,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
     topologyManager->printNESTopologyPlan();
 
     //get unique id for the new node
-    size_t id = getIdFromIp(address);
+    uint64_t id = UtilityFunctions::getNextNodeId();
 
     auto nodes = topologyManager->getNESTopologyPlan()->getNodeByIp(address);
     if (!nodes.empty()) {
@@ -46,9 +37,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
     NESTopologyEntryPtr nodePtr;
     if (type == NESNodeType::Sensor) {
         NES_DEBUG("CoordinatorEngine::registerNode: register sensor node");
-        nodePtr = topologyManager->createNESSensorNode(id,
-                                                       address,
-                                                       CPUCapacity::Value(numberOfCPUs));
+        nodePtr = topologyManager->createNESSensorNode(id, address, CPUCapacity::Value(numberOfCPUs));
 
         if (!nodePtr) {
             NES_ERROR("CoordinatorEngine::RegisterNode : node not created");
@@ -66,41 +55,30 @@ size_t CoordinatorEngine::registerNode(std::string address,
                                                                                << " nodeID=" << nodePtr->getId());
 
         //check if logical stream exists
-        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(
-                streamConf.logicalStreamName)) {
-            NES_ERROR(
-                "CoordinatorEngine::registerNode: error logical stream" << streamConf.logicalStreamName
-                                                                        << " does not exist when adding physical stream "
-                                                                        << streamConf.physicalStreamName);
-            throw Exception(
-                "CoordinatorEngine::registerNode logical stream does not exist " + streamConf.logicalStreamName);
+        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf.logicalStreamName)) {
+            NES_ERROR("CoordinatorEngine::registerNode: error logical stream" << streamConf.logicalStreamName
+                                                                              << " does not exist when adding physical stream "
+                                                                              << streamConf.physicalStreamName);
+            throw Exception("CoordinatorEngine::registerNode logical stream does not exist " + streamConf.logicalStreamName);
         }
 
-        SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(
-            streamConf.logicalStreamName);
+        SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamConf.logicalStreamName);
 
-        if (streamConf.sourceType != "CSVSource"
-            && streamConf.sourceType != "DefaultSource") {
-            NES_ERROR(
-                "CoordinatorEngine::registerNode: error source type " << streamConf.sourceType
-                                                                      << " is not supported");
-            throw Exception(
-                "CoordinatorEngine::registerNode: error source type " + streamConf.sourceType
-                + " is not supported");
+        if (streamConf.sourceType != "CSVSource" && streamConf.sourceType != "DefaultSource") {
+            NES_ERROR("CoordinatorEngine::registerNode: error source type " << streamConf.sourceType
+                                                                            << " is not supported");
+            throw Exception("CoordinatorEngine::registerNode: error source type " + streamConf.sourceType
+                            + " is not supported");
         }
 
-        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-            streamConf, nodePtr);
+        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, nodePtr);
 
-        bool success = streamCatalog->addPhysicalStream(
-            streamConf.logicalStreamName, sce);
+        bool success = streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce);
         if (!success) {
-            NES_ERROR(
-                "CoordinatorEngine::registerNode: physical stream " << streamConf.physicalStreamName
-                                                                    << " could not be added to catalog");
-            throw Exception(
-                "CoordinatorEngine::registerNode: physical stream " + streamConf.physicalStreamName
-                + " could not be added to catalog");
+            NES_ERROR("CoordinatorEngine::registerNode: physical stream " << streamConf.physicalStreamName
+                                                                          << " could not be added to catalog");
+            throw Exception("CoordinatorEngine::registerNode: physical stream " + streamConf.physicalStreamName
+                            + " could not be added to catalog");
         }
 
     } else if (type == NESNodeType::Worker) {
@@ -117,7 +95,7 @@ size_t CoordinatorEngine::registerNode(std::string address,
     assert(nodePtr);
 
     if (nodeStats.IsInitialized()) {
-        nodePtr->setNodeProperty(nodeStats);
+        nodePtr->setNodeStats(nodeStats);
     }
 
     const NESTopologyEntryPtr kRootNode = topologyManager->getRootNode();

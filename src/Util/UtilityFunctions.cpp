@@ -190,6 +190,7 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
 
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
+
 std::string UtilityFunctions::printTupleBufferAsText(TupleBuffer& buffer) {
     std::stringstream ss;
     for (size_t i = 0; i < buffer.getNumberOfTuples(); i++) {
@@ -302,6 +303,11 @@ uint64_t UtilityFunctions::getNextQueryId() {
 }
 
 uint64_t UtilityFunctions::getNextOperatorId() {
+    static std::atomic_uint64_t id = 0;
+    return id++;
+}
+
+uint64_t UtilityFunctions::getNextNodeId(){
     static std::atomic_uint64_t id = 0;
     return id++;
 }

@@ -68,13 +68,13 @@ class CoordinatorRPCClient {
 
     /**
      * @brief method to register a node after the connection is established
-     * @param localAddress where this node is listening
+     * @param ipAddress where this node is listening
      * @param numberOfCpus
      * @param type of this node, e.g., sensor or worker
      * @param nodeProperties
      * @return bool indicating success
      */
-    bool registerNode(std::string localAddress,
+    bool registerNode(std::string ipAddress, uint64_t grpcPort, uint64_t
                       size_t numberOfCpus,
                       NESNodeType type,
                       NodeStats nodeStats);
