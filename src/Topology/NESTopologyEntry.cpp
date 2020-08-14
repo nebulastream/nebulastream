@@ -4,7 +4,7 @@
 namespace NES {
 
 NESTopologyEntry::NESTopologyEntry(uint64_t id, std::string ipAddress, int32_t grpcPort, int32_t dataPort, int8_t cpuCapacity)
-    : id(id), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), cpuCapacity(cpuCapacity), remainingCPUCapacity(0) {}
+    : id(id), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), cpuCapacity(cpuCapacity), remainingCPUCapacity(cpuCapacity) {}
 
 void NESTopologyEntry::setNodeStats(NodeStats nodeStats) {
     NES_TRACE("setNodeStats=" << nodeStats.DebugString());

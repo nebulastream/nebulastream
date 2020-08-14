@@ -30,9 +30,13 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
 
     auto nodes = topologyManager->getNESTopologyPlan()->getNodeByIp(address);
     if (!nodes.empty()) {
-        NES_ERROR("CoordinatorEngine::registerNode: node with this address already exists=" << address << " id="
-                                                                                            << nodes[0]->getId());
-        return false;
+        for (auto& node : nodes) {
+            if (node->getGrpcPort() == grpcPort) {
+                NES_ERROR("CoordinatorEngine::registerNode: node with this address and grpc port already exists=" << address << " id="
+                                                                                                    << nodes[0]->getId());
+                return false;
+            }
+        }
     }
     NESTopologyEntryPtr nodePtr;
     if (type == NESNodeType::Sensor) {
@@ -92,7 +96,6 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
     } else {
         NES_THROW_RUNTIME_ERROR("CoordinatorEngine::registerNode type not supported ");
     }
-    assert(nodePtr);
 
     if (nodeStats.IsInitialized()) {
         nodePtr->setNodeStats(nodeStats);
