@@ -27,7 +27,8 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     }
     NES_INFO("QueryService: Parsing and converting user query string");
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    uint64_t queryId = UtilityFunctions::getNextQueryId();
+//    uint64_t queryId = UtilityFunctions::getNextQueryId();
+    uint64_t queryId = 777777;
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     NES_INFO("QueryService: Queuing the query for the execution");
