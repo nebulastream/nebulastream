@@ -1,4 +1,3 @@
-#include <Deployer/QueryDeployer.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
@@ -9,11 +8,11 @@
 
 namespace NES {
 
-QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer)
-    : globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient), queryDeployer(queryDeployer) {}
+QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient)
+    : globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient) {}
 
-QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer) {
-    return std::make_shared<QueryDeploymentPhase>(QueryDeploymentPhase(globalExecutionPlan, workerRpcClient, queryDeployer));
+QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient) {
+    return std::make_shared<QueryDeploymentPhase>(QueryDeploymentPhase(globalExecutionPlan, workerRpcClient));
 }
 
 bool QueryDeploymentPhase::execute(uint64_t queryId) {
@@ -48,11 +47,6 @@ bool QueryDeploymentPhase::execute(uint64_t queryId) {
 bool QueryDeploymentPhase::deployQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes) {
 
     NES_DEBUG("QueryService::deployQuery queryId=" << queryId);
-    NES_DEBUG("QueryService: preparing for Deployment by adding port information");
-    if (!queryDeployer->prepareForDeployment(queryId)) {
-        NES_ERROR("QueryService: Failed to prepare for Deployment by adding port information");
-        return false;
-    }
 
     for (ExecutionNodePtr executionNode : executionNodes) {
         NES_DEBUG("QueryService::registerQueryInNodeEngine serialize id=" << executionNode->getId());
