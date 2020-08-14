@@ -11,11 +11,11 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   liblog4cxx-dev \
   libcpprest-dev \
   libssl-dev \
-  libzmqpp-dev \
   clang-format \
   librdkafka1 \
   librdkafka++1 \
   librdkafka-dev \
+  libzmqpp-dev \
   git \
   wget \
   tar
