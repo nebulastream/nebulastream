@@ -308,7 +308,7 @@ uint64_t UtilityFunctions::getNextOperatorId() {
 }
 
 uint64_t UtilityFunctions::getNextNodeId(){
-    static std::atomic_uint64_t id = 0;
+    static std::atomic_uint64_t id = 1;
     return id++;
 }
 
