@@ -39,9 +39,6 @@ typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
 class WorkerRPCClient;
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
-class QueryDeployer;
-typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
-
 class QueryRequestQueue;
 typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
 
@@ -51,8 +48,7 @@ typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
 class QueryRequestProcessorService {
   public:
     explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog,
-                                          StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryDeployerPtr queryDeployer,
-                                          QueryRequestQueuePtr queryRequestQueue);
+                                          StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue);
 
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
