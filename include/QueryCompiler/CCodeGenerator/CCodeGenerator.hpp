@@ -95,7 +95,8 @@ class CCodeGenerator : public CodeGenerator {
 
     BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
     BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,
-                                            VariableDeclaration tupleBufferVariable);
+                                            VariableDeclaration tupleBufferVariable,
+                                            VariableDeclaration workerContextVariable);
     void generateTupleBufferSpaceCheck(PipelineContextPtr context,
                                        VariableDeclaration varDeclResultTuple,
                                        StructDeclaration structDeclarationResultTuple);

@@ -3,6 +3,7 @@
 #include "CodeGenerator.hpp"
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <memory>
 #include <vector>
 
@@ -28,6 +29,8 @@ class WindowManager;
 class PipelineExecutionContext;
 typedef std::shared_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
 
+typedef WorkerContext& WorkerContextRef;
+
 class PipelineStage {
   public:
     PipelineStage(
@@ -38,7 +41,13 @@ class PipelineStage {
         PipelineStagePtr nextPipelineStage,
         WindowHandlerPtr windowHandler = WindowHandlerPtr());
 
-    bool execute(TupleBuffer& inputBuffer);
+    /**
+     * @brief Execute a pipeline stage
+     * @param inputBuffer
+     * @param workerContext
+     * @return true if no error occurred
+     */
+    bool execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
 
     /**
    * @brief Initialises a pipeline stage

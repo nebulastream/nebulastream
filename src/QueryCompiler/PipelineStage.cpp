@@ -30,7 +30,7 @@ PipelineStage::PipelineStage(
     }
 }
 
-bool PipelineStage::execute(TupleBuffer& inputBuffer) {
+bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
 
     std::stringstream dbgMsg;
     dbgMsg << "Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId() << " stage=" << pipelineStageId;
@@ -102,7 +102,7 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
     }
 
     //
-    uint32_t ret = !executablePipeline->execute(inputBuffer, windowStage, windowManager, pipelineContext);
+    uint32_t ret = !executablePipeline->execute(inputBuffer, windowStage, windowManager, pipelineContext, workerContext);
 
     if (maxWaterMark != 0) {
         NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());

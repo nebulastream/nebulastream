@@ -123,9 +123,9 @@ void QueryCompiler::compilePipelineStages(
             }
             executionContext = std::make_shared<PipelineExecutionContext>(
                 builder.getBufferManager(),
-                [childPipelines](TupleBuffer& buffer) {
+                [childPipelines](TupleBuffer& buffer, WorkerContextRef workerContext) {
                     for (auto& childPipeline : childPipelines) {
-                        childPipeline->execute(buffer);
+                        childPipeline->execute(buffer, workerContext);
                     }
                 });
             if (builder.getWinDef() != nullptr) {
@@ -143,7 +143,7 @@ void QueryCompiler::compilePipelineStages(
             }
             executionContext = std::make_shared<PipelineExecutionContext>(
                 builder.getBufferManager(),
-                [sinks](TupleBuffer& buffer) {
+                [sinks](TupleBuffer& buffer, WorkerContextRef) {
                     for (auto& sink : sinks) {
                         sink->writeData(buffer);
                     }

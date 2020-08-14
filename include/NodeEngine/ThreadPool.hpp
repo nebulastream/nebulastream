@@ -10,7 +10,7 @@ namespace NES {
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 class WorkerContext;
-
+typedef WorkerContext& WorkerContextRef;
 /**
  * @brief the tread pool handles the dynamic scheduling of tasks during runtime
  * @Limitations

@@ -89,13 +89,14 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr schema, PipelineContextPtr co
     /* === declarations === */
     auto tupleBufferType = tf->createAnonymusDataType("NES::TupleBuffer");
     auto pipelineExecutionContextType = tf->createAnonymusDataType("NES::PipelineExecutionContext");
-
+    auto workerContextType = tf->createAnonymusDataType("NES::WorkerContext");
     VariableDeclaration varDeclarationInputBuffer = VariableDeclaration::create(
         tf->createReference(tupleBufferType), "inputTupleBuffer");
 
     VariableDeclaration varDeclarationPipelineExecutionContext = VariableDeclaration::create(
         tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
-
+    VariableDeclaration varDeclarationWorkerContext = VariableDeclaration::create(
+        tf->createReference(workerContextType), "workerContext");
     VariableDeclaration varDeclarationState =
         VariableDeclaration::create(tf->createPointer(tf->createAnonymusDataType("void")), "state_var");
     VariableDeclaration varDeclarationWindowManager =
@@ -105,6 +106,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr schema, PipelineContextPtr co
 
     code->varDeclarationInputBuffer = varDeclarationInputBuffer;
     code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
+    code->varDeclarationWorkerContext = varDeclarationWorkerContext;
     code->varDeclarationResultBuffer = varDeclarationResultBuffer;
     code->varDeclarationState = varDeclarationState;
     code->varDeclarationWindowManager = varDeclarationWindowManager;
@@ -286,15 +288,12 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
                                               code->varDeclarationInputBuffer)
                                      .copy());
 
-    // 3. copy origin id
-    code->cleanupStmts.push_back(setOriginId(code->varDeclarationResultBuffer,
-                                             code->varDeclarationInputBuffer)
-                                     .copy());
-
-    // 4. emit the buffer to the runtime.
-    code->cleanupStmts.push_back(emitTupleBuffer(code->varDeclarationExecutionContext,
-                                                 code->varDeclarationResultBuffer)
-                                     .copy());
+    // 3. emit the buffer to the runtime.
+    code->cleanupStmts.push_back(
+        emitTupleBuffer(code->varDeclarationExecutionContext,
+                        code->varDeclarationResultBuffer,
+                        code->varDeclarationWorkerContext)
+            .copy());
 
     return true;
 }
@@ -346,9 +345,12 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
             .copy());
 
     // 1.2 emit the output buffers to the runtime -> pipelineExecutionContext.emitBuffer(resultTupleBuffer);
-    thenStatement->addStatement(emitTupleBuffer(code->varDeclarationExecutionContext,
-                                                code->varDeclarationResultBuffer)
-                                    .copy());
+    thenStatement->addStatement(
+        emitTupleBuffer(
+            code->varDeclarationExecutionContext,
+            code->varDeclarationResultBuffer,
+            code->varDeclarationWorkerContext)
+            .copy());
     // 2.1 reset the numberOfResultTuples to 0 -> numberOfResultTuples = 0;
     thenStatement->addStatement(VarRef(code->varDeclarationNumberOfResultTuples).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0))))).copy());
     // 2.2 allocate a new buffer -> resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
@@ -640,7 +642,8 @@ ExecutablePipelinePtr CCodeGenerator::compile(GeneratedCodePtr code) {
                                           .addParameter(code->varDeclarationInputBuffer)
                                           .addParameter(code->varDeclarationState)
                                           .addParameter(code->varDeclarationWindowManager)
-                                          .addParameter(code->varDeclarationExecutionContext);
+                                          .addParameter(code->varDeclarationExecutionContext)
+                                          .addParameter(code->varDeclarationWorkerContext);
     code->variableDeclarations.push_back(code->varDeclarationNumberOfResultTuples);
     for (auto& variableDeclaration : code->variableDeclarations) {
         functionBuilder.addVariableDeclaration(variableDeclaration);
@@ -710,9 +713,11 @@ BinaryOperatorStatement CCodeGenerator::setOriginId(VariableDeclaration tupleBuf
 CCodeGenerator::~CCodeGenerator(){};
 
 BinaryOperatorStatement CCodeGenerator::emitTupleBuffer(VariableDeclaration pipelineContext,
-                                                        VariableDeclaration tupleBufferVariable) {
+                                                        VariableDeclaration tupleBufferVariable,
+                                                        VariableDeclaration workerContextVariable) {
     auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
     emitTupleBuffer.addParameter(VarRef(tupleBufferVariable));
+    emitTupleBuffer.addParameter(VarRef(workerContextVariable));
     return VarRef(pipelineContext).accessRef(emitTupleBuffer);
 }
 BinaryOperatorStatement CCodeGenerator::getBuffer(VariableDeclaration tupleBufferVariable) {
