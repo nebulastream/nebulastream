@@ -53,6 +53,8 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 class BasePlacementStrategy {
 
   private:
+    static constexpr auto NSINK_RETRIES = 3;
+    static constexpr auto NSINK_RETRY_WAIT = std::chrono::seconds(5);
     static constexpr auto ZMQ_DEFAULT_PORT = 5555;
 
   public:
@@ -68,34 +70,20 @@ class BasePlacementStrategy {
 
   private:
     /**
-     * Create a new system sink operator
-     * @param nesNode
-     * @return A logical system generated sink operator
-     */
-    OperatorNodePtr createNetworkSinkOperator(NESTopologyEntryPtr nesNode);
-
-    /**
-     * Create a new system source operator
-     * @param nesNode
-     * @param schema
-     * @return A logical system generated source operator
-     */
-    OperatorNodePtr createNetworkSourceOperator(NESTopologyEntryPtr nesNode, SchemaPtr schema);
-
-    /**
      * @brief Add a system generated network sink operator to the input query plan
      * @param queryPlan
      * @param parentNesNode
+     * @return returns the operator id of the next network source operator
      */
-    void addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode);
+    uint64_t addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode);
 
     /**
-     * @brief Add a system generated network source operator to the input query plan
-     * @param queryPlan
-     * @param currentNesNode
-     * @param childNesNode
+     * @brief Add a system generated network source operator to the input query plan.
+     * @param queryPlan: the query plan to which network source operator is to be added.
+     * @param childNesNode: The child nes node where the corresponding upstream network sink operator is located.
+     * @param operatorId: The id of the network source operator.
      */
-    void addNetworkSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr currentNesNode, NESTopologyEntryPtr childNesNode);
+    void addNetworkSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr childNesNode, uint64_t operatorId);
 
   protected:
     /**
