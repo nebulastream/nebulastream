@@ -74,10 +74,8 @@ class CoordinatorRPCClient {
      * @param nodeProperties
      * @return bool indicating success
      */
-    bool registerNode(std::string ipAddress, uint64_t grpcPort, uint64_t
-                      size_t numberOfCpus,
-                      NESNodeType type,
-                      NodeStats nodeStats);
+    bool registerNode(std::string ipAddress, uint64_t grpcPort, uint64_t numberOfCpus,
+                      NESNodeType type, NodeStats nodeStats);
 
     /**
    * @brief method to unregister a node after the connection is established

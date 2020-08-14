@@ -13,21 +13,17 @@ TopologyManager::TopologyManager() {
     }
 }
 
-NESTopologyCoordinatorNodePtr TopologyManager::createNESCoordinatorNode(size_t id,
-                                                                        const std::string ipAddr,
-                                                                        CPUCapacity cpuCapacity) {
+NESTopologyCoordinatorNodePtr TopologyManager::createNESCoordinatorNode(size_t id, const std::string ipAddr, CPUCapacity cpuCapacity) {
     assert(0);
     return currentPlan->createNESCoordinatorNode(id, ipAddr, cpuCapacity);
 }
 
-NESTopologyWorkerNodePtr TopologyManager::createNESWorkerNode(
-    size_t id, const std::string ipAddr, CPUCapacity cpuCapacity) {
-    return currentPlan->createNESWorkerNode(id, ipAddr, cpuCapacity);
+NESTopologyWorkerNodePtr TopologyManager::createNESWorkerNode(size_t id, const std::string ipAddr, int32_t grpcPort, int32_t dataPort, CPUCapacity cpuCapacity) {
+    return currentPlan->createNESWorkerNode(id, ipAddr, grpcPort, dataPort, cpuCapacity);
 }
 
-NESTopologySensorNodePtr TopologyManager::createNESSensorNode(size_t id, std::string ip,
-                                                              CPUCapacity cpuCapacity) {
-    return currentPlan->createNESSensorNode(id, ip, cpuCapacity);
+NESTopologySensorNodePtr TopologyManager::createNESSensorNode(size_t id, std::string ip, int32_t grpcPort, int32_t dataPort, CPUCapacity cpuCapacity) {
+    return currentPlan->createNESSensorNode(id, ip, grpcPort, dataPort, cpuCapacity);
 }
 
 bool TopologyManager::removeNESWorkerNode(NESTopologyWorkerNodePtr ptr) {

@@ -33,7 +33,7 @@ const std::vector<NESTopologyEntryPtr> NESTopologyGraph::getVertexByIp(
         ++next_vertex;
 
         // check for matching vertex
-        if (graph[*vertex].ptr->getIp() == ip) {
+        if (graph[*vertex].ptr->getIpAddress() == ip) {
             vec.push_back(graph[*vertex].ptr);
         }
     }

@@ -22,7 +22,7 @@ enum NESNodeType {
 
 class NESTopologyEntry {
   public:
-    NESTopologyEntry(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint8_t cpuCapacity);
+    NESTopologyEntry(uint64_t id, std::string ipAddress, int32_t grpcPort, int32_t dataPort, int8_t cpuCapacity);
 
     /**
      * @brief method to get the id of the node
@@ -105,11 +105,11 @@ class NESTopologyEntry {
   protected:
     uint64_t id;
     std::string ipAddress;
-    uint32_t grpcPort;
-    uint32_t dataPort;
+    int32_t grpcPort;
+    int32_t dataPort;
+    int8_t cpuCapacity;
+    int8_t remainingCPUCapacity;
     NodeStats nodeStats;
-    uint8_t cpuCapacity;
-    uint8_t remainingCPUCapacity;
 };
 
 typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;

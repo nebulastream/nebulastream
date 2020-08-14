@@ -3,7 +3,7 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-NESTopologyEntry::NESTopologyEntry(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint8_t cpuCapacity)
+NESTopologyEntry::NESTopologyEntry(uint64_t id, std::string ipAddress, int32_t grpcPort, int32_t dataPort, int8_t cpuCapacity)
     : id(id), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), cpuCapacity(cpuCapacity), remainingCPUCapacity(0) {}
 
 void NESTopologyEntry::setNodeStats(NodeStats nodeStats) {
