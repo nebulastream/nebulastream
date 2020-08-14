@@ -290,7 +290,7 @@ class TestUtils {
         assert(nodePtr);
 
         if (nodeProperties.IsInitialized()) {
-            nodePtr->setNodeProperty(nodeProperties);
+            nodePtr->setNodeStats(nodeProperties);
         }
 
         const NESTopologyEntryPtr kRootNode = topologyManager->getRootNode();

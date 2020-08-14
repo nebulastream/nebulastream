@@ -103,6 +103,12 @@ class UtilityFunctions {
      */
     static uint64_t getNextOperatorId();
 
+    /**
+     * @brief Returns the next free node id
+     * @return node id
+     */
+    static uint64_t getNextNodeId();
+
 };
 }// namespace NES
 

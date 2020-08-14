@@ -214,7 +214,7 @@ bool CoordinatorRPCClient::unregisterNode() {
     }
 }
 
-bool CoordinatorRPCClient::registerNode(std::string localAddress,
+bool CoordinatorRPCClient::registerNode(std::string ipAddress,
                                         size_t numberOfCpus,
                                         NESNodeType type,
                                         NodeStats nodeStats) {
@@ -228,7 +228,7 @@ bool CoordinatorRPCClient::registerNode(std::string localAddress,
     }
 
     RegisterNodeRequest request;
-    request.set_address(localAddress);
+    request.set_address(ipAddress);
     request.set_numberofcpus(numberOfCpus);
     request.mutable_nodeproperties()->CopyFrom(nodeStats);
     request.set_type(type);

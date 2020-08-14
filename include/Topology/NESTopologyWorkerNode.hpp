@@ -23,45 +23,10 @@ namespace NES {
 class NESTopologyWorkerNode : public NESTopologyEntry {
 
   public:
-    NESTopologyWorkerNode(size_t id, std::string ip_addr) {
-        this->id = id;
-        this->ipAddress = std::move(ip_addr);
-        isASink = false;
-        cpuCapacity = 0;
-        remainingCPUCapacity = 0;
-    }
+
+    NESTopologyWorkerNode(size_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint8_t cpuCapacity);
+
     ~NESTopologyWorkerNode() = default;
-
-    /**
-   * @brief method to get the overall cpu capacity of the node
-   * @return size_t cpu capacity
-   */
-    size_t getCpuCapacity();
-
-    /**
-   * @brief method to set CPU capacity
-   * @param CPUCapacity class describing the node capacity
-   */
-    void setCpuCapacity(CPUCapacity cpuCapacity);
-
-    /**
-   * @brief method to reduce the cpu capacity of the node
-   * @param size_t of the value that has to be subtracted
-   * TODO: this should check if the value becomes less than 0
-   */
-    void reduceCpuCapacity(size_t usedCapacity);
-
-    /**
-   * @brief method to increase CPU capacity
-   * @param size_t of the vlaue that has to be added
-   */
-    void increaseCpuCapacity(size_t freedCapacity);
-
-    /**
-   * @brief method to get the actual cpu capacity
-   * @param size_t of the current capacity
-   */
-    size_t getRemainingCpuCapacity();
 
     /**
    * @brief method to make this node a sink node
@@ -88,8 +53,6 @@ class NESTopologyWorkerNode : public NESTopologyEntry {
     std::string getEntryTypeString();
 
   private:
-    size_t cpuCapacity;
-    size_t remainingCPUCapacity;
     bool isASink;
 };
 

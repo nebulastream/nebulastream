@@ -3,62 +3,53 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-void NESTopologyEntry::setNodeProperty(NodeStats nodeStats) {
-    NES_TRACE("setNodeProperty=" << nodeStats.DebugString());
-    this->nodeStats = nodeStats;
-}
+NESTopologyEntry::NESTopologyEntry(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint8_t cpuCapacity)
+    : id(id), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), cpuCapacity(cpuCapacity), remainingCPUCapacity(0) {}
 
-/**
- * @brief method to get the node properties
- * @return serialized json of the node properties object
- */
-std::string NESTopologyEntry::getNodeProperty() {
-    return this->nodeStats.DebugString();
+void NESTopologyEntry::setNodeStats(NodeStats nodeStats) {
+    NES_TRACE("setNodeStats=" << nodeStats.DebugString());
+    this->nodeStats = nodeStats;
 }
 
 std::string NESTopologyEntry::toString() {
     return "id=" + std::to_string(getId()) + " type=" + getEntryTypeString();
 }
 
-NodeStats NESTopologyEntry::getNodeProperties() {
+NodeStats NESTopologyEntry::getNodeStats() {
     return nodeStats;
-}
-
-void NESTopologyEntry::setId(size_t id) {
-    this->id = id;
 }
 
 size_t NESTopologyEntry::getId() {
     return id;
 }
 
-void NESTopologyEntry::setIp(std::string ip) {
-    this->ipAddress = ip;
+uint8_t NESTopologyEntry::getCpuCapacity() {
+    return cpuCapacity;
 }
 
-std::string NESTopologyEntry::getIp() {
-    return this->ipAddress;
+void NESTopologyEntry::reduceCpuCapacity(size_t usedCapacity) {
+    assert(usedCapacity <= remainingCPUCapacity);
+    this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
 }
 
-uint16_t NESTopologyEntry::getPublishPort() {
-    return publish_port;
+void NESTopologyEntry::increaseCpuCapacity(size_t freedCapacity) {
+    this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
 }
 
-void NESTopologyEntry::setPublishPort(uint16_t publishPort) {
-    publish_port = publishPort;
+uint8_t NESTopologyEntry::getRemainingCpuCapacity() {
+    return remainingCPUCapacity;
 }
 
-uint16_t NESTopologyEntry::getReceivePort() {
-    return receive_port;
+const std::string& NESTopologyEntry::getIpAddress() const {
+    return ipAddress;
 }
 
-uint16_t NESTopologyEntry::getNextFreeReceivePort() {
-    receive_port = (receive_port + 12123123 + time(0) * 321 * rand() % 65535) + 1024;
-    return receive_port;
+uint32_t NESTopologyEntry::getGrpcPort() const {
+    return grpcPort;
 }
 
-void NESTopologyEntry::setReceivePort(uint16_t receivePort) {
-    receive_port = receivePort;
+uint32_t NESTopologyEntry::getDataPort() const {
+    return dataPort;
 }
 
 }// namespace NES

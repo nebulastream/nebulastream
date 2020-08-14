@@ -2,27 +2,8 @@
 #include <assert.h>
 namespace NES {
 
-size_t NESTopologySensorNode::getCpuCapacity() {
-    return cpuCapacity;
-}
-
-void NESTopologySensorNode::setCpuCapacity(CPUCapacity cpuCapacity) {
-    this->cpuCapacity = cpuCapacity.toInt();
-    this->remainingCPUCapacity = this->cpuCapacity;
-}
-
-void NESTopologySensorNode::reduceCpuCapacity(size_t usedCapacity) {
-    assert(usedCapacity <= remainingCPUCapacity);
-    this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
-}
-
-void NESTopologySensorNode::increaseCpuCapacity(size_t freedCapacity) {
-    this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
-}
-
-size_t NESTopologySensorNode::getRemainingCpuCapacity() {
-    return remainingCPUCapacity;
-}
+NESTopologySensorNode::NESTopologySensorNode(size_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint8_t cpuCapacity)
+    : NESTopologyEntry(id, ipAddress, grpcPort, dataPort, cpuCapacity), physicalStreamName("default_physical") {}
 
 NESNodeType NESTopologySensorNode::getEntryType() {
     return Sensor;
