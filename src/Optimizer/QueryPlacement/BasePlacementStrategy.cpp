@@ -33,10 +33,36 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
 }
 
 uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode) {
+
+    uint64_t queryId = queryPlan->getQueryId();
+    uint64_t nextNetworkSourceOperatorId = -1;
+    //FIXME: This need a second look when we will consider plans with multiple sources or merge operator.
+    // Ideally we need independent sink and source operator pairs. This change is using existing source operator.
+    // I will re-visit this in #750.
+    NES_DEBUG("BasePlacementStrategy: Find the query sub plan of the parent node");
+    const ExecutionNodePtr parentExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(parentNesNode->getId());
+    if (parentExecutionNode && parentExecutionNode->hasQuerySubPlan(queryId)) {
+        NES_DEBUG("BasePlacementStrategy: Found Query Sub Plan in the parent node");
+        const QueryPlanPtr& parentQuerySubPlan = parentExecutionNode->getQuerySubPlan(queryId);
+        NES_DEBUG("BasePlacementStrategy: Looking for existing network source operator in the parent query sub plan");
+        const vector<SourceLogicalOperatorNodePtr> sourceOperators = parentQuerySubPlan->getSourceOperators();
+        if (!sourceOperators.empty()) {
+            const SourceLogicalOperatorNodePtr sourceOperator = sourceOperators[0];
+            if(sourceOperator->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()){
+                NES_DEBUG("BasePlacementStrategy: found existing network source operator in the parent execution node");
+                nextNetworkSourceOperatorId = sourceOperator->getId();
+            }
+        }
+    }
+
+    if(nextNetworkSourceOperatorId == -1){
+        NES_DEBUG("BasePlacementStrategy: found no existing network source operator in the parent execution node");
+        nextNetworkSourceOperatorId = UtilityFunctions::getNextOperatorId();
+    }
+
     uint64_t operatorId = UtilityFunctions::getNextOperatorId();
-    uint64_t nextNetworkSourceOperatorId = UtilityFunctions::getNextOperatorId();
     Network::NodeLocation nodeLocation(parentNesNode->getId(), parentNesNode->getIpAddress(), parentNesNode->getDataPort());
-    Network::NesPartition nesPartition(queryPlan->getQueryId(), nextNetworkSourceOperatorId, nextNetworkSourceOperatorId, 0);
+    Network::NesPartition nesPartition(queryId, nextNetworkSourceOperatorId, nextNetworkSourceOperatorId, 0);
     const OperatorNodePtr sysSinkOperator = createSinkLogicalOperatorNode(
         Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));
     sysSinkOperator->setId(operatorId);
