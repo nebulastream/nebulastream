@@ -49,18 +49,17 @@ class CoordinatorEngineTest : public testing::Test {
 };
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
-    std::string address = ip + ":" + std::to_string(publish_port);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
 
     auto nodeStats = NodeStats();
-    size_t nodeId = coordinatorEngine->registerNode(address, 4000, 5000, 6, nodeStats, NESNodeType::Sensor);
+    size_t nodeId = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats, NESNodeType::Sensor);
     EXPECT_NE(nodeId, 0);
 
     //test register existing node
     auto nodeStats2 = NodeStats();
-    size_t nodeId2 = coordinatorEngine->registerNode(address, 4002, 5002, 6, nodeStats2, NESNodeType::Sensor);
+    size_t nodeId2 = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats2, NESNodeType::Sensor);
     EXPECT_EQ(nodeId2, 0);
 
     //test unregister not existing node

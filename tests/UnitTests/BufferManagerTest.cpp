@@ -4,14 +4,11 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
-#include <cassert>
 #include <cstdlib>
 #include <deque>
 #include <future>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <log4cxx/appender.h>
-#include <random>
 #include <thread>
 
 namespace NES {
