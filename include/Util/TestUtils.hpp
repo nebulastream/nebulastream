@@ -25,7 +25,7 @@ typedef std::shared_ptr<NodeStats> NodeStatsPtr;
  */
 class TestUtils {
   public:
-    static const size_t timeout = 30;
+    static const size_t timeout = 10;//TODO:increase it again to 30
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
@@ -146,6 +146,8 @@ class TestUtils {
             auto query = queryCatalog->getQueryCatalogEntry(queryId);
             auto statistics = ptr->getQueryStatistics(queryId);
             if (!query || !statistics) {
+                NES_DEBUG("checkCompleteOrTimeout: query=" << query << " stats=" << statistics);
+                sleep(1);
                 continue;
             }
             bool isQueryRunning = query->getQueryStatus() == QueryStatus::Running;
