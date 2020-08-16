@@ -93,12 +93,19 @@ class QueryPlan {
      * @param root
      */
     void addRootOperator(std::shared_ptr<OperatorNode> root);
+
     /**
      * @brief Get all the leaf operators in the query plan
      * Note: in certain stages the source operators might not be Leaf operators
      * @return returns a vector of leaf operators
      */
     std::vector<OperatorNodePtr> getLeafOperators();
+
+    /**
+     * @brief Get all the window operators in the query plan
+     * @return returns a vector of window operators
+     */
+    std::vector<OperatorNodePtr> getWindowOperators();
 
     /**
      * Find if the operator with same Id exists in the plan.

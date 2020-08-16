@@ -75,14 +75,14 @@ void QueryRequestProcessorService::start() {
                         if (!placementSuccessful) {
                             throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for query: " + queryId);
                         }
-                        bool successful = queryDeploymentPhase->execute(queryId);
-                        if (!successful) {
-                            throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with Id " + queryId);
-                        }
                         NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query: " + queryId);
                         bool refinementSuccessful = queryPlacementRefinementPhase->execute(queryPlan->getQueryId());
                         if (!refinementSuccessful) {
                             throw QueryPlacementException("QueryProcessingService: Failed to perform query refinement for query: " + queryId);
+                        }
+                        bool successful = queryDeploymentPhase->execute(queryId);
+                        if (!successful) {
+                            throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with Id " + queryId);
                         }
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                     } else {

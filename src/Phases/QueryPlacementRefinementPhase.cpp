@@ -7,13 +7,12 @@ QueryPlacementRefinementPhasePtr QueryPlacementRefinementPhase::create(GlobalExe
 }
 
 QueryPlacementRefinementPhase::QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan) {
-    globalPlan = globalPlan;
+    globalExecutionPlan = globalPlan;
     windowDistributionRefinement = WindowDistributionRefinement::create();
 }
 
 bool QueryPlacementRefinementPhase::execute(std::string queryId) {
-    windowDistributionRefinement->execute(globalPlan, queryId);
-
+    windowDistributionRefinement->execute(globalExecutionPlan, queryId);
     return true;
 }
 

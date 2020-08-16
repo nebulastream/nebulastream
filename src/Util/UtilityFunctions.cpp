@@ -50,6 +50,10 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
         code << "#include <Sources/DataSource.hpp>" << std::endl;
+        code << "#include <API/Window/WindowMeasure.hpp>" << std::endl;
+        code << "#include <API/Window/WindowType.hpp>" << std::endl;
+        code << "#include <API/Window/TimeCharacteristic.hpp>" << std::endl;
+        code << "#include <API/Window/WindowAggregation.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
         code << "Query createQuery(){" << std::endl;
 

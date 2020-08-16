@@ -26,7 +26,7 @@ class QueryPlacementRefinementPhase {
   private:
     explicit QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan);
     WindowDistributionRefinementPtr windowDistributionRefinement;
-    GlobalExecutionPlanPtr globalPlan;
+    GlobalExecutionPlanPtr globalExecutionPlan;
 };
 }// namespace NES
 #endif//NES_QueryPlacementRefinementPhase_HPP

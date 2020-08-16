@@ -6,6 +6,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <set>
 #include <utility>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 
 namespace NES {
 
@@ -106,7 +107,6 @@ std::vector<OperatorNodePtr> QueryPlan::getRootOperators() {
 }
 
 std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
-
     // Find all the leaf nodes in the query plan
     NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
     std::vector<OperatorNodePtr> leafOperators;
@@ -131,6 +131,35 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
     }
     return leafOperators;
 }
+
+std::vector<OperatorNodePtr> QueryPlan::getWindowOperators() {
+    // Find all the leaf nodes in the query plan
+    NES_DEBUG("QueryPlan: Get all window nodes in the query plan.");
+    std::vector<OperatorNodePtr> windowOperators;
+    // Maintain a list of visited nodes as there are multiple root nodes
+    std::set<u_int64_t> visitedOpIds;
+    NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
+    for (auto rootOperator : rootOperators) {
+        auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
+        for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
+            auto visitingOp = (*itr)->as<OperatorNode>();
+            if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
+                // skip rest of the steps as the node found in already visited node list
+                continue;
+            }
+            NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
+            visitedOpIds.insert(visitingOp->getId());
+            if(visitingOp->instanceOf<WindowLogicalOperatorNode>())
+            {
+                NES_DEBUG("QueryPlan: Found leaf node. Adding to the collection of window nodes.");
+            windowOperators.push_back(visitingOp);
+            }
+        }
+    }
+    return windowOperators;
+}
+
+
 
 bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
 

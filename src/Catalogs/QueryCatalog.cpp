@@ -92,7 +92,7 @@ std::map<std::string, QueryCatalogEntryPtr> QueryCatalog::getAllQueryCatalogEntr
 
 QueryCatalogEntryPtr QueryCatalog::getQueryCatalogEntry(std::string queryId) {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("QueryCatalog: getQueryCatalogEntry with id " << queryId);
+    NES_TRACE("QueryCatalog: getQueryCatalogEntry with id " << queryId);
     return queries[queryId];
 }
 
