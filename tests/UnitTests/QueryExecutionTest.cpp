@@ -251,7 +251,10 @@ TEST_F(QueryExecutionTest, windowQuery) {
 
     // 2. dd window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
-    auto windowType = TumblingWindow::of(TimeCharacteristic::createEventTime(windowSource->getSchema()->get("ts")), Seconds(10));
+    auto field = windowSource->getSchema()->get("ts");
+    auto expr = Attribute("ts");
+    auto windowType = TumblingWindow::of(TimeCharacteristic::createEventTime(expr), Seconds(10));
+
     auto aggregation = Sum::on(Attribute("value"));
     auto windowOperator = createWindowOperator(createWindowDefinition(windowSource->getSchema()->get("key"), aggregation, windowType));
     // 2.1 add window scan operator

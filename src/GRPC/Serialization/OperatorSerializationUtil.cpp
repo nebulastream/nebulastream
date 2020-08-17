@@ -177,7 +177,9 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
         auto serializedTimeCharacterisitc = serializedTumblingWindow.timecharacteristic();
         if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime) {
             auto eventTimeField = AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
-            window = TumblingWindow::of(TimeCharacteristic::createEventTime(eventTimeField), Milliseconds(serializedTumblingWindow.size()));
+            auto field = Attribute(serializedTimeCharacterisitc.field());
+            window = TumblingWindow::of(TimeCharacteristic::createEventTime(field), Milliseconds(serializedTumblingWindow.size()));
+
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
         }

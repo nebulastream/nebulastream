@@ -128,7 +128,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerWindowQuery) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
 //    string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), Sum::on(Attribute(\"id\"))).sink(PrintSinkDescriptor::create());";
-    string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(AttributeField(\"id\")), Seconds(10)), Sum::on(Attribute(\"id\"))).sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"id\")), "
+                   "Seconds(10)), Sum::on(Attribute(\"id\"))).sink(PrintSinkDescriptor::create());";
 
     string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
