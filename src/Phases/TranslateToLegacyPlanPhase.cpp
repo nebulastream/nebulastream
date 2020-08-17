@@ -103,8 +103,6 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         //         Translate window operator node.
         auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
 
-
-
         auto legacyWindowScan = createWindowScanOperator(windowOperator->getOutputSchema());
         // todo both the window operator and the window scan get teh same ID. This should not be a problem.
         legacyWindowScan->setOperatorId(operatorNode->getId());

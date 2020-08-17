@@ -10,6 +10,8 @@ typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 class TimeCharacteristic;
 typedef std::shared_ptr<TimeCharacteristic> TimeCharacteristicPtr;
 
+class ExpressionItem;
+
 /**
  * @brief The time stamp characteristic represents if an window is in event or processing time.
  */
@@ -36,7 +38,7 @@ class TimeCharacteristic {
      * @param field the field from which we want to extract the time.
      * @return
      */
-    static TimeCharacteristicPtr createEventTime(AttributeFieldPtr field);
+    static TimeCharacteristicPtr createEventTime(ExpressionItem field);
 
     /**
      * @return The TimeCharacteristic type.
