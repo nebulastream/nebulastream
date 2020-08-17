@@ -24,7 +24,7 @@ class UpdateTopologyRemoteTest : public testing::Test {
     }
 
     void SetUp() {
-        rpcPort = rpcPort + 2;
+        rpcPort = rpcPort + 30;
     }
 
     static void TearDownTestCase() {
