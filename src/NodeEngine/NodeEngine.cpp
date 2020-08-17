@@ -340,6 +340,10 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage) {
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
+    if(err.getErrorType() == Network::Messages::ErrorType::kPartitionNotRegisteredError){
+        NES_WARNING("NodeEngine: Unable to find the NES Partition " << err.getChannelId());
+        return;
+    }
     NES_THROW_RUNTIME_ERROR(err.getErrorTypeAsString());
 }
 

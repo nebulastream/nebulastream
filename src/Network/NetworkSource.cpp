@@ -38,7 +38,8 @@ bool NetworkSource::start() {
 
 bool NetworkSource::stop() {
     // TODO ensure proper termination: what should happen here when we call stop but refCnt has not reached zero?
-    return networkManager->unregisterSubpartitionConsumer(nesPartition) == 0;
+    networkManager->unregisterSubpartitionConsumer(nesPartition);
+    return true;
 }
 
 void NetworkSource::runningRoutine(BufferManagerPtr, QueryManagerPtr) {
