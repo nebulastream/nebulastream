@@ -179,7 +179,6 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
             auto eventTimeField = AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
             window = TumblingWindow::of(TimeCharacteristic::createEventTime(field), Milliseconds(serializedTumblingWindow.size()));
-
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
         }
@@ -215,7 +214,11 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     if (timeCharacteristic->getType() == TimeCharacteristic::EventTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime);
         timeCharacteristicDetails.set_field(timeCharacteristic->getField()->name);
-    } else {
+    }
+    else if (timeCharacteristic->getType() == TimeCharacteristic::ProcessingTime) {
+        timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime);
+    }
+    else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
     if (windowType->isTumblingWindow()) {
