@@ -226,6 +226,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
         auto tumblingWindowDetails = SerializableOperator_WindowDetails_TumblingWindow();
         tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
         tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
+        windowDetails.mutable_windowtype()->PackFrom(tumblingWindowDetails);
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
     }
