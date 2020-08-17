@@ -126,13 +126,26 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerWindowQueryEventTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
+    //register physical stream
+    PhysicalStreamConfig conf;
+    conf.logicalStreamName = "exdra";
+    conf.physicalStreamName = "test_stream";
+    conf.sourceType = "CSVSource";
+    conf.sourceConfig = "../tests/test_data/exdra.csv";
+    conf.numberOfBuffersToProduce = 2;
+    conf.sourceFrequency = 2;
+    wrk1->registerPhysicalStream(conf);
+
+    std::string filePath = "contTestOut.csv";
+    remove(filePath.c_str());
+
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"id\")), "
-                   "Seconds(10)), Sum::on(Attribute(\"id\"))).sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"features_properties_time\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"metadata_generated\")), "
+                   "Seconds(10)), Sum::on(Attribute(\"features_properties_time\"))).sink(PrintSinkDescriptor::create());";
 
     string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -165,7 +178,23 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerWindowQueryProcessingTime) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), Sum::on(Attribute(\"id\"))).sink(PrintSinkDescriptor::create());";
+
+    //register physical stream
+    PhysicalStreamConfig conf;
+    conf.logicalStreamName = "exdra";
+    conf.physicalStreamName = "test_stream";
+    conf.sourceType = "CSVSource";
+    conf.sourceConfig = "../tests/test_data/exdra.csv";
+    conf.numberOfBuffersToProduce = 10;
+    conf.sourceFrequency = 1;
+    wrk1->registerPhysicalStream(conf);
+
+    std::string filePath = "contTestOut.csv";
+    remove(filePath.c_str());
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"features_properties_time\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
+                   "Seconds(1)), Sum::on(Attribute(\"features_properties_time\"))).sink(PrintSinkDescriptor::create());";
 
     string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));

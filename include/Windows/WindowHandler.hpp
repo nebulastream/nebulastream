@@ -104,6 +104,11 @@ void WindowHandler::aggregateWindows(WindowSliceStore<PartialAggregateType>* sto
     // create result vector of windows
     auto windows = std::make_shared<std::vector<WindowState>>();
     // the window type addes result windows to the windows vectors
+    if(store->getLastWatermark() == 0)
+    {
+            store->setLastWatermark(watermark);
+    }
+
     windowDefinition->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);
     // allocate partial final aggregates for each window
     auto partialFinalAggregates = std::vector<PartialAggregateType>(windows->size());
