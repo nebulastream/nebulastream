@@ -344,14 +344,21 @@ bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineC
 
     // Read key value from record
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
-    auto keyVariableAttributeDeclaration =
-        context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
-    auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
-                                             .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                                                 VarRef(
-                                                     keyVariableAttributeDeclaration)));
-    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
-        keyVariableAttributeStatement));
+    if(window->isKeyed()){
+        auto keyVariableAttributeDeclaration =
+            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
+        auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
+            .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                VarRef(
+                    keyVariableAttributeDeclaration)));
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+            keyVariableAttributeStatement));
+    }else{
+        auto defaultKeyAssignment = VarDeclStatement(keyVariableDeclaration).assign(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+            defaultKeyAssignment));
+    }
+
 
     // get key handle for current key
     auto keyHandlerVariableDeclaration = VariableDeclaration::create(
