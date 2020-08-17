@@ -35,15 +35,18 @@ TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create() {
 
 TranslateToLegacyPlanPhase::TranslateToLegacyPlanPhase() {}
 
-OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine) {
+OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine, OperatorPtr lagacyParent) {
+    OperatorPtr legacyOperator;
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // Translate Source operator node.
         auto sourceNodeOperator = operatorNode->as<SourceLogicalOperatorNode>();
         const SourceDescriptorPtr sourceDescriptor = sourceNodeOperator->getSourceDescriptor();
         const DataSourcePtr dataSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, nodeEngine);
-        const OperatorPtr operatorPtr = createSourceOperator(dataSource);
-        operatorPtr->setOperatorId(operatorNode->getId());
-        return operatorPtr;
+        legacyOperator = createSourceOperator(dataSource);
+        legacyOperator->setOperatorId(operatorNode->getId());
+        lagacyParent->addChild(legacyOperator);
+        legacyOperator->setParent(lagacyParent);
+        return legacyOperator;
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         // Translate filter operator node.
         auto filterNodeOperator = operatorNode->as<FilterLogicalOperatorNode>();
@@ -53,9 +56,11 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         if (legacyPredicate == nullptr) {
             NES_FATAL_ERROR("TranslateToLegacyPhase: Error during translating filter expression");
         }
-        const OperatorPtr operatorPtr = createFilterOperator(legacyPredicate);
-        operatorPtr->setOperatorId(operatorNode->getId());
-        return operatorPtr;
+        legacyOperator = createFilterOperator(legacyPredicate);
+        legacyOperator->setOperatorId(operatorNode->getId());
+        lagacyParent->addChild(legacyOperator);
+        legacyOperator->setParent(lagacyParent);
+        return legacyOperator;
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         // Translate map operator node.
         auto mapOperatorNode = operatorNode->as<MapLogicalOperatorNode>();
@@ -70,29 +75,49 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
             NES_FATAL_ERROR("TranslateToLegacyPhase: Error during translating map expression");
         }
         // Create legacy map operator
-        const OperatorPtr operatorPtr = createMapOperator(legacyField->getAttributeField(), legacyPredicate);
-        operatorPtr->setOperatorId(operatorNode->getId());
-        return operatorPtr;
+        legacyOperator = createMapOperator(legacyField->getAttributeField(), legacyPredicate);
+        legacyOperator->setOperatorId(operatorNode->getId());
+        lagacyParent->addChild(legacyOperator);
+        legacyOperator->setParent(lagacyParent);
+        return legacyOperator;
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
         // Translate merge operator node.
         auto mergeOperatorNode = operatorNode->as<MergeLogicalOperatorNode>();
         // Create legacy merge operator
         const SchemaPtr schema = mergeOperatorNode->getOutputSchema();
-        const OperatorPtr operatorPtr = createMergeOperator(schema);
-        operatorPtr->setOperatorId(operatorNode->getId());
-        return operatorPtr;
+        legacyOperator = createMergeOperator(schema);
+        legacyOperator->setOperatorId(operatorNode->getId());
+        lagacyParent->addChild(legacyOperator);
+        legacyOperator->setParent(lagacyParent);
+        return legacyOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         //         Translate sink operator node.
         auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
         const SinkDescriptorPtr sinkDescriptor = sinkNodeOperator->getSinkDescriptor();
         const SchemaPtr schema = sinkNodeOperator->getOutputSchema();
         const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine);
-        const OperatorPtr operatorPtr = createSinkOperator(dataSink);
-        operatorPtr->setOperatorId(operatorNode->getId());
-        return operatorPtr;
+        legacyOperator = createSinkOperator(dataSink);
+        legacyOperator->setOperatorId(operatorNode->getId());
+        return legacyOperator;
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         //         Translate window operator node.
-        NES_NOT_IMPLEMENTED();
+        auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
+
+
+
+        auto legacyWindowScan = createWindowScanOperator(windowOperator->getOutputSchema());
+        // todo both the window operator and the window scan get teh same ID. This should not be a problem.
+        legacyWindowScan->setOperatorId(operatorNode->getId());
+        lagacyParent->addChild(legacyWindowScan);
+        legacyWindowScan->setParent(lagacyParent);
+
+        auto legacyWindowOperator = createWindowOperator(windowOperator->getWindowDefinition());
+        legacyWindowOperator->setOperatorId(operatorNode->getId());
+
+        legacyWindowScan->addChild(legacyWindowOperator);
+        legacyWindowOperator->setParent(legacyWindowScan);
+
+        return legacyWindowOperator;
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED();
@@ -100,13 +125,12 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
 /**
  * Translade operator node and all its children to the legacy representation.
  */
-OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine) {
+OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine, OperatorPtr legacyParent) {
     NES_DEBUG("TranslateToLegacyPhase: translate " << operatorNode);
-    auto legacyOperator = transformIndividualOperator(operatorNode, nodeEngine);
+    auto legacyOperator = transformIndividualOperator(operatorNode, nodeEngine, legacyParent);
     for (const NodePtr& child : operatorNode->getChildren()) {
-        auto legacyChildOperator = transform(child->as<OperatorNode>(), nodeEngine);
-        legacyOperator->addChild(legacyChildOperator);
-        legacyChildOperator->setParent(legacyOperator);
+        auto legacyChildOperator = transform(child->as<OperatorNode>(), nodeEngine, legacyOperator);
+
     }
     NES_DEBUG("TranslateToLegacyPhase: got " << legacyOperator);
     return legacyOperator;

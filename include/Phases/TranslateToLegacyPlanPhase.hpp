@@ -37,7 +37,7 @@ class TranslateToLegacyPlanPhase {
      * @param operatorNode
      * @return Legacy Operator Tree
      */
-    OperatorPtr transform(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine);
+    OperatorPtr transform(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine, OperatorPtr legacyParent = nullptr);
 
     TranslateToLegacyPlanPhase();
 
@@ -46,7 +46,7 @@ class TranslateToLegacyPlanPhase {
      * @param operatorNode
      * @return Legacy Operator
      */
-    OperatorPtr transformIndividualOperator(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine);
+    OperatorPtr transformIndividualOperator(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine, OperatorPtr legacyParent);
     /**
      * @brief Translates an expression to a legacy user api expression.
      * @param expression node

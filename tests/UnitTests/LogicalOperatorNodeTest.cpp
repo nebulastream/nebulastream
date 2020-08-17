@@ -1434,4 +1434,31 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
     ASSERT_TRUE(legacySource->getOperatorType() == SOURCE_OP);
 }
 
+TEST_F(LogicalOperatorNodeTest, translateWindowOperatorToLegacy) {
+    /**
+     * Sink -> Window -> Source
+     */
+    auto schema = Schema::create();
+
+
+
+    auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
+    auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
+    auto windowOperator = createWindowLogicalOperatorNode(createWindowDefinition(Sum::on(Attribute("test")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10))));
+    sinkOperator->addChild(windowOperator);
+    windowOperator->addChild(sourceOp);
+
+    auto engine = NodeEngine::create("127.0.0.1", 30000);
+    ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
+    // we pass null as the buffer manager as we just want to check if the topology is correct.
+    auto translatePhase = TranslateToLegacyPlanPhase::create();
+    auto legacySink = translatePhase->transform(sinkOperator->as<OperatorNode>(), engine);
+    std::cout << legacySink->toString() << std::endl;
+    ASSERT_TRUE(legacySink->getOperatorType() == SINK_OP);
+    auto legacyWindowScan = legacySink->getChildren()[0];
+    ASSERT_TRUE(legacyWindowScan->getOperatorType() == SOURCE_OP);
+    auto legacyWindowOperator = legacyWindowScan->getChildren()[0];
+    ASSERT_TRUE(legacyWindowOperator->getOperatorType() == WINDOW_OP);
+}
+
 }// namespace NES
