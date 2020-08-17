@@ -63,7 +63,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(
                                                                                       << channelId);
                         return std::make_unique<OutputChannel>(std::move(zmqSocket), channelId, socketAddr);
                     }
-//                    protocol.onChannelError(Messages::ErrorMessage(channelId, serverReadyMsg->getErrorType()));
+                    protocol.onChannelError(Messages::ErrorMessage(channelId, serverReadyMsg->getErrorType()));
                     break;
                 }
                 case Messages::kErrorMessage: {
