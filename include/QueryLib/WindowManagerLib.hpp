@@ -36,8 +36,8 @@ class SliceMetaData {
     uint64_t end_ts;
 };
 
-inline uint64_t getTsFromClock() {
-    return time(NULL);
+inline uint64_t  getTsFromClock() {
+    return time(NULL)*1000;
 }
 
 /**
