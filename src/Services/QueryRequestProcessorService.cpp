@@ -9,9 +9,9 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Phases/QueryPlacementPhase.hpp>
+#include <Phases/QueryPlacementRefinementPhase.hpp>
 #include <Phases/QueryRewritePhase.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
-#include <Phases/QueryPlacementRefinementPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>

@@ -1,9 +1,9 @@
 #ifndef NES_QueryPlacementRefinementPhase_HPP
 #define NES_QueryPlacementRefinementPhase_HPP
 
-#include <memory>
 #include <Optimizer/QueryRefinement/WindowDistributionRefinement.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <memory>
 
 namespace NES {
 class QueryPlacementRefinementPhase;

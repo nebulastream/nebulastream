@@ -27,7 +27,7 @@ bool WindowDistributionRefinement::execute(GlobalExecutionPlanPtr globalPlan, st
     for (auto& node : nodes) {
         QueryPlanPtr plan = node->getQuerySubPlan(queryId);
         std::vector<OperatorNodePtr> windowOps = plan->getWindowOperators();
-//        std::vector<std::shared_ptr<WindowLogicalOperatorNode>> vec = node->getNodesByType<WindowLogicalOperatorNode>();
+        //        std::vector<std::shared_ptr<WindowLogicalOperatorNode>> vec = node->getNodesByType<WindowLogicalOperatorNode>();
         if (windowOps.size() > 0) {
 
             NES_DEBUG("WindowDistributionRefinement::execute: window operator found on " << windowOps.size() << " nodes");
@@ -35,15 +35,15 @@ bool WindowDistributionRefinement::execute(GlobalExecutionPlanPtr globalPlan, st
                 NES_DEBUG("WindowDistributionRefinement::execute: window operator found on node " << node->toString() << " windowOp=" << windowOp->toString());
                 if (!distributedWindowing) {//centralized window
                     NES_DEBUG("WindowDistributionRefinement::execute: introduce centralized window operator on node " << node->toString() << " windowOp=" << windowOp->toString());
-//                    LogicalOperatorNodePtr newWindowOp = windowOp->copyIntoCentralizedWindow();
+                    //                    LogicalOperatorNodePtr newWindowOp = windowOp->copyIntoCentralizedWindow();
                     //replace old with new one
-//                    windowOp->replace(newWindowOp, windowOp);
+                    //                    windowOp->replace(newWindowOp, windowOp);
                     //TODO comment philipp: this is a reverse factory pattern. I think it would be more clear if we have a factory on the CentralWindow::create(WindowLogicalOperatorNode). Same for the DistributedWidnow
                 } else {//distributed window
                     NES_DEBUG("WindowDistributionRefinement::execute: introduce distributed window operator on node " << node->toString() << " windowOp=" << windowOp->toString());
-//                    LogicalOperatorNodePtr newWindowOp = windowOp->copyIntoDistributedWindow();
-//                    //replace old with new one
-//                    windowOp->replace(newWindowOp, windowOp);
+                    //                    LogicalOperatorNodePtr newWindowOp = windowOp->copyIntoDistributedWindow();
+                    //                    //replace old with new one
+                    //                    windowOp->replace(newWindowOp, windowOp);
                     //TODO: here we have to split the operator into the three part operators and deploy them
                 }
             }

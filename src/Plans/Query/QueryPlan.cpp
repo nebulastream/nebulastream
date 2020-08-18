@@ -1,12 +1,12 @@
 #include <Nodes/Node.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <set>
 #include <utility>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 
 namespace NES {
 
@@ -149,17 +149,14 @@ std::vector<OperatorNodePtr> QueryPlan::getWindowOperators() {
             }
             NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
             visitedOpIds.insert(visitingOp->getId());
-            if(visitingOp->instanceOf<WindowLogicalOperatorNode>())
-            {
+            if (visitingOp->instanceOf<WindowLogicalOperatorNode>()) {
                 NES_DEBUG("QueryPlan: Found leaf node. Adding to the collection of window nodes.");
-            windowOperators.push_back(visitingOp);
+                windowOperators.push_back(visitingOp);
             }
         }
     }
     return windowOperators;
 }
-
-
 
 bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
 

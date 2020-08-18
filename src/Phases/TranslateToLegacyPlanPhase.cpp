@@ -128,7 +128,6 @@ OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode, 
     auto legacyOperator = transformIndividualOperator(operatorNode, nodeEngine, legacyParent);
     for (const NodePtr& child : operatorNode->getChildren()) {
         auto legacyChildOperator = transform(child->as<OperatorNode>(), nodeEngine, legacyOperator);
-
     }
     NES_DEBUG("TranslateToLegacyPhase: got " << legacyOperator);
     return legacyOperator;

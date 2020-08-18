@@ -7,6 +7,6 @@ LogicalOperatorNodePtr createDistributedWindowLogicalOperatorNode(const WindowDe
 }
 
 DistributedWindowOperator::DistributedWindowOperator(const WindowDefinitionPtr& windowDefinition)
-    : WindowLogicalOperatorNode(windowDefinition){
+    : WindowLogicalOperatorNode(windowDefinition) {
 }
 }// namespace NES

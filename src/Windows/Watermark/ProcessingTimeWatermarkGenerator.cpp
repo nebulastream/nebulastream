@@ -6,12 +6,10 @@ namespace NES {
 ProcessingTimeWatermarkGenerator::ProcessingTimeWatermarkGenerator() {
 }
 
-uint64_t ProcessingTimeWatermarkGenerator::getWatermark()
-{
+uint64_t ProcessingTimeWatermarkGenerator::getWatermark() {
     auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     NES_DEBUG("ProcessingTimeWatermarkGenerator::getWatermark generate ts=" << ts);
     return ts;
 }
-
 
 }// namespace NES
