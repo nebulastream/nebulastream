@@ -34,22 +34,6 @@ OperatorNodePtr WindowLogicalOperatorNode::copy() {
     copy->setOutputSchema(outputSchema);
     return copy;
 }
-LogicalOperatorNodePtr WindowLogicalOperatorNode::copyIntoCentralizedWindow() {
-    auto copy = createCentralWindowLogicalOperatorNode(windowDefinition);
-    copy->setId(id);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
-}
-
-LogicalOperatorNodePtr WindowLogicalOperatorNode::copyIntoDistributedWindow() {
-    auto copy = createDistributedWindowLogicalOperatorNode(windowDefinition);
-    copy->setId(id);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
-}
-
 
 bool WindowLogicalOperatorNode::inferSchema() {
 

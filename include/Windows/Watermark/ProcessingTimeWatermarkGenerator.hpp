@@ -6,9 +6,9 @@
 
 namespace NES {
 
-class ProcessingTimeWatermark : public Watermark {
+class ProcessingTimeWatermarkGenerator : public Watermark {
   public:
-    explicit ProcessingTimeWatermark();
+    explicit ProcessingTimeWatermarkGenerator();
 
     /**
     * @brief this function returns the watermark value as a processing time value

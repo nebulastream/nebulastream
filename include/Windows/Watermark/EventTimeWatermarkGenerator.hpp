@@ -6,9 +6,9 @@
 
 namespace NES {
 
-class EventTimeWatermark : public Watermark {
+class EventTimeWatermarkGenerator : public Watermark {
   public:
-    explicit EventTimeWatermark();
+    explicit EventTimeWatermarkGenerator();
 
     /**
     * @brief this function returns the watermark value as a event time value

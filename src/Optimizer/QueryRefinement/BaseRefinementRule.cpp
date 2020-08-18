@@ -1,1 +1,1 @@
-#include "Optimizer/QueryRefinement/BaseRefinementRule.hpp"
+#include "Optimizer/QueryRefinement/BaseRewriteRule.hpp"
