@@ -242,7 +242,6 @@ TEST_F(QueryExecutionTest, windowQuery) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
     // Create Operator Tree
-
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(
         nodeEngine->getBufferManager(),

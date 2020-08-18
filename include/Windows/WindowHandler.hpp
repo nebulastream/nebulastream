@@ -100,13 +100,17 @@ void WindowHandler::aggregateWindows(WindowSliceStore<PartialAggregateType>* sto
     // TODO we should add a allowed lateness to support out of order events
     auto windowTimeType = windowDefinition->windowType->getTimeCharacteristic();
     auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMaxTs();
+    NES_DEBUG("WindowHandler::aggregateWindows: current watermak is=" << watermark);
 
     // create result vector of windows
     auto windows = std::make_shared<std::vector<WindowState>>();
-    // the window type addes result windows to the windows vectors
-    if(store->getLastWatermark() == 0)
-    {
-            store->setLastWatermark(watermark);
+    // the window type adds result windows to the windows vectors
+    if (store->getLastWatermark() == 0) {
+        TumblingWindow* tumb = dynamic_cast<TumblingWindow*>(windowDefinition->windowType.get());
+        NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << watermark - tumb->getSize().getTime());
+        store->setLastWatermark(watermark - tumb->getSize().getTime());
+    } else {
+        NES_DEBUG("WindowHandler::aggregateWindows: last watermak is=" << store->getLastWatermark());
     }
 
     windowDefinition->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);

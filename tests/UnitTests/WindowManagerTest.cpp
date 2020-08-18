@@ -4,9 +4,9 @@
 #include <API/Window/WindowAggregation.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 
 #include <QueryLib/WindowManagerLib.hpp>
 #include <Util/Logger.hpp>
@@ -19,16 +19,15 @@
 #include <thread>
 
 #include <API/Schema.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
-#include <Windows/WindowHandler.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
+#include <Windows/WindowHandler.hpp>
 namespace NES {
 class WindowManagerTest : public testing::Test {
   public:
-    void SetUp()
-    {
+    void SetUp() {
         NES::setupLogging("WindowManagerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WindowMangerTest test class.");
     }
@@ -48,8 +47,7 @@ class TestAggregation : public WindowAggregation {
                             StructDeclaration, BinaryOperatorStatement){};
 };
 
-TEST_F(WindowManagerTest, testSumAggregation)
-{
+TEST_F(WindowManagerTest, testSumAggregation) {
     auto field = AttributeField::create("test", DataTypeFactory::createInt64());
     const WindowAggregationPtr aggregation = Sum::on(Attribute("test"));
     if (Sum* store = dynamic_cast<Sum*>(aggregation.get())) {
@@ -61,15 +59,14 @@ TEST_F(WindowManagerTest, testSumAggregation)
     }
 }
 
-TEST_F(WindowManagerTest, testCheckSlice)
-{
+TEST_F(WindowManagerTest, testCheckSlice) {
     auto store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = std::make_shared<TestAggregation>(TestAggregation());
 
     auto windowDef = std::make_shared<WindowDefinition>(
-     WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(60))));
+        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(60))));
 
-//    WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(AttributeField::create("ts", DataTypeFactory::createUInt64())), Seconds(60))));
+    //    WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(AttributeField::create("ts", DataTypeFactory::createUInt64())), Seconds(60))));
 
     auto windowManager = new WindowManager(windowDef);
     uint64_t ts = 10;
@@ -90,16 +87,10 @@ TEST_F(WindowManagerTest, testCheckSlice)
 TEST_F(WindowManagerTest, testWindowTrigger) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-
     auto aggregation = Sum::on(Attribute("id"));
 
     auto windowDef = std::make_shared<WindowDefinition>(
-        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("test")), Milliseconds(10))));
-//        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(60))));
-
-
-//    WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(AttributeField::create("test", DataTypeFactory::createUInt64())), Milliseconds(10))));
+        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10))));
 
     auto w = WindowHandler(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
@@ -112,7 +103,8 @@ TEST_F(WindowManagerTest, testWindowTrigger) {
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&){}) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&) {
+                                           }) {
             // nop
         }
     };
@@ -121,7 +113,7 @@ TEST_F(WindowManagerTest, testWindowTrigger) {
     auto nextPipeline = PipelineStage::create(0, "1", executable, context, nullptr);
     w.setup(nextPipeline, 0);
 
-    auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*)w.getWindowState();
+    auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w.getWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();
@@ -131,6 +123,7 @@ TEST_F(WindowManagerTest, testWindowTrigger) {
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
+    store->setLastWatermark(7);
 
     ts = 14;
     w.getWindowManager()->sliceStream(ts, store);
@@ -138,11 +131,11 @@ TEST_F(WindowManagerTest, testWindowTrigger) {
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
     std::cout << aggregates[sliceIndex] << std::endl;
-    // ASSERT_EQ(buffers_count, buffers_managed);
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
+    w.aggregateWindows<int64_t, int64_t>(store, windowDef, buf);
     w.aggregateWindows<int64_t, int64_t>(store, windowDef, buf);
 
     size_t tupleCnt = buf.getNumberOfTuples();
@@ -150,7 +143,7 @@ TEST_F(WindowManagerTest, testWindowTrigger) {
     ASSERT_NE(buf.getBuffer(), nullptr);
     ASSERT_EQ(tupleCnt, 1);
 
-    uint64_t* tuples = (uint64_t*)buf.getBuffer();
+    uint64_t* tuples = (uint64_t*) buf.getBuffer();
     ASSERT_EQ(tuples[0], 1);
 }
-} // namespace NES
+}// namespace NES
