@@ -57,7 +57,7 @@ void QueryRequestProcessorService::start() {
                         }
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
                     } else if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
-                        NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " + queryId);
+                        NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " + queryId << " status=" << queryCatalogEntry.getQueryStatusAsString());
                         queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
                         std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
                         NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " + queryId);

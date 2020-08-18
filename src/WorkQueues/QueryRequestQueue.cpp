@@ -20,7 +20,7 @@ bool QueryRequestQueue::add(QueryCatalogEntryPtr queryCatalogEntry) {
         NES_INFO("QueryRequestQueue: Changing the status of already present entry in the request queue to:" << queryCatalogEntry->getQueryStatus());
         itr->setQueryStatus(queryCatalogEntry->getQueryStatus());
     } else {
-        NES_INFO("QueryCatalog: Adding query with id " << queryId << " to the scheduling queue");
+        NES_INFO("QueryRequestQueue: Adding query with id " << queryId << " to the scheduling queue");
         //Save a copy of the catalog entry to prevent it from changes happening in the catalog
         schedulingQueue.push_back(queryCatalogEntry->copy());
     }
