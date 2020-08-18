@@ -23,7 +23,6 @@ namespace NES {
 class NESTopologyWorkerNode : public NESTopologyEntry {
 
   public:
-
     NESTopologyWorkerNode(size_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint8_t cpuCapacity);
 
     ~NESTopologyWorkerNode() = default;

@@ -43,17 +43,17 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
         "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string cmdCoord = "../nesCoordinator --coordinatorPort=12348";
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
     bp::child coordinatorProc(cmdCoord.c_str());
 
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
 
-    string cmdWrk1 = "../nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352";
+    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352";
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
-    string cmdWrk2 = "../nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354";
+    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354";
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
@@ -67,7 +67,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
-    NES_INFO( "string submit=" << ss.str());
+    NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
     web::json::value json_return;
@@ -75,25 +75,25 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
     web::http::client::http_client client(
         "http://127.0.0.1:8081/v1/nes/query/execute-query");
     client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-        NES_INFO("get first then");
-        return response.extract_json();
+                                                                      NES_INFO("get first then");
+                                                                      return response.extract_json();
                                                                   })
         .then([&json_return](const pplx::task<web::json::value>& task) {
-        try {
-            NES_INFO("set return");
-            json_return = task.get();
-        } catch (const web::http::http_exception& e) {
-            NES_INFO("error while setting return");
-                NES_INFO( "error " << e.what());
-        }
+            try {
+                NES_INFO("set return");
+                json_return = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
+            }
         })
         .wait();
 
     uint64_t queryId = json_return.at("queryId").as_integer();
 
-    NES_INFO( "try to acc return");
-    NES_INFO( "Query ID: " << queryId);
-    EXPECT_TRUE(queryId != -1);
+    NES_INFO("try to acc return");
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2));
 
@@ -130,18 +130,18 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------+";
-    NES_INFO( "content=" << content );
-    NES_INFO( "expContent=" << expectedContent );
+    NES_INFO("content=" << content);
+    NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
 
-    NES_INFO( "Killing worker 1 process->PID: " << workerPid1 );
+    NES_INFO("Killing worker 1 process->PID: " << workerPid1);
     workerProc1.terminate();
-    NES_INFO( "Killing worker 2 process->PID: " << workerPid2 );
+    NES_INFO("Killing worker 2 process->PID: " << workerPid2);
     workerProc2.terminate();
-    NES_INFO( "Killing coordinator process->PID: " << coordinatorPid );
+    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
     coordinatorProc.terminate();
 }
 }// namespace NES

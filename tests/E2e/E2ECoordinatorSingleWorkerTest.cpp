@@ -81,7 +81,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     NES_INFO("try to acc return");
     uint64_t queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
-    EXPECT_TRUE(queryId != -1);
+    EXPECT_NE(queryId, -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
@@ -138,7 +138,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     uint64_t queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
-    EXPECT_TRUE(queryId != -1);
+    EXPECT_NE(queryId, -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
@@ -225,7 +225,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     NES_INFO("try to acc return");
     uint64_t queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
-    EXPECT_TRUE(queryId != -1);
+    EXPECT_NE(queryId, -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
@@ -309,7 +309,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithF
 
     uint64_t queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
-    EXPECT_TRUE(queryId != -1);
+    EXPECT_NE(queryId, -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
@@ -399,7 +399,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithF
     NES_INFO("try to acc return");
     uint64_t queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
-    EXPECT_TRUE(queryId != -1);
+    EXPECT_NE(queryId, -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 

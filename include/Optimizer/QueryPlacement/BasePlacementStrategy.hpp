@@ -1,11 +1,11 @@
 #ifndef NESPLACEMENTOPTIMIZER_HPP
 #define NESPLACEMENTOPTIMIZER_HPP
 
+#include <chrono>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <vector>
-#include <chrono>
 
 namespace NES {
 
