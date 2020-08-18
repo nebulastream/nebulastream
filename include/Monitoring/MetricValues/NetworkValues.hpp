@@ -48,7 +48,7 @@ class NetworkValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(NetworkValues, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix);
+void serialize(NetworkValues metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 
 }
 

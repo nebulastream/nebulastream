@@ -8,7 +8,7 @@ class Schema;
 class TupleBuffer;
 
 /**
- * @brief This class represents the metrics read from /proc/stat. 
+ * @brief This class represents the metrics read from /proc/stat.
  */
 class CpuValues {
   public:
@@ -41,7 +41,7 @@ class CpuValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(CpuValues, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix);
+void serialize(CpuValues metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 
