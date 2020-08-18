@@ -32,7 +32,6 @@ class WindowDistributionRefinement : public BaseRewriteRule {
 
   private:
     explicit WindowDistributionRefinement();
-
 };
 
 }// namespace NES

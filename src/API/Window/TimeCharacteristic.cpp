@@ -1,6 +1,6 @@
-#include <API/Window/TimeCharacteristic.hpp>
-#include <API/Expressions/Expressions.hpp>
 #include <API/AttributeField.hpp>
+#include <API/Expressions/Expressions.hpp>
+#include <API/Window/TimeCharacteristic.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 

@@ -5,11 +5,9 @@ namespace NES {
 EventTimeWatermarkGenerator::EventTimeWatermarkGenerator() {
 }
 
-uint64_t EventTimeWatermarkGenerator::getWatermark()
-{
+uint64_t EventTimeWatermarkGenerator::getWatermark() {
     NES_NOT_IMPLEMENTED();
     return 0;
 }
-
 
 }// namespace NES

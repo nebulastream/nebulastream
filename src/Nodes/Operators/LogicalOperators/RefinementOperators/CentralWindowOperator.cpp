@@ -7,6 +7,6 @@ LogicalOperatorNodePtr createCentralWindowLogicalOperatorNode(const WindowDefini
 }
 
 CentralWindowOperator::CentralWindowOperator(const WindowDefinitionPtr& windowDefinition)
-    : WindowLogicalOperatorNode(windowDefinition){
+    : WindowLogicalOperatorNode(windowDefinition) {
 }
 }// namespace NES

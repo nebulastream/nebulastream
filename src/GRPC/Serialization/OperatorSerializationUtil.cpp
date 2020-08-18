@@ -182,19 +182,18 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
             window = TumblingWindow::of(TimeCharacteristic::createEventTime(field), Milliseconds(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime) {
             window = TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(serializedTumblingWindow.size()));
-        }        else {
+        } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
         }
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: " << serializedWindowType.DebugString());
     }
 
-    if(windowDetails->onkey() == ""){
+    if (windowDetails->onkey() == "") {
         return createWindowLogicalOperatorNode(createWindowDefinition(aggregation, window))->as<WindowLogicalOperatorNode>();
-    }else{
+    } else {
         return createWindowLogicalOperatorNode(createWindowDefinition(AttributeField::create(windowDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window))->as<WindowLogicalOperatorNode>();
     }
-
 }
 
 SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator) {
@@ -225,7 +224,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
         timeCharacteristicDetails.set_field(timeCharacteristic->getField()->name);
     } else if (timeCharacteristic->getType() == TimeCharacteristic::ProcessingTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime);
-    }    else {
+    } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
     if (windowType->isTumblingWindow()) {
@@ -243,7 +242,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     windowAggregation->set_asfield(windowDefinition->windowAggregation->as()->name);
     windowAggregation->set_onfield(windowDefinition->windowAggregation->on()->name);
     // check if SUM aggregation
-    if(std::dynamic_pointer_cast<Sum>(windowDefinition->windowAggregation) != nullptr){
+    if (std::dynamic_pointer_cast<Sum>(windowDefinition->windowAggregation) != nullptr) {
         windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
     }
     return windowDetails;
