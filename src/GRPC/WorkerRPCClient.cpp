@@ -31,7 +31,7 @@ bool WorkerRPCClient::deployQuery(std::string address, std::string executableTra
     }
 }
 
-bool WorkerRPCClient::undeployQuery(std::string address, uint64_t queryId) {
+bool WorkerRPCClient::undeployQuery(std::string address, QueryId queryId) {
     NES_DEBUG(
         "WorkerRPCClient::undeployQuery address=" << address << " queryId=" << queryId);
 
@@ -57,7 +57,7 @@ bool WorkerRPCClient::undeployQuery(std::string address, uint64_t queryId) {
     }
 }
 
-bool WorkerRPCClient::registerQuery(std::string address, uint64_t queryId, OperatorNodePtr queryOperators) {
+bool WorkerRPCClient::registerQuery(std::string address, QueryId queryId, OperatorNodePtr queryOperators) {
     NES_DEBUG("WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
@@ -86,7 +86,7 @@ bool WorkerRPCClient::registerQuery(std::string address, uint64_t queryId, Opera
     }
 }
 
-bool WorkerRPCClient::unregisterQuery(std::string address, uint64_t queryId) {
+bool WorkerRPCClient::unregisterQuery(std::string address, QueryId queryId) {
     NES_DEBUG("WorkerRPCClient::unregisterQuery address=" << address << " queryId=" << queryId);
 
     UnregisterQueryRequest request;
@@ -111,7 +111,7 @@ bool WorkerRPCClient::unregisterQuery(std::string address, uint64_t queryId) {
     }
 }
 
-bool WorkerRPCClient::startQuery(std::string address, uint64_t queryId) {
+bool WorkerRPCClient::startQuery(std::string address, QueryId queryId) {
     NES_DEBUG(
         "WorkerRPCClient::startQuery address=" << address << " queryId=" << queryId);
 
@@ -138,7 +138,7 @@ bool WorkerRPCClient::startQuery(std::string address, uint64_t queryId) {
     }
 }
 
-bool WorkerRPCClient::stopQuery(std::string address, uint64_t queryId) {
+bool WorkerRPCClient::stopQuery(std::string address, QueryId queryId) {
 
     NES_DEBUG("WorkerRPCClient::stopQuery address=" << address << " queryId=" << queryId);
 

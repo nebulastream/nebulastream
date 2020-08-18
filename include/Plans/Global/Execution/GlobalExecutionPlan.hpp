@@ -58,7 +58,7 @@ class GlobalExecutionPlan {
      * @param queryId : the query id used for removing the input query
      * @return true if successful else false
      */
-    bool removeQuerySubPlans(uint64_t queryId);
+    bool removeQuerySubPlans(QueryId queryId);
 
     /**
      * Find is execution node exists.
@@ -91,7 +91,7 @@ class GlobalExecutionPlan {
      * @param queryId : Id of the query
      * @return vector containing execution nodes
      */
-    std::vector<ExecutionNodePtr> getExecutionNodesByQueryId(uint64_t queryId);
+    std::vector<ExecutionNodePtr> getExecutionNodesByQueryId(QueryId queryId);
 
     /**
      * Get the execution plan as string representation

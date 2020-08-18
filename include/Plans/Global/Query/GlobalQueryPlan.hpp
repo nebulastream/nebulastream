@@ -1,6 +1,7 @@
 #ifndef NES_GLOBALQUERYPLAN_HPP
 #define NES_GLOBALQUERYPLAN_HPP
 
+#include <API/QueryId.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Util/Logger.hpp>
 #include <algorithm>
@@ -45,7 +46,7 @@ class GlobalQueryPlan {
      * @brief remove the operators belonging to the query with input query Id from the global query plan
      * @param queryId: the id of the query whose operators need to be removed
      */
-    void removeQuery(uint64_t queryId);
+    void removeQuery(QueryId queryId);
 
     /**
      * @brief Get all newly added Global Query Nodes with NodeType operators
@@ -93,14 +94,14 @@ class GlobalQueryPlan {
      * @param queryId: the query id to which the logical operator belongs
      * @param operatorNode: the logical operator
      */
-    void addUpstreamLogicalOperatorsAsNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const uint64_t queryId, const OperatorNodePtr& operatorNode);
+    void addUpstreamLogicalOperatorsAsNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const QueryId queryId, const OperatorNodePtr& operatorNode);
 
     /**
      * @brief Get all global query nodes containing given queryId
      * @param queryId: queryId for which to get global query nodes
      * @return vector containing all GlobalQueryNodes or empty list
      */
-    std::vector<GlobalQueryNodePtr> getGlobalQueryNodesForQuery(uint64_t queryId);
+    std::vector<GlobalQueryNodePtr> getGlobalQueryNodesForQuery(QueryId queryId);
 
     /**
      * @brief Add global query node entry to the input query Id
@@ -108,7 +109,7 @@ class GlobalQueryPlan {
      * @param globalQueryNode : global query node entry
      * @return true if successful
      */
-    bool addGlobalQueryNodeToQuery(uint64_t queryId, GlobalQueryNodePtr globalQueryNode);
+    bool addGlobalQueryNodeToQuery(QueryId queryId, GlobalQueryNodePtr globalQueryNode);
 
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;

@@ -1,6 +1,7 @@
 #ifndef INCLUDE_CATALOGS_QUERYCATALOG_HPP_
 #define INCLUDE_CATALOGS_QUERYCATALOG_HPP_
 
+#include <API/QueryId.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <condition_variable>
 #include <map>
@@ -36,21 +37,21 @@ class QueryCatalog {
      * @param queryId: id of the user query.
      * @return query catalog entry or nullptr
      */
-    QueryCatalogEntryPtr addQueryStopRequest(uint64_t queryId);
+    QueryCatalogEntryPtr addQueryStopRequest(QueryId queryId);
 
     /**
      * @brief method to change status of a query
      * @param id of the query
      * @param status of the query
      */
-    void markQueryAs(uint64_t queryId, QueryStatus newStatus);
+    void markQueryAs(QueryId queryId, QueryStatus newStatus);
 
     /**
      * @brief method to test if a query is started
      * @param id of the query to stop
      * @note this will set the running bool to false in the QueryCatalogEntry
      */
-    bool isQueryRunning(uint64_t queryId);
+    bool isQueryRunning(QueryId queryId);
 
     /**
      * @brief method to get the registered queries
@@ -64,14 +65,14 @@ class QueryCatalog {
      * @param id of the query
      * @return pointer to the catalog entry
      */
-    QueryCatalogEntryPtr getQueryCatalogEntry(uint64_t queryId);
+    QueryCatalogEntryPtr getQueryCatalogEntry(QueryId queryId);
 
     /**
      * @brief method to test if a query exists
      * @param query id
      * @return bool indicating if query exists (true) or not (false)
      */
-    bool queryExists(uint64_t queryId);
+    bool queryExists(QueryId queryId);
 
     /**
      * @brief method to get the queries in a specific state

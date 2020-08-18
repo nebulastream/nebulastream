@@ -3,6 +3,7 @@
 #define QUERYSERVICE_HPP
 
 #include <API/Query.hpp>
+#include <API/QueryId.hpp>
 #include <cpprest/json.h>
 
 namespace NES {
@@ -43,14 +44,14 @@ class QueryService {
      * @throws QueryNotFoundException : when query id is not found in the query catalog.
      * @throws InvalidQueryStatusException : when the query is found to be in an invalid state.
      */
-    bool validateAndQueueStopRequest(uint64_t queryId);
+    bool validateAndQueueStopRequest(QueryId queryId);
 
     /**
      * This method is used for generating the base query plan from the input query as string.
      * @param queryId : user query as string
      * @return a json object representing the query plan
      */
-    web::json::value getQueryPlanAsJson(uint64_t queryId);
+    web::json::value getQueryPlanAsJson(QueryId queryId);
 
   private:
     QueryCatalogPtr queryCatalog;

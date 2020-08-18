@@ -7,8 +7,6 @@
 #include <Windows/WindowHandler.hpp>
 #include <map>
 
-//#include <NodeEngine/QueryManager.hpp>
-
 namespace NES {
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

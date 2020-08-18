@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <API/QueryId.hpp>
 
 namespace NES {
 
@@ -37,7 +38,7 @@ class QueryDeploymentPhase {
      * @param queryId : the query Id of the query to be deployed and started
      * @return true if successful else false
      */
-    bool execute(uint64_t queryId);
+    bool execute(QueryId queryId);
 
   private:
     explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
@@ -47,14 +48,14 @@ class QueryDeploymentPhase {
      * @param queryId
      * @return bool indicating success
      */
-    bool deployQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool deployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
 
     /**
      * @brief method to start a already deployed query
      * @param queryId
      * @return bool indicating success
      */
-    bool startQuery(uint64_t queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
 
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;

@@ -299,17 +299,17 @@ const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
 
 uint64_t UtilityFunctions::getNextQueryId() {
     static std::atomic_uint64_t id = 0;
-    return id++;
+    return ++id;
 }
 
 uint64_t UtilityFunctions::getNextOperatorId() {
     static std::atomic_uint64_t id = 0;
-    return id++;
+    return ++id;
 }
 
 uint64_t UtilityFunctions::getNextNodeId() {
-    static std::atomic_uint64_t id = 1;
-    return id++;
+    static std::atomic_uint64_t id = 0;
+    return ++id;
 }
 
 }// namespace NES

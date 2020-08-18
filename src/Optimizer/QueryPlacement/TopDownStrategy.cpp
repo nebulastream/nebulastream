@@ -45,7 +45,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     }
 
     NES_INFO("TopDownStrategy: Placing operators on the nes topology.");
-    const uint64_t queryId = queryPlan->getQueryId();
+    const QueryId queryId = queryPlan->getQueryId();
     placeOperators(queryId, sinkOperator, sourceNodes);
 
     NESTopologyEntryPtr rootNode = nesTopologyPlan->getRootNode();
@@ -60,7 +60,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     return true;
 }
 
-void TopDownStrategy::placeOperators(uint64_t queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes) {
+void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes) {
 
     const NESTopologyEntryPtr sinkNode = nesTopologyPlan->getRootNode();
 

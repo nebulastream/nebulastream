@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <API/QueryId.hpp>
 
 namespace NES {
 

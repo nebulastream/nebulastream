@@ -1,6 +1,7 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <string>
+#include <API/QueryId.hpp>
 #include <unistd.h>
 #define GetCurrentDir getcwd
 #include <Util/TestUtils.hpp>
@@ -92,9 +93,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
 
     NES_INFO("return from q1");
     NES_INFO("try to acc return Q1=" << jsonReturnQ1);
-    uint64_t queryId1 = jsonReturnQ1.at("queryId").as_integer();
+    QueryId queryId1 = jsonReturnQ1.at("queryId").as_integer();
     NES_INFO("Query ID1: " << queryId1);
-    EXPECT_NE(queryId1, -1);
+    EXPECT_NE(queryId1, INVALID_QUERY_ID);
 
     web::json::value jsonReturnQ2;
     web::http::client::http_client clientQ2(
@@ -117,9 +118,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
 
     NES_INFO("try to acc return Q2=" << jsonReturnQ2);
 
-    uint64_t queryId2 = jsonReturnQ2.at("queryId").as_integer();
+    QueryId queryId2 = jsonReturnQ2.at("queryId").as_integer();
     NES_INFO("Query ID2: " << queryId2);
-    EXPECT_NE(queryId2, -1);
+    EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
@@ -265,13 +266,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 
     NES_INFO("return from q3");
 
-    uint64_t queryId1 = jsonReturnQ2.at("queryId").as_integer();
-    uint64_t queryId2 = jsonReturnQ2.at("queryId").as_integer();
-    uint64_t queryId3 = jsonReturnQ2.at("queryId").as_integer();
+    QueryId queryId1 = jsonReturnQ2.at("queryId").as_integer();
+    QueryId queryId2 = jsonReturnQ2.at("queryId").as_integer();
+    QueryId queryId3 = jsonReturnQ2.at("queryId").as_integer();
 
-    EXPECT_NE(queryId1, -1);
-    EXPECT_NE(queryId2, -1);
-    EXPECT_NE(queryId3, -1);
+    EXPECT_NE(queryId1, INVALID_QUERY_ID);
+    EXPECT_NE(queryId2, INVALID_QUERY_ID);
+    EXPECT_NE(queryId3, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));

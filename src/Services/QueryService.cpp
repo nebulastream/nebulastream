@@ -26,7 +26,7 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     }
     NES_INFO("QueryService: Parsing and converting user query string");
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    uint64_t queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = UtilityFunctions::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     NES_INFO("QueryService: Queuing the query for the execution");
@@ -39,7 +39,7 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     }
 }
 
-bool QueryService::validateAndQueueStopRequest(uint64_t queryId) {
+bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
 
     NES_INFO("QueryService : stopping query " + queryId);
     if (!queryCatalog->queryExists(queryId)) {
@@ -52,7 +52,7 @@ bool QueryService::validateAndQueueStopRequest(uint64_t queryId) {
     return false;
 }
 
-json::value QueryService::getQueryPlanAsJson(uint64_t queryId) {
+json::value QueryService::getQueryPlanAsJson(QueryId queryId) {
 
     NES_INFO("QueryService: Get the registered query");
     QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);

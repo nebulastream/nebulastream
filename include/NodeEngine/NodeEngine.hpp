@@ -1,6 +1,7 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
+#include <API/QueryId.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
