@@ -21,13 +21,21 @@ class NetworkMetrics {
 
     std::vector<std::string> getInterfaceNames();
 
-    unsigned int getIntfsNo() const;
+    unsigned int getInterfaceNum() const;
 
   private:
     std::unordered_map<std::string, NetworkValues> interfaceMap;
 };
 
-void serialize(NetworkMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix="");
+/**
+ * @brief The serialize method to write NetworkMetrics into the given Schema and TupleBuffer. The prefix specifies a string
+ * that should be added before each field description in the Schema.
+ * @param the NetworkMetrics
+ * @param the schema
+ * @param the TupleBuffer
+ * @param the prefix as std::string
+ */
+void serialize(NetworkMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix);
 
 
 }// namespace NES

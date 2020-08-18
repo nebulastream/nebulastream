@@ -47,8 +47,8 @@ class MonitoringStackTest : public testing::Test {
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
     CpuMetrics cpuMetrics = cpuStats.measure();
-    ASSERT_TRUE(cpuMetrics.getCpuNo() > 0);
-    for (int i=0; i< cpuMetrics.getCpuNo(); i++){
+    ASSERT_TRUE(cpuMetrics.getNumCores() > 0);
+    for (int i=0; i< cpuMetrics.getNumCores(); i++){
         ASSERT_TRUE(cpuMetrics.getValues(i).USER > 0);
     }
     ASSERT_TRUE(cpuMetrics.getTotal().USER > 0);
@@ -68,7 +68,7 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
 TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskStats = MetricUtils::DiskStats();
     auto diskMetrics = diskStats.measure();
-    ASSERT_TRUE(diskMetrics.F_BAVAIL > 0);
+    ASSERT_TRUE(diskMetrics.fBavail > 0);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
@@ -108,17 +108,17 @@ TEST_F(MonitoringStackTest, testMetric) {
     Metric m2 = metrics[2];
     ASSERT_TRUE(getMetricType(m2) == MetricType::GaugeType);
     Gauge<CpuMetrics> cpuMetrics = m2.getValue<Gauge<CpuMetrics>>();
-    ASSERT_TRUE(cpuStats.measure().getCpuNo() == cpuMetrics.measure().getCpuNo());
+    ASSERT_TRUE(cpuStats.measure().getNumCores() == cpuMetrics.measure().getNumCores());
 
     // test network stats
     metrics.emplace_back(networkStats);
     auto networkMetrics = metrics[3].getValue<Gauge<NetworkMetrics>>();
-    ASSERT_TRUE(networkStats.measure().getIntfsNo() == networkMetrics.measure().getIntfsNo());
+    ASSERT_TRUE(networkStats.measure().getInterfaceNum() == networkMetrics.measure().getInterfaceNum());
 
     // test disk stats
     metrics.emplace_back(diskStats);
     auto diskMetrics = metrics[4].getValue<Gauge<DiskMetrics>>();
-    ASSERT_TRUE(diskStats.measure().F_BAVAIL == diskMetrics.measure().F_BAVAIL);
+    ASSERT_TRUE(diskStats.measure().fBavail == diskMetrics.measure().fBavail);
 
     // test mem stats
     metrics.emplace_back(memStats);
@@ -149,19 +149,19 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     auto cpuS = "cpuStats";
     metricGroup->add(cpuS, cpuStats);
     Gauge<CpuMetrics> cpuMetrics = metricGroup->getAs<Gauge<CpuMetrics>>(cpuS);
-    ASSERT_TRUE(cpuStats.measure().getCpuNo() == cpuMetrics.measure().getCpuNo());
+    ASSERT_TRUE(cpuStats.measure().getNumCores() == cpuMetrics.measure().getNumCores());
 
     // test network stats
     auto networkS = "networkStats";
     metricGroup->add(networkS, networkStats);
     auto networkMetrics = metricGroup->getAs<Gauge<NetworkMetrics>>(networkS);
-    ASSERT_TRUE(networkStats.measure().getIntfsNo() == networkMetrics.measure().getIntfsNo());
+    ASSERT_TRUE(networkStats.measure().getInterfaceNum() == networkMetrics.measure().getInterfaceNum());
 
     // test disk stats
     auto diskS = "diskStats";
     metricGroup->add(diskS, diskStats);
     auto diskMetrics = metricGroup->getAs<Gauge<DiskMetrics>>(diskS);
-    ASSERT_TRUE(diskStats.measure().F_BAVAIL == diskMetrics.measure().F_BAVAIL);
+    ASSERT_TRUE(diskStats.measure().fBavail == diskMetrics.measure().fBavail);
 
     // test mem stats
     auto memS = "memStats";
@@ -186,7 +186,7 @@ TEST_F(MonitoringStackTest, testSerializationMetricsNested) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     auto cpuStats = MetricUtils::CPUStats();
-    serialize(cpuStats.measure(), schema, tupleBuffer);
+    serialize(cpuStats.measure(), schema, tupleBuffer, "");
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
@@ -206,15 +206,15 @@ TEST_F(MonitoringStackTest, testSerializationGroups) {
     auto cpuS = "cpuStats";
     metricGroup->add(cpuS, cpuStats);
 
-    // add cpu stats
+    // add network stats
     auto networkS = "networkStats";
     metricGroup->add(networkS, networkStats);
 
-    // add cpu stats
+    // add disk stats
     auto diskS = "diskStats";
     metricGroup->add(diskS, diskStats);
 
-    // add cpu stats
+    // add mem stats
     auto memS = "memStats";
     metricGroup->add(memS, memStats);
 

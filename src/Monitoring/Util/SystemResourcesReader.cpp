@@ -138,11 +138,11 @@ DiskMetrics SystemResourcesReader::ReadDiskStats() {
     if (ret == EFAULT)
         NES_THROW_RUNTIME_ERROR("SystemResourcesReader: Error reading disk stats");
 
-    output.F_BSIZE = svfs->f_bsize;
-    output.F_FRSIZE = svfs->f_frsize;
-    output.F_BLOCKS = svfs->f_blocks;
-    output.F_BFREE = svfs->f_bfree;
-    output.F_BAVAIL = svfs->f_bavail;
+    output.fBsize = svfs->f_bsize;
+    output.fFrsize = svfs->f_frsize;
+    output.fBlocks = svfs->f_blocks;
+    output.fBfree = svfs->f_bfree;
+    output.fBavail = svfs->f_bavail;
 
     return output;
 }
