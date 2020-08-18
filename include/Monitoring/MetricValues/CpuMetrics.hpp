@@ -58,7 +58,7 @@ class CpuMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(CpuMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix);
+void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 
