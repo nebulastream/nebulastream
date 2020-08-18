@@ -25,7 +25,7 @@ typedef std::shared_ptr<NodeStats> NodeStatsPtr;
  */
 class TestUtils {
   public:
-    static const size_t timeout = 60;//TODO:increase it again to 30
+    static const size_t timeout = 30;//TODO:increase it again to 30
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
@@ -222,6 +222,7 @@ class TestUtils {
                 NES_DEBUG("checkStoppedOrTimeout: status reached stopped");
                 return true;
             }
+            NES_DEBUG("checkStoppedOrTimeout: status not reached as status is=" << queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatusAsString());
             sleep(1);
         }
         NES_DEBUG("checkStoppedOrTimeout: expected status not reached within set timeout");
