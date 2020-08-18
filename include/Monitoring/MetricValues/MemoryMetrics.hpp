@@ -44,7 +44,7 @@ typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(MemoryMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix);
+void serialize(MemoryMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 

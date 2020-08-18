@@ -36,7 +36,7 @@ typedef std::shared_ptr<DiskMetrics> DiskMetricsPtr;
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(DiskMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix);
+void serialize(DiskMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 
