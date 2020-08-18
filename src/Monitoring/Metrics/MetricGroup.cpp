@@ -25,7 +25,7 @@ bool MetricGroup::remove(const std::string& name) {
 void MetricGroup::getSample(std::shared_ptr<Schema> schema, TupleBuffer& buf) {
     NES_DEBUG("MetricGroup: Collecting sample via serialize(..)");
     for (auto const& x: metricMap) {
-        serialize(x.second, schema, buf, x.first);
+        serialize(x.second, schema, buf, x.first+"_");
     }
 }
 

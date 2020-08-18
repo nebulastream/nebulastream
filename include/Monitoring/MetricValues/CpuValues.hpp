@@ -7,10 +7,18 @@ namespace NES {
 class Schema;
 class TupleBuffer;
 
+/**
+ * @brief This class represents the metrics read from /proc/stat. 
+ */
 class CpuValues {
   public:
     CpuValues() = default;
 
+    /**
+     * @brief Returns the schema of the class with a given prefix.
+     * @param prefix
+     * @return the schema
+     */
     static std::shared_ptr<Schema> getSchema(const std::string& prefix);
 
     uint64_t USER;
@@ -25,7 +33,15 @@ class CpuValues {
     uint64_t GUESTNICE;
 };
 
-void serialize(CpuValues, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix="");
+/**
+ * @brief The serialize method to write CpuValues into the given Schema and TupleBuffer. The prefix specifies a string
+ * that should be added before each field description in the Schema.
+ * @param the CpuValues
+ * @param the schema
+ * @param the TupleBuffer
+ * @param the prefix as std::string
+ */
+void serialize(CpuValues, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix);
 
 }// namespace NES
 

@@ -10,7 +10,7 @@ NetworkValues& NetworkMetrics::operator[](std::basic_string<char> interfaceName)
     return interfaceMap[interfaceName];
 }
 
-unsigned int NetworkMetrics::getIntfsNo() const {
+unsigned int NetworkMetrics::getInterfaceNum() const {
     return interfaceMap.size();
 }
 
@@ -27,14 +27,14 @@ std::vector<std::string> NetworkMetrics::getInterfaceNames() {
 
 void serialize(NetworkMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
     auto noFields = schema->getSize();
-    schema->addField(prefix + "_INT_NO", BasicType::UINT16);
+    schema->addField(prefix + "INTERFACE_NO", BasicType::UINT16);
     buf.setNumberOfTuples(1);
 
     auto layout = createRowLayout(schema);
-    layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getIntfsNo());
+    layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getInterfaceNum());
 
     for (auto intfsName: metrics.getInterfaceNames()) {
-        serialize(metrics[intfsName], schema, buf, prefix + "_Intfs[" + intfsName + "]_");
+        serialize(metrics[intfsName], schema, buf, prefix + "Intfs[" + intfsName + "]_");
     }
 }
 

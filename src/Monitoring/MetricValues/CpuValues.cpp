@@ -23,20 +23,20 @@ std::shared_ptr<Schema> CpuValues::getSchema(const std::string& prefix) {
 }
 
 void serialize(CpuValues metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
-    auto noFields = schema->getSize();
+    auto schemaSize = schema->getSize();
     schema->copyFields(CpuValues::getSchema(prefix));
 
     auto layout = createRowLayout(schema);
-    layout->getValueField<uint64_t>(0, noFields)->write(buf, metric.USER);
-    layout->getValueField<uint64_t>(0, noFields+1)->write(buf, metric.NICE);
-    layout->getValueField<uint64_t>(0, noFields+2)->write(buf, metric.SYSTEM);
-    layout->getValueField<uint64_t>(0, noFields+3)->write(buf, metric.IDLE);
-    layout->getValueField<uint64_t>(0, noFields+4)->write(buf, metric.IOWAIT);
-    layout->getValueField<uint64_t>(0, noFields+5)->write(buf, metric.IRQ);
-    layout->getValueField<uint64_t>(0, noFields+6)->write(buf, metric.SOFTIRQ);
-    layout->getValueField<uint64_t>(0, noFields+7)->write(buf, metric.STEAL);
-    layout->getValueField<uint64_t>(0, noFields+8)->write(buf, metric.GUEST);
-    layout->getValueField<uint64_t>(0, noFields+9)->write(buf, metric.GUESTNICE);
+    layout->getValueField<uint64_t>(0, schemaSize)->write(buf, metric.USER);
+    layout->getValueField<uint64_t>(0, schemaSize +1)->write(buf, metric.NICE);
+    layout->getValueField<uint64_t>(0, schemaSize +2)->write(buf, metric.SYSTEM);
+    layout->getValueField<uint64_t>(0, schemaSize +3)->write(buf, metric.IDLE);
+    layout->getValueField<uint64_t>(0, schemaSize +4)->write(buf, metric.IOWAIT);
+    layout->getValueField<uint64_t>(0, schemaSize +5)->write(buf, metric.IRQ);
+    layout->getValueField<uint64_t>(0, schemaSize +6)->write(buf, metric.SOFTIRQ);
+    layout->getValueField<uint64_t>(0, schemaSize +7)->write(buf, metric.STEAL);
+    layout->getValueField<uint64_t>(0, schemaSize +8)->write(buf, metric.GUEST);
+    layout->getValueField<uint64_t>(0, schemaSize +9)->write(buf, metric.GUESTNICE);
     buf.setNumberOfTuples(1);
 }
 

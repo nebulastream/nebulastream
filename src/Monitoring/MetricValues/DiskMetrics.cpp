@@ -21,11 +21,11 @@ void serialize(DiskMetrics metric, std::shared_ptr<Schema> schema, TupleBuffer& 
     schema->copyFields(DiskMetrics::getSchema(prefix));
 
     auto layout = createRowLayout(schema);
-    layout->getValueField<uint64_t>(0, noFields)->write(buf, metric.F_BSIZE);
-    layout->getValueField<uint64_t>(0, noFields+1)->write(buf, metric.F_FRSIZE);
-    layout->getValueField<uint64_t>(0, noFields+2)->write(buf, metric.F_BLOCKS);
-    layout->getValueField<uint64_t>(0, noFields+3)->write(buf, metric.F_BFREE);
-    layout->getValueField<uint64_t>(0, noFields+4)->write(buf, metric.F_BAVAIL);
+    layout->getValueField<uint64_t>(0, noFields)->write(buf, metric.fBsize);
+    layout->getValueField<uint64_t>(0, noFields+1)->write(buf, metric.fFrsize);
+    layout->getValueField<uint64_t>(0, noFields+2)->write(buf, metric.fBlocks);
+    layout->getValueField<uint64_t>(0, noFields+3)->write(buf, metric.fBfree);
+    layout->getValueField<uint64_t>(0, noFields+4)->write(buf, metric.fBavail);
     buf.setNumberOfTuples(1);
 }
 

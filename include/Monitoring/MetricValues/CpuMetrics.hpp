@@ -38,7 +38,7 @@ class CpuMetrics {
      * @brief Returns the number of cores of the node
      * @return core numbers
      */
-    uint16_t getCpuNo() const;
+    uint16_t getNumCores() const;
 
   private:
     // Overloading [] operator to access elements in array style
@@ -47,10 +47,18 @@ class CpuMetrics {
   private:
     CpuValues total;
     std::unique_ptr<CpuValues[]> ptr;
-    const uint16_t cpuNo;
+    const uint16_t numCores;
 };
 
-void serialize(CpuMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix="");
+/**
+ * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
+ * that should be added before each field description in the Schema.
+ * @param the CpuMetrics
+ * @param the schema
+ * @param the TupleBuffer
+ * @param the prefix as std::string
+ */
+void serialize(CpuMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix);
 
 }// namespace NES
 

@@ -7,10 +7,18 @@ namespace NES {
 class Schema;
 class TupleBuffer;
 
+/**
+ * @brief This class represents the metric values read from /proc/net/dev.
+ */
 class NetworkValues {
   public:
     NetworkValues() = default;
 
+    /**
+     * @brief Returns the schema of the class with a given prefix.
+     * @param prefix
+     * @return the schema
+     */
     static std::shared_ptr<Schema> getSchema(const std::string& prefix);
 
     uint64_t rBytes;
@@ -32,7 +40,15 @@ class NetworkValues {
     uint64_t tCompressed;
 };
 
-void serialize(NetworkValues, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix="");
+/**
+ * @brief The serialize method to write NetworkValues into the given Schema and TupleBuffer. The prefix specifies a string
+ * that should be added before each field description in the Schema.
+ * @param the CpuMetrics
+ * @param the schema
+ * @param the TupleBuffer
+ * @param the prefix as std::string
+ */
+void serialize(NetworkValues, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix);
 
 }
 

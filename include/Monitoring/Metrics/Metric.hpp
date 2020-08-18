@@ -11,9 +11,19 @@ class Schema;
 
 template <typename T>
 MetricType getMetricType(const T& x)  {
+    std::ignore = x;
     return UnknownType;
 }
 
+/**
+ * @brief Class specific serialize methods for basic types. The serialize method to write CpuMetrics into
+ * the given Schema and TupleBuffer. The prefix specifies a string
+ * that should be added before each field description in the Schema.
+ * @param the metric
+ * @param the schema
+ * @param the TupleBuffer
+ * @param the prefix as std::string
+ */
 void serialize(uint64_t metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 void serialize(std::string metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 
@@ -63,8 +73,8 @@ class Metric {
      * @param the metric
      * @return the type of the metric
      */
-    friend MetricType getMetricType(const Metric& x) {
-        return x.self->getType();
+    friend MetricType getMetricType(const Metric& metric) {
+        return metric.self->getType();
     }
 
     /**
@@ -86,6 +96,9 @@ class Metric {
         virtual std::unique_ptr<concept_t> copy() const = 0;
         virtual MetricType getType() const = 0;
 
+        /**
+         * @brief The serialize concept to enable polymorphism across different metrics to make them serializable.
+         */
         virtual void serializeC(std::shared_ptr<Schema>, TupleBuffer&, std::string) = 0;
     };
 

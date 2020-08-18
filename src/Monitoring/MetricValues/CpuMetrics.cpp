@@ -6,13 +6,13 @@
 
 namespace NES {
 
-CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::unique_ptr<CpuValues[]> arr) : total(total), cpuNo(size) {
-    if (cpuNo > 0) {
+CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::unique_ptr<CpuValues[]> arr) : total(total), numCores(size) {
+    if (numCores > 0) {
         ptr = std::move(arr);
     } else {
         NES_THROW_RUNTIME_ERROR("CpuMetrics: Object cannot be allocated with less than 0 cores.");
     }
-    NES_DEBUG("CpuMetrics: Allocating memory for " + std::to_string(cpuNo) + " metrics.");
+    NES_DEBUG("CpuMetrics: Allocating memory for " + std::to_string(numCores) + " metrics.");
 }
 
 CpuMetrics::~CpuMetrics() {
@@ -22,14 +22,14 @@ CpuMetrics::~CpuMetrics() {
 
 // Implementation of [] operator.  This function must return a reference as array element can be put on left side
 CpuValues& CpuMetrics::operator[](unsigned int index) {
-    if (index >= cpuNo) {
-        NES_THROW_RUNTIME_ERROR("CPU: Array index out of bound " + std::to_string(index) + ">=" + std::to_string(cpuNo));
+    if (index >= numCores) {
+        NES_THROW_RUNTIME_ERROR("CPU: Array index out of bound " + std::to_string(index) + ">=" + std::to_string(numCores));
     }
     return ptr[index];
 }
 
-uint16_t CpuMetrics::getCpuNo() const {
-    return cpuNo;
+uint16_t CpuMetrics::getNumCores() const {
+    return numCores;
 }
 
 CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const {
@@ -41,16 +41,20 @@ CpuValues CpuMetrics::getTotal() const {
 }
 
 void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    // extend the schema with the core number
     auto noFields = schema->getSize();
-    schema->addField(prefix + "_CPU_NO", BasicType::UINT16);
+    schema->addField(prefix + "CORE_NO", BasicType::UINT16);
+    // the buffer contains only one metric tuple
     buf.setNumberOfTuples(1);
 
     auto layout = createRowLayout(schema);
-    layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getCpuNo());
-    serialize(metrics.getTotal(), schema, buf, prefix + "_CPU[TOTAL]_");
+    layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getNumCores());
+    // call serialize for the total metrics over all cores
+    serialize(metrics.getTotal(), schema, buf, prefix + "CPU[TOTAL]_");
 
-    for (int i=0; i<metrics.getCpuNo(); i++) {
-        serialize(metrics.getValues(i), schema, buf, prefix + "_CPU[" + std::to_string(i+1) + "]_");
+    for (int i=0; i< metrics.getNumCores(); i++) {
+        //call serialize method for the metrics for each cpu
+        serialize(metrics.getValues(i), schema, buf, prefix + "CPU[" + std::to_string(i+1) + "]_");
     }
 }
 

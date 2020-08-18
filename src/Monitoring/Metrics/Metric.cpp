@@ -14,7 +14,9 @@ void serialize(uint64_t metric, std::shared_ptr<Schema> schema, TupleBuffer& buf
 }
 
 void serialize(std::string metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
-    NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible!");
+    std::ignore = buf;
+    NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " + metric +
+                            "and schema " + prefix + schema->toString());
 }
 
 }// namespace NES

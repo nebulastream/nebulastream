@@ -12,6 +12,11 @@ class MemoryMetrics {
   public:
     MemoryMetrics() = default;
 
+    /**
+     * @brief Returns the schema of the class with a given prefix.
+     * @param prefix
+     * @return the schema
+     */
     static std::shared_ptr<Schema> getSchema(const std::string& prefix="") ;
 
     uint64_t TOTAL_RAM;
@@ -31,7 +36,15 @@ class MemoryMetrics {
 
 typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
 
-void serialize(MemoryMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix="");
+/**
+ * @brief The serialize method to write MemoryMetrics into the given Schema and TupleBuffer. The prefix specifies a string
+ * that should be added before each field description in the Schema.
+ * @param the MemoryMetrics
+ * @param the schema
+ * @param the TupleBuffer
+ * @param the prefix as std::string
+ */
+void serialize(MemoryMetrics, std::shared_ptr<Schema>, TupleBuffer&, const std::string& prefix);
 
 }// namespace NES
 
