@@ -54,7 +54,7 @@ class GlobalQueryNode : public Node {
      * @param queryId
      * @return true if successful
      */
-    bool removeQuery(const QueryId queryId);
+    bool removeQuery(QueryId queryId);
 
     /**
      * @brief Check if the global query node was updated.
@@ -104,10 +104,10 @@ class GlobalQueryNode : public Node {
     GlobalQueryNode(uint64_t id);
     GlobalQueryNode(uint64_t id, QueryId queryId, OperatorNodePtr operatorNode);
     uint64_t id;
-    std::vector<uint64_t> queryIds;
+    std::vector<QueryId> queryIds;
     std::vector<OperatorNodePtr> logicalOperators;
-    std::map<uint64_t, OperatorNodePtr> queryToOperatorMap;
-    std::map<OperatorNodePtr, std::vector<uint64_t>> operatorToQueryMap;
+    std::map<QueryId, OperatorNodePtr> queryToOperatorMap;
+    std::map<OperatorNodePtr, std::vector<QueryId>> operatorToQueryMap;
     bool scheduled;
     bool querySetUpdated;
     bool operatorSetUpdated;
