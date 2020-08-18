@@ -10,8 +10,7 @@ class TupleBuffer;
 class Schema;
 
 template <typename T>
-MetricType getMetricType(const T& x)  {
-    std::ignore = x;
+MetricType getMetricType(const T&)  {
     return UnknownType;
 }
 
