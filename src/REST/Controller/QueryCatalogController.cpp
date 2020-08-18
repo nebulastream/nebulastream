@@ -95,7 +95,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
                     //Prepare the response
                     json::value result{};
-                    size_t processedBuffers = coordinator->getQueryStatistics( std::stoi(queryId))->getProcessedBuffers();
+                    size_t processedBuffers = coordinator->getQueryStatistics(std::stoi(queryId))->getProcessedBuffers();
                     NES_DEBUG("getNumberOfProducedBuffers processedBuffers=" << processedBuffers);
 
                     result["producedBuffers"] = processedBuffers;

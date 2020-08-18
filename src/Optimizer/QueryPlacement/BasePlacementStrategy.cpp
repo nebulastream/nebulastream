@@ -48,14 +48,14 @@ uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, N
         const vector<SourceLogicalOperatorNodePtr> sourceOperators = parentQuerySubPlan->getSourceOperators();
         if (!sourceOperators.empty()) {
             const SourceLogicalOperatorNodePtr sourceOperator = sourceOperators[0];
-            if(sourceOperator->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()){
+            if (sourceOperator->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
                 NES_DEBUG("BasePlacementStrategy: found existing network source operator in the parent execution node");
                 nextNetworkSourceOperatorId = sourceOperator->getId();
             }
         }
     }
 
-    if(nextNetworkSourceOperatorId == -1){
+    if (nextNetworkSourceOperatorId == -1) {
         NES_DEBUG("BasePlacementStrategy: found no existing network source operator in the parent execution node");
         nextNetworkSourceOperatorId = UtilityFunctions::getNextOperatorId();
     }

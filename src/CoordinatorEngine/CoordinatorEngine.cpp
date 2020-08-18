@@ -33,7 +33,7 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
         for (auto& node : nodes) {
             if (node->getGrpcPort() == grpcPort) {
                 NES_ERROR("CoordinatorEngine::registerNode: node with this address and grpc port already exists=" << address << " id="
-                                                                                                    << nodes[0]->getId());
+                                                                                                                  << nodes[0]->getId());
                 return false;
             }
         }

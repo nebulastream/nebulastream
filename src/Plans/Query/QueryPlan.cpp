@@ -5,10 +5,9 @@
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <set>
 #include <utility>
-#include <Util/UtilityFunctions.hpp>
-
 
 namespace NES {
 
@@ -20,9 +19,9 @@ QueryPlanPtr QueryPlan::create() {
     return std::make_shared<QueryPlan>(QueryPlan());
 }
 
-QueryPlan::QueryPlan(): queryId(-1) {}
+QueryPlan::QueryPlan() : queryId(-1) {}
 
-QueryPlan::QueryPlan(OperatorNodePtr rootOperator): queryId(-1) {
+QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(-1) {
     rootOperator->setId(UtilityFunctions::getNextOperatorId());
     rootOperators.push_back(std::move(rootOperator));
 }

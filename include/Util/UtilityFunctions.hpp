@@ -108,7 +108,6 @@ class UtilityFunctions {
      * @return node id
      */
     static uint64_t getNextNodeId();
-
 };
 }// namespace NES
 

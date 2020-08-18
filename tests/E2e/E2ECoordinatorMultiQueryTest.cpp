@@ -47,12 +47,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
 
-    string cmdCoord = "../nesCoordinator --coordinatorPort=12346";
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12346";
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
 
-    string cmdWrk = "../nesWorker --coordinatorPort=12346";
+    string cmdWrk = "./nesWorker --coordinatorPort=12346";
     bp::child workerProc(cmdWrk.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
 
@@ -94,7 +94,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
     NES_INFO("try to acc return Q1=" << jsonReturnQ1);
     uint64_t queryId1 = jsonReturnQ1.at("queryId").as_integer();
     NES_INFO("Query ID1: " << queryId1);
-    EXPECT_TRUE(queryId1 != -1);
+    EXPECT_NE(queryId1, -1);
 
     web::json::value jsonReturnQ2;
     web::http::client::http_client clientQ2(
@@ -119,7 +119,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
 
     uint64_t queryId2 = jsonReturnQ2.at("queryId").as_integer();
     NES_INFO("Query ID2: " << queryId2);
-    EXPECT_TRUE(queryId2 != -1);
+    EXPECT_NE(queryId2, -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
@@ -175,12 +175,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     remove(pathQuery2.c_str());
     remove(pathQuery3.c_str());
 
-    string cmdCoord = "../nesCoordinator --coordinatorPort=12346";
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12346";
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
 
-    string cmdWrk = "../nesWorker --coordinatorPort=12346";
+    string cmdWrk = "./nesWorker --coordinatorPort=12346";
     bp::child workerProc(cmdWrk.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
 
@@ -269,9 +269,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     uint64_t queryId2 = jsonReturnQ2.at("queryId").as_integer();
     uint64_t queryId3 = jsonReturnQ2.at("queryId").as_integer();
 
-    EXPECT_TRUE(queryId1 != -1);
-    EXPECT_TRUE(queryId2 != -1);
-    EXPECT_TRUE(queryId3 != -1);
+    EXPECT_NE(queryId1, -1);
+    EXPECT_NE(queryId2, -1);
+    EXPECT_NE(queryId3, -1);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
