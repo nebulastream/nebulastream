@@ -39,7 +39,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string optimizationStrategyName = req.at("strategyName").as_string();
 
                     // Call the service
-                    uint64_t queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
+                    QueryId queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
                     std::string executionPlanAsString = globalExecutionPlan->getAsString();
 
                     // Prepare the response
@@ -67,7 +67,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
 
                     json::value req = json::value::parse(userRequest);
 
-                    uint64_t queryId = req.at("userQuery").as_integer();
+                    QueryId queryId = req.at("userQuery").as_integer();
 
                     //Call the service
                     auto basePlan = queryService->getQueryPlanAsJson(queryId);
@@ -109,7 +109,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
-                    uint64_t queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
+                    QueryId queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
 
                     //Prepare the response
                     json::value restResponse{};
@@ -140,7 +140,7 @@ void QueryController::handleDelete(std::vector<utility::string_t> path, http_req
                     //Prepare Input query from user string
                     std::string payload(body.begin(), body.end());
                     json::value req = json::value::parse(payload);
-                    uint64_t queryId = req.at("queryId").as_integer();
+                    QueryId queryId = req.at("queryId").as_integer();
 
                     bool success = queryService->validateAndQueueStopRequest(queryId);
                     //Prepare the response

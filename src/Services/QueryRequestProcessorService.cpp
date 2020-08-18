@@ -46,7 +46,7 @@ void QueryRequestProcessorService::start() {
             //process the queries using query-at-a-time model
             for (auto queryCatalogEntry : queryCatalogEntryBatch) {
                 auto queryPlan = queryCatalogEntry.getQueryPlan();
-                uint64_t queryId = queryPlan->getQueryId();
+                QueryId queryId = queryPlan->getQueryId();
                 try {
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::MarkedForStop) {
                         NES_INFO("QueryProcessingService: Request received for stopping the query " + queryId);

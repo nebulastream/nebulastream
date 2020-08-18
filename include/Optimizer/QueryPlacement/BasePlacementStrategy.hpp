@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <API/QueryId.hpp>
 
 namespace NES {
 
@@ -93,7 +94,7 @@ class BasePlacementStrategy {
      * @param queryId query Id of the sub plan for which the operators have to be placed
      * @param path vector of nodes where operators could be placed
      */
-    void addSystemGeneratedOperators(uint64_t queryId, std::vector<NESTopologyEntryPtr> path);
+    void addSystemGeneratedOperators(QueryId queryId, std::vector<NESTopologyEntryPtr> path);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     NESTopologyPlanPtr nesTopologyPlan;

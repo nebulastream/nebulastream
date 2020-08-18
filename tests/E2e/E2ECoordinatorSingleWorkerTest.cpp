@@ -2,6 +2,8 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <unistd.h>
+#include <API/QueryId.hpp>
+
 #define GetCurrentDir getcwd
 #include <Util/TestUtils.hpp>
 #include <boost/process.hpp>
@@ -79,9 +81,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
         .wait();
 
     NES_INFO("try to acc return");
-    uint64_t queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, -1);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
@@ -136,9 +138,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     NES_INFO("try to acc return");
 
-    uint64_t queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, -1);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
@@ -223,9 +225,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
         .wait();
 
     NES_INFO("try to acc return");
-    uint64_t queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, -1);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
@@ -307,9 +309,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithF
 
     NES_INFO("try to acc return");
 
-    uint64_t queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, -1);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 
@@ -397,9 +399,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithF
         .wait();
 
     NES_INFO("try to acc return");
-    uint64_t queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, -1);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
 

@@ -1,6 +1,7 @@
 #ifndef NES_GLOBALQUERYNODE_HPP
 #define NES_GLOBALQUERYNODE_HPP
 
+#include <API/QueryId.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <memory>
 #include <string>
@@ -33,7 +34,7 @@ class GlobalQueryNode : public Node {
      * @param operatorNode: logical operator
      * @return Shared pointer to the instance of Global Query Operator instance
      */
-    static GlobalQueryNodePtr create(uint64_t id, uint64_t queryId, OperatorNodePtr operatorNode);
+    static GlobalQueryNodePtr create(uint64_t id, QueryId queryId, OperatorNodePtr operatorNode);
 
     /**
      * @brief Get id of the node
@@ -46,14 +47,14 @@ class GlobalQueryNode : public Node {
      * @param queryId : query to be added.
      * @param operatorNode : logical operator to be grouped together.
      */
-    void addQueryAndOperator(uint64_t queryId, OperatorNodePtr operatorNode);
+    void addQueryAndOperator(QueryId queryId, OperatorNodePtr operatorNode);
 
     /**
      * @brief Remove the query
      * @param queryId
      * @return true if successful
      */
-    bool removeQuery(const uint64_t queryId);
+    bool removeQuery(const QueryId queryId);
 
     /**
      * @brief Check if the global query node was updated.
@@ -101,7 +102,7 @@ class GlobalQueryNode : public Node {
 
   private:
     GlobalQueryNode(uint64_t id);
-    GlobalQueryNode(uint64_t id, uint64_t queryId, OperatorNodePtr operatorNode);
+    GlobalQueryNode(uint64_t id, QueryId queryId, OperatorNodePtr operatorNode);
     uint64_t id;
     std::vector<uint64_t> queryIds;
     std::vector<OperatorNodePtr> logicalOperators;

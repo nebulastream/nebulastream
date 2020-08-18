@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_
 
+#include <API/QueryId.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <map>
@@ -96,7 +97,7 @@ class GeneratedQueryExecutionPlanBuilder {
      * @param queryId
      * @return this
      */
-    GeneratedQueryExecutionPlanBuilder& setQueryId(uint64_t queryId);
+    GeneratedQueryExecutionPlanBuilder& setQueryId(QueryId queryId);
 
     /**
      * @brief add operator to the plan (check compiler/code generator documentation)

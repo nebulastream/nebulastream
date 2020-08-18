@@ -6,7 +6,7 @@ namespace NES {
 
 GlobalQueryNode::GlobalQueryNode(uint64_t id) : id(id), scheduled(false), querySetUpdated(false), operatorSetUpdated(false) {}
 
-GlobalQueryNode::GlobalQueryNode(uint64_t id, uint64_t queryId, OperatorNodePtr operatorNode) : id(id), scheduled(false), querySetUpdated(true), operatorSetUpdated(true) {
+GlobalQueryNode::GlobalQueryNode(uint64_t id, QueryId queryId, OperatorNodePtr operatorNode) : id(id), scheduled(false), querySetUpdated(true), operatorSetUpdated(true) {
     queryIds.push_back(queryId);
     logicalOperators.push_back(operatorNode);
     queryToOperatorMap[queryId] = operatorNode;
@@ -17,7 +17,7 @@ GlobalQueryNodePtr GlobalQueryNode::createEmpty(uint64_t id) {
     return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id));
 }
 
-GlobalQueryNodePtr GlobalQueryNode::create(uint64_t id, uint64_t queryId, OperatorNodePtr operatorNode) {
+GlobalQueryNodePtr GlobalQueryNode::create(uint64_t id, QueryId queryId, OperatorNodePtr operatorNode) {
     return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id, queryId, operatorNode));
 }
 
@@ -25,7 +25,7 @@ uint64_t GlobalQueryNode::getId() {
     return id;
 }
 
-void GlobalQueryNode::addQueryAndOperator(uint64_t queryId, OperatorNodePtr operatorNode) {
+void GlobalQueryNode::addQueryAndOperator(QueryId queryId, OperatorNodePtr operatorNode) {
     NES_INFO("GlobalQueryNode: Add a new query id " << queryId << " and a logical operator in the global query node " << id);
     if (queryToOperatorMap.find(queryId) != queryToOperatorMap.end()) {
         NES_ERROR("GlobalQueryNode: Can't add query which is already present in the global query node");
@@ -68,7 +68,7 @@ OperatorNodePtr GlobalQueryNode::hasOperator(OperatorNodePtr operatorNode) {
     return nullptr;
 }
 
-bool GlobalQueryNode::removeQuery(const uint64_t queryId) {
+bool GlobalQueryNode::removeQuery(const QueryId queryId) {
     NES_INFO("GlobalQueryNode: Removing entries for the query " << queryId << " from the global query node " << id);
     auto itr = std::find(queryIds.begin(), queryIds.end(), queryId);
     if (itr != queryIds.end()) {

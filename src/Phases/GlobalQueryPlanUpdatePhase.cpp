@@ -1,3 +1,4 @@
+#include <API/QueryId.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
@@ -17,7 +18,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
     NES_INFO("GlobalQueryPlanUpdatePhase: Updating global query plan using a query request batch of size " << queryRequests.size());
     try {
         for (auto queryRequest : queryRequests) {
-            uint64_t queryId = queryRequest.getQueryId();
+            QueryId queryId = queryRequest.getQueryId();
             if (queryRequest.getQueryStatus() == MarkedForStop) {
                 NES_TRACE("GlobalQueryPlanUpdatePhase: Removing query plan for the query: " << queryId);
                 globalQueryPlan->removeQuery(queryId);

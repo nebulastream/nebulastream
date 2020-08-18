@@ -75,7 +75,7 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::addSourc
     return *this;
 }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQueryId(uint64_t queryId) {
+GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQueryId(QueryId queryId) {
     this->queryId = std::move(queryId);
     return *this;
 }

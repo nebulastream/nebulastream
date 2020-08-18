@@ -26,7 +26,7 @@ BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan, N
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
-    const uint64_t queryId = queryPlan->getQueryId();
+    const QueryId queryId = queryPlan->getQueryId();
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
     // TONY: now, we are removing the assumption of single source operator.
@@ -65,7 +65,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     return true;
 }
 
-void BottomUpStrategy::placeOperators(uint64_t queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
+void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
     NESTopologyEntryPtr sinkNode = nesTopologyPlan->getRootNode();
 

@@ -56,7 +56,7 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     std::string query = R"(Pattern::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
-    uint64_t queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
@@ -121,8 +121,8 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     std::string query = R"(Pattern::from("QnV").filter(Attribute("velocity") > 100).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
-    uint64_t queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    EXPECT_NE(queryId, -1);
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));

@@ -1,5 +1,6 @@
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
+#include <API/QueryId.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -34,7 +35,7 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    static bool checkCompleteOrTimeout(NodeEnginePtr ptr, uint64_t queryId, size_t expectedResult) {
+    static bool checkCompleteOrTimeout(NodeEnginePtr ptr, QueryId queryId, size_t expectedResult) {
         if (ptr->getQueryStatistics(queryId) == nullptr) {
             NES_ERROR("checkCompleteOrTimeout query does not exists");
             return false;
@@ -64,7 +65,7 @@ class TestUtils {
      * @param expectedResult: The expected value
      * @return true if matched the expected result within the timeout
      */
-    static bool checkCompleteOrTimeout(uint64_t queryId, size_t expectedResult) {
+    static bool checkCompleteOrTimeout(QueryId queryId, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         size_t currentResult = 0;
@@ -137,7 +138,7 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<size_t>>
-    static bool checkCompleteOrTimeout(NesWorkerPtr ptr, uint64_t queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
+    static bool checkCompleteOrTimeout(NesWorkerPtr ptr, QueryId queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         Predicate cmp;
@@ -176,7 +177,7 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<size_t>>
-    static bool checkCompleteOrTimeout(NesCoordinatorPtr ptr, uint64_t queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
+    static bool checkCompleteOrTimeout(NesCoordinatorPtr ptr, QueryId queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         Predicate cmp;
@@ -213,7 +214,7 @@ class TestUtils {
      * @param queryCatalog: the catalog containig the queries in the system
      * @return true if successful
      */
-    static bool checkStoppedOrTimeout(uint64_t queryId, QueryCatalogPtr queryCatalog) {
+    static bool checkStoppedOrTimeout(QueryId queryId, QueryCatalogPtr queryCatalog) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {

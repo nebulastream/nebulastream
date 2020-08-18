@@ -175,7 +175,7 @@ void NesCoordinator::setServerIp(std::string serverIp) {
     this->serverIp = serverIp;
 }
 
-QueryStatisticsPtr NesCoordinator::getQueryStatistics(uint64_t queryId) {
+QueryStatisticsPtr NesCoordinator::getQueryStatistics(QueryId queryId) {
     NES_INFO("NesCoordinator: Get query statistics for query Id " << queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }

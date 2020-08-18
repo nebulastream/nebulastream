@@ -1,5 +1,6 @@
 #ifndef NES_INCLUDE_PLANS_QUERY_HPP_
 #define NES_INCLUDE_PLANS_QUERY_HPP_
+#include <API/QueryId.hpp>
 #include <memory>
 #include <vector>
 
@@ -120,7 +121,7 @@ class QueryPlan {
      * Set the query Id for the plan
      * @param queryId
      */
-    void setQueryId(uint64_t queryId);
+    void setQueryId(QueryId queryId);
 
     /**
      * Get the queryId for the plan
@@ -141,7 +142,7 @@ class QueryPlan {
     QueryPlan();
 
     std::vector<OperatorNodePtr> rootOperators;
-    uint64_t queryId;
+    QueryId queryId;
 };
 }// namespace NES
 #endif//NES_INCLUDE_PLANS_QUERY_HPP_

@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_CATALOGS_QUERYCATALOGENTRY_HPP_
 #define NES_INCLUDE_CATALOGS_QUERYCATALOGENTRY_HPP_
 
+#include <API/QueryId.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <map>
 #include <memory>
@@ -63,7 +64,7 @@ static std::map<QueryStatus, std::string> queryStatusToStringMap{
  */
 class QueryCatalogEntry {
   public:
-    QueryCatalogEntry(uint64_t queryId, std::string queryString, std::string queryPlacementStrategy, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus);
+    QueryCatalogEntry(QueryId queryId, std::string queryString, std::string queryPlacementStrategy, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus);
 
     /**
      * @brief method to get the id of the query
@@ -114,7 +115,7 @@ class QueryCatalogEntry {
     QueryCatalogEntry copy();
 
   private:
-    uint64_t queryId;
+    QueryId queryId;
     std::string queryString;
     std::string queryPlacementStrategy;
     QueryPlanPtr queryPlanPtr;

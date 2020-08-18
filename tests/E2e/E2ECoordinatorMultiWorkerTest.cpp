@@ -89,11 +89,11 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
         })
         .wait();
 
-    uint64_t queryId = json_return.at("queryId").as_integer();
+    QueryId queryId = json_return.at("queryId").as_integer();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, -1);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2));
 

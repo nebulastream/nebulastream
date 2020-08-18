@@ -1,3 +1,4 @@
+#include <API/QueryId.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
@@ -44,7 +45,7 @@ std::map<uint64_t, std::string> QueryCatalog::getAllQueries() {
 
 QueryCatalogEntryPtr QueryCatalog::addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
     std::unique_lock lock(catalogMutex);
-    uint64_t queryId = queryPlan->getQueryId();
+    QueryId queryId = queryPlan->getQueryId();
     NES_INFO("QueryCatalog: Registering query with id " << queryId);
     NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
     QueryCatalogEntryPtr queryCatalogEntry = std::make_shared<QueryCatalogEntry>(queryId, queryString, optimizationStrategyName, queryPlan, QueryStatus::Registered);
@@ -52,7 +53,7 @@ QueryCatalogEntryPtr QueryCatalog::addNewQueryRequest(const std::string& querySt
     return queryCatalogEntry;
 }
 
-QueryCatalogEntryPtr QueryCatalog::addQueryStopRequest(uint64_t queryId) {
+QueryCatalogEntryPtr QueryCatalog::addQueryStopRequest(QueryId queryId) {
     std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog: Validating with old query status.");
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
@@ -66,7 +67,7 @@ QueryCatalogEntryPtr QueryCatalog::addQueryStopRequest(uint64_t queryId) {
     return queryCatalogEntry;
 }
 
-void QueryCatalog::markQueryAs(uint64_t queryId, QueryStatus newStatus) {
+void QueryCatalog::markQueryAs(QueryId queryId, QueryStatus newStatus) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << newStatus);
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
@@ -78,7 +79,7 @@ void QueryCatalog::markQueryAs(uint64_t queryId, QueryStatus newStatus) {
     }
 }
 
-bool QueryCatalog::isQueryRunning(uint64_t queryId) {
+bool QueryCatalog::isQueryRunning(QueryId queryId) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: test if query started with id " << queryId << " running=" << queries[queryId]->getQueryStatus());
     return queries[queryId]->getQueryStatus() == QueryStatus::Running;
@@ -90,13 +91,13 @@ std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getAllQueryCatalogEntries
     return queries;
 }
 
-QueryCatalogEntryPtr QueryCatalog::getQueryCatalogEntry(uint64_t queryId) {
+QueryCatalogEntryPtr QueryCatalog::getQueryCatalogEntry(QueryId queryId) {
     std::unique_lock lock(catalogMutex);
     NES_TRACE("QueryCatalog: getQueryCatalogEntry with id " << queryId);
     return queries[queryId];
 }
 
-bool QueryCatalog::queryExists(uint64_t queryId) {
+bool QueryCatalog::queryExists(QueryId queryId) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: queryExists with id=" << queryId << " registered queries=" << printQueries());
     if (queries.count(queryId) > 0) {

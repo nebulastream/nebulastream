@@ -9,7 +9,7 @@ QueryRequestQueue::QueryRequestQueue() : newRequestAvailable(false), batchSize(1
 
 bool QueryRequestQueue::add(QueryCatalogEntryPtr queryCatalogEntry) {
     std::unique_lock<std::mutex> lock(queryRequest);
-    uint64_t queryId = queryCatalogEntry->getQueryId();
+    QueryId queryId = queryCatalogEntry->getQueryId();
     NES_INFO("QueryRequestQueue: Adding a new query request for query: " << queryId);
     auto itr = std::find_if(schedulingQueue.begin(), schedulingQueue.end(), [&](auto queryRequest) {
         return queryRequest.getQueryId() == queryId;

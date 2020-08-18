@@ -34,7 +34,7 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
 
 uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode) {
 
-    uint64_t queryId = queryPlan->getQueryId();
+    QueryId queryId = queryPlan->getQueryId();
     uint64_t nextNetworkSourceOperatorId = -1;
     //FIXME: This need a second look when we will consider plans with multiple sources or merge operator.
     // Ideally we need independent sink and source operator pairs. This change is using existing source operator.
@@ -77,7 +77,7 @@ void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, NES
         throw QueryPlacementException("BasePlacementStrategy: Failed to add Network source operator due to invalid operator id -1");
     }
 
-    uint64_t queryId = queryPlan->getQueryId();
+    QueryId queryId = queryPlan->getQueryId();
     const ExecutionNodePtr childExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(childNesNode->getId());
     if (!(childExecutionNode)) {
         NES_ERROR("BasePlacementStrategy: Unable to find child execution node");
@@ -110,7 +110,7 @@ void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, NES
 // FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
 // that there could be more than one child. Once the code generator able to deal with it this logic need to be
 // fixed.
-void BasePlacementStrategy::addSystemGeneratedOperators(uint64_t queryId, std::vector<NESTopologyEntryPtr> path) {
+void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, std::vector<NESTopologyEntryPtr> path) {
     NES_DEBUG("BasePlacementStrategy: Adding system generated operators");
 
     uint64_t nextNetworkSourceOperatorId = -1;

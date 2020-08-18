@@ -4,6 +4,7 @@
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
 
+#include <API/QueryId.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <grpcpp/grpcpp.h>
@@ -36,7 +37,7 @@ class WorkerRPCClient {
      * @param queryId to undeploy
      * @return true if succeeded, else false
      */
-    bool undeployQuery(std::string address, uint64_t queryId);
+    bool undeployQuery(std::string address, QueryId queryId);
 
     /**
     * @brief gregisters a query
@@ -44,14 +45,14 @@ class WorkerRPCClient {
     * @param query plan to register as eto
     * @return true if succeeded, else false
     */
-    bool registerQuery(std::string address, uint64_t queryId, OperatorNodePtr queryOperators);
+    bool registerQuery(std::string address, QueryId queryId, OperatorNodePtr queryOperators);
 
     /**
      * @brief ungregisters a query
      * @param queryIdto unregister query
      * @return true if succeeded, else false
      */
-    bool unregisterQuery(std::string address, uint64_t queryId);
+    bool unregisterQuery(std::string address, QueryId queryId);
 
     /**
      * @brief method to start a already deployed query
@@ -59,14 +60,14 @@ class WorkerRPCClient {
      * @param queryId to start
      * @return bool indicating success
      */
-    bool startQuery(std::string address, uint64_t queryId);
+    bool startQuery(std::string address, QueryId queryId);
 
     /**
      * @brief method to stop a query
      * @param queryId to stop
      * @return bool indicating success
      */
-    bool stopQuery(std::string address, uint64_t queryId);
+    bool stopQuery(std::string address, QueryId queryId);
 
   private:
 };

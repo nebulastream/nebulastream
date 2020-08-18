@@ -3,9 +3,8 @@
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cstring><cstring>
+#include <cstring>
 #include <iostream>
-#include <sstream>
 namespace NES {
 
 CsvFormat::CsvFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
