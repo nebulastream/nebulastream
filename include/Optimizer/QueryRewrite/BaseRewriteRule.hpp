@@ -9,7 +9,7 @@ namespace NES {
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
-class BaseRefinementRule : public std::enable_shared_from_this<BaseRefinementRule> {
+class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
 
   public:
     /**

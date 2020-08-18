@@ -13,7 +13,7 @@ WindowDistributionRefinementPtr WindowDistributionRefinement::create() {
     return std::make_shared<WindowDistributionRefinement>(WindowDistributionRefinement());
 }
 
-WindowDistributionRefinement::WindowDistributionRefinement() : BaseRefinementRule() {}
+WindowDistributionRefinement::WindowDistributionRefinement() : BaseRewriteRule() {}
 
 bool WindowDistributionRefinement::execute(GlobalExecutionPlanPtr globalPlan, std::string queryId) {
     NES_DEBUG("WindowDistributionRefinement::execute for globalPlan=" << globalPlan << " queryId=" << queryId);
@@ -38,6 +38,7 @@ bool WindowDistributionRefinement::execute(GlobalExecutionPlanPtr globalPlan, st
 //                    LogicalOperatorNodePtr newWindowOp = windowOp->copyIntoCentralizedWindow();
                     //replace old with new one
 //                    windowOp->replace(newWindowOp, windowOp);
+                    //TODO comment philipp: this is a reverse factory pattern. I think it would be more clear if we have a factory on the CentralWindow::create(WindowLogicalOperatorNode). Same for the DistributedWidnow
                 } else {//distributed window
                     NES_DEBUG("WindowDistributionRefinement::execute: introduce distributed window operator on node " << node->toString() << " windowOp=" << windowOp->toString());
 //                    LogicalOperatorNodePtr newWindowOp = windowOp->copyIntoDistributedWindow();

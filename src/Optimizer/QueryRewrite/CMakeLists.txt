@@ -1,4 +1,4 @@
 add_source_nes(
-        BaseRefinementRule.cpp
+        BaseRewriteRule.cpp
         FilterPushDownRule.cpp
 )

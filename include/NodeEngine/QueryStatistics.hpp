@@ -16,37 +16,37 @@ class QueryStatistics {
      * @brief getter for processedTasks
      * @return processedTasks
      */
-    const std::atomic<size_t> getProcessedTasks() const;
+    const std::atomic<uint64_t> getProcessedTasks() const;
 
     /**
    * @brief getter for processedTuple
    * @return processedTuple
    */
-    const std::atomic<size_t> getProcessedTuple() const;
+    const std::atomic<uint64_t> getProcessedTuple() const;
 
     /**
    * @brief getter for processedBuffers
    * @return processedBuffers
    */
-    const std::atomic<size_t> getProcessedBuffers() const;
+    const std::atomic<uint64_t> getProcessedBuffers() const;
 
     /**
     * @brief getter for processedWatermarks
     * @return processedBuffers
     */
-    const std::atomic<size_t> getProcessedWatermarks() const;
+    const std::atomic<uint64_t> getProcessedWatermarks() const;
 
     /**
     * @brief setter for processedTasks
     * @return processedTasks
     */
-    void setProcessedTasks(const std::atomic<size_t>& processedTasks);
+    void setProcessedTasks(const std::atomic<uint64_t>& processedTasks);
 
     /**
    * @brief setter for processedTuple
    * @return processedTuple
    */
-    void setProcessedTuple(const std::atomic<size_t>& processedTuple);
+    void setProcessedTuple(const std::atomic<uint64_t>& processedTuple);
 
     /**
   * @brief increment processedBuffers
@@ -61,7 +61,7 @@ class QueryStatistics {
     /**
    * @brief increment processedTuple
    */
-    void incProcessedTuple(size_t tupleCnt);
+    void incProcessedTuple(uint64_t tupleCnt);
 
     /**
     * @brief increment processedWatermarks
@@ -72,15 +72,15 @@ class QueryStatistics {
   * @brief setter for processedBuffers
   * @return processedBuffers
   */
-    void setProcessedBuffers(const std::atomic<size_t>& processedBuffers);
+    void setProcessedBuffers(const std::atomic<uint64_t>& processedBuffers);
 
     std::string getQueryStatisticsAsString();
 
   private:
-    std::atomic<size_t> processedTasks;
-    std::atomic<size_t> processedTuple;
-    std::atomic<size_t> processedBuffers;
-    std::atomic<size_t> processedWatermarks;
+    std::atomic<uint64_t> processedTasks;
+    std::atomic<uint64_t> processedTuple;
+    std::atomic<uint64_t> processedBuffers;
+    std::atomic<uint64_t> processedWatermarks;
 };
 typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 
