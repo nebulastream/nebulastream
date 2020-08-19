@@ -1,6 +1,7 @@
 #ifndef NES_GLOBALEXECUTIONPLAN_HPP
 #define NES_GLOBALEXECUTIONPLAN_HPP
 
+#include <API/QueryId.hpp>
 #include <cpprest/json.h>
 #include <map>
 #include <memory>
@@ -122,7 +123,7 @@ class GlobalExecutionPlan {
     /**
      * Index based on query Id for faster access to the execution nodes
      */
-    std::map<uint64_t, std::vector<ExecutionNodePtr>> queryIdIndex;
+    std::map<QueryId, std::vector<ExecutionNodePtr>> queryIdIndex;
 
     /**
      * List Of ExecutionNodes to be deployed. This list contains all nodes with the scheduled flag as false.

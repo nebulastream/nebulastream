@@ -1,6 +1,7 @@
 #ifndef NES_QueryPlacementRefinementPhase_HPP
 #define NES_QueryPlacementRefinementPhase_HPP
 
+#include <API/QueryId.hpp>
 #include <Optimizer/QueryRefinement/WindowDistributionRefinement.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <memory>
@@ -21,7 +22,7 @@ class QueryPlacementRefinementPhase {
      * @param queryId
      * @return success
      */
-    bool execute(std::string queryId);
+    bool execute(QueryId queryId);
 
   private:
     explicit QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan);

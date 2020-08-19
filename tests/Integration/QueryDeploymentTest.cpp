@@ -143,7 +143,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerWindowQueryEventTime) {
     string query = "Query::from(\"exdra\").windowByKey(Attribute(\"features_properties_time\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"metadata_generated\")), "
                    "Seconds(10)), Sum::on(Attribute(\"features_properties_time\"))).sink(PrintSinkDescriptor::create());";
 
-    string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     sleep(3);
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 2));
@@ -198,7 +198,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerWindowQueryProcessingTime) {
     string query = "Query::from(\"exdra\").windowByKey(Attribute(\"features_properties_time\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
                    "Seconds(1)), Sum::on(Attribute(\"features_properties_time\"))).sink(PrintSinkDescriptor::create());";
 
-    string queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     sleep(3);
 //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));

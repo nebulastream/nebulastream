@@ -2,6 +2,7 @@
 #define NES_IMPL_OPTIMIZER_QUERYREFINEMENT_BASERULE_HPP_
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 
+#include <API/QueryId.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 
@@ -18,7 +19,7 @@ class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
      * @param globalPlan
      * @param queryId
      */
-    virtual bool execute(GlobalExecutionPlanPtr globalPlan, std::string queryId) = 0;
+    virtual bool execute(GlobalExecutionPlanPtr globalPlan, QueryId queryId) = 0;
 
     /**
      * @brief Checks if the current node is of type RefinementType
