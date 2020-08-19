@@ -1440,11 +1440,9 @@ TEST_F(LogicalOperatorNodeTest, translateWindowOperatorToLegacy) {
      */
     auto schema = Schema::create();
 
-
-
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
-    auto windowOperator = createWindowLogicalOperatorNode(createWindowDefinition(Sum::on(Attribute("test")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10))));
+    auto windowOperator = createCentralWindowSpecializedOperatorNode(createWindowDefinition(Sum::on(Attribute("test")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10))));
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);
 
