@@ -23,7 +23,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
@@ -64,10 +64,10 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         // serialize map expression
         ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
         serializedOperator->mutable_details()->PackFrom(mapDetails);
-    } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // serialize window operator
-        NES_TRACE("OperatorSerializationUtil:: serialize to WindowLogicalOperatorNode");
-        auto windowDetails = serializeWindowOperator(operatorNode->as<WindowLogicalOperatorNode>());
+        NES_TRACE("OperatorSerializationUtil:: serialize to CentralWindowOperator");
+        auto windowDetails = serializeCentralWindowOperator(operatorNode->as<CentralWindowOperator>());
         serializedOperator->mutable_details()->PackFrom(windowDetails);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
@@ -139,7 +139,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
         auto serializedWindowOperator = SerializableOperator_WindowDetails();
         details.UnpackTo(&serializedWindowOperator);
-        operatorNode = deserializeWindowOperator(&serializedWindowOperator);
+        operatorNode = deserializeCentralWindowOperator(&serializedWindowOperator);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: " << details.type_url());
     }
@@ -159,10 +159,10 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     return operatorNode;
 }
 
-WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(SerializableOperator_WindowDetails* windowDetails) {
+CentralWindowOperatorPtr OperatorSerializationUtil::deserializeCentralWindowOperator(SerializableOperator_WindowDetails* sinkDetails) {
 
-    auto serializedWindowAggregation = windowDetails->windowaggregation();
-    auto serializedWindowType = windowDetails->windowtype();
+    auto serializedWindowAggregation = sinkDetails->windowaggregation();
+    auto serializedWindowType = sinkDetails->windowtype();
     WindowAggregationPtr aggregation;
     if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM) {
         aggregation = Sum::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
@@ -189,10 +189,10 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: " << serializedWindowType.DebugString());
     }
 
-    if (windowDetails->onkey() == "") {
-        return createWindowLogicalOperatorNode(createWindowDefinition(aggregation, window))->as<WindowLogicalOperatorNode>();
+    if (sinkDetails->onkey() == "") {
+        return createCentralWindowSpecializedOperatorNode(createWindowDefinition(aggregation, window))->as<CentralWindowOperator>();
     } else {
-        return createWindowLogicalOperatorNode(createWindowDefinition(AttributeField::create(windowDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window))->as<WindowLogicalOperatorNode>();
+        return createCentralWindowSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window))->as<CentralWindowOperator>();
     }
 }
 
@@ -208,7 +208,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(Serializabl
     return createSourceLogicalOperatorNode(sourceDescriptor);
 }
 
-SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOperator(WindowLogicalOperatorNodePtr windowOperator) {
+SerializableOperator_WindowDetails OperatorSerializationUtil::serializeCentralWindowOperator(CentralWindowOperatorPtr windowOperator) {
     auto windowDetails = SerializableOperator_WindowDetails();
     auto windowDefinition = windowOperator->getWindowDefinition();
 

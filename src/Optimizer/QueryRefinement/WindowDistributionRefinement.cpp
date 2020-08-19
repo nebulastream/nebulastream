@@ -4,6 +4,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 
 #include <string>
 
@@ -29,16 +30,22 @@ bool WindowDistributionRefinement::execute(GlobalExecutionPlanPtr globalPlan, Qu
         std::vector<OperatorNodePtr> windowOps = plan->getWindowOperators();
         //        std::vector<std::shared_ptr<WindowLogicalOperatorNode>> vec = node->getNodesByType<WindowLogicalOperatorNode>();
         if (windowOps.size() > 0) {
-
             NES_DEBUG("WindowDistributionRefinement::execute: window operator found on " << windowOps.size() << " nodes");
             for (auto& windowOp : windowOps) {
                 NES_DEBUG("WindowDistributionRefinement::execute: window operator found on node " << node->toString() << " windowOp=" << windowOp->toString());
                 if (!distributedWindowing) {//centralized window
                     NES_DEBUG("WindowDistributionRefinement::execute: introduce centralized window operator on node " << node->toString() << " windowOp=" << windowOp->toString());
-                    //                    LogicalOperatorNodePtr newWindowOp = windowOp->copyIntoCentralizedWindow();
-                    //replace old with new one
-                    //                    windowOp->replace(newWindowOp, windowOp);
-                    //TODO comment philipp: this is a reverse factory pattern. I think it would be more clear if we have a factory on the CentralWindow::create(WindowLogicalOperatorNode). Same for the DistributedWidnow
+
+                    WindowLogicalOperatorNode* winOp = dynamic_cast<WindowLogicalOperatorNode*>(windowOp.get());
+                    LogicalOperatorNodePtr newWindowOp = createCentralWindowSpecializedOperatorNode(winOp->getWindowDefinition());
+                    newWindowOp->setInputSchema(winOp->getInputSchema());
+                    newWindowOp->setOutputSchema(winOp->getOutputSchema());
+                    newWindowOp->setId(winOp->getId());
+
+                    NES_DEBUG("WindowDistributionRefinement::execute: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
+                    NES_DEBUG("WindowDistributionRefinement::execute: plan before replace " << plan->toString());
+                    windowOp->replace(newWindowOp);
+                    NES_DEBUG("WindowDistributionRefinement::execute: plan after replace " << plan->toString());
                 } else {//distributed window
                     NES_DEBUG("WindowDistributionRefinement::execute: introduce distributed window operator on node " << node->toString() << " windowOp=" << windowOp->toString());
                     //                    LogicalOperatorNodePtr newWindowOp = windowOp->copyIntoDistributedWindow();

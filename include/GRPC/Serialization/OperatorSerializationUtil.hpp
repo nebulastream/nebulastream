@@ -11,8 +11,8 @@ typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 class SinkLogicalOperatorNode;
 typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 
-class WindowLogicalOperatorNode;
-typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
+class CentralWindowOperator;
+typedef std::shared_ptr<CentralWindowOperator> CentralWindowOperatorPtr;
 
 class SourceDescriptor;
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
@@ -71,11 +71,11 @@ class OperatorSerializationUtil {
     static SerializableOperator_SinkDetails serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator);
 
     /**
-     * @brief Serializes an window operator and all its properties to a SerializableOperator_WindowDetails object.
-     * @param windowOperator The window operator node.
+     * @brief Serializes an central window operator and all its properties to a SerializableOperator_WindowDetails object.
+     * @param CentralWindowOperatorPtr The window operator node.
      * @return the serialized SerializableOperator_SinkDetails.
      */
-    static SerializableOperator_WindowDetails serializeWindowOperator(WindowLogicalOperatorNodePtr windowOperator);
+    static SerializableOperator_WindowDetails serializeCentralWindowOperator(CentralWindowOperatorPtr windowOperator);
 
     /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
@@ -85,11 +85,11 @@ class OperatorSerializationUtil {
     static OperatorNodePtr deserializeSinkOperator(SerializableOperator_SinkDetails* sinkDetails);
 
     /**
-     * @brief De-serializes the SerializableOperator_WindowDetails and all its properties back to a window operatorNodePtr
+     * @brief De-serializes the SerializableOperator_WindowDetails and all its properties back to a central window operatorNodePtr
      * @param sinkDetails The serialized sink operator details.
      * @return SinkLogicalOperatorNodePtr
      */
-    static WindowLogicalOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails);
+    static CentralWindowOperatorPtr deserializeCentralWindowOperator(SerializableOperator_WindowDetails* sinkDetails);
 
     /**
      * @brief Serializes an source descriptor and all its properties to a SerializableOperator_SourceDetails object.

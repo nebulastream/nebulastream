@@ -19,7 +19,7 @@ class WindowLogicalOperatorNode : public LogicalOperatorNode {
     bool isIdentical(NodePtr rhs) const override;
     bool inferSchema() override;
 
-  private:
+  protected:
     WindowDefinitionPtr windowDefinition;
 };
 
