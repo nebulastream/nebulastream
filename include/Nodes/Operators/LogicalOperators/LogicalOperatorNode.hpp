@@ -34,7 +34,6 @@ LogicalOperatorNodePtr createSliceCreationSpecializedOperatorNode(const WindowDe
 LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition);
 LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition);
 
-
 LogicalOperatorNodePtr createMergeLogicalOperatorNode();
 }// namespace NES
 

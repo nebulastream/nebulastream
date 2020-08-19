@@ -1,8 +1,8 @@
 #include <API/Schema.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <sstream>
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <sstream>
 
 namespace NES {
 
@@ -24,7 +24,7 @@ bool WindowLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     bool eq = equal(rhs);
     bool idCmp = rhs->as<WindowLogicalOperatorNode>()->getId() == id;
     bool typeInfer = rhs->instanceOf<CentralWindowOperator>();
-    return eq && idCmp && !typeInfer ;
+    return eq && idCmp && !typeInfer;
 }
 
 bool WindowLogicalOperatorNode::equal(const NodePtr rhs) const {

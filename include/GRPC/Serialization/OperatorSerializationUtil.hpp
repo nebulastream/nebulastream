@@ -109,7 +109,6 @@ class OperatorSerializationUtil {
     */
     static WindowLogicalOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails);
 
-
     /**
      * @brief Serializes an source descriptor and all its properties to a SerializableOperator_SourceDetails object.
      * @param sourceDescriptor The source descriptor.

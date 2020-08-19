@@ -1,6 +1,6 @@
-#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <API/Schema.hpp>
 #include <API/Window/WindowDefinition.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 
 namespace NES {
 
@@ -11,7 +11,6 @@ LogicalOperatorNodePtr createCentralWindowSpecializedOperatorNode(const WindowDe
 CentralWindowOperator::CentralWindowOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
 }
-
 
 const std::string CentralWindowOperator::toString() const {
     std::stringstream ss;
@@ -34,6 +33,5 @@ OperatorNodePtr CentralWindowOperator::copy() {
     copy->setOutputSchema(outputSchema);
     return copy;
 }
-
 
 }// namespace NES

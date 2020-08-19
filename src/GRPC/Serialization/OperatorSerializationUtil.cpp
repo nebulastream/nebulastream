@@ -23,8 +23,8 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -161,7 +161,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     return operatorNode;
 }
 
-
 WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails) {
     auto serializedWindowAggregation = sinkDetails->windowaggregation();
     auto serializedWindowType = sinkDetails->windowtype();
@@ -246,7 +245,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(Serializabl
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDetails);
     return createSourceLogicalOperatorNode(sourceDescriptor);
 }
-
 
 SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOperator(CentralWindowOperatorPtr windowOperator) {
     auto windowDetails = SerializableOperator_WindowDetails();
