@@ -7,6 +7,10 @@
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
+#include <open62541/client_config_default.h>
+#include <open62541/client_highlevel.h>
+#include <open62541/client_subscriptions.h>
+#include <open62541/plugin/log_stdout.h>
 namespace NES {
 
 /**
@@ -99,7 +103,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
                                       uint64_t kafkaConsumerTimeout);
 #endif
 
-#ifdef ENABLE_OPC_BUILD
+//#ifdef ENABLE_OPC_BUILD
 /**
  * @brief Create OPC source
  * @param schema schema of the elements
@@ -109,7 +113,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
  * @return
  */
 const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                    const std::string& url,
+                                    const char *url,
                                     UA_UInt16 nsIndex,
                                     char *nsId);
 
@@ -124,12 +128,12 @@ const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferMan
  * @return
  */
 const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                    const std::string& url,
+                                    const char *url,
                                     UA_UInt16 nsIndex,
                                     char *nsId,
-                                    const std::string& user,
-                                    const std::string& password);
-#endif
+                                    const char *user,
+                                    const char *password);
+//#endif
 
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_SOURCECREATOR_HPP_ */

@@ -18,6 +18,7 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 class TupleBuffer;
 
 enum SourceType {
+    OPC_SOURCE,
     ZMQ_SOURCE,
     CSV_SOURCE,
     KAFKA_SOURCE,

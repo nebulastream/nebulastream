@@ -2,6 +2,7 @@
 #include <Sources/OPCSource.hpp>
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
+#include <open62541/client_subscriptions.h>
 #include <open62541/plugin/log_stdout.h>
 
 #include <cassert>
@@ -19,25 +20,33 @@ namespace NES {
 
 OPCSource::OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& url, UA_UInt16 nsIndex, char *nsId)
     : DataSource(schema, bufferManager, queryManager), 
+    url(url),
+    nsIndex(nsIndex),
+    nsId(nsId),
+    retval(UA_STATUSCODE_GOOD),
     client(UA_Client_new()),
-    UA_ClientConfig_setDefault(UA_Client_getConfig(client)),
-    retval(UA_StatusCode_Good),
     connected(false),
-    withPwd(false){
+    withPwd(false),
+    password(""),
+    user("")
+    {
 
     NES_DEBUG(
         "OPCSOURCE  " << this << ": Init OPC Source to " << url << " without user and password.");
 }
 
-OPCSource::OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& url, UA_UInt16 nsIndex, char *nsId, const std::string& user, const std::string& password)
+OPCSource::OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string & url, UA_UInt16 nsIndex, char *nsId, const std::string& user, const std::string& password)
     : DataSource(schema, bufferManager, queryManager), 
-    client(UA_Client_new()),
-    UA_ClientConfig_setDefault(UA_Client_getConfig(client)),
+    url(url),
+    nsIndex(nsIndex),
+    nsId(nsId),
     retval(UA_STATUSCODE_GOOD),
+    client(UA_Client_new()),
     connected(false),
     withPwd(true),
-    user(user),
-    password(password){
+    password(password),
+    user(user)
+    {
 
     NES_DEBUG(
         "OPCSOURCE  " << this << ": Init OPC Source to " << url << " with user and password.");
@@ -45,7 +54,7 @@ OPCSource::OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryMana
 
 OPCSource::~OPCSource() {
     NES_DEBUG("OPCSource::~OPCSource()");
-    bool success = NES::OPCSource::disconnect();
+    bool success = disconnect();
     if (success) {
         NES_DEBUG("OPCSOURCE  " << this << ": Destroy OPC Source");
     } else {
@@ -58,16 +67,15 @@ OPCSource::~OPCSource() {
 std::optional<TupleBuffer> OPCSource::receiveData() {
     NES_DEBUG("OPCSource  " << this << ": receiveData ");
     if (connect()) {
-
         UA_Variant *val = UA_Variant_new();
 
-        retval = UA_Client_readValueAttribute(client, UA_NODEID_STRING(nsIndex, *nsId), val);
+        retval = UA_Client_readValueAttribute(client, UA_NODEID_STRING(nsIndex, nsId), val);
         auto buffer = bufferManager->getBufferBlocking();
         NES_DEBUG("OPCSource  " << this << ": got buffer ");
 
         if(retval == UA_STATUSCODE_GOOD) {
 
-            std::memcpy(buffer.getBuffer(), *(UA_Int32*)val->data, buffer.getBufferSize());
+            std::memcpy(buffer.getBuffer(), (UA_Int32*)val->data, buffer.getBufferSize());
             buffer.setNumberOfTuples(1);
             UA_Variant_delete(val);
 
@@ -94,14 +102,17 @@ const std::string OPCSource::toString() const {
 
 bool OPCSource::connect() {
 
+    UA_ClientConfig_setDefault(UA_Client_getConfig(client));
+
+
     if (!connected) {
         NES_DEBUG("OPCSOURCE was !conncect now connect " << this << ": connected");
         if (withPwd == false)
         {
-            retval = UA_Client_connect(client, url);
+            retval = UA_Client_connect(client, url.c_str());
         }else{
 
-            retval = UA_Client_connect_username(client, url, user, password);
+            retval = UA_Client_connect_username(client, url.c_str(), user.c_str(), password.c_str());
         }
         NES_DEBUG("OPCSOURCE use address " << url);
 
@@ -140,7 +151,7 @@ bool OPCSource::disconnect() {
 
 SourceType OPCSource::getType() const { return OPC_SOURCE; }
 
-const std::string& OPCSource::getUrl() const {
+const std::string&  OPCSource::getUrl() const {
     return url;
 }
 
@@ -149,27 +160,19 @@ UA_UInt16 OPCSource::getNsIndex() const {
 }
 
 char OPCSource::getNsId() const {
-    return nsId;
+    return *nsId;
 }
 
-const std::string OPCSource::getUser() const {
+const std::string& OPCSource::getUser() const {
     return user;
 }
 
-const std::string OPCSource::getPassword() const {
+const std::string& OPCSource::getPassword() const {
     return password;
 }
 
-UA_StatusCode OPCSource::getRetval() const {
+const UA_StatusCode& OPCSource::getRetval() const {
     return retval;
-}
-
-UA_Client OPCSource::getClient() const {
-    return client;
-}
-
-bool OPCSource::getConnected const {
-    return connected;
 }
 
 }// namespace NES
