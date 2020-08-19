@@ -127,7 +127,7 @@ class QueryPlan {
      * Get the queryId for the plan
      * @return query Id of the plan
      */
-    const uint64_t getQueryId() const;
+    const QueryId getQueryId() const;
 
   private:
     /**
