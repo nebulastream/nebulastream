@@ -22,7 +22,7 @@ class WindowDistributionRefinement : public BaseRewriteRule {
      * @param queryId
      * @return bool indicating success
      */
-    bool execute(GlobalExecutionPlanPtr globalPlan, std::string queryId) override;
+    bool execute(GlobalExecutionPlanPtr globalPlan, QueryId queryId) override;
 
     /**
      * @brief mehtod to create a refinement rule
