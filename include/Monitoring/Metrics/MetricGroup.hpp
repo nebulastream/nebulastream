@@ -47,8 +47,12 @@ class MetricGroup {
      */
     bool remove(const std::string& name);
 
-    void getSample(std::shared_ptr<Schema>, TupleBuffer&);
-
+    /**
+     * @brief Reads the values of all metrics from the MetricGroup and stores them to the passed Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     */
+    void getSample(std::shared_ptr<Schema> schema, TupleBuffer& buf);
   private:
     MetricGroup();
     std::unordered_map<std::string, Metric> metricMap;

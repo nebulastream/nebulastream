@@ -46,4 +46,47 @@ void serialize(MemoryMetrics metric, std::shared_ptr<Schema> schema, TupleBuffer
     buf.setNumberOfTuples(1);
 }
 
+MemoryMetrics MemoryMetrics::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    MemoryMetrics output{};
+    auto layout = createRowLayout(schema);
+
+    int i = 0;
+    for (auto field : schema->fields) {
+        if (field->name == prefix + "TOTAL_RAM") {
+            break;
+        }
+        i++;
+    }
+    if (i <= schema->getSize() && schema->fields[i + 12]->name == prefix + "LOADS_15MIN" && buf.getNumberOfTuples() == 1) {
+        output.TOTAL_RAM = layout->getValueField<uint64_t>(0, i)->read(buf);
+        output.TOTAL_SWAP = layout->getValueField<uint64_t>(0, i + 1)->read(buf);
+        output.FREE_RAM = layout->getValueField<uint64_t>(0, i + 2)->read(buf);
+        output.SHARED_RAM = layout->getValueField<uint64_t>(0, i + 3)->read(buf);
+        output.BUFFER_RAM = layout->getValueField<uint64_t>(0, i + 4)->read(buf);
+        output.FREE_SWAP = layout->getValueField<uint64_t>(0, i + 5)->read(buf);
+        output.TOTAL_HIGH = layout->getValueField<uint64_t>(0, i + 6)->read(buf);
+        output.FREE_HIGH = layout->getValueField<uint64_t>(0, i + 7)->read(buf);
+        output.PROCS = layout->getValueField<uint64_t>(0, i + 8)->read(buf);
+        output.MEM_UNIT = layout->getValueField<uint64_t>(0, i + 9)->read(buf);
+        output.LOADS_1MIN = layout->getValueField<uint64_t>(0, i + 10)->read(buf);
+        output.LOADS_5MIN = layout->getValueField<uint64_t>(0, i + 11)->read(buf);
+        output.LOADS_15MIN = layout->getValueField<uint64_t>(0, i + 12)->read(buf);
+    } else {
+        NES_THROW_RUNTIME_ERROR("MemoryMetrics: Metrics could not be parsed from schema " + schema->toString());
+    }
+    return output;
+}
+
+bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
+    return TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP && FREE_RAM == rhs.FREE_RAM
+        && SHARED_RAM == rhs.SHARED_RAM && BUFFER_RAM == rhs.BUFFER_RAM && FREE_SWAP == rhs.FREE_SWAP
+        && TOTAL_HIGH == rhs.TOTAL_HIGH && FREE_HIGH == rhs.FREE_HIGH && PROCS == rhs.PROCS
+        && MEM_UNIT == rhs.MEM_UNIT && LOADS_1MIN == rhs.LOADS_1MIN && LOADS_5MIN == rhs.LOADS_5MIN
+        && LOADS_15MIN == rhs.LOADS_15MIN;
+}
+
+bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const {
+    return !(rhs == *this);
+}
+
 }// namespace NES

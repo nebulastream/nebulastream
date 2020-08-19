@@ -224,6 +224,43 @@ TEST_F(MonitoringStackTest, testSerializationGroups) {
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
+TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
+    MetricGroupPtr metricGroup = MetricGroup::create();
+
+    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
+    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
+    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
+    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
+
+    // add with simple data types
+    auto intS = "simpleInt";
+    metricGroup->add(intS, 1);
+
+    // add cpu stats
+    auto cpuS = "cpuStats";
+    metricGroup->add(cpuS, cpuStats);
+
+    // add network stats
+    auto networkS = "networkStats";
+    metricGroup->add(networkS, networkStats);
+
+    // add disk stats
+    auto diskS = "diskStats";
+    metricGroup->add(diskS, diskStats);
+
+    // add mem stats
+    auto memS = "memStats";
+    metricGroup->add(memS, memStats);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto schema = Schema::create();
+    metricGroup->getSample(schema, tupleBuffer);
+
+    auto deserMem = MemoryMetrics::fromBuffer(schema, tupleBuffer, "memStats_");
+    ASSERT_TRUE(deserMem != MemoryMetrics{});
+    ASSERT_TRUE(deserMem.TOTAL_RAM == memStats.measure().TOTAL_RAM);
+}
+
 TEST_F(MonitoringStackTest, testSamplingProtocol) {
     auto cpuStats = MetricUtils::CPUStats();
     int systemMetrics = 22;
