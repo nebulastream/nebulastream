@@ -10,7 +10,7 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
 class SliceCreationOperator : public WindowLogicalOperatorNode {
   public:
-    SliceCreationOperator(const WindowDefinitionPtr& windowDefinition);
+    SliceCreationOperator(const WindowDefinitionPtr windowDefinition);
 };
 
 }// namespace NES
