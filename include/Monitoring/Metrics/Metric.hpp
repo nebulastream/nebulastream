@@ -9,8 +9,8 @@ namespace NES {
 class TupleBuffer;
 class Schema;
 
-template <typename T>
-MetricType getMetricType(const T&)  {
+template<typename T>
+MetricType getMetricType(const T&) {
     return UnknownType;
 }
 
@@ -37,22 +37,21 @@ class Metric {
      * @param arbitrary parameter of any type
      */
     template<typename T>
-    Metric(T x): self(std::make_unique<model<T>>(std::move(x))){
+    Metric(T x) : self(std::make_unique<model<T>>(std::move(x))) {
     }
 
     /**
      * @brief copy ctor to properly handle the templated values
      * @param the metric
      */
-    Metric(const Metric& x): self(x.self->copy()){
-    };
+    Metric(const Metric& x) : self(x.self->copy()){};
     Metric(Metric&&) noexcept = default;
 
     /**
      * @brief assign operator for metrics to avoid unnecessary copies
      */
     Metric& operator=(const Metric& x) {
-        return *this=Metric(x);
+        return *this = Metric(x);
     }
     Metric& operator=(Metric&& x) noexcept = default;
 
@@ -62,7 +61,7 @@ class Metric {
      * @return the value
      */
     template<typename T>
-    T& getValue() const{
+    T& getValue() const {
         return dynamic_cast<model<T>*>(self.get())->data;
     }
 
@@ -107,7 +106,7 @@ class Metric {
      */
     template<typename T>
     struct model final : concept_t {
-        explicit model(T x): data(std::move(x)){ };
+        explicit model(T x) : data(std::move(x)){};
 
         std::unique_ptr<concept_t> copy() const override {
             return std::make_unique<model>(*this);

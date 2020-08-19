@@ -17,7 +17,7 @@ class MemoryMetrics {
      * @param prefix
      * @return the schema
      */
-    static std::shared_ptr<Schema> getSchema(const std::string& prefix="") ;
+    static std::shared_ptr<Schema> getSchema(const std::string& prefix = "");
 
     uint64_t TOTAL_RAM;
     uint64_t TOTAL_SWAP;
@@ -47,6 +47,5 @@ typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
 void serialize(MemoryMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
-
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_

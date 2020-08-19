@@ -19,6 +19,6 @@ enum MetricType {
     UnknownType
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
