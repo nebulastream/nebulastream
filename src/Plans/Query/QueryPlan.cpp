@@ -170,7 +170,7 @@ bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
     return false;
 }
 
-const uint64_t QueryPlan::getQueryId() const {
+const QueryId QueryPlan::getQueryId() const {
     return queryId;
 }
 
