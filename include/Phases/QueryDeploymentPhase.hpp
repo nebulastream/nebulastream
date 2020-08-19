@@ -1,10 +1,10 @@
 #ifndef NES_QUERYDEPLOYMENTPHASE_HPP
 #define NES_QUERYDEPLOYMENTPHASE_HPP
 
+#include <API/QueryId.hpp>
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <API/QueryId.hpp>
 
 namespace NES {
 
