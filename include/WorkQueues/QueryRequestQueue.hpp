@@ -1,13 +1,13 @@
 #ifndef NES_QUERYREQUESTQUEUE_HPP
 #define NES_QUERYREQUESTQUEUE_HPP
 
+#include <API/QueryId.hpp>
 #include <condition_variable>
 #include <deque>
 #include <iostream>
 #include <memory>
 #include <mutex>
 #include <vector>
-#include <API/QueryId.hpp>
 
 namespace NES {
 

@@ -1,12 +1,12 @@
 #ifndef NESPLACEMENTOPTIMIZER_HPP
 #define NESPLACEMENTOPTIMIZER_HPP
 
+#include <API/QueryId.hpp>
 #include <chrono>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <vector>
-#include <API/QueryId.hpp>
 
 namespace NES {
 
