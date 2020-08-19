@@ -27,14 +27,14 @@ class OPCSource : public DataSource {
     OPCSource(SchemaPtr schema,
         BufferManagerPtr bufferManager,
         QueryManagerPtr queryManager,
-        const std::string& url,
+        const std::string & url,
         UA_UInt16 nsIndex,
         char *nsId);
 
     OPCSource(SchemaPtr schema,
         BufferManagerPtr bufferManager,
         QueryManagerPtr queryManager,
-        const std::string& url,
+        const std::string & url,
         UA_UInt16 nsIndex,
         char *nsId,
         const std::string& user,
@@ -88,11 +88,8 @@ class OPCSource : public DataSource {
 
     const std::string& getPassword() const;
 
-    UA_StatusCode getRetval() const;
+    const UA_StatusCode& getRetval() const;
 
-    UA_Client getClient() const;
-
-    bool getConnected() const;
 
     /**
      * @brief Get source type
@@ -103,7 +100,7 @@ class OPCSource : public DataSource {
     /**
      * @brief default constructor required for boost serialization
      */
-    OPCSource();
+    OPCSource() = default;
 
     /**
      * @brief method to connect zmq using the host and port specified before
@@ -112,18 +109,18 @@ class OPCSource : public DataSource {
      */
     bool connect();
 
-    bool disconnected();
+    bool disconnect();
 
     /**
      * @brief method for serialization, all listed variable below are added to the
      * serialization/deserialization process
      */
     friend class DataSource;
-    std::string url;
+    const std::string& url;
     UA_UInt16 nsIndex;
     char *nsId;
-    std::string& user;
-    std::string& password;
+    const std::string& user;
+    const std::string& password;
     UA_StatusCode retval;
     UA_Client *client;
     bool connected;

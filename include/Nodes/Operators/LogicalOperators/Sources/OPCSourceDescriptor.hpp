@@ -18,30 +18,30 @@ class OPCSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema,
-        const std::string url,
+        const std::string & url,
         UA_UInt16 nsIndex,
         char *nsId);
 
     static SourceDescriptorPtr create(SchemaPtr schema, 
-        const std::string url,
+        const std::string & url,
         UA_UInt16 nsIndex,
         char *nsId,
-        const std::string user,
-        const std::string password);
+        const std::string& user,
+        const std::string& password);
     
     static SourceDescriptorPtr create(SchemaPtr schema, 
         std::string streamName, 
-        const std::string url,
+        const std::string & url,
         UA_UInt16 nsIndex,
         char *nsId);
 
     static SourceDescriptorPtr create(SchemaPtr schema, 
         std::string streamName, 
-        const std::string url,
+        const std::string & url,
         UA_UInt16 nsIndex,
         char *nsId,
-        const std::string user,
-        const std::string password);
+        const std::string& user,
+        const std::string& password);
 
     const std::string& getUrl() const;
 
@@ -59,36 +59,36 @@ class OPCSourceDescriptor : public SourceDescriptor {
 
   private:
     explicit OPCSourceDescriptor(SchemaPtr schema,
-        const std::string url,
+        const std::string & url,
         UA_UInt16 nsIndex,
         char *nsId);
 
     explicit OPCSourceDescriptor(SchemaPtr schema, 
-        const std::string url,
+        const std::string & url,
         UA_UInt16 nsIndex,
         char *nsId,
-        const std::string user,
-        const std::string password);
+        const std::string& user,
+        const std::string& password);
 
     explicit OPCSourceDescriptor(SchemaPtr schema, 
         std::string streamName, 
-        const std::string url,
+        const std::string & url,
         UA_UInt16 nsIndex,
         char *nsId);
 
     explicit OPCSourceDescriptor(SchemaPtr schema, 
         std::string streamName, 
-        const std::string url,
+        const std::string & url,
         UA_UInt16 nsIndex,
         char *nsId,
-        const std::string user,
-        const std::string password);
+        const std::string& user,
+        const std::string& password);
 
-    std::string url;
+    const std::string & url;
     UA_UInt16 nsIndex;
     char *nsId;
-    std::string user;
-    std::string password;
+    const std::string& user;
+    const std::string& password;
 };
 
 typedef std::shared_ptr<OPCSourceDescriptor> OPCSourceDescriptorPtr;
