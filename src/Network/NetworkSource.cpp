@@ -14,9 +14,6 @@ NetworkSource::NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, Q
 }
 
 NetworkSource::~NetworkSource() {
-    //    if (networkManager && networkManager->isPartitionRegistered(nesPartition)) {
-    //        NES_THROW_RUNTIME_ERROR("NetworkSource: ~NetworkSource() called, but partition still in use.");
-    //    }
     NES_DEBUG("NetworkSink: Destroying NetworkSource " << nesPartition.toString());
 }
 
