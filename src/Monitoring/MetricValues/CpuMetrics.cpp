@@ -1,8 +1,8 @@
-#include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Util/Logger.hpp>
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -52,9 +52,9 @@ void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& 
     // call serialize for the total metrics over all cores
     serialize(metrics.getTotal(), schema, buf, prefix + "CPU[TOTAL]_");
 
-    for (int i=0; i< metrics.getNumCores(); i++) {
+    for (int i = 0; i < metrics.getNumCores(); i++) {
         //call serialize method for the metrics for each cpu
-        serialize(metrics.getValues(i), schema, buf, prefix + "CPU[" + std::to_string(i+1) + "]_");
+        serialize(metrics.getValues(i), schema, buf, prefix + "CPU[" + std::to_string(i + 1) + "]_");
     }
 }
 

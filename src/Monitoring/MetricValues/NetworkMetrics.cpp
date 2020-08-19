@@ -1,8 +1,8 @@
-#include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Util/Logger.hpp>
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -33,7 +33,7 @@ void serialize(NetworkMetrics metrics, std::shared_ptr<Schema> schema, TupleBuff
     auto layout = createRowLayout(schema);
     layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getInterfaceNum());
 
-    for (auto intfsName: metrics.getInterfaceNames()) {
+    for (auto intfsName : metrics.getInterfaceNames()) {
         serialize(metrics[intfsName], schema, buf, prefix + "Intfs[" + intfsName + "]_");
     }
 }

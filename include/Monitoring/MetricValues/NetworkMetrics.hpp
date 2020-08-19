@@ -37,7 +37,6 @@ class NetworkMetrics {
  */
 void serialize(NetworkMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 
-
 }// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
