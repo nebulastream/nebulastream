@@ -3,6 +3,7 @@
 
 #include <API/QueryId.hpp>
 #include <Common/ForwardDeclaration.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 #include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <map>
 #include <memory>
@@ -104,7 +105,7 @@ class GeneratedQueryExecutionPlanBuilder {
      * @param operatorPtr
      * @return this
      */
-    GeneratedQueryExecutionPlanBuilder& addOperatorQueryPlan(OperatorPtr operatorPtr);
+    GeneratedQueryExecutionPlanBuilder& addOperatorQueryPlan(OperatorNodePtr operatorPtr);
 
     /**
      * @brief add data source
@@ -131,7 +132,7 @@ class GeneratedQueryExecutionPlanBuilder {
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<PipelineStagePtr> stages;
-    std::vector<OperatorPtr> leaves;
+    std::vector<OperatorNodePtr> leaves;
 };
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_

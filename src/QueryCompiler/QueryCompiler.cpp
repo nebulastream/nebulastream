@@ -27,10 +27,10 @@ QueryCompilerPtr QueryCompiler::create() {
  * 4. it scans the map to build pipeline stages. This way, we know the consumer set for each pipeline stage (or its sinks) and we can generate buffer emitters
  */
 
-void QueryCompiler::compile(GeneratedQueryExecutionPlanBuilder& qepBuilder, OperatorPtr queryPlan) {
+void QueryCompiler::compile(GeneratedQueryExecutionPlanBuilder& qepBuilder, OperatorNodePtr queryPlan) {
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
-    queryPlan->produce(codeGenerator, context, std::cout);
+    queryPlan->as<GeneratableOperator>()->produce(codeGenerator, context, std::cout);
     compilePipelineStages(qepBuilder, codeGenerator, context);
 }
 

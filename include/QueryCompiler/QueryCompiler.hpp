@@ -28,6 +28,10 @@ typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 class PipelineContext;
 typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 
+class GeneratableOperator;
+typedef std::shared_ptr<GeneratableOperator> GeneratableOperatorPtr;
+
+
 /**
  * @brief The query compiler compiles physical query plans to an executable query plan
  */
@@ -46,7 +50,7 @@ class QueryCompiler {
      * @param queryPlan
      * @return
      */
-    void compile(GeneratedQueryExecutionPlanBuilder&, OperatorPtr queryPlan);
+    void compile(GeneratedQueryExecutionPlanBuilder&, OperatorNodePtr queryPlan);
 
   private:
     void compilePipelineStages(
