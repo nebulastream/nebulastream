@@ -22,7 +22,7 @@
 #include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -99,9 +99,9 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         legacyOperator = createSinkOperator(dataSink);
         legacyOperator->setOperatorId(operatorNode->getId());
         return legacyOperator;
-    } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         //         Translate window operator node.
-        auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
+        auto windowOperator = operatorNode->as<CentralWindowOperator>();
 
         auto legacyWindowScan = createWindowScanOperator(windowOperator->getOutputSchema());
         // todo both the window operator and the window scan get teh same ID. This should not be a problem.

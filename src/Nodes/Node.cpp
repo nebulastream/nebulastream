@@ -47,6 +47,7 @@ bool Node::addChild(const NodePtr newNode) {
 bool Node::removeChild(const NodePtr node) {
     // check all children.
     for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
+        NES_DEBUG("Node: remove " << (*nodeItr)->toString() << " from " << node->toString() << " this=" << this << " other=" << node.get());
         if ((*nodeItr)->equal(node)) {
             // remove this from nodeItr's parents
             for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++) {
@@ -156,7 +157,17 @@ bool Node::removeParent(const NodePtr node) {
     return false;
 }
 
+bool Node::replace(NodePtr newNode) {
+    return replace(newNode, shared_from_this());
+}
+
 bool Node::replace(NodePtr newNode, NodePtr oldNode) {
+    if(shared_from_this() == oldNode){
+        insertBetweenThisAndParentNodes(newNode);
+        removeAndJoinParentAndChildren();
+        return true;
+    }
+
     if (oldNode->isIdentical(newNode)) {
         NES_WARNING("Node: the new node was the same so will skip replace operation.");
         return true;
@@ -169,7 +180,7 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
             return false;
         }
     }
-    // update children and parents of new nodes.
+
     bool success = removeChild(oldNode);
     if (success) {
         children.push_back(newNode);
@@ -177,15 +188,22 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
             newNode->addChild(currentNode);
         }
         return true;
+    } else {
+        NES_ERROR("Node: could not remove child from  old node:" << oldNode->toString());
     }
+
     success = removeParent(oldNode);
+    NES_DEBUG("Node: remove parent old node:" << oldNode->toString());
     if (success) {
         parents.push_back(newNode);
         for (auto&& currentNode : oldNode->parents) {
             newNode->addParent(currentNode);
         }
-        return true;
+        return true;//TODO: I think this is wrong
+    } else {
+        NES_ERROR("Node: could not remove parent from  old node:" << oldNode->toString());
     }
+
     return false;
 }
 

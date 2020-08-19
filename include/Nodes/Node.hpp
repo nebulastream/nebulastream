@@ -77,6 +77,12 @@ class Node : public std::enable_shared_from_this<Node> {
     bool replace(NodePtr newNode, NodePtr oldNode);
 
     /**
+     * @brief replace current node with new node
+     * @param newNode
+     * @return
+     */
+    bool replace(NodePtr newNode);
+    /**
      * @brief swap given old node by new node
      * @param newNode the node to mount at oldNode parents instead of oldNode
      * @param oldNode the node to remove from graph
@@ -330,6 +336,7 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     bool visited;
     bool recStack;
+
 };
 }// namespace NES
 

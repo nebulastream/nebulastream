@@ -8,4 +8,4 @@ add_source_nes(
 
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
-add_subdirectory(RefinementOperators)
+add_subdirectory(SpecializedWindowOperators)
