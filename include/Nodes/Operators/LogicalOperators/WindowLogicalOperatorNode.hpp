@@ -10,7 +10,7 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
 class WindowLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    WindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition);
+    WindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
     const WindowDefinitionPtr& getWindowDefinition() const;

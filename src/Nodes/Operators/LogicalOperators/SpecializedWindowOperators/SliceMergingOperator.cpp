@@ -6,7 +6,7 @@ LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const WindowDef
     return std::make_shared<SliceMergingOperator>(windowDefinition);
 }
 
-SliceMergingOperator::SliceMergingOperator(const WindowDefinitionPtr& windowDefinition)
+SliceMergingOperator::SliceMergingOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
 }
 

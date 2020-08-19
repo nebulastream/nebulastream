@@ -6,7 +6,7 @@
 
 namespace NES {
 
-WindowLogicalOperatorNode::WindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition)
+WindowLogicalOperatorNode::WindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition)
     : windowDefinition(windowDefinition) {
 }
 

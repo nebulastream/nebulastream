@@ -6,7 +6,7 @@ LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const Wind
     return std::make_shared<WindowComputationOperator>(windowDefinition);
 }
 
-WindowComputationOperator::WindowComputationOperator(const WindowDefinitionPtr& windowDefinition)
+WindowComputationOperator::WindowComputationOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
 }
 

@@ -6,7 +6,7 @@ LogicalOperatorNodePtr createSliceCreationSpecializedOperatorNode(const WindowDe
     return std::make_shared<SliceCreationOperator>(windowDefinition);
 }
 
-SliceCreationOperator::SliceCreationOperator(const WindowDefinitionPtr& windowDefinition)
+SliceCreationOperator::SliceCreationOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
 }
 

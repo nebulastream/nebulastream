@@ -10,7 +10,7 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
 class WindowComputationOperator : public WindowLogicalOperatorNode {
   public:
-    WindowComputationOperator(const WindowDefinitionPtr& windowDefinition);
+    WindowComputationOperator(const WindowDefinitionPtr windowDefinition);
 };
 
 }// namespace NES

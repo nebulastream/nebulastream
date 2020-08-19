@@ -8,7 +8,7 @@ LogicalOperatorNodePtr createCentralWindowSpecializedOperatorNode(const WindowDe
     return std::make_shared<CentralWindowOperator>(windowDefinition);
 }
 
-CentralWindowOperator::CentralWindowOperator(const WindowDefinitionPtr& windowDefinition)
+CentralWindowOperator::CentralWindowOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
 }
 

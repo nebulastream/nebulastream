@@ -11,7 +11,7 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
 class CentralWindowOperator : public WindowLogicalOperatorNode {
   public:
-    CentralWindowOperator(const WindowDefinitionPtr& windowDefinition);
+    CentralWindowOperator(const WindowDefinitionPtr windowDefinition);
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
