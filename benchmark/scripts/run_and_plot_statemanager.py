@@ -10,9 +10,12 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import math
 
 BENCHMARK_PARAMS = ["Updates", "Keys", "Type of Distribution", "Threads"]
+PRE_SI_UNIT = ["", "k", "M", "B"]
+CHUNK_SIZE = 12
+
 
 def parseArguments():
 	parser = ArgumentParser()
@@ -50,6 +53,14 @@ def loadDataIntoDataFrame(logFile):
 	jsonFile = jsonFile["benchmarks"]
 	return pd.DataFrame.from_dict(jsonFile)
 
+def millify(n):
+    n = float(n)
+    idx = max(0,min(len(PRE_SI_UNIT)-1,
+                        int(math.floor(0 if n == 0 else math.log10(abs(n))/3))))
+
+    return '{:.0f}{}'.format(n / 10**(3 * idx), PRE_SI_UNIT[idx])
+
+
 def createPlotableGroups(df):
 	# Deleting column run_name as this column is not necessary
 	df = df.drop(columns=["run_name"])
@@ -70,7 +81,7 @@ def createPlotableGroups(df):
 
 		if name and params:
 			name = name.group(1)
-			params = "/".join(["{:.2e}".format(int(item)) for item in params.group(1).split("/")])
+			params = "/".join([millify(int(item)) for item in params.group(1).split("/")])
 		else:
 			continue
 
@@ -100,17 +111,23 @@ def plotData(groups, plotFolder):
 	# Plotting data as a bar plot with error 
 	sns.set()
 	for i, (benchmarkName, gbf) in enumerate(groups):
-		plt.figure()
-		gbf.plot(x="params", y="items_per_second", kind="bar", yerr="stddev", 
-				 label="$\\frac{Keys}{s}$", figsize=(8,5))
-		
-		title = benchmarkName
-		plt.title(title.replace("_", " ")[3:])
-		plt.xlabel("/".join(BENCHMARK_PARAMS[:int(str(gbf["params"]).count("/")/len(gbf["params"]))+1]))
-		plt.xticks(rotation=45)
-		plt.tight_layout()
 
-		plt.savefig(f"{plotFolder}/{title}.pdf")
+		xDataChunks = [gbf["params"][x:x+CHUNK_SIZE] for x in range(0, len(gbf["params"]), CHUNK_SIZE)]
+		yDataChunks = [gbf["items_per_second"][x:x+CHUNK_SIZE] for x in range(0, len(gbf["items_per_second"]), CHUNK_SIZE)]
+		yErrChunks = [gbf["stddev"][x:x+CHUNK_SIZE] for x in range(0, len(gbf["stddev"]), CHUNK_SIZE)]
+
+		fig = plt.figure(figsize=(16,max(5, 3*len(xDataChunks))))
+		paramLen = 0
+		for i, (xData, yData, yErr) in enumerate(zip(xDataChunks, yDataChunks, yErrChunks)):
+			ax = fig.add_subplot(len(xDataChunks), 1, i+1)
+			ax.bar(xData, yData, yerr=yErr, label="$\\frac{Keys}{s}$")
+			paramLen = max(paramLen, list(xData)[0].count("/"))
+
+		fig.suptitle(benchmarkName.replace("_", " ")[3:])
+		plt.xlabel(" / ".join(BENCHMARK_PARAMS[:paramLen+1]))
+
+		plt.tight_layout()
+		plt.savefig(f"{plotFolder}/{benchmarkName}.pdf")
 		plt.clf()
 
 
@@ -125,8 +142,8 @@ if __name__ == '__main__':
 	today = datetime.now()
 	benchmarkName = str(options.benchmark).split("/")[-1]
 	plotFolder = os.path.join(options.plotFolder, today.strftime('%Y%m%d_%H%M%S'))
-	#plotFolder = os.path.join(options.plotFolder, "20200812_100717")
-	logFile = os.path.join(plotFolder, f"{benchmarkName}_log.log")
+	#plotFolder = os.path.join(options.plotFolder, "20200813_185654")
+	logFile = os.path.join(plotFolder, f"{benchmarkName}_log.json")
 
 	createFolder(plotFolder)
 	runBenchmark(options.benchmark, logFile)
