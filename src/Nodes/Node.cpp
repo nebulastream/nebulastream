@@ -162,7 +162,7 @@ bool Node::replace(NodePtr newNode) {
 }
 
 bool Node::replace(NodePtr newNode, NodePtr oldNode) {
-    if(shared_from_this() == oldNode){
+    if (shared_from_this() == oldNode) {
         insertBetweenThisAndParentNodes(newNode);
         removeAndJoinParentAndChildren();
         return true;
