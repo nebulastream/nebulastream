@@ -153,6 +153,11 @@ add_executable(query-tests "UnitTests/QueryTest.cpp")
 target_link_libraries(query-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-tests COMMAND query-tests)
 
+# QueryTest
+add_executable(translate-to-generatable-tests "UnitTests/QueryCompiler/TranslateToGeneratablePlanTest.cpp")
+target_link_libraries(translate-to-generatable-tests nes ${GTEST_LIBRARIES})
+add_test(NAME translate-to-generatable-tests COMMAND translate-to-generatable-tests)
+
 # ConvertLogicalToPhysicalSinkTest
 add_executable(convert-logical-to-physical-sink-tests "UnitTests/ConvertLogicalToPhysicalSinkTest.cpp")
 target_link_libraries(convert-logical-to-physical-sink-tests nes ${GTEST_LIBRARIES})

@@ -1,4 +1,5 @@
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/Logger.hpp>
@@ -85,7 +86,7 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setCompi
     return *this;
 }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::addOperatorQueryPlan(OperatorPtr queryPlan) {
+GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::addOperatorQueryPlan(OperatorNodePtr queryPlan) {
     leaves.emplace_back(queryPlan);
     return *this;
 }

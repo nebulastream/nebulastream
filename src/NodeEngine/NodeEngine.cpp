@@ -6,6 +6,7 @@
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
+#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 using namespace std;
@@ -115,8 +116,9 @@ bool NodeEngine::registerQueryInNodeEngine(uint64_t queryId, OperatorNodePtr que
     try {
         // Translate the query operators in their legacy representation
         // todo this is not required if later the query compiler can handle it by it self.
-        auto translationPhase = TranslateToLegacyPlanPhase::create();
-        auto legacyOperatorPlan = translationPhase->transform(queryOperators, shared_from_this());
+        //auto translationPhase = TranslateToLegacyPlanPhase::create();
+        auto translationPhase = TranslateToGeneratableOperatorPhase::create();
+        auto generatableOperatorPlan = translationPhase->transform(queryOperators, shared_from_this());
 
         // Compile legacy operators with qep builder.
         auto qepBuilder = GeneratedQueryExecutionPlanBuilder::create()
@@ -124,7 +126,7 @@ bool NodeEngine::registerQueryInNodeEngine(uint64_t queryId, OperatorNodePtr que
                               .setBufferManager(bufferManager)
                               .setCompiler(queryCompiler)
                               .setQueryId(queryId)
-                              .addOperatorQueryPlan(legacyOperatorPlan);
+                              .addOperatorQueryPlan(generatableOperatorPlan);
 
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : queryOperators->getNodesByType<SourceLogicalOperatorNode>()) {

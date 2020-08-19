@@ -8,6 +8,9 @@ namespace NES {
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
+class WindowLogicalOperatorNode;
+typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
+
 class WindowLogicalOperatorNode : public LogicalOperatorNode {
   public:
     WindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition);

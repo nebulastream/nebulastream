@@ -6,6 +6,9 @@
 
 namespace NES {
 
+class SinkLogicalOperatorNode;
+typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
+
 /**
  * @brief Node representing logical sink operator
  */

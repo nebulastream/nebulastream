@@ -6,6 +6,9 @@
 
 namespace NES {
 
+class MergeLogicalOperatorNode;
+typedef std::shared_ptr<MergeLogicalOperatorNode> MergeLogicalOperatorNodePtr;
+
 /**
  * @brief Merge operator, which contains an expression as a predicate.
  */

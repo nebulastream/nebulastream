@@ -26,6 +26,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
+#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
@@ -1403,60 +1404,6 @@ TEST_F(LogicalOperatorNodeTest, dfIterator) {
     ASSERT_EQ(*iterator, filterOp5);
 }
 
-TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
-    /**
-     * Sink -> Filter -> Source
-     */
-    auto schema = Schema::create();
 
-    auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
-    auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
-    auto constValue = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
-    auto fieldRead = FieldAccessExpressionNode::create(DataTypeFactory::createInt8(), "FieldName");
-    auto andNode = EqualsExpressionNode::create(constValue, fieldRead);
-    auto filter = createFilterLogicalOperatorNode(andNode);
-    sinkOperator->addChild(filter);
-    filter->addChild(sourceOp);
-
-    auto engine = NodeEngine::create("127.0.0.1", 30000);
-    ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
-    // we pass null as the buffer manager as we just want to check if the topology is correct.
-    auto translatePhase = TranslateToLegacyPlanPhase::create();
-    auto legacySink = translatePhase->transform(sinkOperator->as<OperatorNode>(), engine);
-    std::cout << legacySink->toString() << std::endl;
-    ASSERT_TRUE(legacySink->getOperatorType() == SINK_OP);
-    auto legacyFilter = legacySink->getChildren()[0];
-    ASSERT_TRUE(legacyFilter->getOperatorType() == FILTER_OP);
-    auto legacyPredicate = std::dynamic_pointer_cast<FilterOperator>(legacyFilter)->getPredicate();
-    std::cout << legacyPredicate->toString() << std::endl;
-    ASSERT_TRUE(legacyPredicate->toString() == "(1 == FieldName:INTEGER )");
-    auto legacySource = legacyFilter->getChildren()[0];
-    ASSERT_TRUE(legacySource->getOperatorType() == SOURCE_OP);
-}
-
-TEST_F(LogicalOperatorNodeTest, translateWindowOperatorToLegacy) {
-    /**
-     * Sink -> Window -> Source
-     */
-    auto schema = Schema::create();
-
-    auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
-    auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
-    auto windowOperator = createCentralWindowSpecializedOperatorNode(createWindowDefinition(Sum::on(Attribute("test")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10))));
-    sinkOperator->addChild(windowOperator);
-    windowOperator->addChild(sourceOp);
-
-    auto engine = NodeEngine::create("127.0.0.1", 30000);
-    ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
-    // we pass null as the buffer manager as we just want to check if the topology is correct.
-    auto translatePhase = TranslateToLegacyPlanPhase::create();
-    auto legacySink = translatePhase->transform(sinkOperator->as<OperatorNode>(), engine);
-    std::cout << legacySink->toString() << std::endl;
-    ASSERT_TRUE(legacySink->getOperatorType() == SINK_OP);
-    auto legacyWindowScan = legacySink->getChildren()[0];
-    ASSERT_TRUE(legacyWindowScan->getOperatorType() == SOURCE_OP);
-    auto legacyWindowOperator = legacyWindowScan->getChildren()[0];
-    ASSERT_TRUE(legacyWindowOperator->getOperatorType() == WINDOW_OP);
-}
 
 }// namespace NES
