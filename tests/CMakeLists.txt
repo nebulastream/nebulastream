@@ -109,7 +109,7 @@ if (NES_USE_KAFKA)
 endif (NES_USE_KAFKA)
 
 ### OPC Tests ###
-add_executable(opc-tests "UnitTests/OPCTest.cpp")
+add_executable(opc-tests "UnitTests/OPCSourceTest.cpp")
 message("libraies: ${LIBRARIES}")
 target_link_libraries(opc-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME opc-tests COMMAND opc-tests)
