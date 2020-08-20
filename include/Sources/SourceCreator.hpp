@@ -113,9 +113,9 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
  * @return
  */
 const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                    const char *url,
+                                    const std::string& url,
                                     UA_UInt16 nsIndex,
-                                    char *nsId);
+                                    const std::string& nsId);
 
 /**
  * @brief Create OPC source
@@ -128,11 +128,11 @@ const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferMan
  * @return
  */
 const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                    const char *url,
+                                    const std::string& url,
                                     UA_UInt16 nsIndex,
-                                    char *nsId,
-                                    const char *user,
-                                    const char *password);
+                                    const std::string& nsId,
+                                    const std::string& user,
+                                    const std::string& password);
 //#endif
 
 }// namespace NES

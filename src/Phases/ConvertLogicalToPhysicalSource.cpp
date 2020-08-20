@@ -5,6 +5,8 @@
 #include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
+
 
 #include <Network/NetworkManager.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -53,6 +55,13 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
                                  kafkaSourceDescriptor->getGroupId(), kafkaSourceDescriptor->isAutoCommit(),
                                  kafkaSourceDescriptor->getKafkaConnectTimeout());
 #endif
+    } else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating Kafka source");
+        const OPCSourceDescriptorPtr opcSourceDescriptor = sourceDescriptor->as<OPCSourceDescriptor>();
+        return createOPCSource(opcSourceDescriptor->getSchema(), bufferManager, queryManager,
+                                 opcSourceDescriptor->getUrl(), opcSourceDescriptor->getNsIndex(),
+                                 opcSourceDescriptor->getNsId(), opcSourceDescriptor->getUser(),
+                                 opcSourceDescriptor->getPassword());
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating sense source");
         const SenseSourceDescriptorPtr senseSourceDescriptor = sourceDescriptor->as<SenseSourceDescriptor>();
