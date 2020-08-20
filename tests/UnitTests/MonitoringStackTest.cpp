@@ -16,6 +16,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Util/Logger.hpp>
 
+#include <Monitoring/Metrics/MetricDefinition.hpp>
 #include <memory>
 
 namespace NES {
@@ -176,7 +177,10 @@ TEST_F(MonitoringStackTest, testSerializationMetricsSingle) {
     //test serialize method to append to existing schema and buffer
     auto schema = Schema::create();
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    serialize(cpuStats.measure().getTotal(), schema, tupleBuffer, "TOTAL_");
+    MetricDefinition def{};
+    serialize(cpuStats.measure().getTotal(), schema, tupleBuffer, def, "TOTAL_");
+    ASSERT_TRUE(def.cpuMetrics.find("TOTAL_") != def.cpuMetrics.end());
+    ASSERT_TRUE(!def.cpuValues.empty());
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
@@ -184,9 +188,12 @@ TEST_F(MonitoringStackTest, testSerializationMetricsNested) {
     NES_INFO("Starting test");
     auto schema = Schema::create();
     auto tupleBuffer = bufferManager->getBufferBlocking();
+    MetricDefinition def{};
 
     auto cpuStats = MetricUtils::CPUStats();
-    serialize(cpuStats.measure(), schema, tupleBuffer, "");
+    serialize(cpuStats.measure(), schema, tupleBuffer, def, "");
+    ASSERT_TRUE(def.cpuMetrics.find("TOTAL_") != def.cpuMetrics.end());
+    ASSERT_TRUE(!def.cpuValues.empty());
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
@@ -220,8 +227,16 @@ TEST_F(MonitoringStackTest, testSerializationGroups) {
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto schema = Schema::create();
-    metricGroup->getSample(schema, tupleBuffer);
+    auto def = metricGroup->getSample(schema, tupleBuffer);
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+
+    ASSERT_TRUE(!def.cpuMetrics.empty());
+    ASSERT_TRUE(!def.cpuValues.empty());
+    ASSERT_TRUE(!def.networkMetrics.empty());
+    ASSERT_TRUE(!def.networkValues.empty());
+    ASSERT_TRUE(!def.diskMetrics.empty());
+    ASSERT_TRUE(!def.memoryMetrics.empty());
+    ASSERT_TRUE(!def.simpleTypedMetrics.empty());
 }
 
 TEST_F(MonitoringStackTest, testDeserializationMetricValues) {

@@ -6,6 +6,7 @@
 namespace NES {
 class Schema;
 class TupleBuffer;
+class MetricDefinition;
 
 /**
  * @brief This class represents the metric values read from /proc/net/dev.
@@ -48,7 +49,7 @@ class NetworkValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(NetworkValues metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(NetworkValues metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix);
 
 }// namespace NES
 

@@ -8,6 +8,7 @@
 namespace NES {
 class TupleBuffer;
 class Schema;
+class MetricDefinition;
 
 /**
  * @brief Wrapper class to represent the metrics read from the OS about cpu data.
@@ -58,7 +59,7 @@ class CpuMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix);
 
 }// namespace NES
 

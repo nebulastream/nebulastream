@@ -8,6 +8,7 @@
 namespace NES {
 class TupleBuffer;
 class Schema;
+class MetricDefinition;
 
 template<typename T>
 MetricType getMetricType(const T&) {
@@ -23,8 +24,8 @@ MetricType getMetricType(const T&) {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(uint64_t metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
-void serialize(std::string metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(uint64_t metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix);
+void serialize(std::string metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix);
 
 /**
  * @brief The metric class is a conceptual superclass that represents all metrics in NES.
@@ -81,8 +82,8 @@ class Metric {
      * @param the metric
      * @return the type of the metric
      */
-    friend void serialize(const Metric& x, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
-        x.self->serializeC(schema, buf, prefix);
+    friend void serialize(const Metric& x, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix) {
+        x.self->serializeC(schema, buf, def, prefix);
     }
 
   private:
@@ -97,7 +98,7 @@ class Metric {
         /**
          * @brief The serialize concept to enable polymorphism across different metrics to make them serializable.
          */
-        virtual void serializeC(std::shared_ptr<Schema>, TupleBuffer&, std::string) = 0;
+        virtual void serializeC(std::shared_ptr<Schema>, TupleBuffer&, MetricDefinition&, std::string) = 0;
     };
 
     /**
@@ -116,8 +117,8 @@ class Metric {
             return getMetricType(data);
         }
 
-        void serializeC(std::shared_ptr<Schema> schema, TupleBuffer& buf, std::string prefix) override {
-            serialize(data, schema, buf, prefix);
+        void serializeC(std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, std::string prefix) override {
+            serialize(data, schema, buf, def, prefix);
         }
 
         T data;

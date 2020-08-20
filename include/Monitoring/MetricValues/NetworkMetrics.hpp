@@ -10,6 +10,7 @@
 namespace NES {
 class Schema;
 class TupleBuffer;
+class MetricDefinition;
 
 class NetworkMetrics {
 
@@ -35,7 +36,8 @@ class NetworkMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(NetworkMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(NetworkMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def,
+               const std::string& prefix);
 
 }// namespace NES
 
