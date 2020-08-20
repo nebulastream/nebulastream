@@ -15,7 +15,7 @@ const std::string url = "opc.tcp://eleicha-ThinkPad-T480:53530/OPCUA/SimulationS
 
 namespace NES {
 
-class OPCTest : public testing::Test {
+class OPCSourceTest : public testing::Test {
   public:
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;
@@ -23,13 +23,9 @@ class OPCTest : public testing::Test {
         NES::setupLogging("OPCTest.log", NES::LOG_DEBUG);
 
         schema = Schema::create()
-            ->addField("user_id", 16)
-            ->addField("page_id", 16)
-            ->addField("campaign_id", 16)
-            ->addField("ad_type", 9)
-            ->addField("event_type", 9)
-            ->addField("current_ms", UINT64)
-            ->addField("ip", INT32);
+            ->addField("nsId", 16)
+            ->addField("ndIndex", 16)
+            ->addField("value", 16)
 
         uint64_t tuple_size = schema->getSchemaSizeInBytes();
         buffer_size = num_tuples_to_process*tuple_size/num_of_buffers;
@@ -60,6 +56,12 @@ class OPCTest : public testing::Test {
 TEST_F(OPCTest, OPCSourceInit) {
 
     const DataSourcePtr opcSource = std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nsIndex, nsId);
+    SUCCEED();
+}
+
+TEST_F(OPCTest, OPCSourceInit) {
+
+    const DataSourcePtr opcSource = std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nsIndex, nsId, user, password);
     SUCCEED();
 }
 
