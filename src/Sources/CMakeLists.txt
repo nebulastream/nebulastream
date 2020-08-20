@@ -8,6 +8,7 @@ add_source_nes(
         DefaultSource.cpp
         SenseSource.cpp
         AdaptiveSource.cpp
+        OPCSource.cpp
 )
 
 if(NES_USE_KAFKA)
@@ -17,6 +18,5 @@ if(NES_USE_KAFKA)
 endif()
 if(NES_USE_OPC)
     add_source_nes(
-            OPCSource.cpp
     )
 endif()
