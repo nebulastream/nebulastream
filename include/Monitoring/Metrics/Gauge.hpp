@@ -10,6 +10,7 @@
 namespace NES {
 class Schema;
 class TupleBuffer;
+class MetricDefinition;
 
 template<typename T>
 /**
@@ -39,8 +40,8 @@ MetricType getMetricType(const Gauge<T>&) {
 }
 
 template<typename T>
-void serialize(Gauge<T>& metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
-    serialize(metric.measure(), schema, buf, prefix);
+void serialize(Gauge<T>& metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix) {
+    serialize(metric.measure(), schema, buf, def, prefix);
 }
 
 }// namespace NES

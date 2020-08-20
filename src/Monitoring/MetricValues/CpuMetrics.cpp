@@ -1,8 +1,9 @@
-#include <API/Schema.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+#include <API/Schema.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <Monitoring/Metrics/MetricDefinition.hpp>
 
 namespace NES {
 
@@ -40,21 +41,30 @@ CpuValues CpuMetrics::getTotal() const {
     return total;
 }
 
-void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
-    // extend the schema with the core number
-    auto noFields = schema->getSize();
-    schema->addField(prefix + "CORE_NO", BasicType::UINT16);
-    // the buffer contains only one metric tuple
-    buf.setNumberOfTuples(1);
+void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix) {
+    if (def.cpuMetrics.find(prefix) != def.cpuMetrics.end()) {
+        //element is already in MetricDefinition
+        NES_THROW_RUNTIME_ERROR("MemoryMetrics: Error during serialize(..): Metric with " +
+            prefix + " is already in MetricDefinition.");
+    }
+    else {
+        def.cpuMetrics.insert(prefix);
 
-    auto layout = createRowLayout(schema);
-    layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getNumCores());
-    // call serialize for the total metrics over all cores
-    serialize(metrics.getTotal(), schema, buf, prefix + "CPU[TOTAL]_");
+        // extend the schema with the core number
+        auto noFields = schema->getSize();
+        schema->addField(prefix + "CORE_NO", BasicType::UINT16);
+        // the buffer contains only one metric tuple
+        buf.setNumberOfTuples(1);
 
-    for (int i = 0; i < metrics.getNumCores(); i++) {
-        //call serialize method for the metrics for each cpu
-        serialize(metrics.getValues(i), schema, buf, prefix + "CPU[" + std::to_string(i + 1) + "]_");
+        auto layout = createRowLayout(schema);
+        layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getNumCores());
+        // call serialize for the total metrics over all cores
+        serialize(metrics.getTotal(), schema, buf, def, prefix + "CPU[TOTAL]_");
+
+        for (int i=0; i< metrics.getNumCores(); i++) {
+            //call serialize method for the metrics for each cpu
+            serialize(metrics.getValues(i), schema, buf, def, prefix + "CPU[" + std::to_string(i+1) + "]_");
+        }
     }
 }
 

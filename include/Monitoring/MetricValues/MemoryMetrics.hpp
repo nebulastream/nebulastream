@@ -7,6 +7,7 @@
 namespace NES {
 class TupleBuffer;
 class Schema;
+class MetricDefinition;
 
 class MemoryMetrics {
   public:
@@ -55,7 +56,8 @@ class MemoryMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(MemoryMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(MemoryMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def,
+               const std::string& prefix);
 
 typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
 }// namespace NES
