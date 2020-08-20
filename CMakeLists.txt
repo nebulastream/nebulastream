@@ -188,7 +188,6 @@ endif (NES_USE_KAFKA)
 find_package(open62541 REQUIRED COMPONENTS FullNamespace)
 set(LIBRARIES ${LIBRARIES} ${open62541_LIBRARIES})
 add_compile_definitions(ENABLE_OPC_BUILD)
-include_directories(${PROJECT_BINARY_DIR}/src_generated)
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
