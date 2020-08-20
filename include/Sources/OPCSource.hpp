@@ -24,19 +24,13 @@ class OPCSource : public DataSource {
      * @param host name of the source queue
      * @param port of the source queue
      */
-    OPCSource(SchemaPtr schema,
-        BufferManagerPtr bufferManager,
-        QueryManagerPtr queryManager,
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        char *nsId);
 
     OPCSource(SchemaPtr schema,
         BufferManagerPtr bufferManager,
         QueryManagerPtr queryManager,
         const std::string & url,
         UA_UInt16 nsIndex,
-        char *nsId,
+        const std::string& nsId,
         const std::string& user,
         const std::string& password);
     
@@ -82,13 +76,11 @@ class OPCSource : public DataSource {
 
     UA_UInt16 getNsIndex() const;
 
-    char getNsId() const;
+    const std::string& getNsId() const;
 
     const std::string& getUser() const;
 
     const std::string& getPassword() const;
-
-    const UA_StatusCode& getRetval() const;
 
 
     /**
@@ -118,13 +110,12 @@ class OPCSource : public DataSource {
     friend class DataSource;
     const std::string& url;
     UA_UInt16 nsIndex;
-    char *nsId;
+    const std::string& nsId;
     const std::string& user;
     const std::string& password;
     UA_StatusCode retval;
     UA_Client *client;
     bool connected;
-    bool withPwd;
 
 };
 

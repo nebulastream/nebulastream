@@ -77,13 +77,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
 
 const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& url,
                                     UA_UInt16 nsIndex,
-                                    char *nsId) {
-    return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nsIndex, nsId);
-}
-
-const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& url,
-                                    UA_UInt16 nsIndex,
-                                    char *nsId,
+                                    const std::string& nsId,
                                     const std::string& user,
                                     const std::string& password) {
     return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nsIndex, nsId, user, password);

@@ -1,5 +1,5 @@
-#ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_OPCSOURCEDESCRIPTOR_HPP_
-#define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_OPCSOURCEDESCRIPTOR_HPP_
+//#ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_OPCSOURCEDESCRIPTOR_HPP_
+//#define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_OPCSOURCEDESCRIPTOR_HPP_
 
 #include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
@@ -17,29 +17,19 @@ namespace NES {
 class OPCSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema,
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        char *nsId);
 
     static SourceDescriptorPtr create(SchemaPtr schema, 
         const std::string & url,
         UA_UInt16 nsIndex,
-        char *nsId,
+        const std::string& nsId,
         const std::string& user,
         const std::string& password);
-    
-    static SourceDescriptorPtr create(SchemaPtr schema, 
-        std::string streamName, 
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        char *nsId);
 
     static SourceDescriptorPtr create(SchemaPtr schema, 
         std::string streamName, 
         const std::string & url,
         UA_UInt16 nsIndex,
-        char *nsId,
+        const std::string& nsId,
         const std::string& user,
         const std::string& password);
 
@@ -47,7 +37,7 @@ class OPCSourceDescriptor : public SourceDescriptor {
 
     UA_UInt16 getNsIndex() const;
 
-    char getNsId() const;
+    const std::string& getNsId() const;
 
     const std::string& getUser() const;
 
@@ -58,15 +48,11 @@ class OPCSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit OPCSourceDescriptor(SchemaPtr schema,
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        char *nsId);
 
     explicit OPCSourceDescriptor(SchemaPtr schema, 
         const std::string & url,
         UA_UInt16 nsIndex,
-        char *nsId,
+        const std::string& nsId,
         const std::string& user,
         const std::string& password);
 
@@ -74,19 +60,13 @@ class OPCSourceDescriptor : public SourceDescriptor {
         std::string streamName, 
         const std::string & url,
         UA_UInt16 nsIndex,
-        char *nsId);
-
-    explicit OPCSourceDescriptor(SchemaPtr schema, 
-        std::string streamName, 
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        char *nsId,
+        const std::string& nsId,
         const std::string& user,
         const std::string& password);
 
     const std::string & url;
     UA_UInt16 nsIndex;
-    char *nsId;
+    const std::string& nsId;
     const std::string& user;
     const std::string& password;
 };
@@ -95,4 +75,4 @@ typedef std::shared_ptr<OPCSourceDescriptor> OPCSourceDescriptorPtr;
 
 }// namespace NES
 
-#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_ZMQSOURCEDESCRIPTOR_HPP_
+//#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_ZMQSOURCEDESCRIPTOR_HPP_
