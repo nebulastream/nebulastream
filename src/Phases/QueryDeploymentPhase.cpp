@@ -57,7 +57,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, std::vector<ExecutionNod
         }
         //FIXME: we are considering only one root operator
         OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
-        const auto& nesNode = executionNode->getNesNode();
+        const auto& nesNode = executionNode->getPhysicalNode();
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
@@ -78,7 +78,7 @@ bool QueryDeploymentPhase::startQuery(QueryId queryId, std::vector<ExecutionNode
     NES_DEBUG("QueryDeploymentPhase::startQuery queryId=" << queryId);
 
     for (ExecutionNodePtr executionNode : executionNodes) {
-        const auto& nesNode = executionNode->getNesNode();
+        const auto& nesNode = executionNode->getPhysicalNode();
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);

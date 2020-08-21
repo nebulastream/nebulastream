@@ -15,8 +15,8 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
-class NESTopologyEntry;
-typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
+class PhysicalNode;
+typedef std::shared_ptr<PhysicalNode> PhysicalNodePtr;
 
 class ExecutionNode;
 typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
@@ -28,8 +28,8 @@ typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 class ExecutionNode : public Node {
 
   public:
-    static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode, QueryId queryId, OperatorNodePtr operatorNode);
-    static ExecutionNodePtr createExecutionNode(NESTopologyEntryPtr nesNode);
+    static ExecutionNodePtr createExecutionNode(PhysicalNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode);
+    static ExecutionNodePtr createExecutionNode(PhysicalNodePtr physicalNode);
 
     ~ExecutionNode() = default;
 
@@ -88,7 +88,7 @@ class ExecutionNode : public Node {
      * Get the nes node for the execution node.
      * @return the nes node
      */
-    NESTopologyEntryPtr getNesNode();
+    PhysicalNodePtr getPhysicalNode();
 
     /**
      * Create a new entry for query sub plan
@@ -117,9 +117,9 @@ class ExecutionNode : public Node {
     const std::string toString() const override;
 
   private:
-    explicit ExecutionNode(NESTopologyEntryPtr nesNode, QueryId queryId, OperatorNodePtr operatorNode);
+    explicit ExecutionNode(PhysicalNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode);
 
-    explicit ExecutionNode(NESTopologyEntryPtr nesNode);
+    explicit ExecutionNode(PhysicalNodePtr physicalNode);
 
     /**
      * Execution node id.
@@ -130,7 +130,7 @@ class ExecutionNode : public Node {
     /**
      * Physical Node information
      */
-    const NESTopologyEntryPtr nesNode;
+    const PhysicalNodePtr physicalNode;
 
     /**
      * map of queryPlans
