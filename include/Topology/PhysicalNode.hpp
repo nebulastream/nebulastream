@@ -11,6 +11,7 @@ typedef std::shared_ptr<PhysicalNode> PhysicalNodePtr;
 
 class PhysicalNode : public Node {
 
+  public:
     static PhysicalNodePtr create(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resource);
 
     /**
@@ -50,12 +51,6 @@ class PhysicalNode : public Node {
     NodeStats getNodeStats();
 
     /**
-     * @brief method to return this node as a string
-     * @param string with the id and the type
-     */
-    std::string toString();
-
-    /**
      * @brief Get ip address of the node
      * @return ip address
      */
@@ -73,7 +68,6 @@ class PhysicalNode : public Node {
      */
     uint32_t getDataPort() const;
 
-  public:
     const std::string toString() const override;
 
   private:
