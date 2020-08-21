@@ -13,7 +13,6 @@
 //#include <Optimizer/QueryPlacement/MinimumEnergyConsumptionStrategy.hpp>
 //#include <Optimizer/QueryPlacement/MinimumResourceConsumptionStrategy.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
-#include <Optimizer/Utils/PathFinder.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -25,9 +24,7 @@ using namespace std;
 namespace NES {
 
 BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr, TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
-    : globalExecutionPlan(globalExecutionPlan), topology(topologyPtr), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {
-    pathFinder = PathFinder::create(topologyPtr);
-}
+    : globalExecutionPlan(globalExecutionPlan), topology(topologyPtr), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {}
 
 uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, PhysicalNodePtr parentNesNode) {
 

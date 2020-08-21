@@ -5,6 +5,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
+#include <Topology/PhysicalNode.hpp>
 
 namespace NES {
 

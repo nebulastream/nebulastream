@@ -38,9 +38,6 @@ typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
-class PathFinder;
-typedef std::shared_ptr<PathFinder> PathFinderPtr;
-
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
@@ -101,7 +98,6 @@ class BasePlacementStrategy {
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     StreamCatalogPtr streamCatalog;
-    PathFinderPtr pathFinder;
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP

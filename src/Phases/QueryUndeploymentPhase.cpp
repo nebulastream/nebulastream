@@ -3,6 +3,7 @@
 #include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Topology/PhysicalNode.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

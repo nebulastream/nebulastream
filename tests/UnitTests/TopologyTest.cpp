@@ -4,19 +4,14 @@
 
 #include "gtest/gtest.h"
 
-#include "../../include/Topology/NESTopologyEntry.hpp"
-#include "../../include/Topology/NESTopologyLink.hpp"
-#include "../../include/Topology/NESTopologyPlan.hpp"
-#include "../../include/Topology/TopologyManager.hpp"
-#include "Util/CPUCapacity.hpp"
-#include "Util/Logger.hpp"
+#include <Util/Logger.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include <Topology/TestTopology.hpp>
 
 using namespace NES;
 
 /* - nesTopologyManager ---------------------------------------------------- */
-class NesTopologyManagerTest : public testing::Test {
+class TopologyTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
 
@@ -34,7 +29,7 @@ class NesTopologyManagerTest : public testing::Test {
 /* - Nodes ----------------------------------------------------------------- */
 /* Create a new node. */
 
-TEST_F(NesTopologyManagerTest, createNode) {
+TEST_F(TopologyTest, createNode) {
     size_t invalid_id = INVALID_NODE_ID;
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
@@ -55,7 +50,7 @@ TEST_F(NesTopologyManagerTest, createNode) {
 }
 
 /* Remove an existing node. */
-TEST_F(NesTopologyManagerTest, removeNode) {
+TEST_F(TopologyTest, removeNode) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto worker_node = topologyManager->createNESWorkerNode(1, "localhost", 4000, 5000, CPUCapacity::MEDIUM);
@@ -68,7 +63,7 @@ TEST_F(NesTopologyManagerTest, removeNode) {
 }
 
 /* Remove a non-existing node. */
-TEST_F(NesTopologyManagerTest, removeNonExistingNode) {
+TEST_F(TopologyTest, removeNonExistingNode) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto workerNode = topologyManager->createNESWorkerNode(1, "localhost", 4000, 5000, CPUCapacity::MEDIUM);
@@ -86,7 +81,7 @@ TEST_F(NesTopologyManagerTest, removeNonExistingNode) {
 
 /* - Links ----------------------------------------------------------------- */
 /* Create a new link. */
-TEST_F(NesTopologyManagerTest, createLink) {
+TEST_F(TopologyTest, createLink) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto workerNode0 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 5000, CPUCapacity::MEDIUM);
@@ -134,7 +129,7 @@ TEST_F(NesTopologyManagerTest, createLink) {
 }
 
 /* Create link, where a link already exists. */
-TEST_F(NesTopologyManagerTest, createExistingLink) {
+TEST_F(TopologyTest, createExistingLink) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto node_0 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 5000, CPUCapacity::MEDIUM);
@@ -144,7 +139,7 @@ TEST_F(NesTopologyManagerTest, createExistingLink) {
 }
 
 /* Remove an existing link. */
-TEST_F(NesTopologyManagerTest, removeLink) {
+TEST_F(TopologyTest, removeLink) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto node_0 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 5000, CPUCapacity::MEDIUM);
@@ -155,7 +150,7 @@ TEST_F(NesTopologyManagerTest, removeLink) {
 }
 
 /* Remove a non-existing link. */
-TEST_F(NesTopologyManagerTest, removeNonExistingLink) {
+TEST_F(TopologyTest, removeNonExistingLink) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto node_0 = topologyManager->createNESWorkerNode(1, "localhost", 4000, 5000, CPUCapacity::MEDIUM);
@@ -173,7 +168,7 @@ TEST_F(NesTopologyManagerTest, removeNonExistingLink) {
 }
 
 /* - Usage Pattern --------------------------------------------------------- */
-TEST_F(NesTopologyManagerTest, manyNodes) {
+TEST_F(TopologyTest, manyNodes) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     // creater workers
@@ -219,7 +214,7 @@ TEST_F(NesTopologyManagerTest, manyNodes) {
     }
 }
 
-TEST_F(NesTopologyManagerTest, manyLinks) {
+TEST_F(TopologyTest, manyLinks) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     // creater workers
@@ -275,7 +270,7 @@ TEST_F(NesTopologyManagerTest, manyLinks) {
 }
 
 /* - Print ----------------------------------------------------------------- */
-TEST_F(NesTopologyManagerTest, printGraph) {
+TEST_F(TopologyTest, printGraph) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     // creater workers
@@ -399,7 +394,7 @@ TEST_F(NesTopologyManagerTest, printGraph) {
               expected_result);
 }
 
-TEST_F(NesTopologyManagerTest, printGraphWithoutEdges) {
+TEST_F(TopologyTest, printGraphWithoutEdges) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     // creater workers
@@ -453,7 +448,7 @@ TEST_F(NesTopologyManagerTest, printGraphWithoutEdges) {
         == expected_result);
 }
 
-TEST_F(NesTopologyManagerTest, printGraphWithoutAnything) {
+TEST_F(TopologyTest, printGraphWithoutAnything) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     std::string expected_result = "graph G {\n}\n";
@@ -462,35 +457,8 @@ TEST_F(NesTopologyManagerTest, printGraphWithoutAnything) {
         == expected_result);
 }
 
-/* ------------------------------------------------------------------------- */
-/* - NesTopologyGraph ------------------------------------------------------ */
-class TopologyGraphTest : public testing::Test {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        std::cout << "Setup NesTopologyGraph test class." << std::endl;
-    }
-
-    /* Will be called before a test is executed. */
-    void SetUp() {
-        std::cout << "Setup NesTopologyGraph test case." << std::endl;
-        nes_graph = std::make_shared<NESTopologyGraph>();
-    }
-
-    /* Will be called before a test is executed. */
-    void TearDown() {
-        std::cout << "Setup NesTopologyGraph test case." << std::endl;
-    }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        std::cout << "Tear down NesTopologyGraph test class." << std::endl;
-    }
-    std::shared_ptr<NESTopologyGraph> nes_graph;
-};
-
 /* - Vertices -------------------------------------------------------------- */
-TEST_F(TopologyGraphTest, addVertex) {
+TEST_F(TopologyTest, addVertex) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1", 4000, 4002, 2);
@@ -500,7 +468,7 @@ TEST_F(TopologyGraphTest, addVertex) {
     EXPECT_TRUE(nes_graph->addVertex(sensor_node));
 }
 
-TEST_F(TopologyGraphTest, addExistingVertex) {
+TEST_F(TopologyTest, addExistingVertex) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1", 4000, 4002, 2);
@@ -508,7 +476,7 @@ TEST_F(TopologyGraphTest, addExistingVertex) {
     EXPECT_FALSE(nes_graph->addVertex(worker_node));
 }
 
-TEST_F(TopologyGraphTest, removeVertex) {
+TEST_F(TopologyTest, removeVertex) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1", 4000, 4002, 2);
@@ -521,7 +489,7 @@ TEST_F(TopologyGraphTest, removeVertex) {
     EXPECT_TRUE(nes_graph->removeVertex(sensor_node->getId()));
 }
 
-TEST_F(TopologyGraphTest, removeNonExistingVertex) {
+TEST_F(TopologyTest, removeNonExistingVertex) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1", 4000, 4002, 2);
@@ -532,7 +500,7 @@ TEST_F(TopologyGraphTest, removeNonExistingVertex) {
 }
 
 /* - Edges ----------------------------------------------------------------- */
-TEST_F(TopologyGraphTest, addEdge) {
+TEST_F(TopologyTest, addEdge) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1", 4000, 4002, 2);
@@ -550,7 +518,7 @@ TEST_F(TopologyGraphTest, addEdge) {
     EXPECT_TRUE(nes_graph->addEdge(link_1));
 }
 
-TEST_F(TopologyGraphTest, addExistingEdge) {
+TEST_F(TopologyTest, addExistingEdge) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1", 4000, 4002, 2);
@@ -568,7 +536,7 @@ TEST_F(TopologyGraphTest, addExistingEdge) {
     EXPECT_FALSE(nes_graph->addEdge(link_1));
 }
 
-TEST_F(TopologyGraphTest, addInvalidEdge) {
+TEST_F(TopologyTest, addInvalidEdge) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1", 4000, 4002, 2);
@@ -581,7 +549,7 @@ TEST_F(TopologyGraphTest, addInvalidEdge) {
     EXPECT_FALSE(nes_graph->addEdge(link_0));
 }
 
-TEST_F(TopologyGraphTest, removeEdge) {
+TEST_F(TopologyTest, removeEdge) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1", 4000, 4002, 2);
@@ -597,7 +565,7 @@ TEST_F(TopologyGraphTest, removeEdge) {
     EXPECT_TRUE(nes_graph->removeEdge(link_0->getId()));
 }
 
-TEST_F(TopologyGraphTest, removeNonExistingEdge) {
+TEST_F(TopologyTest, removeNonExistingEdge) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
     auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1", 4000, 4002, 2);
@@ -614,7 +582,7 @@ TEST_F(TopologyGraphTest, removeNonExistingEdge) {
     EXPECT_FALSE(nes_graph->removeEdge(link_0->getId()));
 }
 
-TEST_F(TopologyGraphTest, getExampleTopologyAsJson) {
+TEST_F(TopologyTest, getExampleTopologyAsJson) {
     TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     createExampleTopology(streamCatalog, topologyManager);
