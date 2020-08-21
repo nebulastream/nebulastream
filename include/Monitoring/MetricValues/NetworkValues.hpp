@@ -22,6 +22,17 @@ class NetworkValues {
      */
     static std::shared_ptr<Schema> getSchema(const std::string& prefix);
 
+    /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+     */
+    static NetworkValues fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+
+    std::string interfaceName;
+
     uint64_t rBytes;
     uint64_t rPackets;
     uint64_t rErrs;

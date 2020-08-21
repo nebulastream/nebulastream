@@ -41,6 +41,15 @@ class CpuMetrics {
      */
     uint16_t getNumCores() const;
 
+    /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+     */
+    static CpuMetrics fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+
   private:
     // Overloading [] operator to access elements in array style
     CpuValues& operator[](unsigned int);

@@ -22,6 +22,15 @@ class CpuValues {
      */
     static std::shared_ptr<Schema> getSchema(const std::string& prefix);
 
+    /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+     */
+    static CpuValues fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+
     uint64_t USER;
     uint64_t NICE;
     uint64_t SYSTEM;

@@ -1,13 +1,16 @@
-#include <Monitoring/MetricValues/NetworkValues.hpp>
-#include <Util/Logger.hpp>
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <Common/DataTypes/FixedChar.hpp>
+#include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/Metrics/MetricDefinition.hpp>
+#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <cstring>
 
 namespace NES {
 
-std::shared_ptr<Schema> NES::NetworkValues::getSchema(const std::string& prefix) {
+std::shared_ptr<Schema> NetworkValues::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create()
         ->addField(prefix + "rBytes", BasicType::UINT64)
         ->addField(prefix + "rPackets", BasicType::UINT64)
@@ -17,6 +20,7 @@ std::shared_ptr<Schema> NES::NetworkValues::getSchema(const std::string& prefix)
         ->addField(prefix + "rFrame", BasicType::UINT64)
         ->addField(prefix + "rCompressed", BasicType::UINT64)
         ->addField(prefix + "rMulticast", BasicType::UINT64)
+
         ->addField(prefix + "tBytes", BasicType::UINT64)
         ->addField(prefix + "tPackets", BasicType::UINT64)
         ->addField(prefix + "tErrs", BasicType::UINT64)
@@ -24,8 +28,45 @@ std::shared_ptr<Schema> NES::NetworkValues::getSchema(const std::string& prefix)
         ->addField(prefix + "tFifo", BasicType::UINT64)
         ->addField(prefix + "tColls", BasicType::UINT64)
         ->addField(prefix + "tCarrier", BasicType::UINT64)
-        ->addField(prefix + "tCompressed", BasicType::UINT64);
+        ->addField(prefix + "tCompressed", BasicType::UINT64)
+
+        ->addField(prefix + "interfaceName", DataTypeFactory::createFixedChar(20));
     return schema;
+}
+
+NetworkValues NetworkValues::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    NetworkValues output{};
+    auto i = schema->getIndex(prefix+"rBytes");
+
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1
+        && UtilityFunctions::endsWith(schema->fields[i]->name, "rBytes")
+        && UtilityFunctions::endsWith(schema->fields[i + 16]->name, "interfaceName")) {
+        auto layout = createRowLayout(schema);
+
+        output.rBytes = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.rPackets = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.rErrs = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.rDrop = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.rFifo = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.rFrame = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.rCompressed = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.rMulticast = layout->getValueField<uint64_t>(0, i++)->read(buf);
+
+        output.tBytes = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.tPackets = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.tErrs = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.tDrop = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.tFifo = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.tColls = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.tCarrier = layout->getValueField<uint64_t>(0, i++)->read(buf);
+        output.tCompressed = layout->getValueField<uint64_t>(0, i++)->read(buf);
+
+        //auto ptr = layout->getFieldPointer<char>(buf, 0,i++);
+        //output.interfaceName = std::string(ptr, 20);
+    } else {
+        NES_THROW_RUNTIME_ERROR("CpuValues: Metrics could not be parsed from schema with prefix " + prefix + ":\n" + schema->toString());
+    }
+    return output;
 }
 
 void serialize(NetworkValues metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix) {
@@ -41,23 +82,28 @@ void serialize(NetworkValues metric, std::shared_ptr<Schema> schema, TupleBuffer
         schema->copyFields(NetworkValues::getSchema(prefix));
 
         auto layout = createRowLayout(schema);
-        layout->getValueField<uint64_t>(0, noFields)->write(buf, metric.rBytes);
-        layout->getValueField<uint64_t>(0, noFields+1)->write(buf, metric.rPackets);
-        layout->getValueField<uint64_t>(0, noFields+2)->write(buf, metric.rErrs);
-        layout->getValueField<uint64_t>(0, noFields+3)->write(buf, metric.rDrop);
-        layout->getValueField<uint64_t>(0, noFields+4)->write(buf, metric.rFifo);
-        layout->getValueField<uint64_t>(0, noFields+5)->write(buf, metric.rFrame);
-        layout->getValueField<uint64_t>(0, noFields+6)->write(buf, metric.rCompressed);
-        layout->getValueField<uint64_t>(0, noFields+7)->write(buf, metric.rMulticast);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rBytes);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rPackets);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rErrs);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rDrop);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rFifo);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rFrame);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rCompressed);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rMulticast);
 
-        layout->getValueField<uint64_t>(0, noFields+8)->write(buf, metric.tBytes);
-        layout->getValueField<uint64_t>(0, noFields+9)->write(buf, metric.tPackets);
-        layout->getValueField<uint64_t>(0, noFields+10)->write(buf, metric.tErrs);
-        layout->getValueField<uint64_t>(0, noFields+11)->write(buf, metric.tDrop);
-        layout->getValueField<uint64_t>(0, noFields+12)->write(buf, metric.tFifo);
-        layout->getValueField<uint64_t>(0, noFields+13)->write(buf, metric.tColls);
-        layout->getValueField<uint64_t>(0, noFields+14)->write(buf, metric.tCarrier);
-        layout->getValueField<uint64_t>(0, noFields+15)->write(buf, metric.tCompressed);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tBytes);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tPackets);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tErrs);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tDrop);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tFifo);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tColls);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tCarrier);
+        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tCompressed);
+
+        //TODO: fix this
+        //auto array = layout->getFieldPointer<char>(buf, 0, noFields);
+        //std::strncpy(array, metric.interfaceName.c_str(), 20);
+
         buf.setNumberOfTuples(1);
     }
 

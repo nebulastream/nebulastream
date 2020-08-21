@@ -5,6 +5,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
@@ -189,7 +190,6 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
 
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
-
 std::string UtilityFunctions::printTupleBufferAsText(TupleBuffer& buffer) {
     std::stringstream ss;
     for (size_t i = 0; i < buffer.getNumberOfTuples(); i++) {
@@ -296,19 +296,12 @@ const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
     return ss.str();
 }
 
-uint64_t UtilityFunctions::getNextQueryId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
-}
-
-uint64_t UtilityFunctions::getNextOperatorId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
-}
-
-uint64_t UtilityFunctions::getNextNodeId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
+bool UtilityFunctions::endsWith(const std::string& fullString, const std::string& ending) {
+    if (fullString.length() >= ending.length()) {
+        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+    } else {
+        return false;
+    }
 }
 
 }// namespace NES

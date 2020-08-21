@@ -1,9 +1,10 @@
-#include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Util/Logger.hpp>
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/Metrics/MetricDefinition.hpp>
+#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -39,6 +40,25 @@ CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const {
 
 CpuValues CpuMetrics::getTotal() const {
     return total;
+}
+
+CpuMetrics CpuMetrics::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    auto i = schema->getIndex(prefix+"CORE_NO");
+
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->name, "CORE_NO")) {
+        auto layout = createRowLayout(schema);
+        auto numCores = layout->getValueField<uint16_t>(0, i)->read(buf);
+        auto cpu = std::unique_ptr<CpuValues[]>(new CpuValues[numCores]);
+        auto totalCpu = CpuValues::fromBuffer(schema, buf, prefix + "CPU[TOTAL]_");
+
+        for (int n=0; n++; n< numCores) {
+            cpu[n] = CpuValues::fromBuffer(schema, buf, prefix + "CPU[" + std::to_string(n+1) + "]_" );
+        }
+        return CpuMetrics{totalCpu, numCores, std::move(cpu)};
+    }
+    else {
+        NES_THROW_RUNTIME_ERROR("CpuMetrics: Metrics could not be parsed from schema " + schema->toString());
+    }
 }
 
 void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix) {
