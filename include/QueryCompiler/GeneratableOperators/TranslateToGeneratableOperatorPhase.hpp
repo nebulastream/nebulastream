@@ -19,16 +19,16 @@ typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
 
 /**
- * @brief Translates a logical query plan to the legacy operator tree
+ * @brief Translates a logical query plan to the generatable operator tree
  */
 class TranslateToGeneratableOperatorPhase {
   public:
     /**
-     * @brief Factory method to create a translator phase.
+     * @brief Factory method to create a translation phase.
      */
     static TranslateToGeneratableOperatorPhasePtr create();
     /**
-     * @brief Translates a operator node and all its children to the legacy representation.
+     * @brief Translates a operator node and all its children to the generatable representation.
      * @param operatorNode
      * @return Legacy Operator Tree
      */
@@ -36,7 +36,7 @@ class TranslateToGeneratableOperatorPhase {
 
 
     /**
-     * @brief Translates an individual operator to its legacy representation.
+     * @brief Translates an individual operator to its generatable representation.
      * @param operatorNode
      * @return Legacy Operator
      */
