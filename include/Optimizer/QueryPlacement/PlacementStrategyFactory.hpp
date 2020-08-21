@@ -31,8 +31,8 @@ static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategy
 class BasePlacementStrategy;
 typedef std::shared_ptr<BasePlacementStrategy> BasePlacementStrategyPtr;
 
-class NESTopologyPlan;
-typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
 
 class TypeInferencePhase;
 typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
@@ -49,13 +49,13 @@ class PlacementStrategyFactory {
     /**
      * @brief Factory method returning different kind of optimizer.
      * @param strategyName : name of the strategy
-     * @param nesTopologyPlan : topology information
+     * @param topology : topology information
      * @param globalExecutionPlan : global execution plan to be updated
      * @param typeInferencePhase : type inference phase instance
      * @param streamCatalog : stream catalog
      * @return instance of type BaseOptimizer
      */
-    static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string strategyName, GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+    static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string strategyName, GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                                               TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 };
 }// namespace NES

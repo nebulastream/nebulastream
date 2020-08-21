@@ -10,19 +10,20 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyPlan.hpp>
+#include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
 
 using namespace std;
 namespace NES {
 
-std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog) {
-    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog));
+    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
 }
 
-BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
                                    StreamCatalogPtr streamCatalog)
-    : BasePlacementStrategy(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog) {}
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
@@ -44,7 +45,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         throw QueryPlacementException("BottomUpStrategy: No source operator found in the query plan wih id: " + queryId);
     }
 
-    const std::vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
+    const std::vector<PhysicalNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
     if (sourceNodes.empty()) {
         NES_ERROR("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
         throw QueryPlacementException("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
@@ -53,11 +54,11 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     NES_INFO("BottomUpStrategy: Preparing execution plan for query with id : " << queryId);
     placeOperators(queryId, sourceOperator, sourceNodes);
 
-    NESTopologyEntryPtr rootNode = nesTopologyPlan->getRootNode();
+    PhysicalNodePtr rootNode = topology->getRoot();
 
-    for (NESTopologyEntryPtr targetSource : sourceNodes) {
+    for (PhysicalNodePtr targetSource : sourceNodes) {
         NES_DEBUG("BottomUpStrategy: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
-        vector<NESTopologyEntryPtr> path = pathFinder->findPathBetween(targetSource, rootNode);
+        vector<PhysicalNodePtr> path = pathFinder->findPathBetween(targetSource, rootNode);
         NES_INFO("BottomUpStrategy: Adding system generated operators for query with id : " << queryId);
         addSystemGeneratedOperators(queryId, path);
     }
@@ -65,23 +66,23 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     return true;
 }
 
-void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
+void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sourceOperator, vector<PhysicalNodePtr> sourceNodes) {
 
-    NESTopologyEntryPtr sinkNode = nesTopologyPlan->getRootNode();
+    PhysicalNodePtr sinkNode = topology->getRoot();
 
     NES_DEBUG("BottomUpStrategy: Place the operator chain from each source node for query with id : " << queryId);
-    for (const NESTopologyEntryPtr& sourceNode : sourceNodes) {
+    for (const auto& sourceNode : sourceNodes) {
 
         NES_INFO("BottomUpStrategy: Find the path between source and sink node for query with id : " << queryId);
-        const vector<NESTopologyEntryPtr> path = pathFinder->findPathBetween(sourceNode, sinkNode);
-        if (path.empty()) {
+        PhysicalNodePtr startNode = topology->findPathBetween(sourceNode, sinkNode);
+        if (!startNode) {
             NES_ERROR("BottomUpStrategy: No path exists between sink and source");
             throw QueryPlacementException("BottomUpStrategy: No path exists between sink and source");
         }
 
         LogicalOperatorNodePtr operatorToPlace = sourceOperator;
         auto pathItr = path.begin();
-        NESTopologyEntryPtr candidateNesNode = (*pathItr);
+        PhysicalNodePtr candidateNesNode = (*pathItr);
         while (operatorToPlace) {
 
             if (operatorToPlace->instanceOf<SinkLogicalOperatorNode>()) {

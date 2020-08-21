@@ -22,7 +22,9 @@
 
 //GRPC Includes
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Topology/Topology.hpp>
 #include <grpcpp/health_check_service_interface.h>
+
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -35,15 +37,15 @@ NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t
     NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
     stopped = false;
 
-    topologyManager = std::make_shared<TopologyManager>();
+    topology = Topology::create();
     streamCatalog = std::make_shared<StreamCatalog>();
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();
-    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
+    coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     WorkerRPCClientPtr workerRpcClient = std::make_shared<WorkerRPCClient>();
     QueryRequestQueuePtr queryRequestQueue = std::make_shared<QueryRequestQueue>();
-    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topologyManager->getNESTopologyPlan(),
-                                                                                  queryCatalog, streamCatalog, workerRpcClient, queryRequestQueue);
+    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topology, queryCatalog,
+                                                                                  streamCatalog, workerRpcClient, queryRequestQueue);
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
 
@@ -53,7 +55,6 @@ NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     streamCatalog->reset();
     queryCatalog->clearQueries();
-    topologyManager->resetNESTopologyPlan();
     NES_ASSERT(shared_from_this().use_count() == 1, "Nes Coordinator leaked");
 }
 
@@ -85,7 +86,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(), queryCatalog,
-                                              streamCatalog, topologyManager, globalExecutionPlan, queryService);
+                                              streamCatalog, topology, globalExecutionPlan, queryService);
     restThread = std::make_shared<std::thread>(([&]() {
         restServer->start();//this call is blocking
         NES_DEBUG("NesCoordinator: startRestServer thread terminates");

@@ -28,7 +28,7 @@ namespace NES {
 
 BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
                                              StreamCatalogPtr streamCatalog)
-    : globalExecutionPlan(globalExecutionPlan), nesTopologyPlan(nesTopologyPlan), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {
+    : globalExecutionPlan(globalExecutionPlan), topology(nesTopologyPlan), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {
     pathFinder = PathFinder::create(nesTopologyPlan);
 }
 

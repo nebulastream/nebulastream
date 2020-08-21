@@ -9,8 +9,8 @@
 
 namespace NES {
 
-class TopologyManager;
-typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
 
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
@@ -86,8 +86,8 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
         return streamCatalog;
     }
 
-    TopologyManagerPtr getTopologyManger() {
-        return topologyManager;
+    TopologyPtr getTopology() {
+        return topology;
     }
 
     /**
@@ -121,7 +121,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;
-    TopologyManagerPtr topologyManager;
+    TopologyPtr topology;
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;
     std::atomic<bool> stopped;

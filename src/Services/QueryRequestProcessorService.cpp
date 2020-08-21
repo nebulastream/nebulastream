@@ -22,7 +22,7 @@
 
 namespace NES {
 
-QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                                            QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
                                                            QueryRequestQueuePtr queryRequestQueue)
     : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue) {
@@ -30,7 +30,7 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     NES_INFO("QueryProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryRewritePhase = QueryRewritePhase::create();
-    queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog);
+    queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryPlacementRefinementPhase = QueryPlacementRefinementPhase::create(globalExecutionPlan);
