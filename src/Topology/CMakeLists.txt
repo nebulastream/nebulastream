@@ -8,4 +8,5 @@ add_source_nes(
         NESTopologyLink.cpp
         NESTopologyEntry.cpp
         PhysicalNode.cpp
+        Topology.cpp
 )
