@@ -1,16 +1,16 @@
-#include "REST/RestEngine.hpp"
-#include "REST/NetworkUtils.hpp"
 #include <Catalogs/StreamCatalog.hpp>
+#include <REST/NetworkUtils.hpp>
+#include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
 RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog,
-                       TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService) : streamCatalog(streamCatalog) {
+                       TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService) : streamCatalog(streamCatalog) {
     NES_DEBUG("RestEngine");
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator);
-    queryController = std::make_shared<QueryController>(queryService, topologyManager, globalExecutionPlan);
+    queryController = std::make_shared<QueryController>(queryService, topology, globalExecutionPlan);
     connectivityController = std::make_shared<ConnectivityController>();
 }
 

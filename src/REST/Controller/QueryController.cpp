@@ -18,8 +18,8 @@ using namespace std;
 
 namespace NES {
 
-QueryController::QueryController(QueryServicePtr queryService, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan)
-    : queryService(queryService), topologyManager(topologyManager), globalExecutionPlan(globalExecutionPlan) {}
+QueryController::QueryController(QueryServicePtr queryService, TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan)
+    : queryService(queryService), topology(topology), globalExecutionPlan(globalExecutionPlan) {}
 
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 
