@@ -19,8 +19,8 @@ json::value OperatorJsonUtil::getBasePlan(QueryPlanPtr queryPlan) {
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     //FIXME: this needs to be changed but should be covered in another issue
     const OperatorNodePtr root = queryPlan->getRootOperators()[0];
-    OperatorPtr rootLegacyOperator = translator->transform(root, nullptr);// TODO check if this is ok here
-
+//    OperatorPtr rootLegacyOperator = translator->transform(root, nullptr);// TODO check if this is ok here
+/*
     if (!root) {
         auto node = json::value::object();
         node["id"] = json::value::string("NONE");
@@ -42,7 +42,7 @@ json::value OperatorJsonUtil::getBasePlan(QueryPlanPtr queryPlan) {
         nodes.push_back(node);
         getChildren(rootLegacyOperator, nodes, edges);
     }
-
+*/
     result["nodes"] = json::value::array(nodes);
     result["edges"] = json::value::array(edges);
 
