@@ -24,7 +24,10 @@ LogicalOperatorNodePtr createMergeLogicalOperatorNode() {
 
 bool MergeLogicalOperatorNode::inferSchema() {
     OperatorNode::inferSchema();
-
+    if (getChildren().size() != 2) {
+        NES_THROW_RUNTIME_ERROR("MergeLogicalOperator: merge need two child operators.");
+        return false;
+    }
     auto child1 = getChildren()[0]->as<LogicalOperatorNode>();
     auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
 
