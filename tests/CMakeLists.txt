@@ -66,9 +66,9 @@ target_link_libraries(code-generation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
 ### NES Topology Tests ###
-add_executable(nes-topology-manager-tests "UnitTests/TopologyManagerTest.cpp")
-target_link_libraries(nes-topology-manager-tests nes ${GTEST_LIBRARIES})
-add_test(NAME nes-topology-manager-tests COMMAND nes-topology-manager-tests)
+add_executable(topology-tests "UnitTests/TopologyTest.cpp")
+target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})
+add_test(NAME topology-tests COMMAND topology-tests)
 
 ### Buffer Manager Test ###
 add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp" UnitTests/CoordinatorEngineTest.cpp)
@@ -124,9 +124,9 @@ target_link_libraries(query-catalog-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 
 ### Path Finder Tests ###
-add_executable(path-finder-test "UnitTests/Optimizer/Utils/PathFinderTest.cpp")
-target_link_libraries(path-finder-test nes ${GTEST_LIBRARIES})
-add_test(NAME path-finder-test COMMAND path-finder-test)
+#add_executable(path-finder-test "UnitTests/Optimizer/Utils/PathFinderTest.cpp")
+#target_link_libraries(path-finder-test nes ${GTEST_LIBRARIES})
+#add_test(NAME path-finder-test COMMAND path-finder-test)
 
 ### QueryCompilerTest ###
 add_executable(query-execution-test "UnitTests/QueryExecutionTest.cpp")
