@@ -49,7 +49,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;
 
-    TopologyManagerPtr topologyManger = crd->getTopologyManger();
+    TopologyManagerPtr topologyManger = crd->getTopology();
 
     //NOTE: we cannot check full output as ids change each run
     std::string retString = topologyManger->getNESTopologyPlanString();
@@ -134,7 +134,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     EXPECT_TRUE(retStart2);
     cout << "worker started successfully" << endl;
 
-    TopologyManagerPtr topologyManger = crd->getTopologyManger();
+    TopologyManagerPtr topologyManger = crd->getTopology();
 
     //NOTE: we cannot check full output as ids change each run
     std::string retString = topologyManger->getNESTopologyPlanString();

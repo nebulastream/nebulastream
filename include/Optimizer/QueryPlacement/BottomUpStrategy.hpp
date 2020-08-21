@@ -5,6 +5,7 @@
 #include <iostream>
 
 namespace NES {
+
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
@@ -19,11 +20,11 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
 
-    static std::unique_ptr<BottomUpStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+    static std::unique_ptr<BottomUpStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
                                                     StreamCatalogPtr streamCatalog);
 
   private:
-    explicit BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+    explicit BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
                               StreamCatalogPtr streamCatalog);
 
     /**
@@ -33,7 +34,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      *
      * @throws exception if the operator can't be placed anywhere.
      */
-    void placeOperators(QueryId queryId, LogicalOperatorNodePtr sourceOperator, std::vector<NESTopologyEntryPtr> sourceNodes);
+    void placeOperators(QueryId queryId, LogicalOperatorNodePtr sourceOperator, std::vector<PhysicalNodePtr> sourceNodes);
 };
 }// namespace NES
 

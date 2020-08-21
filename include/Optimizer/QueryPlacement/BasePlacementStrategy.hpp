@@ -19,8 +19,8 @@ typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
-class NESTopologyPlan;
-typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
@@ -60,7 +60,7 @@ class BasePlacementStrategy {
     static constexpr auto ZMQ_DEFAULT_PORT = 5555;
 
   public:
-    explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+    explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
                                    StreamCatalogPtr streamCatalog);
 
     /**
@@ -97,7 +97,7 @@ class BasePlacementStrategy {
     void addSystemGeneratedOperators(QueryId queryId, std::vector<NESTopologyEntryPtr> path);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
-    NESTopologyPlanPtr nesTopologyPlan;
+    TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     StreamCatalogPtr streamCatalog;
     PathFinderPtr pathFinder;

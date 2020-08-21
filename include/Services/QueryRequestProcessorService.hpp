@@ -33,8 +33,8 @@ class GlobalExecutionPlan;
 
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
-class NESTopologyPlan;
-typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
 
 class WorkerRPCClient;
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
@@ -47,7 +47,7 @@ typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
  */
 class QueryRequestProcessorService {
   public:
-    explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, QueryCatalogPtr queryCatalog,
+    explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryCatalogPtr queryCatalog,
                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue);
 
     /**

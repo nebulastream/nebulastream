@@ -1,33 +1,34 @@
 #include <Optimizer/Utils/PathFinder.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/NESTopologyPlan.hpp>
+#include <Topology/PhysicalNode.hpp>
 #include <Util/Logger.hpp>
 #include <vector>
 
 namespace NES {
 
-PathFinderPtr PathFinder::create(NESTopologyPlanPtr nesTopologyPlan) {
-    return std::make_shared<PathFinder>(PathFinder(nesTopologyPlan));
+PathFinderPtr PathFinder::create(TopologyPtr topology) {
+    return std::make_shared<PathFinder>(PathFinder(topology));
 }
 
-PathFinder::PathFinder(NESTopologyPlanPtr nesTopologyPlan) : nesTopologyPlan(nesTopologyPlan) {
+PathFinder::PathFinder(TopologyPtr topology) : topology(topology) {
     NES_DEBUG("PathFinder()");
 }
 
-std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopologyEntryPtr source,
-                                                                      NESTopologyEntryPtr destination) {
+std::vector<PhysicalNodePtr> PathFinder::findPathWithMaxBandwidth(PhysicalNodePtr source,
+                                                                  PhysicalNodePtr destination) {
 
     NES_INFO("PathFinder: finding path wih maximum bandwidth between" << source->toString() << " and "
                                                                       << destination->toString());
 
-    std::vector<std::vector<NESTopologyLinkPtr>> pathsWithLinks = findAllPathLinksBetween(source, destination);
+    std::vector<std::vector<PhysicalNodePtr>> pathsWithLinks = findAllPathLinksBetween(source, destination);
 
     if (pathsWithLinks.empty()) {
         throw std::runtime_error(
             "Unable to find bath between " + source->toString() + " and " + destination->toString());
     }
 
-    std::vector<NESTopologyLinkPtr> selectedPath;
+    std::vector<PhysicalNodePtr> selectedPath;
 
     //If the number of paths are more than 1
     if (pathsWithLinks.size() > 1) {
@@ -58,8 +59,8 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopolog
     return convertLinkPathIntoNodePath(source, selectedPath);
 }
 
-std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopologyEntryPtr source,
-                                                                        NESTopologyEntryPtr destination) {
+std::vector<PhysicalNodePtr> PathFinder::findPathWithMinLinkLatency(PhysicalNodePtr source,
+                                                                    PhysicalNodePtr destination) {
 
     NES_INFO("PathFinder: finding path wih minimum link latency between" << source->toString() << " and "
                                                                          << destination->toString());
@@ -103,8 +104,8 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopol
     return convertLinkPathIntoNodePath(source, selectedPath);
 }
 
-std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEntryPtr source,
-                                                             NES::NESTopologyEntryPtr destination) {
+std::vector<PhysicalNodePtr> PathFinder::findPathBetween(PhysicalNodePtr source,
+                                                         PhysicalNodePtr destination) {
 
     NES_INFO("PathFinder: finding a random path between " << source->toString() << " and "
                                                           << destination->toString());
@@ -138,12 +139,10 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEnt
     return convertLinkPathIntoNodePath(source, traversedPath);
 }
 
-std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> PathFinder::findUniquePathBetween(std::vector<
-                                                                                                      NESTopologyEntryPtr>
-                                                                                                      sources,
-                                                                                                  NESTopologyEntryPtr destination) {
+std::map<PhysicalNodePtr, std::vector<PhysicalNodePtr>> PathFinder::findUniquePathBetween(std::vector<PhysicalNodePtr> sources,
+                                                                                          PhysicalNodePtr destination) {
 
-    std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> result;
+    std::map<PhysicalNodePtr, std::vector<PhysicalNodePtr>> result;
 
     NES_INFO("PathFinder: finding unique path between set of sources and destination");
 
@@ -256,8 +255,7 @@ std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> PathFinder::find
     return result;
 }
 
-std::vector<std::vector<NESTopologyEntryPtr>> PathFinder::findAllPathsBetween(NESTopologyEntryPtr source,
-                                                                              NESTopologyEntryPtr destination) {
+std::vector<std::vector<PhysicalNodePtr>> PathFinder::findAllPathsBetween(PhysicalNodePtr source, PhysicalNodePtr destination) {
 
     NES_INFO("PathFinder: finding all paths between source" << source->toString() << " and destination "
                                                             << destination->toString());
@@ -273,8 +271,8 @@ std::vector<std::vector<NESTopologyEntryPtr>> PathFinder::findAllPathsBetween(NE
     return result;
 }
 
-std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween(NESTopologyEntryPtr source,
-                                                                                 NESTopologyEntryPtr destination) {
+std::vector<std::vector<PhysicalNodePtr>> PathFinder::findAllPathLinksBetween(PhysicalNodePtr source,
+                                                                              PhysicalNodePtr destination) {
 
     const std::vector<NESTopologyLinkPtr>& startLinks = nesTopologyPlan->getNESTopologyGraph()->getAllEdgesFromNode(source);
 
@@ -308,8 +306,8 @@ std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween
     return setOfVisitedPaths;
 }
 
-std::vector<NESTopologyEntryPtr> PathFinder::convertLinkPathIntoNodePath(const NESTopologyEntryPtr source,
-                                                                         const std::vector<NESTopologyLinkPtr>& selectedPath) {
+std::vector<PhysicalNodePtr> PathFinder::convertLinkPathIntoNodePath(const PhysicalNodePtr source,
+                                                                     const std::vector<PhysicalNodePtr>& selectedPath) {
 
     NES_INFO("PathFinder: convert a path with ege information to a path containing vertex information");
 
@@ -323,8 +321,7 @@ std::vector<NESTopologyEntryPtr> PathFinder::convertLinkPathIntoNodePath(const N
     return result;
 }
 
-std::vector<NESTopologyLinkPtr> PathFinder::backTrackTraversedPathTill(std::vector<NESTopologyLinkPtr> path,
-                                                                       NES::NESTopologyEntryPtr nesNode) {
+std::vector<PhysicalNodePtr> PathFinder::backTrackTraversedPathTill(std::vector<PhysicalNodePtr> path, PhysicalNodePtr nesNode) {
     auto itr = path.end();
     while (itr != path.begin()) {
         --itr;

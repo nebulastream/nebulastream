@@ -13,18 +13,19 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyPlan.hpp>
+#include <Topology/PhysicalNode.hpp>
 #include <Util/Logger.hpp>
-using namespace std;
+
 namespace NES {
 
-std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
                                                          StreamCatalogPtr streamCatalog) {
-    return std::make_unique<TopDownStrategy>(TopDownStrategy(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog));
+    return std::make_unique<TopDownStrategy>(TopDownStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
 }
 
-TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
+TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
                                  StreamCatalogPtr streamCatalog)
-    : BasePlacementStrategy(globalExecutionPlan, nesTopologyPlan, typeInferencePhase, streamCatalog) {}
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
@@ -35,9 +36,9 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         NES_ERROR("BottomUpStrategy: Source Descriptor need stream name");
         throw QueryPlacementException("BottomUpStrategy: Source Descriptor need stream name");
     }
-    const string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
+    const std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
 
-    const vector<NESTopologyEntryPtr>& sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
+    const std::vector<PhysicalNodePtr>& sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_ERROR("TopDownStrategy: Unable to find the source node to place the operator");
@@ -48,11 +49,11 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     const QueryId queryId = queryPlan->getQueryId();
     placeOperators(queryId, sinkOperator, sourceNodes);
 
-    NESTopologyEntryPtr rootNode = nesTopologyPlan->getRootNode();
+    NESTopologyEntryPtr rootNode = topology->getRootNode();
 
-    for (NESTopologyEntryPtr targetSource : sourceNodes) {
+    for (PhysicalNodePtr targetSource : sourceNodes) {
         NES_DEBUG("TopDownStrategy: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
-        vector<NESTopologyEntryPtr> path = pathFinder->findPathBetween(targetSource, rootNode);
+        std::vector<NESTopologyEntryPtr> path = pathFinder->findPathBetween(targetSource, rootNode);
         NES_INFO("TopDownStrategy: Adding system generated operators for query with id : " << queryId);
         addSystemGeneratedOperators(queryId, path);
     }
@@ -60,9 +61,9 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     return true;
 }
 
-void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sinkOperator, vector<NESTopologyEntryPtr> nesSourceNodes) {
+void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sinkOperator, std::vector<NESTopologyEntryPtr> nesSourceNodes) {
 
-    const NESTopologyEntryPtr sinkNode = nesTopologyPlan->getRootNode();
+    const NESTopologyEntryPtr sinkNode = topology->getRootNode();
 
     for (NESTopologyEntryPtr nesSourceNode : nesSourceNodes) {
 

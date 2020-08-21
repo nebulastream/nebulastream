@@ -11,8 +11,8 @@ typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
-class NESTopologyPlan;
-typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
 
 class TypeInferencePhase;
 typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
@@ -28,7 +28,7 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
  */
 class QueryPlacementPhase {
   public:
-    static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+    static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
     /**
@@ -42,11 +42,11 @@ class QueryPlacementPhase {
     bool execute(std::string placementStrategy, QueryPlanPtr queryPlan);
 
   private:
-    explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan,
+    explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
-    NESTopologyPlanPtr nesTopologyPlan;
+    TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     StreamCatalogPtr streamCatalog;
 };
