@@ -48,12 +48,22 @@ class Topology {
      */
     bool removePhysicalNode(PhysicalNodePtr nodeToRemove);
 
+    /**
+     * @brief This method will return a subgraph containing only the path between start and destination node.
+     * Note: this method will only look for the destination node only in the parent nodes of the start node.
+     * @param startNode: the physical start node
+     * @param destinationNode: the destination start node
+     * @return physical location of the leaf node in the graph.
+     */
+    PhysicalNodePtr findPathBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNode);
+
   private:
     explicit Topology(PhysicalNodePtr rootNode);
 
     //TODO: At present we assume that we have only one root node
     PhysicalNodePtr rootNode;
     std::mutex mutex;
+    bool find(PhysicalNodePtr physicalNode, PhysicalNodePtr destinationNode, std::vector<PhysicalNodePtr>& nodesInPath);
 };
 }// namespace NES
 #endif//NES_TOPOLOGY_HPP

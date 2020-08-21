@@ -1,5 +1,6 @@
 #include <Topology/PhysicalNode.hpp>
 #include <Topology/Topology.hpp>
+#include <deque>
 
 namespace NES {
 
@@ -25,6 +26,41 @@ bool Topology::removePhysicalNode(PhysicalNodePtr nodeToRemove) {
     std::unique_lock<std::mutex> lock(mutex);
     NES_INFO("Topology: Removing Node " << nodeToRemove->toString());
     return rootNode->remove(nodeToRemove);
+}
+
+PhysicalNodePtr Topology::findPathBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNode) {
+    std::unique_lock<std::mutex> lock(mutex);
+    NES_INFO("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
+
+    std::vector<PhysicalNodePtr> nodesInPath;
+    bool found = find(startNode, destinationNode, nodesInPath);
+    if (found) {
+        for (auto& node : nodesInPath) {
+            return node;
+        }
+    }
+    return nullptr;
+}
+
+bool Topology::find(PhysicalNodePtr physicalNode, PhysicalNodePtr destinationNode, std::vector<PhysicalNodePtr>& nodesInPath) {
+
+    std::vector<NodePtr> parents = physicalNode->getParents();
+    if (parents.empty()) {
+        return false;
+    }
+
+    if (physicalNode->getId() == destinationNode->getId()) {
+        nodesInPath.push_back(physicalNode->copy());
+        return true;
+    }
+
+    for (auto& parent : parents) {
+        if (find(physicalNode, destinationNode, nodesInPath)) {
+            nodesInPath.push_back(parent->as<PhysicalNode>()->copy());
+            return true;
+        }
+    }
+    return false;
 }
 
 }// namespace NES
