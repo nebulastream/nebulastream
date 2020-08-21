@@ -88,8 +88,8 @@ void RestEngine::handleDelete(http_request message) {
         if (paths[0] == "streamCatalog") {
             streamCatalogController->handleDelete(paths, message);
             return;
-        } else if (paths[0] == "queryCatalog") {
-            queryCatalogController->handleDelete(paths, message);
+        } else if (paths[0] == "query") {
+            queryController->handleDelete(paths, message);
             return;
         }
     }
