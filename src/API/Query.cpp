@@ -26,7 +26,7 @@ Query Query::from(const std::string sourceStreamName) {
 Query& Query::merge(Query* subQuery) {
     NES_DEBUG("Query: merge the subQuery to current query");
     OperatorNodePtr op = createMergeLogicalOperatorNode();
-    getQueryPlan()->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
+    queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
     queryPlan->appendOperator(op);
     return *this;
 }

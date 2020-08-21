@@ -8,12 +8,12 @@ namespace NES {
 
 class GeneratableMergeOperator : public MergeLogicalOperatorNode, public GeneratableOperator {
   public:
-    static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr);
+    static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr logicalMergeOperator);
     void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
     void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
 
   private:
-    GeneratableMergeOperator();
+    GeneratableMergeOperator(SchemaPtr outputSchema);
 };
 
 }// namespace NES

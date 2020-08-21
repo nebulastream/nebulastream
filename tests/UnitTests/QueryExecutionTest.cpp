@@ -361,8 +361,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     // creating P2
     auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager());
-    auto query2 = PhysicalQuery::from(testSource2->getSchema());
-    query2 = query2.filter(Attribute("id") < 5);
+    auto query2 = PhysicalQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5);
 
 
     // creating P3

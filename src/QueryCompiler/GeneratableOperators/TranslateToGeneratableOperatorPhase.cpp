@@ -39,8 +39,10 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         generatableParentOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
+        auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
+        generatableParentOperator->addChild(scanOperator);
         auto childOperator = GeneratableMergeOperator::create(operatorNode->as<MergeLogicalOperatorNode>());
-        generatableParentOperator->addChild(childOperator);
+        scanOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());

@@ -19,7 +19,9 @@ GeneratableWindowOperatorPtr GeneratableWindowOperator::create(WindowLogicalOper
     return std::make_shared<GeneratableWindowOperator>(GeneratableWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
 }
 
-GeneratableWindowOperator::GeneratableWindowOperator(WindowDefinitionPtr windowDefinition): WindowLogicalOperatorNode(windowDefinition) {}
+GeneratableWindowOperator::GeneratableWindowOperator(WindowDefinitionPtr windowDefinition): WindowLogicalOperatorNode(windowDefinition) {
+
+}
 
 
 }
