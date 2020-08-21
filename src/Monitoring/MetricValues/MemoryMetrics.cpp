@@ -4,6 +4,7 @@
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Monitoring/Metrics/MetricDefinition.hpp>
 
 namespace NES {
@@ -59,16 +60,12 @@ void serialize(MemoryMetrics metric, std::shared_ptr<Schema> schema, TupleBuffer
 
 MemoryMetrics MemoryMetrics::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
     MemoryMetrics output{};
-    auto layout = createRowLayout(schema);
+    auto i = schema->getIndex(prefix+"TOTAL_RAM");
 
-    int i = 0;
-    for (auto field : schema->fields) {
-        if (field->name == prefix + "TOTAL_RAM") {
-            break;
-        }
-        i++;
-    }
-    if (i <= schema->getSize() && schema->fields[i + 12]->name == prefix + "LOADS_15MIN" && buf.getNumberOfTuples() == 1) {
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1
+        && UtilityFunctions::endsWith(schema->fields[i]->name, "TOTAL_RAM")
+        && UtilityFunctions::endsWith(schema->fields[i + 12]->name, "LOADS_15MIN")) {
+        auto layout = createRowLayout(schema);
         output.TOTAL_RAM = layout->getValueField<uint64_t>(0, i)->read(buf);
         output.TOTAL_SWAP = layout->getValueField<uint64_t>(0, i + 1)->read(buf);
         output.FREE_RAM = layout->getValueField<uint64_t>(0, i + 2)->read(buf);

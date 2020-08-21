@@ -128,4 +128,16 @@ const std::string Schema::toString() const {
 AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
 };
+
+uint64_t Schema::getIndex(const std::string& fieldName) {
+    int i = 0;
+    for (const auto& field : this->fields) {
+        if (field->name == fieldName) {
+            break;
+        }
+        i++;
+    }
+    return i;
+}
+
 }// namespace NES

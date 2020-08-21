@@ -75,6 +75,14 @@ class Schema {
     bool has(const std::string& fieldName);
 
     /**
+     * @brief Checks if attribute field name is defined in the schema and returns its index.
+     * If item not in the list, then the return value is equal to fields.size().
+     * @param fieldName
+     * @return the index
+     */
+    uint64_t getIndex(const std::string& fieldName);
+
+    /**
      * @brief Finds a attribute field by name in the schema
      * @param fieldName
      * @return AttributeField

@@ -18,14 +18,25 @@ class NetworkMetrics {
     NetworkMetrics() = default;
 
     // Overloading [] operator to access elements in array style
-    NetworkValues& operator[](std::basic_string<char> interfaceName);
+    NetworkValues& operator[](unsigned int interfaceNo);
 
     std::vector<std::string> getInterfaceNames();
 
     unsigned int getInterfaceNum() const;
 
+    void addNetworkValues(NetworkValues&& nwValue);
+
+    /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+     */
+    static NetworkMetrics fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+
   private:
-    std::unordered_map<std::string, NetworkValues> interfaceMap;
+    std::vector<NetworkValues> networkValues;
 };
 
 /**

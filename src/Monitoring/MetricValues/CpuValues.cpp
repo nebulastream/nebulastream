@@ -1,10 +1,11 @@
 #include <Monitoring/MetricValues/CpuValues.hpp>
 
-#include <Util/Logger.hpp>
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <Monitoring/Metrics/MetricDefinition.hpp>
+#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -21,6 +22,30 @@ std::shared_ptr<Schema> CpuValues::getSchema(const std::string& prefix) {
         ->addField(prefix + "GUEST", BasicType::UINT64)
         ->addField(prefix + "GUESTNICE", BasicType::UINT64);
     return schema;
+}
+
+CpuValues CpuValues::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    CpuValues output{};
+    auto i = schema->getIndex(prefix+"USER");
+
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1
+        && UtilityFunctions::endsWith(schema->fields[i]->name, "USER")
+        && UtilityFunctions::endsWith(schema->fields[i + 9]->name, "GUESTNICE")) {
+        auto layout = createRowLayout(schema);
+        output.USER = layout->getValueField<uint64_t>(0, i)->read(buf);
+        output.NICE = layout->getValueField<uint64_t>(0, i + 1)->read(buf);
+        output.SYSTEM = layout->getValueField<uint64_t>(0, i + 2)->read(buf);
+        output.IDLE = layout->getValueField<uint64_t>(0, i + 3)->read(buf);
+        output.IOWAIT = layout->getValueField<uint64_t>(0, i + 4)->read(buf);
+        output.IRQ = layout->getValueField<uint64_t>(0, i + 5)->read(buf);
+        output.SOFTIRQ = layout->getValueField<uint64_t>(0, i + 6)->read(buf);
+        output.STEAL = layout->getValueField<uint64_t>(0, i + 7)->read(buf);
+        output.GUEST = layout->getValueField<uint64_t>(0, i + 8)->read(buf);
+        output.GUESTNICE = layout->getValueField<uint64_t>(0, i + 9)->read(buf);
+    } else {
+        NES_THROW_RUNTIME_ERROR("CpuValues: Metrics could not be parsed from schema with prefix " + prefix + ":\n" + schema->toString());
+    }
+    return output;
 }
 
 void serialize(CpuValues metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix) {

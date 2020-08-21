@@ -82,23 +82,27 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
         sscanf(buf, "%[^:]: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
                ifname, &rBytes, &rPackets, &rErrs, &rDrop, &rFifo, &rFrame, &rCompressed, &rMulticast,
                &tBytes, &tPackets, &tErrs, &tDrop, &tFifo, &tColls, &tCarrier, &tCompressed);
-        output[ifname].rBytes = rBytes;
-        output[ifname].rPackets = rPackets;
-        output[ifname].rErrs = rErrs;
-        output[ifname].rDrop = rDrop;
-        output[ifname].rFifo = rFifo;
-        output[ifname].rFrame = rFrame;
-        output[ifname].rCompressed = rCompressed;
-        output[ifname].rMulticast = rMulticast;
+        auto outputValue = NetworkValues();
+        outputValue.interfaceName = ifname;
 
-        output[ifname].tBytes = tBytes;
-        output[ifname].tPackets = tPackets;
-        output[ifname].tErrs = tErrs;
-        output[ifname].tDrop = tDrop;
-        output[ifname].tFifo = tFifo;
-        output[ifname].tColls = tColls;
-        output[ifname].tCarrier = tCarrier;
-        output[ifname].tCompressed = tCompressed;
+        outputValue.rBytes = rBytes;
+        outputValue.rPackets = rPackets;
+        outputValue.rErrs = rErrs;
+        outputValue.rDrop = rDrop;
+        outputValue.rFifo = rFifo;
+        outputValue.rFrame = rFrame;
+        outputValue.rCompressed = rCompressed;
+        outputValue.rMulticast = rMulticast;
+
+        outputValue.tBytes = tBytes;
+        outputValue.tPackets = tPackets;
+        outputValue.tErrs = tErrs;
+        outputValue.tDrop = tDrop;
+        outputValue.tFifo = tFifo;
+        outputValue.tColls = tColls;
+        outputValue.tCarrier = tCarrier;
+        outputValue.tCompressed = tCompressed;
+        output.addNetworkValues(std::move(outputValue));
     }
     fclose(fp);
 
