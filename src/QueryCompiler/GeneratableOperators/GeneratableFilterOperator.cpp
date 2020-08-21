@@ -17,7 +17,7 @@ void GeneratableFilterOperator::consume(CodeGeneratorPtr codegen, PipelineContex
     // todo remove if code gen can handle expressions
     auto predicate = TranslateToLegacyPlanPhase::create()->transformExpression(getPredicate());
     codegen->generateCodeForFilter(std::dynamic_pointer_cast<Predicate>(predicate), context);
-    getChildren()[0]->as<GeneratableOperator>()->consume(codegen, context, out);
+    getParents()[0]->as<GeneratableOperator>()->consume(codegen, context, out);
 }
 GeneratableFilterOperator::GeneratableFilterOperator(const ExpressionNodePtr filterExpression) : FilterLogicalOperatorNode(filterExpression) {
 }

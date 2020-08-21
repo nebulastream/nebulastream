@@ -14,9 +14,14 @@
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <utility>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Phases/TypeInferencePhase.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
-
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 using namespace NES;
 
@@ -177,29 +182,74 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
     buf.setNumberOfTuples(10);
 }
 
+class DummySink : public SinkDescriptor{
+  public:
+    static SinkDescriptorPtr create(){
+        return std::make_shared<DummySink>();
+    }
+    DummySink(): SinkDescriptor(){};
+    ~DummySink() override = default;
+    std::string toString() override {
+        return std::string();
+    }
+    bool equal(SinkDescriptorPtr other) override {
+        return false;
+    }
+};
+
+class SchemaSourceDescriptor: public SourceDescriptor{
+  public:
+    static SourceDescriptorPtr create(SchemaPtr schema){
+        return std::make_shared<SchemaSourceDescriptor>(schema);
+    }
+    explicit SchemaSourceDescriptor(SchemaPtr schema): SourceDescriptor(schema){
+
+    }
+    std::string toString() override {
+        return "Schema Source Descriptor";
+    }
+    bool equal(SourceDescriptorPtr other) override {
+        return other->getSchema()->equals(this->getSchema());
+    }
+    ~SchemaSourceDescriptor() override = default;
+};
+
+class PhysicalQuery : public Query{
+  public:
+    static Query from(SchemaPtr inputSchme){
+        auto sourceOperator = createSourceLogicalOperatorNode(SchemaSourceDescriptor::create(inputSchme));
+        auto queryPlan = QueryPlan::create(sourceOperator);
+        return Query(queryPlan);
+    }
+};
+
 TEST_F(QueryExecutionTest, filterQuery) {
 
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                     nodeEngine->getBufferManager(),
                                                                     nodeEngine->getQueryManager());
-    auto source = createSourceOperator(testSource);
-    auto filter = createFilterOperator(
-        createPredicate(Field(testSchema->get("id")) < 5));
-    auto testSink = std::make_shared<TestSink>(10, testSchema, nodeEngine->getBufferManager());
-    auto sink = createSinkOperator(testSink);
 
-    filter->addChild(source);
-    source->setParent(filter);
-    sink->addChild(filter);
-    filter->setParent(sink);
+
+    auto query = PhysicalQuery::from(testSource->getSchema())
+                     .filter(Attribute("id") < 5)
+                     .sink(DummySink::create());
+
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    auto translatePhase =  TranslateToGeneratableOperatorPhase::create();
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0], nodeEngine);
+    auto testSink = std::make_shared<TestSink>(10, testSchema, nodeEngine->getBufferManager());
+
+
 
     auto plan = GeneratedQueryExecutionPlanBuilder::create()
                     .addSink(testSink)
                     .addSource(testSource)
-                    .addOperatorQueryPlan(filter)
+                    .addOperatorQueryPlan(generatableOperators)
                     .setCompiler(nodeEngine->getCompiler())
                     .setBufferManager(nodeEngine->getBufferManager())
                     .setQueryManager(nodeEngine->getQueryManager())
@@ -247,31 +297,24 @@ TEST_F(QueryExecutionTest, windowQuery) {
     auto windowSource = WindowSource::create(
         nodeEngine->getBufferManager(),
         nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
-    auto source = createSourceOperator(windowSource);
 
+
+    auto query = PhysicalQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
-    auto field = windowSource->getSchema()->get("ts");
-    auto expr = Attribute("ts");
-    auto windowType = TumblingWindow::of(TimeCharacteristic::createEventTime(expr), Seconds(10));
-
+    auto windowType = TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(10));
     auto aggregation = Sum::on(Attribute("value"));
-    auto windowOperator = createWindowOperator(createWindowDefinition(windowSource->getSchema()->get("key"), aggregation, windowType));
-    // 2.1 add window scan operator
-    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
-    auto windowScan = createWindowScanOperator(windowResultSchema);
+    query = query.windowByKey(Attribute("key"), windowType, aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
+    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
-    auto sink = createSinkOperator(testSink);
+    query.sink(DummySink::create());
 
-    // cain all operator to each other
-    windowOperator->addChild(source);
-    source->setParent(windowOperator);
-    windowScan->addChild(windowOperator);
-    windowOperator->setParent(windowScan);
-    sink->addChild(windowScan);
-    windowScan->setParent(sink);
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    auto translatePhase =  TranslateToGeneratableOperatorPhase::create();
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0], nodeEngine);
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
@@ -280,7 +323,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
                        .setQueryId(1)
                        .addSource(windowSource)
                        .addSink(testSink)
-                       .addOperatorQueryPlan(sink);
+                       .addOperatorQueryPlan(generatableOperators);
 
     nodeEngine->registerQueryInNodeEngine(builder.build());
     nodeEngine->startQuery(1);
@@ -310,45 +353,36 @@ TEST_F(QueryExecutionTest, mergeQuery) {
 
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager());
-    auto source1 = createSourceOperator(testSource1);
-    auto filter1 = createFilterOperator(
-        createPredicate(Field(testSchema->get("id")) < 5));
 
-    filter1->addChild(source1);
-    source1->setParent(filter1);
+    auto query1 = PhysicalQuery::from(testSource1->getSchema());
+
+    query1 = query1.filter(Attribute("id") < 5);
 
     // creating P2
     auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager());
-    auto source2 = createSourceOperator(testSource2);
-    auto filter2 = createFilterOperator(
-        createPredicate(Field(testSchema->get("id")) < 5));
-    filter2->addChild(source2);
-    source2->setParent(filter2);
+    auto query2 = PhysicalQuery::from(testSource2->getSchema());
+    query2 = query2.filter(Attribute("id") < 5);
+
 
     // creating P3
     // merge does not change schema
     SchemaPtr ptr = std::make_shared<Schema>(testSchema);
-    auto mergeOperator = createMergeOperator(ptr);
-    mergeOperator->addChild(filter1);
-    mergeOperator->addChild(filter2);
-    filter1->setParent(mergeOperator);
-    filter2->setParent(mergeOperator);
-    auto windowScan = createWindowScanOperator(testSchema);
-    mergeOperator->setParent(windowScan);
-    windowScan->addChild(mergeOperator);
+    auto mergedQuery = query2.merge(&query1).sink(DummySink::create());
 
     auto testSink = std::make_shared<TestSink>(10, testSchema, nodeEngine->getBufferManager());
-    auto sink = createSinkOperator(testSink);
 
-    windowScan->setParent(sink);
-    sink->addChild(windowScan);
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
+    auto translatePhase =  TranslateToGeneratableOperatorPhase::create();
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0], nodeEngine);
+
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
         .setQueryManager(nodeEngine->getQueryManager())
         .setBufferManager(nodeEngine->getBufferManager())
         .setCompiler(nodeEngine->getCompiler())
-        .addOperatorQueryPlan(sink)
+        .addOperatorQueryPlan(generatableOperators)
         .setQueryId(1)
         .addSource(testSource1)
         .addSource(testSource2)
