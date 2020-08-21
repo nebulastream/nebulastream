@@ -45,16 +45,22 @@ void PhysicalNode::reduceResource(uint16_t usedCapacity) {
     usedResource = usedResource + usedCapacity;
 }
 
+PhysicalNodePtr PhysicalNode::copy() {
+    PhysicalNodePtr copy = std::shared_ptr<PhysicalNode>(new PhysicalNode(id, ipAddress, grpcPort, dataPort, resource));
+    copy->reduceResource(resource - usedResource);
+    return copy;
+}
+
+const std::string& PhysicalNode::getIpAddress() const {
+    return ipAddress;
+}
+
 const std::string PhysicalNode::toString() const {
     std::stringstream ss;
     ss << "PhysicalNode[id=" + std::to_string(id) + ", ip = " + ipAddress + ", grpcPort = ,"
             + std::to_string(grpcPort) + ", dataPort= " + std::to_string(dataPort) + ", resources = " + std::to_string(resource)
             + ", usedResource=" + std::to_string(usedResource) + " ]";
     return ss.str();
-}
-
-const std::string& PhysicalNode::getIpAddress() const {
-    return ipAddress;
 }
 
 }// namespace NES

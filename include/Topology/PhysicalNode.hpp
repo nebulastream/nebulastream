@@ -70,6 +70,12 @@ class PhysicalNode : public Node {
 
     const std::string toString() const override;
 
+    /**
+     * @brief Create a shallow copy of the physical node i.e. without copying the parent and child nodes
+     * @return
+     */
+    PhysicalNodePtr copy();
+
   private:
     explicit PhysicalNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resource);
 
