@@ -2,8 +2,8 @@
 #define NES_TOPOLOGY_HPP
 
 #include <memory>
-#include <vector>
 #include <mutex>
+#include <vector>
 
 namespace NES {
 
@@ -18,12 +18,18 @@ typedef std::shared_ptr<Topology> TopologyPtr;
  */
 class Topology {
 
+  public:
     /**
      * @brief Factory to create instance of topology
-     * @param rootNode: the root node
      * @return shared pointer to the topology
      */
-    static TopologyPtr create(PhysicalNodePtr rootNode);
+    static TopologyPtr create();
+
+    /**
+     * @brief Get the root node of the topology
+     * @return root of the topology
+     */
+    PhysicalNodePtr getRoot();
 
     /**
      * @brief This method will add the new node as child to the provided parent node
@@ -34,19 +40,18 @@ class Topology {
     bool addNewPhysicalNodeAsChild(PhysicalNodePtr parent, PhysicalNodePtr newNode);
 
     /**
-     * @brief This method will add the new node as parent to the provided child node
-     * @param child : the pointer to the child physical node
-     * @param newNode : the pointer to the new physical node
-     * @return true if successful
-     */
-    bool addNewPhysicalNodeAsParent(PhysicalNodePtr child, PhysicalNodePtr newNode);
-
-    /**
      * @brief This method will remove a given physical node
      * @param nodeToRemove : the node to be removed
      * @return true if successful
      */
     bool removePhysicalNode(PhysicalNodePtr nodeToRemove);
+
+    /**
+     * @brief This method will find a given physical node by its id
+     * @param nodeId : the id of the node
+     * @return physical node if found else nullptr
+     */
+    PhysicalNodePtr findNodeWithId(uint64_t nodeId);
 
     /**
      * @brief This method will return a subgraph containing only the path between start and destination node.
@@ -57,13 +62,46 @@ class Topology {
      */
     PhysicalNodePtr findPathBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNode);
 
-  private:
-    explicit Topology(PhysicalNodePtr rootNode);
+    //FIXME: as part of the issue #955
+    //    std::vector<LinkProperties> getLinkPropertiesBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNde);
+    //    std::vector<LinkProperties> getInputLinksForNode(PhysicalNodePtr node);
+    //    std::vector<LinkProperties> getOutputLinksForNode(PhysicalNodePtr node);
 
+    /**
+     * @brief a Physical Node with the ip address and grpc port exists
+     * @param ipAddress: ipaddress of the node
+     * @param grpcPort: grpc port of the node
+     * @return true if node exists else false
+     */
+    bool nodeExistsWithIpAndPort(std::string ipAddress, uint32_t grpcPort);
+
+    /**
+     * @brief Print the current topology information
+     */
+    void print();
+
+    /**
+     * @brief Add a new root node
+     * @param physicalNode: new root node
+     */
+    void setAsRoot(PhysicalNodePtr physicalNode);
+
+    /**
+     * @brief Remove links between
+     * @param parentNode
+     * @param childNode
+     * @return
+     */
+    bool removeNodeAsChild(PhysicalNodePtr parentNode, PhysicalNodePtr childNode);
+
+  private:
+    explicit Topology();
+
+    bool find(PhysicalNodePtr physicalNode, PhysicalNodePtr destinationNode, std::vector<PhysicalNodePtr>& nodesInPath);
     //TODO: At present we assume that we have only one root node
     PhysicalNodePtr rootNode;
     std::mutex mutex;
-    bool find(PhysicalNodePtr physicalNode, PhysicalNodePtr destinationNode, std::vector<PhysicalNodePtr>& nodesInPath);
+    std::map<uint64_t, PhysicalNodePtr> indexOnNodeIds;
 };
 }// namespace NES
 #endif//NES_TOPOLOGY_HPP

@@ -1,12 +1,11 @@
 #include <Catalogs/StreamCatalogEntry.hpp>
+#include <Topology/PhysicalNode.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-StreamCatalogEntry::StreamCatalogEntry(PhysicalStreamConfig streamConf,
-                                       NESTopologyEntryPtr node)
-    : streamConf(streamConf),
-      node(node){};
+StreamCatalogEntry::StreamCatalogEntry(PhysicalStreamConfig streamConf, PhysicalNodePtr node)
+    : streamConf(streamConf), node(node){};
 
 std::string StreamCatalogEntry::getSourceType() {
     return streamConf.sourceType;
@@ -16,7 +15,7 @@ std::string StreamCatalogEntry::getSourceConfig() {
     return streamConf.sourceConfig;
 }
 
-NESTopologyEntryPtr StreamCatalogEntry::getNode() {
+PhysicalNodePtr StreamCatalogEntry::getNode() {
     return node;
 }
 

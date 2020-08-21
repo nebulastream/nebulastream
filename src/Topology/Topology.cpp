@@ -1,25 +1,20 @@
+#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Topology/PhysicalNode.hpp>
 #include <Topology/Topology.hpp>
 #include <deque>
 
 namespace NES {
 
-Topology::Topology(PhysicalNodePtr rootNode) : rootNode(rootNode) {}
+Topology::Topology() : rootNode(nullptr) {}
 
-TopologyPtr Topology::create(PhysicalNodePtr rootNode) {
-    return std::shared_ptr<Topology>(new Topology(rootNode));
+TopologyPtr Topology::create() {
+    return std::shared_ptr<Topology>();
 }
 
 bool Topology::addNewPhysicalNodeAsChild(PhysicalNodePtr parent, PhysicalNodePtr newNode) {
     std::unique_lock<std::mutex> lock(mutex);
     NES_INFO("Topology: Adding Node " << newNode->toString() << " as child to the node " << parent->toString());
     return parent->addChild(newNode);
-}
-
-bool Topology::addNewPhysicalNodeAsParent(PhysicalNodePtr child, PhysicalNodePtr newNode) {
-    std::unique_lock<std::mutex> lock(mutex);
-    NES_INFO("Topology: Adding Node " << newNode->toString() << " as parent to the node " << child->toString());
-    return child->addParent(newNode);
 }
 
 bool Topology::removePhysicalNode(PhysicalNodePtr nodeToRemove) {
@@ -61,6 +56,62 @@ bool Topology::find(PhysicalNodePtr physicalNode, PhysicalNodePtr destinationNod
         }
     }
     return false;
+}
+
+void Topology::print() {
+    std::unique_lock<std::mutex> lock(mutex);
+    //FIXME: as part of #954
+    std::stringstream topologyInfo;
+    std::deque<PhysicalNodePtr> nodesToPrint{rootNode};
+
+    while (!nodesToPrint.empty()) {
+        topologyInfo << rootNode->getId() << "\t";
+        for (auto& child : rootNode->getChildren()) {
+            nodesToPrint.push_back(child->as<PhysicalNode>());
+        }
+    }
+    NES_DEBUG("Topology:" << topologyInfo.str());
+}
+
+bool Topology::nodeExistsWithIpAndPort(std::string ipAddress, uint32_t grpcPort) {
+    std::unique_lock<std::mutex> lock(mutex);
+    NES_INFO("Topology: Finding if a physical node with ip " << ipAddress << " and port " << grpcPort << " exists.");
+    BreadthFirstNodeIterator bfsIterator(rootNode);
+    for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
+        auto physicalNode = (*itr)->as<PhysicalNode>();
+        if (physicalNode->getIpAddress() == ipAddress && physicalNode->getGrpcPort() == grpcPort) {
+            return true;
+        }
+    }
+    return false;
+}
+
+PhysicalNodePtr Topology::getRoot() {
+    std::unique_lock<std::mutex> lock(mutex);
+    return rootNode;
+}
+
+PhysicalNodePtr Topology::findNodeWithId(uint64_t nodeId) {
+    std::unique_lock<std::mutex> lock(mutex);
+    NES_INFO("Topology: Removing a physical node with id " << nodeId);
+    BreadthFirstNodeIterator bfsIterator(rootNode);
+    for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
+        auto physicalNode = (*itr)->as<PhysicalNode>();
+        if (physicalNode->getId() == nodeId) {
+            return physicalNode;
+        }
+    }
+    return nullptr;
+}
+
+void Topology::setAsRoot(PhysicalNodePtr physicalNode) {
+    std::unique_lock<std::mutex> lock(mutex);
+    rootNode = physicalNode;
+}
+
+bool Topology::removeNodeAsChild(PhysicalNodePtr parentNode, PhysicalNodePtr childNode) {
+    std::unique_lock<std::mutex> lock(mutex);
+    return parentNode->remove(childNode);
 }
 
 }// namespace NES

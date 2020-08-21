@@ -86,6 +86,10 @@ class PhysicalNode : public Node {
     uint16_t resource;
     uint16_t usedResource;
     NodeStats nodeStats;
+
+    //FIXME: as part of the issue #955 A potential solution for adding network link properties
+    //    std::vector<LinkPropertiesPtr> inputLinks;
+    //    std::vector<LinkPropertiesPtr> outputLinks;
 };
 }// namespace NES
 

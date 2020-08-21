@@ -24,9 +24,11 @@ QueryController::QueryController(QueryServicePtr queryService, TopologyManagerPt
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 
     if (path[1] == "nes-topology") {
-        const auto& nesTopology = topologyManager->getNESTopologyGraphAsJson();
+        //FIXME: As part of #954
+        json::value restResponse{};
+        restResponse["topology"] = json::value::string("some value");
         //Prepare the response
-        successMessageImpl(message, nesTopology);
+        successMessageImpl(message, restResponse);
         return;
     } else if (path[1] == "execution-plan") {
         message.extract_string(true)
