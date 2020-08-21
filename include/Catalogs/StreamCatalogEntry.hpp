@@ -2,11 +2,15 @@
 #define INCLUDE_CATALOGS_STREAMCATALOGENTRY_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Topology/NESTopologyEntry.hpp>
+#include <memory>
 #include <sstream>
 #include <string>
 
 namespace NES {
+
+class PhysicalNode;
+typedef std::shared_ptr<PhysicalNode> PhysicalNodePtr;
+
 /**
  * @brief one entry in the catalog contains
  *    - the dataSource that can be created there
@@ -19,13 +23,13 @@ namespace NES {
 class StreamCatalogEntry {
 
   public:
-    StreamCatalogEntry(PhysicalStreamConfig streamConf, NESTopologyEntryPtr node);
+    StreamCatalogEntry(PhysicalStreamConfig streamConf, PhysicalNodePtr node);
 
     std::string getSourceType();
 
     std::string getSourceConfig();
 
-    NESTopologyEntryPtr getNode();
+    PhysicalNodePtr getNode();
 
     std::string getPhysicalName();
 
@@ -39,7 +43,7 @@ class StreamCatalogEntry {
 
   private:
     PhysicalStreamConfig streamConf;
-    NESTopologyEntryPtr node;
+    PhysicalNodePtr node;
 };
 typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;
 

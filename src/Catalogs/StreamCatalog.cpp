@@ -1,9 +1,11 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Topology/PhysicalNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <assert.h>
+
 namespace NES {
 
 void StreamCatalog::addDefaultStreams() {
@@ -263,9 +265,9 @@ bool StreamCatalog::testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::str
         != logicalToPhysicalStreamMapping.end();
 }
 
-std::vector<NESTopologyEntryPtr> StreamCatalog::getSourceNodesForLogicalStream(std::string logicalStreamName) {
+std::vector<PhysicalNodePtr> StreamCatalog::getSourceNodesForLogicalStream(std::string logicalStreamName) {
 
-    std::vector<NESTopologyEntryPtr> listOfSourceNodes;
+    std::vector<PhysicalNodePtr> listOfSourceNodes;
 
     //get current physical stream for this logical stream
     std::vector<StreamCatalogEntryPtr> physicalStreams = logicalToPhysicalStreamMapping[logicalStreamName];

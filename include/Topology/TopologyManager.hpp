@@ -23,9 +23,9 @@ namespace NES {
 using namespace web;
 
 //FIXME:add docu here
-class TopologyManager {
+class TopologyManager1 {
   public:
-    TopologyManager();
+    TopologyManager1();
 
     /**
      * @brief create a nes coordinator node
@@ -144,7 +144,7 @@ class TopologyManager {
   private:
     NESTopologyPlanPtr currentPlan;
 };
-typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+typedef std::shared_ptr<TopologyManager1> TopologyManagerPtr1;
 
 }// namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYMANAGER_HPP_ */

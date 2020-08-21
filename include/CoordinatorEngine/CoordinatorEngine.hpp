@@ -9,13 +9,13 @@ namespace NES {
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
-class TopologyManager;
-typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
 
 class CoordinatorEngine {
 
   public:
-    CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyManagerPtr topologyManager);
+    CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology);
 
     /**
      * @brief registers a node
@@ -32,7 +32,7 @@ class CoordinatorEngine {
      * @param nodeId
      * @return bool indicating success
      */
-    bool unregisterNode(size_t nodeId);
+    bool unregisterNode(uint64_t nodeId);
 
     /**
      * @brief method to register a physical stream
@@ -45,7 +45,7 @@ class CoordinatorEngine {
      * @param logicalstreamname
      * @return bool indicating success
      */
-    bool registerPhysicalStream(size_t nodeId,
+    bool registerPhysicalStream(uint64_t nodeId,
                                 std::string sourcetype,
                                 std::string sourceconf,
                                 size_t sourcefrequency,
@@ -60,7 +60,7 @@ class CoordinatorEngine {
      * @param physicalStreamName
      * @return bool indicating success
      */
-    bool unregisterPhysicalStream(size_t nodeId, std::string physicalStreamName, std::string logicalStreamName);
+    bool unregisterPhysicalStream(uint64_t nodeId, std::string physicalStreamName, std::string logicalStreamName);
 
     /**
      * @brief method to register a logical stream
@@ -83,7 +83,7 @@ class CoordinatorEngine {
      * @param parentId
      * @return bool indicating success
      */
-    bool addParent(size_t childId, size_t parentId);
+    bool addParent(uint64_t childId, uint64_t parentId);
 
     /**
      * @brief method to remove an existing parent from a node
@@ -91,11 +91,11 @@ class CoordinatorEngine {
      * @param parentId
      * @return bool indicating success
      */
-    bool removeParent(size_t childId, size_t parentId);
+    bool removeParent(uint64_t childId, uint64_t parentId);
 
   private:
     StreamCatalogPtr streamCatalog;
-    TopologyManagerPtr topologyManager;
+    TopologyPtr topology;
     std::mutex registerDeregisterNode;
     std::mutex addRemoveLogicalStream;
     std::mutex addRemovePhysicalStream;

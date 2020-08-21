@@ -120,16 +120,14 @@ class StreamCatalog {
    * @param name of the logical stream to test
    * @return bool indicating if stream exists
    */
-    bool testIfLogicalStreamExistsInLogicalToPhysicalMapping(
-        std::string logicalStreamName);
+    bool testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::string logicalStreamName);
 
     /**
    * @brief return all physical nodes that contribute to this logical stream
    * @param name of logical stream
    * @return list of physical nodes as pointers into the topology
    */
-    std::vector<NESTopologyEntryPtr> getSourceNodesForLogicalStream(
-        std::string logicalStreamName);
+    std::vector<PhysicalNodePtr> getSourceNodesForLogicalStream(std::string logicalStreamName);
 
     /**
    * @brief reset the catalog and recreate the default_logical stream
