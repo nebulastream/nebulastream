@@ -7,4 +7,5 @@ add_source_nes(
         NESTopologySensorNode.cpp
         NESTopologyLink.cpp
         NESTopologyEntry.cpp
+        PhysicalNode.cpp
 )
