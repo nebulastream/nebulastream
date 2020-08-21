@@ -8,9 +8,9 @@
 namespace NES {
 
 RestServer::RestServer(std::string host, u_int16_t port, NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                       TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService)
+                       TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService)
     : host(host), port(port) {
-    restEngine = std::make_shared<RestEngine>(streamCatalog, coordinator, queryCatalog, topologyManager, globalExecutionPlan, queryService);
+    restEngine = std::make_shared<RestEngine>(streamCatalog, coordinator, queryCatalog, topology, globalExecutionPlan, queryService);
 }
 
 RestServer::~RestServer() {

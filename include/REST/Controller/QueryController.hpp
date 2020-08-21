@@ -21,15 +21,15 @@ typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
-class TopologyManager;
-typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
-
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
+
 class QueryController : public BaseController {
   public:
-    explicit QueryController(QueryServicePtr queryService, TopologyManagerPtr topologyManager, GlobalExecutionPlanPtr globalExecutionPlan);
+    explicit QueryController(QueryServicePtr queryService, TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~QueryController() = default;
 
@@ -55,7 +55,7 @@ class QueryController : public BaseController {
     void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
-    TopologyManagerPtr topologyManager;
+    TopologyPtr topology;
     QueryServicePtr queryService;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
