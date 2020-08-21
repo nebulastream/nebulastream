@@ -1,13 +1,11 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
-#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Phases/TypeInferencePhase.hpp>
+#include <Topology/PhysicalNode.hpp>
 #include <Util/UtilityFunctions.hpp>
 //#include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
 //#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
@@ -26,13 +24,12 @@
 using namespace std;
 namespace NES {
 
-BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, NESTopologyPlanPtr nesTopologyPlan, TypeInferencePhasePtr typeInferencePhase,
-                                             StreamCatalogPtr streamCatalog)
-    : globalExecutionPlan(globalExecutionPlan), topology(nesTopologyPlan), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {
-    pathFinder = PathFinder::create(nesTopologyPlan);
+BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr, TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
+    : globalExecutionPlan(globalExecutionPlan), topology(topologyPtr), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {
+    pathFinder = PathFinder::create(topologyPtr);
 }
 
-uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode) {
+uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, PhysicalNodePtr parentNesNode) {
 
     QueryId queryId = queryPlan->getQueryId();
     uint64_t nextNetworkSourceOperatorId = -1;
@@ -70,7 +67,7 @@ uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, N
     return nextNetworkSourceOperatorId;
 }
 
-void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr childNesNode, uint64_t operatorId) {
+void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, PhysicalNodePtr childNesNode, uint64_t operatorId) {
 
     if (operatorId == -1) {
         NES_ERROR("BasePlacementStrategy: received invalid operator id of the network source operator");
@@ -110,26 +107,21 @@ void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, NES
 // FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
 // that there could be more than one child. Once the code generator able to deal with it this logic need to be
 // fixed.
-void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, std::vector<NESTopologyEntryPtr> path) {
+void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, PhysicalNodePtr startNode) {
     NES_DEBUG("BasePlacementStrategy: Adding system generated operators");
-
     uint64_t nextNetworkSourceOperatorId = -1;
-    auto pathItr = path.begin();
-    NESTopologyEntryPtr previousNode;
-    while (pathItr != path.end()) {
-
-        NESTopologyEntryPtr currentNode = *pathItr;
-        ExecutionNodePtr executionNode = globalExecutionPlan->getExecutionNodeByNodeId(currentNode->getId());
+    while (!startNode->getParents().empty()) {
+        ExecutionNodePtr executionNode = globalExecutionPlan->getExecutionNodeByNodeId(startNode->getId());
         if (!executionNode || !executionNode->hasQuerySubPlan(queryId)) {
 
-            if (pathItr == path.begin()) {
+            if (startNode->getChildren().empty()) {
                 NES_ERROR("BasePlacementStrategy: Unable to find execution node for source node!"
                           " This should not happen as placement at source node is necessary.");
                 throw QueryPlacementException("BasePlacementStrategy: Unable to find execution node for source node!"
                                               " This should not happen as placement at source node is necessary.");
             }
 
-            if (pathItr == path.end()) {
+            if (startNode->getParents().empty()) {
                 NES_ERROR("BasePlacementStrategy: Unable to find execution node for sink node!"
                           " This should not happen as placement at sink node is necessary.");
                 throw QueryPlacementException("BasePlacementStrategy: Unable to find execution node for sink node!"
@@ -139,14 +131,14 @@ void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, std::ve
             //create a new execution node for the nes node with forward operators
             if (!executionNode) {
                 NES_DEBUG("BasePlacementStrategy: Create a new execution node");
-                executionNode = ExecutionNode::createExecutionNode(currentNode);
+                executionNode = ExecutionNode::createExecutionNode(startNode);
             }
 
             QueryPlanPtr querySubPlan = QueryPlan::create();
             querySubPlan->setQueryId(queryId);
-            NESTopologyEntryPtr childNesNode = *(pathItr - 1);
+            PhysicalNodePtr childNesNode = startNode->getChildren()[0]->as<PhysicalNode>();
             addNetworkSourceOperator(querySubPlan, childNesNode, nextNetworkSourceOperatorId);
-            NESTopologyEntryPtr parentNesNode = *(pathItr + 1);
+            PhysicalNodePtr parentNesNode = startNode->getParents()[0]->as<PhysicalNode>();
             nextNetworkSourceOperatorId = addNetworkSinkOperator(querySubPlan, parentNesNode);
 
             NES_DEBUG("BasePlacementStrategy: Infer the output and input schema for the updated query plan");
@@ -172,24 +164,24 @@ void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, std::ve
             querySubPlan->setQueryId(queryId);
 
             if (querySubPlan->getSinkOperators().empty()) {
-                if (pathItr == path.end()) {
+                if (startNode->getParents().empty()) {
                     NES_ERROR("BasePlacementStrategy: Unable to find sink operator at the sink node!"
                               " This should not happen as placement at sink node is necessary.");
                     throw QueryPlacementException("BasePlacementStrategy: Unable to find sink operator at the sink node!"
                                                   " This should not happen as placement at sink node is necessary.");
                 }
-                NESTopologyEntryPtr parentNesNode = *(pathItr + 1);
+                PhysicalNodePtr parentNesNode = startNode->getParents()[0]->as<PhysicalNode>();
                 nextNetworkSourceOperatorId = addNetworkSinkOperator(querySubPlan, parentNesNode);
             }
 
             if (querySubPlan->getSourceOperators().empty()) {
-                if (pathItr == path.begin()) {
+                if (startNode->getChildren().empty()) {
                     NES_ERROR("BasePlacementStrategy: Unable to find execution node for source node!"
                               " This should not happen as placement at source node is necessary.");
                     throw QueryPlacementException("BasePlacementStrategy: Unable to find execution node for source node!"
                                                   " This should not happen as placement at source node is necessary.");
                 }
-                NESTopologyEntryPtr childNesNode = *(pathItr - 1);
+                PhysicalNodePtr childNesNode = startNode->getChildren()[0]->as<PhysicalNode>();
                 addNetworkSourceOperator(querySubPlan, childNesNode, nextNetworkSourceOperatorId);
             }
 
@@ -202,17 +194,17 @@ void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, std::ve
             }
         }
 
-        if (previousNode) {
+        if (!startNode->getChildren().empty()) {
             NES_DEBUG("BasePlacementStrategy: adding link between previous and current execution node");
-            if (!globalExecutionPlan->addExecutionNodeAsParentTo(previousNode->getId(), executionNode)) {
+            PhysicalNodePtr childNode = startNode->getChildren()[0]->as<PhysicalNode>();
+            if (!globalExecutionPlan->addExecutionNodeAsParentTo(childNode->getId(), executionNode)) {
                 NES_ERROR("BasePlacementStrategy: Unable to add link between previous and current executionNode");
                 throw QueryPlacementException("BasePlacementStrategy: Unable to add link between previous and current executionNode");
             }
         }
         NES_DEBUG("BasePlacementStrategy: scheduling execution node");
         globalExecutionPlan->scheduleExecutionNode(executionNode);
-        previousNode = (*pathItr);
-        ++pathItr;
+        startNode = startNode->getParents()[0]->as<PhysicalNode>();
     }
     NES_DEBUG("BasePlacementStrategy: Finished added system generated operators");
 }

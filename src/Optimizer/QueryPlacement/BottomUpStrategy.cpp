@@ -9,7 +9,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/NESTopologyPlan.hpp>
+#include <Topology/PhysicalNode.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
 
@@ -58,9 +58,9 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     for (PhysicalNodePtr targetSource : sourceNodes) {
         NES_DEBUG("BottomUpStrategy: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
-        vector<PhysicalNodePtr> path = pathFinder->findPathBetween(targetSource, rootNode);
+        PhysicalNodePtr startNode = topology->findPathBetween(targetSource, rootNode);
         NES_INFO("BottomUpStrategy: Adding system generated operators for query with id : " << queryId);
-        addSystemGeneratedOperators(queryId, path);
+        addSystemGeneratedOperators(queryId, startNode);
     }
 
     return true;
@@ -74,51 +74,48 @@ void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr so
     for (const auto& sourceNode : sourceNodes) {
 
         NES_INFO("BottomUpStrategy: Find the path between source and sink node for query with id : " << queryId);
-        PhysicalNodePtr startNode = topology->findPathBetween(sourceNode, sinkNode);
-        if (!startNode) {
+        PhysicalNodePtr candidatePhysicalNode = topology->findPathBetween(sourceNode, sinkNode);
+        if (!candidatePhysicalNode) {
             NES_ERROR("BottomUpStrategy: No path exists between sink and source");
             throw QueryPlacementException("BottomUpStrategy: No path exists between sink and source");
         }
 
         LogicalOperatorNodePtr operatorToPlace = sourceOperator;
-        auto pathItr = path.begin();
-        PhysicalNodePtr candidateNesNode = (*pathItr);
         while (operatorToPlace) {
 
             if (operatorToPlace->instanceOf<SinkLogicalOperatorNode>()) {
                 NES_DEBUG("BottomUpStrategy: Placing sink operator on the sink node");
-                candidateNesNode = sinkNode;
-                if (!globalExecutionPlan->getExecutionNodeByNodeId(candidateNesNode->getId())) {
+                candidatePhysicalNode = sinkNode;
+                if (!globalExecutionPlan->getExecutionNodeByNodeId(candidatePhysicalNode->getId())) {
                     NES_DEBUG("BottomUpStrategy: Creating a new root execution node for placing sink operator");
-                    const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode);
+                    const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(candidatePhysicalNode);
                     globalExecutionPlan->addExecutionNodeAsRoot(rootExecutionNode);
                 }
-            } else if (candidateNesNode->getRemainingCpuCapacity() == 0) {
+            } else if (candidatePhysicalNode->getAvailableResource() == 0) {
                 NES_DEBUG("BottomUpStrategy: Find the next NES node in the path where operator can be placed");
-                while (pathItr != path.end()) {
-                    if ((*pathItr)->getRemainingCpuCapacity() > 0) {
-                        candidateNesNode = (*pathItr);
-                        NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : " << candidateNesNode->getId());
+                while (!candidatePhysicalNode->getParents().empty()) {
+                    candidatePhysicalNode = candidatePhysicalNode->getParents()[0]->as<PhysicalNode>();
+                    if (candidatePhysicalNode->getAvailableResource() > 0) {
+                        NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : " << candidatePhysicalNode->getId());
                         break;
                     }
-                    ++pathItr;
                 }
             }
 
-            if ((pathItr == path.end()) || (candidateNesNode->getRemainingCpuCapacity() == 0)) {
+            if (candidatePhysicalNode->getAvailableResource() == 0) {
                 NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
                 throw QueryPlacementException("BottomUpStrategy: No node available for further placement of operators");
             }
 
             NES_DEBUG("BottomUpStrategy: Checking if execution node for the target worker node already present.");
 
-            if (globalExecutionPlan->checkIfExecutionNodeExists(candidateNesNode->getId())) {
+            if (globalExecutionPlan->checkIfExecutionNodeExists(candidatePhysicalNode->getId())) {
 
-                NES_DEBUG("BottomUpStrategy: node " << candidateNesNode->toString() << " was already used by other deployment");
-                const ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateNesNode->getId());
+                NES_DEBUG("BottomUpStrategy: node " << candidatePhysicalNode->toString() << " was already used by other deployment");
+                const ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidatePhysicalNode->getId());
 
                 if (candidateExecutionNode->hasQuerySubPlan(queryId)) {
-                    NES_DEBUG("BottomUpStrategy: node " << candidateNesNode->toString() << " already contains a query sub plan with the id" << queryId);
+                    NES_DEBUG("BottomUpStrategy: node " << candidatePhysicalNode->toString() << " already contains a query sub plan with the id" << queryId);
                     if (candidateExecutionNode->checkIfQuerySubPlanContainsOperator(queryId, operatorToPlace)) {
                         NES_DEBUG("BottomUpStrategy: skip adding rest of the operator chains as they already exists.");
                         break;
@@ -138,9 +135,9 @@ void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr so
                 }
             } else {
 
-                NES_DEBUG("BottomUpStrategy: create new execution node with id: " << candidateNesNode->getId());
-                ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNesNode, queryId, operatorToPlace->copy());
-                NES_DEBUG("BottomUpStrategy: Adding new execution node with id: " << candidateNesNode->getId());
+                NES_DEBUG("BottomUpStrategy: create new execution node with id: " << candidatePhysicalNode->getId());
+                ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidatePhysicalNode, queryId, operatorToPlace->copy());
+                NES_DEBUG("BottomUpStrategy: Adding new execution node with id: " << candidatePhysicalNode->getId());
                 if (!globalExecutionPlan->addExecutionNode(newExecutionNode)) {
                     NES_ERROR("BottomUpStrategy: failed to add execution node for query " + queryId);
                     throw QueryPlacementException("BottomUpStrategy: failed to add execution node for query " + queryId);
@@ -150,7 +147,7 @@ void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr so
             NES_DEBUG("BottomUpStrategy: Reducing the node remaining CPU capacity by 1");
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
-            candidateNesNode->reduceCpuCapacity(1);
+            candidatePhysicalNode->reduceResource(1);
             if (!operatorToPlace->getParents().empty()) {
                 //FIXME: currently we are not considering split operators
                 NES_DEBUG("BottomUpStrategy: Finding next operator for placement");

@@ -14,6 +14,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Topology/PhysicalNode.hpp>
+#include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -49,19 +50,19 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     const QueryId queryId = queryPlan->getQueryId();
     placeOperators(queryId, sinkOperator, sourceNodes);
 
-    NESTopologyEntryPtr rootNode = topology->getRootNode();
+    PhysicalNodePtr rootNode = topology->getRoot();
 
     for (PhysicalNodePtr targetSource : sourceNodes) {
         NES_DEBUG("TopDownStrategy: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
-        std::vector<NESTopologyEntryPtr> path = pathFinder->findPathBetween(targetSource, rootNode);
+        PhysicalNodePtr startNode = topology->findPathBetween(targetSource, rootNode);
         NES_INFO("TopDownStrategy: Adding system generated operators for query with id : " << queryId);
-        addSystemGeneratedOperators(queryId, path);
+        addSystemGeneratedOperators(queryId, startNode);
     }
 
     return true;
 }
 
-void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sinkOperator, std::vector<NESTopologyEntryPtr> nesSourceNodes) {
+void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sinkOperator, std::vector<PhysicalNodePtr> nesSourceNodes) {
 
     const NESTopologyEntryPtr sinkNode = topology->getRootNode();
 

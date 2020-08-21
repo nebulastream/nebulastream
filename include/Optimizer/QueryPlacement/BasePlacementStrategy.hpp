@@ -2,6 +2,7 @@
 #define NESPLACEMENTOPTIMIZER_HPP
 
 #include <API/QueryId.hpp>
+#include <Catalogs/StreamCatalogEntry.hpp>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -60,7 +61,7 @@ class BasePlacementStrategy {
     static constexpr auto ZMQ_DEFAULT_PORT = 5555;
 
   public:
-    explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
+    explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr, TypeInferencePhasePtr typeInferencePhase,
                                    StreamCatalogPtr streamCatalog);
 
     /**
@@ -77,7 +78,7 @@ class BasePlacementStrategy {
      * @param parentNesNode
      * @return returns the operator id of the next network source operator
      */
-    uint64_t addNetworkSinkOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr parentNesNode);
+    uint64_t addNetworkSinkOperator(QueryPlanPtr queryPlan, PhysicalNodePtr parentNesNode);
 
     /**
      * @brief Add a system generated network source operator to the input query plan.
@@ -85,16 +86,16 @@ class BasePlacementStrategy {
      * @param childNesNode: The child nes node where the corresponding upstream network sink operator is located.
      * @param operatorId: The id of the network source operator.
      */
-    void addNetworkSourceOperator(QueryPlanPtr queryPlan, NESTopologyEntryPtr childNesNode, uint64_t operatorId);
+    void addNetworkSourceOperator(QueryPlanPtr queryPlan, PhysicalNodePtr childNesNode, uint64_t operatorId);
 
   protected:
     /**
      * @brief This method will add the system generated operators where ever necessary along the selected path for operator placement.
      *
      * @param queryId query Id of the sub plan for which the operators have to be placed
-     * @param path vector of nodes where operators could be placed
+     * @param startNode start of the path where operators could be placed
      */
-    void addSystemGeneratedOperators(QueryId queryId, std::vector<NESTopologyEntryPtr> path);
+    void addSystemGeneratedOperators(QueryId queryId, PhysicalNodePtr startNode);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
