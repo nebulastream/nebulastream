@@ -2,7 +2,6 @@
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Operators/OperatorJsonUtil.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -56,6 +55,7 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
     return false;
 }
 
+// TODO fix json plan
 json::value QueryService::getQueryPlanAsJson(QueryId queryId) {
 
     NES_INFO("QueryService: Get the registered query");
@@ -64,7 +64,7 @@ json::value QueryService::getQueryPlanAsJson(QueryId queryId) {
         NES_ERROR("QueryString: Unable to find entry for the query with id " << queryId);
     }
     NES_INFO("QueryService: Getting the json representation of the query plan");
-    return OperatorJsonUtil::getBasePlan(queryCatalogEntry->getQueryPlan());
+    return json::value(true);
 }
 
 }// namespace NES

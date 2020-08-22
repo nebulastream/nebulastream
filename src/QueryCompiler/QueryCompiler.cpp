@@ -1,6 +1,5 @@
 #include <NodeEngine/QueryManager.hpp>
-
-#include <Operators/Operator.hpp>
+#include <set>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>

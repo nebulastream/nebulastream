@@ -16,8 +16,6 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/LogicalStream.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Impl/FilterOperator.hpp>
-#include <Operators/Operator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <memory>
 
