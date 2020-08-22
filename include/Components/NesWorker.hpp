@@ -4,7 +4,6 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Topology/NESTopologyEntry.hpp>
 
 namespace NES {
 class WorkerActor;
@@ -20,7 +19,7 @@ class NesWorker {
               std::string localWorkerIp,
               uint16_t localWorkerRpcPort,
               uint16_t localWorkerZmqPort,
-              NESNodeType type);
+              NodeType type);
 
     /**
      * @brief default dtor
@@ -144,7 +143,7 @@ class NesWorker {
     uint16_t localWorkerRpcPort;
     uint16_t localWorkerZmqPort;
 
-    NESNodeType type;
+    NodeType type;
     bool stopped;
 
     /**

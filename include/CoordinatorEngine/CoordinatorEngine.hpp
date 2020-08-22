@@ -1,7 +1,8 @@
 #ifndef NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #include <NodeStats.pb.h>
-#include <Topology/NESTopologyEntry.hpp>
+#include <CoordinatorRPCService.pb.h>
+
 #include <memory>
 #include <mutex>
 
@@ -25,7 +26,7 @@ class CoordinatorEngine {
      * @param node type
      * @return id of node
      */
-    size_t registerNode(std::string address, int64_t grpcPort, int64_t dataPort, int8_t numberOfCPUs, NodeStats nodeStats, NESNodeType type);
+    size_t registerNode(std::string address, int64_t grpcPort, int64_t dataPort, int8_t numberOfCPUs, NodeStats nodeStats, NodeType type);
 
     /**
      * @brief unregister an existing node

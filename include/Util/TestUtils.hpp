@@ -233,9 +233,9 @@ class TestUtils {
     }
 
     static PhysicalNodePtr registerTestNode(size_t id, std::string address, int cpu, NodeStats nodeProperties,
-                                            PhysicalStreamConfig streamConf, NESNodeType type, StreamCatalogPtr streamCatalog, TopologyPtr topology) {
+                                            PhysicalStreamConfig streamConf, NodeType type, StreamCatalogPtr streamCatalog, TopologyPtr topology) {
         PhysicalNodePtr nodePtr;
-        if (type == NESNodeType::Sensor) {
+        if (type == NodeType::Sensor) {
             NES_DEBUG("CoordinatorService::registerNode: register sensor node");
             nodePtr = PhysicalNode::create(id, address, 4000, 4002, cpu);
 
@@ -269,7 +269,7 @@ class TestUtils {
                                 + " could not be added to catalog");
             }
 
-        } else if (type == NESNodeType::Worker) {
+        } else if (type == NodeType::Worker) {
             NES_DEBUG("CoordinatorService::registerNode: register worker node");
             nodePtr = PhysicalNode::create(id, address, 4004, 4006, cpu);
         } else {

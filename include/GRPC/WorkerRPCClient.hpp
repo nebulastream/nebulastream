@@ -6,7 +6,6 @@
 
 #include <API/QueryId.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Topology/NESTopologyEntry.hpp>
 #include <grpcpp/grpcpp.h>
 #include <string>
 
