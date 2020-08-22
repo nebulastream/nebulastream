@@ -59,7 +59,7 @@ const std::string PhysicalNode::toString() const {
     std::stringstream ss;
     ss << "PhysicalNode[id=" + std::to_string(id) + ", ip = " + ipAddress + ", grpcPort = ,"
             + std::to_string(grpcPort) + ", dataPort= " + std::to_string(dataPort) + ", resources = " + std::to_string(resource)
-            + ", usedResource=" + std::to_string(usedResource) + " ]";
+            + ", usedResource=" + std::to_string(usedResource) + "]";
     return ss.str();
 }
 

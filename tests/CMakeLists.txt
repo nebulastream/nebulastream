@@ -66,7 +66,7 @@ target_link_libraries(code-generation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
 ### NES Topology Tests ###
-add_executable(topology-tests "UnitTests/TopologyTest.cpp")
+add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
 target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-tests COMMAND topology-tests)
 
