@@ -81,6 +81,12 @@ class Topology {
     void print();
 
     /**
+     * @brief Return graph as string
+     * @return string object representing topology information
+     */
+    std::string toString();
+
+    /**
      * @brief Add a new root node
      * @param physicalNode: new root node
      */
