@@ -47,7 +47,7 @@ void PhysicalNode::reduceResource(uint16_t usedCapacity) {
 
 PhysicalNodePtr PhysicalNode::copy() {
     PhysicalNodePtr copy = std::shared_ptr<PhysicalNode>(new PhysicalNode(id, ipAddress, grpcPort, dataPort, resource));
-    copy->reduceResource(resource - usedResource);
+    copy->reduceResource(usedResource);
     return copy;
 }
 
