@@ -9,7 +9,6 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <Operators/Operator.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 #include "../util/DummySink.hpp"

@@ -17,9 +17,6 @@ typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 class UserAPIExpression;
 typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 
-class Operator;
-typedef std::shared_ptr<Operator> OperatorPtr;
-
 class NodeEngine;
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 

@@ -4,7 +4,6 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
-#include <Operators/OperatorJsonUtil.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <REST/Controller/QueryController.hpp>
 #include <REST/runtime_utils.hpp>

@@ -13,9 +13,6 @@ typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
-class Operator;
-typedef std::shared_ptr<Operator> OperatorPtr;
-
 class QueryCompiler;
 typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
 

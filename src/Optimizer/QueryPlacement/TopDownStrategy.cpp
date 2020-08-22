@@ -4,7 +4,6 @@
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/Operator.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>

@@ -30,9 +30,6 @@ typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 class ExecutablePipeline;
 typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 
-class Operator;
-typedef std::shared_ptr<Operator> OperatorPtr;
-
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
 
