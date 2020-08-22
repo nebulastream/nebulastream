@@ -68,6 +68,8 @@ void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sin
 
         LogicalOperatorNodePtr candidateOperator = sinkOperator;
         auto startNode = topology->findPathBetween(nesSourceNode, sinkNode);
+        NES_DEBUG("TopDownStrategy: inverting the start of the path");
+        startNode = startNode->getAllRootNodes()[0]->as<PhysicalNode>();
         if (!startNode) {
             NES_ERROR("TopDownStrategy: No path exists between sink and source");
             throw QueryPlacementException("TopDownStrategy: No path exists between sink and source");
@@ -78,7 +80,9 @@ void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sin
 
             if (candidateOperator->instanceOf<SourceLogicalOperatorNode>()) {
                 NES_DEBUG("TopDownStrategy: Placing source operator on the source node");
-                startNode = nesSourceNode;
+                if (startNode->getId() != nesSourceNode->getId()) {
+                    startNode = startNode->getAllLeafNodes()[0]->as<PhysicalNode>();
+                }
             } else if (startNode->getAvailableResource() == 0) {
                 NES_DEBUG("TopDownStrategy: Find the next NES node in the path where operator can be placed");
                 while (!startNode->getChildren().empty()) {
@@ -157,6 +161,7 @@ void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sin
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
             startNode->reduceResource(1);
+            topology->reduceResources(startNode->getId(), 1);
             if (!candidateOperator->getChildren().empty()) {
                 //FIXME: currently we are not considering split operators
                 NES_DEBUG("TopDownStrategy: Finding next operator for placement");

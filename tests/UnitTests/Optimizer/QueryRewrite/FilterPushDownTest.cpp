@@ -9,7 +9,8 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/TopologyManager.hpp>
+#include <Topology/PhysicalNode.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 
@@ -38,22 +39,21 @@ class FilterPushDownTest : public testing::Test {
     }
 };
 
-void setupSensorNodeAndStreamCatalog(TopologyManagerPtr topologyManager, StreamCatalogPtr streamCatalog) {
+void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     NES_INFO("Setup FilterPushDownTest test case.");
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost",4000, 5000, CPUCapacity::HIGH);
+    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
 }
 
 TEST_F(FilterPushDownTest, testPushingOneFilterBelowMap) {
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupSensorNodeAndStreamCatalog(topologyManager, streamCatalog);
+    setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -91,9 +91,8 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMap) {
 }
 
 TEST_F(FilterPushDownTest, testPushingOneFilterBelowMapAndBeforeFilter) {
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupSensorNodeAndStreamCatalog(topologyManager, streamCatalog);
+    setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -136,9 +135,8 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMapAndBeforeFilter) {
 }
 
 TEST_F(FilterPushDownTest, testPushingFiltersBelowAllMapOperators) {
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupSensorNodeAndStreamCatalog(topologyManager, streamCatalog);
+    setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -186,9 +184,8 @@ TEST_F(FilterPushDownTest, testPushingFiltersBelowAllMapOperators) {
 }
 
 TEST_F(FilterPushDownTest, testPushingTwoFilterBelowMap) {
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupSensorNodeAndStreamCatalog(topologyManager, streamCatalog);
+    setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -231,9 +228,8 @@ TEST_F(FilterPushDownTest, testPushingTwoFilterBelowMap) {
 }
 
 TEST_F(FilterPushDownTest, testPushingFilterAlreadyAtBottom) {
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    setupSensorNodeAndStreamCatalog(topologyManager, streamCatalog);
+    setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
