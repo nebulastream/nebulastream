@@ -12,7 +12,11 @@
 #include <Operators/Operator.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
+#include "../util/DummySink.hpp"
+#include "../util/TestQuery.hpp"
 #include <NodeEngine/BufferManager.hpp>
+#include <Phases/TypeInferencePhase.hpp>
+#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <gtest/gtest.h>
@@ -860,14 +864,18 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                           netManager, nesPartition);
     auto testSink = std::make_shared<TestSink>(schema, nodeEngine->getBufferManager());
 
-    auto networkSourceOp = createSourceOperator(networkSource1);
-    auto testSinkOp = createSinkOperator(testSink);
-    networkSourceOp->setParent(testSinkOp);
-    testSinkOp->addChild(networkSourceOp);
+    auto query = PhysicalQuery::from(schema)
+        .sink(DummySink::create());
+
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    auto translatePhase =  TranslateToGeneratableOperatorPhase::create();
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0], nodeEngine);
+
 
     GeneratedQueryExecutionPlanBuilder builderReceiverQEP = GeneratedQueryExecutionPlanBuilder::create()
         .setCompiler(nodeEngine->getCompiler())
-        .addOperatorQueryPlan(testSinkOp) // TODO @Philipp, do we really need this?
+        .addOperatorQueryPlan(generatableOperators)
         .addSink(testSink)
         .addSource(networkSource1)
         .setBufferManager(nodeEngine->getBufferManager())
@@ -879,19 +887,18 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                                     nodeEngine->getQueryManager());
     auto networkSink = std::make_shared<NetworkSink>(schema, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager());
 
-    auto source = createSourceOperator(testSource);
-    auto filter = createFilterOperator(createPredicate(Field(schema->get("id")) < 5));
-    auto sink = createSinkOperator(networkSink);
+    auto query2 = PhysicalQuery::from(schema)
+        .filter(Attribute("id")< 5)
+        .sink(DummySink::create());
 
-    filter->addChild(source);
-    source->setParent(filter);
-    sink->addChild(filter);
-    filter->setParent(sink);
+    auto queryPlan2 = typeInferencePhase->execute(query2.getQueryPlan());
+    auto generatableOperators2 = translatePhase->transform(queryPlan2->getRootOperators()[0], nodeEngine);
+
 
     GeneratedQueryExecutionPlanBuilder builderGeneratorQEP = GeneratedQueryExecutionPlanBuilder::create()
         .setCompiler(nodeEngine->getCompiler())
         .addSink(networkSink)
-        .addOperatorQueryPlan(sink)
+        .addOperatorQueryPlan(generatableOperators2)
         .addSource(testSource)
         .setBufferManager(nodeEngine->getBufferManager())
         .setQueryManager(nodeEngine->getQueryManager())
