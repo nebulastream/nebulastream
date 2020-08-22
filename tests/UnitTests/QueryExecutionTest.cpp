@@ -14,6 +14,9 @@
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <utility>
 
+#include "../util/DummySink.hpp"
+#include "../util/SchemaSourceDescriptor.hpp"
+#include "../util/TestQuery.hpp"
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -22,7 +25,6 @@
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-
 using namespace NES;
 
 class QueryExecutionTest : public testing::Test {
@@ -182,46 +184,6 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
     buf.setNumberOfTuples(10);
 }
 
-class DummySink : public SinkDescriptor{
-  public:
-    static SinkDescriptorPtr create(){
-        return std::make_shared<DummySink>();
-    }
-    DummySink(): SinkDescriptor(){};
-    ~DummySink() override = default;
-    std::string toString() override {
-        return std::string();
-    }
-    bool equal(SinkDescriptorPtr other) override {
-        return false;
-    }
-};
-
-class SchemaSourceDescriptor: public SourceDescriptor{
-  public:
-    static SourceDescriptorPtr create(SchemaPtr schema){
-        return std::make_shared<SchemaSourceDescriptor>(schema);
-    }
-    explicit SchemaSourceDescriptor(SchemaPtr schema): SourceDescriptor(schema){
-
-    }
-    std::string toString() override {
-        return "Schema Source Descriptor";
-    }
-    bool equal(SourceDescriptorPtr other) override {
-        return other->getSchema()->equals(this->getSchema());
-    }
-    ~SchemaSourceDescriptor() override = default;
-};
-
-class PhysicalQuery : public Query{
-  public:
-    static Query from(SchemaPtr inputSchme){
-        auto sourceOperator = createSourceLogicalOperatorNode(SchemaSourceDescriptor::create(inputSchme));
-        auto queryPlan = QueryPlan::create(sourceOperator);
-        return Query(queryPlan);
-    }
-};
 
 TEST_F(QueryExecutionTest, filterQuery) {
 
