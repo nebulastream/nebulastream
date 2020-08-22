@@ -14,7 +14,6 @@
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -22,8 +21,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/NESTopologySensorNode.hpp>
-#include <Topology/TopologyManager.hpp>
+#include <Topology/PhysicalNode.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 
@@ -45,16 +43,14 @@ class QueryTest : public testing::Test {
 };
 
 TEST_F(QueryTest, testQueryFilter) {
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                     sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addPhysicalStream("default_logical", sce);
@@ -79,16 +75,13 @@ TEST_F(QueryTest, testQueryFilter) {
 }
 
 TEST_F(QueryTest, testQueryWindow) {
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                     sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addPhysicalStream("default_logical", sce);
@@ -120,12 +113,11 @@ TEST_F(QueryTest, testQueryWindow) {
  * Merge two input stream: one with filter and one without filter.
  */
 TEST_F(QueryTest, testQueryMerge) {
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addPhysicalStream("default_logical", sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);

@@ -84,7 +84,9 @@ void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr so
 
             if (operatorToPlace->instanceOf<SinkLogicalOperatorNode>()) {
                 NES_DEBUG("BottomUpStrategy: Placing sink operator on the sink node");
-                candidatePhysicalNode = sinkNode;
+                if (candidatePhysicalNode->getId() != sinkNode->getId()) {
+                    candidatePhysicalNode = candidatePhysicalNode->getAllRootNodes()[0]->as<PhysicalNode>();
+                }
                 if (!globalExecutionPlan->getExecutionNodeByNodeId(candidatePhysicalNode->getId())) {
                     NES_DEBUG("BottomUpStrategy: Creating a new root execution node for placing sink operator");
                     const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(candidatePhysicalNode);

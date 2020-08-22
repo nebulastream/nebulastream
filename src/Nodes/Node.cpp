@@ -312,7 +312,27 @@ const std::vector<NodePtr>& Node::getParents() const {
     return parents;
 }
 
-std::vector<NodePtr>& Node::getAllLeafNodes() {
+std::vector<NodePtr> Node::getAllRootNodes() {
+    NES_DEBUG("Node: Get all leaf nodes for this node");
+    std::vector<NodePtr> rootNodes;
+    for (auto parent : parents) {
+        if (parent->getParents().empty()) {
+            NES_DEBUG("Node: Inserting leaf node to the collection");
+            rootNodes.push_back(parent);
+        } else {
+            NES_DEBUG("Node: Iterating over all children to find more leaf nodes");
+            for (auto parentOfParent : parent->getParents()) {
+                std::vector<NodePtr> parentNodes = parentOfParent->getParents();
+                NES_DEBUG("Node: inserting leaf nodes into the collection of leaf nodes");
+                rootNodes.insert(rootNodes.end(), parentNodes.begin(), parentNodes.end());
+            }
+        }
+    }
+    NES_DEBUG("Node: Found " << rootNodes.size() << " leaf nodes");
+    return rootNodes;
+}
+
+std::vector<NodePtr> Node::getAllLeafNodes() {
     NES_DEBUG("Node: Get all leaf nodes for this node");
     std::vector<NodePtr> leafNodes;
     for (auto child : children) {

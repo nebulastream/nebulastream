@@ -1,13 +1,9 @@
-#include <Sinks/Mediums/PrintSink.hpp>
-#include <Sources/ZmqSource.hpp>
 #include <gtest/gtest.h>
 
-#include "../../include/Topology/TopologyManager.hpp"
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
+#include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
 
 #include <string>
@@ -50,12 +46,15 @@ class CoordinatorEngineTest : public testing::Test {
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
+    TopologyPtr topology = Topology::create();
+    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
 
     auto nodeStats = NodeStats();
     size_t nodeId = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats, NESNodeType::Sensor);
     EXPECT_NE(nodeId, 0);
+
+    size_t nodeId1 = coordinatorEngine->registerNode(ip, publish_port+2, 5000, 6, nodeStats, NESNodeType::Sensor);
+    EXPECT_NE(nodeId1, 0);
 
     //test register existing node
     auto nodeStats2 = NodeStats();
@@ -64,18 +63,18 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
 
     //test unregister not existing node
     bool successUnregisterNotExistingNode = coordinatorEngine->unregisterNode(552);
-    EXPECT_NE(successUnregisterNotExistingNode, true);
+    EXPECT_FALSE(successUnregisterNotExistingNode);
 
     //test unregister existing node
-    bool successUnregisterExistingNode = coordinatorEngine->unregisterNode(nodeId);
+    bool successUnregisterExistingNode = coordinatorEngine->unregisterNode(nodeId1);
     EXPECT_TRUE(successUnregisterExistingNode);
 }
 
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
+    TopologyPtr topology = Topology::create();
+    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     std::string logicalStreamName = "testStream";
     std::string testSchema =
         "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
@@ -98,8 +97,8 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterLogicalStream) {
 TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
-    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topologyManager);
+    TopologyPtr topology = Topology::create();
+    CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     std::string physicalStreamName = "testStream";
     PhysicalStreamConfig conf;
     conf.logicalStreamName = "testStream";

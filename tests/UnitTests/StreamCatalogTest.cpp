@@ -6,9 +6,11 @@
 #include <Catalogs/StreamCatalog.hpp>
 
 #include <API/Schema.hpp>
-#include <Topology/TopologyManager.hpp>
+#include <Topology/PhysicalNode.hpp>
+#include <Topology/Topology.hpp>
 
 #include <Util/Logger.hpp>
+
 using namespace std;
 using namespace NES;
 std::string testSchema =
@@ -92,68 +94,53 @@ TEST_F(StreamCatalogTest, testGetNotExistingKey) {
 
 TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    TopologyPtr topology = Topology::create();
 
-    streamCatalog->addLogicalStream(
-        "test_stream", Schema::create());
+    streamCatalog->addLogicalStream("test_stream", Schema::create());
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
-    EXPECT_TRUE(
-        streamCatalog->addPhysicalStream(streamConf.logicalStreamName,
-                                         sce));
+    EXPECT_TRUE(streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce));
 
-    std::string expected =
-        "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=test_stream sourceType=DefaultSource sourceConfig=1 sourceFrequency=0 numberOfBuffersToProduce=1 on node=1\n";
-    cout << " string="
-         << streamCatalog->getPhysicalStreamAndSchemaAsString()
-         << endl;
+    std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=test_stream sourceType=DefaultSource sourceConfig=1 sourceFrequency=0 numberOfBuffersToProduce=1 on node=1\n";
+    cout << " string=" << streamCatalog->getPhysicalStreamAndSchemaAsString() << endl;
 
-    EXPECT_EQ(expected,
-              streamCatalog->getPhysicalStreamAndSchemaAsString());
+    EXPECT_EQ(expected, streamCatalog->getPhysicalStreamAndSchemaAsString());
 }
 
 //TODO: add test for a second physical stream add
 
 TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    TopologyPtr topology = Topology::create();
 
-    streamCatalog->addLogicalStream(
-        "test_stream", Schema::create());
+    streamCatalog->addLogicalStream("test_stream", Schema::create());
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
-    EXPECT_TRUE(
-        streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce));
-
-    EXPECT_TRUE(
-        streamCatalog->removePhysicalStream(
-            streamConf.logicalStreamName, streamConf.physicalStreamName,
-            sensorNode->getId()));
-
-    cout << streamCatalog->getPhysicalStreamAndSchemaAsString()
-         << endl;
+    EXPECT_TRUE(streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce));
+    EXPECT_TRUE(streamCatalog->removePhysicalStream(streamConf.logicalStreamName, streamConf.physicalStreamName, physicalNode->getId()));
+    NES_INFO(streamCatalog->getPhysicalStreamAndSchemaAsString());
 }
 
 TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    TopologyPtr topology = Topology::create();
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "localhost", 4000, 4002, CPUCapacity::HIGH);
+    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
     EXPECT_TRUE(
         streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce));
@@ -187,18 +174,19 @@ TEST_F(StreamCatalogTest, testAddLogicalStream) {
 
 TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
+    TopologyPtr topology = Topology::create();
+    ;
 
     std::string newLogicalStreamName = "test_stream";
 
     streamCatalog->addLogicalStream(newLogicalStreamName,
                                     testSchema);
 
-    NESTopologySensorNodePtr sensorNode = topologyManager->createNESSensorNode(1, "127.0.0.1", 4000, 4002, CPUCapacity::LOW);
+    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig conf;
     conf.sourceType = "sensor";
-    StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(conf, sensorNode);
+    StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     streamCatalog->addPhysicalStream(newLogicalStreamName, catalogEntryPtr);
     const vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(newLogicalStreamName);
     EXPECT_EQ(allPhysicalStream.size(), 1);
