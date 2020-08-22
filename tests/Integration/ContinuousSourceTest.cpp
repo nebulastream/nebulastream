@@ -1,12 +1,12 @@
-#include <iostream>
+#include <gtest/gtest.h>
 
+#include <iostream>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <gtest/gtest.h>
 
 using namespace std;
 

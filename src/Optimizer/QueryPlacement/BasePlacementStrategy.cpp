@@ -107,7 +107,7 @@ void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, Phy
 void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, PhysicalNodePtr startNode) {
     NES_DEBUG("BasePlacementStrategy: Adding system generated operators");
     uint64_t nextNetworkSourceOperatorId = -1;
-    while (!startNode->getParents().empty()) {
+    while (startNode) {
         ExecutionNodePtr executionNode = globalExecutionPlan->getExecutionNodeByNodeId(startNode->getId());
         if (!executionNode || !executionNode->hasQuerySubPlan(queryId)) {
 
@@ -158,8 +158,6 @@ void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, Physica
                 throw QueryPlacementException("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
             }
 
-            querySubPlan->setQueryId(queryId);
-
             if (querySubPlan->getSinkOperators().empty()) {
                 if (startNode->getParents().empty()) {
                     NES_ERROR("BasePlacementStrategy: Unable to find sink operator at the sink node!"
@@ -201,7 +199,11 @@ void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, Physica
         }
         NES_DEBUG("BasePlacementStrategy: scheduling execution node");
         globalExecutionPlan->scheduleExecutionNode(executionNode);
-        startNode = startNode->getParents()[0]->as<PhysicalNode>();
+        if (startNode->getParents().empty()) {
+            startNode = nullptr;
+        } else {
+            startNode = startNode->getParents()[0]->as<PhysicalNode>();
+        }
     }
     NES_DEBUG("BasePlacementStrategy: Finished added system generated operators");
 }

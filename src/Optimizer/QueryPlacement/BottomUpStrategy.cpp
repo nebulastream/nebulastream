@@ -147,6 +147,7 @@ void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr so
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
             candidatePhysicalNode->reduceResource(1);
+            topology->reduceResources(candidatePhysicalNode->getId(), 1);
             if (!operatorToPlace->getParents().empty()) {
                 //FIXME: currently we are not considering split operators
                 NES_DEBUG("BottomUpStrategy: Finding next operator for placement");

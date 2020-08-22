@@ -100,6 +100,20 @@ class Topology {
      */
     bool removeNodeAsChild(PhysicalNodePtr parentNode, PhysicalNodePtr childNode);
 
+    /**
+     * @brief Increase the amount of resources on the node with the id
+     * @param nodeId : the node id
+     * @param amountToIncrease : resources to free
+     */
+    void increaseResources(uint64_t nodeId, uint16_t amountToIncrease);
+
+    /**
+     * @brief Reduce the amount of resources on the node with given id
+     * @param nodeId : the node id
+     * @param amountToReduce : amount of resources to reduce
+     */
+    void reduceResources(uint64_t nodeId, uint16_t amountToReduce);
+
   private:
     explicit Topology();
 
