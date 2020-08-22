@@ -116,7 +116,7 @@ int main(int argc, char** argv) {
         coordinatorIp, // TODO add rpc/zmq server ip address
         localPort,
         zmqDataPort,
-        NESNodeType::Sensor // TODO what is this?!
+        NodeType::Sensor // TODO what is this?!
     );
 
     //register phy stream if nessesary

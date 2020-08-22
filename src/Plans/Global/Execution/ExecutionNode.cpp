@@ -7,7 +7,6 @@
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/NESTopologyEntry.hpp>
 #include <Topology/PhysicalNode.hpp>
 #include <Util/Logger.hpp>
 #include <set>

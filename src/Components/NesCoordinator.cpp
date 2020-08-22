@@ -10,14 +10,10 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <REST/RestServer.hpp>
-#include <REST/usr_interrupt_handler.hpp>
 #include <Services/QueryRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
-#include <Topology/NESTopologyEntry.hpp>
-#include <Topology/TopologyManager.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/QueryRequestQueue.hpp>
-#include <future>
 #include <thread>
 
 //GRPC Includes
@@ -80,7 +76,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     worker = std::make_shared<NesWorker>(serverIp, std::to_string(rpcPort), serverIp,
-                                         rpcPort + 1, rpcPort + 2, NESNodeType::Worker);
+                                         rpcPort + 1, rpcPort + 2, NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //Start rest that accepts queries form the outsides

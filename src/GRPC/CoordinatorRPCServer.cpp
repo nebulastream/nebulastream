@@ -14,7 +14,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                 request->dataport(),
                                                 request->numberofcpus(),
                                                 request->nodeproperties(),
-                                                (NESNodeType) request->type());
+                                                (NodeType) request->type());
     if (id != 0) {
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);
         reply->set_id(id);

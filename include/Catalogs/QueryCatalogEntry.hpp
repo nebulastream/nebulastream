@@ -2,7 +2,6 @@
 #define NES_INCLUDE_CATALOGS_QUERYCATALOGENTRY_HPP_
 
 #include <API/QueryId.hpp>
-#include <Topology/NESTopologyEntry.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -12,9 +11,6 @@ namespace NES {
 
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
-
-class TopologyManager;
-typedef std::shared_ptr<TopologyManager> TopologyManagerPtr;
 
 class NESExecutionPlan;
 typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;

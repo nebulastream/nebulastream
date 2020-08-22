@@ -5,7 +5,6 @@
 #include <CoordinatorRPCService.pb.h>
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Topology/NESTopologyEntry.hpp>
 #include <grpcpp/grpcpp.h>
 #include <string>
 
@@ -77,7 +76,7 @@ class CoordinatorRPCClient {
      * @return bool indicating success
      */
     bool registerNode(std::string ipAddress, int64_t grpcPort, int64_t dataPort, int8_t numberOfCpus,
-                      NESNodeType type, NodeStats nodeStats);
+                      NodeType type, NodeStats nodeStats);
 
     /**
    * @brief method to unregister a node after the connection is established

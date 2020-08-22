@@ -18,7 +18,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr
     NES_DEBUG("CoordinatorEngine()");
 }
 
-size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, int8_t numberOfCPUs, NodeStats nodeStats, NESNodeType type) {
+size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, int8_t numberOfCPUs, NodeStats nodeStats, NodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address
                                                           << " numberOfCpus=" << numberOfCPUs
                                                           << " nodeProperties=" << nodeStats.DebugString()
@@ -37,7 +37,7 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
     uint64_t id = UtilityFunctions::getNextNodeId();
 
     PhysicalNodePtr physicalNode;
-    if (type == NESNodeType::Sensor) {
+    if (type == NodeType::Sensor) {
         NES_DEBUG("CoordinatorEngine::registerNode: register sensor node");
         physicalNode = PhysicalNode::create(id, address, grpcPort, dataPort, numberOfCPUs);
 
@@ -74,7 +74,7 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
                             + " could not be added to catalog");
         }
 
-    } else if (type == NESNodeType::Worker) {
+    } else if (type == NodeType::Worker) {
         NES_DEBUG("CoordinatorEngine::registerNode: register worker node");
         physicalNode = PhysicalNode::create(id, address, grpcPort, dataPort, numberOfCPUs);
 

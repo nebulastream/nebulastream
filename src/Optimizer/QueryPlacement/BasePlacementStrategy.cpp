@@ -16,8 +16,6 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/NESTopologyGraph.hpp>
-#include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 using namespace std;

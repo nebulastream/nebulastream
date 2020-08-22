@@ -22,6 +22,10 @@ service CoordinatorRPCService {
 }
 
 
+enum NodeType {
+  Sensor = 0;
+  Worker = 1;
+}
 
 message RegisterNodeRequest {
   string address = 1;
@@ -29,7 +33,7 @@ message RegisterNodeRequest {
   uint64 dataPort = 3;
   uint32 numberOfCpus = 4;
   NES.NodeStats nodeProperties = 5;
-  int32 type = 6;
+  NodeType type = 6;
 }
 
 message RegisterNodeReply {

@@ -1,12 +1,4 @@
 add_source_nes(
-        NESTopologyPlan.cpp
-        NESTopologyGraph.cpp
-        TopologyManager.cpp
-        NESTopologyCoordinatorNode.cpp
-        NESTopologyWorkerNode.cpp
-        NESTopologySensorNode.cpp
-        NESTopologyLink.cpp
-        NESTopologyEntry.cpp
         PhysicalNode.cpp
         Topology.cpp
 )

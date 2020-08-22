@@ -4,7 +4,6 @@
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <NodeStats.pb.h>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Topology/TopologyManager.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
