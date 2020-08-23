@@ -63,6 +63,22 @@ class Topology {
      */
     std::optional<TopologyNodePtr> findPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode);
 
+    /**
+     * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
+     * @param startNodes: the start Nodes
+     * @param destinationNodes: the destination Nodes
+     * @return a vector of start nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
+     */
+    std::vector<PhysicalNodePtr> findPathBetween(std::vector<PhysicalNodePtr> startNodes, std::vector<PhysicalNodePtr> destinationNodes);
+
+    /**
+     * @brief Find a sub-graph with all paths between a start and destination node
+     * @param startNode: the start node
+     * @param destinationNode: the destination node
+     * @return the pointer to the start node else nullptr
+     */
+    PhysicalNodePtr findAllPathBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNode);
+
     //FIXME: as part of the issue #955
     //    std::vector<LinkProperties> getLinkPropertiesBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNde);
     //    std::vector<LinkProperties> getInputLinksForNode(PhysicalNodePtr node);
@@ -123,6 +139,14 @@ class Topology {
     explicit Topology();
 
     bool find(TopologyNodePtr physicalNode, TopologyNodePtr destinationNode, std::vector<TopologyNodePtr>& nodesInPath);
+    /**
+     * @brief Find if searched node is in the parent list of the test node or its parents parent list
+     * @param testNode: the test node
+     * @param searchedNodes: the searched node
+     * @return the node where the searched node is found
+     */
+    TopologyNodePtr find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<uint64_t, TopologyNodePtr>& uniqueNodes);
+
     //TODO: At present we assume that we have only one root node
     TopologyNodePtr rootNode;
     std::mutex mutex;

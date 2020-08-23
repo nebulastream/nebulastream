@@ -39,7 +39,7 @@ class QueryDeploymentTest : public testing::Test {
 /**
  * TODO: this test requires issue 750 to be addressed. Currently, make it disabled.
  */
-TEST_F(QueryDeploymentTest, testDeployOneWorkerMergePrint) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerMergePrint) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -60,12 +60,12 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerMergePrint) {
     std::ofstream out(testSchemaFileName);
     out << testSchema;
     out.close();
-    wrk1->registerLogicalStream("testStream", testSchemaFileName);
+    wrk1->registerLogicalStream("car", testSchemaFileName);
 
     //register physical stream
     PhysicalStreamConfig conf;
-    conf.logicalStreamName = "testStream";
-    conf.physicalStreamName = "physical_test";
+    conf.logicalStreamName = "car";
+    conf.physicalStreamName = "physical_car";
     conf.sourceType = "DefaultSource";
     conf.numberOfBuffersToProduce = 3;
     conf.sourceFrequency = 1;
@@ -75,7 +75,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerMergePrint) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").merge(Query::from(\"default_logical\")).sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(PrintSinkDescriptor::create());";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));

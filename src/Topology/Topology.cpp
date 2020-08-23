@@ -33,7 +33,6 @@ bool Topology::removePhysicalNode(TopologyNodePtr nodeToRemove) {
     NES_INFO("Topology: Removing Node " << nodeToRemove->toString());
 
     uint64_t idOfNodeToRemove = nodeToRemove->getId();
-
     if (indexOnNodeIds.find(idOfNodeToRemove) == indexOnNodeIds.end()) {
         NES_WARNING("Topology: The physical node " << nodeToRemove << " doesn't exists in the system.");
         return false;
@@ -59,6 +58,25 @@ bool Topology::removePhysicalNode(TopologyNodePtr nodeToRemove) {
     return false;
 }
 
+std::vector<TopologyNodePtr> Topology::findPathBetween(std::vector<TopologyNodePtr> startNodes, std::vector<TopologyNodePtr> destinationNodes) {
+    std::unique_lock lock(mutex);
+    NES_INFO("Topology: Finding path between set of start and destination nodes");
+    std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
+    std::vector<TopologyNodePtr> startNodesOfGraph;
+    for (auto& startNode : startNodes) {
+        TopologyNodePtr startNodeOfGraph = find(startNode, destinationNodes, mapOfUniqueNodes);
+        startNodesOfGraph.push_back(startNodeOfGraph);
+    }
+    return startNodesOfGraph;
+}
+
+TopologyNodePtr Topology::findAllPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode) {
+    std::unique_lock lock(mutex);
+    NES_INFO("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
+
+    return nullptr;
+}
+
 std::optional<TopologyNodePtr> Topology::findPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode) {
     std::unique_lock lock(mutex);
     NES_INFO("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
@@ -66,43 +84,55 @@ std::optional<TopologyNodePtr> Topology::findPathBetween(TopologyNodePtr startNo
     std::optional<TopologyNodePtr> result;
     std::vector<TopologyNodePtr> nodesInPath;
     bool found = find(startNode, destinationNode, nodesInPath);
+    std::vector<TopologyNodePtr> searchedNodes{destinationNode};
+    std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
+    TopologyNodePtr found = find(startNode, searchedNodes, mapOfUniqueNodes);
     if (found) {
         NES_INFO("Topology: Found path between " << startNode->toString() << " and " << destinationNode->toString());
-        TopologyNodePtr previousNode;
-        for (auto itr = nodesInPath.begin(); itr != nodesInPath.end(); itr++) {
-            if (previousNode) {
-                previousNode->addChild(*itr);
-            }
-            previousNode = *itr;
-        }
-        return previousNode;
+        return found;
     }
     NES_WARNING("Topology: Unable to find path between " << startNode->toString() << " and " << destinationNode->toString());
     return result;
 }
 
-bool Topology::find(TopologyNodePtr physicalNode, TopologyNodePtr destinationNode, std::vector<TopologyNodePtr>& nodesInPath) {
+TopologyNodePtr Topology::find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<uint64_t, TopologyNodePtr>& uniqueNodes) {
 
-    if (physicalNode->getId() == destinationNode->getId()) {
-        NES_INFO("Topology: found the destination node with " << physicalNode->toString() << " == " << destinationNode->toString());
-        nodesInPath.push_back(physicalNode->copy());
-        return true;
+    auto found = std::find_if(searchedNodes.begin(), searchedNodes.end(), [&](TopologyNodePtr searchedNode) {
+        return searchedNode->getId() == testNode->getId();
+    });
+
+    if (found != searchedNodes.end()) {
+        NES_INFO("Topology: found the destination node");
+        if (uniqueNodes.find(testNode->getId()) == uniqueNodes.end()) {
+            const TopologyNodePtr copyOfTestNode = testNode->copy();
+            uniqueNodes[testNode->getId()] = copyOfTestNode;
+        }
+        return uniqueNodes[testNode->getId()];
     }
 
-    std::vector<NodePtr> parents = physicalNode->getParents();
+    std::vector<NodePtr> parents = testNode->getParents();
     if (parents.empty()) {
-        NES_WARNING("Topology: reached end of the tree but destination node was not found.");
-        return false;
+        NES_WARNING("Topology: reached end of the tree but destination node not found.");
+        return nullptr;
     }
 
+    TopologyNodePtr foundNode = nullptr;
     for (auto& parent : parents) {
-        if (find(parent->as<TopologyNode>(), destinationNode, nodesInPath)) {
+        const TopologyNodePtr found = find(parent->as<PhysicalNode>(), searchedNodes, uniqueNodes);
+        if (found) {
             NES_TRACE("Topology: found the destination node as the parent of the physical node.");
-            nodesInPath.push_back(physicalNode->copy());
-            return true;
+            if (!foundNode) {
+                if (uniqueNodes.find(testNode->getId()) == uniqueNodes.end()) {
+                    const TopologyNodePtr copyOfTestNode = testNode->copy();
+                    uniqueNodes[testNode->getId()] = copyOfTestNode;
+                }
+                foundNode = uniqueNodes[testNode->getId()];
+            }
+            NES_TRACE("Topology: Adding found node as parent to the copy of testNode.");
+            foundNode->addParent(found);
         }
     }
-    return false;
+    return foundNode;
 }
 
 std::string Topology::toString() {
