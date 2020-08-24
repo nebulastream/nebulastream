@@ -7,7 +7,7 @@
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <deque>
-#include <mutex>
+#include <topologyLock>
 #include <thread>
 #include <unordered_map>
 #endif
@@ -120,7 +120,7 @@ class BufferControlBlock {
             return os;
         }
     };
-    std::mutex owningThreadsMutex;
+    std::topologyLock owningThreadsMutex;
     std::unordered_map<std::thread::id, std::deque<ThreadOwnershipInfo>> owningThreads;
 #endif
 };
