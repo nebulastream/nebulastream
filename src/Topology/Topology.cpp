@@ -57,6 +57,7 @@ std::optional<TopologyNodePtr> Topology::findPathBetween(TopologyNodePtr startNo
     std::unique_lock lock(mutex);
     NES_INFO("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
 
+    std::optional<TopologyNodePtr> result;
     std::vector<TopologyNodePtr> nodesInPath;
     bool found = find(startNode, destinationNode, nodesInPath);
     if (found) {
@@ -71,7 +72,7 @@ std::optional<TopologyNodePtr> Topology::findPathBetween(TopologyNodePtr startNo
         return previousNode;
     }
     NES_WARNING("Topology: Unable to find path between " << startNode->toString() << " and " << destinationNode->toString());
-    return {};
+    return result;
 }
 
 bool Topology::find(TopologyNodePtr physicalNode, TopologyNodePtr destinationNode, std::vector<TopologyNodePtr>& nodesInPath) {
