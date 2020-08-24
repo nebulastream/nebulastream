@@ -75,7 +75,7 @@ class BasePlacementStrategy {
      * @param parentNesNode
      * @return returns the operator id of the next network source operator
      */
-    uint64_t addNetworkSinkOperator(QueryPlanPtr queryPlan, PhysicalNodePtr parentNesNode);
+    uint64_t addNetworkSinkOperator(QueryPlanPtr queryPlan, TopologyNodePtr parentNesNode);
 
     /**
      * @brief Add a system generated network source operator to the input query plan.
@@ -83,7 +83,7 @@ class BasePlacementStrategy {
      * @param childNesNode: The child nes node where the corresponding upstream network sink operator is located.
      * @param operatorId: The id of the network source operator.
      */
-    void addNetworkSourceOperator(QueryPlanPtr queryPlan, PhysicalNodePtr childNesNode, uint64_t operatorId);
+    void addNetworkSourceOperator(QueryPlanPtr queryPlan, TopologyNodePtr childNesNode, uint64_t operatorId);
 
   protected:
     /**
@@ -92,7 +92,7 @@ class BasePlacementStrategy {
      * @param queryId query Id of the sub plan for which the operators have to be placed
      * @param startNode start of the path where operators could be placed
      */
-    void addSystemGeneratedOperators(QueryId queryId, PhysicalNodePtr startNode);
+    void addSystemGeneratedOperators(QueryId queryId, TopologyNodePtr startNode);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

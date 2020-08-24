@@ -8,8 +8,8 @@
 
 namespace NES {
 
-class PhysicalNode;
-typedef std::shared_ptr<PhysicalNode> PhysicalNodePtr;
+class TopologyNode;
+typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 
 /**
  * @brief one entry in the catalog contains
@@ -23,13 +23,13 @@ typedef std::shared_ptr<PhysicalNode> PhysicalNodePtr;
 class StreamCatalogEntry {
 
   public:
-    StreamCatalogEntry(PhysicalStreamConfig streamConf, PhysicalNodePtr node);
+    StreamCatalogEntry(PhysicalStreamConfig streamConf, TopologyNodePtr node);
 
     std::string getSourceType();
 
     std::string getSourceConfig();
 
-    PhysicalNodePtr getNode();
+    TopologyNodePtr getNode();
 
     std::string getPhysicalName();
 
@@ -43,7 +43,7 @@ class StreamCatalogEntry {
 
   private:
     PhysicalStreamConfig streamConf;
-    PhysicalNodePtr node;
+    TopologyNodePtr node;
 };
 typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;
 

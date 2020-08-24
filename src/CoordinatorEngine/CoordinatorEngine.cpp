@@ -2,8 +2,8 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
-#include <Topology/PhysicalNode.hpp>
 #include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -36,10 +36,10 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
     //get unique id for the new node
     uint64_t id = UtilityFunctions::getNextNodeId();
 
-    PhysicalNodePtr physicalNode;
+    TopologyNodePtr physicalNode;
     if (type == NodeType::Sensor) {
         NES_DEBUG("CoordinatorEngine::registerNode: register sensor node");
-        physicalNode = PhysicalNode::create(id, address, grpcPort, dataPort, numberOfCPUs);
+        physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfCPUs);
 
         if (!physicalNode) {
             NES_ERROR("CoordinatorEngine::RegisterNode : node not created");
@@ -76,7 +76,7 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
 
     } else if (type == NodeType::Worker) {
         NES_DEBUG("CoordinatorEngine::registerNode: register worker node");
-        physicalNode = PhysicalNode::create(id, address, grpcPort, dataPort, numberOfCPUs);
+        physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfCPUs);
 
         if (!physicalNode) {
             NES_ERROR("CoordinatorEngine::RegisterNode : node not created");
@@ -90,7 +90,7 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
         physicalNode->setNodeStats(nodeStats);
     }
 
-    const PhysicalNodePtr rootNode = topology->getRoot();
+    const TopologyNodePtr rootNode = topology->getRoot();
 
     if (!rootNode) {
         NES_DEBUG("CoordinatorEngine::registerNode: tree is empty so this becomes new root");
@@ -109,7 +109,7 @@ bool CoordinatorEngine::unregisterNode(size_t nodeId) {
     NES_DEBUG("CoordinatorEngine::UnregisterNode: try to disconnect sensor with id " << nodeId);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
-    PhysicalNodePtr physicalNode = topology->findNodeWithId(nodeId);
+    TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
 
     if (!physicalNode) {
         NES_ERROR("CoordinatorActor: node with id not found " << nodeId);
@@ -137,7 +137,7 @@ bool CoordinatorEngine::registerPhysicalStream(size_t nodeId, std::string source
                                     logicalstreamname);
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream with conf= " << streamConf.toString()
                                                                                                        << " for workerId=" << nodeId);
-    PhysicalNodePtr physicalNode = topology->findNodeWithId(nodeId);
+    TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
     if (!physicalNode) {
         NES_ERROR("CoordinatorEngine::RegisterPhysicalStream node not found");
         return false;
@@ -152,7 +152,7 @@ bool CoordinatorEngine::unregisterPhysicalStream(size_t nodeId, std::string phys
               << physicalStreamName << " logical name " << logicalStreamName << " workerId=" << nodeId);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
-    PhysicalNodePtr physicalNode = topology->findNodeWithId(nodeId);
+    TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
     if (!physicalNode) {
         NES_DEBUG("CoordinatorEngine::UnregisterPhysicalStream: sensor not found with workerId" << nodeId);
         return false;
@@ -189,14 +189,14 @@ bool CoordinatorEngine::addParent(uint64_t childId, uint64_t parentId) {
         return false;
     }
 
-    PhysicalNodePtr childPhysicalNode = topology->findNodeWithId(childId);
+    TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
     if (!childPhysicalNode) {
         NES_ERROR("CoordinatorEngine::AddParent: source node " << childId << " does not exists");
         return false;
     }
     NES_DEBUG("CoordinatorEngine::AddParent: source node " << childId << " exists");
 
-    PhysicalNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
+    TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
     if (!parentPhysicalNode) {
         NES_ERROR("CoordinatorEngine::AddParent: sensorParent node " << parentId << " does not exists");
         return false;
@@ -204,7 +204,7 @@ bool CoordinatorEngine::addParent(uint64_t childId, uint64_t parentId) {
     NES_DEBUG("CoordinatorEngine::AddParent: sensorParent node " << parentId << " exists");
 
     for (auto& child : parentPhysicalNode->getChildren()) {
-        if (child->as<PhysicalNode>()->getId() == childId) {
+        if (child->as<TopologyNode>()->getId() == childId) {
             NES_ERROR("CoordinatorEngine::AddParent: nodes " << childId << " and " << parentId << " already exists");
             return false;
         }
@@ -223,14 +223,14 @@ bool CoordinatorEngine::addParent(uint64_t childId, uint64_t parentId) {
 bool CoordinatorEngine::removeParent(uint64_t childId, uint64_t parentId) {
     NES_DEBUG("CoordinatorEngine::removeParent: childId=" << childId << " parentId=" << parentId);
 
-    PhysicalNodePtr childNode = topology->findNodeWithId(childId);
+    TopologyNodePtr childNode = topology->findNodeWithId(childId);
     if (!childNode) {
         NES_ERROR("CoordinatorEngine::removeParent: source node " << childId << " does not exists");
         return false;
     }
     NES_DEBUG("CoordinatorEngine::removeParent: source node " << childId << " exists");
 
-    PhysicalNodePtr parentNode = topology->findNodeWithId(parentId);
+    TopologyNodePtr parentNode = topology->findNodeWithId(parentId);
     if (!parentNode) {
         NES_ERROR("CoordinatorEngine::removeParent: sensorParent node " << childId << " does not exists");
         return false;
@@ -240,7 +240,7 @@ bool CoordinatorEngine::removeParent(uint64_t childId, uint64_t parentId) {
 
     std::vector<NodePtr> children = parentNode->getChildren();
     auto found = std::find_if(children.begin(), children.end(), [&](NodePtr node) {
-        return node->as<PhysicalNode>()->getId() == childId;
+        return node->as<TopologyNode>()->getId() == childId;
     });
 
     if (found == children.end()) {
@@ -249,7 +249,7 @@ bool CoordinatorEngine::removeParent(uint64_t childId, uint64_t parentId) {
     }
 
     for (auto& child : children) {
-        if (child->as<PhysicalNode>()->getId() == childId) {
+        if (child->as<TopologyNode>()->getId() == childId) {
         }
     }
 

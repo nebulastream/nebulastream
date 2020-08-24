@@ -4,8 +4,8 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-#include <Topology/PhysicalNode.hpp>
 
 namespace NES {
 

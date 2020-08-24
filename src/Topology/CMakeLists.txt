@@ -1,4 +1,4 @@
 add_source_nes(
-        PhysicalNode.cpp
+        TopologyNode.cpp
         Topology.cpp
 )

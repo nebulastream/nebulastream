@@ -7,20 +7,20 @@
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/PhysicalNode.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <set>
 
 namespace NES {
 
-ExecutionNode::ExecutionNode(PhysicalNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) : id(physicalNode->getId()), physicalNode(physicalNode) {
+ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) : id(physicalNode->getId()), physicalNode(physicalNode) {
     QueryPlanPtr queryPlan = QueryPlan::create();
     queryPlan->appendPreExistingOperator(operatorNode);
     queryPlan->setQueryId(queryId);
     mapOfQuerySubPlans.emplace(queryId, queryPlan);
 }
 
-ExecutionNode::ExecutionNode(PhysicalNodePtr physicalNode) : id(physicalNode->getId()), physicalNode(physicalNode) {}
+ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode) : id(physicalNode->getId()), physicalNode(physicalNode) {}
 
 bool ExecutionNode::hasQuerySubPlan(QueryId queryId) {
     NES_DEBUG("ExecutionNode : Checking if a query sub plan exists with id " << queryId);
@@ -105,7 +105,7 @@ void ExecutionNode::freeOccupiedResources(QueryPlanPtr querySubPlan) {
         }
     }
     NES_INFO("ExecutionNode: Releasing " << resourceToFree << " CPU resources from the node with id " << id);
-    physicalNode->increaseResource(resourceToFree);
+    physicalNode->increaseResources(resourceToFree);
 }
 
 bool ExecutionNode::createNewQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode) {
@@ -163,11 +163,11 @@ const std::string ExecutionNode::toString() const {
     return "ExecutionNode(" + std::to_string(id) + ")";
 }
 
-ExecutionNodePtr ExecutionNode::createExecutionNode(PhysicalNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) {
+ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) {
     return std::make_shared<ExecutionNode>(ExecutionNode(physicalNode, queryId, operatorNode));
 }
 
-ExecutionNodePtr ExecutionNode::createExecutionNode(PhysicalNodePtr physicalNode) {
+ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode) {
     return std::make_shared<ExecutionNode>(ExecutionNode(physicalNode));
 }
 
@@ -175,7 +175,7 @@ uint64_t ExecutionNode::getId() {
     return id;
 }
 
-PhysicalNodePtr ExecutionNode::getPhysicalNode() {
+TopologyNodePtr ExecutionNode::getPhysicalNode() {
     return physicalNode;
 }
 

@@ -9,7 +9,7 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/PhysicalNode.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -41,7 +41,7 @@ class FilterPushDownTest : public testing::Test {
 
 void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     NES_INFO("Setup FilterPushDownTest test case.");
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";

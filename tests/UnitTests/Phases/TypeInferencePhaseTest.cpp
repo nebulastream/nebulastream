@@ -12,7 +12,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/PhysicalNode.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -61,7 +61,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     plan->appendOperator(sink);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -98,7 +98,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
                      .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -133,7 +133,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     plan->appendOperator(sink);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -150,7 +150,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
  */
 TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
 
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";

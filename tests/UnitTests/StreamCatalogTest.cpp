@@ -6,8 +6,8 @@
 #include <Catalogs/StreamCatalog.hpp>
 
 #include <API/Schema.hpp>
-#include <Topology/PhysicalNode.hpp>
 #include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 
 #include <Util/Logger.hpp>
 
@@ -98,7 +98,7 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
 
     streamCatalog->addLogicalStream("test_stream", Schema::create());
 
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -122,7 +122,7 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
 
     streamCatalog->addLogicalStream("test_stream", Schema::create());
 
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -137,7 +137,7 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyPtr topology = Topology::create();
 
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
@@ -182,7 +182,7 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     streamCatalog->addLogicalStream(newLogicalStreamName,
                                     testSchema);
 
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig conf;
     conf.sourceType = "sensor";

@@ -2,13 +2,14 @@
 #define NES_TOPOLOGY_HPP
 
 #include <memory>
+#include <map>
 #include <mutex>
 #include <vector>
 
 namespace NES {
 
-class PhysicalNode;
-typedef std::shared_ptr<PhysicalNode> PhysicalNodePtr;
+class TopologyNode;
+typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 
 class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
@@ -29,7 +30,7 @@ class Topology {
      * @brief Get the root node of the topology
      * @return root of the topology
      */
-    PhysicalNodePtr getRoot();
+    TopologyNodePtr getRoot();
 
     /**
      * @brief This method will add the new node as child to the provided parent node
@@ -37,21 +38,21 @@ class Topology {
      * @param newNode : the new physical node.
      * @return true if successful
      */
-    bool addNewPhysicalNodeAsChild(PhysicalNodePtr parent, PhysicalNodePtr newNode);
+    bool addNewPhysicalNodeAsChild(TopologyNodePtr parent, TopologyNodePtr newNode);
 
     /**
      * @brief This method will remove a given physical node
      * @param nodeToRemove : the node to be removed
      * @return true if successful
      */
-    bool removePhysicalNode(PhysicalNodePtr nodeToRemove);
+    bool removePhysicalNode(TopologyNodePtr nodeToRemove);
 
     /**
      * @brief This method will find a given physical node by its id
      * @param nodeId : the id of the node
      * @return physical node if found else nullptr
      */
-    PhysicalNodePtr findNodeWithId(uint64_t nodeId);
+    TopologyNodePtr findNodeWithId(uint64_t nodeId);
 
     /**
      * @brief This method will return a subgraph containing only the path between start and destination node.
@@ -60,7 +61,7 @@ class Topology {
      * @param destinationNode: the destination start node
      * @return physical location of the leaf node in the graph.
      */
-    PhysicalNodePtr findPathBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNode);
+    std::optional<TopologyNodePtr> findPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode);
 
     //FIXME: as part of the issue #955
     //    std::vector<LinkProperties> getLinkPropertiesBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNde);
@@ -87,10 +88,10 @@ class Topology {
     std::string toString();
 
     /**
-     * @brief Add a new root node
-     * @param physicalNode: new root node
+     * @brief Add a Physical node as the root node of the topology
+     * @param physicalNode: Physical node to be set as root node
      */
-    void setAsRoot(PhysicalNodePtr physicalNode);
+    void setAsRoot(TopologyNodePtr physicalNode);
 
     /**
      * @brief Remove links between
@@ -98,30 +99,32 @@ class Topology {
      * @param childNode
      * @return
      */
-    bool removeNodeAsChild(PhysicalNodePtr parentNode, PhysicalNodePtr childNode);
+    bool removeNodeAsChild(TopologyNodePtr parentNode, TopologyNodePtr childNode);
 
     /**
      * @brief Increase the amount of resources on the node with the id
      * @param nodeId : the node id
      * @param amountToIncrease : resources to free
+     * @return true if successful
      */
-    void increaseResources(uint64_t nodeId, uint16_t amountToIncrease);
+    bool increaseResources(uint64_t nodeId, uint16_t amountToIncrease);
 
     /**
      * @brief Reduce the amount of resources on the node with given id
      * @param nodeId : the node id
      * @param amountToReduce : amount of resources to reduce
+     * @return true if successful
      */
-    void reduceResources(uint64_t nodeId, uint16_t amountToReduce);
+    bool reduceResources(uint64_t nodeId, uint16_t amountToReduce);
 
   private:
     explicit Topology();
 
-    bool find(PhysicalNodePtr physicalNode, PhysicalNodePtr destinationNode, std::vector<PhysicalNodePtr>& nodesInPath);
+    bool find(TopologyNodePtr physicalNode, TopologyNodePtr destinationNode, std::vector<TopologyNodePtr>& nodesInPath);
     //TODO: At present we assume that we have only one root node
-    PhysicalNodePtr rootNode;
+    TopologyNodePtr rootNode;
     std::mutex mutex;
-    std::map<uint64_t, PhysicalNodePtr> indexOnNodeIds;
+    std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
 };
 }// namespace NES
 #endif//NES_TOPOLOGY_HPP
