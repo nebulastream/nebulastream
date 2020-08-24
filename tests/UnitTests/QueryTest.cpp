@@ -21,7 +21,7 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/PhysicalNode.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 
@@ -44,7 +44,7 @@ class QueryTest : public testing::Test {
 
 TEST_F(QueryTest, testQueryFilter) {
 
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -75,7 +75,7 @@ TEST_F(QueryTest, testQueryFilter) {
 }
 
 TEST_F(QueryTest, testQueryWindow) {
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
@@ -113,7 +113,7 @@ TEST_F(QueryTest, testQueryWindow) {
  * Merge two input stream: one with filter and one without filter.
  */
 TEST_F(QueryTest, testQueryMerge) {
-    PhysicalNodePtr physicalNode = PhysicalNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "test2";
     streamConf.logicalStreamName = "test_stream";

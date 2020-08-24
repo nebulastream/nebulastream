@@ -8,8 +8,8 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/PhysicalNode.hpp>
 #include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 
 using namespace std;
@@ -44,7 +44,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         throw QueryPlacementException("BottomUpStrategy: No source operator found in the query plan wih id: " + queryId);
     }
 
-    const std::vector<PhysicalNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
+    const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
     if (sourceNodes.empty()) {
         NES_ERROR("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
         throw QueryPlacementException("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
@@ -53,27 +53,26 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     NES_INFO("BottomUpStrategy: Preparing execution plan for query with id : " << queryId);
     placeOperators(queryId, sourceOperator, sourceNodes);
 
-    PhysicalNodePtr rootNode = topology->getRoot();
+    TopologyNodePtr rootNode = topology->getRoot();
 
-    for (PhysicalNodePtr targetSource : sourceNodes) {
+    for (TopologyNodePtr targetSource : sourceNodes) {
         NES_DEBUG("BottomUpStrategy: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
-        PhysicalNodePtr startNode = topology->findPathBetween(targetSource, rootNode);
+        TopologyNodePtr startNode = topology->findPathBetween(targetSource, rootNode).value();
         NES_INFO("BottomUpStrategy: Adding system generated operators for query with id : " << queryId);
         addSystemGeneratedOperators(queryId, startNode);
     }
-
     return true;
 }
 
-void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sourceOperator, vector<PhysicalNodePtr> sourceNodes) {
+void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sourceOperator, vector<TopologyNodePtr> sourceNodes) {
 
-    PhysicalNodePtr sinkNode = topology->getRoot();
+    TopologyNodePtr sinkNode = topology->getRoot();
 
     NES_DEBUG("BottomUpStrategy: Place the operator chain from each source node for query with id : " << queryId);
     for (const auto& sourceNode : sourceNodes) {
 
         NES_INFO("BottomUpStrategy: Find the path between source and sink node for query with id : " << queryId);
-        PhysicalNodePtr candidatePhysicalNode = topology->findPathBetween(sourceNode, sinkNode);
+        TopologyNodePtr candidatePhysicalNode = topology->findPathBetween(sourceNode, sinkNode).value();
         if (!candidatePhysicalNode) {
             NES_ERROR("BottomUpStrategy: No path exists between sink and source");
             throw QueryPlacementException("BottomUpStrategy: No path exists between sink and source");
@@ -85,25 +84,25 @@ void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr so
             if (operatorToPlace->instanceOf<SinkLogicalOperatorNode>()) {
                 NES_DEBUG("BottomUpStrategy: Placing sink operator on the sink node");
                 if (candidatePhysicalNode->getId() != sinkNode->getId()) {
-                    candidatePhysicalNode = candidatePhysicalNode->getAllRootNodes()[0]->as<PhysicalNode>();
+                    candidatePhysicalNode = candidatePhysicalNode->getAllRootNodes()[0]->as<TopologyNode>();
                 }
                 if (!globalExecutionPlan->getExecutionNodeByNodeId(candidatePhysicalNode->getId())) {
                     NES_DEBUG("BottomUpStrategy: Creating a new root execution node for placing sink operator");
                     const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(candidatePhysicalNode);
                     globalExecutionPlan->addExecutionNodeAsRoot(rootExecutionNode);
                 }
-            } else if (candidatePhysicalNode->getAvailableResource() == 0) {
+            } else if (candidatePhysicalNode->getAvailableResources() == 0) {
                 NES_DEBUG("BottomUpStrategy: Find the next NES node in the path where operator can be placed");
                 while (!candidatePhysicalNode->getParents().empty()) {
-                    candidatePhysicalNode = candidatePhysicalNode->getParents()[0]->as<PhysicalNode>();
-                    if (candidatePhysicalNode->getAvailableResource() > 0) {
+                    candidatePhysicalNode = candidatePhysicalNode->getParents()[0]->as<TopologyNode>();
+                    if (candidatePhysicalNode->getAvailableResources() > 0) {
                         NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : " << candidatePhysicalNode->getId());
                         break;
                     }
                 }
             }
 
-            if (candidatePhysicalNode->getAvailableResource() == 0) {
+            if (candidatePhysicalNode->getAvailableResources() == 0) {
                 NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
                 throw QueryPlacementException("BottomUpStrategy: No node available for further placement of operators");
             }
@@ -148,7 +147,7 @@ void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr so
             NES_DEBUG("BottomUpStrategy: Reducing the node remaining CPU capacity by 1");
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
-            candidatePhysicalNode->reduceResource(1);
+            candidatePhysicalNode->reduceResources(1);
             topology->reduceResources(candidatePhysicalNode->getId(), 1);
             if (!operatorToPlace->getParents().empty()) {
                 //FIXME: currently we are not considering split operators

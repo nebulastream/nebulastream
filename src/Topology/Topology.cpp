@@ -1,6 +1,6 @@
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Topology/PhysicalNode.hpp>
 #include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <deque>
 
 namespace NES {
@@ -11,7 +11,7 @@ TopologyPtr Topology::create() {
     return std::shared_ptr<Topology>(new Topology());
 }
 
-bool Topology::addNewPhysicalNodeAsChild(PhysicalNodePtr parent, PhysicalNodePtr newNode) {
+bool Topology::addNewPhysicalNodeAsChild(TopologyNodePtr parent, TopologyNodePtr newNode) {
     std::unique_lock lock(mutex);
     uint64_t newNodeId = newNode->getId();
     if (indexOnNodeIds.find(newNodeId) == indexOnNodeIds.end()) {
@@ -22,18 +22,19 @@ bool Topology::addNewPhysicalNodeAsChild(PhysicalNodePtr parent, PhysicalNodePtr
     return parent->addChild(newNode);
 }
 
-bool Topology::removePhysicalNode(PhysicalNodePtr nodeToRemove) {
+bool Topology::removePhysicalNode(TopologyNodePtr nodeToRemove) {
     std::unique_lock lock(mutex);
     NES_INFO("Topology: Removing Node " << nodeToRemove->toString());
 
     uint64_t idOfNodeToRemove = nodeToRemove->getId();
+
     if (indexOnNodeIds.find(idOfNodeToRemove) == indexOnNodeIds.end()) {
         NES_WARNING("Topology: The physical node " << nodeToRemove << " doesn't exists in the system.");
         return false;
     }
 
     if (!rootNode) {
-        NES_WARNING("Topology: No root not exists in the topology");
+        NES_WARNING("Topology: No root node exists in the topology");
         return false;
     }
 
@@ -52,15 +53,15 @@ bool Topology::removePhysicalNode(PhysicalNodePtr nodeToRemove) {
     return false;
 }
 
-PhysicalNodePtr Topology::findPathBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNode) {
+std::optional<TopologyNodePtr> Topology::findPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode) {
     std::unique_lock lock(mutex);
     NES_INFO("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
 
-    std::vector<PhysicalNodePtr> nodesInPath;
+    std::vector<TopologyNodePtr> nodesInPath;
     bool found = find(startNode, destinationNode, nodesInPath);
     if (found) {
         NES_INFO("Topology: Found path between " << startNode->toString() << " and " << destinationNode->toString());
-        PhysicalNodePtr previousNode;
+        TopologyNodePtr previousNode;
         for (auto itr = nodesInPath.begin(); itr != nodesInPath.end(); itr++) {
             if (previousNode) {
                 previousNode->addChild(*itr);
@@ -70,25 +71,25 @@ PhysicalNodePtr Topology::findPathBetween(PhysicalNodePtr startNode, PhysicalNod
         return previousNode;
     }
     NES_WARNING("Topology: Unable to find path between " << startNode->toString() << " and " << destinationNode->toString());
-    return nullptr;
+    return {};
 }
 
-bool Topology::find(PhysicalNodePtr physicalNode, PhysicalNodePtr destinationNode, std::vector<PhysicalNodePtr>& nodesInPath) {
+bool Topology::find(TopologyNodePtr physicalNode, TopologyNodePtr destinationNode, std::vector<TopologyNodePtr>& nodesInPath) {
 
     if (physicalNode->getId() == destinationNode->getId()) {
-        NES_INFO("Topology: found the destination node");
+        NES_INFO("Topology: found the destination node with " << physicalNode->toString() << " == " << destinationNode->toString());
         nodesInPath.push_back(physicalNode->copy());
         return true;
     }
 
     std::vector<NodePtr> parents = physicalNode->getParents();
     if (parents.empty()) {
-        NES_WARNING("Topology: reached end of the tree but destination node not found.");
+        NES_WARNING("Topology: reached end of the tree but destination node was not found.");
         return false;
     }
 
     for (auto& parent : parents) {
-        if (find(parent->as<PhysicalNode>(), destinationNode, nodesInPath)) {
+        if (find(parent->as<TopologyNode>(), destinationNode, nodesInPath)) {
             NES_TRACE("Topology: found the destination node as the parent of the physical node.");
             nodesInPath.push_back(physicalNode->copy());
             return true;
@@ -108,16 +109,16 @@ std::string Topology::toString() {
 
     std::stringstream topologyInfo;
     topologyInfo << std::endl;
-    std::deque<PhysicalNodePtr> parentToPrint{rootNode};
-    std::deque<PhysicalNodePtr> childToPrint;
+    std::deque<TopologyNodePtr> parentToPrint{rootNode};
+    std::deque<TopologyNodePtr> childToPrint;
 
     while (!parentToPrint.empty()) {
-        PhysicalNodePtr nodeToPrint = parentToPrint.front();
+        TopologyNodePtr nodeToPrint = parentToPrint.front();
         parentToPrint.pop_front();
         topologyInfo << nodeToPrint->getId() << "\t";
 
         for (auto& child : nodeToPrint->getChildren()) {
-            childToPrint.push_back(child->as<PhysicalNode>());
+            childToPrint.push_back(child->as<TopologyNode>());
         }
 
         if (parentToPrint.empty()) {
@@ -140,22 +141,24 @@ bool Topology::nodeExistsWithIpAndPort(std::string ipAddress, uint32_t grpcPort)
         NES_WARNING("Topology: Root node not found.");
         return false;
     }
+    NES_TRACE("Topology: Traversing the topology using BFS.");
     BreadthFirstNodeIterator bfsIterator(rootNode);
     for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
-        auto physicalNode = (*itr)->as<PhysicalNode>();
+        auto physicalNode = (*itr)->as<TopologyNode>();
         if (physicalNode->getIpAddress() == ipAddress && physicalNode->getGrpcPort() == grpcPort) {
+            NES_TRACE("Topology: Found a physical node " << physicalNode->toString() << " with ip " << ipAddress << " and port " << grpcPort);
             return true;
         }
     }
     return false;
 }
 
-PhysicalNodePtr Topology::getRoot() {
+TopologyNodePtr Topology::getRoot() {
     std::unique_lock lock(mutex);
     return rootNode;
 }
 
-PhysicalNodePtr Topology::findNodeWithId(uint64_t nodeId) {
+TopologyNodePtr Topology::findNodeWithId(uint64_t nodeId) {
     std::unique_lock lock(mutex);
     NES_INFO("Topology: Finding a physical node with id " << nodeId);
     if (indexOnNodeIds.find(nodeId) != indexOnNodeIds.end()) {
@@ -166,37 +169,39 @@ PhysicalNodePtr Topology::findNodeWithId(uint64_t nodeId) {
     return nullptr;
 }
 
-void Topology::setAsRoot(PhysicalNodePtr physicalNode) {
+void Topology::setAsRoot(TopologyNodePtr physicalNode) {
     std::unique_lock lock(mutex);
     NES_INFO("Topology: Setting physical node " << physicalNode->toString() << " as root to the topology.");
     indexOnNodeIds[physicalNode->getId()] = physicalNode;
     rootNode = physicalNode;
 }
 
-bool Topology::removeNodeAsChild(PhysicalNodePtr parentNode, PhysicalNodePtr childNode) {
+bool Topology::removeNodeAsChild(TopologyNodePtr parentNode, TopologyNodePtr childNode) {
     std::unique_lock lock(mutex);
     NES_INFO("Topology: Removing node " << childNode->toString() << " as child to the node " << parentNode->toString());
     return parentNode->remove(childNode);
 }
 
-void Topology::reduceResources(uint64_t nodeId, uint16_t amountToReduce) {
+bool Topology::reduceResources(uint64_t nodeId, uint16_t amountToReduce) {
     std::unique_lock lock(mutex);
     NES_INFO("Topology: Reduce " << amountToReduce << " resources from node with id " << nodeId);
     if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
         NES_WARNING("Topology: Unable to find node with id " << nodeId);
-        return;
+        return false;
     }
-    indexOnNodeIds[nodeId]->reduceResource(amountToReduce);
+    indexOnNodeIds[nodeId]->reduceResources(amountToReduce);
+    return true;
 }
 
-void Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
+bool Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
     std::unique_lock lock(mutex);
     NES_INFO("Topology: Increase " << amountToIncrease << " resources from node with id " << nodeId);
     if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
         NES_WARNING("Topology: Unable to find node with id " << nodeId);
-        return;
+        return false;
     }
-    indexOnNodeIds[nodeId]->increaseResource(amountToIncrease);
+    indexOnNodeIds[nodeId]->increaseResources(amountToIncrease);
+    return true;
 }
 
 }// namespace NES

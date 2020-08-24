@@ -34,7 +34,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      *
      * @throws exception if the operator can't be placed anywhere.
      */
-    void placeOperators(QueryId queryId, LogicalOperatorNodePtr sourceOperator, std::vector<PhysicalNodePtr> sourceNodes);
+    void placeOperators(QueryId queryId, LogicalOperatorNodePtr sourceOperator, std::vector<TopologyNodePtr> sourceNodes);
 };
 }// namespace NES
 

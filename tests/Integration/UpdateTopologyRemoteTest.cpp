@@ -1,8 +1,8 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Topology/PhysicalNode.hpp>
 #include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <ctime>
 #include <gtest/gtest.h>
@@ -58,12 +58,12 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
     ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
 
-    PhysicalNodePtr rootNode = topology->getRoot();
+    TopologyNodePtr rootNode = topology->getRoot();
     ASSERT_TRUE(rootNode->getGrpcPort() == port + 1);
     ASSERT_TRUE(rootNode->getChildren().size() == 2);
-    PhysicalNodePtr node1 = rootNode->getChildren()[0]->as<PhysicalNode>();
+    TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
     ASSERT_TRUE(node1->getGrpcPort() == node1RpcPort);
-    PhysicalNodePtr node2 = rootNode->getChildren()[1]->as<PhysicalNode>();
+    TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
     ASSERT_TRUE(node2->getGrpcPort() == node2RpcPort);
 
     NES_INFO("ADD NEW PARENT");
@@ -71,7 +71,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     EXPECT_TRUE(successAddPar);
     ASSERT_TRUE(rootNode->getChildren().size() == 2);
     ASSERT_TRUE(node2->getChildren().size() == 1);
-    ASSERT_TRUE(node2->getChildren()[0]->as<PhysicalNode>()->getId() == node1->getId());
+    ASSERT_TRUE(node2->getChildren()[0]->as<TopologyNode>()->getId() == node1->getId());
 
     NES_INFO("REMOVE NEW PARENT");
     bool successRemoveParent = wrk->removeParent(node2->getId());
@@ -118,12 +118,12 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
     ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
 
-    PhysicalNodePtr rootNode = topology->getRoot();
+    TopologyNodePtr rootNode = topology->getRoot();
     ASSERT_TRUE(rootNode->getGrpcPort() == port + 1);
     ASSERT_TRUE(rootNode->getChildren().size() == 2);
-    PhysicalNodePtr node1 = rootNode->getChildren()[0]->as<PhysicalNode>();
+    TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
     ASSERT_TRUE(node1->getGrpcPort() == node1RpcPort);
-    PhysicalNodePtr node2 = rootNode->getChildren()[1]->as<PhysicalNode>();
+    TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
     ASSERT_TRUE(node2->getGrpcPort() == node2RpcPort);
 
     NES_INFO("REMOVE NEW PARENT");

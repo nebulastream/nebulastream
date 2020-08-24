@@ -313,17 +313,17 @@ const std::vector<NodePtr>& Node::getParents() const {
 }
 
 std::vector<NodePtr> Node::getAllRootNodes() {
-    NES_DEBUG("Node: Get all leaf nodes for this node");
+    NES_DEBUG("Node: Get all root nodes for this node");
     std::vector<NodePtr> rootNodes;
     for (auto parent : parents) {
         if (parent->getParents().empty()) {
-            NES_DEBUG("Node: Inserting leaf node to the collection");
+            NES_DEBUG("Node: Inserting root node to the collection");
             rootNodes.push_back(parent);
         } else {
-            NES_DEBUG("Node: Iterating over all children to find more leaf nodes");
+            NES_DEBUG("Node: Iterating over all parents to find more root nodes");
             for (auto parentOfParent : parent->getParents()) {
                 std::vector<NodePtr> parentNodes = parentOfParent->getParents();
-                NES_DEBUG("Node: inserting leaf nodes into the collection of leaf nodes");
+                NES_DEBUG("Node: inserting parent nodes into the collection of parent nodes");
                 rootNodes.insert(rootNodes.end(), parentNodes.begin(), parentNodes.end());
             }
         }

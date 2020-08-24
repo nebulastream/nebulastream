@@ -240,8 +240,8 @@ class Node : public std::enable_shared_from_this<Node> {
     const std::vector<NodePtr>& getParents() const;
 
     /**
-     * Get all the leaf nodes
-     * @return vector of leaf nodes
+     * Get all the root nodes
+     * @return vector of root nodes
      */
     std::vector<NodePtr> getAllRootNodes();
 

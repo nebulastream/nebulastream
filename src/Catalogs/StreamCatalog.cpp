@@ -1,7 +1,7 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Topology/PhysicalNode.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <assert.h>
@@ -265,9 +265,9 @@ bool StreamCatalog::testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::str
         != logicalToPhysicalStreamMapping.end();
 }
 
-std::vector<PhysicalNodePtr> StreamCatalog::getSourceNodesForLogicalStream(std::string logicalStreamName) {
+std::vector<TopologyNodePtr> StreamCatalog::getSourceNodesForLogicalStream(std::string logicalStreamName) {
 
-    std::vector<PhysicalNodePtr> listOfSourceNodes;
+    std::vector<TopologyNodePtr> listOfSourceNodes;
 
     //get current physical stream for this logical stream
     std::vector<StreamCatalogEntryPtr> physicalStreams = logicalToPhysicalStreamMapping[logicalStreamName];

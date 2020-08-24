@@ -111,6 +111,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerPrint) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
+/**
+ * @brief Test deploy query with print sink with one worker using top down strategy
+ */
 TEST_F(QueryDeploymentTest, testDeployOneWorkerPrintUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);

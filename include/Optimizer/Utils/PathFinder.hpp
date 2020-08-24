@@ -11,8 +11,8 @@ namespace NES {
 class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
 
-class PhysicalNode;
-typedef std::shared_ptr<PhysicalNode> PhysicalNodePtr;
+class TopologyNode;
+typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 
 class PathFinder;
 typedef std::shared_ptr<PathFinder> PathFinderPtr;
@@ -48,8 +48,8 @@ class PathFinder {
      * @param destination : destination node
      * @return a map of source node to the vector of nodes in the path identified for the
      */
-    std::map<PhysicalNodePtr, std::vector<PhysicalNodePtr>> findUniquePathBetween(std::vector<PhysicalNodePtr> sources,
-                                                                                  PhysicalNodePtr destination);
+    std::map<TopologyNodePtr, std::vector<TopologyNodePtr>> findUniquePathBetween(std::vector<TopologyNodePtr> sources,
+                                                                                  TopologyNodePtr destination);
 
     /**
      * @brief Find a path between given source and destination
@@ -57,7 +57,7 @@ class PathFinder {
      * @param destination : destination node
      * @return vector containing nodes
      */
-    std::vector<PhysicalNodePtr> findPathBetween(PhysicalNodePtr source, PhysicalNodePtr destination);
+    std::vector<TopologyNodePtr> findPathBetween(TopologyNodePtr source, TopologyNodePtr destination);
 
     /**
      * @brief Find a path with maximum bandwidth between given source destination
@@ -65,7 +65,7 @@ class PathFinder {
      * @param destination : destination node
      * @return vector containing nodes
      */
-    std::vector<PhysicalNodePtr> findPathWithMaxBandwidth(PhysicalNodePtr source, PhysicalNodePtr destination);
+    std::vector<TopologyNodePtr> findPathWithMaxBandwidth(TopologyNodePtr source, TopologyNodePtr destination);
 
     /**
      * @brief Find a path with minimum link latency between given source destination
@@ -73,7 +73,7 @@ class PathFinder {
      * @param destination : destination node
      * @return vector containing nodes
      */
-    std::vector<PhysicalNodePtr> findPathWithMinLinkLatency(PhysicalNodePtr source, PhysicalNodePtr destination);
+    std::vector<TopologyNodePtr> findPathWithMinLinkLatency(TopologyNodePtr source, TopologyNodePtr destination);
 
     /**
      * @brief Find all paths between given source destination
@@ -81,7 +81,7 @@ class PathFinder {
      * @param destination : destination node
      * @return vector containing vector of paths
      */
-    std::vector<std::vector<PhysicalNodePtr>> findAllPathsBetween(PhysicalNodePtr source, PhysicalNodePtr destination);
+    std::vector<std::vector<TopologyNodePtr>> findAllPathsBetween(TopologyNodePtr source, TopologyNodePtr destination);
 
     static PathFinderPtr create(TopologyPtr topology);
 
@@ -94,7 +94,7 @@ class PathFinder {
      * @param nesNode : the nes node pointer
      * @return backtracked path
      */
-    std::vector<PhysicalNodePtr> backTrackTraversedPathTill(std::vector<PhysicalNodePtr> path, PhysicalNodePtr nesNode);
+    std::vector<TopologyNodePtr> backTrackTraversedPathTill(std::vector<TopologyNodePtr> path, TopologyNodePtr nesNode);
 
     /**
      * @brief Find all paths between given source destination
@@ -102,7 +102,7 @@ class PathFinder {
      * @param destination : destination node
      * @return vector containing vector of paths
      */
-    std::vector<std::vector<PhysicalNodePtr>> findAllPathLinksBetween(PhysicalNodePtr source, PhysicalNodePtr destination);
+    std::vector<std::vector<TopologyNodePtr>> findAllPathLinksBetween(TopologyNodePtr source, TopologyNodePtr destination);
 
     /**
      * @brief convert the link path into the node path
@@ -110,7 +110,7 @@ class PathFinder {
      * @param selectedPath : the link path to be converted
      * @return vector of nodes in the link path
      */
-    std::vector<PhysicalNodePtr> convertLinkPathIntoNodePath(const PhysicalNodePtr source, const std::vector<PhysicalNodePtr>& selectedPath);
+    std::vector<TopologyNodePtr> convertLinkPathIntoNodePath(const TopologyNodePtr source, const std::vector<TopologyNodePtr>& selectedPath);
 
     TopologyPtr topology;
 };

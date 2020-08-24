@@ -1,18 +1,21 @@
-#ifndef NES_PHYSICALNODE_HPP
-#define NES_PHYSICALNODE_HPP
+#ifndef NES_TOPOLOGYNODE_HPP
+#define NES_TOPOLOGYNODE_HPP
 
 #include <NodeStats.pb.h>
 #include <Nodes/Node.hpp>
 
 namespace NES {
 
-class PhysicalNode;
-typedef std::shared_ptr<PhysicalNode> PhysicalNodePtr;
+class TopologyNode;
+typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 
-class PhysicalNode : public Node {
+/**
+ * @brief This class represents information about a physical node participating in the NES infrastructure
+ */
+class TopologyNode : public Node {
 
   public:
-    static PhysicalNodePtr create(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resource);
+    static TopologyNodePtr create(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
 
     /**
      * @brief method to get the id of the node
@@ -24,19 +27,19 @@ class PhysicalNode : public Node {
      * @brief method to get the overall cpu capacity of the node
      * @return size_t cpu capacity
      */
-    uint16_t getAvailableResource();
+    uint16_t getAvailableResources();
 
     /**
      * @brief method to reduce the cpu capacity of the node
      * @param size_t of the value that has to be subtracted
      */
-    void reduceResource(uint16_t usedCapacity);
+    void reduceResources(uint16_t usedCapacity);
 
     /**
      * @brief method to increase CPU capacity
      * @param size_t of the vlaue that has to be added
      */
-    void increaseResource(uint16_t freedCapacity);
+    void increaseResources(uint16_t freedCapacity);
 
     /**
      * @brief method to set the property of the node by creating a NodeProperties object
@@ -54,7 +57,7 @@ class PhysicalNode : public Node {
      * @brief Get ip address of the node
      * @return ip address
      */
-    const std::string& getIpAddress() const;
+    const std::string getIpAddress() const;
 
     /**
      * @brief Get grpc port for the node
@@ -74,17 +77,17 @@ class PhysicalNode : public Node {
      * @brief Create a shallow copy of the physical node i.e. without copying the parent and child nodes
      * @return
      */
-    PhysicalNodePtr copy();
+    TopologyNodePtr copy();
 
   private:
-    explicit PhysicalNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resource);
+    explicit TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
 
     uint64_t id;
     std::string ipAddress;
     uint32_t grpcPort;
     uint32_t dataPort;
-    uint16_t resource;
-    uint16_t usedResource;
+    uint16_t resources;
+    uint16_t usedResources;
     NodeStats nodeStats;
 
     //FIXME: as part of the issue #955 A potential solution for adding network link properties
@@ -93,4 +96,4 @@ class PhysicalNode : public Node {
 };
 }// namespace NES
 
-#endif//NES_PHYSICALNODE_HPP
+#endif//NES_TOPOLOGYNODE_HPP

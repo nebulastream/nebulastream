@@ -127,7 +127,7 @@ class StreamCatalog {
    * @param name of logical stream
    * @return list of physical nodes as pointers into the topology
    */
-    std::vector<PhysicalNodePtr> getSourceNodesForLogicalStream(std::string logicalStreamName);
+    std::vector<TopologyNodePtr> getSourceNodesForLogicalStream(std::string logicalStreamName);
 
     /**
    * @brief reset the catalog and recreate the default_logical stream

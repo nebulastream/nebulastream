@@ -6,8 +6,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Topology/PhysicalNode.hpp>
 #include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <chrono>
 #include <cpprest/http_client.h>
 #include <iostream>
@@ -232,12 +232,12 @@ class TestUtils {
         return false;
     }
 
-    static PhysicalNodePtr registerTestNode(size_t id, std::string address, int cpu, NodeStats nodeProperties,
+    static TopologyNodePtr registerTestNode(size_t id, std::string address, int cpu, NodeStats nodeProperties,
                                             PhysicalStreamConfig streamConf, NodeType type, StreamCatalogPtr streamCatalog, TopologyPtr topology) {
-        PhysicalNodePtr nodePtr;
+        TopologyNodePtr nodePtr;
         if (type == NodeType::Sensor) {
             NES_DEBUG("CoordinatorService::registerNode: register sensor node");
-            nodePtr = PhysicalNode::create(id, address, 4000, 4002, cpu);
+            nodePtr = TopologyNode::create(id, address, 4000, 4002, cpu);
 
             NES_DEBUG("try to register sensor phyName=" << streamConf.physicalStreamName << " logName="
                                                         << streamConf.logicalStreamName << " nodeID=" << nodePtr->getId());
@@ -271,7 +271,7 @@ class TestUtils {
 
         } else if (type == NodeType::Worker) {
             NES_DEBUG("CoordinatorService::registerNode: register worker node");
-            nodePtr = PhysicalNode::create(id, address, 4004, 4006, cpu);
+            nodePtr = TopologyNode::create(id, address, 4004, 4006, cpu);
         } else {
             NES_ERROR("CoordinatorService::registerNode: type not supported " << type);
             assert(0);
@@ -282,7 +282,7 @@ class TestUtils {
             nodePtr->setNodeStats(nodeProperties);
         }
 
-        const PhysicalNodePtr rootNode = topology->getRoot();
+        const TopologyNodePtr rootNode = topology->getRoot();
 
         if (rootNode == nodePtr) {
             NES_DEBUG("CoordinatorService::registerNode: tree is empty so this becomes new root");
