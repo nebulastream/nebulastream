@@ -212,7 +212,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
     builder.setQueryManager(engine->getQueryManager());
     builder.setBufferManager(engine->getBufferManager());
     builder.setCompiler(engine->getCompiler());
-    auto context = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink](TupleBuffer& buffer, WorkerContext&) {
+    auto context = std::make_shared<PipelineExecutionContext>(queryId, engine->getBufferManager(), [sink](TupleBuffer& buffer, WorkerContext&) {
         sink->writeData(buffer);
     });
     auto executable = std::make_shared<HandCodedExecutablePipeline>();

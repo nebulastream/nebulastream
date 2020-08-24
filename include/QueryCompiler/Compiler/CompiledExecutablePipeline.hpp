@@ -13,11 +13,17 @@ typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
  * @brief A executable pipeline that executes compiled code if invoked.
  */
 class CompiledExecutablePipeline : public ExecutablePipeline {
+  public:
     typedef uint32_t PipelineFunctionReturnType;
-    typedef PipelineFunctionReturnType (*PipelineFunctionPtr)(TupleBuffer&, void*, WindowManager*, QueryExecutionContextPtr::element_type&, WorkerContextRef);
+    typedef PipelineFunctionReturnType (*PipelineFunctionPtr)(TupleBuffer&, void*, WindowManager*, PipelineExecutionContext&, WorkerContextRef);
 
   public:
-    CompiledExecutablePipeline(CompiledCodePtr compiled_code);
+
+    CompiledExecutablePipeline() = delete;
+
+    explicit CompiledExecutablePipeline(PipelineFunctionPtr func);
+
+    explicit CompiledExecutablePipeline(CompiledCodePtr compiled_code);
 
     static ExecutablePipelinePtr create(CompiledCodePtr compiledCode);
 

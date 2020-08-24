@@ -1,15 +1,17 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <NodeEngine/WorkerContext.hpp>
+#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <utility>
 
 namespace NES {
 
+
 PipelineExecutionContext::PipelineExecutionContext(
+    QueryExecutionPlanId queryId,
     BufferManagerPtr bufferManager,
     std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction)
-    : bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)) {
+    : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)) {
     // nop
 }
 

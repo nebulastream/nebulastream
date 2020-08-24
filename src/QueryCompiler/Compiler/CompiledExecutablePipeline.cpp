@@ -12,6 +12,10 @@ CompiledExecutablePipeline::CompiledExecutablePipeline(CompiledCodePtr compiled_
     // nop
 }
 
+CompiledExecutablePipeline::CompiledExecutablePipeline(PipelineFunctionPtr func) : compiledCode(nullptr), pipelineFunc(func) {
+
+}
+
 uint32_t CompiledExecutablePipeline::execute(TupleBuffer& inputBuffer,
                                              void* state,
                                              WindowManagerPtr windowManager,

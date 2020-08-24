@@ -21,9 +21,10 @@ NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() {
 std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, size_t bufferSize, size_t numBuffers) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
+        auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
-        auto queryManager = std::make_shared<QueryManager>(nodeEngineId);
+        auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId);
         if (!partitionManager) {
             NES_ERROR("NodeEngine: error while creating partition manager");
             throw Exception("Error while creating partition manager");
