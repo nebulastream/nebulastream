@@ -23,6 +23,20 @@
 namespace NES {
 
 class TupleBuffer;
+
+enum ReconfigurationType : uint8_t {
+    CreateSink,
+};
+
+struct ReconfigurationDescriptor {
+    ReconfigurationType type;
+};
+
+class CompiledExecutablePipeline;
+
+class BufferManager;
+typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+
 /**
  * @brief the query manager is the central class to process queries.
  * It is source-driven. Each incoming buffer will add a task to the queue.
@@ -35,10 +49,17 @@ class TupleBuffer;
  */
 class QueryManager : public std::enable_shared_from_this<QueryManager> {
   public:
+
+    QueryManager() = delete;
+    QueryManager(const QueryManager&) = delete;
+    QueryManager& operator=(const QueryManager&) = delete;
+
     /**
-     * @brief Default constrcutor
+     * @brief
+     * @param bufferManager
      */
-    QueryManager(uint64_t nodeEngineId);
+    explicit QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId);
+
     ~QueryManager();
 
     /**
@@ -132,8 +153,10 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
+     * @param queryExecutionPlanId: the local QEP to reconfigure
+     * @param reconfigurationDescriptor: what to do
      */
-    bool addReconfigurationTask();
+    bool addReconfigurationTask(QueryExecutionPlanId queryExecutionPlanId, ReconfigurationDescriptor reconfigurationDescriptor);
 
   private:
     friend class ThreadPool;
@@ -144,9 +167,6 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     * @return bool indicating success
     */
     bool startThreadPool();
-
-    QueryManager(const QueryManager&) = delete;
-    QueryManager& operator=(const QueryManager&) = delete;
 
     void cleanup();
     void cleanupUnsafe();
@@ -166,6 +186,9 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     std::mutex workMutex;
 
     std::condition_variable cv;
+
+    BufferManagerPtr bufferManager;
+    std::shared_ptr<CompiledExecutablePipeline> reconfigurationExecutable;
 
     size_t nodeEngineId;
 };

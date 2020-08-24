@@ -2,6 +2,8 @@
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #include <functional>
 #include <memory>
+#include <QueryCompiler/QueryExecutionPlanId.hpp>
+
 namespace NES {
 class WorkerContext;
 class BufferManager;
@@ -30,6 +32,7 @@ class PipelineExecutionContext {
      * @param emitFunctionHandler an handler to receive the emitted buffers from the pipeline.
      */
     explicit PipelineExecutionContext(
+        QueryExecutionPlanId queryId,
         BufferManagerPtr bufferManager,
         std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler);
 
@@ -60,6 +63,12 @@ class PipelineExecutionContext {
     void setInputSchema(SchemaPtr inputSchema);
 
   private:
+
+    /**
+     * @brief Id of the local qep that owns the pipeline
+     */
+    QueryExecutionPlanId queryId;
+
     /**
      * @brief Reference to the buffer manager to enable buffer allocation
      */

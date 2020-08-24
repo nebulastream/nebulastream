@@ -1,15 +1,30 @@
 #include <NodeEngine/QueryManager.hpp>
+#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <Util/Logger.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <iostream>
 #include <memory>
+#include <utility>
 
 namespace NES {
 using std::string;
+namespace detail {
+uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, void*, WindowManager*, PipelineExecutionContext&, WorkerContextRef) {
+    auto* descriptor = buffer.getBufferAs<ReconfigurationDescriptor>();
+    switch (descriptor->type) {
+        case CreateSink: {
+            break;
+        }
+        default: NES_THROW_RUNTIME_ERROR("unsupported switch condition");
+    }
+    return 0;
+}
+}
 
-QueryManager::QueryManager(uint64_t nodeEngineId)
-    : queryMutex(), workMutex(), threadPool(nullptr), nodeEngineId(nodeEngineId) {
-    NES_DEBUG("QueryManager()");
+QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId)
+    : taskQueue(), sourceIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId) {
+    NES_DEBUG("Init QueryManager::QueryManager");
+    reconfigurationExecutable = std::make_shared<CompiledExecutablePipeline>(detail::reconfigurationTaskEntryPoint);
 }
 
 QueryManager::~QueryManager() {
@@ -172,7 +187,17 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool QueryManager::addReconfigurationTask() {
+bool QueryManager::addReconfigurationTask(QueryExecutionPlanId queryExecutionPlanId, ReconfigurationDescriptor descriptor) {
+    NES_DEBUG("QueryManager: QueryManager::getWork addReconfigurationTask get lock");
+    std::unique_lock<std::mutex> lock(workMutex);
+    auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationDescriptor));
+    NES_ASSERT(optBuffer, "invalid buffer");
+    auto buffer = optBuffer.value();
+    new (buffer.getBuffer()) ReconfigurationDescriptor(descriptor); // memcpy using copy ctor
+    auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, nullptr, nullptr);
+    for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+        taskQueue.emplace_back(pipeline, buffer);
+    }
     return true;
 }
 
