@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
-#include <NodeStats.pb.h>
 #include <CoordinatorRPCService.pb.h>
+#include <NodeStats.pb.h>
 
 #include <memory>
 #include <mutex>
