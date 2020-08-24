@@ -6,6 +6,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -132,7 +133,7 @@ AttributeFieldPtr createField(std::string name, BasicType type) {
 uint64_t Schema::getIndex(const std::string& fieldName) {
     int i = 0;
     for (const auto& field : this->fields) {
-        if (field->name == fieldName) {
+        if (UtilityFunctions::startsWith(field->name, fieldName)) {
             break;
         }
         i++;

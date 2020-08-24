@@ -304,4 +304,11 @@ bool UtilityFunctions::endsWith(const std::string& fullString, const std::string
     }
 }
 
+bool UtilityFunctions::startsWith(const std::string& fullString, const std::string& ending) {
+    if (fullString.rfind(ending, 0) == 0) {
+        return true;
+    }
+    return false;
+}
+
 }// namespace NES

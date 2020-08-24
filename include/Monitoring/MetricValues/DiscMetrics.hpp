@@ -20,6 +20,15 @@ class DiskMetrics {
      */
     static std::shared_ptr<Schema> getSchema(const std::string& prefix);
 
+    /**
+     * @brief Parses a DiskMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+     */
+    static DiskMetrics fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+
     uint64_t fBsize;
     uint64_t fFrsize;
     uint64_t fBlocks;

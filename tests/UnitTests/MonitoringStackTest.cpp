@@ -206,40 +206,37 @@ TEST_F(MonitoringStackTest, testSerializationGroups) {
     Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
 
     // add with simple data types
-    //auto intS = "simpleInt";
-    //metricGroup->add(intS, 1);
+    auto intS = "simpleInt";
+    metricGroup->add(intS, 1);
 
     // add cpu stats
-    //auto cpuS = "cpuStats";
-    //metricGroup->add(cpuS, cpuStats);
+    auto cpuS = "cpuStats";
+    metricGroup->add(cpuS, cpuStats);
 
     // add network stats
     auto networkS = "networkStats";
     metricGroup->add(networkS, networkStats);
 
     // add disk stats
-    //auto diskS = "diskStats";
-    //metricGroup->add(diskS, diskStats);
+    auto diskS = "diskStats";
+    metricGroup->add(diskS, diskStats);
 
     // add mem stats
-    //auto memS = "memStats";
-    //metricGroup->add(memS, memStats);
+    auto memS = "memStats";
+    metricGroup->add(memS, memStats);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto schema = Schema::create();
     auto def = metricGroup->getSample(schema, tupleBuffer);
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 
-    //ASSERT_TRUE(!def.cpuMetrics.empty());
-    //ASSERT_TRUE(!def.cpuValues.empty());
+    ASSERT_TRUE(!def.cpuMetrics.empty());
+    ASSERT_TRUE(!def.cpuValues.empty());
     ASSERT_TRUE(!def.networkMetrics.empty());
     ASSERT_TRUE(!def.networkValues.empty());
-    //ASSERT_TRUE(!def.diskMetrics.empty());
-    //ASSERT_TRUE(!def.memoryMetrics.empty());
-    //ASSERT_TRUE(!def.simpleTypedMetrics.empty());
-
-    auto deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, "networkStats_");
-    //ASSERT_TRUE(deserNw.getInterfaceNum() == networkStats.measure().getInterfaceNum());
+    ASSERT_TRUE(!def.diskMetrics.empty());
+    ASSERT_TRUE(!def.memoryMetrics.empty());
+    ASSERT_TRUE(!def.simpleTypedMetrics.empty());
 }
 
 TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
@@ -282,7 +279,13 @@ TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
     ASSERT_TRUE(deserCpu.getNumCores() == cpuStats.measure().getNumCores());
 
     auto deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, "networkStats_");
-    ASSERT_TRUE(deserCpu.getNumCores() == cpuStats.measure().getNumCores());
+    ASSERT_TRUE(deserNw.getInterfaceNum() == networkStats.measure().getInterfaceNum());
+
+    auto deserDisk = DiskMetrics::fromBuffer(schema, tupleBuffer, "diskStats_");
+    ASSERT_TRUE(deserDisk.fBavail == diskStats.measure().fBavail);
+
+    //TODO: deser of simple data types
+    //TODO: Parsing of MetricDefinition for group deserialization
 }
 
 TEST_F(MonitoringStackTest, testSamplingProtocol) {
