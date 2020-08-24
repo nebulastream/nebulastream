@@ -1,8 +1,8 @@
 #ifndef NES_TOPOLOGY_HPP
 #define NES_TOPOLOGY_HPP
 
-#include <memory>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <vector>
 
