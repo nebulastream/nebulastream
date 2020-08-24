@@ -50,7 +50,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     for (TopologyNodePtr targetSource : sourceNodes) {
         NES_DEBUG("TopDownStrategy: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
-        TopologyNodePtr startNode = topology->findAllPathBetween(targetSource, rootNode);
+        TopologyNodePtr startNode = topology->findAllPathBetween(targetSource, rootNode).value();
         NES_INFO("TopDownStrategy: Adding system generated operators for query with id : " << queryId);
         addSystemGeneratedOperators(queryId, startNode);
     }
@@ -65,55 +65,55 @@ void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sin
     for (TopologyNodePtr nesSourceNode : nesSourceNodes) {
 
         LogicalOperatorNodePtr candidateOperator = sinkOperator;
-        auto startNode = topology->findAllPathBetween(nesSourceNode, sinkNode);
+        auto candidatePhysicalNode = topology->findAllPathBetween(nesSourceNode, sinkNode);
         NES_DEBUG("TopDownStrategy: inverting the start of the path");
-        startNode = startNode->getAllRootNodes()[0]->as<TopologyNode>();
-        if (!startNode) {
+        if (!candidatePhysicalNode.has_value()) {
             NES_ERROR("TopDownStrategy: No path exists between sink and source");
             throw QueryPlacementException("TopDownStrategy: No path exists between sink and source");
         }
+        TopologyNodePtr candidateNode = candidatePhysicalNode.value()->getAllRootNodes()[0]->as<TopologyNode>();
 
         // Loop till all operators are not placed.
         while (candidateOperator) {
 
             if (candidateOperator->instanceOf<SourceLogicalOperatorNode>()) {
                 NES_DEBUG("TopDownStrategy: Placing source operator on the source node");
-                if (startNode->getId() != nesSourceNode->getId()) {
-                    startNode = startNode->getAllLeafNodes()[0]->as<TopologyNode>();
+                if (candidateNode->getId() != nesSourceNode->getId()) {
+                    candidateNode = candidateNode->getAllLeafNodes()[0]->as<TopologyNode>();
                 }
-            } else if (startNode->getAvailableResources() == 0) {
+            } else if (candidateNode->getAvailableResources() == 0) {
                 NES_DEBUG("TopDownStrategy: Find the next NES node in the path where operator can be placed");
-                while (!startNode->getChildren().empty()) {
-                    startNode = startNode->getChildren()[0]->as<TopologyNode>();
-                    if (startNode->getAvailableResources() > 0) {
-                        NES_DEBUG("TopDownStrategy: Found NES node for placing the operators with id : " + startNode->getId());
+                while (!candidateNode->getChildren().empty()) {
+                    candidateNode = candidateNode->getChildren()[0]->as<TopologyNode>();
+                    if (candidateNode->getAvailableResources() > 0) {
+                        NES_DEBUG("TopDownStrategy: Found NES node for placing the operators with id : " + candidateNode->getId());
                         break;
                     }
                 }
             }
 
-            if (startNode->getAvailableResources() == 0) {
+            if (candidateNode->getAvailableResources() == 0) {
                 NES_ERROR("TopDownStrategy: No node available for further placement of operators");
                 throw QueryPlacementException("TopDownStrategy: No node available for further placement of operators");
             }
 
             if (candidateOperator->instanceOf<SinkLogicalOperatorNode>()) {
-                if (!globalExecutionPlan->getExecutionNodeByNodeId(startNode->getId())) {
+                if (!globalExecutionPlan->getExecutionNodeByNodeId(candidateNode->getId())) {
                     NES_DEBUG("TopDownStrategy: Creating a new root execution node for placing sink operator");
-                    const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(startNode);
+                    const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(candidateNode);
                     globalExecutionPlan->addExecutionNodeAsRoot(rootExecutionNode);
                 }
             }
 
             NES_DEBUG("TopDownStrategy: Checking if execution node for the target worker node already present.");
 
-            if (globalExecutionPlan->checkIfExecutionNodeExists(startNode->getId())) {
+            if (globalExecutionPlan->checkIfExecutionNodeExists(candidateNode->getId())) {
 
-                NES_DEBUG("TopDownStrategy: node " << startNode->toString() << " was already used by other deployment");
-                const ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(startNode->getId());
+                NES_DEBUG("TopDownStrategy: node " << candidateNode->toString() << " was already used by other deployment");
+                const ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateNode->getId());
 
                 if (candidateExecutionNode->hasQuerySubPlan(queryId)) {
-                    NES_DEBUG("TopDownStrategy: node " << startNode->toString() << " already contains a query sub plan with the id" << queryId);
+                    NES_DEBUG("TopDownStrategy: node " << candidateNode->toString() << " already contains a query sub plan with the id" << queryId);
                     if (candidateExecutionNode->checkIfQuerySubPlanContainsOperator(queryId, candidateOperator)) {
                         NES_DEBUG("TopDownStrategy: skip to next upstream operator as the target operator is already placed.");
                         std::vector<NodePtr> children = candidateOperator->getChildren();
@@ -146,9 +146,9 @@ void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sin
                 }
             } else {
 
-                NES_DEBUG("TopDownStrategy: create new execution node with id: " << startNode->getId());
-                ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(startNode, queryId, candidateOperator->copy());
-                NES_DEBUG("TopDownStrategy: Adding new execution node with id: " << startNode->getId());
+                NES_DEBUG("TopDownStrategy: create new execution node with id: " << candidateNode->getId());
+                ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNode, queryId, candidateOperator->copy());
+                NES_DEBUG("TopDownStrategy: Adding new execution node with id: " << candidateNode->getId());
                 if (!globalExecutionPlan->addExecutionNode(newExecutionNode)) {
                     NES_ERROR("TopDownStrategy: failed to add execution node for query " + queryId);
                     throw QueryPlacementException("TopDownStrategy: failed to add execution node for query " + queryId);
@@ -158,8 +158,8 @@ void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sin
             NES_DEBUG("TopDownStrategy: Reducing the node remaining CPU capacity by 1");
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
-            startNode->reduceResources(1);
-            topology->reduceResources(startNode->getId(), 1);
+            candidateNode->reduceResources(1);
+            topology->reduceResources(candidateNode->getId(), 1);
             if (!candidateOperator->getChildren().empty()) {
                 //FIXME: currently we are not considering split operators
                 NES_DEBUG("TopDownStrategy: Finding next operator for placement");
