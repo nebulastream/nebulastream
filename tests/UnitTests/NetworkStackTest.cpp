@@ -917,8 +917,8 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
 
     ASSERT_EQ(10, testSink->completed.get_future().get());
 
-    nodeEngine->undeployQuery(1);
     nodeEngine->undeployQuery(2);
+    nodeEngine->undeployQuery(1);
 }
 
 } // namespace Network
