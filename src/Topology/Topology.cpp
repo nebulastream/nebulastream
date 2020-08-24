@@ -61,13 +61,74 @@ bool Topology::removePhysicalNode(TopologyNodePtr nodeToRemove) {
 std::vector<TopologyNodePtr> Topology::findPathBetween(std::vector<TopologyNodePtr> startNodes, std::vector<TopologyNodePtr> destinationNodes) {
     std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Finding path between set of start and destination nodes");
-    std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
     std::vector<TopologyNodePtr> startNodesOfGraph;
     for (auto& startNode : startNodes) {
+        std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
         TopologyNodePtr startNodeOfGraph = find(startNode, destinationNodes, mapOfUniqueNodes);
+        for (auto& destinationNode : destinationNodes) {
+            if (mapOfUniqueNodes.find(destinationNode->getId()) == mapOfUniqueNodes.end()) {
+                NES_ERROR("Topology: Unable to find path between source node " << startNode->toString() << " and destination node " << destinationNode->toString());
+                return {};
+            }
+        }
         startNodesOfGraph.push_back(startNodeOfGraph);
     }
     return startNodesOfGraph;
+}
+
+std::vector<TopologyNodePtr> mergeGraphs(std::vector<TopologyNodePtr> startNodes) {
+    std::map<uint64_t, uint32_t> nodeCountMap;
+
+    std::deque<TopologyNodePtr> nodesToTraverse{startNodes.begin(), startNodes.end()};
+    while (!nodesToTraverse.empty()) {
+        TopologyNodePtr node = nodesToTraverse.front();
+        nodesToTraverse.pop_front();
+        const std::vector<NodePtr> family = node->getAndFlattenAllParent();
+        for (auto& member : family) {
+            uint64_t nodeId = member->as<TopologyNode>()->getId();
+            if (nodeCountMap.find(nodeId) != nodeCountMap.end()) {
+                uint32_t count = nodeCountMap[nodeId];
+                nodeCountMap[nodeId] = count + 1;
+            } else {
+                nodeCountMap[nodeId] = 1;
+            }
+        }
+    }
+
+    for (auto& startNode : startNodes) {
+        while (startNode) {
+            std::vector<NodePtr> parents = startNode->getParents();
+            if (parents.size() > 1) {
+                uint32_t maxWeight = 0;
+                TopologyNodePtr selectedParent;
+                for (auto& parent : parents) {
+                    std::vector<NodePtr> family = parent->getAndFlattenAllParent();
+                    uint32_t weight = 0;
+                    for (auto& member : family) {
+                        weight = weight + nodeCountMap[member->as<TopologyNode>()->getId()];
+                    }
+                    if (weight > maxWeight) {
+                        if (selectedParent) {
+                            startNode->removeChild(selectedParent);
+                        }
+                        maxWeight = weight;
+                        selectedParent = parent->as<TopologyNode>();
+                    } else {
+                        if (selectedParent) {
+                            startNode->removeChild(selectedParent);
+                        }
+                    }
+                }
+                startNode = selectedParent;
+            } else if (parents.size() == 1) {
+                startNode = parents[0]->as<TopologyNode>();
+            } else {
+                startNode = nullptr;
+            }
+        }
+    }
+
+    return startNodes;
 }
 
 std::optional<TopologyNodePtr> Topology::findAllPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode) {
