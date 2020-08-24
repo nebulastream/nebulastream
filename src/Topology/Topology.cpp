@@ -5,7 +5,7 @@
 
 namespace NES {
 
-Topology::Topology() : rootNode(nullptr), mutex() {
+Topology::Topology() : rootNode(nullptr), topologyLock() {
     NES_DEBUG("Topology()");
 }
 
@@ -18,7 +18,7 @@ TopologyPtr Topology::create() {
 }
 
 bool Topology::addNewPhysicalNodeAsChild(TopologyNodePtr parent, TopologyNodePtr newNode) {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     uint64_t newNodeId = newNode->getId();
     if (indexOnNodeIds.find(newNodeId) == indexOnNodeIds.end()) {
         NES_INFO("Topology: Adding New Node " << newNode->toString() << " to the catalog of nodes.");
@@ -29,7 +29,7 @@ bool Topology::addNewPhysicalNodeAsChild(TopologyNodePtr parent, TopologyNodePtr
 }
 
 bool Topology::removePhysicalNode(TopologyNodePtr nodeToRemove) {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Removing Node " << nodeToRemove->toString());
 
     uint64_t idOfNodeToRemove = nodeToRemove->getId();
@@ -59,7 +59,7 @@ bool Topology::removePhysicalNode(TopologyNodePtr nodeToRemove) {
 }
 
 std::vector<TopologyNodePtr> Topology::findPathBetween(std::vector<TopologyNodePtr> startNodes, std::vector<TopologyNodePtr> destinationNodes) {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Finding path between set of start and destination nodes");
     std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
     std::vector<TopologyNodePtr> startNodesOfGraph;
@@ -71,7 +71,7 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(std::vector<TopologyNodeP
 }
 
 std::optional<TopologyNodePtr> Topology::findAllPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode) {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
 
     std::optional<TopologyNodePtr> result;
@@ -129,7 +129,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode, std::vector<TopologyNod
 }
 
 std::string Topology::toString() {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     //FIXME: as part of #954
 
     if (!rootNode) {
@@ -165,7 +165,7 @@ void Topology::print() {
 }
 
 bool Topology::nodeExistsWithIpAndPort(std::string ipAddress, uint32_t grpcPort) {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Finding if a physical node with ip " << ipAddress << " and port " << grpcPort << " exists.");
     if (!rootNode) {
         NES_WARNING("Topology: Root node not found.");
@@ -184,12 +184,12 @@ bool Topology::nodeExistsWithIpAndPort(std::string ipAddress, uint32_t grpcPort)
 }
 
 TopologyNodePtr Topology::getRoot() {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     return rootNode;
 }
 
 TopologyNodePtr Topology::findNodeWithId(uint64_t nodeId) {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Finding a physical node with id " << nodeId);
     if (indexOnNodeIds.find(nodeId) != indexOnNodeIds.end()) {
         NES_DEBUG("Topology: Found a physical node with id " << nodeId);
@@ -200,20 +200,20 @@ TopologyNodePtr Topology::findNodeWithId(uint64_t nodeId) {
 }
 
 void Topology::setAsRoot(TopologyNodePtr physicalNode) {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Setting physical node " << physicalNode->toString() << " as root to the topology.");
     indexOnNodeIds[physicalNode->getId()] = physicalNode;
     rootNode = physicalNode;
 }
 
 bool Topology::removeNodeAsChild(TopologyNodePtr parentNode, TopologyNodePtr childNode) {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Removing node " << childNode->toString() << " as child to the node " << parentNode->toString());
     return parentNode->remove(childNode);
 }
 
 bool Topology::reduceResources(uint64_t nodeId, uint16_t amountToReduce) {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Reduce " << amountToReduce << " resources from node with id " << nodeId);
     if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
         NES_WARNING("Topology: Unable to find node with id " << nodeId);
@@ -224,7 +224,7 @@ bool Topology::reduceResources(uint64_t nodeId, uint16_t amountToReduce) {
 }
 
 bool Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
-    std::unique_lock lock(mutex);
+    std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Increase " << amountToIncrease << " resources from node with id " << nodeId);
     if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
         NES_WARNING("Topology: Unable to find node with id " << nodeId);

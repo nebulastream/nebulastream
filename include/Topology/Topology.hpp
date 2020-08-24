@@ -141,7 +141,7 @@ class Topology {
 
     //TODO: At present we assume that we have only one root node
     TopologyNodePtr rootNode;
-    std::mutex mutex;
+    std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
 };
 }// namespace NES
