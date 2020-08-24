@@ -55,13 +55,13 @@ class Topology {
     TopologyNodePtr findNodeWithId(uint64_t nodeId);
 
     /**
-     * @brief This method will return a subgraph containing only the path between start and destination node.
+     * @brief This method will return a subgraph containing all the paths between start and destination node.
      * Note: this method will only look for the destination node only in the parent nodes of the start node.
      * @param startNode: the physical start node
      * @param destinationNode: the destination start node
      * @return physical location of the leaf node in the graph.
      */
-    std::optional<TopologyNodePtr> findPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode);
+    std::optional<TopologyNodePtr> findAllPathBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNode);
 
     /**
      * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
@@ -69,15 +69,7 @@ class Topology {
      * @param destinationNodes: the destination Nodes
      * @return a vector of start nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
      */
-    std::vector<PhysicalNodePtr> findPathBetween(std::vector<PhysicalNodePtr> startNodes, std::vector<PhysicalNodePtr> destinationNodes);
-
-    /**
-     * @brief Find a sub-graph with all paths between a start and destination node
-     * @param startNode: the start node
-     * @param destinationNode: the destination node
-     * @return the pointer to the start node else nullptr
-     */
-    PhysicalNodePtr findAllPathBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNode);
+    std::vector<TopologyNodePtr> findPathBetween(std::vector<PhysicalNodePtr> startNodes, std::vector<PhysicalNodePtr> destinationNodes);
 
     //FIXME: as part of the issue #955
     //    std::vector<LinkProperties> getLinkPropertiesBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNde);

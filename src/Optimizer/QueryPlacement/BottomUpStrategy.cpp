@@ -57,7 +57,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     for (TopologyNodePtr targetSource : sourceNodes) {
         NES_DEBUG("BottomUpStrategy: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
-        TopologyNodePtr startNode = topology->findPathBetween(targetSource, rootNode).value();
+        TopologyNodePtr startNode = topology->findAllPathBetween(targetSource, rootNode).value();
         NES_INFO("BottomUpStrategy: Adding system generated operators for query with id : " << queryId);
         addSystemGeneratedOperators(queryId, startNode);
     }
@@ -72,7 +72,7 @@ void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr so
     for (const auto& sourceNode : sourceNodes) {
 
         NES_INFO("BottomUpStrategy: Find the path between source and sink node for query with id : " << queryId);
-        TopologyNodePtr candidatePhysicalNode = topology->findPathBetween(sourceNode, sinkNode).value();
+        PhysicalNodePtr candidatePhysicalNode = topology->findAllPathBetween(sourceNode, sinkNode);
         if (!candidatePhysicalNode) {
             NES_ERROR("BottomUpStrategy: No path exists between sink and source");
             throw QueryPlacementException("BottomUpStrategy: No path exists between sink and source");

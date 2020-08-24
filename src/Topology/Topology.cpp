@@ -70,20 +70,11 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(std::vector<TopologyNodeP
     return startNodesOfGraph;
 }
 
-TopologyNodePtr Topology::findAllPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode) {
-    std::unique_lock lock(mutex);
-    NES_INFO("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
-
-    return nullptr;
-}
-
-std::optional<TopologyNodePtr> Topology::findPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode) {
+std::optional<TopologyNodePtr> Topology::findAllPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode) {
     std::unique_lock lock(mutex);
     NES_INFO("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
 
     std::optional<TopologyNodePtr> result;
-    std::vector<TopologyNodePtr> nodesInPath;
-    bool found = find(startNode, destinationNode, nodesInPath);
     std::vector<TopologyNodePtr> searchedNodes{destinationNode};
     std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
     TopologyNodePtr found = find(startNode, searchedNodes, mapOfUniqueNodes);
@@ -100,6 +91,8 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode, std::vector<TopologyNod
     auto found = std::find_if(searchedNodes.begin(), searchedNodes.end(), [&](TopologyNodePtr searchedNode) {
         return searchedNode->getId() == testNode->getId();
     });
+
+    std::optional<TopologyNodePtr> result;
 
     if (found != searchedNodes.end()) {
         NES_INFO("Topology: found the destination node");
