@@ -61,7 +61,7 @@ class Topology {
      * @param destinationNode: the destination start node
      * @return physical location of the leaf node in the graph.
      */
-    std::optional<TopologyNodePtr> findAllPathBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNode);
+    std::optional<TopologyNodePtr> findAllPathBetween(TopologyNodePtr startNode, TopologyNodePtr destinationNode);
 
     /**
      * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
@@ -69,7 +69,7 @@ class Topology {
      * @param destinationNodes: the destination Nodes
      * @return a vector of start nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
      */
-    std::vector<TopologyNodePtr> findPathBetween(std::vector<PhysicalNodePtr> startNodes, std::vector<PhysicalNodePtr> destinationNodes);
+    std::vector<TopologyNodePtr> findPathBetween(std::vector<TopologyNodePtr> startNodes, std::vector<TopologyNodePtr> destinationNodes);
 
     //FIXME: as part of the issue #955
     //    std::vector<LinkProperties> getLinkPropertiesBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNde);

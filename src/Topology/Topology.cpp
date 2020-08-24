@@ -111,7 +111,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode, std::vector<TopologyNod
 
     TopologyNodePtr foundNode = nullptr;
     for (auto& parent : parents) {
-        const TopologyNodePtr found = find(parent->as<PhysicalNode>(), searchedNodes, uniqueNodes);
+        TopologyNodePtr found = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
         if (found) {
             NES_TRACE("Topology: found the destination node as the parent of the physical node.");
             if (!foundNode) {

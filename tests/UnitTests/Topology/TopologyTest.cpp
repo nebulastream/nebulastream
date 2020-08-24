@@ -308,7 +308,7 @@ TEST_F(TopologyTest, findPathBetweenTwoNodes) {
     EXPECT_TRUE(success);
     EXPECT_TRUE(childNode1->containAsChild(childNode2));
 
-    const TopologyNodePtr startNode = topology->findPathBetween(childNode1, rootNode).value();
+    const TopologyNodePtr startNode = topology->findAllPathBetween(childNode1, rootNode).value();
 
     EXPECT_TRUE(startNode->getId() == childNode1->getId());
 }
@@ -349,7 +349,7 @@ TEST_F(TopologyTest, findPathBetweenNodesWithMultipleParentsAndChildren) {
     topology->addNewPhysicalNodeAsChild(workers.at(7), workers.at(8));
     topology->addNewPhysicalNodeAsChild(workers.at(7), workers.at(9));
 
-    const std::optional<TopologyNodePtr> startNode = topology->findPathBetween(workers.at(9), workers.at(2));
+    const std::optional<TopologyNodePtr> startNode = topology->findAllPathBetween(workers.at(9), workers.at(2));
 
     EXPECT_TRUE(startNode.has_value());
     EXPECT_TRUE(startNode.value()->getId() == workers.at(9)->getId());
@@ -390,7 +390,7 @@ TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     success = topology->removeNodeAsChild(childNode1, childNode2);
     EXPECT_TRUE(success);
 
-    const std::optional<TopologyNodePtr> startNode = topology->findPathBetween(childNode2, rootNode);
+    const std::optional<TopologyNodePtr> startNode = topology->findAllPathBetween(childNode2, rootNode);
 
     EXPECT_FALSE(startNode.has_value());
 }
