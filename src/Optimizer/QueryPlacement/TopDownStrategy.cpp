@@ -50,7 +50,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     for (TopologyNodePtr targetSource : sourceNodes) {
         NES_DEBUG("TopDownStrategy: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
-        TopologyNodePtr startNode = topology->findPathBetween(targetSource, rootNode).value();
+        TopologyNodePtr startNode = topology->findAllPathBetween(targetSource, rootNode);
         NES_INFO("TopDownStrategy: Adding system generated operators for query with id : " << queryId);
         addSystemGeneratedOperators(queryId, startNode);
     }
@@ -65,7 +65,7 @@ void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sin
     for (TopologyNodePtr nesSourceNode : nesSourceNodes) {
 
         LogicalOperatorNodePtr candidateOperator = sinkOperator;
-        auto startNode = topology->findPathBetween(nesSourceNode, sinkNode).value();
+        auto startNode = topology->findAllPathBetween(nesSourceNode, sinkNode);
         NES_DEBUG("TopDownStrategy: inverting the start of the path");
         startNode = startNode->getAllRootNodes()[0]->as<TopologyNode>();
         if (!startNode) {
