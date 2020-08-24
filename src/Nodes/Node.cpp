@@ -483,8 +483,7 @@ std::vector<NodePtr> Node::getAndFlattenAllChildren() {
     return allChildren;
 }
 
-void Node::getAndFlattenAllChildrenHelper(const NodePtr node,
-                                          std::vector<NodePtr>& allChildren, const NodePtr excludednode) {
+void Node::getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludednode) {
 
     // todo this implementation may be slow
     for (auto&& currentNode : node->children) {
@@ -493,6 +492,18 @@ void Node::getAndFlattenAllChildrenHelper(const NodePtr node,
             getAndFlattenAllChildrenHelper(currentNode, allChildren, excludednode);
         }
     }
+}
+
+std::vector<NodePtr> Node::getAndFlattenAllParent() {
+    NES_INFO("Node: Get this node, all its parents, and Ancestors");
+    std::vector<NodePtr> result{shared_from_this()};
+    for(auto& parent: parents){
+        NES_TRACE("Node: Get this node, all its parents, and Ancestors");
+        std::vector<NodePtr> parentAndAncestors=parent->getAndFlattenAllParent();
+        NES_TRACE("Node: Add them to the result");
+        result.insert(result.end(), parentAndAncestors.begin(), parentAndAncestors.end());
+    }
+    return result;
 }
 
 bool Node::isCyclic() {

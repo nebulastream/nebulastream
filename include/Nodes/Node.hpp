@@ -272,6 +272,12 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     NodePtr findRecursively(const NodePtr root, const NodePtr nodeToFind);
 
+    /**
+     * @brief Get all nodes that are parents to this node.
+     * @return vector of all of its parent nodes
+     */
+    std::vector<NodePtr> getAndFlattenAllParent();
+
   protected:
     /**
      * @brief the parents of this node. There is no equal nodes
