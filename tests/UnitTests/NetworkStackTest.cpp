@@ -871,7 +871,6 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     auto translatePhase =  TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0], nodeEngine);
 
-
     GeneratedQueryExecutionPlanBuilder builderReceiverQEP = GeneratedQueryExecutionPlanBuilder::create()
         .setCompiler(nodeEngine->getCompiler())
         .addOperatorQueryPlan(generatableOperators)
