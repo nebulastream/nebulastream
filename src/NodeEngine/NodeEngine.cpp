@@ -290,6 +290,7 @@ bool NodeEngine::stop() {
     }
 
     // release components
+
     queryManager->destroy();
     queryManager.reset();
     networkManager.reset();
