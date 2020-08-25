@@ -63,15 +63,17 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
         NES_WARNING("NesCoordinator: finished queryRequestProcessor");
     }));
 
-    NES_DEBUG("startCoordinatorRPCServer: Building GRPC Server");
+    NES_DEBUG("NesCoordinator: startCoordinatorRPCServer: Building GRPC Server");
+    std::promise<bool> promRPC;
 
     rpcThread = std::make_shared<std::thread>(([&]() {
-        NES_DEBUG("startCoordinatorRPCServer");
-        buildAndStartGRPCServer();
-        NES_DEBUG("startCoordinatorRPCServer: end listening");
+        NES_DEBUG("NesCoordinator: buildAndStartGRPCServer");
+        buildAndStartGRPCServer(promRPC);
+        NES_DEBUG("NesCoordinator: buildAndStartGRPCServer: end listening");
     }));
+    promRPC.get_future().get();
 
-    NES_DEBUG("NESWorker::startCoordinatorRPCServer: ready");
+    NES_DEBUG("NesCoordinator:buildAndStartGRPCServer: ready");
 
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
@@ -121,8 +123,11 @@ bool NesCoordinator::stopCoordinator(bool force) {
         }
 
         NES_DEBUG("NesCoordinator: stopping rpc server");
-        rpcServer->Shutdown(std::chrono::system_clock::now());
+        rpcServer->Shutdown();
+        rpcServer->GetHealthCheckService()->Shutdown();
+        grpc_shutdown();
         rpcServer->Wait();
+
         if (rpcThread->joinable()) {
             NES_DEBUG("NesCoordinator: join rpcThread");
             rpcThread->join();
@@ -156,7 +161,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
     }
 }
 
-void NesCoordinator::buildAndStartGRPCServer() {
+void NesCoordinator::buildAndStartGRPCServer(std::promise<bool>& prom) {
     grpc::ServerBuilder builder;
     CoordinatorRPCServer service(coordinatorEngine);
 
@@ -164,8 +169,11 @@ void NesCoordinator::buildAndStartGRPCServer() {
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     rpcServer = builder.BuildAndStart();
-    NES_DEBUG("startCoordinatorRPCServer: Server listening on address=" << address);
+    prom.set_value(true);
+    NES_DEBUG("NesCoordinator: buildAndStartGRPCServerServer listening on address=" << address);
     rpcServer->Wait();//blocking call
+    NES_DEBUG("NesCoordinator: buildAndStartGRPCServer end listening");
+
 }
 
 void NesCoordinator::setServerIp(std::string serverIp) {

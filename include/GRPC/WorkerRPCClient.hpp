@@ -22,6 +22,7 @@ class WorkerRPCClient {
 
   public:
     WorkerRPCClient();
+    ~WorkerRPCClient();
 
     /**
     * @brief deploy registers and starts a query

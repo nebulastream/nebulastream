@@ -18,6 +18,12 @@ CoordinatorRPCClient::CoordinatorRPCClient(std::string address)
     coordinatorStub = CoordinatorRPCService::NewStub(rpcChannel);
 }
 
+CoordinatorRPCClient::~CoordinatorRPCClient()
+{
+    NES_DEBUG("CoordinatorRPCClient(): destruct");
+}
+
+
 bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf.toString() << " workerID=" << workerId);
 

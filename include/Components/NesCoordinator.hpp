@@ -6,7 +6,7 @@
 #include <grpcpp/server_builder.h>
 #include <string>
 #include <thread>
-
+#include <future>
 namespace NES {
 
 class Topology;
@@ -104,10 +104,9 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
 
   private:
     /**
-     * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the
-     * CoordinatorRPCClient
+     * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient
      */
-    void buildAndStartGRPCServer();
+    void buildAndStartGRPCServer(std::promise<bool>& prom);
 
   private:
     std::string serverIp;
