@@ -56,7 +56,7 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
                 // qep not found in list, add it
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << source->getSourceId());
                 sourceIdToQueryMap[source->getSourceId()].insert(qep);
-                queryToStatisticsMap[qep->getQueryId()] = std::make_shared<QueryStatistics>();
+                queryToStatisticsMap.insert(qep->getQueryId(), std::make_shared<QueryStatistics>());
             } else {
                 NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.");
                 return false;
@@ -67,7 +67,8 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
                                               << " not found. Creating new element with with qep " << qep);
             std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
             sourceIdToQueryMap[source->getSourceId()] = qepSet;
-            queryToStatisticsMap[qep->getQueryId()] = std::make_shared<QueryStatistics>();
+            queryToStatisticsMap.insert(qep->getQueryId(), std::make_shared<QueryStatistics>());
+
         }
     }
     return true;
@@ -243,7 +244,7 @@ void QueryManager::addWork(const std::string& sourceId, TupleBuffer& buf) {
 void QueryManager::completedWork(Task& task, WorkerContext&) {
     NES_INFO("QueryManager::completedWork: Work for task=" << task);
     std::unique_lock lock(statisticsMutex);
-    auto statistics = queryToStatisticsMap[task.getPipelineStage()->getQepParentId()];
+    auto statistics = queryToStatisticsMap.find(task.getPipelineStage()->getQepParentId());
 
     statistics->incProcessedTasks();
     if (task.isWatermarkOnly()) {
@@ -259,7 +260,7 @@ std::string QueryManager::getQueryManagerStatistics() {
     std::stringstream ss;
     ss << "QueryManager Statistics:";
     for (auto& qep : runningQEPs) {
-        auto stats = queryToStatisticsMap[qep->getQueryId()];
+        auto stats = queryToStatisticsMap.find(qep->getQueryId());
         ss << "Query=" << qep;
         ss << "\t processedTasks =" << stats->getProcessedTasks();
         ss << "\t processedTuple =" << stats->getProcessedTuple();
@@ -284,7 +285,7 @@ std::string QueryManager::getQueryManagerStatistics() {
 QueryStatisticsPtr QueryManager::getQueryStatistics(QueryExecutionPlanId qepId) {
     std::unique_lock lock(statisticsMutex);
     NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qepId);
-    return queryToStatisticsMap[qepId];
+    return queryToStatisticsMap.find(qepId);
 }
 
 }// namespace NES

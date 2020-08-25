@@ -18,6 +18,8 @@
 #include <NodeEngine/Task.hpp>
 #include <Sources/DataSource.hpp>
 #include <Windows/WindowHandler.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
+
 namespace NES {
 
 class TupleBuffer;
@@ -153,13 +155,9 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
 
     std::unordered_set<QueryExecutionPlanPtr> runningQEPs;
 
-    // TODO move statistics in the workerContext and aggregate them afterwards
-    // TODO before engine rewrite, we had data races on the map, now i put a lock
-    // TODO but this kills perf!
-    // TODO alternative: use concurrent hash map
-    // TODO look at issue 907
+    //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
-    std::map<QueryExecutionPlanId, QueryStatisticsPtr> queryToStatisticsMap;
+    cuckoohash_map<QueryExecutionPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
     std::shared_mutex queryMutex;
     std::mutex workMutex;
