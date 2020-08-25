@@ -48,8 +48,8 @@ set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} libgtest libgtest_main libgmo
 
 # Copy Test Data --------------------------------------------------------------
 file(COPY test_data DESTINATION .)
-add_definitions( -DTEST_DATA_DIRECTORY="${CMAKE_BINARY_DIR}/tests/test_data" )
-message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
+add_definitions(-DTEST_DATA_DIRECTORY="${CMAKE_BINARY_DIR}/tests/test_data")
+message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}")
 
 
 #-------------------------------##############----------------------------------
@@ -57,7 +57,7 @@ message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 
 ### Node Engine Tests ###
 add_executable(node-engine-test "UnitTests/NodeEngineTest.cpp")
-target_link_libraries(node-engine-test  nes ${GTEST_LIBRARIES})
+target_link_libraries(node-engine-test nes ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
 
 ### Code Generation Tests ###
@@ -101,12 +101,12 @@ target_link_libraries(sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME sink-tests COMMAND sink-tests)
 
 ### Kafka Tests ###
-if(NES_USE_KAFKA)
-add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
-message("libraies: ${LIBRARIES}")
-target_link_libraries(kafka-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
-add_test(NAME kafka-tests COMMAND kafka-tests)
-endif(NES_USE_KAFKA)
+if (NES_USE_KAFKA)
+    add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
+    message("libraies: ${LIBRARIES}")
+    target_link_libraries(kafka-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+    add_test(NAME kafka-tests COMMAND kafka-tests)
+endif (NES_USE_KAFKA)
 
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/MemoryLayoutTest.cpp")
@@ -174,9 +174,9 @@ target_link_libraries(type-inference-tests nes ${GTEST_LIBRARIES})
 add_test(NAME type-inference-tests COMMAND type-inference-tests)
 
 # FilterPushDownTest
-add_executable(filter-push-down-test "UnitTests/Optimizer/QueryRewrite/FilterPushDownTest.cpp")
-target_link_libraries(filter-push-down-test nes ${GTEST_LIBRARIES})
-add_test(NAME filter-push-down-test COMMAND filter-push-down-test)
+add_executable(filter-push-down-rule-test "UnitTests/Optimizer/QueryRewrite/FilterPushDownRuleTest.cpp")
+target_link_libraries(filter-push-down-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME filter-push-down-rule-test COMMAND filter-push-down-rule-test)
 
 # SerializationUtilTest
 add_executable(serialize-operator-test "UnitTests/Nodes/SerializationUtilTest.cpp")
@@ -219,9 +219,14 @@ target_link_libraries(global-query-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-query-plan-tests COMMAND global-query-plan-tests)
 
 ### Query Merger Phase Tests ###
-add_executable(query-merger-phase-tests "UnitTests/Phases/GlobalQueryPlanUpdatePhaseTest.cpp")
-target_link_libraries(query-merger-phase-tests nes ${GTEST_LIBRARIES})
-add_test(NAME query-merger-phase-tests COMMAND query-merger-phase-tests)
+add_executable(global-query-plan-update-phase-tests "UnitTests/Phases/GlobalQueryPlanUpdatePhaseTest.cpp")
+target_link_libraries(global-query-plan-update-phase-tests nes ${GTEST_LIBRARIES})
+add_test(NAME global-query-plan-update-phase-tests COMMAND global-query-plan-update-phase-tests)
+
+### Logical Source Expansion Rule Tests ###
+add_executable(logical-source-expansion-rule-test "UnitTests/Optimizer/QueryRewrite/LogicalSourceExpansionRuleTest.cpp")
+target_link_libraries(logical-source-expansion-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME logical-source-expansion-rule-test COMMAND logical-source-expansion-rule-test)
 
 ### Thread Naming Test ###
 add_executable(thread-naming-tests "UnitTests/ThreadNamingTest.cpp")

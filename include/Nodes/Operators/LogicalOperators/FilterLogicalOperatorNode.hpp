@@ -45,12 +45,6 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
     */
     bool inferSchema() override;
 
-    /**
-     * @brief Create duplicate of this filter operator by copying its predicate and other context information and also its parent and child operator set.
-     * @return duplicate of the filter operator
-     */
-    FilterLogicalOperatorNodePtr duplicate();
-
     OperatorNodePtr copy() override;
 
   private:

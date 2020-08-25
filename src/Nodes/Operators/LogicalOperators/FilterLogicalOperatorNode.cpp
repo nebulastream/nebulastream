@@ -1,6 +1,7 @@
 #include <API/Schema.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Util/Logger.hpp>
+#include <deque>
 
 namespace NES {
 
@@ -31,30 +32,6 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::duplicate() {
-
-    NES_INFO("FilterLogicalOperatorNode: Create copy of the filter operator");
-    const FilterLogicalOperatorNodePtr copiedOptr = std::make_shared<FilterLogicalOperatorNode>(this->getPredicate());
-    copiedOptr->setId(this->getId());
-
-    NES_INFO("FilterLogicalOperatorNode: copy all parents");
-    std::vector<NodePtr> parents = this->getParents();
-    for (auto parent : parents) {
-        if (!copiedOptr->addParent(parent)) {
-            NES_THROW_RUNTIME_ERROR("FilterLogicalOperatorNode: Unable to add parent to copy");
-        }
-    }
-
-    NES_INFO("FilterLogicalOperatorNode: copy all children");
-    std::vector<NodePtr> children = this->getChildren();
-    for (auto child : children) {
-        if (!copiedOptr->addChild(child)) {
-            NES_THROW_RUNTIME_ERROR("FilterLogicalOperatorNode: Unable to add child to copy");
-        }
-    }
-    return copiedOptr;
-}
-
 LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr predicate) {
     return std::make_shared<FilterLogicalOperatorNode>(predicate);
 }
@@ -64,7 +41,6 @@ bool FilterLogicalOperatorNode::inferSchema() {
     predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
-        return false;
     }
     return true;
 }
