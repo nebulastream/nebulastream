@@ -342,18 +342,17 @@ BENCHMARK(BM_Statemanager_KeyRange_Skewed_Distribution_KeyVec)
 
 BENCHMARK(BM_Multithreaded_Key_Updates)
                         //Number of Updates, Number of Keys, Distribution Type, Number of Threads
-    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {0, 2}, {1, 1}})
-    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {0, 2}, {2, 2}})
-    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {0, 2}, {3, 3}})
-    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {0, 2}, {4, 4}})
+    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {0, 2}, {1, 2}})
+    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {0, 2}, {3, 4}})
     ->Repetitions(5)->ReportAggregatesOnly(true)
     ->MeasureProcessCPUTime()->Unit(benchmark::kMillisecond);
 
 
-// A benchmark main is needed
 int main(int argc, char** argv) {
     benchmark::Initialize(&argc, argv);
+    if (benchmark::ReportUnrecognizedArguments(argc, argv)) return 1;
     benchmark::RunSpecifiedBenchmarks();
     return 0;
-}
+  }
+
 };
