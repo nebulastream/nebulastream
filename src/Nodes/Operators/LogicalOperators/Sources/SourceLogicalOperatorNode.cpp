@@ -37,6 +37,7 @@ bool SourceLogicalOperatorNode::inferSchema() {
     outputSchema = sourceDescriptor->getSchema();
     return true;
 }
+
 void SourceLogicalOperatorNode::setSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
     this->sourceDescriptor = sourceDescriptor;
 }

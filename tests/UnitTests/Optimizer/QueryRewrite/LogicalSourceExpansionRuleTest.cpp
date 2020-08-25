@@ -1,0 +1,270 @@
+// clang-format off
+#include <gtest/gtest.h>
+// clang-format on
+#include <API/Query.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Topology/TopologyNode.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Util/Logger.hpp>
+#include <iostream>
+
+using namespace NES;
+
+class LogicalSourceExpansionRuleTest : public testing::Test {
+
+  public:
+    SchemaPtr schema;
+
+    /* Will be called before a test is executed. */
+    void SetUp() {
+        NES::setupLogging("LogicalSourceExpansionRuleTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+        schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() {
+        NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+    }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() {
+        NES_INFO("Tear down LogicalSourceExpansionRuleTest test class.");
+    }
+};
+
+void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
+    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+    TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
+
+    PhysicalStreamConfig streamConf;
+    streamConf.physicalStreamName = "test2";
+    streamConf.logicalStreamName = "test_stream";
+
+    StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
+    StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
+    streamCatalog->addPhysicalStream("default_logical", sce1);
+    streamCatalog->addPhysicalStream("default_logical", sce2);
+}
+
+TEST_F(LogicalSourceExpansionRuleTest, testPushingOneFilterBelowMap) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupSensorNodeAndStreamCatalog(streamCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("default_logical")
+                      .map(Attribute("value") = 40)
+                      .filter(Attribute("id") < 45)
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+//    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+//    auto itr = queryPlanNodeIterator.begin();
+//
+//    const NodePtr sinkOperator = (*itr);
+//    ++itr;
+//    const NodePtr filterOperator = (*itr);
+//    ++itr;
+//    const NodePtr mapOperator = (*itr);
+//    ++itr;
+//    const NodePtr srcOperator = (*itr);
+
+    // Execute
+    LogicalSourceExpansionRulePtr logicalSourceExpansionRule= LogicalSourceExpansionRule::create(streamCatalog);
+    const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
+
+    // Validate
+//    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+//    itr = queryPlanNodeIterator.begin();
+//    EXPECT_TRUE(sinkOperator->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(mapOperator->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(filterOperator->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(srcOperator->equal((*itr)));
+}
+
+//TEST_F(LogicalSourceExpansionRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
+//    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+//    setupSensorNodeAndStreamCatalog(streamCatalog);
+//
+//    // Prepare
+//    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+//    Query query = Query::from("default_logical")
+//                      .filter(Attribute("id") > 45)
+//                      .map(Attribute("value") = 40)
+//                      .filter(Attribute("id") < 45)
+//                      .sink(printSinkDescriptor);
+//    const QueryPlanPtr queryPlan = query.getQueryPlan();
+//
+//    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+//    auto itr = queryPlanNodeIterator.begin();
+//
+//    const NodePtr sinkOperator = (*itr);
+//    ++itr;
+//    const NodePtr filterOperator1 = (*itr);
+//    ++itr;
+//    const NodePtr mapOperator = (*itr);
+//    ++itr;
+//    const NodePtr filterOperator2 = (*itr);
+//    ++itr;
+//    const NodePtr srcOperator = (*itr);
+//
+//    // Execute
+//    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+//    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+//
+//    // Validate
+//    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+//    itr = queryPlanNodeIterator.begin();
+//    EXPECT_TRUE(sinkOperator->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(mapOperator->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(filterOperator1->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(filterOperator2->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(srcOperator->equal((*itr)));
+//}
+
+//TEST_F(FilterPushDownTest, testPushingFiltersBelowAllMapOperators) {
+//    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+//    setupSensorNodeAndStreamCatalog(streamCatalog);
+//
+//    // Prepare
+//    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+//    Query query = Query::from("default_logical")
+//                      .map(Attribute("value") = 80)
+//                      .filter(Attribute("id") > 45)
+//                      .map(Attribute("value") = 40)
+//                      .filter(Attribute("id") < 45)
+//                      .sink(printSinkDescriptor);
+//    const QueryPlanPtr queryPlan = query.getQueryPlan();
+//
+//    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+//    auto itr = queryPlanNodeIterator.begin();
+//
+//    const NodePtr sinkOperator = (*itr);
+//    ++itr;
+//    const NodePtr filterOperator1 = (*itr);
+//    ++itr;
+//    const NodePtr mapOperator1 = (*itr);
+//    ++itr;
+//    const NodePtr filterOperator2 = (*itr);
+//    ++itr;
+//    const NodePtr mapOperator2 = (*itr);
+//    ++itr;
+//    const NodePtr srcOperator = (*itr);
+//
+//    // Execute
+//    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+//    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+//
+//    // Validate
+//    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+//    itr = queryPlanNodeIterator.begin();
+//    EXPECT_TRUE(sinkOperator->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(mapOperator1->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(mapOperator2->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(filterOperator1->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(filterOperator2->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(srcOperator->equal((*itr)));
+//}
+//
+//TEST_F(FilterPushDownTest, testPushingTwoFilterBelowMap) {
+//    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+//    setupSensorNodeAndStreamCatalog(streamCatalog);
+//
+//    // Prepare
+//    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+//    Query query = Query::from("default_logical")
+//                      .map(Attribute("value") = 40)
+//                      .filter(Attribute("id") > 45)
+//                      .filter(Attribute("id") < 45)
+//                      .sink(printSinkDescriptor);
+//    const QueryPlanPtr queryPlan = query.getQueryPlan();
+//
+//    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+//    auto itr = queryPlanNodeIterator.begin();
+//
+//    const NodePtr sinkOperator = (*itr);
+//    ++itr;
+//    const NodePtr filterOperator1 = (*itr);
+//    ++itr;
+//    const NodePtr filterOperator2 = (*itr);
+//    ++itr;
+//    const NodePtr mapOperator = (*itr);
+//    ++itr;
+//    const NodePtr srcOperator = (*itr);
+//
+//    // Execute
+//    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+//    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+//
+//    // Validate
+//    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+//    itr = queryPlanNodeIterator.begin();
+//    EXPECT_TRUE(sinkOperator->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(mapOperator->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(filterOperator1->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(filterOperator2->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(srcOperator->equal((*itr)));
+//}
+//
+//TEST_F(FilterPushDownTest, testPushingFilterAlreadyAtBottom) {
+//    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+//    setupSensorNodeAndStreamCatalog(streamCatalog);
+//
+//    // Prepare
+//    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+//    Query query = Query::from("default_logical")
+//                      .filter(Attribute("id") > 45)
+//                      .map(Attribute("value") = 40)
+//                      .sink(printSinkDescriptor);
+//    const QueryPlanPtr queryPlan = query.getQueryPlan();
+//
+//    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+//    auto itr = queryPlanNodeIterator.begin();
+//
+//    const NodePtr sinkOperator = (*itr);
+//    ++itr;
+//    const NodePtr mapOperator = (*itr);
+//    ++itr;
+//    const NodePtr filterOperator2 = (*itr);
+//    ++itr;
+//    const NodePtr srcOperator = (*itr);
+//
+//    // Execute
+//    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+//    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+//
+//    // Validate
+//    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+//    itr = queryPlanNodeIterator.begin();
+//    EXPECT_TRUE(sinkOperator->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(mapOperator->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(filterOperator2->equal((*itr)));
+//    ++itr;
+//    EXPECT_TRUE(srcOperator->equal((*itr)));
+//}

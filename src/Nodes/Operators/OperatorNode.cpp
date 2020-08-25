@@ -48,4 +48,60 @@ void OperatorNode::setOutputSchema(SchemaPtr outputSchema) {
     this->outputSchema = std::move(outputSchema);
 }
 
+bool OperatorNode::isNAryOperator() {
+    return (getChildren().empty() && getChildren().size() > 1) || (getParents().empty() && getParents().size() > 1);
+}
+
+OperatorNodePtr OperatorNode::duplicate() {
+    NES_INFO("OperatorNode: Create copy of the operator");
+    const OperatorNodePtr copyOperator = copy();
+
+    NES_DEBUG("OperatorNode: copy all parents");
+    for (auto& parent : getParents()) {
+        if (!copyOperator->addParent(getDuplicateOfParent(parent->as<OperatorNode>()))) {
+            NES_THROW_RUNTIME_ERROR("OperatorNode: Unable to add parent to copy");
+        }
+    }
+
+    NES_DEBUG("OperatorNode: copy all children");
+    for (auto& child : getChildren()) {
+        if (!copyOperator->addChild(getDuplicateOfChild(child->as<OperatorNode>()->duplicate()))) {
+            NES_THROW_RUNTIME_ERROR("OperatorNode: Unable to add child to copy");
+        }
+    }
+    return copyOperator;
+}
+
+OperatorNodePtr OperatorNode::getDuplicateOfParent(OperatorNodePtr operatorNode) {
+    NES_DEBUG("OperatorNode: create copy of the input operator");
+    const OperatorNodePtr& copyOfOperator = operatorNode->copy();
+    if (operatorNode->getParents().empty()) {
+        NES_TRACE("OperatorNode: No ancestor of the input node. Returning the copy of the input operator");
+        return copyOfOperator;
+    }
+
+    NES_TRACE("OperatorNode: For all parents get copy of the ancestor and add as parent to the copy of the input operator");
+    for (auto& parent : operatorNode->getParents()) {
+        copyOfOperator->addParent(getDuplicateOfParent(parent->as<OperatorNode>()));
+    }
+    NES_TRACE("OperatorNode: return copy of the input operator");
+    return copyOfOperator;
+}
+
+OperatorNodePtr OperatorNode::getDuplicateOfChild(OperatorNodePtr operatorNode) {
+    NES_DEBUG("OperatorNode: create copy of the input operator");
+    const OperatorNodePtr& copyOfOperator = operatorNode->copy();
+    if (operatorNode->getChildren().empty()) {
+        NES_TRACE("OperatorNode: No children of the input node. Returning the copy of the input operator");
+        return copyOfOperator;
+    }
+
+    NES_TRACE("OperatorNode: For all children get copy of their children and add as child to the copy of the input operator");
+    for (auto& child : operatorNode->getChildren()) {
+        copyOfOperator->addChild(getDuplicateOfParent(child->as<OperatorNode>()));
+    }
+    NES_TRACE("OperatorNode: return copy of the input operator");
+    return copyOfOperator;
+}
+
 }// namespace NES

@@ -51,12 +51,39 @@ class OperatorNode : public Node {
     void setId(u_int64_t id);
 
     /**
-     * Create a shallow copy of the operator by copying its operator properties but not its children or parent operator tree.
+     * @brief Create duplicate of this operator by copying its context information and also its parent and child operator set.
+     * @return duplicate of this logical operator
+     */
+    OperatorNodePtr duplicate();
+
+    /**
+     * @brief Create a shallow copy of the operator by copying its operator properties but not its children or parent operator tree.
      * @return shallow copy of the operator
      */
     virtual OperatorNodePtr copy() = 0;
 
+    /**
+     * @brief detect if this operator is a n-ary operator, i.e., it has multiple parent or children.
+     * @return true if n-ary else false;
+     */
+    bool isNAryOperator();
+
   protected:
+
+    /**
+     * @brief get duplicate of the input operator and all its ancestors
+     * @param operatorNode: the input operator
+     * @return duplicate of the input operator
+     */
+    OperatorNodePtr getDuplicateOfParent(OperatorNodePtr operatorNode);
+
+    /**
+     * @brief get duplicate of the input operator and all its children
+     * @param operatorNode: the input operator
+     * @return duplicate of the input operator
+     */
+    OperatorNodePtr getDuplicateOfChild(OperatorNodePtr operatorNode);
+
     /**
      * @brief Unique Identifier of the operator within a query.
      */

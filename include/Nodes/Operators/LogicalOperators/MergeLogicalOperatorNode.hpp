@@ -26,6 +26,5 @@ class MergeLogicalOperatorNode : public LogicalOperatorNode {
 
     OperatorNodePtr copy() override;
 };
-
 }// namespace NES
 #endif// Merge_LOGICAL_OPERATOR_NODE_HPP

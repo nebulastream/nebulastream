@@ -16,7 +16,7 @@
 
 using namespace NES;
 
-class FilterPushDownTest : public testing::Test {
+class FilterPushDownRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
@@ -51,7 +51,7 @@ void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     streamCatalog->addPhysicalStream("default_logical", sce);
 }
 
-TEST_F(FilterPushDownTest, testPushingOneFilterBelowMap) {
+TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
@@ -90,7 +90,7 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMap) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterPushDownTest, testPushingOneFilterBelowMapAndBeforeFilter) {
+TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
@@ -134,7 +134,7 @@ TEST_F(FilterPushDownTest, testPushingOneFilterBelowMapAndBeforeFilter) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterPushDownTest, testPushingFiltersBelowAllMapOperators) {
+TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
@@ -183,7 +183,7 @@ TEST_F(FilterPushDownTest, testPushingFiltersBelowAllMapOperators) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterPushDownTest, testPushingTwoFilterBelowMap) {
+TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
@@ -227,7 +227,7 @@ TEST_F(FilterPushDownTest, testPushingTwoFilterBelowMap) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterPushDownTest, testPushingFilterAlreadyAtBottom) {
+TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
