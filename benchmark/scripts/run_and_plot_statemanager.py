@@ -107,20 +107,73 @@ def createPlotableGroups(df):
 	return df.groupby(["name"])
 
 
+class DataPoint(object):
+	x = "N/A"
+	ySum = 0
+	errSum = 0
+	amount = 1
+
+
+# Removes possible duplicates by building mean and deleting one of the duplicates
+def removeDuplicates(xData, yData, yErr):
+
+	dataPoints = {}
+
+	# Iterating through data, checking if x-value already exists. Then either update or create new
+	for x, y, err in zip(xData, yData, yErr):
+		point = dataPoints.get(x)
+		if not point:
+			point = DataPoint()
+			point.x = x
+			point.ySum = y
+			point.errSum = err
+			dataPoints.update({x : point})
+		else:
+			dataPoints[x].ySum += y
+			dataPoints[x].errSum += err
+			dataPoints[x].amount += 1
+
+
+	xNew = []
+	yNew = []
+	errNew = []
+
+	for dp in dataPoints.values():
+		xNew.append(dp.x)
+		yNew.append(dp.ySum / dp.amount)
+		errNew.append(dp.errSum / dp.amount)
+
+	return xNew, yNew, errNew
+
+
 def plotData(groups, plotFolder):
 	# Plotting data as a bar plot with error 
 	sns.set()
 	for i, (benchmarkName, gbf) in enumerate(groups):
 
-		xDataChunks = [gbf["params"][x:x+CHUNK_SIZE] for x in range(0, len(gbf["params"]), CHUNK_SIZE)]
-		yDataChunks = [gbf["items_per_second"][x:x+CHUNK_SIZE] for x in range(0, len(gbf["items_per_second"]), CHUNK_SIZE)]
-		yErrChunks = [gbf["stddev"][x:x+CHUNK_SIZE] for x in range(0, len(gbf["stddev"]), CHUNK_SIZE)]
+		xDataFull, yDataFull, yErrFull = removeDuplicates(gbf["params"], gbf["items_per_second"], gbf["stddev"])
 
-		fig = plt.figure(figsize=(16,max(5, 3*len(xDataChunks))))
+		# Creating data chunks so that later each chunk can be plotted in a separate subfigure
+		xDataChunks = [xDataFull[x:x+CHUNK_SIZE] for x in range(0, len(xDataFull), CHUNK_SIZE)]
+		yDataChunks = [yDataFull[x:x+CHUNK_SIZE] for x in range(0, len(yDataFull), CHUNK_SIZE)]
+		yErrChunks = [yErrFull[x:x+CHUNK_SIZE] for x in range(0, len(yErrFull), CHUNK_SIZE)]
+
+		fig = plt.figure(figsize=(18,max(5, 3*len(xDataChunks))))
 		paramLen = 0
 		for i, (xData, yData, yErr) in enumerate(zip(xDataChunks, yDataChunks, yErrChunks)):
 			ax = fig.add_subplot(len(xDataChunks), 1, i+1)
-			ax.bar(xData, yData, yerr=yErr, label="$\\frac{Keys}{s}$")
+			rects = ax.bar(xData, yData, yerr=yErr, width=0.25)
+
+			print(benchmarkName, i, list(xData))
+			print(list(yData))
+			print()
+
+
+			for rect in rects:
+				height = rect.get_height()
+				ax.text(rect.get_x() + rect.get_width()/2., 1.02*height, millify(height), ha='center', va='bottom')
+				
+			# Getting the max number of Params, needed to portray correct xlabel
 			paramLen = max(paramLen, list(xData)[0].count("/"))
 
 		fig.suptitle(benchmarkName.replace("_", " ")[3:])
@@ -142,7 +195,6 @@ if __name__ == '__main__':
 	today = datetime.now()
 	benchmarkName = str(options.benchmark).split("/")[-1]
 	plotFolder = os.path.join(options.plotFolder, today.strftime('%Y%m%d_%H%M%S'))
-	#plotFolder = os.path.join(options.plotFolder, "20200813_185654")
 	logFile = os.path.join(plotFolder, f"{benchmarkName}_log.json")
 
 	createFolder(plotFolder)
