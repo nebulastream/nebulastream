@@ -394,3 +394,117 @@ TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
 
     EXPECT_FALSE(startNode.has_value());
 }
+
+/**
+ * @brief Find Path between multiple source and destination nodes
+ */
+TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    // creater workers
+    std::vector<TopologyNodePtr> topologyNodes;
+    int resource = 4;
+    for (uint32_t i = 0; i < 10; ++i) {
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    topology->setAsRoot(topologyNodes.at(0));
+
+    // link each worker with its neighbor
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(7));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(9));
+
+    std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(8), topologyNodes.at(9)};
+    std::vector<TopologyNodePtr> destinationNodes{topologyNodes.at(0)};
+
+    const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_FALSE(startNodes.empty());
+    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+
+    TopologyNodePtr startNode1 = startNodes[0];
+    EXPECT_TRUE(startNode1->getId() == topologyNodes.at(8)->getId());
+    TopologyNodePtr startNode2 = startNodes[1];
+    EXPECT_TRUE(startNode2->getId() == topologyNodes.at(9)->getId());
+    EXPECT_TRUE(startNode2->getParents().size() == startNode1->getParents().size());
+    EXPECT_TRUE(startNode2->getParents()[0]->as<TopologyNode>()->getId() == startNode1->getParents()[0]->as<TopologyNode>()->getId());
+    TopologyNodePtr s1Parent1 = startNode1->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(s1Parent1->getId() == topologyNodes.at(7)->getId());
+    TopologyNodePtr s1Parent2 = s1Parent1->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(s1Parent2->getId() == topologyNodes.at(4)->getId());
+    TopologyNodePtr s1Parent3 = s1Parent2->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(s1Parent3->getId() == topologyNodes.at(1)->getId());
+    TopologyNodePtr s1Parent4 = s1Parent3->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(s1Parent4->getId() == topologyNodes.at(0)->getId());
+}
+
+/**
+ * @brief Find Path between two connected nodes and select the shortest path
+ */
+TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheShortest) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    // creater workers
+    std::vector<TopologyNodePtr> topologyNodes;
+    int resource = 4;
+    for (uint32_t i = 0; i < 10; ++i) {
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    topology->setAsRoot(topologyNodes.at(0));
+
+    // link each worker with its neighbor
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(5));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(7));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(9));
+
+    std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(8)};
+    std::vector<TopologyNodePtr> destinationNodes{topologyNodes.at(0)};
+
+    const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_FALSE(startNodes.empty());
+    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+
+    TopologyNodePtr startNode = startNodes[0];
+    EXPECT_TRUE(startNode->getId() == topologyNodes.at(8)->getId());
+    TopologyNodePtr parent1 = startNode->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(parent1->getId() == topologyNodes.at(7)->getId());
+    TopologyNodePtr parent2 = parent1->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(parent2->getId() == topologyNodes.at(5)->getId());
+    TopologyNodePtr parent3 = parent2->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(parent3->getId() == topologyNodes.at(0)->getId());
+}

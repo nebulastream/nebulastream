@@ -276,7 +276,14 @@ class Node : public std::enable_shared_from_this<Node> {
      * @brief Get all nodes that are parents to this node.
      * @return vector of all of its parent nodes
      */
-    std::vector<NodePtr> getAndFlattenAllParent();
+    std::vector<NodePtr> getAndFlattenAllAncestors();
+
+    /**
+     * @brief Find the ancestor node of the given set of children
+     * @param children: set of children
+     * @return returns the youngest ancestor node that can reach to all of the children else nullptr
+     */
+    NodePtr getImmediateAncestorOf(std::vector<NodePtr> children);
 
   protected:
     /**

@@ -494,12 +494,12 @@ void Node::getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePt
     }
 }
 
-std::vector<NodePtr> Node::getAndFlattenAllParent() {
+std::vector<NodePtr> Node::getAndFlattenAllAncestors() {
     NES_INFO("Node: Get this node, all its parents, and Ancestors");
     std::vector<NodePtr> result{shared_from_this()};
     for(auto& parent: parents){
         NES_TRACE("Node: Get this node, all its parents, and Ancestors");
-        std::vector<NodePtr> parentAndAncestors=parent->getAndFlattenAllParent();
+        std::vector<NodePtr> parentAndAncestors= parent->getAndFlattenAllAncestors();
         NES_TRACE("Node: Add them to the result");
         result.insert(result.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }

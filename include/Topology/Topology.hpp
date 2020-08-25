@@ -65,11 +65,11 @@ class Topology {
 
     /**
      * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
-     * @param startNodes: the start Nodes
+     * @param sourceNodes: the start Nodes
      * @param destinationNodes: the destination Nodes
      * @return a vector of start nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
      */
-    std::vector<TopologyNodePtr> findPathBetween(std::vector<TopologyNodePtr> startNodes, std::vector<TopologyNodePtr> destinationNodes);
+    std::vector<TopologyNodePtr> findPathBetween(std::vector<TopologyNodePtr> sourceNodes, std::vector<TopologyNodePtr> destinationNodes);
 
     //FIXME: as part of the issue #955
     //    std::vector<LinkProperties> getLinkPropertiesBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNde);
@@ -128,6 +128,8 @@ class Topology {
     ~Topology();
 
   private:
+    static constexpr int BASE_MULTIPLIER = 10000;
+
     explicit Topology();
 
     bool find(TopologyNodePtr physicalNode, TopologyNodePtr destinationNode, std::vector<TopologyNodePtr>& nodesInPath);
@@ -143,6 +145,7 @@ class Topology {
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
+    std::vector<TopologyNodePtr> mergeGraphs(std::vector<TopologyNodePtr> startNodes);
 };
 }// namespace NES
 #endif//NES_TOPOLOGY_HPP
