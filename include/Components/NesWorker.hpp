@@ -4,6 +4,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <future>
 
 namespace NES {
 class WorkerActor;
@@ -125,8 +126,13 @@ class NesWorker {
     NodeEnginePtr getNodeEngine();
 
   private:
+    /**
+   * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
+   */
+    void buildAndStartGRPCServer(std::promise<bool>& prom);
+
     std::shared_ptr<grpc::Server> rpcServer;
-    std::thread rpcThread;
+    std::shared_ptr<std::thread> rpcThread;
 
     NodeEnginePtr nodeEngine;
     CoordinatorRPCClientPtr coordinatorRpcClient;
@@ -136,6 +142,8 @@ class NesWorker {
     PhysicalStreamConfig conf;
     bool withParent;
     std::string parentId;
+
+    std::string rpcAddress;
 
     std::string coordinatorIp;
     std::string coordinatorPort;

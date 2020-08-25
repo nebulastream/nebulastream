@@ -31,6 +31,12 @@ bool WorkerRPCClient::deployQuery(std::string address, std::string executableTra
     }
 }
 
+WorkerRPCClient::~WorkerRPCClient()
+{
+    NES_DEBUG("WorkerRPCClient(): destruct");
+}
+
+
 bool WorkerRPCClient::undeployQuery(std::string address, QueryId queryId) {
     NES_DEBUG(
         "WorkerRPCClient::undeployQuery address=" << address << " queryId=" << queryId);
