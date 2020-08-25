@@ -17,8 +17,8 @@
 #include <NodeEngine/QueryStatistics.hpp>
 #include <NodeEngine/Task.hpp>
 #include <Sources/DataSource.hpp>
-#include <Windows/WindowHandler.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
+#include <Windows/WindowHandler.hpp>
 
 namespace NES {
 

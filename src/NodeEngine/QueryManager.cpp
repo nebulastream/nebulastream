@@ -68,7 +68,6 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
             std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
             sourceIdToQueryMap[source->getSourceId()] = qepSet;
             queryToStatisticsMap.insert(qep->getQueryId(), std::make_shared<QueryStatistics>());
-
         }
     }
     return true;
