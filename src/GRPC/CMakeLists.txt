@@ -3,6 +3,7 @@ add_source_nes(
         CoordinatorRPCClient.cpp
         WorkerRPCClient.cpp
         WorkerRPCServer.cpp
+        GrpcLibraryInizializer.cpp
 )
 
 add_subdirectory(Serialization)

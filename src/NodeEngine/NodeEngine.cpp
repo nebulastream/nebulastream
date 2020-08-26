@@ -290,11 +290,12 @@ bool NodeEngine::stop() {
     }
 
     // release components
-
+    queryManager->destroy();
     queryManager.reset();
     networkManager.reset();
     bufferManager.reset();
-
+    networkManager.reset();
+    isReleased = true;
     return !withError;
 }
 

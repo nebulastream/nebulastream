@@ -60,7 +60,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     rpcPort += 30;
 }
 
-TEST_F(WorkerCoordinatorStarterTest, DISABLED_startStopWorkerCoordinator10times) {
+TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
     cout << "start coordinator" << endl;
     for(size_t i = 0; i < 10; i++)
     {
@@ -85,6 +85,11 @@ TEST_F(WorkerCoordinatorStarterTest, DISABLED_startStopWorkerCoordinator10times)
         cout << "stopping coordinator" << endl;
         bool retStopCord = crd->stopCoordinator(false);
         cout << crd.use_count() << " use cnt" << endl;
+        cout << wrk.use_count() << " use cnt" << endl;
+        crd.reset();
+        wrk.reset();
+        cout << crd.use_count() << " use cnt" << endl;
+        cout << wrk.use_count() << " use cnt" << endl;
         EXPECT_TRUE(retStopCord);
     }
 }

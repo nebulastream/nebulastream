@@ -152,7 +152,7 @@ class NesWorker {
     uint16_t localWorkerZmqPort;
 
     NodeType type;
-    bool stopped;
+    std::atomic<bool> stopped;
 
     /**
      * @brief helper method to ensure client is connected before callin rpcs functions

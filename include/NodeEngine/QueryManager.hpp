@@ -116,7 +116,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     /**
      * @brief reset query manager to intial state
      */
-    void resetQueryManager();
+    void destroy();
 
     /**
      * @brief method to return the query statistics
@@ -133,12 +133,6 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     * @return bool indicating success
     */
     bool startThreadPool();
-
-    /**
-     * @brief method to stop thread pool
-     * @return bool indicating success
-     */
-    bool stopThreadPool();
 
     QueryManager(const QueryManager&);
     QueryManager& operator=(const QueryManager&);

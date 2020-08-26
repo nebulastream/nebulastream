@@ -8,16 +8,14 @@ namespace NES {
 using std::string;
 
 QueryManager::QueryManager()
-      : queryMutex(), workMutex() {
+      : queryMutex(), workMutex(), threadPool(nullptr) {
     NES_DEBUG("QueryManager()");
 }
 
 
 QueryManager::~QueryManager() {
     NES_DEBUG("~QueryManager()");
-    NES_DEBUG("QueryManager(): stop thread pool");
-    NES_DEBUG("ResetQueryManager");
-    resetQueryManager();
+    destroy();
 }
 
 bool QueryManager::startThreadPool() {
@@ -27,12 +25,11 @@ bool QueryManager::startThreadPool() {
     return threadPool->start();
 }
 
-bool QueryManager::stopThreadPool() {
-    NES_DEBUG("QueryManager::stopThreadPool: stop");
-    return threadPool->stop();
-}
-
-void QueryManager::resetQueryManager() {
+void QueryManager::destroy() {
+    if (threadPool) {
+        threadPool->stop();
+        threadPool.reset();
+    }
     std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
     NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
     taskQueue.clear();
