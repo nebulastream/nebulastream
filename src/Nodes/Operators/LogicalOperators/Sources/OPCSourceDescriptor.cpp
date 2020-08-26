@@ -9,51 +9,43 @@
 namespace NES {
 
 SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema,
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        const std::string& nsId,
-        const std::string& user,
-        const std::string& password) {
-    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(url), std::move(nsIndex), std::move(nsId), std::move(user), std::move(password)));
+                                                const std::string & url,
+        UA_NodeId *nodeId,
+                                                const std::string& user,
+                                                const std::string& password) {
+    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(url), std::move(nodeId), std::move(user), std::move(password)));
 }
 
 SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema, 
-        std::string streamName, 
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        const std::string& nsId,
-        const std::string& user,
-        const std::string& password) {
-    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(streamName), std::move(url), std::move(nsIndex), std::move(nsId), std::move(user), std::move(password)));
+        std::string streamName,
+                                                const std::string & url,
+        UA_NodeId *nodeId,
+                                                const std::string& user,
+                                                const std::string& password) {
+    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(streamName), std::move(url), std::move(nodeId), std::move(user), std::move(password)));
 }
 
-OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema, 
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        const std::string& nsId,
-        const std::string& user,
-        const std::string& password)
-    : SourceDescriptor(std::move(schema)), url(std::move(url)), nsIndex(std::move(nsIndex)), nsId(std::move(nsId)), user(std::move(user)), password(std::move(password)) {}
+OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema,
+                                         const std::string & url,
+                                         UA_NodeId *nodeId,
+                                         const std::string& user,
+                                         const std::string& password)
+    : SourceDescriptor(std::move(schema)), url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)), password(std::move(password)) {}
 
-OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema, 
-        std::string streamName, 
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        const std::string& nsId,
-        const std::string& user,
-        const std::string& password)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), url(std::move(url)), nsIndex(std::move(nsIndex)), nsId(std::move(nsId)), user(std::move(user)), password(std::move(password)) {}
+OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema,
+                                         std::string streamName,
+                                         const std::string & url,
+                                         UA_NodeId *nodeId,
+                                         const std::string& user,
+                                         const std::string& password)
+    : SourceDescriptor(std::move(schema), std::move(streamName)), url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)), password(std::move(password)) {}
 
 const std::string& OPCSourceDescriptor::getUrl() const {
     return url;
 }
 
-UA_UInt16 OPCSourceDescriptor::getNsIndex() const {
-    return nsIndex;
-}
-
-const std::string& OPCSourceDescriptor::getNsId() const {
-    return nsId;
+UA_NodeId* OPCSourceDescriptor::getNodeId() const {
+    return nodeId;
 }
 
 const std::string& OPCSourceDescriptor::getUser() const {
@@ -70,7 +62,7 @@ bool OPCSourceDescriptor::equal(SourceDescriptorPtr other) {
     if (!other->instanceOf<OPCSourceDescriptor>())
         return false;
     auto otherOPCSource = other->as<OPCSourceDescriptor>();
-    return url == otherOPCSource->getUrl() && nsIndex == otherOPCSource->getNsIndex() && nsId == otherOPCSource->getNsId() && user == otherOPCSource->getUser() && password == otherOPCSource->getPassword() && getSchema()->equals(other->getSchema());
+    return url == otherOPCSource->getUrl() && UA_NodeId_equal(nodeId, otherOPCSource->getNodeId()) && user == otherOPCSource->getUser() && password == otherOPCSource->getPassword() && getSchema()->equals(other->getSchema());
 }
 
 std::string OPCSourceDescriptor::toString() {

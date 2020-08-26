@@ -25,14 +25,8 @@ class OPCSource : public DataSource {
      * @param port of the source queue
      */
 
-    OPCSource(SchemaPtr schema,
-        BufferManagerPtr bufferManager,
-        QueryManagerPtr queryManager,
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        const std::string& nsId,
-        const std::string& user,
-        const std::string& password);
+    OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string &url,
+              UA_NodeId* nodeId, const std::string &password, const std::string &user);
     
     //ToDo: Implement historical read.
     
@@ -74,9 +68,7 @@ class OPCSource : public DataSource {
      */
     const std::string& getUrl() const;
 
-    UA_UInt16 getNsIndex() const;
-
-    const std::string& getNsId() const;
+    UA_NodeId* getNodeId() const;
 
     const std::string& getUser() const;
 
@@ -108,9 +100,8 @@ class OPCSource : public DataSource {
      * serialization/deserialization process
      */
     friend class DataSource;
-    const std::string& url;
-    UA_UInt16 nsIndex;
-    const std::string& nsId;
+    const std::string &url;
+    UA_NodeId *nodeId;
     const std::string& user;
     const std::string& password;
     UA_StatusCode retval;

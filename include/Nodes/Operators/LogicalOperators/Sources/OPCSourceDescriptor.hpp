@@ -18,26 +18,22 @@ class OPCSourceDescriptor : public SourceDescriptor {
 
   public:
 
-    static SourceDescriptorPtr create(SchemaPtr schema, 
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        const std::string& nsId,
-        const std::string& user,
-        const std::string& password);
+    static SourceDescriptorPtr create(SchemaPtr schema,
+                                      const std::string & url,
+                                      UA_NodeId *nodeId,
+                                      const std::string& user,
+                                      const std::string& password);
 
     static SourceDescriptorPtr create(SchemaPtr schema, 
-        std::string streamName, 
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        const std::string& nsId,
-        const std::string& user,
-        const std::string& password);
+        std::string streamName,
+                                      const std::string & url,
+        UA_NodeId *nodeId,
+                                      const std::string& user,
+                                      const std::string& password);
 
     const std::string& getUrl() const;
 
-    UA_UInt16 getNsIndex() const;
-
-    const std::string& getNsId() const;
+    UA_NodeId* getNodeId() const;
 
     const std::string& getUser() const;
 
@@ -49,24 +45,21 @@ class OPCSourceDescriptor : public SourceDescriptor {
 
   private:
 
-    explicit OPCSourceDescriptor(SchemaPtr schema, 
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        const std::string& nsId,
-        const std::string& user,
-        const std::string& password);
+    explicit OPCSourceDescriptor(SchemaPtr schema,
+                                 const std::string & url,
+                                 UA_NodeId *nodeId,
+                                 const std::string& user,
+                                 const std::string& password);
 
     explicit OPCSourceDescriptor(SchemaPtr schema, 
-        std::string streamName, 
-        const std::string & url,
-        UA_UInt16 nsIndex,
-        const std::string& nsId,
-        const std::string& user,
-        const std::string& password);
+        std::string streamName,
+                                 const std::string & url,
+        UA_NodeId *nodeId,
+                                 const std::string& user,
+                                 const std::string& password);
 
     const std::string & url;
-    UA_UInt16 nsIndex;
-    const std::string& nsId;
+    UA_NodeId *nodeId;
     const std::string& user;
     const std::string& password;
 };
