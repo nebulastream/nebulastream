@@ -26,33 +26,34 @@ bool WindowDistributionRefinement::execute(GlobalExecutionPlanPtr globalPlan, Qu
 
     //find out if there is a window operator in the query
     for (auto& node : nodes) {
-        QueryPlanPtr plan = node->getQuerySubPlans(queryId);
-        std::vector<OperatorNodePtr> windowOps = plan->getOperatorByType<WindowLogicalOperatorNode>();
-        if (windowOps.size() > 0) {
-            NES_DEBUG("WindowDistributionRefinement::execute: window operator found on " << windowOps.size() << " nodes");
-            for (auto& windowOp : windowOps) {
-                NES_DEBUG("WindowDistributionRefinement::execute: window operator found on node " << node->toString() << " windowOp=" << windowOp->toString());
-                if (!distributedWindowing) {//centralized window
-                    NES_DEBUG("WindowDistributionRefinement::execute: introduce centralized window operator on node " << node->toString() << " windowOp=" << windowOp->toString());
+        std::vector<QueryPlanPtr> plans = node->getQuerySubPlans(queryId);
+        for(auto& plan : plans){
+            std::vector<OperatorNodePtr> windowOps = plan->getOperatorByType<WindowLogicalOperatorNode>();
+            if (windowOps.size() > 0) {
+                NES_DEBUG("WindowDistributionRefinement::execute: window operator found on " << windowOps.size() << " nodes");
+                for (auto& windowOp : windowOps) {
+                    NES_DEBUG("WindowDistributionRefinement::execute: window operator found on node " << node->toString() << " windowOp=" << windowOp->toString());
+                    if (!distributedWindowing) {//centralized window
+                        NES_DEBUG("WindowDistributionRefinement::execute: introduce centralized window operator on node " << node->toString() << " windowOp=" << windowOp->toString());
 
-                    WindowLogicalOperatorNode* winOp = dynamic_cast<WindowLogicalOperatorNode*>(windowOp.get());
-                    LogicalOperatorNodePtr newWindowOp = createCentralWindowSpecializedOperatorNode(winOp->getWindowDefinition());
-                    newWindowOp->setInputSchema(winOp->getInputSchema());
-                    newWindowOp->setOutputSchema(winOp->getOutputSchema());
-                    newWindowOp->setId(winOp->getId());
+                        WindowLogicalOperatorNode* winOp = dynamic_cast<WindowLogicalOperatorNode*>(windowOp.get());
+                        LogicalOperatorNodePtr newWindowOp = createCentralWindowSpecializedOperatorNode(winOp->getWindowDefinition());
+                        newWindowOp->setInputSchema(winOp->getInputSchema());
+                        newWindowOp->setOutputSchema(winOp->getOutputSchema());
+                        newWindowOp->setId(winOp->getId());
 
-                    NES_DEBUG("WindowDistributionRefinement::execute: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
-                    NES_DEBUG("WindowDistributionRefinement::execute: plan before replace " << plan->toString());
-                    windowOp->replace(newWindowOp);
-                    NES_DEBUG("WindowDistributionRefinement::execute: plan after replace " << plan->toString());
-                } else {//distributed window
-                    NES_DEBUG("WindowDistributionRefinement::execute: introduce distributed window operator on node " << node->toString() << " windowOp=" << windowOp->toString());
-                    //TODO: here we have to split the operator into the three part operators and deploy them
+                        NES_DEBUG("WindowDistributionRefinement::execute: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
+                        NES_DEBUG("WindowDistributionRefinement::execute: plan before replace " << plan->toString());
+                        windowOp->replace(newWindowOp);
+                        NES_DEBUG("WindowDistributionRefinement::execute: plan after replace " << plan->toString());
+                    } else {//distributed window
+                        NES_DEBUG("WindowDistributionRefinement::execute: introduce distributed window operator on node " << node->toString() << " windowOp=" << windowOp->toString());
+                       //TODO: here we have to split the operator into the three part operators and deploy them
+                    }
                 }
+            } else {
+                NES_DEBUG("WindowDistributionRefinement::execute: no window operator found on node " << node->toString() << " plan=" << plan->toString());
             }
-        } else {
-            QueryPlanPtr plan = node->getQuerySubPlans(queryId);
-            NES_DEBUG("WindowDistributionRefinement::execute: no window operator found on node " << node->toString() << " plan=" << plan->toString());
         }
     }
     return true;

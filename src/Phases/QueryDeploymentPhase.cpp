@@ -56,24 +56,28 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, std::vector<ExecutionNod
 
     for (ExecutionNodePtr executionNode : executionNodes) {
         NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id=" << executionNode->getId());
-        QueryPlanPtr querySubPlan = executionNode->getQuerySubPlans(queryId);
-        if (!querySubPlan) {
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+        if (!querySubPlans.empty()) {
             NES_WARNING("QueryDeploymentPhase : unable to find query sub plan with id " << queryId);
             return false;
         }
-        //FIXME: we are considering only one root operator
-        OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
+
         const auto& nesNode = executionNode->getPhysicalNode();
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress);
-        bool success = workerRPCClient->registerQuery(rpcAddress, queryId, rootOperator);
-        if (success) {
-            NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << " successful");
-        } else {
-            NES_ERROR("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << "  failed");
-            return false;
+
+        for(auto& querySubPlan: querySubPlans){
+            //FIXME: we are considering only one root operator
+            OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
+            bool success = workerRPCClient->registerQuery(rpcAddress, queryId, rootOperator);
+            if (success) {
+                NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << " successful");
+            } else {
+                NES_ERROR("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << "  failed");
+                return false;
+            }
         }
     }
     NES_INFO("QueryDeploymentPhase: Finished deploying execution plan for query with Id " << queryId);

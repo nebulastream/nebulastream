@@ -345,4 +345,43 @@ bool Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
     return true;
 }
 
+TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes) {
+
+    if (topologyNodes.empty()) {
+        return nullptr;
+    }
+    TopologyNodePtr startNode = topologyNodes[0];
+
+    bool foundAncestor = false;
+    TopologyNodePtr resultAncestor;
+    std::deque<NodePtr> nodesToProcess{startNode};
+    while (!nodesToProcess.empty()) {
+        TopologyNodePtr candidateNode = nodesToProcess.front()->as<TopologyNode>();
+        nodesToProcess.pop_front();
+        std::vector<NodePtr> children = candidateNode->getAndFlattenAllChildren();
+        for (auto& nodeToLook : topologyNodes) {
+            auto found = std::find_if(children.begin(), children.end(), [&](NodePtr child) {
+                return nodeToLook->getId() == child->as<TopologyNode>()->getId();
+            });
+
+            if (found == children.end()) {
+                foundAncestor = false;
+                break;
+            }
+            foundAncestor = true;
+        }
+
+        if (foundAncestor) {
+            resultAncestor = candidateNode;
+            break;
+        }
+
+        for (auto& parent : candidateNode->getParents()) {
+            nodesToProcess.push_back(parent);
+        }
+    }
+
+    return resultAncestor;
+}
+
 }// namespace NES
