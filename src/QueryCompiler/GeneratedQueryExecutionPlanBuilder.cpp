@@ -48,7 +48,7 @@ QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
     NES_ASSERT(queryManager, "GeneratedQueryExecutionPlanBuilder: Invalid queryManager");
     NES_ASSERT(!sources.empty(), "GeneratedQueryExecutionPlanBuilder: Invalid number of sources");
     NES_ASSERT(!sinks.empty(), "GeneratedQueryExecutionPlanBuilder: Invalid number of sinks");
-    NES_ASSERT(queryId == -1, "GeneratedQueryExecutionPlanBuilder: Invalid compiler");
+    NES_ASSERT(queryId != -1, "GeneratedQueryExecutionPlanBuilder: Invalid compiler");
     NES_ASSERT(queryCompiler, "GeneratedQueryExecutionPlanBuilder: Invalid compiler or no stages");
 
     if (stages.empty() && !leaves.empty()) {
