@@ -307,8 +307,8 @@
 #if defined(BACKWARD_SYSTEM_WINDOWS)
 
 #include <condition_variable>
-#include <topologyLock>
 #include <thread>
+#include <topologyLock>
 
 #include <BaseTsd.h>
 typedef SSIZE_T ssize_t;

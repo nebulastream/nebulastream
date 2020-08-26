@@ -30,7 +30,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @note  A newNode cannot be in its own child.
      * @param newNode
      */
-    bool addChild(const NodePtr newNode);
+    virtual bool addChild(const NodePtr newNode);
 
     /**
      * @brief remove a node from current children.
@@ -44,7 +44,7 @@ class Node : public std::enable_shared_from_this<Node> {
      *        one cannot add current node into its parents.
      * @param newNode
      */
-    bool addParent(const NodePtr newNode);
+    virtual bool addParent(const NodePtr newNode);
 
     /**
      * @brief remove a parent from vector of parents

@@ -1,6 +1,8 @@
 #include <API/Schema.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
+#include <algorithm>
 #include <utility>
+
 namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
@@ -102,6 +104,38 @@ OperatorNodePtr OperatorNode::getDuplicateOfChild(OperatorNodePtr operatorNode) 
     }
     NES_TRACE("OperatorNode: return copy of the input operator");
     return copyOfOperator;
+}
+
+bool OperatorNode::addChild(const NodePtr newNode) {
+    std::vector<NodePtr> currentChildren = getChildren();
+    auto found = std::find_if(currentChildren.begin(), currentChildren.end(), [&](NodePtr child) {
+        return child->as<OperatorNode>()->getId() == newNode->as<OperatorNode>()->getId();
+    });
+
+    if (found == currentChildren.end()) {
+        NES_DEBUG("OperatorNode: Adding node to the children.");
+        children.push_back(newNode);
+        newNode->addParent(shared_from_this());
+        return true;
+    }
+    NES_DEBUG("OperatorNode: the node is already part of its children so skip add chld operation.");
+    return false;
+}
+
+bool OperatorNode::addParent(const NodePtr newNode) {
+    std::vector<NodePtr> currentParents = getParents();
+    auto found = std::find_if(currentParents.begin(), currentParents.end(), [&](NodePtr child) {
+        return child->as<OperatorNode>()->getId() == newNode->as<OperatorNode>()->getId();
+    });
+
+    if (found == currentParents.end()) {
+        NES_DEBUG("OperatorNode: Adding node to the Parents.");
+        parents.push_back(newNode);
+        newNode->addChild(shared_from_this());
+        return true;
+    }
+    NES_DEBUG("OperatorNode: the node is already part of its parent so skip add parent operation.");
+    return false;
 }
 
 }// namespace NES
