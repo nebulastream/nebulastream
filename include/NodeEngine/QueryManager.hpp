@@ -118,8 +118,6 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      */
     void resetQueryManager();
 
-    ~QueryManager();
-
     /**
      * @brief method to return the query statistics
      * @param qep of the particular query
