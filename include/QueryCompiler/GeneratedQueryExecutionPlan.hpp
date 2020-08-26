@@ -16,10 +16,11 @@ typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlan
 class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
   public:
     explicit GeneratedQueryExecutionPlan(QueryExecutionPlanId queryId,
-                                         std::vector<DataSourcePtr> sources,
-                                         std::vector<PipelineStagePtr> stages,
-                                         QueryManagerPtr queryManager,
-                                         BufferManagerPtr bufferManager);
+                                         std::vector<DataSourcePtr>&& sources,
+                                         std::vector<DataSinkPtr>&& sinks,
+                                         std::vector<PipelineStagePtr>&& stages,
+                                         QueryManagerPtr&& queryManager,
+                                         BufferManagerPtr&& bufferManager);
 };
 
 }// namespace NES

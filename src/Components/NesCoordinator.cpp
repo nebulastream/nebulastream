@@ -20,6 +20,7 @@
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Topology/Topology.hpp>
 #include <grpcpp/health_check_service_interface.h>
+#include <Util/ThreadNaming.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -72,6 +73,21 @@ NesCoordinator::~NesCoordinator() {
 //    NES_ASSERT(coordinatorEngine.use_count() == 1, "NesCoordinator coordinatorEngine leaked");
 //    NES_ASSERT(coordinatorEngine.use_count() == 1, "NesCoordinator coordinatorEngine leaked");
 
+    topology.reset();
+    streamCatalog.reset();
+    globalExecutionPlan.reset();
+    queryCatalog.reset();
+    workerRpcClient.reset();
+    queryRequestQueue.reset();
+    queryRequestProcessorService.reset();
+    queryService.reset();
+    queryRequestProcessorThread.reset();
+    worker.reset();
+    coordinatorEngine.reset();
+    restThread.reset();
+    restServer.reset();
+    rpcThread.reset();
+
     std::cout << "topology.use_count()=" << topology.use_count() << std::endl;
     std::cout << "streamCatalog.use_count()=" << streamCatalog.use_count() << std::endl;
     std::cout << "globalExecutionPlan.use_count()=" << globalExecutionPlan.use_count() << std::endl;
@@ -94,6 +110,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");
 
     queryRequestProcessorThread = std::make_shared<std::thread>(([&]() {
+        setThreadName("RqstProc");
         NES_INFO("NesCoordinator: started queryRequestProcessor");
         queryRequestProcessorService->start();
         NES_WARNING("NesCoordinator: finished queryRequestProcessor");
@@ -103,6 +120,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     std::promise<bool> promRPC;
 
     rpcThread = std::make_shared<std::thread>(([&]() {
+        setThreadName("nesRPC");
         NES_DEBUG("NesCoordinator: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
         NES_DEBUG("NesCoordinator: buildAndStartGRPCServer: end listening");
@@ -122,6 +140,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     restServer = std::make_shared<RestServer>(serverIp, restPort, this->weak_from_this(), queryCatalog,
                                               streamCatalog, topology, globalExecutionPlan, queryService);
     restThread = std::make_shared<std::thread>(([&]() {
+        setThreadName("nesREST");
         restServer->start();//this call is blocking
         NES_DEBUG("NesCoordinator: startRestServer thread terminates");
     }));
@@ -177,12 +196,13 @@ bool NesCoordinator::stopCoordinator(bool force) {
 
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
-        grpc_shutdown();
+
         rpcServer->Wait();
 
         if (rpcThread->joinable()) {
             NES_DEBUG("NesCoordinator: join rpcThread");
             rpcThread->join();
+            rpcThread.reset();
         } else {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
             throw Exception("Error while stopping thread->join");
@@ -197,14 +217,13 @@ bool NesCoordinator::stopCoordinator(bool force) {
 
 void NesCoordinator::buildAndStartGRPCServer(std::promise<bool>& prom) {
     grpc::ServerBuilder builder;
+    NES_ASSERT(coordinatorEngine, "null coordinator engine");
     CoordinatorRPCServer service(coordinatorEngine);
 
     std::string address = serverIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
-    std::unique_ptr<grpc::Server> ref = builder.BuildAndStart();
-    rpcServer = std::move(ref);
-//    ref.reset(rpcServer.get());
+    rpcServer = builder.BuildAndStart();
     prom.set_value(true);
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServerServer listening on address=" << address);
     rpcServer->Wait();//blocking call

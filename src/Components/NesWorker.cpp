@@ -37,7 +37,7 @@ NesWorker::NesWorker(
 NesWorker::~NesWorker() {
     NES_DEBUG("NesWorker::~NesWorker()");
     NES_DEBUG("NesWorker::~NesWorker() use count of node engine: " << nodeEngine.use_count());
-    nodeEngine.reset();
+    stop(true);
 }
 bool NesWorker::setWitRegister(PhysicalStreamConfig pConf) {
     withRegisterStream = true;
@@ -142,11 +142,13 @@ bool NesWorker::stop(bool) {
     if (!stopped) {
         NES_DEBUG("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
-        grpc_shutdown();
+
         if (rpcThread->joinable()) {
             NES_DEBUG("NesWorker: join rpcThread");
             rpcThread->join();
         }
+        rpcServer.reset();
+        rpcThread.reset();
 
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {

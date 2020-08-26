@@ -107,11 +107,14 @@ bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, size_t tupleSize) {
     auto payloadSize = tupleSize * numOfTuples;
     auto ptr = inputBuffer.getBuffer<uint8_t>();
     auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize);// DON'T TRY THIS AT HOME :P
+    if (payloadSize == 0) {
+        return true;
+    }
     sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples);
     inputBuffer.retain();
-    size_t sentBytes =
-        zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer));
-    if (sentBytes > 0) {
+    auto sentBytesOpt =
+        zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer), zmq::send_flags::none);
+    if (sentBytesOpt.has_value()) {
         //NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
         //                                               << inputBuffer.getNumberOfTuples() << "/"
         //                                               << inputBuffer.getBufferSize());

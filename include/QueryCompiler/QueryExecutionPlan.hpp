@@ -33,11 +33,11 @@ class QueryExecutionPlan {
   protected:
     explicit QueryExecutionPlan(
         QueryExecutionPlanId queryId,
-        std::vector<DataSourcePtr> sources,
-        std::vector<PipelineStagePtr> stages,
-        QueryManagerPtr queryManager,
-        BufferManagerPtr bufferManager);
-
+        std::vector<DataSourcePtr>&& sources,
+        std::vector<DataSinkPtr>&& sinks,
+        std::vector<PipelineStagePtr>&& stages,
+        QueryManagerPtr&& queryManager,
+        BufferManagerPtr&& bufferManager);
   public:
     virtual ~QueryExecutionPlan();
 

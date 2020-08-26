@@ -58,7 +58,7 @@ QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
         NES_ASSERT(!stages.empty(), "GeneratedQueryExecutionPlanBuilder: No stages after query compilation");
         std::reverse(stages.begin(), stages.end());// this is necessary, check plan generator documentation
     }
-    return std::make_shared<GeneratedQueryExecutionPlan>(std::move(queryId), std::move(sources), std::move(stages), std::move(queryManager), std::move(bufferManager));
+    return std::make_shared<GeneratedQueryExecutionPlan>(std::move(queryId), std::move(sources), std::move(sinks), std::move(stages), std::move(queryManager), std::move(bufferManager));
 }
 
 std::vector<DataSinkPtr>& GeneratedQueryExecutionPlanBuilder::getSinks() {

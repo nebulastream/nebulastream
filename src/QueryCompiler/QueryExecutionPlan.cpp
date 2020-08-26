@@ -6,12 +6,14 @@
 namespace NES {
 
 QueryExecutionPlan::QueryExecutionPlan(uint64_t queryId,
-                                       std::vector<DataSourcePtr> sources,
-                                       std::vector<PipelineStagePtr> stages,
-                                       QueryManagerPtr queryManager,
-                                       BufferManagerPtr bufferManager)
+                                       std::vector<DataSourcePtr>&& sources,
+                                       std::vector<DataSinkPtr>&& sinks,
+                                       std::vector<PipelineStagePtr>&& stages,
+                                       QueryManagerPtr&& queryManager,
+                                       BufferManagerPtr&& bufferManager)
     : queryId(std::move(queryId)),
       sources(std::move(sources)),
+      sinks(std::move(sinks)),
       stages(std::move(stages)),
       queryManager(std::move(queryManager)),
       bufferManager(std::move(bufferManager)),
