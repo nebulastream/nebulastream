@@ -116,6 +116,7 @@ const OperatorPtr createKeyByOperator(const Attributes& keyby_spec);
 const OperatorPtr createMapOperator(AttributeFieldPtr attr, UserAPIExpressionPtr ptr);
 const OperatorPtr createSinkOperator(const DataSinkPtr sink);
 const OperatorPtr createSourceOperator(const DataSourcePtr source);
+const OperatorPtr createSourceOperator(const SchemaPtr source);
 const OperatorPtr createWindowOperator(const WindowDefinitionPtr window_definition);
 const OperatorPtr createWindowScanOperator(const SchemaPtr schema);
 const OperatorPtr createSampleOperator(const std::string& udfs);

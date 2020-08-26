@@ -41,8 +41,9 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         // Translate Source operator node.
         auto sourceNodeOperator = operatorNode->as<SourceLogicalOperatorNode>();
         const SourceDescriptorPtr sourceDescriptor = sourceNodeOperator->getSourceDescriptor();
-        const DataSourcePtr dataSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, nodeEngine);
-        legacyOperator = createSourceOperator(dataSource);
+        //const DataSourcePtr dataSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, nodeEngine);
+        //legacyOperator = createSourceOperator(dataSource);
+        legacyOperator = createSourceOperator(sourceDescriptor->getSchema());
         legacyOperator->setOperatorId(operatorNode->getId());
         lagacyParent->addChild(legacyOperator);
         legacyOperator->setParent(lagacyParent);
@@ -95,8 +96,8 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
         const SinkDescriptorPtr sinkDescriptor = sinkNodeOperator->getSinkDescriptor();
         const SchemaPtr schema = sinkNodeOperator->getOutputSchema();
-        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine);
-        legacyOperator = createSinkOperator(dataSink);
+        //const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine);
+        legacyOperator = createSinkOperator(nullptr);
         legacyOperator->setOperatorId(operatorNode->getId());
         return legacyOperator;
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {

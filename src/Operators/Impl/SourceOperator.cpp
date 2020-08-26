@@ -6,7 +6,8 @@
 
 namespace NES {
 
-SourceOperator::SourceOperator(const DataSourcePtr source) : Operator(), source(source) {}
+SourceOperator::SourceOperator(const DataSourcePtr source) : Operator(), source(source), schemaPtr(source->getSchema()) {}
+SourceOperator::SourceOperator(const SchemaPtr schenma) : Operator(), source(), schemaPtr(schenma) {}
 
 SourceOperator::SourceOperator(const SourceOperator& other) : source(other.source) {}
 
@@ -22,7 +23,7 @@ void SourceOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr contex
 }
 
 void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    codegen->generateCodeForScan(source->getSchema(), context);
+    codegen->generateCodeForScan(schemaPtr, context);
     getParent()->consume(codegen, context, out);
 }
 
@@ -34,7 +35,7 @@ const OperatorPtr SourceOperator::copy() const {
 
 const std::string SourceOperator::toString() const {
     std::stringstream ss;
-    ss << "SOURCE(" << NES::toString(source) << ")";
+    ss << "SOURCE()";
     return ss.str();
 }
 
@@ -50,5 +51,6 @@ SourceOperator::SourceOperator() {
 }
 
 const OperatorPtr createSourceOperator(const DataSourcePtr source) { return std::make_shared<SourceOperator>(source); }
+const OperatorPtr createSourceOperator(const SchemaPtr source) { return std::make_shared<SourceOperator>(source); }
 
 }// namespace NES
