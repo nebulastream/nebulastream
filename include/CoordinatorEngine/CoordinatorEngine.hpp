@@ -17,7 +17,7 @@ class CoordinatorEngine {
 
   public:
     CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology);
-
+    ~CoordinatorEngine();
     /**
      * @brief registers a node
      * @param address of node ip:port

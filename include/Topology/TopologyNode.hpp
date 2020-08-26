@@ -79,9 +79,9 @@ class TopologyNode : public Node {
      */
     TopologyNodePtr copy();
 
-  private:
     explicit TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
 
+  private:
     uint64_t id;
     std::string ipAddress;
     uint32_t grpcPort;

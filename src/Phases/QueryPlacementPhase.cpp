@@ -8,7 +8,14 @@ namespace NES {
 
 QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
                                          StreamCatalogPtr streamCatalog) : globalExecutionPlan(globalExecutionPlan), topology(topology),
-                                                                           typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {}
+                                                                           typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {
+    NES_DEBUG("QueryPlacementPhase()");
+}
+
+QueryPlacementPhase::~QueryPlacementPhase()
+{
+    NES_DEBUG("~QueryPlacementPhase()");
+}
 
 QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
                                                    StreamCatalogPtr streamCatalog) {

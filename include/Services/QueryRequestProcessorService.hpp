@@ -50,6 +50,7 @@ class QueryRequestProcessorService {
     explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryCatalogPtr queryCatalog,
                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue);
 
+    ~QueryRequestProcessorService();
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
      */

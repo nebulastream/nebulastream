@@ -13,7 +13,14 @@
 
 namespace NES {
 
-TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamCatalog(streamCatalog) {}
+TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamCatalog(streamCatalog) {
+    NES_DEBUG("TypeInferencePhase()");
+}
+
+TypeInferencePhase::~TypeInferencePhase()
+{
+    NES_DEBUG("~TypeInferencePhase()");
+}
 
 TypeInferencePhasePtr TypeInferencePhase::create(StreamCatalogPtr streamCatalog) {
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(streamCatalog));

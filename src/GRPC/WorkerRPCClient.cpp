@@ -5,6 +5,8 @@
 namespace NES {
 
 WorkerRPCClient::WorkerRPCClient() {
+    NES_DEBUG("WorkerRPCClient()");
+
 }
 bool WorkerRPCClient::deployQuery(std::string address, std::string executableTransferObject) {
     NES_DEBUG(
@@ -33,9 +35,8 @@ bool WorkerRPCClient::deployQuery(std::string address, std::string executableTra
 
 WorkerRPCClient::~WorkerRPCClient()
 {
-    NES_DEBUG("WorkerRPCClient(): destruct");
+    NES_DEBUG("~WorkerRPCClient()");
 }
-
 
 bool WorkerRPCClient::undeployQuery(std::string address, QueryId queryId) {
     NES_DEBUG(

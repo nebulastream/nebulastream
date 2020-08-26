@@ -5,7 +5,7 @@ using namespace NES;
 
 WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
     : nodeEngine(nodeEngine) {
-    NES_DEBUG("WorkerRPCServer::WorkerRPCServer");
+    NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request,

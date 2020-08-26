@@ -18,6 +18,7 @@ class QueryRequestQueue {
 
   public:
     QueryRequestQueue();
+    ~QueryRequestQueue();
 
     /**
      * @brief Add query request into processing queue

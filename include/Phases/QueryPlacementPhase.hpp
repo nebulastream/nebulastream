@@ -40,11 +40,11 @@ class QueryPlacementPhase {
      * @throws QueryPlacementException
      */
     bool execute(std::string placementStrategy, QueryPlanPtr queryPlan);
+    ~QueryPlacementPhase();
 
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
-
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;

@@ -6,7 +6,7 @@ TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort
     : id(id), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0) {}
 
 TopologyNodePtr TopologyNode::create(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {
-    return std::make_shared<TopologyNode>(TopologyNode(id, ipAddress, grpcPort, dataPort, resources));
+    return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources);
 }
 
 uint64_t TopologyNode::getId() {

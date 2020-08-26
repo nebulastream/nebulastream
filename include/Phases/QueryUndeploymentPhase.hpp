@@ -40,10 +40,10 @@ class QueryUndeploymentPhase {
      * @return true if successful
      */
     bool execute(const QueryId queryId);
+    ~QueryUndeploymentPhase();
 
   private:
     explicit QueryUndeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
-
     /**
      * @brief method remove query from nodes
      * @param queryId

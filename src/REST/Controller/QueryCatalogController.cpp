@@ -7,7 +7,7 @@
 
 namespace NES {
 
-QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorPtr coordinator) {
+QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorWeakPtr coordinator) {
     NES_DEBUG("QueryCatalogController()");
     this->queryCatalog = queryCatalog;
     this->coordinator = coordinator;
@@ -95,7 +95,10 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
                     //Prepare the response
                     json::value result{};
-                    size_t processedBuffers = coordinator->getQueryStatistics(std::stoi(queryId))->getProcessedBuffers();
+                    size_t processedBuffers = 0;
+                    if (auto shared_back_reference = coordinator.lock()) {
+                         processedBuffers = shared_back_reference->getQueryStatistics(std::stoi(queryId))->getProcessedBuffers();
+                    }
                     NES_DEBUG("getNumberOfProducedBuffers processedBuffers=" << processedBuffers);
 
                     result["producedBuffers"] = processedBuffers;

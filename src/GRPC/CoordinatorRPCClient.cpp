@@ -16,11 +16,12 @@ CoordinatorRPCClient::CoordinatorRPCClient(std::string address)
         NES_THROW_RUNTIME_ERROR("CoordinatorRPCClient::connecting error while creating channel");
     }
     coordinatorStub = CoordinatorRPCService::NewStub(rpcChannel);
+    workerId = SIZE_MAX;
 }
 
 CoordinatorRPCClient::~CoordinatorRPCClient()
 {
-    NES_DEBUG("CoordinatorRPCClient(): destruct");
+    NES_DEBUG("~CoordinatorRPCClient()");
 }
 
 

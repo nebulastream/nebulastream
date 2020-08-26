@@ -8,6 +8,8 @@
 #include <thread>
 #include <future>
 namespace NES {
+class QueryRequestQueue;
+typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
 
 class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
@@ -112,7 +114,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     std::string serverIp;
     uint16_t restPort;
     uint16_t rpcPort;
-    std::shared_ptr<grpc::Server> rpcServer;
+    std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     std::shared_ptr<std::thread> queryRequestProcessorThread;
     NesWorkerPtr worker;
@@ -126,6 +128,8 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     std::atomic<bool> stopped;
     QueryRequestProcessorServicePtr queryRequestProcessorService;
     QueryServicePtr queryService;
+    WorkerRPCClientPtr workerRpcClient;
+    QueryRequestQueuePtr queryRequestQueue;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 

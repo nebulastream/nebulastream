@@ -27,7 +27,7 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
                                                            QueryRequestQueuePtr queryRequestQueue)
     : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue) {
 
-    NES_INFO("QueryProcessorService()");
+    NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryRewritePhase = QueryRewritePhase::create();
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
@@ -35,7 +35,10 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     queryUndeploymentPhase = QueryUndeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryPlacementRefinementPhase = QueryPlacementRefinementPhase::create(globalExecutionPlan);
 }
-
+QueryRequestProcessorService::~QueryRequestProcessorService()
+{
+    NES_DEBUG("~QueryRequestProcessorService()");
+}
 void QueryRequestProcessorService::start() {
 
     try {

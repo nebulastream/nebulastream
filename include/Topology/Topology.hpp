@@ -117,6 +117,8 @@ class Topology {
      */
     bool reduceResources(uint64_t nodeId, uint16_t amountToReduce);
 
+    ~Topology();
+
   private:
     explicit Topology();
 

@@ -5,7 +5,7 @@
 
 namespace NES {
 
-RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordinator, QueryCatalogPtr queryCatalog,
+RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
                        TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService) : streamCatalog(streamCatalog) {
     NES_DEBUG("RestEngine");
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
@@ -15,7 +15,7 @@ RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorPtr coordin
 }
 
 RestEngine::~RestEngine() {
-    NES_DEBUG("~RestEngine");
+    NES_DEBUG("~RestEngine()");
 }
 
 void RestEngine::initRestOpHandlers() {

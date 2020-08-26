@@ -17,7 +17,7 @@ ExchangeProtocol::ExchangeProtocol(
 }
 
 ExchangeProtocol::~ExchangeProtocol() {
-    NES_ASSERT(protocolListener.use_count() == 1, "the protocolListener pointer was leaked");
+//    NES_ASSERT(protocolListener.use_count() == 1, "the protocolListener pointer was leaked");
 }
 
 Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {

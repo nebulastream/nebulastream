@@ -17,6 +17,11 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr qu
     NES_DEBUG("QueryService()");
 }
 
+QueryService::~QueryService()
+{
+    NES_DEBUG("~QueryService()");
+}
+
 uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
