@@ -114,7 +114,7 @@ void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr so
                 NES_DEBUG("BottomUpStrategy: node " << candidateNode->toString() << " was already used by other deployment");
                 const ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateNode->getId());
 
-                if (candidateExecutionNode->hasQuerySubPlan(queryId)) {
+                if (candidateExecutionNode->hasQuerySubPlans(queryId)) {
                     NES_DEBUG("BottomUpStrategy: node " << candidateNode->toString() << " already contains a query sub plan with the id" << queryId);
                     if (candidateExecutionNode->checkIfQuerySubPlanContainsOperator(queryId, operatorToPlace)) {
                         NES_DEBUG("BottomUpStrategy: skip adding rest of the operator chains as they already exists.");

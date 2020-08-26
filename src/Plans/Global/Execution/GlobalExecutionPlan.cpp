@@ -92,7 +92,7 @@ bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
     NES_DEBUG("GlobalExecutionPlan: Found " << executionNodes.size() << " Execution node for query with id " << queryId);
     for (auto executionNode : executionNodes) {
         uint64_t executionNodeId = executionNode->getId();
-        if (!executionNode->removeQuerySubPlan(queryId)) {
+        if (!executionNode->removeQuerySubPlans(queryId)) {
             NES_ERROR("GlobalExecutionPlan: Unable to remove query sub plan with id " << queryId << " from execution node with id " << executionNodeId);
             return false;
         }
