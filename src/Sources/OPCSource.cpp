@@ -15,14 +15,15 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <Util/Logger.hpp>
+#include <open62541/types.h>
 
 namespace NES {
 
-OPCSource::OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string & url, UA_UInt16 nsIndex, const std::string& nsId, const std::string& user, const std::string& password)
+OPCSource::OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string &url,
+                     UA_NodeId* nodeId, const std::string &password, const std::string &user)
     : DataSource(schema, bufferManager, queryManager), 
     url(url),
-    nsIndex(nsIndex),
-    nsId(nsId),
+    nodeId(nodeId),
     retval(UA_STATUSCODE_GOOD),
     client(UA_Client_new()),
     connected(false),
@@ -51,8 +52,11 @@ std::optional<TupleBuffer> OPCSource::receiveData() {
     if (connect()) {
         UA_Variant *val = UA_Variant_new();
 
-        retval = UA_Client_readValueAttribute(client, UA_NODEID_STRING(nsIndex, const_cast<char*>(nsId.c_str())), val);
-        auto buffer = bufferManager->getBufferBlocking();
+        NES_DEBUG("Init var");
+
+        retval = UA_Client_readValueAttribute(client, *nodeId, val);
+
+        TupleBuffer buffer = bufferManager->getBufferBlocking();
         NES_DEBUG("OPCSource  " << this << ": got buffer ");
 
         if(retval == UA_STATUSCODE_GOOD) {
@@ -73,12 +77,13 @@ std::optional<TupleBuffer> OPCSource::receiveData() {
 }
 
 const std::string OPCSource::toString() const {
+
     std::stringstream ss;
     ss << "OPC_SOURCE(";
     ss << "SCHEMA(" << schema->toString() << "), ";
     ss << "URL= " << url << ", ";
-    ss << "NODE_INDEX= " << nsIndex << ", ";
-    ss << "NODE_ID= " << nsId << ". ";
+    ss << "NODE_INDEX= " << nodeId->namespaceIndex << ". ";
+
     return ss.str();
 }
 
@@ -89,13 +94,14 @@ bool OPCSource::connect() {
 
     if (!connected) {
         NES_DEBUG("OPCSOURCE was !conncect now connect " << this << ": connected");
-        if (password.empty())
-        {
+        //if (password.empty())
+        //{
             retval = UA_Client_connect(client, url.c_str());
-        }else{
+            NES_DEBUG("OPCSOURCE connected without user or password");
+        //}else{
             //ToDO: Enable username and password connection
             //retval = UA_Client_connect_username(client, url.c_str(), user.c_str(), password.c_str());
-        }
+        //}
         NES_DEBUG("OPCSOURCE use address " << url);
 
         if (retval != UA_STATUSCODE_GOOD)
@@ -104,6 +110,8 @@ bool OPCSource::connect() {
             connected = false;
             NES_ERROR("OPCSOURCE ERROR with Status Code: " << retval);
             NES_DEBUG("OPCSOURCE " << this << ": set connected false");
+        } else{
+            connected = true;
         }
     }
 
@@ -137,12 +145,8 @@ const std::string&  OPCSource::getUrl() const {
     return url;
 }
 
-UA_UInt16 OPCSource::getNsIndex() const {
-    return nsIndex;
-}
-
-const std::string& OPCSource::getNsId() const {
-    return nsId;
+UA_NodeId* OPCSource::getNodeId() const {
+    return nodeId;
 }
 
 const std::string& OPCSource::getUser() const {

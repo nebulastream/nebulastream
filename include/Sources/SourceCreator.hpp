@@ -104,18 +104,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
 #endif
 
 //#ifdef ENABLE_OPC_BUILD
-/**
- * @brief Create OPC source
- * @param schema schema of the elements
- * @param url the url of the OPC server
- * @param nsIndex an int with the depth of the node on the server
- * @param nsId the name of the server node
- * @return
- */
-const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                    const std::string& url,
-                                    UA_UInt16 nsIndex,
-                                    const std::string& nsId);
+
 
 /**
  * @brief Create OPC source
@@ -129,8 +118,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferMan
  */
 const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                     const std::string& url,
-                                    UA_UInt16 nsIndex,
-                                    const std::string& nsId,
+                                    UA_NodeId* nodeId,
                                     const std::string& user,
                                     const std::string& password);
 //#endif

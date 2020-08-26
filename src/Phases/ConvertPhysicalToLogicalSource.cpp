@@ -79,8 +79,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const SourceDescriptorPtr opcSourceDescriptor =
                     OPCSourceDescriptor::create(opcSourcePtr->getSchema(),
                                                   opcSourcePtr->getUrl(),
-                                                  opcSourcePtr->getNsIndex(),
-                                                  opcSourcePtr->getNsId(),
+                                                  opcSourcePtr->getNodeId(),
                                                   opcSourcePtr->getUser(),
                                                   opcSourcePtr->getPassword());
             return opcSourceDescriptor;
