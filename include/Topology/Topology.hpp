@@ -125,6 +125,27 @@ class Topology {
      */
     bool reduceResources(uint64_t nodeId, uint16_t amountToReduce);
 
+    /**
+     * @brief Merge the sub graphs starting from the nodes into a single sub-graph
+     * @param startNodes : start nodes of the sub-graphs to be merged
+     * @return start nodes of the merged sub-graph
+     */
+    std::vector<TopologyNodePtr> mergeGraphs(std::vector<TopologyNodePtr> startNodes);
+
+    /**
+     * @brief Find the immediate common ancestor for the set of Topology nodes
+     * @param topologyNodes: the set of topology nodes
+     * @return the immediate common ancestor.
+     */
+    TopologyNodePtr findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes);
+
+    /**
+     * @brief Find the immediate common child for the set of Topology nodes
+     * @param topologyNodes: the set of topology nodes
+     * @return the immediate common child.
+     */
+    TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
+
     ~Topology();
 
   private:
@@ -145,7 +166,6 @@ class Topology {
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
-    std::vector<TopologyNodePtr> mergeGraphs(std::vector<TopologyNodePtr> startNodes);
 };
 }// namespace NES
 #endif//NES_TOPOLOGY_HPP

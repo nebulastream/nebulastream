@@ -27,31 +27,37 @@ BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan, T
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     const QueryId queryId = queryPlan->getQueryId();
+    NES_INFO("BottomUpStrategy: Performing placement of the input query plan with id " << queryId);
 
-    // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    // TONY: now, we are removing the assumption of single source operator.
-    // Create multiple query graph by splitting merge operator.
-    const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
-    const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
-
-    if (!sourceOperator->getSourceDescriptor()->hasStreamName()) {
-        NES_THROW_RUNTIME_ERROR("BottomUpStrategy: Source Descriptor need stream name: " + queryId);
-    }
-    const string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
-
-    if (!sourceOperator) {
-        NES_ERROR("BottomUpStrategy: No source operator found in the query plan wih id: " + queryId);
-        throw QueryPlacementException("BottomUpStrategy: No source operator found in the query plan wih id: " + queryId);
+    NES_DEBUG("BottomUpStrategy: Get all source operators");
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    if (!sourceOperators.empty()) {
+        NES_ERROR("BottomUpStrategy: No source operators found in the query plan wih id: " << queryId);
+        throw QueryPlacementException("BottomUpStrategy: No source operators found in the query plan wih id: " + queryId);
     }
 
-    const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
-    if (sourceNodes.empty()) {
-        NES_ERROR("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
-        throw QueryPlacementException("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
+    NES_DEBUG("BottomUpStrategy: Prepare a map of source to physical nodes");
+    std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
+    for (auto& sourceOperator : sourceOperators) {
+        if (!sourceOperator->getSourceDescriptor()->hasStreamName()) {
+            throw QueryPlacementException("BottomUpStrategy: Source Descriptor need stream name: " + queryId);
+        }
+        const std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
+        if (mapOfSourceToTopologyNodes.find(streamName) != mapOfSourceToTopologyNodes.end()) {
+            NES_TRACE("BottomUpStrategy: Entry for the logical stream " << streamName << " already present.");
+            continue;
+        }
+        NES_TRACE("BottomUpStrategy: Get all topology nodes for the logical source stream");
+        const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
+        if (sourceNodes.empty()) {
+            NES_ERROR("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
+            throw QueryPlacementException("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
+        }
+        mapOfSourceToTopologyNodes[streamName] = sourceNodes;
     }
 
-    NES_INFO("BottomUpStrategy: Preparing execution plan for query with id : " << queryId);
-    placeOperators(queryId, sourceOperator, sourceNodes);
+    NES_DEBUG("BottomUpStrategy: Preparing execution plan for query with id : " << queryId);
+    placeOperators(queryPlan, mapOfSourceToTopologyNodes);
 
     TopologyNodePtr rootNode = topology->getRoot();
 
@@ -64,101 +70,151 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     return true;
 }
 
-void BottomUpStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sourceOperator, vector<TopologyNodePtr> sourceNodes) {
+void BottomUpStrategy::placeOperators(QueryPlanPtr queryPlan, std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes) {
 
+    QueryId queryId = queryPlan->getQueryId();
     TopologyNodePtr sinkNode = topology->getRoot();
 
-    NES_DEBUG("BottomUpStrategy: Place the operator chain from each source node for query with id : " << queryId);
-    for (const auto& sourceNode : sourceNodes) {
-
-        NES_INFO("BottomUpStrategy: Find the path between source and sink node for query with id : " << queryId);
-        std::optional<TopologyNodePtr> candidatePhysicalNode = topology->findAllPathBetween(sourceNode, sinkNode);
-        if (!candidatePhysicalNode.has_value()) {
-            NES_ERROR("BottomUpStrategy: No path exists between sink and source");
-            throw QueryPlacementException("BottomUpStrategy: No path exists between sink and source");
+    vector<TopologyNodePtr> topoSubGrphForOP;
+    for (auto& entry : mapOfSourceToTopologyNodes) {
+        NES_TRACE("BottomUpStrategy: ");
+        vector<TopologyNodePtr> topoSubGrphForSrc = topology->findPathBetween(entry.second, {sinkNode});
+        if (topoSubGrphForOP.empty()) {
+            topoSubGrphForOP = topoSubGrphForSrc;
+            continue;
+        } else {
+            topoSubGrphForOP.insert(topoSubGrphForOP.end(), topoSubGrphForSrc.begin(), topoSubGrphForSrc.end());
         }
-        TopologyNodePtr candidateNode = candidatePhysicalNode.value();
-        LogicalOperatorNodePtr operatorToPlace = sourceOperator;
-        while (operatorToPlace) {
+        NES_TRACE("BottomUpStrategy: Merge the topology sub-graphs found till now");
+        topoSubGrphForOP = topology->mergeGraphs(topoSubGrphForOP);
+    }
 
-            if (operatorToPlace->instanceOf<SinkLogicalOperatorNode>()) {
-                NES_DEBUG("BottomUpStrategy: Placing sink operator on the sink node");
-                if (candidateNode->getId() != sinkNode->getId()) {
-                    candidateNode = candidateNode->getAllRootNodes()[0]->as<TopologyNode>();
-                }
-                if (!globalExecutionPlan->getExecutionNodeByNodeId(candidateNode->getId())) {
-                    NES_DEBUG("BottomUpStrategy: Creating a new root execution node for placing sink operator");
-                    const ExecutionNodePtr rootExecutionNode = ExecutionNode::createExecutionNode(candidateNode);
-                    globalExecutionPlan->addExecutionNodeAsRoot(rootExecutionNode);
-                }
-            } else if (candidateNode->getAvailableResources() == 0) {
-                NES_DEBUG("BottomUpStrategy: Find the next NES node in the path where operator can be placed");
-                while (!candidateNode->getParents().empty()) {
-                    candidateNode = candidateNode->getParents()[0]->as<TopologyNode>();
-                    if (candidateNode->getAvailableResources() > 0) {
-                        NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : " << candidateNode->getId());
-                        break;
-                    }
-                }
-            }
+    NES_DEBUG("BottomUpStrategy: Get the all source operators for performing the placement.");
+    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
 
-            if (candidateNode->getAvailableResources() == 0) {
-                NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
-                throw QueryPlacementException("BottomUpStrategy: No node available for further placement of operators");
-            }
+    std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
 
-            NES_DEBUG("BottomUpStrategy: Checking if execution node for the target worker node already present.");
-
-            if (globalExecutionPlan->checkIfExecutionNodeExists(candidateNode->getId())) {
-
-                NES_DEBUG("BottomUpStrategy: node " << candidateNode->toString() << " was already used by other deployment");
-                const ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateNode->getId());
-
-                if (candidateExecutionNode->hasQuerySubPlans(queryId)) {
-                    NES_DEBUG("BottomUpStrategy: node " << candidateNode->toString() << " already contains a query sub plan with the id" << queryId);
-                    if (candidateExecutionNode->checkIfQuerySubPlanContainsOperator(queryId, operatorToPlace)) {
-                        NES_DEBUG("BottomUpStrategy: skip adding rest of the operator chains as they already exists.");
-                        break;
-                    } else {
-                        NES_DEBUG("BottomUpStrategy: Adding the operator to an existing query sub plan on the Execution node");
-                        if (!candidateExecutionNode->appendOperatorToQuerySubPlan(queryId, operatorToPlace->copy())) {
-                            NES_ERROR("BottomUpStrategy: failed to add operator" + operatorToPlace->toString() + "node for query " + std::to_string(queryId));
-                            throw QueryPlacementException("BottomUpStrategy: failed to add operator" + operatorToPlace->toString() + "node for query " + std::to_string(queryId));
-                        }
-                    }
-                } else {
-                    NES_DEBUG("BottomUpStrategy: Adding the operator to an existing execution node");
-                    if (!candidateExecutionNode->createNewQuerySubPlan(queryId, operatorToPlace->copy())) {
-                        NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
-                        throw QueryPlacementException("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
-                    }
-                }
-            } else {
-
-                NES_DEBUG("BottomUpStrategy: create new execution node with id: " << candidateNode->getId());
-                ExecutionNodePtr newExecutionNode = ExecutionNode::createExecutionNode(candidateNode, queryId, operatorToPlace->copy());
-                NES_DEBUG("BottomUpStrategy: Adding new execution node with id: " << candidateNode->getId());
-                if (!globalExecutionPlan->addExecutionNode(newExecutionNode)) {
-                    NES_ERROR("BottomUpStrategy: failed to add execution node for query " + queryId);
-                    throw QueryPlacementException("BottomUpStrategy: failed to add execution node for query " + queryId);
-                }
-            }
-
-            NES_DEBUG("BottomUpStrategy: Reducing the node remaining CPU capacity by 1");
-            // Reduce the processing capacity by 1
-            // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
-            candidateNode->reduceResources(1);
-            topology->reduceResources(candidateNode->getId(), 1);
-            if (!operatorToPlace->getParents().empty()) {
-                //FIXME: currently we are not considering split operators
-                NES_DEBUG("BottomUpStrategy: Finding next operator for placement");
-                operatorToPlace = operatorToPlace->getParents()[0]->as<LogicalOperatorNode>();
-            } else {
-                NES_DEBUG("BottomUpStrategy: No operator found for placement");
-                operatorToPlace = nullptr;
-            }
+    for (auto& sourceOperator : sourceOperators) {
+        NES_DEBUG("BottomUpStrategy: Get the topology node for source operator " << sourceOperator->toString() << " placement.");
+        SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
+        std::vector<TopologyNodePtr> topologyNodes = mapOfSourceToTopologyNodes[sourceDescriptor->getStreamName()];
+        if (topologyNodes.empty()) {
+            NES_ERROR("BottomUpStrategy: unable to find topology nodes for logical source " << sourceDescriptor->getStreamName());
+            throw QueryPlacementException("BottomUpStrategy: unable to find topology nodes for logical source " + sourceDescriptor->getStreamName());
         }
+
+        TopologyNodePtr candidateTopologyNode = topologyNodes[0];
+        topologyNodes.erase(topologyNodes.begin());
+        if (candidateTopologyNode->getAvailableResources() == 0) {
+            NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
+            throw QueryPlacementException("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
+        }
+        placeOperator(queryId, sourceOperator, candidateTopologyNode, operatorToExecutionNodeMap);
     }
     NES_DEBUG("BottomUpStrategy: Finished placing query operators into the global execution plan");
 }
+
+bool BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap) {
+
+    if (candidateTopologyNode->getAvailableResources() == 0) {
+        NES_DEBUG("BottomUpStrategy: Find the next NES node in the path where operator can be placed");
+        while (!candidateTopologyNode->getParents().empty()) {
+            candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
+            if (candidateTopologyNode->getAvailableResources() > 0) {
+                NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : " << candidateTopologyNode->getId());
+                break;
+            }
+        }
+    }
+
+    if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
+        NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
+        throw QueryPlacementException("BottomUpStrategy: No node available for further placement of operators");
+    }
+
+    ExecutionNodePtr candidateExecutionNode;
+    if (globalExecutionPlan->checkIfExecutionNodeExists(candidateTopologyNode->getId())) {
+        NES_TRACE("BottomUpStrategy: node " << candidateTopologyNode->toString() << " was already used by other deployment");
+        candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateTopologyNode->getId());
+    } else {
+
+        NES_DEBUG("BottomUpStrategy: create new execution node with id: " << candidateTopologyNode->getId());
+        candidateExecutionNode = ExecutionNode::createExecutionNode(candidateTopologyNode);
+        NES_DEBUG("BottomUpStrategy: Adding new execution node with id: " << candidateTopologyNode->getId());
+        if (!globalExecutionPlan->addExecutionNode(candidateExecutionNode)) {
+            NES_ERROR("BottomUpStrategy: failed to add execution node for query " << queryId);
+            throw QueryPlacementException("BottomUpStrategy: failed to add execution node for query " + queryId);
+        }
+    }
+
+    std::vector<QueryPlanPtr> queryPlansWithChildren;
+    std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
+    for (auto& child : candidateOperator->getChildren()) {
+        auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](QueryPlanPtr querySubPlan) {
+            const vector<OperatorNodePtr> rootOperators = querySubPlan->getRootOperators();
+            for (auto root : rootOperators) {
+                if (root->as<OperatorNode>()->getId() == child->as<OperatorNode>()->getId()) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        if (found != querySubPlans.end()) {
+            queryPlansWithChildren.push_back(*found);
+            querySubPlans.erase(found);
+        }
+    }
+
+    const OperatorNodePtr copyOfCandidateOperator = candidateOperator->copy();
+    if (queryPlansWithChildren.empty()) {
+        NES_DEBUG("BottomUpStrategy: Adding a new query plan for the operator to an existing execution node");
+        QueryPlanPtr querySubPlan = QueryPlan::create(copyOfCandidateOperator);
+        querySubPlan->setQueryId(queryId);
+        if (!candidateExecutionNode->createNewQuerySubPlan(queryId, querySubPlan)) {
+            NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
+            throw QueryPlacementException("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
+        }
+    } else {
+        NES_DEBUG("BottomUpStrategy: Merging the Query plans");
+        for (auto& queryPlan : queryPlansWithChildren) {
+            for (auto& rootOperator : queryPlan->getRootOperators()) {
+                copyOfCandidateOperator->addChild(rootOperator);
+            }
+        }
+        QueryPlanPtr querySubPlan = QueryPlan::create(copyOfCandidateOperator);
+        querySubPlan->setQueryId(queryId);
+        querySubPlans.push_back(querySubPlan);
+        if (!candidateExecutionNode->updateQuerySubPlans(queryId, querySubPlans)) {
+            NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
+            throw QueryPlacementException("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
+        }
+    }
+
+    operatorToExecutionNodeMap[candidateOperator->getId()] = candidateExecutionNode;
+
+    for (auto& parent : candidateOperator->getParents()) {
+        OperatorNodePtr parentOperator = parent->as<OperatorNode>();
+        if (parentOperator->isNAryOperator()) {
+            std::vector<TopologyNodePtr> childTopologyNodes;
+            vector<NodePtr> children = parentOperator->getChildren();
+            for (auto& child : children) {
+                const auto& found = operatorToExecutionNodeMap.find(child->as<OperatorNode>()->getId());
+                if (found == operatorToExecutionNodeMap.end()) {
+                    break;
+                }
+                TopologyNodePtr childPhysicalNode = found->second->getPhysicalNode();
+                childTopologyNodes.push_back(childPhysicalNode);
+            }
+            if (childTopologyNodes.size() != children.size()) {
+                continue;
+            }
+            candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
+        }
+        placeOperator(queryId, parentOperator, candidateTopologyNode, operatorToExecutionNodeMap);
+    }
+
+    return true;
+}
+
 }// namespace NES
