@@ -25,7 +25,7 @@ class QueryService {
   public:
     explicit QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue);
 
-    ~QueryService() = default;
+    ~QueryService();
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

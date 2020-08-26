@@ -127,6 +127,7 @@ MemoryMetrics SystemResourcesReader::ReadMemoryStats() {
     output.LOADS_5MIN = sinfo->loads[1];
     output.LOADS_15MIN = sinfo->loads[2];
 
+    delete sinfo;
     return output;
 }
 

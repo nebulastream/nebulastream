@@ -8,9 +8,10 @@ namespace NES {
 using std::string;
 
 QueryManager::QueryManager()
-    : taskQueue(), sourceIdToQueryMap(), queryMutex(), workMutex() {
-    NES_DEBUG("Init QueryManager::QueryManager()");
+      : queryMutex(), workMutex() {
+    NES_DEBUG("QueryManager()");
 }
+
 
 QueryManager::~QueryManager() {
     NES_DEBUG("~QueryManager()");

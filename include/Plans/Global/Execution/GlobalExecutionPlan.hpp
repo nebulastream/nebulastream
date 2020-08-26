@@ -24,7 +24,7 @@ class GlobalExecutionPlan {
 
   public:
     static GlobalExecutionPlanPtr create();
-    ~GlobalExecutionPlan() = default;
+
 
     /**
      * Add execution node as parent of another execution node. If the node already exists then simply update the node.
@@ -106,9 +106,10 @@ class GlobalExecutionPlan {
      */
     void scheduleExecutionNode(ExecutionNodePtr executionNode);
 
-  private:
-    explicit GlobalExecutionPlan() = default;
+    ~GlobalExecutionPlan();
 
+  private:
+    explicit GlobalExecutionPlan();
     /**
      * Map the input execution node with different sub query plans it has
      * @param executionNode : the input execution node

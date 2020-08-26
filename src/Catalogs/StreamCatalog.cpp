@@ -48,7 +48,7 @@ StreamCatalog::StreamCatalog() {
 }
 
 StreamCatalog::~StreamCatalog() {
-    NES_DEBUG("StreamCatalog: deconstruct stream catalog");
+    NES_DEBUG("~StreamCatalog:");
 }
 
 bool StreamCatalog::addLogicalStream(const std::string& streamName, const std::string& streamSchema) {

@@ -17,6 +17,7 @@ namespace NES {
 
 class NesCoordinator;
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
+typedef std::weak_ptr<NesCoordinator> NesCoordinatorWeakPtr;
 
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;

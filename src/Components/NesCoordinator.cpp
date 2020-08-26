@@ -38,8 +38,8 @@ NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
-    WorkerRPCClientPtr workerRpcClient = std::make_shared<WorkerRPCClient>();
-    QueryRequestQueuePtr queryRequestQueue = std::make_shared<QueryRequestQueue>();
+    workerRpcClient = std::make_shared<WorkerRPCClient>();
+    queryRequestQueue = std::make_shared<QueryRequestQueue>();
     queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topology, queryCatalog,
                                                                                   streamCatalog, workerRpcClient, queryRequestQueue);
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
@@ -47,11 +47,47 @@ NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t
 
 NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator()");
+    NES_DEBUG("NesCoordinator::~NesCoordinator() ptr usage=" << workerRpcClient.use_count());
+
     stopCoordinator(true);
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     streamCatalog->reset();
     queryCatalog->clearQueries();
-    NES_ASSERT(shared_from_this().use_count() == 1, "Nes Coordinator leaked");
+
+//    NES_ASSERT(topology.use_count() == 1, "NesCoordinator topology leaked");
+//    NES_ASSERT(streamCatalog.use_count() == 1, "NesCoordinator streamCatalog leaked");
+//    NES_ASSERT(globalExecutionPlan.use_count() == 1, "NesCoordinator globalExecutionPlan leaked");
+//    NES_ASSERT(queryCatalog.use_count() == 1, "NesCoordinator queryCatalog leaked");
+//    NES_ASSERT(workerRpcClient.use_count() == 1, "NesCoordinator workerRpcClient leaked");
+//    NES_ASSERT(queryRequestQueue.use_count() == 1, "NesCoordinator queryRequestQueue leaked");
+//    NES_ASSERT(queryRequestProcessorService.use_count() == 1, "NesCoordinator queryRequestProcessorService leaked");
+//    NES_ASSERT(queryService.use_count() == 1, "NesCoordinator queryService leaked");
+//
+//    NES_ASSERT(rpcThread.use_count() == 1, "NesCoordinator rpcThread leaked");
+//    NES_ASSERT(queryRequestProcessorThread.use_count() == 1, "NesCoordinator queryRequestProcessorThread leaked");
+//    NES_ASSERT(worker.use_count() == 1, "NesCoordinator worker leaked");
+//    NES_ASSERT(coordinatorEngine.use_count() == 1, "NesCoordinator coordinatorEngine leaked");
+//    NES_ASSERT(restServer.use_count() == 1, "NesCoordinator restServer leaked");
+//    NES_ASSERT(restThread.use_count() == 1, "NesCoordinator restThread leaked");
+//    NES_ASSERT(coordinatorEngine.use_count() == 1, "NesCoordinator coordinatorEngine leaked");
+//    NES_ASSERT(coordinatorEngine.use_count() == 1, "NesCoordinator coordinatorEngine leaked");
+
+    std::cout << "topology.use_count()=" << topology.use_count() << std::endl;
+    std::cout << "streamCatalog.use_count()=" << streamCatalog.use_count() << std::endl;
+    std::cout << "globalExecutionPlan.use_count()=" << globalExecutionPlan.use_count() << std::endl;
+    std::cout << "queryCatalog.use_count()=" << queryCatalog.use_count() << std::endl;
+    std::cout << "workerRpcClient.use_count()=" << workerRpcClient.use_count() << std::endl;
+    std::cout << "queryRequestQueue.use_count()=" << queryRequestQueue.use_count() << std::endl;
+    std::cout << "queryRequestProcessorService.use_count()=" << queryRequestProcessorService.use_count() << std::endl;
+    std::cout << "queryService.use_count()=" << queryService.use_count() << std::endl;
+    std::cout << "rpcThread.use_count()=" << rpcThread.use_count() << std::endl;
+    std::cout << "queryRequestProcessorThread.use_count()=" << queryRequestProcessorThread.use_count() << std::endl;
+    std::cout << "worker.use_count()=" << worker.use_count() << std::endl;
+    std::cout << "coordinatorEngine.use_count()=" << coordinatorEngine.use_count() << std::endl;
+    std::cout << "restServer.use_count()=" << restServer.use_count() << std::endl;
+    std::cout << "restThread.use_count()=" << restThread.use_count() << std::endl;
+    std::cout << "coordinatorEngine.use_count()=" << coordinatorEngine.use_count() << std::endl;
+    std::cout << "coordinatorEngine.use_count()=" << coordinatorEngine.use_count() << std::endl;
 }
 
 size_t NesCoordinator::startCoordinator(bool blocking) {
@@ -83,7 +119,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
 
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
-    restServer = std::make_shared<RestServer>(serverIp, restPort, this->shared_from_this(), queryCatalog,
+    restServer = std::make_shared<RestServer>(serverIp, restPort, this->weak_from_this(), queryCatalog,
                                               streamCatalog, topology, globalExecutionPlan, queryService);
     restThread = std::make_shared<std::thread>(([&]() {
         restServer->start();//this call is blocking
@@ -122,20 +158,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
             throw Exception("Error while stopping thread->join");
         }
 
-        NES_DEBUG("NesCoordinator: stopping rpc server");
-        rpcServer->Shutdown();
-        rpcServer->GetHealthCheckService()->Shutdown();
-        grpc_shutdown();
-        rpcServer->Wait();
-
-        if (rpcThread->joinable()) {
-            NES_DEBUG("NesCoordinator: join rpcThread");
-            rpcThread->join();
-        } else {
-            NES_ERROR("NesCoordinator: rpc thread not joinable");
-            throw Exception("Error while stopping thread->join");
-        }
-
         queryRequestProcessorService->shutDown();
         if (queryRequestProcessorThread->joinable()) {
             NES_DEBUG("NesCoordinator: join rpcThread");
@@ -153,6 +175,18 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
         }
 
+        NES_DEBUG("NesCoordinator: stopping rpc server");
+        rpcServer->Shutdown();
+        grpc_shutdown();
+        rpcServer->Wait();
+
+        if (rpcThread->joinable()) {
+            NES_DEBUG("NesCoordinator: join rpcThread");
+            rpcThread->join();
+        } else {
+            NES_ERROR("NesCoordinator: rpc thread not joinable");
+            throw Exception("Error while stopping thread->join");
+        }
         stopped = true;
         return true;
     } else {
@@ -168,7 +202,9 @@ void NesCoordinator::buildAndStartGRPCServer(std::promise<bool>& prom) {
     std::string address = serverIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
-    rpcServer = builder.BuildAndStart();
+    std::unique_ptr<grpc::Server> ref = builder.BuildAndStart();
+    rpcServer = std::move(ref);
+//    ref.reset(rpcServer.get());
     prom.set_value(true);
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServerServer listening on address=" << address);
     rpcServer->Wait();//blocking call

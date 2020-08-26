@@ -142,7 +142,6 @@ bool NesWorker::stop(bool) {
     if (!stopped) {
         NES_DEBUG("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
-        rpcServer->GetHealthCheckService()->Shutdown();
         grpc_shutdown();
         if (rpcThread->joinable()) {
             NES_DEBUG("NesWorker: join rpcThread");

@@ -10,8 +10,14 @@
 namespace NES {
 
 QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient)
-    : globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient) {}
+    : globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient) {
+    NES_DEBUG("QueryDeploymentPhase()");
+}
 
+QueryDeploymentPhase::~QueryDeploymentPhase()
+{
+    NES_DEBUG("~QueryDeploymentPhase()");
+}
 QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient) {
     return std::make_shared<QueryDeploymentPhase>(QueryDeploymentPhase(globalExecutionPlan, workerRpcClient));
 }

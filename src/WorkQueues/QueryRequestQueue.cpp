@@ -5,7 +5,13 @@
 
 namespace NES {
 
-QueryRequestQueue::QueryRequestQueue() : newRequestAvailable(false), batchSize(1) {}
+QueryRequestQueue::QueryRequestQueue() : newRequestAvailable(false), batchSize(1) {
+    NES_DEBUG("QueryRequestQueue()");
+}
+
+QueryRequestQueue::~QueryRequestQueue(){
+    NES_DEBUG("~QueryRequestQueue()");
+}
 
 bool QueryRequestQueue::add(QueryCatalogEntryPtr queryCatalogEntry) {
     std::unique_lock<std::mutex> lock(queryRequest);

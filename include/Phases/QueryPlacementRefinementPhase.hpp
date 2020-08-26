@@ -24,8 +24,10 @@ class QueryPlacementRefinementPhase {
      */
     bool execute(QueryId queryId);
 
+    ~QueryPlacementRefinementPhase();
   private:
     explicit QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan);
+
     WindowDistributionRefinementPtr windowDistributionRefinement;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };

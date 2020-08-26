@@ -27,6 +27,7 @@ class QueryRewritePhase {
      */
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
+    ~QueryRewritePhase();
   private:
     explicit QueryRewritePhase();
     FilterPushDownRulePtr filterPushDownRule;

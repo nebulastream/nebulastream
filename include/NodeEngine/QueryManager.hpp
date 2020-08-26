@@ -39,7 +39,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      * @brief Default constrcutor
      */
     QueryManager();
-
+    ~QueryManager();
     /**
      * @brief register a query by extracting sources, windows and sink and add them to
      * respective map

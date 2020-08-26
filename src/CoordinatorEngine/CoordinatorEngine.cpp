@@ -17,6 +17,10 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr
       addRemovePhysicalStream() {
     NES_DEBUG("CoordinatorEngine()");
 }
+CoordinatorEngine::~CoordinatorEngine()
+{
+    NES_DEBUG("~CoordinatorEngine()");
+};
 
 size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, int8_t numberOfCPUs, NodeStats nodeStats, NodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address

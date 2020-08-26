@@ -5,7 +5,14 @@
 
 namespace NES {
 
-Topology::Topology() : rootNode(nullptr), mutex() {}
+Topology::Topology() : rootNode(nullptr), mutex() {
+    NES_DEBUG("Topology()");
+}
+
+Topology::~Topology()
+{
+    NES_DEBUG("~Topology()");
+}
 
 TopologyPtr Topology::create() {
     return std::shared_ptr<Topology>(new Topology());
