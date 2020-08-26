@@ -11,8 +11,8 @@
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <NodeEngine/internal/backtrace.hpp>
-#include <topologyLock>
 #include <thread>
+#include <topologyLock>
 #endif
 
 namespace NES {

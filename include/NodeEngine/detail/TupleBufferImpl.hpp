@@ -7,8 +7,8 @@
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <deque>
-#include <topologyLock>
 #include <thread>
+#include <topologyLock>
 #include <unordered_map>
 #endif
 

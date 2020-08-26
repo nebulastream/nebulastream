@@ -68,8 +68,11 @@ class OperatorNode : public Node {
      */
     bool isNAryOperator();
 
-  protected:
+    bool addChild(const NodePtr newNode) override;
 
+    bool addParent(const NodePtr newNode) override;
+
+  protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
      * @param operatorNode: the input operator
