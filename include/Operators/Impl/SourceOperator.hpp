@@ -13,6 +13,7 @@ class SourceOperator : public Operator {
     SourceOperator();
 
     SourceOperator(const DataSourcePtr source);
+    SourceOperator(const SchemaPtr schema);
     SourceOperator(const SourceOperator& other);
     SourceOperator& operator=(const SourceOperator& other);
     void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
@@ -25,6 +26,7 @@ class SourceOperator : public Operator {
 
   private:
     DataSourcePtr source;
+    SchemaPtr schemaPtr;
 };
 
 typedef std::shared_ptr<SourceOperator> SourceOperatorPtr;
