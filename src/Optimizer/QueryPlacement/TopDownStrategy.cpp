@@ -112,7 +112,7 @@ void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sin
                 NES_DEBUG("TopDownStrategy: node " << candidateNode->toString() << " was already used by other deployment");
                 const ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateNode->getId());
 
-                if (candidateExecutionNode->hasQuerySubPlan(queryId)) {
+                if (candidateExecutionNode->hasQuerySubPlans(queryId)) {
                     NES_DEBUG("TopDownStrategy: node " << candidateNode->toString() << " already contains a query sub plan with the id" << queryId);
                     if (candidateExecutionNode->checkIfQuerySubPlanContainsOperator(queryId, candidateOperator)) {
                         NES_DEBUG("TopDownStrategy: skip to next upstream operator as the target operator is already placed.");
@@ -126,13 +126,13 @@ void TopDownStrategy::placeOperators(QueryId queryId, LogicalOperatorNodePtr sin
                     } else {
                         NES_DEBUG("TopDownStrategy: Adding the operator to an existing query sub plan on the Execution node");
 
-                        QueryPlanPtr querySubPlan = candidateExecutionNode->getQuerySubPlan(queryId);
+                        QueryPlanPtr querySubPlan = candidateExecutionNode->getQuerySubPlans(queryId);
                         if (!querySubPlan) {
                             NES_ERROR("TopDownStrategy : unable to find query sub plan with id " + queryId);
                             throw QueryPlacementException("TopDownStrategy : unable to find query sub plan with id " + queryId);
                         }
                         querySubPlan->prependPreExistingOperator(candidateOperator->copy());
-                        if (!candidateExecutionNode->updateQuerySubPlan(queryId, querySubPlan)) {
+                        if (!candidateExecutionNode->updateQuerySubPlans(queryId, querySubPlan)) {
                             NES_ERROR("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + std::to_string(queryId));
                             throw QueryPlacementException("TopDownStrategy: failed to add operator" + candidateOperator->toString() + "node for query " + std::to_string(queryId));
                         }

@@ -33,9 +33,9 @@ uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, T
     // I will re-visit this in #750.
     NES_DEBUG("BasePlacementStrategy: Find the query sub plan of the parent node");
     const ExecutionNodePtr parentExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(parentNesNode->getId());
-    if (parentExecutionNode && parentExecutionNode->hasQuerySubPlan(queryId)) {
+    if (parentExecutionNode && parentExecutionNode->hasQuerySubPlans(queryId)) {
         NES_DEBUG("BasePlacementStrategy: Found Query Sub Plan in the parent node");
-        const QueryPlanPtr& parentQuerySubPlan = parentExecutionNode->getQuerySubPlan(queryId);
+        const QueryPlanPtr& parentQuerySubPlan = parentExecutionNode->getQuerySubPlans(queryId);
         NES_DEBUG("BasePlacementStrategy: Looking for existing network source operator in the parent query sub plan");
         const vector<SourceLogicalOperatorNodePtr> sourceOperators = parentQuerySubPlan->getSourceOperators();
         if (!sourceOperators.empty()) {
@@ -76,12 +76,12 @@ void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, Top
         throw QueryPlacementException("BasePlacementStrategy: Unable to find child execution node");
     }
 
-    if (!childExecutionNode->hasQuerySubPlan(queryId)) {
+    if (!childExecutionNode->hasQuerySubPlans(queryId)) {
         NES_ERROR("BasePlacementStrategy: Unable to find query sub plan in child execution node");
         throw QueryPlacementException("BasePlacementStrategy: Unable to find query sub plan in child execution node");
     }
 
-    QueryPlanPtr childQuerySubPlan = childExecutionNode->getQuerySubPlan(queryId);
+    QueryPlanPtr childQuerySubPlan = childExecutionNode->getQuerySubPlans(queryId);
     if (!childQuerySubPlan) {
         NES_ERROR("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
         throw QueryPlacementException("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
@@ -107,7 +107,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, Topolog
     uint64_t nextNetworkSourceOperatorId = -1;
     while (startNode) {
         ExecutionNodePtr executionNode = globalExecutionPlan->getExecutionNodeByNodeId(startNode->getId());
-        if (!executionNode || !executionNode->hasQuerySubPlan(queryId)) {
+        if (!executionNode || !executionNode->hasQuerySubPlans(queryId)) {
 
             if (startNode->getChildren().empty()) {
                 NES_ERROR("BasePlacementStrategy: Unable to find execution node for source node!"
@@ -150,7 +150,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, Topolog
             }
 
         } else {
-            const QueryPlanPtr querySubPlan = executionNode->getQuerySubPlan(queryId);
+            const QueryPlanPtr querySubPlan = executionNode->getQuerySubPlans(queryId);
             if (!querySubPlan) {
                 NES_ERROR("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
                 throw QueryPlacementException("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
@@ -181,7 +181,7 @@ void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, Topolog
             NES_DEBUG("BasePlacementStrategy: Infer the output and input schema for the updated query plan");
             typeInferencePhase->execute(querySubPlan);
 
-            if (!executionNode->updateQuerySubPlan(queryId, querySubPlan)) {
+            if (!executionNode->updateQuerySubPlans(queryId, querySubPlan)) {
                 NES_ERROR("BasePlacementStrategy: Unable to add system generated source operator.");
                 throw QueryPlacementException("BasePlacementStrategy: Unable to add system generated source operator.");
             }

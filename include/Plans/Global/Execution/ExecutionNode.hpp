@@ -38,45 +38,31 @@ class ExecutionNode : public Node {
      * @param queryId : Id of the sub plan
      * @return true if the plan exists else false
      */
-    bool hasQuerySubPlan(QueryId queryId);
+    bool hasQuerySubPlans(QueryId queryId);
 
-    /**
-     * Check if the query sub plan consists of operator node or not.
-     * @param queryId : the plan Id
-     * @param operatorNode : operator node
-     * @return true if the operator exists else false
-     */
-    bool checkIfQuerySubPlanContainsOperator(QueryId queryId, OperatorNodePtr operatorNode);
+    //    /**
+    //     * Check if the query sub plan consists of operator node or not.
+    //     * @param queryId : the plan Id
+    //     * @param operatorNode : operator node
+    //     * @return true if the operator exists else false
+    //     */
+    //    bool checkIfQuerySubPlanContainsOperator(QueryId queryId, OperatorNodePtr operatorNode);
 
-    /**
-     * Get Query subPlan for the given Id
-     * @param queryId
-     * @return Query sub plan
-     */
-    QueryPlanPtr getQuerySubPlan(QueryId queryId);
-
-    /**
-     * Remove existing subPlan
-     * @param queryId
-     * @return true if operation succeeds
-     */
-    bool removeQuerySubPlan(QueryId queryId);
-
-    /**
-     * add new query sub plan to the execution node
-     * @param queryId: id of the sub plan
-     * @param querySubPlan: query sub plan graph
-     * @return true if operation succeeds
-     */
-    bool createNewQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode);
-
-    /**
-     * Append the Operators to the query sub plan
-     * @param queryId: id of the sub plan
-     * @param querySubPlan: query sub plan graph
-     * @return true if operation succeeds
-     */
-    bool appendOperatorToQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode);
+    //    /**
+    //     * add new query sub plan to the execution node
+    //     * @param queryId: id of the sub plan
+    //     * @param querySubPlan: query sub plan graph
+    //     * @return true if operation succeeds
+    //     */
+    //    bool createNewQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode);
+    //
+    //    /**
+    //     * Append the Operators to the query sub plan
+    //     * @param queryId: id of the sub plan
+    //     * @param querySubPlan: query sub plan graph
+    //     * @return true if operation succeeds
+    //     */
+    //    bool appendOperatorToQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode);
 
     /**
      * Get execution node id
@@ -101,16 +87,30 @@ class ExecutionNode : public Node {
     /**
      * Update an existing query sub plan
      * @param queryId : query id
-     * @param querySubPlan : the new query sub plan
+     * @param querySubPlans : the new query sub plan
      * @return true if successful
      */
-    bool updateQuerySubPlan(QueryId queryId, QueryPlanPtr querySubPlan);
+    bool updateQuerySubPlans(QueryId queryId, std::vector<QueryPlanPtr> querySubPlans);
+
+    /**
+     * Get Query subPlan for the given Id
+     * @param queryId
+     * @return Query sub plan
+     */
+    std::vector<QueryPlanPtr> getQuerySubPlans(QueryId queryId);
+
+    /**
+     * Remove existing subPlan
+     * @param queryId
+     * @return true if operation succeeds
+     */
+    bool removeQuerySubPlans(QueryId queryId);
 
     /**
      * Get the map of all query sub plans
      * @return
      */
-    std::map<uint64_t, QueryPlanPtr> getAllQuerySubPlans();
+    std::map<QueryId, std::vector<QueryPlanPtr>> getAllQuerySubPlans();
 
     bool equal(NodePtr rhs) const override;
 
@@ -135,7 +135,7 @@ class ExecutionNode : public Node {
     /**
      * map of queryPlans
      */
-    std::map<uint64_t, QueryPlanPtr> mapOfQuerySubPlans;
+    std::map<QueryId, std::vector<QueryPlanPtr>> mapOfQuerySubPlans;
 
     /**
      * Free the resources occupied by the query sub plan.
