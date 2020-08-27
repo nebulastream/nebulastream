@@ -111,7 +111,7 @@ void ExecutionNode::freeOccupiedResources(QueryPlanPtr querySubPlan) {
     physicalNode->increaseResources(resourceToFree);
 }
 
-//bool ExecutionNode::createNewQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode) {
+//bool ExecutionNode::addNewQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode) {
 //    NES_DEBUG("ExecutionNode: Creating a new query sub plan with id : " << queryId << " and assigning root operator as " << operatorNode->toString());
 //    QueryPlanPtr querySubPlan = QueryPlan::create();
 //    querySubPlan->appendPreExistingOperator(operatorNode);
@@ -126,7 +126,7 @@ void ExecutionNode::freeOccupiedResources(QueryPlanPtr querySubPlan) {
 //    return false;
 //}
 
-bool ExecutionNode::createNewQuerySubPlan(QueryId queryId, QueryPlanPtr querySubPlan) {
+bool ExecutionNode::addNewQuerySubPlan(QueryId queryId, QueryPlanPtr querySubPlan) {
     if (hasQuerySubPlans(queryId)) {
         NES_DEBUG("ExecutionNode: Adding a new entry to the collection of query sub plans after assigning the id : " << queryId);
         std::vector<QueryPlanPtr> querySubPlans = mapOfQuerySubPlans[queryId];
@@ -179,7 +179,7 @@ uint64_t ExecutionNode::getId() {
     return id;
 }
 
-TopologyNodePtr ExecutionNode::getPhysicalNode() {
+TopologyNodePtr ExecutionNode::getTopologyNode() {
     return physicalNode;
 }
 
