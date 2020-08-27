@@ -53,7 +53,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         NES_TRACE("BottomUpStrategy: Get all topology nodes for the logical source stream");
         const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
         if (sourceNodes.empty()) {
-            NES_ERROR("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
+            NES_ERROR("BottomUpStrategy: No source found in the topology for stream " << streamName << "for query with id : " << queryId);
             throw QueryPlacementException("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
         }
         mapOfSourceToTopologyNodes[streamName] = sourceNodes;
@@ -61,15 +61,6 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     NES_DEBUG("BottomUpStrategy: Preparing execution plan for query with id : " << queryId);
     placeOperators(queryPlan, mapOfSourceToTopologyNodes);
-
-    //    TopologyNodePtr rootNode = topology->getRoot();
-    //
-    //    for (TopologyNodePtr targetSource : sourceNodes) {
-    //        NES_DEBUG("BottomUpStrategy: Find the path used for performing the placement based on the strategy type for query with id : " << queryId);
-    //        TopologyNodePtr startNode = topology->findAllPathBetween(targetSource, rootNode).value();
-    //        NES_INFO("BottomUpStrategy: Adding system generated operators for query with id : " << queryId);
-    //        addSystemGeneratedOperators(queryId, startNode);
-    //    }
     return true;
 }
 

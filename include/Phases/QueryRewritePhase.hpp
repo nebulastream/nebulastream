@@ -10,6 +10,12 @@ typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
+class LogicalSourceExpansionRule;
+typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePtr;
+
 class FilterPushDownRule;
 typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
 
@@ -18,7 +24,7 @@ typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
  */
 class QueryRewritePhase {
   public:
-    static QueryRewritePhasePtr create();
+    static QueryRewritePhasePtr create(StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Perform query plan re-write for the input query plan
@@ -30,7 +36,8 @@ class QueryRewritePhase {
     ~QueryRewritePhase();
 
   private:
-    explicit QueryRewritePhase();
+    explicit QueryRewritePhase(StreamCatalogPtr streamCatalog);
+    LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     FilterPushDownRulePtr filterPushDownRule;
 };
 }// namespace NES
