@@ -17,8 +17,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr
       addRemovePhysicalStream() {
     NES_DEBUG("CoordinatorEngine()");
 }
-CoordinatorEngine::~CoordinatorEngine()
-{
+CoordinatorEngine::~CoordinatorEngine() {
     NES_DEBUG("~CoordinatorEngine()");
 };
 

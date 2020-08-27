@@ -17,8 +17,7 @@ TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamC
     NES_DEBUG("TypeInferencePhase()");
 }
 
-TypeInferencePhase::~TypeInferencePhase()
-{
+TypeInferencePhase::~TypeInferencePhase() {
     NES_DEBUG("~TypeInferencePhase()");
 }
 

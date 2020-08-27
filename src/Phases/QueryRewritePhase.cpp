@@ -11,8 +11,7 @@ QueryRewritePhase::QueryRewritePhase() {
     filterPushDownRule = FilterPushDownRule::create();
 }
 
-QueryRewritePhase::~QueryRewritePhase()
-{
+QueryRewritePhase::~QueryRewritePhase() {
     NES_DEBUG("~QueryRewritePhase()");
 }
 

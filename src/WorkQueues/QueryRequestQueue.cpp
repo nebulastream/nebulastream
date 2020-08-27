@@ -9,7 +9,7 @@ QueryRequestQueue::QueryRequestQueue() : newRequestAvailable(false), batchSize(1
     NES_DEBUG("QueryRequestQueue()");
 }
 
-QueryRequestQueue::~QueryRequestQueue(){
+QueryRequestQueue::~QueryRequestQueue() {
     NES_DEBUG("~QueryRequestQueue()");
 }
 

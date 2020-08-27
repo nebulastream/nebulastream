@@ -13,8 +13,7 @@ QueryUndeploymentPhase::QueryUndeploymentPhase(GlobalExecutionPlanPtr globalExec
     NES_DEBUG("QueryUndeploymentPhase()");
 }
 
-QueryUndeploymentPhase::~QueryUndeploymentPhase()
-{
+QueryUndeploymentPhase::~QueryUndeploymentPhase() {
     NES_DEBUG("~QueryUndeploymentPhase()");
 }
 

@@ -5,15 +5,13 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
-GlobalExecutionPlan::GlobalExecutionPlan(){
+GlobalExecutionPlan::GlobalExecutionPlan() {
     NES_DEBUG("GlobalExecutionPlan()");
 }
 
-GlobalExecutionPlan::~GlobalExecutionPlan()
-{
+GlobalExecutionPlan::~GlobalExecutionPlan() {
     NES_DEBUG("~GlobalExecutionPlan()");
 }
-
 
 GlobalExecutionPlanPtr GlobalExecutionPlan::create() {
     return std::make_shared<GlobalExecutionPlan>(GlobalExecutionPlan());

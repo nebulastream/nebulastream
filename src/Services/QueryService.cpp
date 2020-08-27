@@ -17,8 +17,7 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr qu
     NES_DEBUG("QueryService()");
 }
 
-QueryService::~QueryService()
-{
+QueryService::~QueryService() {
     NES_DEBUG("~QueryService()");
 }
 

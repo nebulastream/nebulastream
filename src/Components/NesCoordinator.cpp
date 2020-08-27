@@ -19,8 +19,8 @@
 //GRPC Includes
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Topology/Topology.hpp>
-#include <grpcpp/health_check_service_interface.h>
 #include <Util/ThreadNaming.hpp>
+#include <grpcpp/health_check_service_interface.h>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -211,7 +211,6 @@ void NesCoordinator::buildAndStartGRPCServer(std::promise<bool>& prom) {
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServerServer listening on address=" << address);
     rpcServer->Wait();//blocking call
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServer end listening");
-
 }
 
 void NesCoordinator::setServerIp(std::string serverIp) {
