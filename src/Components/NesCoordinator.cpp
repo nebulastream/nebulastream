@@ -55,24 +55,6 @@ NesCoordinator::~NesCoordinator() {
     streamCatalog->reset();
     queryCatalog->clearQueries();
 
-//    NES_ASSERT(topology.use_count() == 1, "NesCoordinator topology leaked");
-//    NES_ASSERT(streamCatalog.use_count() == 1, "NesCoordinator streamCatalog leaked");
-//    NES_ASSERT(globalExecutionPlan.use_count() == 1, "NesCoordinator globalExecutionPlan leaked");
-//    NES_ASSERT(queryCatalog.use_count() == 1, "NesCoordinator queryCatalog leaked");
-//    NES_ASSERT(workerRpcClient.use_count() == 1, "NesCoordinator workerRpcClient leaked");
-//    NES_ASSERT(queryRequestQueue.use_count() == 1, "NesCoordinator queryRequestQueue leaked");
-//    NES_ASSERT(queryRequestProcessorService.use_count() == 1, "NesCoordinator queryRequestProcessorService leaked");
-//    NES_ASSERT(queryService.use_count() == 1, "NesCoordinator queryService leaked");
-//
-//    NES_ASSERT(rpcThread.use_count() == 1, "NesCoordinator rpcThread leaked");
-//    NES_ASSERT(queryRequestProcessorThread.use_count() == 1, "NesCoordinator queryRequestProcessorThread leaked");
-//    NES_ASSERT(worker.use_count() == 1, "NesCoordinator worker leaked");
-//    NES_ASSERT(coordinatorEngine.use_count() == 1, "NesCoordinator coordinatorEngine leaked");
-//    NES_ASSERT(restServer.use_count() == 1, "NesCoordinator restServer leaked");
-//    NES_ASSERT(restThread.use_count() == 1, "NesCoordinator restThread leaked");
-//    NES_ASSERT(coordinatorEngine.use_count() == 1, "NesCoordinator coordinatorEngine leaked");
-//    NES_ASSERT(coordinatorEngine.use_count() == 1, "NesCoordinator coordinatorEngine leaked");
-
     topology.reset();
     streamCatalog.reset();
     globalExecutionPlan.reset();
@@ -88,22 +70,23 @@ NesCoordinator::~NesCoordinator() {
     restServer.reset();
     rpcThread.reset();
 
-    std::cout << "topology.use_count()=" << topology.use_count() << std::endl;
-    std::cout << "streamCatalog.use_count()=" << streamCatalog.use_count() << std::endl;
-    std::cout << "globalExecutionPlan.use_count()=" << globalExecutionPlan.use_count() << std::endl;
-    std::cout << "queryCatalog.use_count()=" << queryCatalog.use_count() << std::endl;
-    std::cout << "workerRpcClient.use_count()=" << workerRpcClient.use_count() << std::endl;
-    std::cout << "queryRequestQueue.use_count()=" << queryRequestQueue.use_count() << std::endl;
-    std::cout << "queryRequestProcessorService.use_count()=" << queryRequestProcessorService.use_count() << std::endl;
-    std::cout << "queryService.use_count()=" << queryService.use_count() << std::endl;
-    std::cout << "rpcThread.use_count()=" << rpcThread.use_count() << std::endl;
-    std::cout << "queryRequestProcessorThread.use_count()=" << queryRequestProcessorThread.use_count() << std::endl;
-    std::cout << "worker.use_count()=" << worker.use_count() << std::endl;
-    std::cout << "coordinatorEngine.use_count()=" << coordinatorEngine.use_count() << std::endl;
-    std::cout << "restServer.use_count()=" << restServer.use_count() << std::endl;
-    std::cout << "restThread.use_count()=" << restThread.use_count() << std::endl;
-    std::cout << "coordinatorEngine.use_count()=" << coordinatorEngine.use_count() << std::endl;
-    std::cout << "coordinatorEngine.use_count()=" << coordinatorEngine.use_count() << std::endl;
+    NES_ASSERT(topology.use_count() == 0, "NesCoordinator topology leaked");
+    NES_ASSERT(streamCatalog.use_count() == 0, "NesCoordinator streamCatalog leaked");
+    NES_ASSERT(globalExecutionPlan.use_count() == 0, "NesCoordinator globalExecutionPlan leaked");
+    NES_ASSERT(queryCatalog.use_count() == 0, "NesCoordinator queryCatalog leaked");
+    NES_ASSERT(workerRpcClient.use_count() == 0, "NesCoordinator workerRpcClient leaked");
+    NES_ASSERT(queryRequestQueue.use_count() == 0, "NesCoordinator queryRequestQueue leaked");
+    NES_ASSERT(queryRequestProcessorService.use_count() == 0, "NesCoordinator queryRequestProcessorService leaked");
+    NES_ASSERT(queryService.use_count() == 0, "NesCoordinator queryService leaked");
+
+    NES_ASSERT(rpcThread.use_count() == 0, "NesCoordinator rpcThread leaked");
+    NES_ASSERT(queryRequestProcessorThread.use_count() == 0, "NesCoordinator queryRequestProcessorThread leaked");
+    NES_ASSERT(worker.use_count() == 0, "NesCoordinator worker leaked");
+    NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
+    NES_ASSERT(restServer.use_count() == 0, "NesCoordinator restServer leaked");
+    NES_ASSERT(restThread.use_count() == 0, "NesCoordinator restThread leaked");
+    NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
+    NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
 }
 
 size_t NesCoordinator::startCoordinator(bool blocking) {
