@@ -29,10 +29,10 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
             auto success = task(workerContext);
             if (success) {
                 queryManager->completedWork(task, workerContext);
-                NES_TRACE("Threadpool: finished task " << task << " with success");
+                NES_TRACE("Threadpool: finished task " << task.toString() << " with success");
             } else {
                 // TODO add here error handling (see issues 524 and 463)
-                NES_TRACE("Threadpool: finished task " << task << " with error");
+                NES_TRACE("Threadpool: finished task " << task.toString() << " with error");
             }
         } else {
             NES_ERROR("Threadpool: task invalid");

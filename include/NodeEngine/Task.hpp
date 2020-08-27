@@ -23,9 +23,7 @@ class Task {
      */
     explicit Task(PipelineStagePtr pipeline, TupleBuffer& buf);
 
-    explicit Task() : pipeline(nullptr), buf() {
-        // nop
-    }
+    explicit Task();
 
     ~Task() = default;
 
@@ -62,14 +60,14 @@ class Task {
      */
     bool operator!() const;
 
-    friend std::ostream& operator<<(std::ostream& os, const Task&) {
-        os << "Task()";
-        return os;
-    }
+    std::string toString();
+
+    uint64_t getId();
 
   private:
     PipelineStagePtr pipeline;
     TupleBuffer buf;
+    uint64_t id;
 };
 
 }// namespace NES

@@ -187,7 +187,7 @@ Task QueryManager::getWork(std::atomic<bool>& threadPool_running) {
     // there is a potential task in the queue and the thread pool is running
     if (threadPool_running) {
         auto task = taskQueue.front();
-        NES_TRACE("QueryManager: provide task" << task << " to thread (getWork())");
+        NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         taskQueue.pop_front();
         return task;
     } else {
@@ -219,7 +219,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr 
 
     // dispatch buffer as task
     taskQueue.emplace_back(std::move(nextPipeline), buffer);
-    NES_TRACE("QueryManager: added Task " << taskQueue.back() << " for nextPipeline " << nextPipeline << " inputBuffer " << buffer);
+    NES_TRACE("QueryManager: added Task " << taskQueue.back().toString() << " for nextPipeline " << nextPipeline << " inputBuffer " << buffer);
 
     cv.notify_all();
 }
@@ -231,14 +231,14 @@ void QueryManager::addWork(const std::string& sourceId, TupleBuffer& buf) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
         taskQueue.emplace_back(qep->getStage(0), buf);
-        NES_DEBUG("QueryManager: added Task " << taskQueue.back() << " for query " << sourceId << " for QEP " << qep
+        NES_DEBUG("QueryManager: added Task " << taskQueue.back().toString() << " for query " << sourceId << " for QEP " << qep
                                               << " inputBuffer " << buf);
     }
     cv.notify_all();
 }
 
 void QueryManager::completedWork(Task& task, WorkerContext&) {
-    NES_INFO("QueryManager::completedWork: Work for task=" << task);
+    NES_INFO("QueryManager::completedWork: Work for task=" << task.toString());
     std::unique_lock lock(statisticsMutex);
     auto statistics = queryToStatisticsMap.find(task.getPipelineStage()->getQepParentId());
 
