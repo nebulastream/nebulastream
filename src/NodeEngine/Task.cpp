@@ -3,6 +3,7 @@
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES {
@@ -10,7 +11,11 @@ namespace NES {
 Task::Task(PipelineStagePtr pipeline, TupleBuffer& buffer)
     : pipeline(std::move(pipeline)),
       buf(buffer) {
-    // nop
+    id = UtilityFunctions::generateIdInt();
+}
+
+Task::Task() : pipeline(nullptr), buf() {
+    id = UtilityFunctions::generateIdInt();
 }
 
 bool Task::operator()(WorkerContext&) {
@@ -35,6 +40,17 @@ bool Task::operator!() const {
 
 Task::operator bool() const {
     return pipeline != nullptr;
+}
+uint64_t Task::getId() {
+    return id;
+}
+
+std::string Task::toString() {
+    std::stringstream ss;
+    ss << "Task: id=" << id;
+    ss << " execute pipelineId=" << pipeline->getPipeStageId() << " qepParentId=" << pipeline->getQepParentId() << " nextPipelineId=" << pipeline->getNextStage();
+    ss << " inputBuffer=" << buf.getBuffer() << " inputTuples=" << buf.getNumberOfTuples() << " bufferSize=" << buf.getBufferSize() << " watermark=" << buf.getWatermark();
+    return ss.str();
 }
 
 }// namespace NES
