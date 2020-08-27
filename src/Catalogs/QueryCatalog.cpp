@@ -50,7 +50,6 @@ std::map<uint64_t, std::string> QueryCatalog::getAllQueries() {
 QueryCatalogEntryPtr QueryCatalog::addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
     std::unique_lock lock(catalogMutex);
     QueryId queryId = queryPlan->getQueryId();
-    NES_INFO("QueryCatalog: Registering query with id " << queryId);
     NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
     QueryCatalogEntryPtr queryCatalogEntry = std::make_shared<QueryCatalogEntry>(queryId, queryString, optimizationStrategyName, queryPlan, QueryStatus::Registered);
     queries[queryId] = queryCatalogEntry;

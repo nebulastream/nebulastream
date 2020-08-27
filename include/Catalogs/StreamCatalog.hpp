@@ -154,8 +154,7 @@ class StreamCatalog {
      * @param logicalStreamName
      * @return
      */
-    std::vector<StreamCatalogEntryPtr> getPhysicalStreams(
-        std::string logicalStreamName);
+    std::vector<StreamCatalogEntryPtr> getPhysicalStreams(std::string logicalStreamName);
 
     /**
      * @brief update an existing stream
@@ -169,6 +168,8 @@ class StreamCatalog {
     ~StreamCatalog();
 
   private:
+    std::recursive_mutex catalogMutex;
+
     //map logical stream to schema
     std::map<std::string, SchemaPtr> logicalStreamToSchemaMapping;
 
