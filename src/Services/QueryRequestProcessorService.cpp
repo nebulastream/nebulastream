@@ -29,7 +29,7 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    queryRewritePhase = QueryRewritePhase::create();
+    queryRewritePhase = QueryRewritePhase::create(streamCatalog);
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(globalExecutionPlan, workerRpcClient);

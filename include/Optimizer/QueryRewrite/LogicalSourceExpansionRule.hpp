@@ -11,6 +11,9 @@ typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
 class LogicalSourceExpansionRule;
 typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePtr;
 

@@ -1,14 +1,16 @@
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+#include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Phases/QueryRewritePhase.hpp>
 
 namespace NES {
 
-QueryRewritePhasePtr QueryRewritePhase::create() {
-    return std::make_shared<QueryRewritePhase>(QueryRewritePhase());
+QueryRewritePhasePtr QueryRewritePhase::create(StreamCatalogPtr streamCatalog) {
+    return std::make_shared<QueryRewritePhase>(QueryRewritePhase(streamCatalog));
 }
 
-QueryRewritePhase::QueryRewritePhase() {
+QueryRewritePhase::QueryRewritePhase(StreamCatalogPtr streamCatalog) {
     filterPushDownRule = FilterPushDownRule::create();
+    logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
 }
 
 QueryRewritePhase::~QueryRewritePhase() {
@@ -16,7 +18,8 @@ QueryRewritePhase::~QueryRewritePhase() {
 }
 
 QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
-    return filterPushDownRule->apply(queryPlan);
+    queryPlan = filterPushDownRule->apply(queryPlan);
+    return logicalSourceExpansionRule->apply(queryPlan);
 }
 
 }// namespace NES
