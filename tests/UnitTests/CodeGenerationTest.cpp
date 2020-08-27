@@ -822,7 +822,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
         new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
     //auto context = PipelineContext::create();
-    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer &buff){});
+    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer &buff){buff.isValid();});
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr); // TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nextPipeline, 0);
 
