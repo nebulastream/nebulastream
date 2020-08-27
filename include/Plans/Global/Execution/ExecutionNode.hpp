@@ -40,30 +40,6 @@ class ExecutionNode : public Node {
      */
     bool hasQuerySubPlans(QueryId queryId);
 
-    //    /**
-    //     * Check if the query sub plan consists of operator node or not.
-    //     * @param queryId : the plan Id
-    //     * @param operatorNode : operator node
-    //     * @return true if the operator exists else false
-    //     */
-    //    bool checkIfQuerySubPlanContainsOperator(QueryId queryId, OperatorNodePtr operatorNode);
-
-    //    /**
-    //     * add new query sub plan to the execution node
-    //     * @param queryId: id of the sub plan
-    //     * @param querySubPlan: query sub plan graph
-    //     * @return true if operation succeeds
-    //     */
-    //    bool addNewQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode);
-    //
-    //    /**
-    //     * Append the Operators to the query sub plan
-    //     * @param queryId: id of the sub plan
-    //     * @param querySubPlan: query sub plan graph
-    //     * @return true if operation succeeds
-    //     */
-    //    bool appendOperatorToQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode);
-
     /**
      * Get execution node id
      * @return id of the execution node
@@ -130,7 +106,7 @@ class ExecutionNode : public Node {
     /**
      * Physical Node information
      */
-    const TopologyNodePtr physicalNode;
+    const TopologyNodePtr topologyNode;
 
     /**
      * map of queryPlans

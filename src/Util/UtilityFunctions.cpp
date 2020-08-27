@@ -319,6 +319,11 @@ uint64_t UtilityFunctions::getNextOperatorId() {
     return ++id;
 }
 
+uint64_t UtilityFunctions::getNextQueryExecutionId() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+}
+
 uint64_t UtilityFunctions::getNextNodeId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
