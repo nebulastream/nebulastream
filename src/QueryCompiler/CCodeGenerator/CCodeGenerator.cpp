@@ -312,6 +312,9 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
     thenStatement->addStatement(emitTupleBuffer(code->varDeclarationExecutionContext,
                                                 code->varDeclarationResultBuffer)
                                     .copy());
+    auto releaseBufferFunctionCall = FunctionCallStatement("release");
+    auto releaseBufferStm =  VarRef(code->varDeclarationResultBuffer).accessRef(releaseBufferFunctionCall);
+    thenStatement->addStatement(releaseBufferStm.copy());
     // 2.1 reset the numberOfResultTuples to 0 -> numberOfResultTuples = 0;
     thenStatement->addStatement(VarRef(code->varDeclarationNumberOfResultTuples).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0))))).copy());
     // 2.2 allocate a new buffer -> resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
