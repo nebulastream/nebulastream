@@ -35,7 +35,7 @@ TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create() {
 
 TranslateToLegacyPlanPhase::TranslateToLegacyPlanPhase() {}
 
-OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine, OperatorPtr lagacyParent) {
+OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNodePtr operatorNode, NodeEnginePtr, OperatorPtr lagacyParent) {
     OperatorPtr legacyOperator;
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // Translate Source operator node.

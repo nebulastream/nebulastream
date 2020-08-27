@@ -47,6 +47,8 @@ class TupleBuffer {
 
     TupleBuffer() noexcept;
 
+    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs);
+
   private:
     explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size);
 
@@ -82,12 +84,6 @@ class TupleBuffer {
     * @return the same TupleBuffer object
     */
     TupleBuffer& retain();
-
-    /**
-    * @brief Swaps this TupleBuffers with the content of other
-    * @param other
-    */
-    void swap(TupleBuffer& other) noexcept;
 
     /**
     * @brief Decreases the internal reference counter by one. Note that if the buffer's counter reaches 0
