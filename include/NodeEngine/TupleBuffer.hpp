@@ -49,7 +49,6 @@ class TupleBuffer {
 
   private:
     explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size);
-
   public:
     ~TupleBuffer();
 
