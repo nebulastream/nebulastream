@@ -203,6 +203,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
                     .setCompiler(nodeEngine->getCompiler())
                     .setBufferManager(nodeEngine->getBufferManager())
                     .setQueryManager(nodeEngine->getQueryManager())
+                    .setQueryId(1)
                     .build();
 
     // The plan should have one pipeline
