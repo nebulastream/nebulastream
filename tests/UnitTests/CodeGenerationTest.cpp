@@ -796,28 +796,34 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
-    auto context = PipelineContext::create();
+    auto context1 = PipelineContext::create();
 
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(source->getSchema(), context);
+    codeGenerator->generateCodeForScan(source->getSchema(), context1);
 
     auto sum = Sum::on(Attribute("value"));
     auto windowDefinition = createWindowDefinition(
         input_schema->get("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)));
 
-    codeGenerator->generateCodeForWindow(windowDefinition, context);
+    codeGenerator->generateCodeForWindow(windowDefinition, context1);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(context->code);
+    auto stage1 = codeGenerator->compile(context1->code);
+
+
+    auto context2 = PipelineContext::create();
+    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
     auto windowHandler =
         new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
-
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, nullptr, nullptr, nullptr); // TODO Philipp, plz add pass-through pipeline here
+    //auto context = PipelineContext::create();
+    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer &buff){});
+    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr); // TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nextPipeline, 0);
 
     /* prepare input tuple buffer */
@@ -825,7 +831,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
-    stage->execute(inputBuffer, windowHandler->getWindowState(),
+    stage1->execute(inputBuffer, windowHandler->getWindowState(),
                    windowHandler->getWindowManager(), queryContext);
 
     //check partial aggregates in window state
