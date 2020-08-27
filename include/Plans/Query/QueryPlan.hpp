@@ -1,9 +1,12 @@
 #ifndef NES_INCLUDE_PLANS_QUERY_HPP_
 #define NES_INCLUDE_PLANS_QUERY_HPP_
 #include <API/QueryId.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <memory>
 #include <vector>
 
+#include <set>
 namespace NES {
 
 class Stream;
@@ -96,17 +99,42 @@ class QueryPlan {
     void addRootOperator(std::shared_ptr<OperatorNode> root);
 
     /**
-     * @brief Get all the leaf operators in the query plan
-     * Note: in certain stages the source operators might not be Leaf operators
-     * @return returns a vector of leaf operators
+     * @brief Get all the operators of a specific type
+     * @return returns a vector of operators
      */
-    std::vector<OperatorNodePtr> getLeafOperators();
+    template<class T>
+    std::vector<OperatorNodePtr> getOperatorByType() {
+        // Find all the nodes in the query plan
+        NES_DEBUG("QueryPlan: Get all  nodes in the query plan.");
+        std::vector<OperatorNodePtr> operators;
+        // Maintain a list of visited nodes as there are multiple root nodes
+        std::set<uint64_t> visitedOpIds;
+        NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
+        for (auto rootOperator : rootOperators) {
+            auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
+            for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
+                auto visitingOp = (*itr)->as<OperatorNode>();
+                if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
+                    // skip rest of the steps as the node found in already visited node list
+                    continue;
+                }
+                NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
+                visitedOpIds.insert(visitingOp->getId());
+                if (visitingOp->instanceOf<T>()) {
+                    NES_DEBUG("QueryPlan: Found leaf node. Adding to the collection of window nodes.");
+                    operators.push_back(visitingOp);
+                }
+            }
+        }
+        return operators;
+    }
 
     /**
-     * @brief Get all the window operators in the query plan
-     * @return returns a vector of window operators
-     */
-    std::vector<OperatorNodePtr> getWindowOperators();
+    * @brief Get all the leaf operators in the query plan
+     * Note: in certain stages the source operators might not be Leaf operators
+    * @return returns a vector of leaf operators
+    */
+    std::vector<OperatorNodePtr> getLeafOperators();
 
     /**
      * Find if the operator with same Id exists in the plan.
