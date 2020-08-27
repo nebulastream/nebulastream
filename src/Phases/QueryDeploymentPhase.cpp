@@ -62,7 +62,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, std::vector<ExecutionNod
             return false;
         }
 
-        const auto& nesNode = executionNode->getPhysicalNode();
+        const auto& nesNode = executionNode->getTopologyNode();
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
@@ -88,7 +88,7 @@ bool QueryDeploymentPhase::startQuery(QueryId queryId, std::vector<ExecutionNode
     NES_DEBUG("QueryDeploymentPhase::startQuery queryId=" << queryId);
 
     for (ExecutionNodePtr executionNode : executionNodes) {
-        const auto& nesNode = executionNode->getPhysicalNode();
+        const auto& nesNode = executionNode->getTopologyNode();
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);

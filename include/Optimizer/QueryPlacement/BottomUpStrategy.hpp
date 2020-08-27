@@ -36,7 +36,10 @@ class BottomUpStrategy : public BasePlacementStrategy {
      */
     void placeOperators(QueryPlanPtr queryPlan, std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes);
 
-    bool placeOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap);
+    void placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap);
+    void recursiveOperatorPlacement(QueryPlanPtr candidateQueryPlan, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap);
+    ExecutionNodePtr getCandidateExecutionNode(TopologyNodePtr candidateTopologyNode);
+    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(OperatorNodePtr candidateOperator, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap);
 };
 }// namespace NES
 

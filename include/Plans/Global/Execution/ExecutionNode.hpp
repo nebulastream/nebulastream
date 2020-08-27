@@ -54,7 +54,7 @@ class ExecutionNode : public Node {
     //     * @param querySubPlan: query sub plan graph
     //     * @return true if operation succeeds
     //     */
-    //    bool createNewQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode);
+    //    bool addNewQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode);
     //
     //    /**
     //     * Append the Operators to the query sub plan
@@ -74,7 +74,7 @@ class ExecutionNode : public Node {
      * Get the nes node for the execution node.
      * @return the nes node
      */
-    TopologyNodePtr getPhysicalNode();
+    TopologyNodePtr getTopologyNode();
 
     /**
      * Create a new entry for query sub plan
@@ -82,7 +82,7 @@ class ExecutionNode : public Node {
      * @param querySubPlan : the query sub plan
      * @return true if operation is successful
      */
-    bool createNewQuerySubPlan(QueryId queryId, QueryPlanPtr querySubPlan);
+    bool addNewQuerySubPlan(QueryId queryId, QueryPlanPtr querySubPlan);
 
     /**
      * Update an existing query sub plan
