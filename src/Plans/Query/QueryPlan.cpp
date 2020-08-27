@@ -130,7 +130,6 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
     return leafOperators;
 }
 
-
 bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
 
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
