@@ -38,6 +38,7 @@ class QueryExecutionPlan {
         std::vector<PipelineStagePtr>&& stages,
         QueryManagerPtr&& queryManager,
         BufferManagerPtr&& bufferManager);
+
   public:
     virtual ~QueryExecutionPlan();
 

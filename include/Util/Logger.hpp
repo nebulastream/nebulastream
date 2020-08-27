@@ -80,7 +80,7 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 
 #define NES_ASSERT(CONDITION, TEXT)                                                 \
     do {                                                                            \
-        if (!(CONDITION)) {                                                           \
+        if (!(CONDITION)) {                                                         \
             NES::collectAndPrintStacktrace();                                       \
             NES_FATAL_ERROR(TEXT);                                                  \
             throw std::runtime_error("NES Runtime Error on condition " #CONDITION); \

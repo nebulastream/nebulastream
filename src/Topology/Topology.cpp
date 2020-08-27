@@ -9,8 +9,7 @@ Topology::Topology() : rootNode(nullptr), mutex() {
     NES_DEBUG("Topology()");
 }
 
-Topology::~Topology()
-{
+Topology::~Topology() {
     NES_DEBUG("~Topology()");
 }
 

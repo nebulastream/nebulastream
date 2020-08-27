@@ -35,8 +35,7 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     queryUndeploymentPhase = QueryUndeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryPlacementRefinementPhase = QueryPlacementRefinementPhase::create(globalExecutionPlan);
 }
-QueryRequestProcessorService::~QueryRequestProcessorService()
-{
+QueryRequestProcessorService::~QueryRequestProcessorService() {
     NES_DEBUG("~QueryRequestProcessorService()");
 }
 void QueryRequestProcessorService::start() {

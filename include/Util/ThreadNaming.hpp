@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_UTIL_THREADNAMING_HPP_
 #define NES_INCLUDE_UTIL_THREADNAMING_HPP_
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <thread>
 #include <unistd.h>
 #ifdef _POSIX_THREADS
@@ -22,6 +22,5 @@ void setThreadName(const char* threadNameFmt, ...) {
 #endif
     va_end(args);
 }
-
 
 #endif//NES_INCLUDE_UTIL_THREADNAMING_HPP_

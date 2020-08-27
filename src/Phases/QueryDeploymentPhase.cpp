@@ -14,8 +14,7 @@ QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutio
     NES_DEBUG("QueryDeploymentPhase()");
 }
 
-QueryDeploymentPhase::~QueryDeploymentPhase()
-{
+QueryDeploymentPhase::~QueryDeploymentPhase() {
     NES_DEBUG("~QueryDeploymentPhase()");
 }
 QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient) {

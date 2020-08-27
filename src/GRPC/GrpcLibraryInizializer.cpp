@@ -8,7 +8,6 @@ GrpcLibraryInizializer::GrpcLibraryInizializer() {
 GrpcLibraryInizializer::~GrpcLibraryInizializer() {
     grpc_shutdown();
 }
-}
+}// namespace NES
 
 static NES::GrpcLibraryInizializer singleton;
-

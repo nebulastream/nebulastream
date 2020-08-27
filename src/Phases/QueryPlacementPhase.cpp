@@ -12,8 +12,7 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
     NES_DEBUG("QueryPlacementPhase()");
 }
 
-QueryPlacementPhase::~QueryPlacementPhase()
-{
+QueryPlacementPhase::~QueryPlacementPhase() {
     NES_DEBUG("~QueryPlacementPhase()");
 }
 

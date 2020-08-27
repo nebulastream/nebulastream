@@ -6,8 +6,7 @@ QueryPlacementRefinementPhasePtr QueryPlacementRefinementPhase::create(GlobalExe
     return std::make_shared<QueryPlacementRefinementPhase>(QueryPlacementRefinementPhase(globalPlan));
 }
 
-QueryPlacementRefinementPhase::~QueryPlacementRefinementPhase()
-{
+QueryPlacementRefinementPhase::~QueryPlacementRefinementPhase() {
     NES_DEBUG("~QueryPlacementRefinementPhase()");
 }
 QueryPlacementRefinementPhase::QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan) {

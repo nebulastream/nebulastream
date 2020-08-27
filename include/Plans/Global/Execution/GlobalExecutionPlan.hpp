@@ -25,7 +25,6 @@ class GlobalExecutionPlan {
   public:
     static GlobalExecutionPlanPtr create();
 
-
     /**
      * Add execution node as parent of another execution node. If the node already exists then simply update the node.
      * @param childId: id of the child node

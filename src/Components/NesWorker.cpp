@@ -85,9 +85,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     std::promise<bool> promRPC;
 
     rpcThread = std::make_shared<std::thread>(([&]() {
-      NES_DEBUG("NesWorker: buildAndStartGRPCServer");
-      buildAndStartGRPCServer(promRPC);
-      NES_DEBUG("NesWorker: buildAndStartGRPCServer: end listening");
+        NES_DEBUG("NesWorker: buildAndStartGRPCServer");
+        buildAndStartGRPCServer(promRPC);
+        NES_DEBUG("NesWorker: buildAndStartGRPCServer: end listening");
     }));
     promRPC.get_future().get();
     NES_DEBUG("NesWorker:buildAndStartGRPCServer: ready");

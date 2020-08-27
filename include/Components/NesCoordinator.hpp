@@ -2,11 +2,11 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
 #include <GRPC/WorkerRPCClient.hpp>
+#include <future>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
 #include <thread>
-#include <future>
 namespace NES {
 class QueryRequestQueue;
 typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
