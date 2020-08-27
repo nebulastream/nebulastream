@@ -278,7 +278,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
 void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
                                                    VariableDeclaration varDeclResultTuple,
                                                    StructDeclaration structDeclarationResultTuple) {
-    NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check.");
+    NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check");
 
     auto code = context->code;
     auto tf = getTypeFactory();

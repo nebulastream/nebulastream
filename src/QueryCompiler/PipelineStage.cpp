@@ -23,7 +23,7 @@ PipelineStage::PipelineStage(
 }
 
 bool PipelineStage::execute(TupleBuffer& inputBuffer) {
-    NES_DEBUG("Execute Pipeline Stage!");
+    NES_DEBUG("Execute Pipeline Stage with id=" << pipelineStageId);
     // only get the window manager and state if the pipeline has a window handler.
     auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;               // TODO Philipp, do we need this check?
     auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : WindowManagerPtr();// TODO Philipp, do we need this check?
