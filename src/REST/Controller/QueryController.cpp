@@ -29,36 +29,11 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
         successMessageImpl(message, restResponse);
         return;
     } else if (path[1] == "execution-plan") {
-        message.extract_string(true)
-            .then([this, message](utility::string_t body) {
-                try {
-                    // Prepare Input query from user string
-                    string userRequest(body.begin(), body.end());
-                    json::value req = json::value::parse(userRequest);
-                    string userQuery = req.at("userQuery").as_string();
-                    string optimizationStrategyName = req.at("strategyName").as_string();
-
-                    // Call the service
-                    QueryId queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
-                    std::string executionPlanAsString = globalExecutionPlan->getAsString();
-
-                    // Prepare the response
-                    json::value restResponse{};
-                    restResponse["queryId"] = json::value::number(queryId);
-                    restResponse["executionPlan"] = json::value::string(executionPlanAsString);
-                    successMessageImpl(message, restResponse);
-                    return;
-                } catch (const std::exception& exc) {
-                    NES_ERROR(" QueryController: handleGet -execution-plan: Exception occurred while building the query plan for user request:" << exc.what());
-                    handleException(message, exc);
-                    return;
-                } catch (...) {
-                    RuntimeUtils::printStackTrace();
-                    internalServerErrorImpl(message);
-                }
-            })
-            .wait();
-    } else if (path[1] == "query-plan") {
+        // There will be change in the structure of globalExecutionPlan, so we will wait for that to be resolve
+        // then create the execution-plan based on the new structure
+        message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path[1]));
+    }
+    else if (path[1] == "query-plan") {
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                 try {
