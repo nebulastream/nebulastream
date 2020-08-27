@@ -23,12 +23,10 @@ class TupleBufferTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp()
-    {
+    void SetUp() {
         NES::setupLogging("TupleBufferTest.log", NES::LOG_DEBUG);
         std::cout << "Setup TupleBufferTest test case." << std::endl;
         bufferManager = std::make_shared<BufferManager>(1024, 1024);
-
     }
 
     /* Will be called before a test is executed. */
@@ -38,8 +36,7 @@ class TupleBufferTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TupleBufferTest test class." << std::endl; }
 };
 
-TEST_F(TupleBufferTest, testPrintingOfTupleBuffer)
-{
+TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
 
     struct __attribute__((packed)) MyTuple {
         uint64_t i64;
@@ -51,7 +48,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer)
 
     auto optBuf = bufferManager->getBufferNoBlocking();
     auto buf = *optBuf;
-//    MyTuple* my_array = (MyTuple*)malloc(5 * sizeof(MyTuple));
+    //    MyTuple* my_array = (MyTuple*)malloc(5 * sizeof(MyTuple));
     auto my_array = buf.getBufferAs<MyTuple>();
     for (unsigned int i = 0; i < 5; ++i) {
         my_array[i] = MyTuple{i, float(0.5f * i), double(i * 0.2), i * 2, "1234"};
@@ -79,15 +76,16 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer)
 
     std::string result = UtilityFunctions::prettyPrintTupleBuffer(buf, s);
     std::cout << "RES=" << result << std::endl;
-    NES_DEBUG("Reference size="  << reference.size() << " content=" << std::endl << reference);
-    NES_DEBUG("Result size=" << result.size() << " content=" << std::endl << result);
+    NES_DEBUG("Reference size=" << reference.size() << " content=" << std::endl
+                                << reference);
+    NES_DEBUG("Result size=" << result.size() << " content=" << std::endl
+                             << result);
     NES_DEBUG("----");
     EXPECT_EQ(reference.size(), result.size());
-//    EXPECT_EQ(reference, result);//TODO fix bug
+    //    EXPECT_EQ(reference, result);//TODO fix bug
 }
 
-TEST_F(TupleBufferTest, testEndianessOneItem)
-{
+TEST_F(TupleBufferTest, testEndianessOneItem) {
 
     struct __attribute__((packed)) TestStruct {
         u_int8_t v1;
@@ -145,8 +143,7 @@ TEST_F(TupleBufferTest, testEndianessOneItem)
     EXPECT_EQ(expected, UtilityFunctions::printTupleBufferAsCSV(testBuf, s));
 }
 
-TEST_F(TupleBufferTest, testEndianessTwoItems)
-{
+TEST_F(TupleBufferTest, testEndianessTwoItems) {
 
     struct __attribute__((packed)) TestStruct {
         u_int8_t v1;
@@ -181,16 +178,16 @@ TEST_F(TupleBufferTest, testEndianessTwoItems)
     testBuf.setNumberOfTuples(5);
 
     SchemaPtr s = Schema::create()
-                   ->addField("v1", UINT8)
-                   ->addField("v2", UINT16)
-                   ->addField("v3", UINT32)
-                   ->addField("v4", UINT64)
-                   ->addField("v5", INT8)
-                   ->addField("v6", INT16)
-                   ->addField("v7", INT32)
-                   ->addField("v8", INT64)
-                   ->addField("v9", FLOAT32)
-                   ->addField("v10", FLOAT64);
+                      ->addField("v1", UINT8)
+                      ->addField("v2", UINT16)
+                      ->addField("v3", UINT32)
+                      ->addField("v4", UINT64)
+                      ->addField("v5", INT8)
+                      ->addField("v6", INT16)
+                      ->addField("v7", INT32)
+                      ->addField("v8", INT64)
+                      ->addField("v9", FLOAT32)
+                      ->addField("v10", FLOAT64);
 
     cout << "to string=" << endl;
     std::string result = UtilityFunctions::prettyPrintTupleBuffer(testBuf, s);
@@ -206,6 +203,14 @@ TEST_F(TupleBufferTest, testEndianessTwoItems)
     string expected = "0,0,0,1,0,1,0,5,3.000000,0.000000\n1,1,1,2,1,1,1,6,4.100000,1.200000\n2,2,2,3,2,1,2,7,5.200000,"
                       "2.400000\n3,3,3,4,3,1,3,8,6.300000,3.600000\n4,4,4,5,4,1,4,9,7.400000,4.800000\n";
     EXPECT_EQ(expected, UtilityFunctions::printTupleBufferAsCSV(testBuf, s));
+}
+
+TEST_F(TupleBufferTest, testCopyAndSwap) {
+    auto buffer = bufferManager->getBufferBlocking();
+    for (auto i = 0; i < 10; ++i) {
+        *buffer.getBufferAs<uint64_t>() = 0;
+        buffer = bufferManager->getBufferBlocking();
+    }
 }
 
 } // namespace NES

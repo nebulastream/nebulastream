@@ -44,6 +44,9 @@ TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) {
     if (this == std::addressof(other)) {
         return *this;
     }
+    if (controlBlock) {
+        controlBlock->release();
+    }
     controlBlock = other.controlBlock;
     ptr = other.ptr;
     size = other.size;
@@ -64,12 +67,6 @@ bool TupleBuffer::isValid() const {
 TupleBuffer& TupleBuffer::retain() {
     controlBlock->retain();
     return *this;
-}
-
-void TupleBuffer::swap(TupleBuffer& other) noexcept {
-    std::swap(ptr, other.ptr);
-    std::swap(size, other.size);
-    std::swap(controlBlock, other.controlBlock);
 }
 
 void TupleBuffer::release() {
@@ -102,6 +99,12 @@ int64_t TupleBuffer::getWatermark() {
 
 void TupleBuffer::setWatermark(int64_t value) {
     controlBlock->setWatermark(value);
+}
+
+void swap(TupleBuffer& lhs, TupleBuffer& rhs) {
+    std::swap(lhs.ptr, rhs.ptr);
+    std::swap(lhs.size, rhs.size);
+    std::swap(lhs.controlBlock, rhs.controlBlock);
 }
 
 }// namespace NES
