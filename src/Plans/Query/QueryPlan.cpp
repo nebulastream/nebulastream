@@ -19,9 +19,9 @@ QueryPlanPtr QueryPlan::create() {
     return std::make_shared<QueryPlan>(QueryPlan());
 }
 
-QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID) {}
+QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), queryExecutionPlanId(INVALID_QUERY_EXECUTION_PLAN_ID) {}
 
-QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID) {
+QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), queryExecutionPlanId(INVALID_QUERY_EXECUTION_PLAN_ID) {
     rootOperator->setId(UtilityFunctions::getNextOperatorId());
     rootOperators.push_back(std::move(rootOperator));
 }
@@ -154,5 +154,13 @@ void QueryPlan::setQueryId(QueryId queryId) {
 
 void QueryPlan::addRootOperator(std::shared_ptr<OperatorNode> root) {
     rootOperators.push_back(root);
+}
+
+QueryExecutionPlanId QueryPlan::getQueryExecutionPlanId() {
+    return queryExecutionPlanId;
+}
+
+void QueryPlan::setQueryExecutionPlanId(uint64_t queryExecutionPlanId) {
+    this->queryExecutionPlanId = queryExecutionPlanId;
 }
 }// namespace NES

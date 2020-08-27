@@ -13,7 +13,7 @@
 
 namespace NES {
 
-ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) : id(physicalNode->getId()), physicalNode(physicalNode) {
+ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) : id(physicalNode->getId()), topologyNode(physicalNode) {
     QueryPlanPtr queryPlan = QueryPlan::create();
     queryPlan->appendPreExistingOperator(operatorNode);
     queryPlan->setQueryId(queryId);
@@ -21,7 +21,7 @@ ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, Oper
     mapOfQuerySubPlans.emplace(queryId, querySubPlans);
 }
 
-ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode) : id(physicalNode->getId()), physicalNode(physicalNode) {}
+ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode) : id(physicalNode->getId()), topologyNode(physicalNode) {}
 
 bool ExecutionNode::hasQuerySubPlans(QueryId queryId) {
     NES_DEBUG("ExecutionNode : Checking if a query sub plan exists with id " << queryId);
@@ -108,23 +108,8 @@ void ExecutionNode::freeOccupiedResources(QueryPlanPtr querySubPlan) {
         }
     }
     NES_INFO("ExecutionNode: Releasing " << resourceToFree << " CPU resources from the node with id " << id);
-    physicalNode->increaseResources(resourceToFree);
+    topologyNode->increaseResources(resourceToFree);
 }
-
-//bool ExecutionNode::addNewQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode) {
-//    NES_DEBUG("ExecutionNode: Creating a new query sub plan with id : " << queryId << " and assigning root operator as " << operatorNode->toString());
-//    QueryPlanPtr querySubPlan = QueryPlan::create();
-//    querySubPlan->appendPreExistingOperator(operatorNode);
-//    querySubPlan->setQueryId(queryId);
-//    NES_DEBUG("ExecutionNode: Appending the query sub plan with id : " << queryId << " to the collection of query sub plans");
-//    auto emplace = mapOfQuerySubPlans.emplace(queryId, querySubPlan);
-//    if (emplace.second) {
-//        NES_DEBUG("ExecutionNode: Successfully created new query sub plan");
-//        return true;
-//    }
-//    NES_WARNING("ExecutionNode: Not able to add query sub plan with id : " + queryId);
-//    return false;
-//}
 
 bool ExecutionNode::addNewQuerySubPlan(QueryId queryId, QueryPlanPtr querySubPlan) {
     if (hasQuerySubPlans(queryId)) {
@@ -180,7 +165,7 @@ uint64_t ExecutionNode::getId() {
 }
 
 TopologyNodePtr ExecutionNode::getTopologyNode() {
-    return physicalNode;
+    return topologyNode;
 }
 
 std::map<QueryId, std::vector<QueryPlanPtr>> ExecutionNode::getAllQuerySubPlans() {

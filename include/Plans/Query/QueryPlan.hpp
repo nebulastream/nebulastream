@@ -1,12 +1,13 @@
 #ifndef NES_INCLUDE_PLANS_QUERY_HPP_
 #define NES_INCLUDE_PLANS_QUERY_HPP_
 #include <API/QueryId.hpp>
+#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <memory>
 #include <vector>
-
 #include <set>
+
 namespace NES {
 
 class Stream;
@@ -157,6 +158,18 @@ class QueryPlan {
      */
     const QueryId getQueryId() const;
 
+    /**
+     * @brief get query execution id
+     * @return return query execution id
+     */
+    QueryExecutionPlanId getQueryExecutionPlanId();
+
+    /**
+     * @brief Set query execution id
+     * @param queryExecutionPlanId : input query execution id
+     */
+    void setQueryExecutionPlanId(uint64_t queryExecutionPlanId);
+
   private:
     /**
      * @brief initialize query plan and set currentOperatorId to 1
@@ -171,6 +184,7 @@ class QueryPlan {
 
     std::vector<OperatorNodePtr> rootOperators;
     QueryId queryId;
+    QueryExecutionPlanId queryExecutionPlanId;
 };
 }// namespace NES
 #endif//NES_INCLUDE_PLANS_QUERY_HPP_

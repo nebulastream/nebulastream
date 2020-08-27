@@ -17,7 +17,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
-#include <iostream>
+
 using namespace std;
 namespace NES {
 
@@ -32,7 +32,7 @@ uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, T
     uint64_t operatorId = UtilityFunctions::getNextOperatorId();
     uint64_t nextNetworkSourceOperatorId = UtilityFunctions::getNextOperatorId();
     Network::NodeLocation nodeLocation(parentNesNode->getId(), parentNesNode->getIpAddress(), parentNesNode->getDataPort());
-    Network::NesPartition nesPartition(queryId, nextNetworkSourceOperatorId, 0, 0);
+    Network::NesPartition nesPartition(queryId, nextNetworkSourceOperatorId, nextNetworkSourceOperatorId, 0);
     const OperatorNodePtr sysSinkOperator = createSinkLogicalOperatorNode(Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));
     sysSinkOperator->setId(operatorId);
     queryPlan->appendPreExistingOperator(sysSinkOperator);
@@ -40,147 +40,10 @@ uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, T
 }
 
 void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, SchemaPtr inputSchema, uint64_t operatorId) {
-
-//    if (operatorId == -1) {
-//        NES_ERROR("BasePlacementStrategy: received invalid operator id of the network source operator");
-//        throw QueryPlacementException("BasePlacementStrategy: Failed to add Network source operator due to invalid operator id -1");
-//    }
-//
-//    QueryId queryId = queryPlan->getQueryId();
-//    const ExecutionNodePtr childExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(childNesNode->getId());
-//    if (!(childExecutionNode)) {
-//        NES_ERROR("BasePlacementStrategy: Unable to find child execution node");
-//        throw QueryPlacementException("BasePlacementStrategy: Unable to find child execution node");
-//    }
-//
-//    if (!childExecutionNode->hasQuerySubPlans(queryId)) {
-//        NES_ERROR("BasePlacementStrategy: Unable to find query sub plan in child execution node");
-//        throw QueryPlacementException("BasePlacementStrategy: Unable to find query sub plan in child execution node");
-//    }
-//
-//    QueryPlanPtr childQuerySubPlan = childExecutionNode->getQuerySubPlans(queryId);
-//    if (!childQuerySubPlan) {
-//        NES_ERROR("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
-//        throw QueryPlacementException("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
-//    }
-//    vector<SinkLogicalOperatorNodePtr> sinkOperators = childQuerySubPlan->getSinkOperators();
-//    if (sinkOperators.empty()) {
-//        NES_ERROR("BasePlacementStrategy: Found a query sub plan without sink operator");
-//        throw QueryPlacementException("BasePlacementStrategy: Found a query sub plan without sink operator");
-//    }
-//    //If there are more than one sink operators then all of them should have the same output schema
-//    SchemaPtr sourceSchema = sinkOperators[0]->getOutputSchema();
     const Network::NesPartition nesPartition = Network::NesPartition(queryPlan->getQueryId(), operatorId, operatorId, 0);
     const OperatorNodePtr sysSourceOperator = createSourceLogicalOperatorNode(Network::NetworkSourceDescriptor::create(inputSchema, nesPartition));
     sysSourceOperator->setId(operatorId);
     queryPlan->appendPreExistingOperator(sysSourceOperator);
-}
-
-// FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
-// that there could be more than one child. Once the code generator able to deal with it this logic need to be
-// fixed.
-void BasePlacementStrategy::addSystemGeneratedOperators(QueryId queryId, TopologyNodePtr startNode) {
-    NES_DEBUG("BasePlacementStrategy: Adding system generated operators");
-    uint64_t nextNetworkSourceOperatorId = -1;
-    while (startNode) {
-        ExecutionNodePtr executionNode = globalExecutionPlan->getExecutionNodeByNodeId(startNode->getId());
-        if (!executionNode || !executionNode->hasQuerySubPlans(queryId)) {
-
-            if (startNode->getChildren().empty()) {
-                NES_ERROR("BasePlacementStrategy: Unable to find execution node for source node!"
-                          " This should not happen as placement at source node is necessary.");
-                throw QueryPlacementException("BasePlacementStrategy: Unable to find execution node for source node!"
-                                              " This should not happen as placement at source node is necessary.");
-            }
-
-            if (startNode->getParents().empty()) {
-                NES_ERROR("BasePlacementStrategy: Unable to find execution node for sink node!"
-                          " This should not happen as placement at sink node is necessary.");
-                throw QueryPlacementException("BasePlacementStrategy: Unable to find execution node for sink node!"
-                                              " This should not happen as placement at sink node is necessary.");
-            }
-
-            //create a new execution node for the nes node with forward operators
-            if (!executionNode) {
-                NES_DEBUG("BasePlacementStrategy: Create a new execution node");
-                executionNode = ExecutionNode::createExecutionNode(startNode);
-            }
-
-            QueryPlanPtr querySubPlan = QueryPlan::create();
-            querySubPlan->setQueryId(queryId);
-            TopologyNodePtr childNesNode = startNode->getChildren()[0]->as<TopologyNode>();
-//            addNetworkSourceOperator(querySubPlan, childNesNode, nextNetworkSourceOperatorId);
-            TopologyNodePtr parentNesNode = startNode->getParents()[0]->as<TopologyNode>();
-            nextNetworkSourceOperatorId = addNetworkSinkOperator(querySubPlan, parentNesNode);
-
-            NES_DEBUG("BasePlacementStrategy: Infer the output and input schema for the updated query plan");
-            typeInferencePhase->execute(querySubPlan);
-
-            if (!executionNode->addNewQuerySubPlan(queryId, querySubPlan)) {
-                NES_ERROR("BasePlacementStrategy: Unable to add system generated query sub plan.");
-                throw QueryPlacementException("BasePlacementStrategy: Unable to add system generated query sub plan.");
-            }
-
-            if (!globalExecutionPlan->addExecutionNodeAsParentTo(childNesNode->getId(), executionNode)) {
-                NES_ERROR("BasePlacementStrategy: Unable to add execution node with forward operators");
-                throw QueryPlacementException("BasePlacementStrategy: Unable to add execution node with forward operators");
-            }
-
-        } else {
-//            const QueryPlanPtr querySubPlan = executionNode->getQuerySubPlans(queryId);
-//            if (!querySubPlan) {
-//                NES_ERROR("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
-//                throw QueryPlacementException("BasePlacementStrategy: unable to find query sub plan with id " + queryId);
-//            }
-
-//            if (querySubPlan->getSinkOperators().empty()) {
-//                if (startNode->getParents().empty()) {
-//                    NES_ERROR("BasePlacementStrategy: Unable to find sink operator at the sink node!"
-//                              " This should not happen as placement at sink node is necessary.");
-//                    throw QueryPlacementException("BasePlacementStrategy: Unable to find sink operator at the sink node!"
-//                                                  " This should not happen as placement at sink node is necessary.");
-//                }
-//                TopologyNodePtr parentNesNode = startNode->getParents()[0]->as<TopologyNode>();
-//                nextNetworkSourceOperatorId = addNetworkSinkOperator(querySubPlan, parentNesNode);
-//            }
-//
-//            if (querySubPlan->getSourceOperators().empty()) {
-//                if (startNode->getChildren().empty()) {
-//                    NES_ERROR("BasePlacementStrategy: Unable to find execution node for source node!"
-//                              " This should not happen as placement at source node is necessary.");
-//                    throw QueryPlacementException("BasePlacementStrategy: Unable to find execution node for source node!"
-//                                                  " This should not happen as placement at source node is necessary.");
-//                }
-//                TopologyNodePtr childNesNode = startNode->getChildren()[0]->as<TopologyNode>();
-////                addNetworkSourceOperator(querySubPlan, childNesNode, nextNetworkSourceOperatorId);
-//            }
-//
-//            NES_DEBUG("BasePlacementStrategy: Infer the output and input schema for the updated query plan");
-//            typeInferencePhase->execute(querySubPlan);
-
-//            if (!executionNode->updateQuerySubPlans(queryId, querySubPlan)) {
-//                NES_ERROR("BasePlacementStrategy: Unable to add system generated source operator.");
-//                throw QueryPlacementException("BasePlacementStrategy: Unable to add system generated source operator.");
-//            }
-        }
-
-        if (!startNode->getChildren().empty()) {
-            NES_DEBUG("BasePlacementStrategy: adding link between previous and current execution node");
-            TopologyNodePtr childNode = startNode->getChildren()[0]->as<TopologyNode>();
-            if (!globalExecutionPlan->addExecutionNodeAsParentTo(childNode->getId(), executionNode)) {
-                NES_ERROR("BasePlacementStrategy: Unable to add link between previous and current executionNode");
-                throw QueryPlacementException("BasePlacementStrategy: Unable to add link between previous and current executionNode");
-            }
-        }
-        NES_DEBUG("BasePlacementStrategy: scheduling execution node");
-        globalExecutionPlan->scheduleExecutionNode(executionNode);
-        if (startNode->getParents().empty()) {
-            startNode = nullptr;
-        } else {
-            startNode = startNode->getParents()[0]->as<TopologyNode>();
-        }
-    }
-    NES_DEBUG("BasePlacementStrategy: Finished added system generated operators");
 }
 
 }// namespace NES

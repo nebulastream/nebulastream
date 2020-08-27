@@ -55,7 +55,6 @@ class BasePlacementStrategy {
   private:
     static constexpr auto NSINK_RETRIES = 3;
     static constexpr auto NSINK_RETRY_WAIT = std::chrono::seconds(5);
-    static constexpr auto ZMQ_DEFAULT_PORT = 5555;
 
   public:
     explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr, TypeInferencePhasePtr typeInferencePhase,
@@ -85,15 +84,6 @@ class BasePlacementStrategy {
      * @param operatorId: The id of the network source operator.
      */
     void addNetworkSourceOperator(QueryPlanPtr queryPlan, SchemaPtr inputSchema, uint64_t operatorId);
-
-
-    /**
-     * @brief This method will add the system generated operators where ever necessary along the selected path for operator placement.
-     *
-     * @param queryId query Id of the sub plan for which the operators have to be placed
-     * @param startNode start of the path where operators could be placed
-     */
-    void addSystemGeneratedOperators(QueryId queryId, TopologyNodePtr startNode);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
