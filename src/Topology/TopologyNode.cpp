@@ -34,14 +34,14 @@ uint16_t TopologyNode::getAvailableResources() {
 }
 
 void TopologyNode::increaseResources(uint16_t freedCapacity) {
-    NES_ASSERT(freedCapacity < resources, "PhysicalNode: amount of resources to free can't be more than actual resources");
-    NES_ASSERT(freedCapacity < (resources - usedResources), "PhysicalNode: amount of resources to free can't be more than actual consumed resources");
+    NES_ASSERT(freedCapacity <= resources, "PhysicalNode: amount of resources to free can't be more than actual resources");
+    NES_ASSERT(freedCapacity <= usedResources, "PhysicalNode: amount of resources to free can't be more than actual consumed resources");
     usedResources = usedResources - freedCapacity;
 }
 
 void TopologyNode::reduceResources(uint16_t usedCapacity) {
-    NES_ASSERT(usedCapacity < resources, "PhysicalNode: amount of resources to be used can't be more than actual resources");
-    NES_ASSERT(usedCapacity < (resources - usedResources), "PhysicalNode: amount of resources to be used can't be more than available resources");
+    NES_ASSERT(usedCapacity <= resources, "PhysicalNode: amount of resources to be used can't be more than actual resources");
+    NES_ASSERT(usedCapacity <= (resources - usedResources), "PhysicalNode: amount of resources to be used can't be more than available resources");
     usedResources = usedResources + usedCapacity;
 }
 
