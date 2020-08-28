@@ -70,4 +70,5 @@ typedef std::shared_ptr<OPCSourceDescriptor> OPCSourceDescriptorPtr;
 
 }// namespace NES
 
+#endif
 #endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_ZMQSOURCEDESCRIPTOR_HPP_
