@@ -12,7 +12,19 @@ typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 class GeneratableFilterOperator : public FilterLogicalOperatorNode, public GeneratableOperator {
   public:
     static GeneratableFilterOperatorPtr create(FilterLogicalOperatorNodePtr filterLogicalOperator);
+
+    /**
+    * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
+    * @param codegen a pointer to the code generator.
+    * @param context a pointer to the current pipeline context.
+    */
     void produce(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+
+    /**
+    * @brief Consume function, which generates code for the processing and calls the parent consume function.
+    * @param codegen a pointer to the code generator.
+    * @param context a pointer to the current pipeline context.
+    */
     void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
   private:
