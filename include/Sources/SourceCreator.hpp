@@ -106,7 +106,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
                                       uint64_t kafkaConsumerTimeout);
 #endif
 
-//#ifdef ENABLE_OPC_BUILD
+#ifdef ENABLE_OPC_BUILD
 
 
 /**
@@ -124,7 +124,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferMan
                                     UA_NodeId* nodeId,
                                     const std::string& user,
                                     const std::string& password);
-//#endif
+#endif
 
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_SOURCECREATOR_HPP_ */
