@@ -2,8 +2,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEOPERATORFORWARDREF_HPP_
 
 #include <memory>
-namespace NES{
-
+namespace NES {
 
 class GeneratableFilterOperator;
 typedef std::shared_ptr<GeneratableFilterOperator> GeneratableFilterOperatorPtr;
@@ -26,6 +25,6 @@ typedef std::shared_ptr<GeneratableSourceOperator> GeneratableSourceOperatorPtr;
 class GeneratableScanOperator;
 typedef std::shared_ptr<GeneratableScanOperator> GeneratableScanOperatorPtr;
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEOPERATORFORWARDREF_HPP_

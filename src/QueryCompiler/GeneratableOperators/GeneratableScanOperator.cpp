@@ -1,13 +1,13 @@
 
-#include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 
-namespace NES{
+namespace NES {
 
 void GeneratableScanOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     this->consume(codegen, context);
-    if(!getChildren().empty()) {
+    if (!getChildren().empty()) {
         getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context);
     }
 }
@@ -25,7 +25,7 @@ GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr schema) {
     return std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(schema));
 }
 
-GeneratableScanOperator::GeneratableScanOperator(SchemaPtr schema): schema(schema) {}
+GeneratableScanOperator::GeneratableScanOperator(SchemaPtr schema) : schema(schema) {}
 
 const std::string GeneratableScanOperator::toString() const {
     std::stringstream ss;
@@ -33,4 +33,4 @@ const std::string GeneratableScanOperator::toString() const {
     return ss.str();
 }
 
-}
+}// namespace NES

@@ -33,7 +33,6 @@ class GeneratableFilterOperator : public FilterLogicalOperatorNode, public Gener
     */
     const std::string toString() const override;
 
-
   private:
     GeneratableFilterOperator(const ExpressionNodePtr filterExpression);
 };

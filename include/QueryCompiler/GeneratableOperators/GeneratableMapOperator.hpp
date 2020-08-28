@@ -24,7 +24,6 @@ class GeneratableMapOperator : public MapLogicalOperatorNode, public Generatable
     */
     void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
-
     /**
     * @brief To string method for the operator.
     * @return string

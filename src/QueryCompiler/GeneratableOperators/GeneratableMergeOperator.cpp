@@ -1,9 +1,9 @@
 
-#include <QueryCompiler/GeneratableOperators/GeneratableMergeOperator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableMergeOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 
-namespace NES{
+namespace NES {
 
 void GeneratableMergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto newPipelineContext1 = PipelineContext::create();
@@ -22,7 +22,7 @@ GeneratableMergeOperatorPtr GeneratableMergeOperator::create(MergeLogicalOperato
     return std::make_shared<GeneratableMergeOperator>(GeneratableMergeOperator(logicalMergeOperator->getOutputSchema()));
 }
 
-GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schemaP): MergeLogicalOperatorNode() {
+GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schemaP) : MergeLogicalOperatorNode() {
     setInputSchema(schemaP);
     setOutputSchema(schemaP);
 }
@@ -33,4 +33,4 @@ const std::string GeneratableMergeOperator::toString() const {
     return ss.str();
 }
 
-}
+}// namespace NES

@@ -1,10 +1,10 @@
 
-#include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <utility>
 
-namespace NES{
+namespace NES {
 
 void GeneratableSinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context);
@@ -25,4 +25,4 @@ const std::string GeneratableSinkOperator::toString() const {
     return ss.str();
 }
 
-}
+}// namespace NES
