@@ -20,10 +20,12 @@ class OPCSource : public DataSource {
 
   public:
     /**
-     * @brief constructor for the zmq source
-     * @param schema of the input buffer
-     * @param host name of the source queue
-     * @param port of the source queue
+     * @brief constructor for the opc source
+     * @param schema schema of the elements
+ * @param url the url of the OPC server
+ * @param nodeId the node id of the desired node
+ * @param user name if connecting with a server with authentication
+ * @param password for authentication if needed
      */
 
     OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string &url,
@@ -45,33 +47,48 @@ class OPCSource : public DataSource {
         const std::string& password,
         UA_Int64 startTime);*/
     /**
-     * @brief destructor of OPC sink that disconnects the queue before deconstruction
+     * @brief destructor of OPC source that disconnects the queue before deconstruction
      * @note if queue cannot be disconnected, an assertion is raised
      */
     ~OPCSource();
 
     /**
      * @brief blocking method to receive a buffer from the OPC source
-     * @return TupleBufferPtr containing thre received buffer
+     * @return TupleBufferPtr containing the received buffer
      */
     std::optional<TupleBuffer> receiveData() override;
 
     /**
-     * @brief override the toString method for the zmq source
-     * @return returns string describing the zmq source
+     * @brief override the toString method for the opc source
+     * @return returns string describing the opc source
      */
     const std::string toString() const override;
 
 
     /**
-     * @brief The port of the ZMQ
-     * @return ZMQ port
+     * @brief The url of the OPC server
+     * @return OPC url
      */
     const std::string& getUrl() const;
 
+    /**
+     *
+     * @return OPC node id
+     */
+
     UA_NodeId* getNodeId() const;
 
+    /**
+     *
+     * @return opc server user name
+     */
+
     const std::string& getUser() const;
+
+    /**
+     *
+     * @return opc server password
+     */
 
     const std::string& getPassword() const;
 
@@ -88,7 +105,7 @@ class OPCSource : public DataSource {
     OPCSource() = default;
 
     /**
-     * @brief method to connect zmq using the host and port specified before
+     * @brief method to connect opc using the url specified before
      * check if already connected, if not connect try to connect, if already connected return
      * @return bool indicating if connection could be established
      */

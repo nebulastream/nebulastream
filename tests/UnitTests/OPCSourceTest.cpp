@@ -18,6 +18,11 @@
 
 #include <NodeEngine/NodeEngine.hpp>
 
+/**
+ * The tests require an OPC server running at opc.tcp://localhost:4840 with a node storing a uint32_t
+ * and the node id: ns=1;s=the.answer
+ */
+
 
 const std::string url = "opc.tcp://localhost:4840";
 

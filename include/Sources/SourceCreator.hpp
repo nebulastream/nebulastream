@@ -113,8 +113,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
  * @brief Create OPC source
  * @param schema schema of the elements
  * @param url the url of the OPC server
- * @param nsIndex an int with the depth of the node on the server
- * @param nsId the name of the server node
+ * @param nodeId the node id of the desired node
  * @param user name if connecting with a server with authentication
  * @param password for authentication if needed
  * @return
