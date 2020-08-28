@@ -13,7 +13,7 @@ class DummySink : public SinkDescriptor {
     std::string toString() override {
         return std::string();
     }
-    bool equal(SinkDescriptorPtr other) override {
+    bool equal(SinkDescriptorPtr) override {
         return false;
     }
 };

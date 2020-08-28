@@ -869,7 +869,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase =  TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0], nodeEngine);
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
     GeneratedQueryExecutionPlanBuilder builderReceiverQEP = GeneratedQueryExecutionPlanBuilder::create()
         .setCompiler(nodeEngine->getCompiler())
@@ -890,7 +890,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
         .sink(DummySink::create());
 
     auto queryPlan2 = typeInferencePhase->execute(query2.getQueryPlan());
-    auto generatableOperators2 = translatePhase->transform(queryPlan2->getRootOperators()[0], nodeEngine);
+    auto generatableOperators2 = translatePhase->transform(queryPlan2->getRootOperators()[0]);
 
 
     GeneratedQueryExecutionPlanBuilder builderGeneratorQEP = GeneratedQueryExecutionPlanBuilder::create()
