@@ -1,4 +1,3 @@
-#include <gtest/gtest.h>//
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -7,16 +6,29 @@
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Util/Logger.hpp>
+#include <gtest/gtest.h>//
 
 #include <iostream>
-#include <Catalogs/StreamCatalog.hpp>
+#include <API/UserAPIExpression.hpp>
 #include <Catalogs/LogicalStream.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <Operators/Impl/FilterOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <Sources/DefaultSource.hpp>
+#include <iostream>
 #include <memory>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
+
+#include <API/Expressions/Expressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Phases/TypeInferencePhase.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 using namespace std;
 namespace NES {
@@ -41,36 +53,36 @@ class LogicalOperatorNodeTest : public testing::Test {
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
         sourceOp = createSourceLogicalOperatorNode(sourceDescriptor);
-        sourceOp->setId(0);
+        sourceOp->setId(UtilityFunctions::getNextOperatorId());
         filterOp1 = createFilterLogicalOperatorNode(pred1);
-        filterOp1->setId(1);
+        filterOp1->setId(UtilityFunctions::getNextOperatorId());
         filterOp2 = createFilterLogicalOperatorNode(pred2);
-        filterOp2->setId(2);
+        filterOp2->setId(UtilityFunctions::getNextOperatorId());
         filterOp3 = createFilterLogicalOperatorNode(pred3);
-        filterOp3->setId(3);
+        filterOp3->setId(UtilityFunctions::getNextOperatorId());
         filterOp4 = createFilterLogicalOperatorNode(pred4);
-        filterOp4->setId(4);
+        filterOp4->setId(UtilityFunctions::getNextOperatorId());
         filterOp5 = createFilterLogicalOperatorNode(pred5);
-        filterOp5->setId(5);
+        filterOp5->setId(UtilityFunctions::getNextOperatorId());
         filterOp6 = createFilterLogicalOperatorNode(pred6);
-        filterOp6->setId(6);
+        filterOp6->setId(UtilityFunctions::getNextOperatorId());
         filterOp7 = createFilterLogicalOperatorNode(pred7);
-        filterOp7->setId(7);
+        filterOp7->setId(UtilityFunctions::getNextOperatorId());
 
         filterOp1Copy = createFilterLogicalOperatorNode(pred1);
-        filterOp1Copy->setId(8);
+        filterOp1Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp2Copy = createFilterLogicalOperatorNode(pred2);
-        filterOp2Copy->setId(9);
+        filterOp2Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp3Copy = createFilterLogicalOperatorNode(pred3);
-        filterOp3Copy->setId(10);
+        filterOp3Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp4Copy = createFilterLogicalOperatorNode(pred4);
-        filterOp4Copy->setId(11);
+        filterOp4Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp5Copy = createFilterLogicalOperatorNode(pred5);
-        filterOp5Copy->setId(12);
+        filterOp5Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp6Copy = createFilterLogicalOperatorNode(pred6);
-        filterOp6Copy->setId(13);
+        filterOp6Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp7Copy = createFilterLogicalOperatorNode(pred7);
-        filterOp7Copy->setId(14);
+        filterOp7Copy->setId(UtilityFunctions::getNextOperatorId());
 
         removed = false;
         replaced = false;
@@ -191,9 +203,10 @@ TEST_F(LogicalOperatorNodeTest, addAndRemoveMultipleSuccessors) {
     EXPECT_EQ(children.size(), 0u);
 }
 
-TEST_F(LogicalOperatorNodeTest, addAndRmoveDuplicatedSuccessors) {
+TEST_F(LogicalOperatorNodeTest, addAndRemoveDuplicatedSuccessors) {
     sourceOp->addChild(filterOp1);
-    sourceOp->addChild(filterOp1Copy);
+    OperatorNodePtr duplicate = filterOp1->duplicate();
+    sourceOp->addChild(duplicate);
     children = sourceOp->getChildren();
     EXPECT_EQ(children.size(), 1u);
 
@@ -202,9 +215,26 @@ TEST_F(LogicalOperatorNodeTest, addAndRmoveDuplicatedSuccessors) {
     children = sourceOp->getChildren();
     EXPECT_EQ(children.size(), 0u);
 
-    removed = sourceOp->removeChild(filterOp1Copy);
+    removed = sourceOp->removeChild(duplicate);
     EXPECT_FALSE(removed);
     sourceOp->addChild(filterOp1Copy);
+    EXPECT_EQ(children.size(), 0u);
+}
+
+TEST_F(LogicalOperatorNodeTest, addAndRemoveLogicalDuplicateButDifferentOperatorAsSuccessors) {
+    sourceOp->addChild(filterOp1);
+    sourceOp->addChild(filterOp1Copy);
+    children = sourceOp->getChildren();
+    EXPECT_EQ(children.size(), 2u);
+
+    removed = sourceOp->removeChild(filterOp1);
+    EXPECT_TRUE(removed);
+    children = sourceOp->getChildren();
+    EXPECT_EQ(children.size(), 1u);
+
+    removed = sourceOp->removeChild(filterOp1Copy);
+    EXPECT_TRUE(removed);
+    children = sourceOp->getChildren();
     EXPECT_EQ(children.size(), 0u);
 }
 
@@ -256,7 +286,8 @@ TEST_F(LogicalOperatorNodeTest, addAndRemoveDuplicatedPredecessors) {
     parents = filterOp3->getParents();
     EXPECT_EQ(parents.size(), 1u);
 
-    filterOp3->addParent(filterOp1Copy);
+    OperatorNodePtr duplicate = filterOp1->duplicate();
+    filterOp3->addParent(duplicate);
     parents = filterOp3->getParents();
     EXPECT_EQ(parents.size(), 1u);
 
@@ -265,8 +296,28 @@ TEST_F(LogicalOperatorNodeTest, addAndRemoveDuplicatedPredecessors) {
     parents = filterOp3->getParents();
     EXPECT_EQ(parents.size(), 0u);
 
-    removed = filterOp3->removeParent(filterOp1Copy);
+    removed = filterOp3->removeParent(duplicate);
     EXPECT_FALSE(removed);
+    parents = filterOp3->getParents();
+    EXPECT_EQ(parents.size(), 0u);
+}
+
+TEST_F(LogicalOperatorNodeTest, addAndRemoveLogicallyDuplicatedButDifferentOperatorAsPredecessors) {
+    filterOp3->addParent(filterOp1);
+    parents = filterOp3->getParents();
+    EXPECT_EQ(parents.size(), 1u);
+
+    filterOp3->addParent(filterOp1Copy);
+    parents = filterOp3->getParents();
+    EXPECT_EQ(parents.size(), 2u);
+
+    removed = filterOp3->removeParent(filterOp1);
+    EXPECT_TRUE(removed);
+    parents = filterOp3->getParents();
+    EXPECT_EQ(parents.size(), 1u);
+
+    removed = filterOp3->removeParent(filterOp1Copy);
+    EXPECT_TRUE(removed);
     parents = filterOp3->getParents();
     EXPECT_EQ(parents.size(), 0u);
 }

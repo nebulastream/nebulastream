@@ -107,6 +107,12 @@ OperatorNodePtr OperatorNode::getDuplicateOfChild(OperatorNodePtr operatorNode) 
 }
 
 bool OperatorNode::addChild(const NodePtr newNode) {
+
+    if(newNode->as<OperatorNode>()->getId() == id){
+        NES_ERROR("OperatorNode: can not add self as child to itself");
+        return false;
+    }
+
     std::vector<NodePtr> currentChildren = getChildren();
     auto found = std::find_if(currentChildren.begin(), currentChildren.end(), [&](NodePtr child) {
         return child->as<OperatorNode>()->getId() == newNode->as<OperatorNode>()->getId();
@@ -123,6 +129,12 @@ bool OperatorNode::addChild(const NodePtr newNode) {
 }
 
 bool OperatorNode::addParent(const NodePtr newNode) {
+
+    if(newNode->as<OperatorNode>()->getId() == id){
+        NES_ERROR("OperatorNode: can not add self as parent to itself");
+        return false;
+    }
+
     std::vector<NodePtr> currentParents = getParents();
     auto found = std::find_if(currentParents.begin(), currentParents.end(), [&](NodePtr child) {
         return child->as<OperatorNode>()->getId() == newNode->as<OperatorNode>()->getId();
