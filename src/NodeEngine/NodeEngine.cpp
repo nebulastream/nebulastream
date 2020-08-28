@@ -325,7 +325,7 @@ void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& b
         // create a string for logging of the identity which corresponds to the
         // queryId::operatorId::partitionId::subpartitionId
         //TODO: dont use strings for lookups
-        queryManager->addWork(std::to_string(nesPartition.getQueryId()), buffer);
+        queryManager->addWork(std::to_string(nesPartition.getOperatorId()), buffer);
     } else {
         // partition is not registered, discard the buffer
         buffer.release();
