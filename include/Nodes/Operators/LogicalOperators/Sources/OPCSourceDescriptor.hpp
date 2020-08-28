@@ -14,7 +14,7 @@
 namespace NES {
 
 /**
- * @brief Descriptor defining properties used for creating physical zmq source
+ * @brief Descriptor defining properties used for creating physical opc source
  */
 class OPCSourceDescriptor : public SourceDescriptor {
 
