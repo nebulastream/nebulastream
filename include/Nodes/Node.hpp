@@ -258,6 +258,10 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     bool insertBetweenThisAndParentNodes(const NodePtr newNode);
 
+    /**
+     * @brief To string method for the current node.
+     * @return string
+     */
     virtual const std::string toString() const = 0;
 
     /**
