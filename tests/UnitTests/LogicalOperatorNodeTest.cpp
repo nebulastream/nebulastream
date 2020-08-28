@@ -9,24 +9,15 @@
 #include <gtest/gtest.h>//
 
 #include <iostream>
-#include <API/UserAPIExpression.hpp>
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Operators/Impl/FilterOperator.hpp>
-#include <Operators/Operator.hpp>
 #include <Sources/DefaultSource.hpp>
-#include <iostream>
 #include <memory>
 
-#include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Util/UtilityFunctions.hpp>
 
