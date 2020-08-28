@@ -9,8 +9,8 @@ namespace NES {
 class GeneratableMergeOperator : public MergeLogicalOperatorNode, public GeneratableOperator {
   public:
     static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr logicalMergeOperator);
-    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
   private:
     GeneratableMergeOperator(SchemaPtr outputSchema);

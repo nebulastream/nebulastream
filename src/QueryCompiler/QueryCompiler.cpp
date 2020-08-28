@@ -29,7 +29,7 @@ QueryCompilerPtr QueryCompiler::create() {
 void QueryCompiler::compile(GeneratedQueryExecutionPlanBuilder& qepBuilder, OperatorNodePtr queryPlan) {
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
-    queryPlan->as<GeneratableOperator>()->produce(codeGenerator, context, std::cout);
+    queryPlan->as<GeneratableOperator>()->produce(codeGenerator, context);
     compilePipelineStages(qepBuilder, codeGenerator, context);
 }
 

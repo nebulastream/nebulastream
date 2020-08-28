@@ -5,16 +5,16 @@
 
 namespace NES{
 
-void GeneratableScanOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    this->consume(codegen, context, out);
+void GeneratableScanOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    this->consume(codegen, context);
     if(!getChildren().empty()) {
-        getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context, out);
+        getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context);
     }
 }
 
-void GeneratableScanOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
+void GeneratableScanOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForScan(schema, context);
-    getParents()[0]->as<GeneratableOperator>()->consume(codegen, context, out);
+    getParents()[0]->as<GeneratableOperator>()->consume(codegen, context);
 }
 const std::string GeneratableScanOperator::toString() const {
     return "Scan()";

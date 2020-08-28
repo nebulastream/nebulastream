@@ -6,11 +6,11 @@
 
 namespace NES{
 
-void GeneratableSinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
-    getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context, out);
+void GeneratableSinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context);
 }
 
-void GeneratableSinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream&) {
+void GeneratableSinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForEmit(context->getResultSchema(), context);
 }
 GeneratableSinkOperatorPtr GeneratableSinkOperator::create(SinkLogicalOperatorNodePtr sinkLogicalOperatorNode) {

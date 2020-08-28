@@ -9,8 +9,8 @@ namespace NES {
 class GeneratableSinkOperator : public SinkLogicalOperatorNode, public GeneratableOperator {
   public:
     static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr);
-    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
   private:
     explicit GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor);

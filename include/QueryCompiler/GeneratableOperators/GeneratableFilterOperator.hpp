@@ -12,8 +12,8 @@ typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 class GeneratableFilterOperator : public FilterLogicalOperatorNode, public GeneratableOperator {
   public:
     static GeneratableFilterOperatorPtr create(FilterLogicalOperatorNodePtr filterLogicalOperator);
-    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
   private:
     GeneratableFilterOperator(const ExpressionNodePtr filterExpression);
