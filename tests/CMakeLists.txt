@@ -109,9 +109,11 @@ if (NES_USE_KAFKA)
 endif (NES_USE_KAFKA)
 
 ### OPC Tests ###
-add_executable(opc-source-tests "UnitTests/OPCSourceTest.cpp" UnitTests/OPCSourceTest.cpp)
-target_link_libraries(opc-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
-add_test(NAME opc-source-tests COMMAND opc-source-tests)
+if(NES_USE_OPC)
+    add_executable(opc-source-tests "UnitTests/OPCSourceTest.cpp" UnitTests/OPCSourceTest.cpp)
+    target_link_libraries(opc-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+    add_test(NAME opc-source-tests COMMAND opc-source-tests)
+endif(NES_USE_OPC)
 
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/MemoryLayoutTest.cpp")
