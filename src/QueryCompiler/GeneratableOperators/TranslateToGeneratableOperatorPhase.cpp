@@ -12,6 +12,7 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -60,6 +61,8 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
 OperatorNodePtr TranslateToGeneratableOperatorPhase::transform(OperatorNodePtr operatorNode, OperatorNodePtr legacyParent) {
     NES_DEBUG("TranslateToGeneratableOperatorPhase: translate " << operatorNode);
     auto legacyOperator = transformIndividualOperator(operatorNode, legacyParent);
+    legacyOperator->setId(UtilityFunctions::getNextOperatorId());
+
     for (const NodePtr& child : operatorNode->getChildren()) {
         auto generatableOperator = transform(child->as<OperatorNode>(), legacyOperator);
     }
