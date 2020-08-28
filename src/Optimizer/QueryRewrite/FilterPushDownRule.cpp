@@ -66,12 +66,11 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
             NES_INFO("FilterPushDownRule: Filter can't be pushed below the " + node->toString() + " operator");
 
-            if (node != filterOperator) {
+            if (node->as<OperatorNode>()->getId() != filterOperator->getId()) {
 
                 NES_INFO("FilterPushDownRule: Adding Filter operator between current operator and its parents");
-                OperatorNodePtr copyOptr = filterOperator->duplicate();
-                if (!(copyOptr->removeAndJoinParentAndChildren()
-                      && node->insertBetweenThisAndParentNodes(copyOptr))) {
+                if (!(filterOperator->removeAndJoinParentAndChildren()
+                      && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");

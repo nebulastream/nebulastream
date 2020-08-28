@@ -99,6 +99,7 @@ void BottomUpStrategy::placeOperators(QueryPlanPtr queryPlan, std::map<std::stri
 
         TopologyNodePtr candidateTopologyNode = topologyNodes[0];
         topologyNodes.erase(topologyNodes.begin());
+        mapOfSourceToTopologyNodes[sourceDescriptor->getStreamName()] = topologyNodes;
         if (candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
             throw QueryPlacementException("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
@@ -191,6 +192,10 @@ void BottomUpStrategy::placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr 
     //Check if all children operators already placed
     std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(candidateOperator, operatorToExecutionNodeMap);
 
+    if(childTopologyNodes.empty()){
+        return;
+    }
+
     //Find the candidate node
     if (candidateOperator->instanceOf<SinkLogicalOperatorNode>()) {
         candidateTopologyNode = candidateTopologyNode->getAllRootNodes()[0]->as<TopologyNode>();
@@ -240,7 +245,7 @@ void BottomUpStrategy::placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr 
             throw QueryPlacementException("BottomUpStrategy: unable to find query plan with child operator as root.");
         }
 
-//        vector<TopologyNodePtr> startNodesForSubGraph = topology->findPathBetween({startTopologyNode}, {candidateTopologyNode});
+        //        vector<TopologyNodePtr> startNodesForSubGraph = topology->findPathBetween({startTopologyNode}, {candidateTopologyNode});
         QueryPlanPtr startQueryPlan = *found;
 
         uint64_t networkSourceOperatorId = -1;
@@ -318,6 +323,7 @@ void BottomUpStrategy::placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr 
     // Reduce the processing capacity by 1
     // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
     candidateTopologyNode->reduceResources(1);
+    operatorToExecutionNodeMap[candidateOperator->getId()] = candidateExecutionNode;
     topology->reduceResources(candidateTopologyNode->getId(), 1);
     if (!candidateExecutionNode->updateQuerySubPlans(queryId, querySubPlans)) {
         NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
