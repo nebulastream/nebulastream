@@ -5,17 +5,17 @@
 
 namespace NES{
 
-void GeneratableMergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
+void GeneratableMergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto newPipelineContext1 = PipelineContext::create();
-    getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext1, out);
+    getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext1);
     auto newPipelineContext2 = PipelineContext::create();
-    getChildren()[1]->as<GeneratableOperator>()->produce(codegen, newPipelineContext2, out);
+    getChildren()[1]->as<GeneratableOperator>()->produce(codegen, newPipelineContext2);
 
     context->addNextPipeline(newPipelineContext1);
     context->addNextPipeline(newPipelineContext2);
 }
 
-void GeneratableMergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream&) {
+void GeneratableMergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForEmit(outputSchema, context);
 }
 GeneratableMergeOperatorPtr GeneratableMergeOperator::create(MergeLogicalOperatorNodePtr logicalMergeOperator) {

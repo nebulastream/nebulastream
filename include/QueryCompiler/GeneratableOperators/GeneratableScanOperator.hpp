@@ -8,8 +8,8 @@ namespace NES {
 class GeneratableScanOperator : public OperatorNode, public GeneratableOperator {
   public:
     static GeneratableScanOperatorPtr create(SchemaPtr schema);
-    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

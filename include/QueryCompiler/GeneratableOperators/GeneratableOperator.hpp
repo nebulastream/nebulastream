@@ -14,12 +14,16 @@ typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 class GeneratableOperator;
 typedef std::shared_ptr<GeneratableOperator> GeneratableOperatorPtr;
 
+/**
+ * @brief Base class for all generatable operators. It defines the general produce and consume methods as defined by Neumann.
+ */
 class GeneratableOperator {
 
   public:
-    virtual void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
 
-    virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
+    virtual void produce(CodeGeneratorPtr codegen, PipelineContextPtr context) = 0;
+
+    virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) = 0;
 };
 
 }// namespace NES

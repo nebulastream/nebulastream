@@ -5,14 +5,14 @@
 
 namespace NES{
 
-void GeneratableWindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
+void GeneratableWindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     // The window operator is a pipeline breaker -> we create a new pipeline context for the children
     auto newPipelineContext = PipelineContext::create();
-    getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext, out);
+    getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext);
     context->addNextPipeline(newPipelineContext);
 }
 
-void GeneratableWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream&) {
+void GeneratableWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForWindow(getWindowDefinition(), context);
 }
 GeneratableWindowOperatorPtr GeneratableWindowOperator::create(WindowLogicalOperatorNodePtr windowLogicalOperatorNode) {

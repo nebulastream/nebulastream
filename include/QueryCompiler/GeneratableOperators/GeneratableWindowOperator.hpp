@@ -9,8 +9,8 @@ namespace NES {
 class GeneratableWindowOperator : public WindowLogicalOperatorNode, public GeneratableOperator {
   public:
     static GeneratableWindowOperatorPtr create(WindowLogicalOperatorNodePtr);
-    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
   private:
     explicit GeneratableWindowOperator(WindowDefinitionPtr windowDefinition);

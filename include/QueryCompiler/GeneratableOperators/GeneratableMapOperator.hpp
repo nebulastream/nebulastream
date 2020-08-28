@@ -9,8 +9,8 @@ namespace NES {
 class GeneratableMapOperator : public MapLogicalOperatorNode, public GeneratableOperator {
   public:
     static GeneratableMapOperatorPtr create(MapLogicalOperatorNodePtr mapLogicalOperatorNode);
-    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
   private:
     GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression);
