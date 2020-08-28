@@ -29,4 +29,4 @@ const std::string GeneratableFilterOperator::toString() const {
     return ss.str();
 }
 
-}
+}// namespace NES

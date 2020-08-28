@@ -30,9 +30,7 @@ class TranslateToLegacyPlanPhase {
      */
     static TranslateToLegacyPlanPhasePtr create();
 
-
     TranslateToLegacyPlanPhase();
-
 
     /**
      * @brief Translates an expression to a legacy user api expression.

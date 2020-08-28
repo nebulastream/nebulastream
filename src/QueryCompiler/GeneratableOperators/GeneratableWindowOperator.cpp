@@ -1,9 +1,9 @@
 
-#include <QueryCompiler/GeneratableOperators/GeneratableWindowOperator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableWindowOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 
-namespace NES{
+namespace NES {
 
 void GeneratableWindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     // The window operator is a pipeline breaker -> we create a new pipeline context for the children
@@ -19,8 +19,7 @@ GeneratableWindowOperatorPtr GeneratableWindowOperator::create(WindowLogicalOper
     return std::make_shared<GeneratableWindowOperator>(GeneratableWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
 }
 
-GeneratableWindowOperator::GeneratableWindowOperator(WindowDefinitionPtr windowDefinition): WindowLogicalOperatorNode(windowDefinition) {
-
+GeneratableWindowOperator::GeneratableWindowOperator(WindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(windowDefinition) {
 }
 
 const std::string GeneratableWindowOperator::toString() const {
@@ -29,5 +28,4 @@ const std::string GeneratableWindowOperator::toString() const {
     return ss.str();
 }
 
-
-}
+}// namespace NES

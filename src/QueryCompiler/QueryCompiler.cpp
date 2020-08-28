@@ -1,11 +1,11 @@
 #include <NodeEngine/QueryManager.hpp>
-#include <set>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <set>
 #include <utility>
 namespace NES {
 

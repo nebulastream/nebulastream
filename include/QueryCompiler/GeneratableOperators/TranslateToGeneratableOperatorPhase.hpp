@@ -17,7 +17,6 @@ typedef std::shared_ptr<GeneratableOperator> GeneratableOperatorPtr;
 class NodeEngine;
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
-
 /**
  * @brief Translates a logical query plan to the generatable operator tree
  */
@@ -34,7 +33,6 @@ class TranslateToGeneratableOperatorPhase {
      */
     OperatorNodePtr transform(OperatorNodePtr operatorNode, OperatorNodePtr legacyParent = nullptr);
 
-
     /**
      * @brief Translates an individual operator to its generatable representation.
      * @param operatorNode
@@ -43,7 +41,6 @@ class TranslateToGeneratableOperatorPhase {
     OperatorNodePtr transformIndividualOperator(OperatorNodePtr operatorNode, OperatorNodePtr generatableParentOperator);
 
     TranslateToGeneratableOperatorPhase();
-
 };
 
 }// namespace NES

@@ -1,11 +1,11 @@
 
 
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 
-namespace NES{
+namespace NES {
 
 void GeneratableMapOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context);
@@ -22,7 +22,7 @@ GeneratableMapOperatorPtr GeneratableMapOperator::create(MapLogicalOperatorNodeP
     return std::make_shared<GeneratableMapOperator>(GeneratableMapOperator(mapLogicalOperatorNode->getMapExpression()));
 }
 
-GeneratableMapOperator::GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression): MapLogicalOperatorNode(mapExpression) {
+GeneratableMapOperator::GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression) : MapLogicalOperatorNode(mapExpression) {
 }
 
 const std::string GeneratableMapOperator::toString() const {
@@ -31,4 +31,4 @@ const std::string GeneratableMapOperator::toString() const {
     return ss.str();
 }
 
-}
+}// namespace NES
