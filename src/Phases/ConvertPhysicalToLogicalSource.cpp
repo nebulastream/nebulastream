@@ -73,6 +73,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             return kafkaSourceDescriptor;
         }
 #endif
+#ifdef ENABLE_OPC_BUILD
         case OPC_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating OPC source");
             const OPCSourcePtr opcSourcePtr = std::dynamic_pointer_cast<OPCSource>(dataSource);
@@ -84,6 +85,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
                                                   opcSourcePtr->getPassword());
             return opcSourceDescriptor;
         }
+#endif
         case SENSE_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating sense source");
             const SenseSourcePtr senseSourcePtr = std::dynamic_pointer_cast<SenseSource>(dataSource);

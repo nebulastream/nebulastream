@@ -1,4 +1,4 @@
-//#ifdef ENABLE_OPC_BUILD
+#ifdef ENABLE_OPC_BUILD
 #include <Sources/OPCSource.hpp>
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
@@ -44,36 +44,46 @@ OPCSource::~OPCSource() {
         NES_ERROR("OPCSOURCE  " << this << ": Destroy OPC Source failed cause it could not be disconnected");
         assert(0);
     }
-    NES_DEBUG("OPCSOURCE  " << this << ": Destroy OPC Source");
+
 }
 
 std::optional<TupleBuffer> OPCSource::receiveData() {
     NES_DEBUG("OPCSource  " << this << ": receiveData ");
     if (connect()) {
+        UA_Int32 value = 0;
         UA_Variant *val = UA_Variant_new();
 
         NES_DEBUG("Init var");
 
         retval = UA_Client_readValueAttribute(client, *nodeId, val);
 
-        TupleBuffer buffer = bufferManager->getBufferBlocking();
+        auto buffer = bufferManager->getBufferBlocking();
+
+        const size_t tupleSize = schema->getSchemaSizeInBytes();
+
+        buffer.setNumberOfTuples(1);
         NES_DEBUG("OPCSource  " << this << ": got buffer ");
 
-        if(retval == UA_STATUSCODE_GOOD) {
+        if(retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
 
-            std::memcpy(buffer.getBuffer(), (UA_Int32*)val->data, buffer.getBufferSize());
-            buffer.setNumberOfTuples(1);
-            UA_Variant_delete(val);
+            value = *(UA_Int32*)val->data;
+
+            NES_DEBUG("Value is: " << value);
+
+            std::memcpy(buffer.getBuffer(), &value, buffer.getBufferSize());
 
             return buffer;
         }else{
             NES_ERROR("OPCSOURCE error: Could not retrieve data. Further inspection needed.");
+
             return std::nullopt;
         }
+
     } else {
         NES_ERROR("OPCSOURCE: Not connected!");
         return std::nullopt;
     }
+
 }
 
 const std::string OPCSource::toString() const {
@@ -127,7 +137,9 @@ bool OPCSource::disconnect() {
     NES_DEBUG("OPCSource::disconnect() connected=" << connected);
     if (connected) {
 
+        NES_DEBUG("OPCSOURCE disconnect client");
         UA_Client_disconnect(client);
+        NES_DEBUG("OPCSOURCE delete client");
         UA_Client_delete(client);
         connected = false;
     }
@@ -158,4 +170,4 @@ const std::string& OPCSource::getPassword() const {
 }
 
 }// namespace NES
-//#endif
+#endif

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-//#ifdef ENABLE_OPC_BUILD
+#ifdef ENABLE_OPC_BUILD
 #include <string>
 #include <cstring>
 #include <thread>
@@ -19,7 +19,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 
 
-const std::string url = "opc.tcp://localhost:53530/OPCUA/SimulationServer";
+const std::string url = "opc.tcp://localhost:4840";
 
 namespace NES {
 
@@ -38,15 +38,11 @@ class OPCSourceTest : public testing::Test {
 
         test_schema =
                 Schema::create()
-                        ->addField("nsId", DataTypeFactory::createFixedChar(16))
-                        ->addField("nsIndex", UINT16)
-                        ->addField("var", UINT64);
-
-        tuple_size = test_schema->getSchemaSizeInBytes();
-        buffer_size = num_tuples_to_process*tuple_size/num_of_buffers;
-
+                        ->addField("var", UINT32);
         bufferManager = std::make_shared<BufferManager>();
         queryManager = std::make_shared<QueryManager>();
+
+        bufferManager->configure(sizeof(uint32_t),1);
 
         ASSERT_GT(buffer_size, 0);
 
@@ -70,7 +66,7 @@ class OPCSourceTest : public testing::Test {
     size_t buffer_size;
 
   protected:
-    UA_NodeId nodeId = UA_NODEID_STRING(3, "h1");
+    UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
     const std::string& user = "";
     const std::string& password = "";
 
@@ -91,7 +87,7 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
 
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, &nodeId, user, password);
 
-    std::string expected = "OPC_SOURCE(SCHEMA(nsId:Char nsIndex:INTEGER var:INTEGER ), URL= opc.tcp://localhost:53530/OPCUA/SimulationServer, NODE_INDEX= 3. ";
+    std::string expected = "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 3. ";
 
     EXPECT_EQ(opcSource->toString(), expected);
 
@@ -103,19 +99,23 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
 
 TEST_F(OPCSourceTest, OPCSourceValue) {
 
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, &nodeId, user, password);
+    auto test_schema = Schema::create()
+                ->addField("var", UINT32);
 
-    std::string expected = "OPC_SOURCE(SCHEMA(nsId:Char nsIndex:INTEGER var:INTEGER ), URL= opc.tcp://localhost:53530/OPCUA/SimulationServer, NODE_INDEX= 3. ";
+    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, &nodeId, user, password);
 
     auto tuple_buffer = opcSource->receiveData();
 
-    //uint32_t *tuple = (uint32_t*) tuple_buffer->getBuffer();
+    size_t sum = 0;
+    uint32_t *tuple = (uint32_t *) tuple_buffer->getBuffer();
 
-    std::cout << opcSource->toString() << std::endl;
+    sum = *tuple;
+    size_t expected = 43;
 
-    SUCCEED();
+    EXPECT_EQ(sum, expected);
+
 }
 
 
 }
-//#endif
+#endif
