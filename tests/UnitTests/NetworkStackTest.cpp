@@ -863,7 +863,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                           netManager, nesPartition);
     auto testSink = std::make_shared<TestSink>(schema, nodeEngine->getBufferManager());
 
-    auto query = PhysicalQuery::from(schema)
+    auto query = TestQuery::from(schema)
         .sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
@@ -885,7 +885,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                                     nodeEngine->getQueryManager());
     auto networkSink = std::make_shared<NetworkSink>(schema, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager());
 
-    auto query2 = PhysicalQuery::from(schema)
+    auto query2 = TestQuery::from(schema)
         .filter(Attribute("id")< 5)
         .sink(DummySink::create());
 

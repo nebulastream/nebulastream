@@ -7,8 +7,10 @@
 #include "SchemaSourceDescriptor.hpp"
 namespace NES{
 
-
-class PhysicalQuery : public Query{
+/**
+ * @brief TestQuery api for testing.
+ */
+class TestQuery : public Query{
   public:
     static Query from(SchemaPtr inputSchme){
         auto sourceOperator = createSourceLogicalOperatorNode(SchemaSourceDescriptor::create(inputSchme));
