@@ -6,6 +6,7 @@
 #include <Util/ThreadBarrier.hpp>
 #include <functional>
 #include <string.h>
+#include <Util/ThreadNaming.hpp>
 namespace NES {
 
 ThreadPool::ThreadPool(QueryManagerPtr queryManager)
@@ -57,6 +58,7 @@ bool ThreadPool::start() {
     NES_DEBUG("Threadpool: Spawning " << numThreads << " threads");
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, i, barrier]() {
+            setThreadName("WrkThr-%d", i);
             barrier->wait();
             runningRoutine(WorkerContext(i));
         });

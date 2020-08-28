@@ -16,6 +16,10 @@ class WorkerContext {
     explicit WorkerContext(uint32_t worker_id) : worker_id(worker_id) {
         // nop
     }
+
+    uint32_t id() const {
+        return worker_id;
+    }
 };
 }// namespace NES
 #endif//NES_WORKERCONTEXT_HPP_

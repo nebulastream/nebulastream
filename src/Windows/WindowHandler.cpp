@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <Util/ThreadNaming.hpp>
 
 namespace NES {
 
@@ -65,6 +66,7 @@ bool WindowHandler::start() {
     running = true;
     NES_DEBUG("WindowHandler " << this << ": Spawn thread");
     thread = std::make_shared<std::thread>([this]() {
+        setThreadName("whdlr");
         trigger();
     });
     return true;

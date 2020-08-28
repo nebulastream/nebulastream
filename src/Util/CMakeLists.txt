@@ -3,4 +3,5 @@ add_source_nes(
         SharedLibrary.cpp
         TimeMeasurement.cpp
         StacktraceLoader.cpp
+        ThreadNaming.cpp
 )

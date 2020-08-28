@@ -1,26 +1,18 @@
 #ifndef NES_INCLUDE_UTIL_THREADNAMING_HPP_
 #define NES_INCLUDE_UTIL_THREADNAMING_HPP_
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <thread>
-#include <unistd.h>
-#ifdef _POSIX_THREADS
-#define HAS_POSIX_THREAD
-#include <pthread.h>
-#else
-#error "Unsupported architecture"
-#endif
-
-void setThreadName(const char* threadNameFmt, ...) {
-    char buffer[256];
-    va_list args;
-    va_start(args, threadNameFmt);
-    vsprintf(buffer, threadNameFmt, args);
-#ifdef HAS_POSIX_THREAD
-    pthread_setname_np(pthread_self(), buffer);
-#endif
-    va_end(args);
+namespace NES {
+/**
+ * @brief Sets the calling thread's name using the supplied
+ * formattable string. For example, setThreadName("helper") will
+ * set the thread name to "helper", setThreadName("helper-%d", 123)
+ * will set the thread name to "helper-123". Be careful that on some
+ * operating systems, the length of the thread name is constrained, e.g.,
+ * on Linux it is 16 characters.
+ * @param threadNameFmt name of the thread with formatting option
+ * @param ...
+ */
+void setThreadName(const char* threadNameFmt, ...);
 }
 
 #endif//NES_INCLUDE_UTIL_THREADNAMING_HPP_

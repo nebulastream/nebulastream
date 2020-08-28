@@ -13,7 +13,7 @@
 
 #include <Sources/DataSource.hpp>
 #include <Windows/Watermark/ProcessingTimeWatermarkGenerator.hpp>
-
+#include <Util/ThreadNaming.hpp>
 namespace NES {
 
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager)
@@ -113,6 +113,7 @@ bool DataSource::isRunning() { return running; }
 void DataSource::setGatheringInterval(size_t interval) { this->gatheringInterval = interval; }
 
 void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
+    setThreadName("DataSrc-%d", getSourceId());
     if (!queryManager) {
         NES_ERROR("query Manager not set");
         throw std::logic_error("DataSource: QueryManager not set");
