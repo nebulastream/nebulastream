@@ -5,6 +5,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
+#include <Util/ThreadNaming.hpp>
 
 #define TO_RAW_ZMQ_SOCKET static_cast<void*>
 
@@ -28,6 +29,7 @@ bool ZmqServer::start() {
     uint16_t numHandlerThreads = numNetworkThreads / 2;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
     routerThread = std::make_unique<std::thread>([this, numHandlerThreads, &startPromise]() {
+        setThreadName("zmq-router");
         routerLoop(numHandlerThreads, startPromise);
     });
     return startPromise.get_future().get();
@@ -77,6 +79,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
 
     for (int i = 0; i < numHandlerThreads; ++i) {
         handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
+            setThreadName("zmq-evt-%d", i);
             messageHandlerEventLoop(barrier, i);
         }));
     }
