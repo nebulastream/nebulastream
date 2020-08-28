@@ -1,3 +1,4 @@
+#ifdef ENABLE_OPC_BUILD
 #include <API/Schema.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <utility>
@@ -70,3 +71,5 @@ std::string OPCSourceDescriptor::toString() {
 }
 
 }// namespace NES
+
+#endif

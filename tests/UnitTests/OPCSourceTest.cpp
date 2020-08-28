@@ -87,7 +87,7 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
 
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, &nodeId, user, password);
 
-    std::string expected = "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 3. ";
+    std::string expected = "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1. ";
 
     EXPECT_EQ(opcSource->toString(), expected);
 
