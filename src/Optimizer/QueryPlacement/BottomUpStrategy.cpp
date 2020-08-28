@@ -198,7 +198,9 @@ void BottomUpStrategy::placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr 
 
     //Find the candidate node
     if (candidateOperator->instanceOf<SinkLogicalOperatorNode>()) {
-        candidateTopologyNode = candidateTopologyNode->getAllRootNodes()[0]->as<TopologyNode>();
+        if(candidateTopologyNode->getId() != topology->getRoot()->getId()){
+            candidateTopologyNode = candidateTopologyNode->getAllRootNodes()[0]->as<TopologyNode>();
+        }
     } else {
         candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
         if (candidateTopologyNode->getAvailableResources() == 0) {
