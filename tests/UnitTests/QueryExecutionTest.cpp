@@ -12,6 +12,7 @@
 #include <iostream>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <utility>
+#include <Nodes/Operators/OperatorNode.hpp>
 
 #include "../util/DummySink.hpp"
 #include "../util/SchemaSourceDescriptor.hpp"
@@ -202,7 +203,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase =  TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0], nodeEngine);
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
     auto testSink = std::make_shared<TestSink>(10, testSchema, nodeEngine->getBufferManager());
 
 
@@ -275,7 +276,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase =  TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0], nodeEngine);
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
@@ -335,7 +336,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
     auto translatePhase =  TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0], nodeEngine);
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()

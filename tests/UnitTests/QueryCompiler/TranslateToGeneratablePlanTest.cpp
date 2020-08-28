@@ -157,7 +157,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
     ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableSinkOperator = translatePhase->transform(sinkOperator->as<OperatorNode>(), engine);
+    auto generatableSinkOperator = translatePhase->transform(sinkOperator->as<OperatorNode>());
 
     ASSERT_TRUE(generatableSinkOperator->instanceOf<GeneratableSinkOperator>());
 
@@ -188,7 +188,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     auto typeInferencePhase = TypeInferencePhase::create(std::make_shared<StreamCatalog>());
     auto queryPlan = typeInferencePhase->execute(QueryPlan::create(sinkOperator));
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableSinkOperator = translatePhase->transform(queryPlan->getRootOperators()[0], engine);
+    auto generatableSinkOperator = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
     ASSERT_TRUE(generatableSinkOperator->instanceOf<GeneratableSinkOperator>());
 
