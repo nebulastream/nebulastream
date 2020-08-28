@@ -195,7 +195,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
                                                                     nodeEngine->getQueryManager());
 
 
-    auto query = PhysicalQuery::from(testSource->getSchema())
+    auto query = TestQuery::from(testSource->getSchema())
                      .filter(Attribute("id") < 5)
                      .sink(DummySink::create());
 
@@ -260,7 +260,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
         nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
 
 
-    auto query = PhysicalQuery::from(windowSource->getSchema());
+    auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
     auto windowType = TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(10));
@@ -315,14 +315,14 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager());
 
-    auto query1 = PhysicalQuery::from(testSource1->getSchema());
+    auto query1 = TestQuery::from(testSource1->getSchema());
 
     query1 = query1.filter(Attribute("id") < 5);
 
     // creating P2
     auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager());
-    auto query2 = PhysicalQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5);
+    auto query2 = TestQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5);
 
 
     // creating P3
