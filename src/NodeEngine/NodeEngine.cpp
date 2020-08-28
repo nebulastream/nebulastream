@@ -12,9 +12,6 @@
 using namespace std;
 namespace NES {
 
-static constexpr size_t DEFAULT_BUFFER_SIZE = 4096;
-static constexpr size_t DEFAULT_NUM_BUFFERS = 1024;
-
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() {
     return nodeStatsProvider;
 }
@@ -118,7 +115,7 @@ bool NodeEngine::registerQueryInNodeEngine(uint64_t queryId, OperatorNodePtr que
         // todo this is not required if later the query compiler can handle it by it self.
         //auto translationPhase = TranslateToLegacyPlanPhase::create();
         auto translationPhase = TranslateToGeneratableOperatorPhase::create();
-        auto generatableOperatorPlan = translationPhase->transform(queryOperators, shared_from_this());
+        auto generatableOperatorPlan = translationPhase->transform(queryOperators);
 
         // Compile legacy operators with qep builder.
         auto qepBuilder = GeneratedQueryExecutionPlanBuilder::create()

@@ -32,7 +32,7 @@ class TranslateToGeneratableOperatorPhase {
      * @param operatorNode
      * @return Legacy Operator Tree
      */
-    OperatorNodePtr transform(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine, OperatorNodePtr legacyParent = nullptr);
+    OperatorNodePtr transform(OperatorNodePtr operatorNode, OperatorNodePtr legacyParent = nullptr);
 
 
     /**
@@ -40,7 +40,7 @@ class TranslateToGeneratableOperatorPhase {
      * @param operatorNode
      * @return Legacy Operator
      */
-    OperatorNodePtr transformIndividualOperator(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine, OperatorNodePtr generatableParentOperator);
+    OperatorNodePtr transformIndividualOperator(OperatorNodePtr operatorNode, OperatorNodePtr generatableParentOperator);
 
     TranslateToGeneratableOperatorPhase();
 
