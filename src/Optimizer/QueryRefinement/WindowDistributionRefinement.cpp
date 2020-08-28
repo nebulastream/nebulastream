@@ -6,6 +6,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
+#include <Util/UtilityFunctions.hpp>
 #include <string>
 
 namespace NES {
@@ -40,7 +41,7 @@ bool WindowDistributionRefinement::execute(GlobalExecutionPlanPtr globalPlan, Qu
                         LogicalOperatorNodePtr newWindowOp = createCentralWindowSpecializedOperatorNode(winOp->getWindowDefinition());
                         newWindowOp->setInputSchema(winOp->getInputSchema());
                         newWindowOp->setOutputSchema(winOp->getOutputSchema());
-                        newWindowOp->setId(winOp->getId());
+                        newWindowOp->setId(UtilityFunctions::getNextOperatorId());
 
                         NES_DEBUG("WindowDistributionRefinement::execute: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
                         NES_DEBUG("WindowDistributionRefinement::execute: plan before replace " << plan->toString());

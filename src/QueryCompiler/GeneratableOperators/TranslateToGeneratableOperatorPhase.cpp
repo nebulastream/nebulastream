@@ -29,28 +29,37 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         // Translate Source operator node.
         auto scanOperator = operatorNode->as<SourceLogicalOperatorNode>();
         auto childOperator = GeneratableScanOperator::create(scanOperator->getOutputSchema());
+        childOperator->setId(UtilityFunctions::getNextOperatorId());
         generatableParentOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         auto childOperator = GeneratableFilterOperator::create(operatorNode->as<FilterLogicalOperatorNode>());
+        childOperator->setId(UtilityFunctions::getNextOperatorId());
         generatableParentOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         auto childOperator = GeneratableMapOperator::create(operatorNode->as<MapLogicalOperatorNode>());
+        childOperator->setId(UtilityFunctions::getNextOperatorId());
         generatableParentOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
+        scanOperator->setId(UtilityFunctions::getNextOperatorId());
         generatableParentOperator->addChild(scanOperator);
         auto childOperator = GeneratableMergeOperator::create(operatorNode->as<MergeLogicalOperatorNode>());
+        childOperator->setId(UtilityFunctions::getNextOperatorId());
         scanOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
+        auto childOperator = GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
+        childOperator->setId(UtilityFunctions::getNextOperatorId());
+        return childOperator;
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
+        scanOperator->setId(UtilityFunctions::getNextOperatorId());
         generatableParentOperator->addChild(scanOperator);
         auto windowOperator = GeneratableWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        windowOperator->setId(UtilityFunctions::getNextOperatorId());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     }
@@ -61,7 +70,6 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
 OperatorNodePtr TranslateToGeneratableOperatorPhase::transform(OperatorNodePtr operatorNode, OperatorNodePtr legacyParent) {
     NES_DEBUG("TranslateToGeneratableOperatorPhase: translate " << operatorNode);
     auto legacyOperator = transformIndividualOperator(operatorNode, legacyParent);
-    legacyOperator->setId(UtilityFunctions::getNextOperatorId());
 
     for (const NodePtr& child : operatorNode->getChildren()) {
         auto generatableOperator = transform(child->as<OperatorNode>(), legacyOperator);
