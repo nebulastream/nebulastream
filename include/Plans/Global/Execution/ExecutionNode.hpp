@@ -88,6 +88,12 @@ class ExecutionNode : public Node {
      */
     std::map<QueryId, std::vector<QueryPlanPtr>> getAllQuerySubPlans();
 
+    /**
+     * Get the resources occupied by the query sub plans for the input query id.
+     * @param queryId : the input query id
+     */
+    uint32_t getOccupiedResources(QueryId queryId);
+
     bool equal(NodePtr rhs) const override;
 
     const std::string toString() const override;
@@ -112,12 +118,6 @@ class ExecutionNode : public Node {
      * map of queryPlans
      */
     std::map<QueryId, std::vector<QueryPlanPtr>> mapOfQuerySubPlans;
-
-    /**
-     * Free the resources occupied by the query sub plan.
-     * @param querySubPlan : the input query sub plan
-     */
-    void freeOccupiedResources(QueryPlanPtr querySubPlan);
 };
 }// namespace NES
 

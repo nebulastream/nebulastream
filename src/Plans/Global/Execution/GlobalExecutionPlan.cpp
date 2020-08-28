@@ -2,6 +2,7 @@
 #include <Nodes/Util/DumpContext.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -166,6 +167,20 @@ void GlobalExecutionPlan::mapExecutionNodeToQueryId(ExecutionNodePtr executionNo
             }
         }
     }
+}
+
+std::map<uint64_t, uint32_t> GlobalExecutionPlan::getMapOfTopologyNodeIdToOccupiedResource(QueryId queryId) {
+
+    NES_INFO("GlobalExecutionPlan: Get a map of occupied resources for the query " << queryId);
+    std::map<uint64_t, uint32_t> mapOfTopologyNodeIdToOccupiedResources;
+    std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[queryId];
+    NES_DEBUG("GlobalExecutionPlan: Found " << executionNodes.size() << " Execution node for query with id " << queryId);
+    for (auto& executionNode : executionNodes) {
+        uint32_t occupiedResource = executionNode->getOccupiedResources(queryId);
+        mapOfTopologyNodeIdToOccupiedResources[executionNode->getTopologyNode()->getId()] = occupiedResource;
+    }
+    NES_DEBUG("GlobalExecutionPlan: returning the map of occupied resources for the query " << queryId);
+    return mapOfTopologyNodeIdToOccupiedResources;
 }
 
 }// namespace NES

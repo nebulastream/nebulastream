@@ -8,6 +8,9 @@
 
 namespace NES {
 
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
+
 class WorkerRPCClient;
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
@@ -32,7 +35,7 @@ class QueryUndeploymentPhase {
      * @param workerRpcClient : rpc client to communicate with workers
      * @return shared pointer to the instance of QueryUndeploymentPhase
      */
-    static QueryUndeploymentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
+    static QueryUndeploymentPhasePtr create(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
 
     /**
      * @brief method for stopping and undeploying the query with the given id
@@ -40,10 +43,11 @@ class QueryUndeploymentPhase {
      * @return true if successful
      */
     bool execute(const QueryId queryId);
+
     ~QueryUndeploymentPhase();
 
   private:
-    explicit QueryUndeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
+    explicit QueryUndeploymentPhase(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
     /**
      * @brief method remove query from nodes
      * @param queryId
@@ -58,8 +62,9 @@ class QueryUndeploymentPhase {
      */
     bool stopQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
 
-    WorkerRPCClientPtr workerRPCClient;
+    TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
+    WorkerRPCClientPtr workerRPCClient;
 };
 }// namespace NES
 
