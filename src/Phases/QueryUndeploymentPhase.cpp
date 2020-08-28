@@ -3,13 +3,14 @@
 #include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-QueryUndeploymentPhase::QueryUndeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient)
-    : globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient) {
+QueryUndeploymentPhase::QueryUndeploymentPhase(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient)
+    : topology(topology), globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient) {
     NES_DEBUG("QueryUndeploymentPhase()");
 }
 
@@ -17,8 +18,8 @@ QueryUndeploymentPhase::~QueryUndeploymentPhase() {
     NES_DEBUG("~QueryUndeploymentPhase()");
 }
 
-QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(globalExecutionPlan, workerRpcClient));
+QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient) {
+    return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(topology, globalExecutionPlan, workerRpcClient));
 }
 
 bool QueryUndeploymentPhase::execute(const QueryId queryId) {
@@ -47,6 +48,13 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: undeploy query failed");
         throw QueryUndeploymentException("Failed to undeploy the query " + queryId);
+    }
+
+    const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(queryId);
+
+    for (auto entry : resourceMap) {
+        NES_TRACE("QueryUndeploymentPhase: Releasing " << entry.second << " resources for the node " << entry.first);
+        topology->increaseResources(entry.first, entry.second);
     }
 
     return globalExecutionPlan->removeQuerySubPlans(queryId);

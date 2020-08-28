@@ -105,6 +105,13 @@ class GlobalExecutionPlan {
      */
     void scheduleExecutionNode(ExecutionNodePtr executionNode);
 
+    /**
+     * @brief Get the map of topology node id to the amount of resources occupied by the query
+     * @param queryId : the id of the query
+     * @return a map of topology node id to resources occupied
+     */
+    std::map<uint64_t, uint32_t> getMapOfTopologyNodeIdToOccupiedResource(QueryId queryId);
+
     ~GlobalExecutionPlan();
 
   private:

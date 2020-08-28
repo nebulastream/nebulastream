@@ -32,7 +32,7 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     queryRewritePhase = QueryRewritePhase::create(streamCatalog);
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
-    queryUndeploymentPhase = QueryUndeploymentPhase::create(globalExecutionPlan, workerRpcClient);
+    queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     queryPlacementRefinementPhase = QueryPlacementRefinementPhase::create(globalExecutionPlan);
 }
 QueryRequestProcessorService::~QueryRequestProcessorService() {

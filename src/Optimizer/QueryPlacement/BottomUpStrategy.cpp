@@ -240,13 +240,13 @@ void BottomUpStrategy::placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr 
             throw QueryPlacementException("BottomUpStrategy: unable to find query plan with child operator as root.");
         }
 
-        vector<TopologyNodePtr> startNodesForSubGraph = topology->findPathBetween({startTopologyNode}, {candidateTopologyNode});
+//        vector<TopologyNodePtr> startNodesForSubGraph = topology->findPathBetween({startTopologyNode}, {candidateTopologyNode});
         QueryPlanPtr startQueryPlan = *found;
 
         uint64_t networkSourceOperatorId = -1;
 
         //Start from next node
-        TopologyNodePtr parentTopologyNode = startNodesForSubGraph[0]->getParents()[0]->as<TopologyNode>();
+        TopologyNodePtr parentTopologyNode = startTopologyNode->getParents()[0]->as<TopologyNode>();
 
         while (parentTopologyNode) {
 
