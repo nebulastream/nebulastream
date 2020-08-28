@@ -12,7 +12,7 @@
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <NodeEngine/internal/backtrace.hpp>
 #include <thread>
-#include <topologyLock>
+#include <mutex>
 #endif
 
 namespace NES {
