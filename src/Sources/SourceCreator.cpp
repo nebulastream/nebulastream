@@ -15,10 +15,12 @@
 #include <Sources/ZmqSource.hpp>
 #include <Sources/OPCSource.hpp>
 
-
+#ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/plugin/log_stdout.h>
+
+#endif
 
 namespace NES {
 
