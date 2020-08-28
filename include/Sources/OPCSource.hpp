@@ -1,5 +1,6 @@
-//#ifndef OPCSOURCE_HPP
-//#define OPCSOURCE_HPP
+#ifndef OPCSOURCE_HPP
+#define OPCSOURCE_HPP
+#ifdef ENABLE_KAFKA_BUILD
 
 #include <cstdint>
 #include <memory>
@@ -113,4 +114,5 @@ class OPCSource : public DataSource {
 typedef std::shared_ptr<OPCSource> OPCSourcePtr;
 }// namespace NES
 
-//#endif// OPCSOURCE_HPP
+#endif
+#endif// OPCSOURCE_HPP
