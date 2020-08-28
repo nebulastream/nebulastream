@@ -308,7 +308,7 @@
 
 #include <condition_variable>
 #include <thread>
-#include <topologyLock>
+#include <mutex>
 
 #include <BaseTsd.h>
 typedef SSIZE_T ssize_t;
@@ -4013,7 +4013,7 @@ class SignalHandling {
             crash happens or the program exits normally. */
 
               {
-                  std::unique_lock<std::topologyLock> lk(mtx());
+                  std::unique_lock<std::mutex> lk(mtx());
                   cv().wait(lk, [] {
                       return crashed() != crash_status::running;
                   });
@@ -4022,7 +4022,7 @@ class SignalHandling {
                   handle_stacktrace(skip_recs());
               }
               {
-                  std::unique_lock<std::topologyLock> lk(mtx());
+                  std::unique_lock<std::mutex> lk(mtx());
                   crashed() = crash_status::ending;
               }
               cv().notify_one();
@@ -4041,7 +4041,7 @@ class SignalHandling {
 
     ~SignalHandling() {
         {
-            std::unique_lock<std::topologyLock> lk(mtx());
+            std::unique_lock<std::mutex> lk(mtx());
             crashed() = crash_status::normal_exit;
         }
 
@@ -4066,8 +4066,8 @@ class SignalHandling {
         return data;
     }
 
-    static std::topologyLock& mtx() {
-        static std::topologyLock data;
+    static std::mutex& mtx() {
+        static std::mutex data;
         return data;
     }
 
@@ -4142,14 +4142,14 @@ class SignalHandling {
         skip_recs() = skip;
 
         {
-            std::unique_lock<std::topologyLock> lk(mtx());
+            std::unique_lock<std::mutex> lk(mtx());
             crashed() = crash_status::crashed;
         }
 
         cv().notify_one();
 
         {
-            std::unique_lock<std::topologyLock> lk(mtx());
+            std::unique_lock<std::mutex> lk(mtx());
             cv().wait(lk, [] {
                 return crashed() != crash_status::crashed;
             });
