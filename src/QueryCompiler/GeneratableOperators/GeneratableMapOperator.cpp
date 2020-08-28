@@ -24,4 +24,11 @@ GeneratableMapOperatorPtr GeneratableMapOperator::create(MapLogicalOperatorNodeP
 
 GeneratableMapOperator::GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression): MapLogicalOperatorNode(mapExpression) {
 }
+
+const std::string GeneratableMapOperator::toString() const {
+    std::stringstream ss;
+    ss << "GENERATABLE_MAP(" << outputSchema->toString() << ")";
+    return ss.str();
+}
+
 }

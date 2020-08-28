@@ -19,7 +19,14 @@ void GeneratableFilterOperator::consume(CodeGeneratorPtr codegen, PipelineContex
     codegen->generateCodeForFilter(std::dynamic_pointer_cast<Predicate>(predicate), context);
     getParents()[0]->as<GeneratableOperator>()->consume(codegen, context);
 }
+
 GeneratableFilterOperator::GeneratableFilterOperator(const ExpressionNodePtr filterExpression) : FilterLogicalOperatorNode(filterExpression) {
+}
+
+const std::string GeneratableFilterOperator::toString() const {
+    std::stringstream ss;
+    ss << "GENERATABLE_FILTER(" << outputSchema->toString() << ")";
+    return ss.str();
 }
 
 }

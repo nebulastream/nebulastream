@@ -23,5 +23,11 @@ GeneratableWindowOperator::GeneratableWindowOperator(WindowDefinitionPtr windowD
 
 }
 
+const std::string GeneratableWindowOperator::toString() const {
+    std::stringstream ss;
+    ss << "GENERATABLE_WINDOW(" << outputSchema->toString() << ")";
+    return ss.str();
+}
+
 
 }

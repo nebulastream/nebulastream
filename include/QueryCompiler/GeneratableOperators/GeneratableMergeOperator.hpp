@@ -24,6 +24,13 @@ class GeneratableMergeOperator : public MergeLogicalOperatorNode, public Generat
     */
     void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
+
+    /**
+    * @brief To string method for the operator.
+    * @return string
+    */
+    const std::string toString() const override;
+
   private:
     GeneratableMergeOperator(SchemaPtr outputSchema);
 };

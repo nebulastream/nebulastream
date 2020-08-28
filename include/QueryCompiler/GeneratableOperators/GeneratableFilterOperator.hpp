@@ -27,6 +27,13 @@ class GeneratableFilterOperator : public FilterLogicalOperatorNode, public Gener
     */
     void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
+    /**
+    * @brief To string method for the operator.
+    * @return string
+    */
+    const std::string toString() const override;
+
+
   private:
     GeneratableFilterOperator(const ExpressionNodePtr filterExpression);
 };

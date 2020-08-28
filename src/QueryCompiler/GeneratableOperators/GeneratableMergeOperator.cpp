@@ -27,4 +27,10 @@ GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schemaP): MergeLogi
     setOutputSchema(schemaP);
 }
 
+const std::string GeneratableMergeOperator::toString() const {
+    std::stringstream ss;
+    ss << "GENERATABLE_MERGE(" << outputSchema->toString() << ")";
+    return ss.str();
+}
+
 }
