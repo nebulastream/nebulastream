@@ -22,7 +22,7 @@ TranslateToGeneratableOperatorPhasePtr TranslateToGeneratableOperatorPhase::crea
 TranslateToGeneratableOperatorPhase::TranslateToGeneratableOperatorPhase() {
 }
 
-OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine, OperatorNodePtr generatableParentOperator) {
+OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator(OperatorNodePtr operatorNode, OperatorNodePtr generatableParentOperator) {
 
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // Translate Source operator node.
@@ -57,11 +57,11 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     NES_NOT_IMPLEMENTED();
 }
 
-OperatorNodePtr TranslateToGeneratableOperatorPhase::transform(OperatorNodePtr operatorNode, NodeEnginePtr nodeEngine, OperatorNodePtr legacyParent) {
+OperatorNodePtr TranslateToGeneratableOperatorPhase::transform(OperatorNodePtr operatorNode, OperatorNodePtr legacyParent) {
     NES_DEBUG("TranslateToGeneratableOperatorPhase: translate " << operatorNode);
-    auto legacyOperator = transformIndividualOperator(operatorNode, nodeEngine, legacyParent);
+    auto legacyOperator = transformIndividualOperator(operatorNode, legacyParent);
     for (const NodePtr& child : operatorNode->getChildren()) {
-        auto generatableOperator = transform(child->as<OperatorNode>(), nodeEngine, legacyOperator);
+        auto generatableOperator = transform(child->as<OperatorNode>(), legacyOperator);
     }
     NES_DEBUG("TranslateToLegacyPhase: got " << legacyOperator);
     return legacyOperator;
