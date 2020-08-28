@@ -17,10 +17,6 @@ void GeneratableScanOperator::consume(CodeGeneratorPtr codegen, PipelineContextP
     getParents()[0]->as<GeneratableOperator>()->consume(codegen, context);
 }
 
-const std::string GeneratableScanOperator::toString() const {
-    return "Scan()";
-}
-
 OperatorNodePtr GeneratableScanOperator::copy() {
     return GeneratableScanOperator::create(schema);
 }
@@ -30,5 +26,11 @@ GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr schema) {
 }
 
 GeneratableScanOperator::GeneratableScanOperator(SchemaPtr schema): schema(schema) {}
+
+const std::string GeneratableScanOperator::toString() const {
+    std::stringstream ss;
+    ss << "GENERATABLE_SCAN(" << outputSchema->toString() << ")";
+    return ss.str();
+}
 
 }

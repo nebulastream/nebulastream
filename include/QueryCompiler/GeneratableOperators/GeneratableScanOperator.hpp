@@ -29,7 +29,10 @@ class GeneratableScanOperator : public OperatorNode, public GeneratableOperator 
      */
     const std::string toString() const override;
 
-
+    /**
+    * Create a shallow copy of the operator by copying its operator properties but not its children or parent operator tree.
+    * @return shallow copy of the operator
+    */
     OperatorNodePtr copy() override;
 
   private:

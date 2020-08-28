@@ -19,4 +19,10 @@ GeneratableSinkOperatorPtr GeneratableSinkOperator::create(SinkLogicalOperatorNo
 GeneratableSinkOperator::GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor) : SinkLogicalOperatorNode(std::move(sinkDescriptor)) {
 }
 
+const std::string GeneratableSinkOperator::toString() const {
+    std::stringstream ss;
+    ss << "GENERATABLE_SINK(" << outputSchema->toString() << ")";
+    return ss.str();
+}
+
 }
