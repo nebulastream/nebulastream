@@ -1,6 +1,6 @@
 #ifndef OPCSOURCE_HPP
 #define OPCSOURCE_HPP
-#ifdef ENABLE_KAFKA_BUILD
+#ifdef ENABLE_OPC_BUILD
 
 #include <cstdint>
 #include <memory>
