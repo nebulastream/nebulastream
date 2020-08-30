@@ -4,6 +4,7 @@
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 

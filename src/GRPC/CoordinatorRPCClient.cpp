@@ -54,8 +54,7 @@ bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
 
 bool CoordinatorRPCClient::registerLogicalStream(std::string streamName,
                                                  std::string filePath) {
-    NES_DEBUG(
-        "CoordinatorRPCClient: registerLogicalStream " << streamName << " with path" << filePath);
+    NES_DEBUG("CoordinatorRPCClient: registerLogicalStream " << streamName << " with path" << filePath);
 
     // Check if file can be found on system and read.
     boost::filesystem::path path{filePath.c_str()};
