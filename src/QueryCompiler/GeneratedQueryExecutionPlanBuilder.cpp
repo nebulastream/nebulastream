@@ -50,7 +50,7 @@ QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
     NES_ASSERT(!sources.empty(), "GeneratedQueryExecutionPlanBuilder: Invalid number of sources");
     NES_ASSERT(!sinks.empty(), "GeneratedQueryExecutionPlanBuilder: Invalid number of sinks");
     NES_ASSERT(queryId != INVALID_QUERY_ID, "GeneratedQueryExecutionPlanBuilder: Invalid Query Id");
-    NES_ASSERT(queryExecutionId != INVALID_QUERY_EXECUTION_PLAN_ID, "GeneratedQueryExecutionPlanBuilder: Invalid Query Execution Id");
+    NES_ASSERT(queryExecutionPlanId != INVALID_QUERY_EXECUTION_PLAN_ID, "GeneratedQueryExecutionPlanBuilder: Invalid Query Execution Id");
     NES_ASSERT(queryCompiler, "GeneratedQueryExecutionPlanBuilder: Invalid compiler or no stages");
 
     if (stages.empty() && !leaves.empty()) {
@@ -60,7 +60,7 @@ QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
         NES_ASSERT(!stages.empty(), "GeneratedQueryExecutionPlanBuilder: No stages after query compilation");
         std::reverse(stages.begin(), stages.end());// this is necessary, check plan generator documentation
     }
-    return std::make_shared<GeneratedQueryExecutionPlan>(std::move(queryId), std::move(sources), std::move(sinks), std::move(stages), std::move(queryManager), std::move(bufferManager));
+    return std::make_shared<GeneratedQueryExecutionPlan>(queryId, queryExecutionPlanId, std::move(sources), std::move(sinks), std::move(stages), std::move(queryManager), std::move(bufferManager));
 }
 
 std::vector<DataSinkPtr>& GeneratedQueryExecutionPlanBuilder::getSinks() {
@@ -105,7 +105,11 @@ size_t GeneratedQueryExecutionPlanBuilder::getNumberOfPipelineStages() const {
 }
 
 GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQueryExecutionId(QueryExecutionPlanId queryExecutionId) {
-    this->queryExecutionId = queryExecutionId;
+    this->queryExecutionPlanId = queryExecutionId;
     return *this;
+}
+
+QueryExecutionPlanId GeneratedQueryExecutionPlanBuilder::getQueryExecutionPlanId() const {
+    return queryExecutionPlanId;
 }
 }// namespace NES

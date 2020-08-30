@@ -54,7 +54,7 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
                 // qep not found in list, add it
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << source->getSourceId());
                 sourceIdToQueryMap[source->getSourceId()].insert(qep);
-                queryToStatisticsMap.insert(qep->getQueryId(), std::make_shared<QueryStatistics>());
+                queryToStatisticsMap.insert(qep->getQueryExecutionPlanId(), std::make_shared<QueryStatistics>());
             } else {
                 NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.");
                 return false;
@@ -65,7 +65,7 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
                                               << " not found. Creating new element with with qep " << qep);
             std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
             sourceIdToQueryMap[source->getSourceId()] = qepSet;
-            queryToStatisticsMap.insert(qep->getQueryId(), std::make_shared<QueryStatistics>());
+            queryToStatisticsMap.insert(qep->getQueryExecutionPlanId(), std::make_shared<QueryStatistics>());
         }
     }
     return true;
@@ -257,7 +257,7 @@ std::string QueryManager::getQueryManagerStatistics() {
     std::stringstream ss;
     ss << "QueryManager Statistics:";
     for (auto& qep : runningQEPs) {
-        auto stats = queryToStatisticsMap.find(qep->getQueryId());
+        auto stats = queryToStatisticsMap.find(qep->getQueryExecutionPlanId());
         ss << "Query=" << qep;
         ss << "\t processedTasks =" << stats->getProcessedTasks();
         ss << "\t processedTuple =" << stats->getProcessedTuple();

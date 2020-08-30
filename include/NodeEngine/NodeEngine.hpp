@@ -71,7 +71,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param queryId to undeploy
      * @return true if succeeded, else false
      */
-    bool undeployQuery(QueryExecutionPlanId queryId);
+    bool undeployQuery(QueryId queryId);
 
     /**
      * @brief registers a query
@@ -87,14 +87,14 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param operatorTree: query sub plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(QueryExecutionPlanId queryId, uint64_t queryExecutionId, OperatorNodePtr operatorTree);
+    bool registerQueryInNodeEngine(QueryId queryId, QueryExecutionPlanId queryExecutionId, OperatorNodePtr operatorTree);
 
     /**
      * @brief ungregisters a query
      * @param queryIdto unregister query
      * @return true if succeeded, else false
      */
-    bool unregisterQuery(QueryExecutionPlanId queryId);
+    bool unregisterQuery(QueryId queryId);
 
     /**
      * @brief method to start a already deployed query
@@ -102,14 +102,14 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param queryId to start
      * @return bool indicating success
      */
-    bool startQuery(QueryExecutionPlanId queryId);
+    bool startQuery(QueryId queryId);
 
     /**
      * @brief method to stop a query
      * @param queryId to stop
      * @return bool indicating success
      */
-    bool stopQuery(QueryExecutionPlanId queryId);
+    bool stopQuery(QueryId queryId);
 
     /**
      * @brief release all resource of the node engine
@@ -154,9 +154,9 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     /**
     * @brief method to return the query statistics
     * @param id of the query
-    * @return queryStatistics
+    * @return vector of queryStatistics
     */
-    QueryStatisticsPtr getQueryStatistics(const QueryExecutionPlanId queryId);
+    std::vector<QueryStatisticsPtr> getQueryStatistics(const QueryExecutionPlanId queryId);
 
     Network::PartitionManagerPtr getPartitionManager();
 
@@ -185,6 +185,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
 
   private:
     NodeStatsProviderPtr nodeStatsProvider;
+    std::map<QueryId, std::vector<QueryExecutionPlanId>> deployedQueryToExecutionPlanId;
     std::map<QueryExecutionPlanId, QueryExecutionPlanPtr> deployedQEPs;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;

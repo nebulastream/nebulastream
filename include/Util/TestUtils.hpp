@@ -38,7 +38,7 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     static bool checkCompleteOrTimeout(NodeEnginePtr ptr, QueryId queryId, size_t expectedResult) {
-        if (ptr->getQueryStatistics(queryId) == nullptr) {
+        if (ptr->getQueryStatistics(queryId).empty()) {
             NES_ERROR("checkCompleteOrTimeout query does not exists");
             return false;
         }
@@ -47,13 +47,14 @@ class TestUtils {
         auto now = start_timestamp;
         while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
-            if (ptr->getQueryStatistics(queryId)->getProcessedBuffers() == expectedResult
-                && ptr->getQueryStatistics(queryId)->getProcessedTasks() == expectedResult) {
+            //FIXME: handle vector of statistics properly in #977
+            if (ptr->getQueryStatistics(queryId)[0]->getProcessedBuffers() == expectedResult
+                && ptr->getQueryStatistics(queryId)[0]->getProcessedTasks() == expectedResult) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct");
                 return true;
             }
             NES_DEBUG(
-                "checkCompleteOrTimeout: sleep because val=" << ptr->getQueryStatistics(queryId)->getProcessedTuple()
+                "checkCompleteOrTimeout: sleep because val=" << ptr->getQueryStatistics(queryId)[0]->getProcessedTuple()
                                                              << " < " << expectedResult);
             sleep(1);
         }
@@ -147,22 +148,23 @@ class TestUtils {
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
             auto query = queryCatalog->getQueryCatalogEntry(queryId);
+            //FIXME: handle vector of statistics properly in #977
             auto statistics = ptr->getQueryStatistics(queryId);
-            if (!query || !statistics) {
-                NES_DEBUG("checkCompleteOrTimeout: query=" << query << " stats=" << statistics);
+            if (!query || statistics.empty()) {
+                NES_DEBUG("checkCompleteOrTimeout: query=" << query << " stats size=" << statistics.size());
                 sleep(1);
                 continue;
             }
             bool isQueryRunning = query->getQueryStatus() == QueryStatus::Running;
-            if (isQueryRunning && cmp(statistics->getProcessedBuffers(), expectedResult)) {
-                NES_DEBUG("checkCompleteOrTimeout: results are correct isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics->getProcessedBuffers()
-                                                                                        << " procTasks=" << statistics->getProcessedTasks()
-                                                                                        << " procWatermarks=" << statistics->getProcessedWatermarks());
+            if (isQueryRunning && cmp(statistics[0]->getProcessedBuffers(), expectedResult)) {
+                NES_DEBUG("checkCompleteOrTimeout: results are correct isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics[0]->getProcessedBuffers()
+                                                                                        << " procTasks=" << statistics[0]->getProcessedTasks()
+                                                                                        << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
                 return true;
             } else {
-                NES_DEBUG("checkCompleteOrTimeout: results are incomplete isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics->getProcessedBuffers()
-                                                                                           << " procTasks=" << statistics->getProcessedTasks()
-                                                                                           << " procWatermarks=" << statistics->getProcessedWatermarks());
+                NES_DEBUG("checkCompleteOrTimeout: results are incomplete isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics[0]->getProcessedBuffers()
+                                                                                           << " procTasks=" << statistics[0]->getProcessedTasks()
+                                                                                           << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
             }
             sleep(1);
         }
@@ -186,27 +188,29 @@ class TestUtils {
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr");
             auto query = queryCatalog->getQueryCatalogEntry(queryId);
+            //FIXME: handle vector of statistics properly in #977
             auto statistics = ptr->getQueryStatistics(queryId);
-            if (!query || !statistics) {
+            if (!query || statistics.empty()) {
                 continue;
             }
             bool isQueryRunning = query->getQueryStatus() == QueryStatus::Running;
-            if (isQueryRunning && cmp(statistics->getProcessedBuffers(), expectedResult)) {
-                NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct isQueryRunning=" << isQueryRunning << " stats=" << statistics->getProcessedBuffers()
-                                                                                                          << " procTasks=" << statistics->getProcessedTasks()
-                                                                                                          << " procWatermarks=" << statistics->getProcessedWatermarks());
+            if (isQueryRunning && cmp(statistics[0]->getProcessedBuffers(), expectedResult)) {
+                NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct isQueryRunning=" << isQueryRunning << " stats=" << statistics[0]->getProcessedBuffers()
+                                                                                                          << " procTasks=" << statistics[0]->getProcessedTasks()
+                                                                                                          << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
                 return true;
             } else {
-                NES_DEBUG("checkCompleteOrTimeout: results are incomplete isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics->getProcessedBuffers()
-                                                                                           << " procTasks=" << statistics->getProcessedTasks());
+                NES_DEBUG("checkCompleteOrTimeout: results are incomplete isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics[0]->getProcessedBuffers()
+                                                                                           << " procTasks=" << statistics[0]->getProcessedTasks());
             }
             sleep(1);
         }
+        //FIXME: handle vector of statistics properly in #977
         NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout expected result=" << expectedResult
                                                                                                             << " query status=" << queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatusAsString()
-                                                                                                            << " processedBuffer=" << ptr->getQueryStatistics(queryId)->getProcessedBuffers()
-                                                                                                            << " processedTasks=" << ptr->getQueryStatistics(queryId)->getProcessedTasks()
-                                                                                                            << " procWatermarks=" << ptr->getQueryStatistics(queryId)->getProcessedWatermarks());
+                                                                                                            << " processedBuffer=" << ptr->getQueryStatistics(queryId)[0]->getProcessedBuffers()
+                                                                                                            << " processedTasks=" << ptr->getQueryStatistics(queryId)[0]->getProcessedTasks()
+                                                                                                            << " procWatermarks=" << ptr->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
         return false;
     }
 
