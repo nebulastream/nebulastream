@@ -149,14 +149,14 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     /**
      * @return return the status of a query
      */
-    QueryExecutionPlan::QueryExecutionPlanStatus getQueryStatus(QueryExecutionPlanId queryId);
+    QueryExecutionPlan::QueryExecutionPlanStatus getQueryStatus(QueryId queryId);
 
     /**
     * @brief method to return the query statistics
     * @param id of the query
     * @return vector of queryStatistics
     */
-    std::vector<QueryStatisticsPtr> getQueryStatistics(const QueryExecutionPlanId queryId);
+    std::vector<QueryStatisticsPtr> getQueryStatistics(const QueryId queryId);
 
     Network::PartitionManagerPtr getPartitionManager();
 
