@@ -1,5 +1,6 @@
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
+#include <API/QueryId.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
 #include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -32,7 +33,8 @@ class QueryExecutionPlan {
 
   protected:
     explicit QueryExecutionPlan(
-        QueryExecutionPlanId queryId,
+        QueryId queryId,
+        QueryExecutionPlanId queryExecutionPlanId,
         std::vector<DataSourcePtr>&& sources,
         std::vector<DataSinkPtr>&& sinks,
         std::vector<PipelineStagePtr>&& stages,
@@ -87,16 +89,18 @@ class QueryExecutionPlan {
 
     void print();
 
-    QueryExecutionPlanId getQueryId();
+    QueryId getQueryId();
+
+    QueryExecutionPlanId getQueryExecutionPlanId() const;
 
   protected:
+    const QueryId queryId;
+    const QueryExecutionPlanId queryExecutionPlanId;
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<PipelineStagePtr> stages;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
-    const QueryExecutionPlanId queryId;
-
     std::atomic<QueryExecutionPlanStatus> qepStatus;
 };
 

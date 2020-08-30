@@ -97,7 +97,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     json::value result{};
                     size_t processedBuffers = 0;
                     if (auto shared_back_reference = coordinator.lock()) {
-                        processedBuffers = shared_back_reference->getQueryStatistics(std::stoi(queryId))->getProcessedBuffers();
+                        processedBuffers = shared_back_reference->getQueryStatistics(std::stoi(queryId))[0]->getProcessedBuffers();
                     }
                     NES_DEBUG("getNumberOfProducedBuffers processedBuffers=" << processedBuffers);
 

@@ -128,12 +128,14 @@ class GeneratedQueryExecutionPlanBuilder {
      */
     GeneratedQueryExecutionPlanBuilder& setQueryExecutionId(QueryExecutionPlanId queryExecutionId);
 
+    QueryExecutionPlanId getQueryExecutionPlanId() const;
+
   private:
     GeneratedQueryExecutionPlanBuilder();
 
   private:
     QueryId queryId;
-    QueryExecutionPlanId queryExecutionId;
+    QueryExecutionPlanId queryExecutionPlanId;
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;
     QueryCompilerPtr queryCompiler;
