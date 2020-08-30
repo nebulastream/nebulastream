@@ -878,7 +878,8 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
         .addSource(networkSource1)
         .setBufferManager(nodeEngine->getBufferManager())
         .setQueryManager(nodeEngine->getQueryManager())
-        .setQueryId(1);
+        .setQueryId(1)
+        .setQueryExecutionId(1);
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
@@ -900,7 +901,8 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
         .addSource(testSource)
         .setBufferManager(nodeEngine->getBufferManager())
         .setQueryManager(nodeEngine->getQueryManager())
-        .setQueryId(2);
+        .setQueryId(2)
+        .setQueryExecutionId(2);
 
     //    auto generatorQep = nodeEngine->getCompiler()->compile(sink);
     //    generatorQep->addDataSink(networkSink);

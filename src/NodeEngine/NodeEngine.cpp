@@ -203,7 +203,7 @@ bool NodeEngine::startQuery(QueryId queryId) {
     return false;
 }
 
-bool NodeEngine::undeployQuery(QueryExecutionPlanId queryId) {
+bool NodeEngine::undeployQuery(QueryId queryId) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: undeployQuery query=" << queryId);
     bool successStop = stopQuery(queryId);
@@ -244,6 +244,7 @@ bool NodeEngine::unregisterQuery(uint64_t queryId) {
                 return false;
             }
         }
+        deployedQueryToExecutionPlanId.erase(queryId);
         return true;
     }
 
@@ -299,11 +300,11 @@ bool NodeEngine::stop() {
             if (queryManager->stopQuery(qep)) {
                 NES_DEBUG("NodeEngine: stop of QEP " << qepId << " succeeded");
             } else {
-                NES_DEBUG("NodeEngine: stop of QEP " << qepId << " failed");
+                NES_ERROR("NodeEngine: stop of QEP " << qepId << " failed");
                 withError = true;
             }
         } catch (std::exception& err) {
-            NES_DEBUG("NodeEngine: stop of QEP " << qepId << " failed: " << err.what());
+            NES_ERROR("NodeEngine: stop of QEP " << qepId << " failed: " << err.what());
             withError = true;
         }
         try {
@@ -311,19 +312,19 @@ bool NodeEngine::stop() {
                 NES_DEBUG("NodeEngine: deregisterQuery of QEP " << qepId << " succeeded");
                 it = deployedQEPs.erase(it);
             } else {
-                NES_DEBUG("NodeEngine: deregisterQuery of QEP " << qepId << " failed");
+                NES_ERROR("NodeEngine: deregisterQuery of QEP " << qepId << " failed");
                 withError = true;
                 ++it;
             }
         } catch (std::exception& err) {
-            NES_DEBUG("NodeEngine: deregisterQuery of QEP " << qepId << " failed: " << err.what());
+            NES_ERROR("NodeEngine: deregisterQuery of QEP " << qepId << " failed: " << err.what());
             withError = true;
             ++it;
         }
     }
 
     // release components
-
+    deployedQueryToExecutionPlanId.clear();
     queryManager->destroy();
     queryManager.reset();
     networkManager.reset();
@@ -345,11 +346,19 @@ QueryCompilerPtr NodeEngine::getCompiler() {
     return queryCompiler;
 }
 
-QueryExecutionPlan::QueryExecutionPlanStatus NodeEngine::getQueryStatus(QueryExecutionPlanId queryId) {
+QueryExecutionPlan::QueryExecutionPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);
-    decltype(deployedQEPs)::iterator it;
-    if ((it = deployedQEPs.find(queryId)) != deployedQEPs.end()) {
-        return it->second->getStatus();
+    if (deployedQueryToExecutionPlanId.find(queryId) != deployedQueryToExecutionPlanId.end()) {
+        vector<QueryExecutionPlanId> queryExecutionPlanIds = deployedQueryToExecutionPlanId[queryId];
+        if (queryExecutionPlanIds.empty()) {
+            NES_ERROR("NodeEngine: Unable to find qep ids for the query " << queryId << ". Start failed.");
+            return QueryExecutionPlan::QueryExecutionPlanStatus::Invalid;
+        }
+
+        for (auto qepId : queryExecutionPlanIds) {
+            //FIXME: handle vector of statistics properly in #977
+            return deployedQEPs[qepId]->getStatus();
+        }
     }
     return QueryExecutionPlan::QueryExecutionPlanStatus::Invalid;
 }

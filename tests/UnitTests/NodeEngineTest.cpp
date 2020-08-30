@@ -206,6 +206,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
     builder.addSource(source);
     builder.addSink(sink);
     builder.setQueryId(queryId);
+    builder.setQueryExecutionId(queryId);
     builder.setQueryManager(engine->getQueryManager());
     builder.setBufferManager(engine->getBufferManager());
     builder.setCompiler(engine->getCompiler());
@@ -283,6 +284,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
+    builder1.setQueryExecutionId(1);
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
@@ -301,6 +303,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     builder2.addSource(source2);
     builder2.addSink(sink2);
     builder2.setQueryId(2);
+    builder2.setQueryExecutionId(2);
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
@@ -349,6 +352,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
+    builder1.setQueryExecutionId(1);
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
@@ -367,6 +371,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     builder2.addSource(source2);
     builder2.addSink(sink2);
     builder2.setQueryId(2);
+    builder2.setQueryExecutionId(2);
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
@@ -408,6 +413,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
+    builder1.setQueryExecutionId(1);
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
@@ -425,6 +431,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     builder2.addSource(source2);
     builder2.addSink(sink1);
     builder2.setQueryId(2);
+    builder2.setQueryExecutionId(2);
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
@@ -464,6 +471,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
+    builder1.setQueryExecutionId(1);
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
@@ -480,6 +488,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     builder2.addSource(source1);
     builder2.addSink(sink1);
     builder2.setQueryId(2);
+    builder2.setQueryExecutionId(2);
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
