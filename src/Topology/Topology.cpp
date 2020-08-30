@@ -347,11 +347,15 @@ bool Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
 
 TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes) {
 
+    NES_INFO("Topology: find common node for a set of topology nodes.");
+
     if (topologyNodes.empty()) {
+        NES_WARNING("Topology: Input topology node list was empty.");
         return nullptr;
     }
-    TopologyNodePtr startNode = topologyNodes[0];
 
+    NES_DEBUG("Topology: Selecting a start node to identify the common ancestor.");
+    TopologyNodePtr startNode = topologyNodes[0];
     bool foundAncestor = false;
     TopologyNodePtr resultAncestor;
     std::deque<NodePtr> nodesToProcess{startNode};

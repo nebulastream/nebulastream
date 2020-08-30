@@ -22,7 +22,9 @@ QueryPlanPtr QueryPlan::create() {
 QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), queryExecutionPlanId(INVALID_QUERY_EXECUTION_PLAN_ID) {}
 
 QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), queryExecutionPlanId(INVALID_QUERY_EXECUTION_PLAN_ID) {
-    rootOperator->setId(UtilityFunctions::getNextOperatorId());
+    if(rootOperator->getId() == 0){
+        rootOperator->setId(UtilityFunctions::getNextOperatorId());
+    }
     rootOperators.push_back(std::move(rootOperator));
 }
 

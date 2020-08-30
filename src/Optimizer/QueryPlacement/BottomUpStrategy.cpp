@@ -38,56 +38,18 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         throw QueryPlacementException("BottomUpStrategy: No source operators found in the query plan wih id: " + queryId);
     }
 
-    NES_DEBUG("BottomUpStrategy: Prepare a map of source to physical nodes");
-    std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
-    for (auto& sourceOperator : sourceOperators) {
-        if (!sourceOperator->getSourceDescriptor()->hasStreamName()) {
-            throw QueryPlacementException("BottomUpStrategy: Source Descriptor need stream name: " + queryId);
-        }
-        const std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
-        if (mapOfSourceToTopologyNodes.find(streamName) != mapOfSourceToTopologyNodes.end()) {
-            NES_TRACE("BottomUpStrategy: Entry for the logical stream " << streamName << " already present.");
-            continue;
-        }
-        NES_TRACE("BottomUpStrategy: Get all topology nodes for the logical source stream");
-        const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
-        if (sourceNodes.empty()) {
-            NES_ERROR("BottomUpStrategy: No source found in the topology for stream " << streamName << "for query with id : " << queryId);
-            throw QueryPlacementException("BottomUpStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
-        }
-        mapOfSourceToTopologyNodes[streamName] = sourceNodes;
-    }
-
     NES_DEBUG("BottomUpStrategy: Preparing execution plan for query with id : " << queryId);
-    placeOperators(queryPlan, mapOfSourceToTopologyNodes);
+    placeOperators(queryPlan);
     return true;
 }
 
-void BottomUpStrategy::placeOperators(QueryPlanPtr queryPlan, std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes) {
+void BottomUpStrategy::placeOperators(QueryPlanPtr queryPlan) {
 
     QueryId queryId = queryPlan->getQueryId();
-    TopologyNodePtr sinkNode = topology->getRoot();
-
-    vector<TopologyNodePtr> topoSubGrphForOP;
-    for (auto& entry : mapOfSourceToTopologyNodes) {
-        NES_TRACE("BottomUpStrategy: ");
-        vector<TopologyNodePtr> topoSubGrphForSrc = topology->findPathBetween(entry.second, {sinkNode});
-        mapOfSourceToTopologyNodes[entry.first] = topoSubGrphForSrc;
-        if (topoSubGrphForOP.empty()) {
-            topoSubGrphForOP = topoSubGrphForSrc;
-            continue;
-        } else {
-            topoSubGrphForOP.insert(topoSubGrphForOP.end(), topoSubGrphForSrc.begin(), topoSubGrphForSrc.end());
-        }
-        NES_TRACE("BottomUpStrategy: Merge the topology sub-graphs found till now");
-        topoSubGrphForOP = topology->mergeGraphs(topoSubGrphForOP);
-    }
-
     NES_DEBUG("BottomUpStrategy: Get the all source operators for performing the placement.");
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
-
+    auto mapOfSourceToTopologyNodes = mapLogicalSourceToTopologyNodes(queryId, sourceOperators);
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
-
     for (auto& sourceOperator : sourceOperators) {
         NES_DEBUG("BottomUpStrategy: Get the topology node for source operator " << sourceOperator->toString() << " placement.");
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
@@ -192,17 +154,21 @@ void BottomUpStrategy::placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr 
     //Check if all children operators already placed
     std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(candidateOperator, operatorToExecutionNodeMap);
 
-    if(childTopologyNodes.empty()){
+    if (childTopologyNodes.empty()) {
         return;
     }
 
     //Find the candidate node
     if (candidateOperator->instanceOf<SinkLogicalOperatorNode>()) {
-        if(candidateTopologyNode->getId() != topology->getRoot()->getId()){
+        if (candidateTopologyNode->getId() != topology->getRoot()->getId()) {
             candidateTopologyNode = candidateTopologyNode->getAllRootNodes()[0]->as<TopologyNode>();
         }
     } else {
         candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
+        if (!candidateTopologyNode) {
+            NES_ERROR("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
+            throw QueryPlacementException("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
+        }
         if (candidateTopologyNode->getAvailableResources() == 0) {
             while (!candidateTopologyNode->getParents().empty()) {
                 //FIXME: we are considering only one root node currently
@@ -248,12 +214,9 @@ void BottomUpStrategy::placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr 
         }
 
         QueryPlanPtr startQueryPlan = *found;
-
         uint64_t networkSourceOperatorId = -1;
-
         //Start from next node
         TopologyNodePtr parentTopologyNode = startTopologyNode->getParents()[0]->as<TopologyNode>();
-
         while (parentTopologyNode) {
 
             networkSourceOperatorId = addNetworkSinkOperator(startQueryPlan, parentTopologyNode);

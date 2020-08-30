@@ -29,12 +29,10 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
-     * @param sourceOperator : sensor nodes which act as the source source.
-     * @param sourceNodes : sensor nodes which act as the source source.
-     *
+     * @param queryPlan: query plan to place
      * @throws exception if the operator can't be placed anywhere.
      */
-    void placeOperators(QueryPlanPtr queryPlan, std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes);
+    void placeOperators(QueryPlanPtr queryPlan);
 
     void placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap);
     void recursiveOperatorPlacement(QueryPlanPtr candidateQueryPlan, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap);

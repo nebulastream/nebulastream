@@ -47,6 +47,9 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
+class SourceLogicalOperatorNode;
+typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -68,6 +71,13 @@ class BasePlacementStrategy {
     virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) = 0;
 
   protected:
+    /**
+     * @brief Map the logical source name to the physical source nodes in the topology used for placing the operators
+     * @param queryId : the id of the query.
+     * @param sourceOperators: the source operators in the query
+     * @return map of source name to the physical source Nodes.
+     */
+    std::map<std::string, std::vector<TopologyNodePtr>> mapLogicalSourceToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
 
     /**
      * @brief Add a system generated network sink operator to the input query plan
