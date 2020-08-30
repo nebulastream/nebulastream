@@ -121,11 +121,19 @@ class GeneratedQueryExecutionPlanBuilder {
      */
     GeneratedQueryExecutionPlanBuilder& addSink(DataSinkPtr sink);
 
+    /**
+     * @brief Add query execution id
+     * @param queryExecutionId : the input query execution id
+     * @return this
+     */
+    GeneratedQueryExecutionPlanBuilder& setQueryExecutionId(QueryExecutionPlanId queryExecutionId);
+
   private:
     GeneratedQueryExecutionPlanBuilder();
 
   private:
-    QueryExecutionPlanId queryId;
+    QueryId queryId;
+    QueryExecutionPlanId queryExecutionId;
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;
     QueryCompilerPtr queryCompiler;

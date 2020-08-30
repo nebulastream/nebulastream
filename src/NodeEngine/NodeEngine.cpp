@@ -8,6 +8,7 @@
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Util/Logger.hpp>
 #include <string>
+
 using namespace std;
 namespace NES {
 
@@ -106,7 +107,7 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool NodeEngine::registerQueryInNodeEngine(uint64_t queryId, OperatorNodePtr queryOperators) {
+bool NodeEngine::registerQueryInNodeEngine(uint64_t queryId, uint64_t queryExecutionId, OperatorNodePtr queryOperators) {
     std::unique_lock lock(engineMutex);
     NES_INFO("Creating QueryExecutionPlan for " << queryId);
     try {
@@ -122,6 +123,7 @@ bool NodeEngine::registerQueryInNodeEngine(uint64_t queryId, OperatorNodePtr que
                               .setBufferManager(bufferManager)
                               .setCompiler(queryCompiler)
                               .setQueryId(queryId)
+                              .setQueryExecutionId(queryExecutionId)
                               .addOperatorQueryPlan(generatableOperatorPlan);
 
         // Translate all operator source to the physical sources and add them to the query plan
