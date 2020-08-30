@@ -2,6 +2,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -22,7 +23,9 @@ OperatorNodePtr GeneratableScanOperator::copy() {
 }
 
 GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr schema) {
-    return std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(schema));
+    auto generatableOperator = std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(schema));
+    generatableOperator->setId(UtilityFunctions::getNextOperatorId());
+    return generatableOperator;
 }
 
 GeneratableScanOperator::GeneratableScanOperator(SchemaPtr schema) : schema(schema) {}

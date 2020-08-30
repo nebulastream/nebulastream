@@ -2,6 +2,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableWindowOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -15,8 +16,11 @@ void GeneratableWindowOperator::produce(CodeGeneratorPtr codegen, PipelineContex
 void GeneratableWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForWindow(getWindowDefinition(), context);
 }
+
 GeneratableWindowOperatorPtr GeneratableWindowOperator::create(WindowLogicalOperatorNodePtr windowLogicalOperatorNode) {
-    return std::make_shared<GeneratableWindowOperator>(GeneratableWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
+    auto generatableOperator = std::make_shared<GeneratableWindowOperator>(GeneratableWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
+    generatableOperator->setId(UtilityFunctions::getNextOperatorId());
+    return generatableOperator;
 }
 
 GeneratableWindowOperator::GeneratableWindowOperator(WindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(windowDefinition) {
