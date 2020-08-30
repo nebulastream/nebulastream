@@ -5,7 +5,6 @@
 #include <WorkerRPCService.pb.h>
 
 #include <API/QueryId.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <grpcpp/grpcpp.h>
 #include <string>
 
@@ -17,6 +16,9 @@ namespace NES {
 
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
+class QueryPlan;
+typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 class WorkerRPCClient {
 
@@ -40,12 +42,12 @@ class WorkerRPCClient {
     bool undeployQuery(std::string address, QueryId queryId);
 
     /**
-    * @brief gregisters a query
-    * @param queryId
-    * @param query plan to register as eto
+    * @brief register a query
+    * @param address: addres of node where query plan need to be registered
+    * @param query plan to register
     * @return true if succeeded, else false
     */
-    bool registerQuery(std::string address, QueryId queryId, OperatorNodePtr queryOperators);
+    bool registerQuery(std::string address, QueryPlanPtr queryPlan);
 
     /**
      * @brief ungregisters a query

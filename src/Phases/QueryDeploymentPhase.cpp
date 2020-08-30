@@ -71,7 +71,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, std::vector<ExecutionNod
         for(auto& querySubPlan: querySubPlans){
             //FIXME: we are considering only one root operator
             OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
-            bool success = workerRPCClient->registerQuery(rpcAddress, queryId, rootOperator);
+            bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
             if (success) {
                 NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << " successful");
             } else {

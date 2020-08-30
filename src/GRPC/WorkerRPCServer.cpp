@@ -11,12 +11,13 @@ WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request,
                                       RegisterQueryReply* reply) {
     auto queryId = request->queryid();
+    auto queryExecutionPlanId = request->queryexecutionid();
 
     auto queryPlan = OperatorSerializationUtil::deserializeOperator((SerializableOperator*) &request->operatortree());
     NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryId);
     bool success;
     try {
-        success = nodeEngine->registerQueryInNodeEngine(queryId, queryPlan);
+        success = nodeEngine->registerQueryInNodeEngine(queryId, queryExecutionPlanId, queryPlan);
     } catch (std::exception& error) {
         NES_ERROR("Register query crashed: " << error.what());
         success = false;

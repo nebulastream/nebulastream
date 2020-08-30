@@ -13,7 +13,8 @@ service WorkerRPCService {
 
 message DeployQueryRequest {
   uint64 queryId = 1;
-  NES.SerializableOperator operatorTree = 2;
+  uint64 queryExecutionId = 2;
+  NES.SerializableOperator operatorTree = 3;
 }
 
 message DeployQueryReply {
@@ -30,7 +31,8 @@ message UndeployQueryReply {
 
 message RegisterQueryRequest {
   uint64 queryId = 1;
-  NES.SerializableOperator operatorTree = 2;
+  uint64 queryExecutionId = 2;
+  NES.SerializableOperator operatorTree = 3;
 
 }
 

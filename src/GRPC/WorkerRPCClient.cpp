@@ -1,5 +1,6 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -62,14 +63,18 @@ bool WorkerRPCClient::undeployQuery(std::string address, QueryId queryId) {
     }
 }
 
-bool WorkerRPCClient::registerQuery(std::string address, QueryId queryId, OperatorNodePtr queryOperators) {
-    NES_DEBUG("WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId);
+bool WorkerRPCClient::registerQuery(std::string address, QueryPlanPtr queryPlan) {
+    QueryId queryId = queryPlan->getQueryId();
+    QueryExecutionPlanId queryExecutionPlanId = queryPlan->getQueryExecutionPlanId();
+    NES_DEBUG("WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId << " queryExecutionPlanId = " << queryExecutionPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
     request.set_queryid(queryId);
+    request.set_queryexecutionid(queryExecutionPlanId);
     // serialize query operators.
-    OperatorSerializationUtil::serializeOperator(queryOperators, request.mutable_operatortree());
+    OperatorNodePtr rootOperator = queryPlan->getRootOperators()[0];
+    OperatorSerializationUtil::serializeOperator(rootOperator, request.mutable_operatortree());
 
     NES_TRACE("WorkerRPCClient:registerQuery -> " << request.DebugString());
     RegisterQueryReply reply;

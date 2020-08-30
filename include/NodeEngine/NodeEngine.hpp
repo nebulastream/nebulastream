@@ -81,12 +81,13 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     bool registerQueryInNodeEngine(QueryExecutionPlanPtr qep);
 
     /**
-    * @brief registers a query
-    * @param queryId: id of the query sub plan to be registered
-    * @param operatorTree: query sub plan to register
-    * @return true if succeeded, else false
-    */
-    bool registerQueryInNodeEngine(QueryExecutionPlanId queryId, OperatorNodePtr operatorTree);
+     * @brief registers a query
+     * @param queryId: id of the query sub plan to be registered
+     * @param queryExecutionId: query execution plan id
+     * @param operatorTree: query sub plan to register
+     * @return true if succeeded, else false
+     */
+    bool registerQueryInNodeEngine(QueryExecutionPlanId queryId, uint64_t queryExecutionId, OperatorNodePtr operatorTree);
 
     /**
      * @brief ungregisters a query
