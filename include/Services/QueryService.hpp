@@ -56,6 +56,11 @@ class QueryService {
   private:
     QueryCatalogPtr queryCatalog;
     QueryRequestQueuePtr queryRequestQueue;
+
+    void getQueryPlanChildren(const OperatorNodePtr root, std::vector<json::value>& nodes,
+                             std::vector<json::value>& edges);
+
+    std::string getOperatorType(OperatorNodePtr);
 };
 
 };// namespace NES
