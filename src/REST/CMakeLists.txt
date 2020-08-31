@@ -5,6 +5,7 @@ add_source_nes(
         Controller/StreamCatalogController.cpp
         Controller/QueryCatalogController.cpp
         Controller/ConnectivityController.cpp
+        Controller/TopologyController.cpp
         NetworkUtils.cpp
         RestServer.cpp
 )
