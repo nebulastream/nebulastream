@@ -21,14 +21,7 @@ QueryController::QueryController(QueryServicePtr queryService, TopologyPtr topol
 
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 
-    if (path[1] == "nes-topology") {
-        //FIXME: As part of #954
-        json::value restResponse{};
-        restResponse["topology"] = json::value::string("some value");
-        //Prepare the response
-        successMessageImpl(message, restResponse);
-        return;
-    } else if (path[1] == "execution-plan") {
+    if (path[1] == "execution-plan") {
         // There will be change in the structure of globalExecutionPlan, so we will wait for that to be resolve
         // then create the execution-plan based on the new structure
         message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path[1]));

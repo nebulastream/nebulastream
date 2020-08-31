@@ -12,6 +12,7 @@ RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coo
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator);
     queryController = std::make_shared<QueryController>(queryService, topology, globalExecutionPlan);
     connectivityController = std::make_shared<ConnectivityController>();
+    topologyController = std::make_shared<TopologyController>(topology);
 }
 
 RestEngine::~RestEngine() {
@@ -59,6 +60,8 @@ void RestEngine::handleGet(http_request message) {
             return;
         } else if (paths[0] == "connectivity") {
             connectivityController->handleGet(paths, message);
+        } else if (paths[0] == "topology") {
+            topologyController->handleGet(paths, message);
         }
     }
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));

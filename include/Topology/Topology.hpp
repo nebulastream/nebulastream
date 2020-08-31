@@ -1,6 +1,7 @@
 #ifndef NES_TOPOLOGY_HPP
 #define NES_TOPOLOGY_HPP
 
+#include <cpprest/json.h>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -161,6 +162,12 @@ class Topology {
      * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
      */
     std::vector<TopologyNodePtr> findTopologyNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode);
+
+    /**
+      * @brief Return graph as json
+      * @return json object representing topology information
+      */
+    web::json::value getAsJson();
 
     ~Topology();
 
