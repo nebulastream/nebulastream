@@ -43,6 +43,7 @@ int main(int argc, char** argv) {
     std::string rpcPort = "3000";
     std::string dataPort = "3001";
     std::string coordinatorIp = "127.0.0.1";
+    std::string localWorkerIp = "127.0.0.1";
 
     std::string sourceType = "";
     std::string sourceConfig = "";
@@ -77,9 +78,12 @@ int main(int argc, char** argv) {
         "Set the number of buffers to produce")(
         "logicalStreamName",
         po::value<string>(&logicalStreamName)->default_value(logicalStreamName),
-        "Set the logical stream name where this stream is added to")("parentId",
-                                                                     po::value<string>(&parentId)->default_value(parentId),
-                                                                     "Set the parentId of this node")("help", "Display help message");
+        "Set the logical stream name where this stream is added to")
+        ("parentId", po::value<string>(&parentId)->default_value(parentId),
+         "Set the parentId of this node")
+        ("localWorkerIp", po::value<string>(&localWorkerIp)->default_value(localWorkerIp),
+         "Set worker ip (default: localhost)")
+        ("help", "Display help message");
 
     po::variables_map vm;
 
@@ -113,7 +117,7 @@ int main(int argc, char** argv) {
     NesWorkerPtr wrk = std::make_shared<NesWorker>(
         coordinatorIp,
         coordinatorPort,
-        coordinatorIp, // TODO add rpc/zmq server ip address
+        localWorkerIp, // TODO add rpc/zmq server ip address
         localPort,
         zmqDataPort,
         NodeType::Sensor // TODO what is this?!
