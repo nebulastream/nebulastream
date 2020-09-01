@@ -55,18 +55,6 @@ std::vector<SinkLogicalOperatorNodePtr> QueryPlan::getSinkOperators() {
 void QueryPlan::appendOperator(OperatorNodePtr operatorNode) {
     NES_DEBUG("QueryPlan: Appending operator " << operatorNode->toString() << " as new root of the plan.");
     for (auto rootOperator : rootOperators) {
-        operatorNode->setId(UtilityFunctions::getNextOperatorId());
-        rootOperator->addParent(operatorNode);
-    }
-    NES_DEBUG("QueryPlan: Clearing current root operators.");
-    rootOperators.clear();
-    NES_DEBUG("QueryPlan: Pushing input operator node as new root.");
-    rootOperators.push_back(operatorNode);
-}
-
-void QueryPlan::appendPreExistingOperator(OperatorNodePtr operatorNode) {
-    NES_DEBUG("QueryPlan: Appending pre-existing operator " << operatorNode->toString() << " as new root of the plan.");
-    for (auto rootOperator : rootOperators) {
         if (!rootOperator->addParent(operatorNode)) {
             NES_THROW_RUNTIME_ERROR("QueryPlan: Enable to add operator " + operatorNode->toString() + " as parent to " + rootOperator->toString());
         }
@@ -77,7 +65,7 @@ void QueryPlan::appendPreExistingOperator(OperatorNodePtr operatorNode) {
     rootOperators.push_back(operatorNode);
 }
 
-void QueryPlan::prependPreExistingOperator(OperatorNodePtr operatorNode) {
+void QueryPlan::prependOperator(OperatorNodePtr operatorNode) {
     NES_DEBUG("QueryPlan: Prepending operator " << operatorNode->toString() << " as new leaf of the plan.");
     auto leafOperators = getLeafOperators();
     if (leafOperators.empty()) {

@@ -63,22 +63,13 @@ class QueryPlan {
     void appendOperator(OperatorNodePtr operatorNode);
 
     /**
-     * @brief Append the new pre-existing operator to the query plan.
-     * Note: Pre-existing operators are the operators that are already part of another
-     * query plan and are getting moved to another query plan or are the system created network sink or source operators
-     * Note: this operation will add the pre-existing operator without assigning it a new Id.
-     * @param operatorNode
-     */
-    void appendPreExistingOperator(OperatorNodePtr operatorNode);
-
-    /**
      * @brief Pre-pend the pre-existing operator to the leaf of the query plan.
      * Note: Pre-existing operators are the operators that are already part of another
      * query plan and are getting moved to another query plan or are the system created network sink or source operators
      * Note: this operation will add the pre-existing operator without assigning it a new Id.
      * @param operatorNode
      */
-    void prependPreExistingOperator(OperatorNodePtr operatorNode);
+    void prependOperator(OperatorNodePtr operatorNode);
 
     /**
      * @brief Returns string representation of the query.

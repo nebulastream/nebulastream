@@ -102,7 +102,7 @@ void BottomUpStrategy::recursiveOperatorPlacement(QueryId queryId, OperatorNodeP
 
     ExecutionNodePtr candidateExecutionNode = getCandidateExecutionNode(candidateTopologyNode);
     QueryPlanPtr candidateQueryPlan = getCandidateQueryPlan(queryId, candidateOperator, candidateExecutionNode);
-    candidateQueryPlan->appendPreExistingOperator(candidateOperator->copy());
+    candidateQueryPlan->appendOperator(candidateOperator->copy());
     operatorToExecutionNodeMap[candidateOperator->getId()] = candidateExecutionNode;
     if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
         NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);

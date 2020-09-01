@@ -154,7 +154,7 @@ uint64_t BasePlacementStrategy::addNetworkSinkOperator(QueryPlanPtr queryPlan, T
     Network::NesPartition nesPartition(queryId, nextNetworkSourceOperatorId, nextNetworkSourceOperatorId, 0);
     const OperatorNodePtr sysSinkOperator = createSinkLogicalOperatorNode(Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));
     sysSinkOperator->setId(operatorId);
-    queryPlan->appendPreExistingOperator(sysSinkOperator);
+    queryPlan->appendOperator(sysSinkOperator);
     return nextNetworkSourceOperatorId;
 }
 
@@ -162,7 +162,7 @@ void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, Sch
     const Network::NesPartition nesPartition = Network::NesPartition(queryPlan->getQueryId(), operatorId, operatorId, 0);
     const OperatorNodePtr sysSourceOperator = createSourceLogicalOperatorNode(Network::NetworkSourceDescriptor::create(inputSchema, nesPartition));
     sysSourceOperator->setId(operatorId);
-    queryPlan->appendPreExistingOperator(sysSourceOperator);
+    queryPlan->appendOperator(sysSourceOperator);
 }
 
 OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, TopologyNodePtr parentNesNode) {
@@ -229,7 +229,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, OperatorNodePt
                         OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
                         if (rootOperator->getId() == operatorNode->getId()) {
                             OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
-                            querySubPlan->appendPreExistingOperator(networkSink);
+                            querySubPlan->appendOperator(networkSink);
                             found = true;
                             break;
                         }
@@ -270,11 +270,11 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, OperatorNodePt
                 querySubPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
 
                 const OperatorNodePtr networkSource = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId);
-                querySubPlan->appendPreExistingOperator(networkSource);
+                querySubPlan->appendOperator(networkSource);
 
                 sourceOperatorId = UtilityFunctions::getNextOperatorId();
                 OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
-                querySubPlan->appendPreExistingOperator(networkSink);
+                querySubPlan->appendOperator(networkSink);
                 candidateExecutionNode->addNewQuerySubPlan(queryId, querySubPlan);
                 globalExecutionPlan->scheduleExecutionNode(candidateExecutionNode);
             }
