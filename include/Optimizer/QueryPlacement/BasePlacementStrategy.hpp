@@ -108,11 +108,22 @@ class BasePlacementStrategy {
      */
     TopologyNodePtr getTopologyNodeForPinnedOperator(uint64_t operatorId);
 
+    /**
+     * @brief Add network source and sinks between query sub plans allocated on different execution nodes
+     * @param queryPlan: the original query plan
+     */
+    void addSystemGeneratedOperators(QueryPlanPtr queryPlan);
+
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     StreamCatalogPtr streamCatalog;
     std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
+    std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
+    void placeNetworkOperator(QueryId queryId, OperatorNodePtr operatorNode);
+    OperatorNodePtr createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, TopologyNodePtr parentNesNode);
+    OperatorNodePtr createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId);
+    void runTypeInferencePhase(QueryId queryId);
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP

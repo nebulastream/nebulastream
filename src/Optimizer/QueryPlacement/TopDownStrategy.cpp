@@ -88,6 +88,9 @@ void TopDownStrategy::recursiveOperatorPlacement(QueryPlanPtr candidateQueryPlan
     } else if (candidateTopologyNode->getAvailableResources() == 0) {
 
         NES_DEBUG("BottomUpStrategy: Find the next NES node in the path where operator can be placed");
+
+
+
         while (!candidateTopologyNode->getChildren().empty()) {
             //FIXME: we are considering only one root node currently
             candidateTopologyNode = candidateTopologyNode->getChildren()[0]->as<TopologyNode>();

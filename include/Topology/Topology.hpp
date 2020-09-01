@@ -141,10 +141,20 @@ class Topology {
 
     /**
      * @brief Find the immediate common child for the set of Topology nodes
-     * @param parent: the set of topology nodes
+     * @param topologyNodes: the set of topology nodes
      * @return the immediate common child.
      */
-    TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> parent);
+    TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
+
+    /**
+     * @brief Find a node location that can be reachable from both the
+     * @param childNodes: list of child nodes to be reachable
+     * @param parenNodes: list of parent nodes to be reachable
+     * @return common node else nullptr
+     */
+    TopologyNodePtr findCommonNodeBetween(std::vector<TopologyNodePtr> childNodes, std::vector<TopologyNodePtr> parenNodes);
+
+    std::vector<TopologyNodePtr> findTopologyNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode);
 
     ~Topology();
 

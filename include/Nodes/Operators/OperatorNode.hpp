@@ -72,6 +72,8 @@ class OperatorNode : public Node {
 
     bool addParent(const NodePtr newNode) override;
 
+    NodePtr getChildWithOperatorId(uint64_t operatorIdToFind);
+
   protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors

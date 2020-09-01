@@ -22,7 +22,7 @@ QueryPlanPtr QueryPlan::create() {
 QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), queryExecutionPlanId(INVALID_QUERY_EXECUTION_PLAN_ID) {}
 
 QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), queryExecutionPlanId(INVALID_QUERY_EXECUTION_PLAN_ID) {
-    if(rootOperator->getId() == 0){
+    if (rootOperator->getId() == 0) {
         rootOperator->setId(UtilityFunctions::getNextOperatorId());
     }
     rootOperators.push_back(std::move(rootOperator));
@@ -135,15 +135,39 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
 bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
 
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
-    NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator");
     for (auto rootOperator : rootOperators) {
-        if (rootOperator->findRecursively(rootOperator, operatorNode)) {
+        if (rootOperator->getId() == operatorNode->getId()) {
             NES_DEBUG("QueryPlan: Found operator " << operatorNode->toString() << " in the query plan");
             return true;
+        } else {
+            for (auto& child : rootOperator->getChildren()) {
+                if (child->as<OperatorNode>()->getChildWithOperatorId(operatorNode->getId())) {
+                    return true;
+                }
+            }
         }
     }
     NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
     return false;
+}
+
+OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
+    NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
+    for (auto rootOperator : rootOperators) {
+        if (rootOperator->getId() == operatorId) {
+            NES_DEBUG("QueryPlan: Found operator " << operatorId << " in the query plan");
+            return rootOperator;
+        } else {
+            for (auto& child : rootOperator->getChildren()) {
+                NodePtr found = child->as<OperatorNode>()->getChildWithOperatorId(operatorId);
+                if (found) {
+                    return found->as<OperatorNode>();
+                }
+            }
+        }
+    }
+    NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
+    return nullptr;
 }
 
 const QueryId QueryPlan::getQueryId() const {

@@ -388,7 +388,6 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
     return resultAncestor;
 }
 
-
 TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyNodes) {
     NES_INFO("Topology: find common child node for a set of parent topology nodes.");
 
@@ -408,7 +407,7 @@ TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyN
         std::vector<NodePtr> parents = candidateNode->getAndFlattenAllAncestors();
         for (auto& nodeToLook : topologyNodes) {
             auto found = std::find_if(parents.begin(), parents.end(), [&](NodePtr parent) {
-              return nodeToLook->getId() == parent->as<TopologyNode>()->getId();
+                return nodeToLook->getId() == parent->as<TopologyNode>()->getId();
             });
 
             if (found == parents.end()) {
@@ -429,6 +428,47 @@ TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyN
     }
 
     return resultAncestor;
+}
+
+TopologyNodePtr Topology::findCommonNodeBetween(std::vector<TopologyNodePtr> childNodes, std::vector<TopologyNodePtr> parenNodes) {
+    TopologyNodePtr commonAncestor = findCommonAncestor(childNodes);
+
+    if (!commonAncestor) {
+        return nullptr;
+    }
+
+    TopologyNodePtr commonChild = findCommonChild(parenNodes);
+
+    if (!commonChild) {
+        return nullptr;
+    }
+
+    if (commonChild->getId() == commonAncestor->getId()) {
+        return commonChild;
+    } else if (!commonChild->containAsParent(commonAncestor)) {
+        return nullptr;
+    }
+    return commonAncestor;
+}
+
+std::vector<TopologyNodePtr> Topology::findTopologyNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode) {
+
+    if (sourceNode->getId() == destinationNode->getId()) {
+        return {sourceNode};
+    } else if (!sourceNode->containAsParent(destinationNode)) {
+        return {};
+    }
+
+    std::vector<TopologyNodePtr> nodesBetween;
+    for (auto& sourceParent : sourceNode->getParents()) {
+        std::vector<TopologyNodePtr> foundBetweenNodes = findTopologyNodesBetween(sourceParent->as<TopologyNode>(), destinationNode);
+        if(!foundBetweenNodes.empty()){
+            nodesBetween.push_back(sourceNode);
+            nodesBetween.insert(nodesBetween.end(), foundBetweenNodes.begin(), foundBetweenNodes.end());
+            return nodesBetween;
+        }
+    }
+    return nodesBetween;
 }
 
 }// namespace NES
