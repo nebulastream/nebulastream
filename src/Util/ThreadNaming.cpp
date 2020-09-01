@@ -1,7 +1,7 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <cstring>
 #include <algorithm>
+#include <cstring>
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>

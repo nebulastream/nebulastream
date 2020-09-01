@@ -13,6 +13,6 @@ namespace NES {
  * @param ... variadic arguments
  */
 void setThreadName(const char* threadNameFmt, ...);
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_UTIL_THREADNAMING_HPP_

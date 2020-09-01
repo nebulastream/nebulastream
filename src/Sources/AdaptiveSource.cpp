@@ -3,9 +3,9 @@
 #include <Sources/AdaptiveSource.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <Util/ThreadNaming.hpp>
 #include <cassert>
 #include <unistd.h>
-#include <Util/ThreadNaming.hpp>
 
 namespace NES {
 
