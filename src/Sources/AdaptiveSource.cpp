@@ -29,7 +29,7 @@ std::optional<TupleBuffer> AdaptiveSource::receiveData() {
 }
 
 void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
-    setThreadName("AdaptSrc-%d", getSourceId());
+    setThreadName("AdaptSrc-%d", getSourceId().c_str());
     if (!bufferManager) {
         NES_ERROR("AdaptiveSource:" << this << ", BufferManager not set");
         throw std::logic_error("AdaptiveSource: BufferManager not set");

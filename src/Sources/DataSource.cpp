@@ -113,7 +113,7 @@ bool DataSource::isRunning() { return running; }
 void DataSource::setGatheringInterval(size_t interval) { this->gatheringInterval = interval; }
 
 void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
-    setThreadName("DataSrc-%d", getSourceId());
+    setThreadName("DataSrc-%d", getSourceId().c_str());
     if (!queryManager) {
         NES_ERROR("query Manager not set");
         throw std::logic_error("DataSource: QueryManager not set");
