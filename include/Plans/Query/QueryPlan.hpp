@@ -147,6 +147,13 @@ class QueryPlan {
     bool hasOperator(OperatorNodePtr operatorNode);
 
     /**
+     * @brief Get operator node with input id if present
+     * @param operatorId : the input operator id
+     * @return operator with the input id
+     */
+    OperatorNodePtr getOperatorWithId(uint64_t operatorId);
+
+    /**
      * Set the query Id for the plan
      * @param queryId
      */

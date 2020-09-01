@@ -153,4 +153,18 @@ bool OperatorNode::addParent(const NodePtr newNode) {
     return false;
 }
 
+NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorIdToFind) {
+
+    if (id == operatorIdToFind) {
+        return shared_from_this();
+    }
+    for (auto& child : children) {
+        auto found = child->as<OperatorNode>()->getChildWithOperatorId(operatorIdToFind);
+        if (found) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
 }// namespace NES

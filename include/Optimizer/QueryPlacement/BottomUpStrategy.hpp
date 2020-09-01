@@ -30,14 +30,13 @@ class BottomUpStrategy : public BasePlacementStrategy {
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
      * @param queryPlan: query plan to place
-     * @return true if successful else false
      * @throws exception if the operator can't be placed.
      */
-    bool placeOperators(QueryPlanPtr queryPlan);
+    void placeOperators(QueryPlanPtr queryPlan);
 
-    void placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap);
-    void recursiveOperatorPlacement(QueryPlanPtr candidateQueryPlan, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap);
-    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(OperatorNodePtr candidateOperator, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap);
+    void recursiveOperatorPlacement(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode);
+    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(OperatorNodePtr candidateOperator);
+    QueryPlanPtr getCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode);
 };
 }// namespace NES
 

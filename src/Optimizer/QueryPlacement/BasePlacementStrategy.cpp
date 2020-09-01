@@ -21,11 +21,10 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 
-using namespace std;
 namespace NES {
 
 BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr, TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
-    : globalExecutionPlan(globalExecutionPlan), topology(topologyPtr), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog), pinnedOperatorLocationMap() {}
+    : globalExecutionPlan(globalExecutionPlan), topology(topologyPtr), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog), pinnedOperatorLocationMap(), operatorToExecutionNodeMap() {}
 
 void BasePlacementStrategy::mapLogicalSourceToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {
 
@@ -52,7 +51,7 @@ void BasePlacementStrategy::mapLogicalSourceToTopologyNodes(QueryId queryId, std
         }
         mapOfSourceToTopologyNodes[streamName] = sourceNodes;
         NES_TRACE("BasePlacementStrategy: Find the topology sub graph for the source nodes.");
-        vector<TopologyNodePtr> topoSubGraphSourceNodes = this->topology->findPathBetween(sourceNodes, {sinkNode});
+        std::vector<TopologyNodePtr> topoSubGraphSourceNodes = this->topology->findPathBetween(sourceNodes, {sinkNode});
         allSourceNodes.insert(allSourceNodes.end(), topoSubGraphSourceNodes.begin(), topoSubGraphSourceNodes.end());
     }
 
@@ -62,10 +61,10 @@ void BasePlacementStrategy::mapLogicalSourceToTopologyNodes(QueryId queryId, std
     NES_DEBUG("BasePlacementStrategy: Adding location for sink operator.");
     //TODO: Change this when we assume more than one sink nodes
     OperatorNodePtr sourceOperator = sourceOperators[0];
-    const vector<NodePtr>& rootOperatorNodes = sourceOperator->getAllRootNodes();
+    const std::vector<NodePtr>& rootOperatorNodes = sourceOperator->getAllRootNodes();
     OperatorNodePtr sinkOperator = rootOperatorNodes[0]->as<SinkLogicalOperatorNode>();
     TopologyNodePtr sourceTopologyNode = mergedGraphSourceNodes[0];
-    vector<NodePtr> rootNodes = sourceTopologyNode->getAllRootNodes();
+    std::vector<NodePtr> rootNodes = sourceTopologyNode->getAllRootNodes();
     pinnedOperatorLocationMap[sinkOperator->getId()] = rootNodes[0]->as<TopologyNode>();
 
     NES_DEBUG("BasePlacementStrategy: Update the source to topology node map using the source nodes from the merged topology graph");
@@ -89,7 +88,7 @@ void BasePlacementStrategy::mapLogicalSourceToTopologyNodes(QueryId queryId, std
 
     for (auto sourceNode : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceNode->getSourceDescriptor();
-        string logicalSourceName = sourceDescriptor->getStreamName();
+        std::string logicalSourceName = sourceDescriptor->getStreamName();
         NES_TRACE("BasePlacementStrategy: Get the topology node for logical source name " << logicalSourceName);
         std::vector<TopologyNodePtr> topologyNodes = mapOfSourceToTopologyNodes[logicalSourceName];
         if (topologyNodes.empty()) {
@@ -164,6 +163,125 @@ void BasePlacementStrategy::addNetworkSourceOperator(QueryPlanPtr queryPlan, Sch
     const OperatorNodePtr sysSourceOperator = createSourceLogicalOperatorNode(Network::NetworkSourceDescriptor::create(inputSchema, nesPartition));
     sysSourceOperator->setId(operatorId);
     queryPlan->appendPreExistingOperator(sysSourceOperator);
+}
+
+OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, TopologyNodePtr parentNesNode) {
+
+    NES_DEBUG("BasePlacementStrategy: found no existing network source operator in the parent execution node");
+    Network::NodeLocation nodeLocation(parentNesNode->getId(), parentNesNode->getIpAddress(), parentNesNode->getDataPort());
+    Network::NesPartition nesPartition(queryId, sourceOperatorId, sourceOperatorId, 0);
+    const OperatorNodePtr networkSink = createSinkLogicalOperatorNode(Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));
+    networkSink->setId(UtilityFunctions::getNextOperatorId());
+    return networkSink;
+}
+
+OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId) {
+    const Network::NesPartition nesPartition = Network::NesPartition(queryId, operatorId, operatorId, 0);
+    const OperatorNodePtr networkSource = createSourceLogicalOperatorNode(Network::NetworkSourceDescriptor::create(inputSchema, nesPartition));
+    networkSource->setId(operatorId);
+    return networkSource;
+}
+
+void BasePlacementStrategy::addSystemGeneratedOperators(QueryPlanPtr queryPlan) {
+    QueryId queryId = queryPlan->getQueryId();
+    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    for (auto& sourceOperator : sourceOperators) {
+        placeNetworkOperator(queryId, sourceOperator);
+    }
+}
+
+void BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    for (auto executionNode : executionNodes) {
+        const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId);
+        for(auto& querySubPlan: querySubPlans){
+            typeInferencePhase->execute(querySubPlan);
+        }
+    }
+}
+
+void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, OperatorNodePtr operatorNode) {
+
+    ExecutionNodePtr executionNode = operatorToExecutionNodeMap[operatorNode->getId()];
+
+    for (auto& parent : operatorNode->getParents()) {
+
+        OperatorNodePtr parentOperator = parent->as<OperatorNode>();
+        ExecutionNodePtr parentExecutionNode = operatorToExecutionNodeMap[parentOperator->getId()];
+
+        if (executionNode->getId() != parentExecutionNode->getId()) {
+
+            TopologyNodePtr sourceNode = executionNode->getTopologyNode();
+            TopologyNodePtr destinationNode = parentExecutionNode->getTopologyNode();
+
+            std::vector<TopologyNodePtr> nodesBetween = topology->findTopologyNodesBetween(sourceNode, destinationNode);
+
+            const SchemaPtr& inputSchema = operatorNode->getOutputSchema();
+            uint64_t sourceOperatorId = UtilityFunctions::getNextOperatorId();
+            for (int i = 0; i < nodesBetween.size(); i++) {
+
+                if (i == 0) {
+                    std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+                    OperatorNodePtr candidateOperator;
+                    bool found = false;
+                    for (auto& querySubPlan : querySubPlans) {
+                        OperatorNodePtr rootOperator = querySubPlan->getRootOperators()[0];
+                        if (rootOperator->getId() == operatorNode->getId()) {
+                            OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
+                            querySubPlan->appendPreExistingOperator(networkSink);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        break;
+                    }
+                    continue;
+                }
+
+                if (i == nodesBetween.size() - 1) {
+                    std::vector<QueryPlanPtr> querySubPlans = parentExecutionNode->getQuerySubPlans(queryId);
+                    OperatorNodePtr sourceOperator = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId);
+                    for (auto& querySubPlan : querySubPlans) {
+
+                        if (parentOperator->isNAryOperator()) {
+                            const OperatorNodePtr& operatorWithParentId = querySubPlan->getOperatorWithId(parentOperator->getId());
+                            if (operatorWithParentId) {
+                                operatorWithParentId->addChild(sourceOperator);
+                                break;
+                            }
+                        } else {
+                            std::vector<OperatorNodePtr> leafOperators = querySubPlan->getLeafOperators();
+                            for (auto& leafOperator : leafOperators) {
+                                if (leafOperator->getId() == parentOperator->getId()) {
+                                    leafOperator->addChild(sourceOperator);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    continue;
+                }
+
+                ExecutionNodePtr candidateExecutionNode = getCandidateExecutionNode(nodesBetween[i]);
+                QueryPlanPtr querySubPlan = QueryPlan::create();
+                querySubPlan->setQueryId(queryId);
+                querySubPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
+
+                const OperatorNodePtr networkSource = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId);
+                querySubPlan->appendPreExistingOperator(networkSource);
+
+                sourceOperatorId = UtilityFunctions::getNextOperatorId();
+                OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
+                querySubPlan->appendPreExistingOperator(networkSink);
+                candidateExecutionNode->addNewQuerySubPlan(queryId, querySubPlan);
+                globalExecutionPlan->scheduleExecutionNode(candidateExecutionNode);
+            }
+        }
+
+        placeNetworkOperator(queryId, parentOperator);
+    }
 }
 
 }// namespace NES
