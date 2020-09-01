@@ -1,7 +1,6 @@
 #ifndef NES_TOPOLOGY_HPP
 #define NES_TOPOLOGY_HPP
 
-#include <cpprest/json.h>
 #include <map>
 #include <memory>
 #include <mutex>
