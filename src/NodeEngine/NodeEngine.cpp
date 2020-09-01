@@ -32,7 +32,7 @@ std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint
             NES_ERROR("NodeEngine: error while creating queryManager");
             throw Exception("Error while creating queryManager");
         }
-        if (!queryManager->startThreadPool()) {
+        if (!queryManager->startThreadPool(0)) {
             NES_ERROR("NodeEngine: error while start thread pool");
             throw Exception("Error while start thread pool");
         } else {

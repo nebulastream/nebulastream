@@ -9,9 +9,10 @@
 #include <Util/ThreadNaming.hpp>
 namespace NES {
 
-ThreadPool::ThreadPool(QueryManagerPtr queryManager)
+ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, size_t numThreads)
     : running(false),
-      numThreads(1),
+      numThreads(numThreads),
+      nodeId(nodeId),
       threads(),
       queryManager(queryManager) {
 }
@@ -58,7 +59,7 @@ bool ThreadPool::start() {
     NES_DEBUG("Threadpool: Spawning " << numThreads << " threads");
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, i, barrier]() {
-            setThreadName("WrkThr-%d", i);
+            setThreadName("Wrk-%d-%d", nodeId, i);
             barrier->wait();
             runningRoutine(WorkerContext(i));
         });

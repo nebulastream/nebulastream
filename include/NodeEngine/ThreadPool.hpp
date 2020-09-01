@@ -23,7 +23,7 @@ class ThreadPool {
     /**
      * @brief default constructor
      */
-    ThreadPool(QueryManagerPtr queryManager);
+    ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, size_t numThreads = 1);
 
     /**
      * @brief default destructor
@@ -90,6 +90,7 @@ class ThreadPool {
 
   private:
     //indicating if the thread pool is running, used for multi-thread execution
+    const uint64_t nodeId;
     std::atomic<bool> running;
     std::atomic<size_t> numThreads;
     std::vector<std::thread> threads;
