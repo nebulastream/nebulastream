@@ -12,8 +12,8 @@
 #include <Util/ThreadBarrier.hpp>
 
 #include <Sources/DataSource.hpp>
-#include <Windows/Watermark/ProcessingTimeWatermarkGenerator.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Windows/Watermark/ProcessingTimeWatermarkGenerator.hpp>
 namespace NES {
 
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager)

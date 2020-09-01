@@ -2,12 +2,12 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
+#include <Util/ThreadNaming.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <atomic>
 #include <iostream>
 #include <memory>
 #include <utility>
-#include <Util/ThreadNaming.hpp>
 
 namespace NES {
 

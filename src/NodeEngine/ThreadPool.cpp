@@ -4,9 +4,9 @@
 #include <NodeEngine/WorkerContext.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
+#include <Util/ThreadNaming.hpp>
 #include <functional>
 #include <string.h>
-#include <Util/ThreadNaming.hpp>
 namespace NES {
 
 ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, size_t numThreads)
