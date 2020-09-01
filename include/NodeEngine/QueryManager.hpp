@@ -130,9 +130,10 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     friend class NodeEngine;
     /**
     * @brief method to start the thread pool
+    * @param nodeEngineId the id of the owning node engine
     * @return bool indicating success
     */
-    bool startThreadPool();
+    bool startThreadPool(uint64_t nodeEngineId);
 
     QueryManager(const QueryManager&);
     QueryManager& operator=(const QueryManager&);

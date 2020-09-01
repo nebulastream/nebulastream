@@ -17,10 +17,11 @@ QueryManager::~QueryManager() {
     destroy();
 }
 
-bool QueryManager::startThreadPool() {
+bool QueryManager::startThreadPool(uint64_t nodeEngineId) {
     NES_DEBUG("startThreadPool: setup thread pool ");
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
-    threadPool = std::make_shared<ThreadPool>(shared_from_this());
+    NES_ASSERT(threadPool == nullptr, "thread pool already running");
+    threadPool = std::make_shared<ThreadPool>(nodeEngineId, shared_from_this());
     return threadPool->start();
 }
 

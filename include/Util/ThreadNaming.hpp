@@ -10,7 +10,7 @@ namespace NES {
  * operating systems, the length of the thread name is constrained, e.g.,
  * on Linux it is 16 characters.
  * @param threadNameFmt name of the thread with formatting option
- * @param ...
+ * @param ... variadic arguments
  */
 void setThreadName(const char* threadNameFmt, ...);
 }
