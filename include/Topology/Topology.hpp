@@ -141,10 +141,10 @@ class Topology {
 
     /**
      * @brief Find the immediate common child for the set of Topology nodes
-     * @param topologyNodes: the set of topology nodes
+     * @param parent: the set of topology nodes
      * @return the immediate common child.
      */
-    TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
+    TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> parent);
 
     ~Topology();
 
