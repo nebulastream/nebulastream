@@ -223,6 +223,11 @@ add_executable(query-merger-phase-tests "UnitTests/Phases/GlobalQueryPlanUpdateP
 target_link_libraries(query-merger-phase-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-merger-phase-tests COMMAND query-merger-phase-tests)
 
+### Thread Naming Test ###
+add_executable(thread-naming-tests "UnitTests/ThreadNamingTest.cpp")
+target_link_libraries(thread-naming-tests nes ${GTEST_LIBRARIES})
+add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
