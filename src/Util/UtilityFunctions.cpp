@@ -5,7 +5,6 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
@@ -309,6 +308,21 @@ bool UtilityFunctions::startsWith(const std::string& fullString, const std::stri
         return true;
     }
     return false;
+}
+
+uint64_t UtilityFunctions::getNextQueryId() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+}
+
+uint64_t UtilityFunctions::getNextOperatorId() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+}
+
+uint64_t UtilityFunctions::getNextNodeId() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
 }
 
 }// namespace NES
