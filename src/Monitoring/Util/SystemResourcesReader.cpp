@@ -20,7 +20,7 @@ CpuMetrics SystemResourcesReader::ReadCPUStats() {
     std::ifstream fileStat("/proc/stat");
     std::string line;
     unsigned int numCPU = std::thread::hardware_concurrency();
-    auto cpu = std::unique_ptr<CpuValues[]>(new CpuValues[numCPU]);
+    auto cpu = std::vector<CpuValues>(numCPU);
     CpuValues totalCpu{};
 
     int i = 0;

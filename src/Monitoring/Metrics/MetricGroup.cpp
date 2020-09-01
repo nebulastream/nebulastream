@@ -1,7 +1,6 @@
 #include <Monitoring/Metrics/MetricGroup.hpp>
 
 #include <API/Schema.hpp>
-#include <Monitoring/Metrics/MetricDefinition.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 
@@ -23,13 +22,11 @@ bool MetricGroup::remove(const std::string& name) {
     return metricMap.erase(name);
 }
 
-MetricDefinition MetricGroup::getSample(std::shared_ptr<Schema> schema, TupleBuffer& buf) {
+void MetricGroup::getSample(std::shared_ptr<Schema> schema, TupleBuffer& buf) {
     NES_DEBUG("MetricGroup: Collecting sample via serialize(..)");
-    MetricDefinition def{};
     for (auto const& x: metricMap) {
-        serialize(x.second, schema, buf, def, x.first+"_");
+        serialize(x.second, schema, buf, x.first);
     }
-    return def;
 }
 
 }// namespace NES

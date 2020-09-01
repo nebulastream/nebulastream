@@ -1,6 +1,7 @@
 add_source_nes(
         Metric.cpp
-        MetricDefinition.cpp
+        MetricCatalog.cpp
+        MonitoringPlan.cpp
         MetricGroup.cpp
         MetricType.cpp
         MetricUtils.cpp

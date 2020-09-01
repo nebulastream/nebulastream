@@ -9,6 +9,8 @@
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/Metrics/IntCounter.hpp>
+#include <Monitoring/Metrics/MetricCatalog.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
@@ -16,7 +18,8 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Util/Logger.hpp>
 
-#include <Monitoring/Metrics/MetricDefinition.hpp>
+#include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <memory>
 
 namespace NES {
@@ -177,10 +180,7 @@ TEST_F(MonitoringStackTest, testSerializationMetricsSingle) {
     //test serialize method to append to existing schema and buffer
     auto schema = Schema::create();
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    MetricDefinition def{};
-    serialize(cpuStats.measure().getTotal(), schema, tupleBuffer, def, "TOTAL_");
-    ASSERT_TRUE(def.cpuMetrics.find("TOTAL_") != def.cpuMetrics.end());
-    ASSERT_TRUE(!def.cpuValues.empty());
+    serialize(cpuStats.measure().getTotal(), schema, tupleBuffer, "TOTAL_");
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
@@ -188,12 +188,9 @@ TEST_F(MonitoringStackTest, testSerializationMetricsNested) {
     NES_INFO("Starting test");
     auto schema = Schema::create();
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    MetricDefinition def{};
 
     auto cpuStats = MetricUtils::CPUStats();
-    serialize(cpuStats.measure(), schema, tupleBuffer, def, "");
-    ASSERT_TRUE(def.cpuMetrics.find("TOTAL_") != def.cpuMetrics.end());
-    ASSERT_TRUE(!def.cpuValues.empty());
+    serialize(cpuStats.measure(), schema, tupleBuffer, "");
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
@@ -206,37 +203,24 @@ TEST_F(MonitoringStackTest, testSerializationGroups) {
     Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
 
     // add with simple data types
-    auto intS = "simpleInt";
-    metricGroup->add(intS, 1);
+    metricGroup->add("simpleInt_", 1);
 
     // add cpu stats
-    auto cpuS = "cpuStats";
-    metricGroup->add(cpuS, cpuStats);
+    metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, cpuStats);
 
     // add network stats
-    auto networkS = "networkStats";
-    metricGroup->add(networkS, networkStats);
+    metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, networkStats);
 
     // add disk stats
-    auto diskS = "diskStats";
-    metricGroup->add(diskS, diskStats);
+    metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, diskStats);
 
     // add mem stats
-    auto memS = "memStats";
-    metricGroup->add(memS, memStats);
+    metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto schema = Schema::create();
-    auto def = metricGroup->getSample(schema, tupleBuffer);
+    metricGroup->getSample(schema, tupleBuffer);
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
-
-    ASSERT_TRUE(!def.cpuMetrics.empty());
-    ASSERT_TRUE(!def.cpuValues.empty());
-    ASSERT_TRUE(!def.networkMetrics.empty());
-    ASSERT_TRUE(!def.networkValues.empty());
-    ASSERT_TRUE(!def.diskMetrics.empty());
-    ASSERT_TRUE(!def.memoryMetrics.empty());
-    ASSERT_TRUE(!def.simpleTypedMetrics.empty());
 }
 
 TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
@@ -248,44 +232,57 @@ TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
     Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
 
     // add with simple data types
-    auto intS = "simpleInt";
-    metricGroup->add(intS, 1);
+    metricGroup->add("simpleInt_", 1);
 
     // add cpu stats
-    auto cpuS = "cpuStats";
-    metricGroup->add(cpuS, cpuStats);
+    metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, cpuStats);
 
     // add network stats
-    auto networkS = "networkStats";
-    metricGroup->add(networkS, networkStats);
+    metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, networkStats);
 
     // add disk stats
-    auto diskS = "diskStats";
-    metricGroup->add(diskS, diskStats);
+    metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, diskStats);
 
     // add mem stats
-    auto memS = "memStats";
-    metricGroup->add(memS, memStats);
+    metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto schema = Schema::create();
-    auto def = metricGroup->getSample(schema, tupleBuffer);
 
-    auto deserMem = MemoryMetrics::fromBuffer(schema, tupleBuffer, "memStats_");
+    metricGroup->getSample(schema, tupleBuffer);
+
+    auto deserMem = MemoryMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::MEMORY_METRICS_DESC);
     ASSERT_TRUE(deserMem != MemoryMetrics{});
     ASSERT_TRUE(deserMem.TOTAL_RAM == memStats.measure().TOTAL_RAM);
 
-    auto deserCpu = CpuMetrics::fromBuffer(schema, tupleBuffer, "cpuStats_");
+    auto deserCpu = CpuMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::CPU_METRICS_DESC);
     ASSERT_TRUE(deserCpu.getNumCores() == cpuStats.measure().getNumCores());
+    ASSERT_TRUE(deserCpu.getValues(1).USER > 0);
 
-    auto deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, "networkStats_");
+    auto deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::NETWORK_METRICS_DESC);
     ASSERT_TRUE(deserNw.getInterfaceNum() == networkStats.measure().getInterfaceNum());
 
-    auto deserDisk = DiskMetrics::fromBuffer(schema, tupleBuffer, "diskStats_");
-    ASSERT_TRUE(deserDisk.fBavail == diskStats.measure().fBavail);
+    auto deserDisk = DiskMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::DISK_METRICS_DESC);
+    ASSERT_TRUE(deserDisk.fBlocks == diskStats.measure().fBlocks);
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+}
 
-    //TODO: deser of simple data types
-    //TODO: Parsing of MetricDefinition for group deserialization
+TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
+    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    MonitoringPlan plan = MonitoringPlan(MetricCatalog::NesMetrics(), metrics);
+    MetricGroupPtr metricGroup = plan.createMetricGroup();
+
+    //worker side
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto schema = Schema::create();
+    metricGroup->getSample(schema, tupleBuffer);
+
+    // coordinator side
+    GroupedValues parsedValues = plan.fromBuffer(schema, tupleBuffer);
+
+    ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().USER > 0);
+    ASSERT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
+    ASSERT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
 }
 
 TEST_F(MonitoringStackTest, testSamplingProtocol) {

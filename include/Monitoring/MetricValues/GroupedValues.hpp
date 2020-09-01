@@ -1,7 +1,6 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDVALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDVALUES_HPP_
 
-#include <unordered_map>
 #include <Monitoring/MetricValues/DiscMetrics.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
@@ -10,16 +9,13 @@
 
 
 namespace NES {
-class MetricDefinition;
+class MonitoringPlan;
 
 struct GroupedValues {
-    void parseFromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition def);
-
-    std::unordered_map<std::string, DiskMetrics> diskMetrics;
-    std::unordered_map<std::string, CpuMetrics> cpuMetrics;
-    std::unordered_map<std::string, NetworkMetrics> networkMetrics;
-    std::unordered_map<std::string, MemoryMetrics> memoryMetrics;
-    std::unordered_map<std::string, Metric> simpleTypedMetrics;
+    std::optional<std::unique_ptr<DiskMetrics>> diskMetrics;
+    std::optional<std::unique_ptr<CpuMetrics>> cpuMetrics;
+    std::optional<std::unique_ptr<NetworkMetrics>> networkMetrics;
+    std::optional<std::unique_ptr<MemoryMetrics>> memoryMetrics;
 };
 
 }

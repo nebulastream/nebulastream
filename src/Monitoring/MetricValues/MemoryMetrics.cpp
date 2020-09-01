@@ -1,11 +1,11 @@
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 
 #include <API/Schema.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Monitoring/Metrics/MetricDefinition.hpp>
 
 namespace NES {
 
@@ -27,40 +27,31 @@ std::shared_ptr<Schema> MemoryMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void serialize(MemoryMetrics metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def,
-               const std::string& prefix) {
-    if (def.memoryMetrics.find(prefix) != def.memoryMetrics.end()) {
-        //element is already in MetricDefinition
-        NES_THROW_RUNTIME_ERROR("MemoryMetrics: Error during serialize(..): Metric with " +
-            prefix + " is already in MetricDefinition.");
-    }
-    else {
-        def.memoryMetrics.insert(prefix);
-        buf.setNumberOfTuples(1);
+void serialize(MemoryMetrics metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    buf.setNumberOfTuples(1);
 
-        auto noFields = schema->getSize();
-        schema->copyFields(MemoryMetrics::getSchema(prefix));
+    auto noFields = schema->getSize();
+    schema->copyFields(MemoryMetrics::getSchema(prefix));
 
-        auto layout = createRowLayout(schema);
-        layout->getValueField<uint64_t>(0, noFields)->write(buf, metric.TOTAL_RAM);
-        layout->getValueField<uint64_t>(0, noFields + 1)->write(buf, metric.TOTAL_SWAP);
-        layout->getValueField<uint64_t>(0, noFields + 2)->write(buf, metric.FREE_RAM);
-        layout->getValueField<uint64_t>(0, noFields + 3)->write(buf, metric.SHARED_RAM);
-        layout->getValueField<uint64_t>(0, noFields + 4)->write(buf, metric.BUFFER_RAM);
-        layout->getValueField<uint64_t>(0, noFields + 5)->write(buf, metric.FREE_SWAP);
-        layout->getValueField<uint64_t>(0, noFields + 6)->write(buf, metric.TOTAL_HIGH);
-        layout->getValueField<uint64_t>(0, noFields + 7)->write(buf, metric.FREE_HIGH);
-        layout->getValueField<uint64_t>(0, noFields + 8)->write(buf, metric.PROCS);
-        layout->getValueField<uint64_t>(0, noFields + 9)->write(buf, metric.MEM_UNIT);
-        layout->getValueField<uint64_t>(0, noFields + 10)->write(buf, metric.LOADS_1MIN);
-        layout->getValueField<uint64_t>(0, noFields + 11)->write(buf, metric.LOADS_5MIN);
-        layout->getValueField<uint64_t>(0, noFields + 12)->write(buf, metric.LOADS_15MIN);
-    }
+    auto layout = createRowLayout(schema);
+    layout->getValueField<uint64_t>(0, noFields)->write(buf, metric.TOTAL_RAM);
+    layout->getValueField<uint64_t>(0, noFields + 1)->write(buf, metric.TOTAL_SWAP);
+    layout->getValueField<uint64_t>(0, noFields + 2)->write(buf, metric.FREE_RAM);
+    layout->getValueField<uint64_t>(0, noFields + 3)->write(buf, metric.SHARED_RAM);
+    layout->getValueField<uint64_t>(0, noFields + 4)->write(buf, metric.BUFFER_RAM);
+    layout->getValueField<uint64_t>(0, noFields + 5)->write(buf, metric.FREE_SWAP);
+    layout->getValueField<uint64_t>(0, noFields + 6)->write(buf, metric.TOTAL_HIGH);
+    layout->getValueField<uint64_t>(0, noFields + 7)->write(buf, metric.FREE_HIGH);
+    layout->getValueField<uint64_t>(0, noFields + 8)->write(buf, metric.PROCS);
+    layout->getValueField<uint64_t>(0, noFields + 9)->write(buf, metric.MEM_UNIT);
+    layout->getValueField<uint64_t>(0, noFields + 10)->write(buf, metric.LOADS_1MIN);
+    layout->getValueField<uint64_t>(0, noFields + 11)->write(buf, metric.LOADS_5MIN);
+    layout->getValueField<uint64_t>(0, noFields + 12)->write(buf, metric.LOADS_15MIN);
 }
 
 MemoryMetrics MemoryMetrics::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
     MemoryMetrics output{};
-    auto i = schema->getIndex(prefix+"TOTAL_RAM");
+    auto i = schema->getIndex(prefix + "TOTAL_RAM");
 
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1
         && UtilityFunctions::endsWith(schema->fields[i]->name, "TOTAL_RAM")

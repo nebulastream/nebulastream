@@ -9,7 +9,7 @@
 namespace NES {
 class Schema;
 class TupleBuffer;
-class MetricDefinition;
+class MonitoringPlan;
 
 /**
  * A MetricGroup is a named container for Metrics and further metric subgroups.
@@ -52,9 +52,8 @@ class MetricGroup {
      * @brief Reads the values of all metrics from the MetricGroup and stores them to the passed Schema and TupleBuffer.
      * @param schema
      * @param buf
-     * @return The MetricDefinition for the sample
      */
-    MetricDefinition getSample(std::shared_ptr<Schema> schema, TupleBuffer& buf);
+    void getSample(std::shared_ptr<Schema> schema, TupleBuffer& buf);
   private:
     MetricGroup();
     std::unordered_map<std::string, Metric> metricMap;
