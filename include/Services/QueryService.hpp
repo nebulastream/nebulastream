@@ -57,8 +57,8 @@ class QueryService {
     QueryCatalogPtr queryCatalog;
     QueryRequestQueuePtr queryRequestQueue;
 
-    void getQueryPlanChildren(const OperatorNodePtr root, std::vector<json::value>& nodes,
-                             std::vector<json::value>& edges);
+    void getQueryPlanChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
+                             std::vector<web::json::value>& edges);
 
     std::string getOperatorType(OperatorNodePtr);
 };
