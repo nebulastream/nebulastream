@@ -119,7 +119,7 @@ void TopDownStrategy::recursiveOperatorPlacement(QueryPlanPtr candidateQueryPlan
     }
 
     ExecutionNodePtr candidateExecutionNode = getCandidateExecutionNode(candidateTopologyNode);
-    candidateQueryPlan->appendPreExistingOperator(candidateOperator->copy());
+    candidateQueryPlan->appendOperator(candidateOperator->copy());
 //    typeInferencePhase->execute(candidateQueryPlan);
     operatorToExecutionNodeMap[candidateOperator->getId()] = candidateExecutionNode;
     globalExecutionPlan->scheduleExecutionNode(candidateExecutionNode);

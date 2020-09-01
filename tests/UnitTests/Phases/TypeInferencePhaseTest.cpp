@@ -14,6 +14,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
@@ -53,8 +54,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     inputSchema->addField("f2", BasicType::INT8);
 
     auto source = createSourceLogicalOperatorNode(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    source->setId(UtilityFunctions::getNextOperatorId());
     auto map = createMapLogicalOperatorNode(Attribute("f3") = Attribute("f1") * 42);
+    map->setId(UtilityFunctions::getNextOperatorId());
     auto sink = createSinkLogicalOperatorNode(FileSinkDescriptor::create(""));
+    sink->setId(UtilityFunctions::getNextOperatorId());
 
     auto plan = QueryPlan::create(source);
     plan->appendOperator(map);
@@ -125,8 +129,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     inputSchema->addField("f2", BasicType::INT8);
 
     auto source = createSourceLogicalOperatorNode(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    source->setId(UtilityFunctions::getNextOperatorId());
     auto map = createMapLogicalOperatorNode(Attribute("f3") = Attribute("f3") * 42);
+    map->setId(UtilityFunctions::getNextOperatorId());
     auto sink = createSinkLogicalOperatorNode(FileSinkDescriptor::create(""));
+    sink->setId(UtilityFunctions::getNextOperatorId());
 
     auto plan = QueryPlan::create(source);
     plan->appendOperator(map);
