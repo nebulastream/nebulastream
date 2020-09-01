@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
         ("dataPort", po::value<string>(&dataPort)->default_value(dataPort),
          "Set NES data server port (default: 0).")
         ("coordinatorIp", po::value<string>(&coordinatorIp)->default_value(coordinatorIp),
-                                                                "Set NES server ip (default: localhost).")(
+                                                                "Set NES server ip (default: 127.0.0.1).")(
         "sourceType", po::value<string>(&sourceType)->default_value(sourceType),
         "Set the type of the Source either CSVSource or DefaultSource")(
         "sourceConfig",
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
         ("parentId", po::value<string>(&parentId)->default_value(parentId),
          "Set the parentId of this node")
         ("localWorkerIp", po::value<string>(&localWorkerIp)->default_value(localWorkerIp),
-         "Set worker ip (default: localhost)")
+         "Set worker ip (default: 127.0.0.1)")
         ("help", "Display help message");
 
     po::variables_map vm;
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
     NesWorkerPtr wrk = std::make_shared<NesWorker>(
         coordinatorIp,
         coordinatorPort,
-        localWorkerIp, // TODO add rpc/zmq server ip address
+        localWorkerIp,
         localPort,
         zmqDataPort,
         NodeType::Sensor // TODO what is this?!
