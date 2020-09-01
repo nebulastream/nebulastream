@@ -1,6 +1,7 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <cstring>
+#include <algorithm>
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -14,12 +15,15 @@
 namespace NES {
 void setThreadName(const char* threadNameFmt, ...) {
     char buffer[128];
+    char resized_buffer[16];
     va_list args;
     va_start(args, threadNameFmt);
     vsprintf(buffer, threadNameFmt, args);
-    NES_ASSERT(std::strlen(buffer) <= 16, "Invalid name length");
+    auto sz = std::min<size_t>(15, std::strlen(buffer));
+    std::strncpy(resized_buffer, buffer, sz);
+    resized_buffer[sz] = 0;
 #ifdef HAS_POSIX_THREAD
-    pthread_setname_np(pthread_self(), buffer);
+    pthread_setname_np(pthread_self(), resized_buffer);
 #endif
     va_end(args);
 }
