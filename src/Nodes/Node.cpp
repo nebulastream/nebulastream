@@ -315,6 +315,12 @@ const std::vector<NodePtr>& Node::getParents() const {
 std::vector<NodePtr> Node::getAllRootNodes() {
     NES_DEBUG("Node: Get all root nodes for this node");
     std::vector<NodePtr> rootNodes;
+
+    if (getParents().empty()) {
+        NES_DEBUG("Node: Inserting this node to the collection");
+        rootNodes.push_back(shared_from_this());
+    }
+
     for (auto parent : parents) {
         if (parent->getParents().empty()) {
             NES_DEBUG("Node: Inserting root node to the collection");

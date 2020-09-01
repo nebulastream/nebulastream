@@ -75,9 +75,8 @@ class BasePlacementStrategy {
      * @brief Map the logical source name to the physical source nodes in the topology used for placing the operators
      * @param queryId : the id of the query.
      * @param sourceOperators: the source operators in the query
-     * @return map of source name to the physical source Nodes.
      */
-    std::map<std::string, std::vector<TopologyNodePtr>> mapLogicalSourceToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
+    void mapLogicalSourceToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
 
     /**
      * @brief Add a system generated network sink operator to the input query plan
@@ -95,10 +94,25 @@ class BasePlacementStrategy {
      */
     void addNetworkSourceOperator(QueryPlanPtr queryPlan, SchemaPtr inputSchema, uint64_t operatorId);
 
+    /**
+     * @brief Get Execution node for the input topology node
+     * @param candidateTopologyNode: topology node
+     * @return Execution Node pointer
+     */
+    ExecutionNodePtr getCandidateExecutionNode(TopologyNodePtr candidateTopologyNode);
+
+    /**
+     * @brief Get the physical node for the logical source
+     * @param operatorId: the id of the operator
+     * @return Topology node ptr or nullptr
+     */
+    TopologyNodePtr getTopologyNodeForPinnedOperator(uint64_t operatorId);
+
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     StreamCatalogPtr streamCatalog;
+    std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP

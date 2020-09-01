@@ -388,4 +388,47 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
     return resultAncestor;
 }
 
+
+TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyNodes) {
+    NES_INFO("Topology: find common child node for a set of parent topology nodes.");
+
+    if (topologyNodes.empty()) {
+        NES_WARNING("Topology: Input topology node list was empty.");
+        return nullptr;
+    }
+
+    NES_DEBUG("Topology: Selecting a start node to identify the common child.");
+    TopologyNodePtr startNode = topologyNodes[0];
+    bool foundAncestor = false;
+    TopologyNodePtr resultAncestor;
+    std::deque<NodePtr> nodesToProcess{startNode};
+    while (!nodesToProcess.empty()) {
+        TopologyNodePtr candidateNode = nodesToProcess.front()->as<TopologyNode>();
+        nodesToProcess.pop_front();
+        std::vector<NodePtr> parents = candidateNode->getAndFlattenAllAncestors();
+        for (auto& nodeToLook : topologyNodes) {
+            auto found = std::find_if(parents.begin(), parents.end(), [&](NodePtr parent) {
+              return nodeToLook->getId() == parent->as<TopologyNode>()->getId();
+            });
+
+            if (found == parents.end()) {
+                foundAncestor = false;
+                break;
+            }
+            foundAncestor = true;
+        }
+
+        if (foundAncestor) {
+            resultAncestor = candidateNode;
+            break;
+        }
+
+        for (auto& child : candidateNode->getChildren()) {
+            nodesToProcess.push_back(child);
+        }
+    }
+
+    return resultAncestor;
+}
+
 }// namespace NES
