@@ -1,14 +1,8 @@
 #include <Monitoring/MetricValues/GroupedValues.hpp>
 
-#include <Monitoring/Metrics/MetricDefinition.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
 
 namespace NES {
-
-
-void GroupedValues::parseFromBuffer(std::shared_ptr<Schema>, TupleBuffer&, MetricDefinition) {
-
-
-}
 
 
 }

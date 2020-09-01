@@ -1,7 +1,7 @@
 #include <Monitoring/MetricValues/CpuValues.hpp>
 
 #include <API/Schema.hpp>
-#include <Monitoring/Metrics/MetricDefinition.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
@@ -11,26 +11,27 @@ namespace NES {
 
 std::shared_ptr<Schema> CpuValues::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create()
-        ->addField(prefix + "USER", BasicType::UINT64)
-        ->addField(prefix + "NICE", BasicType::UINT64)
-        ->addField(prefix + "SYSTEM", BasicType::UINT64)
-        ->addField(prefix + "IDLE", BasicType::UINT64)
-        ->addField(prefix + "IOWAIT", BasicType::UINT64)
-        ->addField(prefix + "IRQ", BasicType::UINT64)
-        ->addField(prefix + "SOFTIRQ", BasicType::UINT64)
-        ->addField(prefix + "STEAL", BasicType::UINT64)
-        ->addField(prefix + "GUEST", BasicType::UINT64)
-        ->addField(prefix + "GUESTNICE", BasicType::UINT64);
+                           ->addField(prefix + "USER", BasicType::UINT64)
+                           ->addField(prefix + "NICE", BasicType::UINT64)
+                           ->addField(prefix + "SYSTEM", BasicType::UINT64)
+                           ->addField(prefix + "IDLE", BasicType::UINT64)
+                           ->addField(prefix + "IOWAIT", BasicType::UINT64)
+                           ->addField(prefix + "IRQ", BasicType::UINT64)
+                           ->addField(prefix + "SOFTIRQ", BasicType::UINT64)
+                           ->addField(prefix + "STEAL", BasicType::UINT64)
+                           ->addField(prefix + "GUEST", BasicType::UINT64)
+                           ->addField(prefix + "GUESTNICE", BasicType::UINT64);
     return schema;
 }
 
 CpuValues CpuValues::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
     CpuValues output{};
-    auto i = schema->getIndex(prefix+"USER");
+    auto i = schema->getIndex(prefix + "USER");
 
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1
         && UtilityFunctions::endsWith(schema->fields[i]->name, "USER")
         && UtilityFunctions::endsWith(schema->fields[i + 9]->name, "GUESTNICE")) {
+        NES_DEBUG("CpuValues: Index found for " + prefix + "USER" + " at " + std::to_string(i));
         auto layout = createRowLayout(schema);
         output.USER = layout->getValueField<uint64_t>(0, i)->read(buf);
         output.NICE = layout->getValueField<uint64_t>(0, i + 1)->read(buf);
@@ -48,31 +49,22 @@ CpuValues CpuValues::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf
     return output;
 }
 
-void serialize(CpuValues metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix) {
-    if (def.cpuValues.find(prefix) != def.cpuValues.end()) {
-        //element is already in MetricDefinition
-        NES_THROW_RUNTIME_ERROR("MemoryMetrics: Error during serialize(..): Metric with " +
-            prefix + " is already in MetricDefinition.");
-    }
-    else {
-        def.cpuValues.insert(prefix);
+void serialize(CpuValues metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    auto schemaSize = schema->getSize();
+    schema->copyFields(CpuValues::getSchema(prefix));
 
-        auto schemaSize = schema->getSize();
-        schema->copyFields(CpuValues::getSchema(prefix));
-
-        auto layout = createRowLayout(schema);
-        layout->getValueField<uint64_t>(0, schemaSize)->write(buf, metric.USER);
-        layout->getValueField<uint64_t>(0, schemaSize +1)->write(buf, metric.NICE);
-        layout->getValueField<uint64_t>(0, schemaSize +2)->write(buf, metric.SYSTEM);
-        layout->getValueField<uint64_t>(0, schemaSize +3)->write(buf, metric.IDLE);
-        layout->getValueField<uint64_t>(0, schemaSize +4)->write(buf, metric.IOWAIT);
-        layout->getValueField<uint64_t>(0, schemaSize +5)->write(buf, metric.IRQ);
-        layout->getValueField<uint64_t>(0, schemaSize +6)->write(buf, metric.SOFTIRQ);
-        layout->getValueField<uint64_t>(0, schemaSize +7)->write(buf, metric.STEAL);
-        layout->getValueField<uint64_t>(0, schemaSize +8)->write(buf, metric.GUEST);
-        layout->getValueField<uint64_t>(0, schemaSize +9)->write(buf, metric.GUESTNICE);
-        buf.setNumberOfTuples(1);
-    }
+    auto layout = createRowLayout(schema);
+    layout->getValueField<uint64_t>(0, schemaSize)->write(buf, metric.USER);
+    layout->getValueField<uint64_t>(0, schemaSize + 1)->write(buf, metric.NICE);
+    layout->getValueField<uint64_t>(0, schemaSize + 2)->write(buf, metric.SYSTEM);
+    layout->getValueField<uint64_t>(0, schemaSize + 3)->write(buf, metric.IDLE);
+    layout->getValueField<uint64_t>(0, schemaSize + 4)->write(buf, metric.IOWAIT);
+    layout->getValueField<uint64_t>(0, schemaSize + 5)->write(buf, metric.IRQ);
+    layout->getValueField<uint64_t>(0, schemaSize + 6)->write(buf, metric.SOFTIRQ);
+    layout->getValueField<uint64_t>(0, schemaSize + 7)->write(buf, metric.STEAL);
+    layout->getValueField<uint64_t>(0, schemaSize + 8)->write(buf, metric.GUEST);
+    layout->getValueField<uint64_t>(0, schemaSize + 9)->write(buf, metric.GUESTNICE);
+    buf.setNumberOfTuples(1);
 }
 
-}
+}// namespace NES

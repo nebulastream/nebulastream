@@ -1,7 +1,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
-#include <Monitoring/Metrics/MetricDefinition.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
@@ -45,7 +45,7 @@ NetworkValues NetworkValues::fromBuffer(std::shared_ptr<Schema> schema, TupleBuf
         NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is " + std::to_string(buf.getNumberOfTuples()));
     }
     if (!(UtilityFunctions::endsWith(schema->fields[i]->name, "rBytes")
-        && UtilityFunctions::endsWith(schema->fields[i + 15]->name, "tCompressed"))) {
+          && UtilityFunctions::endsWith(schema->fields[i + 15]->name, "tCompressed"))) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
     }
 
@@ -74,41 +74,34 @@ NetworkValues NetworkValues::fromBuffer(std::shared_ptr<Schema> schema, TupleBuf
     return output;
 }
 
-void serialize(NetworkValues metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, MetricDefinition& def, const std::string& prefix) {
-    if (def.networkValues.find(prefix) != def.networkValues.end()) {
-        //element is already in MetricDefinition
-        NES_THROW_RUNTIME_ERROR("MemoryMetrics: Error during serialize(..): Metric with " + prefix + " is already in MetricDefinition.");
-    } else {
-        def.networkValues.insert(prefix);
+void serialize(NetworkValues metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    auto noFields = schema->getSize();
+    schema->copyFields(NetworkValues::getSchema(prefix));
 
-        auto noFields = schema->getSize();
-        schema->copyFields(NetworkValues::getSchema(prefix));
+    auto layout = createRowLayout(schema);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rBytes);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rPackets);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rErrs);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rDrop);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rFifo);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rFrame);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rCompressed);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rMulticast);
 
-        auto layout = createRowLayout(schema);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rBytes);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rPackets);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rErrs);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rDrop);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rFifo);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rFrame);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rCompressed);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rMulticast);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tBytes);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tPackets);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tErrs);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tDrop);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tFifo);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tColls);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tCarrier);
+    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tCompressed);
 
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tBytes);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tPackets);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tErrs);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tDrop);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tFifo);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tColls);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tCarrier);
-        layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tCompressed);
+    //TODO: fix this
+    //auto array = layout->getFieldPointer<char>(buf, 0, noFields);
+    //std::strncpy(array, metric.interfaceName.c_str(), 20);
 
-        //TODO: fix this
-        //auto array = layout->getFieldPointer<char>(buf, 0, noFields);
-        //std::strncpy(array, metric.interfaceName.c_str(), 20);
-
-        buf.setNumberOfTuples(1);
-    }
+    buf.setNumberOfTuples(1);
 }
 
 }// namespace NES

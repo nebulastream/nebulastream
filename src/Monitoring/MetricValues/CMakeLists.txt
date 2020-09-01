@@ -4,6 +4,7 @@ add_source_nes(
         DiskMetrics.cpp
         GroupedValues.cpp
         MemoryMetrics.cpp
+        MetricValueType.cpp
         NetworkMetrics.cpp
         NetworkValues.cpp
 )
