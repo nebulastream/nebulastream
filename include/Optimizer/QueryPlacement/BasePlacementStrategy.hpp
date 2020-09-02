@@ -76,7 +76,7 @@ class BasePlacementStrategy {
      * @param queryId : the id of the query.
      * @param sourceOperators: the source operators in the query
      */
-    void mapLogicalSourceToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
+    void mapPinnedOperatorToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
 
     /**
      * @brief Get Execution node for the input topology node
@@ -98,16 +98,44 @@ class BasePlacementStrategy {
      */
     void addSystemGeneratedOperators(QueryPlanPtr queryPlan);
 
+    /**
+     * @brief Run the type inference phase for all the query sub plans for the input query id
+     * @param queryId: the input query id
+     */
+    void runTypeInferencePhase(QueryId queryId);
+
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     StreamCatalogPtr streamCatalog;
     std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
-    void placeNetworkOperator(QueryId queryId, OperatorNodePtr operatorNode);
-    OperatorNodePtr createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, TopologyNodePtr parentNesNode);
+  private:
+
+    /**
+     * @brief create a new network sink operator
+     * @param queryId : the query id to which the sink belongs to
+     * @param sourceOperatorId : the operator id of the corresponding source operator
+     * @param sourceTopologyNode : the topology node to which sink operator will send the data
+     * @return the instance of network sink operator
+     */
+    OperatorNodePtr createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, TopologyNodePtr sourceTopologyNode);
+
+    /**
+     * @brief create a new network source operator
+     * @param queryId : the query id to which the source belongs to
+     * @param inputSchema : the schema for input event stream
+     * @param operatorId : the operator id of the source network operator
+     * @return the instance of network source operator
+     */
     OperatorNodePtr createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId);
-    void runTypeInferencePhase(QueryId queryId);
+
+    /**
+     * @brief Attach network source or sink operator to the given operator
+     * @param queryId : the id of the query
+     * @param operatorNode : the logical operator to which source or sink operator need to be attached
+     */
+    void placeNetworkOperator(QueryId queryId, OperatorNodePtr operatorNode);
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP
