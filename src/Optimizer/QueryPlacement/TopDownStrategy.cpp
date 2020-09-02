@@ -38,7 +38,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         throw QueryPlacementException("TopDownStrategy: No source operators found in the query plan wih id: " + queryId);
     }
 
-    NES_INFO("TopDownStrategy: map pinned operators to the physical location");
+    NES_DEBUG("TopDownStrategy: map pinned operators to the physical location");
     mapPinnedOperatorToTopologyNodes(queryId, sourceOperators);
 
     NES_DEBUG("TopDownStrategy: Get all sink operators");

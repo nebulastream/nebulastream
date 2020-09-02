@@ -32,9 +32,9 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param queryPlan: query plan to place
      * @throws exception if the operator can't be placed.
      */
-    void placeOperators(QueryPlanPtr queryPlan);
+    void placeQueryPlan(QueryPlanPtr queryPlan);
 
-    void recursiveOperatorPlacement(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode);
+    void placeOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode);
     std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(OperatorNodePtr candidateOperator);
     QueryPlanPtr getCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode);
 };
