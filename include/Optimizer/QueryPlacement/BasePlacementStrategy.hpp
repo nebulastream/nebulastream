@@ -79,22 +79,6 @@ class BasePlacementStrategy {
     void mapLogicalSourceToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
 
     /**
-     * @brief Add a system generated network sink operator to the input query plan
-     * @param queryPlan
-     * @param parentNesNode
-     * @return returns the operator id of the next network source operator
-     */
-    uint64_t addNetworkSinkOperator(QueryPlanPtr queryPlan, TopologyNodePtr parentNesNode);
-
-    /**
-     * @brief Add a system generated network source operator to the input query plan.
-     * @param queryPlan: the query plan to which network source operator is to be added.
-     * @param inputSchema: The schema of the data to be received from upstream sink operator.
-     * @param operatorId: The id of the network source operator.
-     */
-    void addNetworkSourceOperator(QueryPlanPtr queryPlan, SchemaPtr inputSchema, uint64_t operatorId);
-
-    /**
      * @brief Get Execution node for the input topology node
      * @param candidateTopologyNode: topology node
      * @return Execution Node pointer
