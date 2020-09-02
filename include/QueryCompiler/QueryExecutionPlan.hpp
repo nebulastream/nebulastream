@@ -89,8 +89,16 @@ class QueryExecutionPlan {
 
     void print();
 
+    /**
+     * @brief Get the query id
+     * @return the query id
+     */
     QueryId getQueryId();
 
+    /**
+     * @brief Get the query execution plan id
+     * @return the query execution plan id
+     */
     QueryExecutionPlanId getQueryExecutionPlanId() const;
 
   protected:

@@ -128,6 +128,10 @@ class GeneratedQueryExecutionPlanBuilder {
      */
     GeneratedQueryExecutionPlanBuilder& setQueryExecutionId(QueryExecutionPlanId queryExecutionId);
 
+    /**
+     * @brief Get the query execution plan id
+     * @return the query execution plan id
+     */
     QueryExecutionPlanId getQueryExecutionPlanId() const;
 
   private:

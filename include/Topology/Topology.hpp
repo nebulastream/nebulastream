@@ -154,6 +154,12 @@ class Topology {
      */
     TopologyNodePtr findCommonNodeBetween(std::vector<TopologyNodePtr> childNodes, std::vector<TopologyNodePtr> parenNodes);
 
+    /**
+     * @brief Find the set of nodes (inclusive of) between a source and destination topology node
+     * @param sourceNode : the source topology node
+     * @param destinationNode : the destination topology node
+     * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
+     */
     std::vector<TopologyNodePtr> findTopologyNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode);
 
     ~Topology();
@@ -163,7 +169,6 @@ class Topology {
 
     explicit Topology();
 
-    bool find(TopologyNodePtr physicalNode, TopologyNodePtr destinationNode, std::vector<TopologyNodePtr>& nodesInPath);
     /**
      * @brief Find if searched node is in the parent list of the test node or its parents parent list
      * @param testNode: the test node
