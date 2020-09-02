@@ -72,6 +72,11 @@ class OperatorNode : public Node {
 
     bool addParent(const NodePtr newNode) override;
 
+    /**
+     * @brief Get the operator with input operator id
+     * @param operatorIdToFind : the operator to find and return
+     * @return nulptr if not found else the operator node
+     */
     NodePtr getChildWithOperatorId(uint64_t operatorIdToFind);
 
   protected:
