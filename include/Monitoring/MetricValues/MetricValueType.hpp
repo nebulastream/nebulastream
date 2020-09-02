@@ -13,7 +13,6 @@ enum MetricValueType {
     NetworkMetric
 };
 
-}
-
+}// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_METRICVALUETYPE_HPP_

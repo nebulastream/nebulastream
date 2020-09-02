@@ -31,7 +31,8 @@ class Gauge {
     }
 
   private:
-    std::function<T()> probingFunc;};
+    std::function<T()> probingFunc;
+};
 
 template<typename T>
 MetricType getMetricType(const Gauge<T>&) {

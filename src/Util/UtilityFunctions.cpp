@@ -298,7 +298,7 @@ const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
 bool UtilityFunctions::endsWith(const std::string& fullString, const std::string& ending) {
     if (fullString.length() >= ending.length()) {
         // get the start of the ending index of the full string and compare with the ending string
-        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+        return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
     } else {
         // if full string is smaller than the ending automatically return false
         return false;

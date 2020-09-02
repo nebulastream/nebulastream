@@ -44,7 +44,6 @@ class MonitoringPlan {
      */
     std::shared_ptr<MetricGroup> createMetricGroup() const;
 
-
     /**
      * @brief
      * @param schema
@@ -72,6 +71,6 @@ class MonitoringPlan {
     bool diskMetrics;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICS_MONITORINGPLAN_HPP_

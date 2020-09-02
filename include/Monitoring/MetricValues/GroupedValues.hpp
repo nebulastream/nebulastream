@@ -1,12 +1,11 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDVALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDVALUES_HPP_
 
-#include <Monitoring/MetricValues/DiscMetrics.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Monitoring/MetricValues/NetworkMetrics.hpp>
+#include <Monitoring/MetricValues/DiscMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
+#include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
-
 
 namespace NES {
 class MonitoringPlan;
@@ -18,6 +17,6 @@ struct GroupedValues {
     std::optional<std::unique_ptr<MemoryMetrics>> memoryMetrics;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDVALUES_HPP_

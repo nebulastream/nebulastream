@@ -2,9 +2,9 @@
 #define NES_INCLUDE_MONITORING_METRICS_METRICCATALOG_HPP_
 
 #include <Monitoring/MetricValues/MetricValueType.hpp>
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
 
 namespace NES {
 class Metric;
@@ -32,6 +32,6 @@ class MetricCatalog {
     std::map<MetricValueType, Metric> metrics;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICS_METRICCATALOG_HPP_
