@@ -28,16 +28,6 @@ bool ExecutionNode::hasQuerySubPlans(QueryId queryId) {
     return mapOfQuerySubPlans.find(queryId) != mapOfQuerySubPlans.end();
 }
 
-//bool ExecutionNode::checkIfQuerySubPlanContainsOperator(QueryId queryId, OperatorNodePtr operatorNode) {
-//    NES_DEBUG("ExecutionNode : Checking if operator " << operatorNode->toString() << " exists in the query sub plan with id " << queryId);
-//    if (hasQuerySubPlans(queryId)) {
-//        QueryPlanPtr querySubPlan = mapOfQuerySubPlans[queryId];
-//        return querySubPlan->hasOperator(operatorNode);
-//    }
-//    NES_WARNING("ExecutionNode: Not able to find " << operatorNode->toString() << " in sub plan with id : " << queryId);
-//    return false;
-//}
-
 std::vector<QueryPlanPtr> ExecutionNode::getQuerySubPlans(QueryId queryId) {
     if (hasQuerySubPlans(queryId)) {
         NES_DEBUG("ExecutionNode : Found query sub plan with id " << queryId);
@@ -134,18 +124,6 @@ bool ExecutionNode::updateQuerySubPlans(QueryId queryId, std::vector<QueryPlanPt
     NES_WARNING("ExecutionNode: Not able to find query sub plan with id : " << queryId << " creating a new entry");
     return false;
 }
-
-//bool ExecutionNode::appendOperatorToQuerySubPlan(QueryId queryId, OperatorNodePtr operatorNode) {
-//    if (hasQuerySubPlans(queryId)) {
-//        QueryPlanPtr querySubPlan = mapOfQuerySubPlans[queryId];
-//        NES_DEBUG("ExecutionNode: Appending operator " << operatorNode->toString() << " in the query sub plan with id : " << queryId);
-//        querySubPlan->appendOperator(operatorNode);
-//        NES_DEBUG("ExecutionNode: Successfully appended operator to the query sub plan");
-//        return true;
-//    }
-//    NES_WARNING("ExecutionNode: Not able to find " << operatorNode->toString() << " in sub plan with id : " << queryId);
-//    return false;
-//}
 
 const std::string ExecutionNode::toString() const {
     return "ExecutionNode(" + std::to_string(id) + ")";
