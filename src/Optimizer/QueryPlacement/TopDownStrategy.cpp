@@ -148,34 +148,34 @@ QueryPlanPtr TopDownStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNod
         return candidateQueryPlan;
     }
 
-    std::vector<NodePtr> children = candidateOperator->getChildren();
-    std::vector<QueryPlanPtr> queryPlansWithChildren;
+    std::vector<NodePtr> parents = candidateOperator->getParents();
+    std::vector<QueryPlanPtr> queryPlansWithParent;
     //NOTE: we do not check for parent operators as we are performing bottom up placement.
-    for (auto& child : children) {
+    for (auto& parent : parents) {
         auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](QueryPlanPtr querySubPlan) {
-            return querySubPlan->hasOperator(child->as<OperatorNode>());
+            return querySubPlan->hasOperator(parent->as<OperatorNode>());
         });
 
         if (found != querySubPlans.end()) {
-            queryPlansWithChildren.push_back(*found);
+            queryPlansWithParent.push_back(*found);
             querySubPlans.erase(found);
         }
     }
 
-    if (!queryPlansWithChildren.empty()) {
+    if (!queryPlansWithParent.empty()) {
         executionNode->updateQuerySubPlans(queryId, querySubPlans);
-        if (queryPlansWithChildren.size() > 1) {
+        if (queryPlansWithParent.size() > 1) {
             candidateQueryPlan = QueryPlan::create();
             candidateQueryPlan->setQueryId(queryId);
             candidateQueryPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
-            for (auto& queryPlanWithChildren : queryPlansWithChildren) {
+            for (auto& queryPlanWithChildren : queryPlansWithParent) {
                 for (auto& root : queryPlanWithChildren->getRootOperators()) {
                     candidateQueryPlan->addRootOperator(root);
                 }
             }
             return candidateQueryPlan;
-        } else if (queryPlansWithChildren.size() == 1) {
-            return queryPlansWithChildren[0];
+        } else if (queryPlansWithParent.size() == 1) {
+            return queryPlansWithParent[0];
         }
     }
     candidateQueryPlan = QueryPlan::create();
