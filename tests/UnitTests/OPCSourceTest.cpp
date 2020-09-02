@@ -34,12 +34,12 @@ class OPCSourceTest : public testing::Test {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES_DEBUG("Setup OPCSourceTest test class.");
+        NES_DEBUG("OPCSOURCETEST::SetUpTestCase()");
     }
 
     void SetUp() {
-        NES_DEBUG("Setup OPCSourceTest cases.");
-        NES::setupLogging("OPCTest.log", NES::LOG_DEBUG);
+        NES_DEBUG("OPCSOURCETEST::SetUp() OPCSourceTest cases set up.");
+        NES::setupLogging("OPCSourceTest.log", NES::LOG_DEBUG);
 
         test_schema =
                 Schema::create()
@@ -55,32 +55,29 @@ class OPCSourceTest : public testing::Test {
 
     /* Will be called after a test is executed. */
     void TearDown() {
-        NES_DEBUG("Tear down OPCSourceTest");
+        NES_DEBUG("OPCSOURCETEST::TearDown() Tear down OPCSourceTest");
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        NES_DEBUG("Tear down OPCSourceTest test class." );
+        NES_DEBUG("OPCSOURCETEST::TearDownTestCases() Tear down OPCSourceTest test class." );
     }
 
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;
-    size_t tupleCnt;
     SchemaPtr test_schema;
-    size_t tuple_size;
     size_t buffer_size;
 
   protected:
     UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
-    const std::string& user = "";
-    const std::string& password = "";
-
-
-    const size_t num_of_buffers = 1;
-    const uint64_t num_tuples_to_process = 1;
+    const std::string user = "";
+    const std::string password = "";
 
 };
 
+/**
+ * Tests basic set up of OPC source
+ */
 TEST_F(OPCSourceTest, OPCSourceInit) {
 
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, &nodeId, user, password);
@@ -88,6 +85,9 @@ TEST_F(OPCSourceTest, OPCSourceInit) {
     SUCCEED();
 }
 
+/**
+ * Test if schema, OPC server url, and node index are the same
+ */
 TEST_F(OPCSourceTest, OPCSourcePrint) {
 
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, &nodeId, user, password);
@@ -101,7 +101,12 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
     SUCCEED();
 }
 
-
+/**
+ * Tests if obtained value is valid.
+ * Requires an OPC test server without any security policy,
+ * running at opc.tcp://localhost:4840
+ * and a node with node id "ns=1;s="the.answer"
+ */
 TEST_F(OPCSourceTest, OPCSourceValue) {
 
     auto test_schema = Schema::create()
@@ -111,13 +116,15 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
 
     auto tuple_buffer = opcSource->receiveData();
 
-    size_t sum = 0;
-    uint32_t *tuple = (uint32_t *) tuple_buffer->getBuffer();
+    size_t value = 0;
+    auto *tuple = (uint32_t *) tuple_buffer->getBuffer();
 
-    sum = *tuple;
+    value = *tuple;
     size_t expected = 43;
 
-    EXPECT_EQ(sum, expected);
+    NES_DEBUG("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: " << expected << ". Received value is: " << value);
+
+    EXPECT_EQ(value, expected);
 
 }
 

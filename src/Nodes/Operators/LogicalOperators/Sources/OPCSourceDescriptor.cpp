@@ -10,36 +10,36 @@
 namespace NES {
 
 SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema,
-                                                const std::string & url,
-        UA_NodeId *nodeId,
-                                                const std::string& user,
-                                                const std::string& password) {
-    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(url), std::move(nodeId), std::move(user), std::move(password)));
+                                                const std::string &url,
+                                                UA_NodeId *nodeId,
+                                                std::string user,
+                                                std::string password) {
+    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), url, nodeId, std::move(user), std::move(password)));
 }
 
-SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema, 
-        std::string streamName,
-                                                const std::string & url,
-        UA_NodeId *nodeId,
-                                                const std::string& user,
-                                                const std::string& password) {
-    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(streamName), std::move(url), std::move(nodeId), std::move(user), std::move(password)));
+SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema,
+                                                std::string streamName,
+                                                const std::string &url,
+                                                UA_NodeId *nodeId,
+                                                std::string user,
+                                                std::string password) {
+    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(streamName), url, nodeId, std::move(user), std::move(password)));
 }
 
 OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema,
-                                         const std::string & url,
+                                         const std::string &url,
                                          UA_NodeId *nodeId,
-                                         const std::string& user,
-                                         const std::string& password)
-    : SourceDescriptor(std::move(schema)), url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)), password(std::move(password)) {}
+                                         std::string user,
+                                         std::string password)
+    : SourceDescriptor(std::move(schema)), url(url), nodeId(nodeId), user(std::move(user)), password(std::move(password)) {}
 
 OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema,
                                          std::string streamName,
-                                         const std::string & url,
+                                         const std::string &url,
                                          UA_NodeId *nodeId,
-                                         const std::string& user,
-                                         const std::string& password)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)), password(std::move(password)) {}
+                                         std::string user,
+                                         std::string password)
+    : SourceDescriptor(std::move(schema), std::move(streamName)), url(url), nodeId(nodeId), user(std::move(user)), password(std::move(password)) {}
 
 const std::string& OPCSourceDescriptor::getUrl() const {
     return url;
@@ -49,11 +49,11 @@ UA_NodeId* OPCSourceDescriptor::getNodeId() const {
     return nodeId;
 }
 
-const std::string& OPCSourceDescriptor::getUser() const {
+const std::string OPCSourceDescriptor::getUser() const {
     return user;
 }
 
-const std::string& OPCSourceDescriptor::getPassword() const {
+const std::string OPCSourceDescriptor::getPassword() const {
     return password;
 }
 
