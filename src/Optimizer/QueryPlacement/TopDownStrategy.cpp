@@ -46,10 +46,13 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     }
 
     NES_DEBUG("TopDownStrategy: Preparing execution plan for query with id : " << queryId);
-    return placeOperators(queryPlan);
+    placeOperators(queryPlan);
+    addSystemGeneratedOperators(queryPlan);
+    runTypeInferencePhase(queryId);
+    return true;
 }
 
-bool TopDownStrategy::placeOperators(QueryPlanPtr queryPlan) {
+void TopDownStrategy::placeOperators(QueryPlanPtr queryPlan) {
 
     QueryId queryId = queryPlan->getQueryId();
     NES_DEBUG("TopDownStrategy: Get the all source operators for performing the placement.");
@@ -58,7 +61,6 @@ bool TopDownStrategy::placeOperators(QueryPlanPtr queryPlan) {
 
     const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = queryPlan->getSinkOperators();
 
-    std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
     for (auto sinkOperator : sinkOperators) {
         //TODO: Handle when we assume more than one sink nodes
         TopologyNodePtr candidateTopologyNode = getTopologyNodeForPinnedOperator(sinkOperator->getId());
@@ -67,182 +69,91 @@ bool TopDownStrategy::placeOperators(QueryPlanPtr queryPlan) {
             throw QueryPlacementException("TopDownStrategy: Unable to find resources on the physical node for placement of sink operator");
         }
 
-        QueryPlanPtr startingQuerySubPlan = QueryPlan::create();
-        startingQuerySubPlan->setQueryId(queryId);
-        startingQuerySubPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
-        ExecutionNodePtr executionNode = getCandidateExecutionNode(candidateTopologyNode);
-        executionNode->addNewQuerySubPlan(queryId, startingQuerySubPlan);
-        recursiveOperatorPlacement(startingQuerySubPlan, sinkOperator, candidateTopologyNode, operatorToExecutionNodeMap);
+        recursiveOperatorPlacement(queryId, sinkOperator, candidateTopologyNode);
     }
     NES_DEBUG("TopDownStrategy: Finished placing query operators into the global execution plan");
-    return true;
 }
 
-void TopDownStrategy::recursiveOperatorPlacement(QueryPlanPtr candidateQueryPlan, OperatorNodePtr candidateOperator,
-                                                 TopologyNodePtr candidateTopologyNode, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap) {
+void TopDownStrategy::recursiveOperatorPlacement(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode) {
 
-    QueryId queryId = candidateQueryPlan->getQueryId();
-    if (candidateOperator->isNAryOperator() || candidateOperator->instanceOf<SourceLogicalOperatorNode>()) {
-        placeNAryOrSinkOperator(queryId, candidateOperator, candidateTopologyNode, operatorToExecutionNodeMap);
-        return;
-    } else if (candidateTopologyNode->getAvailableResources() == 0) {
+    if (candidateOperator->isNAryOperator() && !candidateOperator->instanceOf<SinkLogicalOperatorNode>()) {
+        std::vector<TopologyNodePtr> parentTopologyNodes = getTopologyNodesForParentOperators(candidateOperator);
+        if (parentTopologyNodes.empty()) {
+            return;
+        }
 
-        NES_DEBUG("BottomUpStrategy: Find the next NES node in the path where operator can be placed");
+        std::vector<SourceLogicalOperatorNodePtr> sourceOperators = candidateOperator->getNodesByType<SourceLogicalOperatorNode>();
+        if (sourceOperators.empty()) {
+            throw QueryPlacementException("Unable to find the source operators to the candidate operator");
+        }
 
+        std::vector<TopologyNodePtr> childNodes;
 
+        for (auto& sourceOperator : sourceOperators) {
+            childNodes.push_back(getTopologyNodeForPinnedOperator(sourceOperator->getId()));
+        }
+        candidateTopologyNode = topology->findCommonNodeBetween(childNodes, parentTopologyNodes);
+    } else if (candidateOperator->instanceOf<SourceLogicalOperatorNode>()) {
+        candidateTopologyNode = getTopologyNodeForPinnedOperator(candidateOperator->getId());
+    }
+
+    if (candidateTopologyNode->getAvailableResources() == 0) {
+
+        NES_DEBUG("TopDownStrategy: Find the next NES node in the path where operator can be placed");
 
         while (!candidateTopologyNode->getChildren().empty()) {
             //FIXME: we are considering only one root node currently
             candidateTopologyNode = candidateTopologyNode->getChildren()[0]->as<TopologyNode>();
-
-            SchemaPtr inputSchema = candidateOperator->getOutputSchema();
-//            addNetworkSourceOperator(candidateQueryPlan, inputSchema, networkSourceOperatorId);
-            typeInferencePhase->execute(candidateQueryPlan);
-            ExecutionNodePtr executionNode = getCandidateExecutionNode(candidateTopologyNode);
-            candidateQueryPlan = QueryPlan::create();
-            candidateQueryPlan->setQueryId(queryId);
-            candidateQueryPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
-//            uint64_t networkSourceOperatorId = addNetworkSinkOperator(candidateQueryPlan, candidateTopologyNode);
-            typeInferencePhase->execute(candidateQueryPlan);
-            executionNode->addNewQuerySubPlan(queryId, candidateQueryPlan);
-            globalExecutionPlan->scheduleExecutionNode(executionNode);
             if (candidateTopologyNode->getAvailableResources() > 0) {
-                NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : " << candidateTopologyNode->getId());
+                NES_DEBUG("TopDownStrategy: Found NES node for placing the operators with id : " << candidateTopologyNode->getId());
                 break;
             }
         }
     }
 
     if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
-        NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
-        throw QueryPlacementException("BottomUpStrategy: No node available for further placement of operators");
+        NES_ERROR("TopDownStrategy: No node available for further placement of operators");
+        throw QueryPlacementException("TopDownStrategy: No node available for further placement of operators");
     }
 
     ExecutionNodePtr candidateExecutionNode = getCandidateExecutionNode(candidateTopologyNode);
-    candidateQueryPlan->appendOperator(candidateOperator->copy());
-//    typeInferencePhase->execute(candidateQueryPlan);
+
+    QueryPlanPtr candidateQueryPlan = getCandidateQueryPlan(queryId, candidateOperator, candidateExecutionNode);
+    candidateQueryPlan->prependOperator(candidateOperator->copy());
     operatorToExecutionNodeMap[candidateOperator->getId()] = candidateExecutionNode;
+    if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
+        NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
+        throw QueryPlacementException("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
+    }
     globalExecutionPlan->scheduleExecutionNode(candidateExecutionNode);
-    NES_DEBUG("BottomUpStrategy: Reducing the node remaining CPU capacity by 1");
+    NES_DEBUG("TopDownStrategy: Reducing the node remaining CPU capacity by 1");
     // Reduce the processing capacity by 1
     // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
     candidateTopologyNode->reduceResources(1);
     topology->reduceResources(candidateTopologyNode->getId(), 1);
 
     for (auto& child : candidateOperator->getChildren()) {
-        recursiveOperatorPlacement(candidateQueryPlan, child->as<OperatorNode>(), candidateTopologyNode, operatorToExecutionNodeMap);
+        recursiveOperatorPlacement(queryId, child->as<OperatorNode>(), candidateTopologyNode);
     }
 }
 
-void TopDownStrategy::placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode,
-                                              std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap) {
+QueryPlanPtr TopDownStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode) {
+    std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
 
-    //Check if all children operators already placed
-    std::vector<TopologyNodePtr> parentTopologyNodes = getTopologyNodesForParentOperators(candidateOperator, operatorToExecutionNodeMap);
-
-    if (parentTopologyNodes.empty()) {
-        return;
+    QueryPlanPtr candidateQueryPlan;
+    if (querySubPlans.empty()) {
+        candidateQueryPlan = QueryPlan::create();
+        candidateQueryPlan->setQueryId(queryId);
+        candidateQueryPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
+        return candidateQueryPlan;
     }
 
-    //Find the candidate node
-    if (candidateOperator->instanceOf<SourceLogicalOperatorNode>()) {
-        if (candidateTopologyNode->getId() != topology->getRoot()->getId()) {
-            candidateTopologyNode = candidateTopologyNode->getAllRootNodes()[0]->as<TopologyNode>();
-        }
-    } else {
-        candidateTopologyNode = topology->findCommonAncestor(parentTopologyNodes);
-        if (!candidateTopologyNode) {
-            NES_ERROR("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
-            throw QueryPlacementException("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
-        }
-        if (candidateTopologyNode->getAvailableResources() == 0) {
-            while (!candidateTopologyNode->getParents().empty()) {
-                //FIXME: we are considering only one root node currently
-                candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
-                if (candidateTopologyNode->getAvailableResources() > 0) {
-                    break;
-                }
-            }
-        }
-    }
-
-    if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
-        NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
-        throw QueryPlacementException("BottomUpStrategy: No node available for further placement of operators");
-    }
-
-    //Perform placement of fwd operators
-    std::vector<uint64_t> childrenOperatorIds;
-    std::vector<NodePtr> childrenOperator = candidateOperator->getChildren();
-    for (auto& child : childrenOperator) {
-        OperatorNodePtr childOperator = child->as<OperatorNode>();
-        uint64_t childOperatorId = childOperator->getId();
-        ExecutionNodePtr startExecutionNode = operatorToExecutionNodeMap[childOperatorId];
-        TopologyNodePtr startTopologyNode = startExecutionNode->getTopologyNode();
-
-        if (startTopologyNode->getId() == candidateTopologyNode->getId()) {
-            childrenOperatorIds.push_back(childOperatorId);
-            NES_DEBUG("BottomUpStrategy: Skip adding candidate operator for now");
-            continue;
-        }
-
-        std::vector<QueryPlanPtr> querySubPlans = startExecutionNode->getQuerySubPlans(queryId);
-        auto found = find_if(querySubPlans.begin(), querySubPlans.end(), [&](QueryPlanPtr queryPlan) {
-            //FIXME: We assume that there should not be more than one root operator for a query sub Plan
-            // This may not work when we bring in split operator
-            OperatorNodePtr rootOperator = queryPlan->getRootOperators()[0];
-            return rootOperator->getId() == childOperatorId;
-        });
-
-        if (found == querySubPlans.end()) {
-            NES_ERROR("BottomUpStrategy: unable to find query plan with child operator as root.");
-            throw QueryPlacementException("BottomUpStrategy: unable to find query plan with child operator as root.");
-        }
-
-        QueryPlanPtr startQueryPlan = *found;
-        uint64_t networkSourceOperatorId = -1;
-        //Start from next node
-        TopologyNodePtr parentTopologyNode = startTopologyNode->getParents()[0]->as<TopologyNode>();
-        while (parentTopologyNode) {
-
-            networkSourceOperatorId = addNetworkSinkOperator(startQueryPlan, parentTopologyNode);
-            typeInferencePhase->execute(startQueryPlan);
-            ExecutionNodePtr candidateExecutionNode = getCandidateExecutionNode(parentTopologyNode);
-            startQueryPlan = QueryPlan::create();
-            startQueryPlan->setQueryId(queryId);
-            startQueryPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
-            SchemaPtr inputSchema = childOperator->getOutputSchema();
-            addNetworkSourceOperator(startQueryPlan, inputSchema, networkSourceOperatorId);
-            typeInferencePhase->execute(startQueryPlan);
-            candidateExecutionNode->addNewQuerySubPlan(queryId, startQueryPlan);
-            globalExecutionPlan->scheduleExecutionNode(candidateExecutionNode);
-            if (parentTopologyNode->getParents().empty()) {
-                parentTopologyNode = nullptr;
-            } else {
-                parentTopologyNode = parentTopologyNode->getParents()[0]->as<TopologyNode>();
-            }
-        }
-        childrenOperatorIds.push_back(networkSourceOperatorId);
-    }
-
-    if (childrenOperatorIds.empty()) {
-        NES_ERROR("BottomUpStrategy: unable to find the children operator ids for the operator " << candidateOperator->toString());
-        throw QueryPlacementException("BottomUpStrategy: unable to find the children operator ids for the operator " + candidateOperator->toString());
-    }
-
-    ExecutionNodePtr candidateExecutionNode = getCandidateExecutionNode(candidateTopologyNode);
-    std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
+    std::vector<NodePtr> children = candidateOperator->getChildren();
     std::vector<QueryPlanPtr> queryPlansWithChildren;
     //NOTE: we do not check for parent operators as we are performing bottom up placement.
-    for (auto& childrenId : childrenOperatorIds) {
+    for (auto& child : children) {
         auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](QueryPlanPtr querySubPlan) {
-            const std::vector<OperatorNodePtr> rootOperators = querySubPlan->getRootOperators();
-            for (auto root : rootOperators) {
-                if (root->as<OperatorNode>()->getId() == childrenId) {
-                    return true;
-                }
-            }
-            return false;
+            return querySubPlan->hasOperator(child->as<OperatorNode>());
         });
 
         if (found != querySubPlans.end()) {
@@ -251,41 +162,29 @@ void TopDownStrategy::placeNAryOrSinkOperator(QueryId queryId, OperatorNodePtr c
         }
     }
 
-    if (queryPlansWithChildren.size() != childrenOperatorIds.size()) {
-        NES_ERROR("BottomUpStrategy: Unable to find all query sub plans with children nodes on the execution node.");
-        throw QueryPlacementException("BottomUpStrategy: Unable to find all query sub plans with children nodes on the execution node.");
-    }
-
-    const OperatorNodePtr copyOfCandidateOperator = candidateOperator->copy();
-    NES_DEBUG("BottomUpStrategy: Merging the Query plans");
-    for (auto& queryPlan : queryPlansWithChildren) {
-        for (auto& rootOperator : queryPlan->getRootOperators()) {
-            copyOfCandidateOperator->addChild(rootOperator);
+    if (!queryPlansWithChildren.empty()) {
+        executionNode->updateQuerySubPlans(queryId, querySubPlans);
+        if (queryPlansWithChildren.size() > 1) {
+            candidateQueryPlan = QueryPlan::create();
+            candidateQueryPlan->setQueryId(queryId);
+            candidateQueryPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
+            for (auto& queryPlanWithChildren : queryPlansWithChildren) {
+                for (auto& root : queryPlanWithChildren->getRootOperators()) {
+                    candidateQueryPlan->addRootOperator(root);
+                }
+            }
+            return candidateQueryPlan;
+        } else if (queryPlansWithChildren.size() == 1) {
+            return queryPlansWithChildren[0];
         }
     }
-
-    QueryPlanPtr querySubPlan = QueryPlan::create(copyOfCandidateOperator);
-    querySubPlan->setQueryId(queryId);
-    querySubPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
-    typeInferencePhase->execute(querySubPlan);
-    querySubPlans.push_back(querySubPlan);
-    NES_DEBUG("BottomUpStrategy: Reducing the node remaining CPU capacity by 1");
-    // Reduce the processing capacity by 1
-    // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
-    candidateTopologyNode->reduceResources(1);
-    operatorToExecutionNodeMap[candidateOperator->getId()] = candidateExecutionNode;
-    topology->reduceResources(candidateTopologyNode->getId(), 1);
-    if (!candidateExecutionNode->updateQuerySubPlans(queryId, querySubPlans)) {
-        NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
-        throw QueryPlacementException("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
-    }
-    globalExecutionPlan->scheduleExecutionNode(candidateExecutionNode);
-    for (auto& child : candidateOperator->getChildren()) {
-        recursiveOperatorPlacement(querySubPlan, child->as<OperatorNode>(), candidateTopologyNode, operatorToExecutionNodeMap);
-    }
+    candidateQueryPlan = QueryPlan::create();
+    candidateQueryPlan->setQueryId(queryId);
+    candidateQueryPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
+    return candidateQueryPlan;
 }
 
-std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForParentOperators(OperatorNodePtr candidateOperator, std::map<uint64_t, ExecutionNodePtr>& operatorToExecutionNodeMap) {
+std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForParentOperators(OperatorNodePtr candidateOperator) {
 
     std::vector<TopologyNodePtr> parentTopologyNodes;
     std::vector<NodePtr> parents = candidateOperator->getParents();
