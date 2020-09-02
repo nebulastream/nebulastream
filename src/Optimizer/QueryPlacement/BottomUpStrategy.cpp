@@ -36,7 +36,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         NES_ERROR("BottomUpStrategy: No source operators found in the query plan wih id: " << queryId);
         throw QueryPlacementException("BottomUpStrategy: No source operators found in the query plan wih id: " + queryId);
     }
-
+    mapPinnedOperatorToTopologyNodes(queryId, sourceOperators);
     NES_DEBUG("BottomUpStrategy: Get all sink operators");
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
     if (sinkOperators.empty()) {
@@ -56,7 +56,6 @@ void BottomUpStrategy::placeOperators(QueryPlanPtr queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
     NES_DEBUG("BottomUpStrategy: Get the all source operators for performing the placement.");
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
-    mapLogicalSourceToTopologyNodes(queryId, sourceOperators);
     for (auto& sourceOperator : sourceOperators) {
         NES_DEBUG("BottomUpStrategy: Get the topology node for source operator " << sourceOperator->toString() << " placement.");
         TopologyNodePtr candidateTopologyNode = getTopologyNodeForPinnedOperator(sourceOperator->getId());

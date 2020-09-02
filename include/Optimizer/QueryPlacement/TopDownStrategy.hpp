@@ -25,10 +25,11 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param queryPlan: query plan to place
      * @throws exception if the operator can't be placed.
      */
-    void placeOperators(QueryPlanPtr queryPlan);
-    void recursiveOperatorPlacement(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode);
+    void placeQueryPlan(QueryPlanPtr queryPlan);
+    void placeOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode);
     std::vector<TopologyNodePtr> getTopologyNodesForParentOperators(OperatorNodePtr candidateOperator);
     QueryPlanPtr getCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode);
+    std::vector<TopologyNodePtr> getTopologyNodesForSourceOperators(OperatorNodePtr candidateOperator);
 };
 
 }// namespace NES

@@ -26,7 +26,7 @@ namespace NES {
 BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr, TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
     : globalExecutionPlan(globalExecutionPlan), topology(topologyPtr), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog), pinnedOperatorLocationMap(), operatorToExecutionNodeMap() {}
 
-void BasePlacementStrategy::mapLogicalSourceToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {
+void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {
 
     NES_DEBUG("BasePlacementStrategy: Prepare a map of source to physical nodes");
     NES_DEBUG("BasePlacementStrategy: Clear the previous mapping");
@@ -143,10 +143,10 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNodeForPinnedOperator(uint64_t
     return candidateTopologyNode;
 }
 
-OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, TopologyNodePtr parentNesNode) {
+OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, TopologyNodePtr sourceTopologyNode) {
 
     NES_DEBUG("BasePlacementStrategy: found no existing network source operator in the parent execution node");
-    Network::NodeLocation nodeLocation(parentNesNode->getId(), parentNesNode->getIpAddress(), parentNesNode->getDataPort());
+    Network::NodeLocation nodeLocation(sourceTopologyNode->getId(), sourceTopologyNode->getIpAddress(), sourceTopologyNode->getDataPort());
     Network::NesPartition nesPartition(queryId, sourceOperatorId, sourceOperatorId, 0);
     const OperatorNodePtr networkSink = createSinkLogicalOperatorNode(Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));
     networkSink->setId(UtilityFunctions::getNextOperatorId());
