@@ -9,13 +9,14 @@ namespace NES {
 class TupleBuffer;
 class Schema;
 class MonitoringPlan;
+typedef std::shared_ptr<Schema> SchemaPtr;
 
 /**
  * @brief Wrapper class to represent the metrics read from the OS about cpu data.
  */
 class CpuMetrics {
   public:
-    CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues> arr);
+    CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues>&& arr);
 
     /**
      * @brief Returns the cpu metrics for a given core
@@ -48,7 +49,7 @@ class CpuMetrics {
      * @param prefix
      * @return The object
      */
-    static CpuMetrics fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+    static CpuMetrics fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
   private:
     CpuValues total;
@@ -64,7 +65,7 @@ class CpuMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const CpuMetrics& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 

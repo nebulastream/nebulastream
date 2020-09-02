@@ -83,8 +83,10 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
                ifname, &rBytes, &rPackets, &rErrs, &rDrop, &rFifo, &rFrame, &rCompressed, &rMulticast,
                &tBytes, &tPackets, &tErrs, &tDrop, &tFifo, &tColls, &tCarrier, &tCompressed);
         auto outputValue = NetworkValues();
+        // the name of the network interface
         outputValue.interfaceName = ifname;
 
+        // the received metric fields
         outputValue.rBytes = rBytes;
         outputValue.rPackets = rPackets;
         outputValue.rErrs = rErrs;
@@ -94,6 +96,7 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
         outputValue.rCompressed = rCompressed;
         outputValue.rMulticast = rMulticast;
 
+        // the transmitted metric fields
         outputValue.tBytes = tBytes;
         outputValue.tPackets = tPackets;
         outputValue.tErrs = tErrs;
@@ -102,6 +105,8 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
         outputValue.tColls = tColls;
         outputValue.tCarrier = tCarrier;
         outputValue.tCompressed = tCompressed;
+
+        // extension of the wrapper class object
         output.addNetworkValues(std::move(outputValue));
     }
     fclose(fp);

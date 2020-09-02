@@ -7,6 +7,7 @@ namespace NES {
 class Schema;
 class TupleBuffer;
 class MonitoringPlan;
+typedef std::shared_ptr<Schema> SchemaPtr;
 
 /**
  * @brief This class represents the metrics read from /proc/stat.
@@ -20,7 +21,7 @@ class CpuValues {
      * @param prefix
      * @return the schema
      */
-    static std::shared_ptr<Schema> getSchema(const std::string& prefix);
+    static SchemaPtr getSchema(const std::string& prefix);
 
     /**
      * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
@@ -29,7 +30,7 @@ class CpuValues {
      * @param prefix
      * @return The object
      */
-    static CpuValues fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+    static CpuValues fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
     uint64_t USER;
     uint64_t NICE;
@@ -51,7 +52,7 @@ class CpuValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(CpuValues metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const CpuValues& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 

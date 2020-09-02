@@ -1,7 +1,6 @@
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 
 #include <API/Schema.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
@@ -9,7 +8,7 @@
 
 namespace NES {
 
-std::shared_ptr<Schema> MemoryMetrics::getSchema(const std::string& prefix) {
+SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
     auto schema = Schema::create()
                       ->addField(prefix + "TOTAL_RAM", BasicType::UINT64)
                       ->addField(prefix + "TOTAL_SWAP", BasicType::UINT64)
@@ -27,7 +26,7 @@ std::shared_ptr<Schema> MemoryMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void serialize(MemoryMetrics metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const MemoryMetrics& metric, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     buf.setNumberOfTuples(1);
 
     auto noFields = schema->getSize();
@@ -49,7 +48,7 @@ void serialize(MemoryMetrics metric, std::shared_ptr<Schema> schema, TupleBuffer
     layout->getValueField<uint64_t>(0, noFields + 12)->write(buf, metric.LOADS_15MIN);
 }
 
-MemoryMetrics MemoryMetrics::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     MemoryMetrics output{};
     auto i = schema->getIndex(prefix + "TOTAL_RAM");
 

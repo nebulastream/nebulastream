@@ -8,12 +8,14 @@
 
 namespace NES {
 class Metric;
+class MetricCatalog;
+typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
 
 class MetricCatalog {
   public:
-    static std::shared_ptr<MetricCatalog> create(std::map<MetricValueType, Metric> metrics);
+    static MetricCatalogPtr create(std::map<MetricValueType, Metric> metrics);
 
-    static std::shared_ptr<MetricCatalog> NesMetrics();
+    static MetricCatalogPtr NesMetrics();
 
     /**
      * @brief Registers a metric.
@@ -29,8 +31,6 @@ class MetricCatalog {
   private:
     std::map<MetricValueType, Metric> metrics;
 };
-
-typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
 
 }
 
