@@ -54,6 +54,7 @@ class MetricGroup {
      * @param buf
      */
     void getSample(std::shared_ptr<Schema> schema, TupleBuffer& buf);
+
   private:
     MetricGroup();
     std::unordered_map<std::string, Metric> metricMap;

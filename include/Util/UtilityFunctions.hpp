@@ -22,7 +22,7 @@ class UtilityFunctions {
      * @param ending
      * @return true if it ends with the given string, else false
      */
-    static bool endsWith(std::string const &fullString, std::string const &ending);
+    static bool endsWith(std::string const& fullString, std::string const& ending);
 
     /**
      * @brief Checks if a string starts with a given string.
@@ -30,7 +30,7 @@ class UtilityFunctions {
      * @param start
      * @return true if it ends with the given string, else false
      */
-    static bool startsWith(std::string const &fullString, std::string const &ending);
+    static bool startsWith(std::string const& fullString, std::string const& ending);
 
     /**
    *  @brief this function **executes** the code provided by the user and returns an InputQuery Object

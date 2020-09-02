@@ -19,7 +19,7 @@ class MemoryMetrics {
      * @param prefix
      * @return the schema
      */
-    static SchemaPtr getSchema(const std::string& prefix="");
+    static SchemaPtr getSchema(const std::string& prefix = "");
 
     /**
      * @brief Parses a MemoryMetrics objects from a given Schema and TupleBuffer.
@@ -61,6 +61,5 @@ void serialize(const MemoryMetrics& metrics, SchemaPtr schema, TupleBuffer& buf,
 
 typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
 }// namespace NES
-
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
