@@ -7,6 +7,7 @@ namespace NES {
 class Schema;
 class TupleBuffer;
 class MonitoringPlan;
+typedef std::shared_ptr<Schema> SchemaPtr;
 
 /**
  * @brief This class represents the metric values read from /proc/net/dev.
@@ -20,7 +21,7 @@ class NetworkValues {
      * @param prefix
      * @return the schema
      */
-    static std::shared_ptr<Schema> getSchema(const std::string& prefix);
+    static SchemaPtr getSchema(const std::string& prefix);
 
     /**
      * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
@@ -29,7 +30,7 @@ class NetworkValues {
      * @param prefix
      * @return The object
      */
-    static NetworkValues fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+    static NetworkValues fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
     std::string interfaceName;
 
@@ -60,7 +61,7 @@ class NetworkValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(NetworkValues metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const NetworkValues& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 

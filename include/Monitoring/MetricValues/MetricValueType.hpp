@@ -10,12 +10,7 @@ enum MetricValueType {
     CpuMetric,
     DiskMetric,
     MemoryMetric,
-    NetworkMetric,
-
-    //not supported so far
-    //UINT64Metric,
-    //INT64Metric,
-    //StringMetric
+    NetworkMetric
 };
 
 }

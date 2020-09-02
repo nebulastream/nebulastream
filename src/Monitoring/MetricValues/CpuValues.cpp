@@ -1,7 +1,6 @@
 #include <Monitoring/MetricValues/CpuValues.hpp>
 
 #include <API/Schema.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
@@ -9,7 +8,7 @@
 
 namespace NES {
 
-std::shared_ptr<Schema> CpuValues::getSchema(const std::string& prefix) {
+SchemaPtr CpuValues::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create()
                            ->addField(prefix + "USER", BasicType::UINT64)
                            ->addField(prefix + "NICE", BasicType::UINT64)
@@ -24,7 +23,7 @@ std::shared_ptr<Schema> CpuValues::getSchema(const std::string& prefix) {
     return schema;
 }
 
-CpuValues CpuValues::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+CpuValues CpuValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     CpuValues output{};
     auto i = schema->getIndex(prefix + "USER");
 
@@ -49,7 +48,7 @@ CpuValues CpuValues::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf
     return output;
 }
 
-void serialize(CpuValues metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const CpuValues& metric, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     auto schemaSize = schema->getSize();
     schema->copyFields(CpuValues::getSchema(prefix));
 

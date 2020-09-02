@@ -8,7 +8,7 @@
 
 namespace NES {
 
-CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues> arr) : total(total), numCores(size) {
+CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues>&& arr) : total(total), numCores(size) {
     if (numCores > 0) {
         cpuValues = std::move(arr);
     } else {
@@ -34,7 +34,7 @@ CpuValues CpuMetrics::getTotal() const {
     return total;
 }
 
-CpuMetrics CpuMetrics::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     auto i = schema->getIndex(prefix + "CORE_NO");
 
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->name, "CORE_NO")) {
@@ -52,7 +52,7 @@ CpuMetrics CpuMetrics::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& b
     }
 }
 
-void serialize(CpuMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const CpuMetrics& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     // extend the schema with the core number
     auto noFields = schema->getSize();
     schema->addField(prefix + "CORE_NO", BasicType::UINT16);

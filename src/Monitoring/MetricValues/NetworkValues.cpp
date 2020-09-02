@@ -1,16 +1,13 @@
 #include <API/Schema.hpp>
-#include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cstring>
 
 namespace NES {
 
-std::shared_ptr<Schema> NetworkValues::getSchema(const std::string& prefix) {
+SchemaPtr NetworkValues::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create()
                            ->addField(prefix + "rBytes", BasicType::UINT64)
                            ->addField(prefix + "rPackets", BasicType::UINT64)
@@ -30,11 +27,10 @@ std::shared_ptr<Schema> NetworkValues::getSchema(const std::string& prefix) {
                            ->addField(prefix + "tCarrier", BasicType::UINT64)
                            ->addField(prefix + "tCompressed", BasicType::UINT64);
 
-    //->addField(prefix + "interfaceName", DataTypeFactory::createFixedChar(20));
     return schema;
 }
 
-NetworkValues NetworkValues::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     NetworkValues output{};
     auto i = schema->getIndex(prefix);
 
@@ -69,12 +65,10 @@ NetworkValues NetworkValues::fromBuffer(std::shared_ptr<Schema> schema, TupleBuf
     output.tCarrier = layout->getValueField<uint64_t>(0, i++)->read(buf);
     output.tCompressed = layout->getValueField<uint64_t>(0, i++)->read(buf);
 
-    //auto ptr = layout->getFieldPointer<char>(buf, 0,i++);
-    //output.interfaceName = std::string(ptr, 20);
     return output;
 }
 
-void serialize(NetworkValues metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const NetworkValues& metric, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     auto noFields = schema->getSize();
     schema->copyFields(NetworkValues::getSchema(prefix));
 
@@ -96,10 +90,6 @@ void serialize(NetworkValues metric, std::shared_ptr<Schema> schema, TupleBuffer
     layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tColls);
     layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tCarrier);
     layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tCompressed);
-
-    //TODO: fix this
-    //auto array = layout->getFieldPointer<char>(buf, 0, noFields);
-    //std::strncpy(array, metric.interfaceName.c_str(), 20);
 
     buf.setNumberOfTuples(1);
 }

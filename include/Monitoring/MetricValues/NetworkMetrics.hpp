@@ -12,28 +12,29 @@ class Schema;
 class TupleBuffer;
 class MonitoringPlan;
 
+typedef std::shared_ptr<Schema> SchemaPtr;
+
 class NetworkMetrics {
 
   public:
     NetworkMetrics() = default;
 
-    // Overloading [] operator to access elements in array style
-    NetworkValues& operator[](unsigned int interfaceNo);
+    NetworkValues getNetworkValue(uint64_t interfaceNo) const;
 
     std::vector<std::string> getInterfaceNames();
 
-    unsigned int getInterfaceNum() const;
+    uint64_t getInterfaceNum() const;
 
     void addNetworkValues(NetworkValues&& nwValue);
 
     /**
      * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
-     * @param schema
-     * @param buf
-     * @param prefix
-     * @return The object
+     * @param schema The schema object, that will be extended with the new schema of the network metrics
+     * @param buf The buffer where to data is written into
+     * @param prefix A prefix that is appended to the schema fields
+     * @return The NetworkMetrics object
      */
-    static NetworkMetrics fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+    static NetworkMetrics fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
   private:
     std::vector<NetworkValues> networkValues;
@@ -47,7 +48,7 @@ class NetworkMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(NetworkMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const NetworkMetrics& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 

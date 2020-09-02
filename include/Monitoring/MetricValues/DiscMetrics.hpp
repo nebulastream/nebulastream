@@ -8,6 +8,7 @@ namespace NES {
 class Schema;
 class TupleBuffer;
 class MonitoringPlan;
+typedef std::shared_ptr<Schema> SchemaPtr;
 
 class DiskMetrics {
   public:
@@ -18,7 +19,7 @@ class DiskMetrics {
      * @param prefix
      * @return the schema
      */
-    static std::shared_ptr<Schema> getSchema(const std::string& prefix);
+    static SchemaPtr getSchema(const std::string& prefix);
 
     /**
      * @brief Parses a DiskMetrics objects from a given Schema and TupleBuffer.
@@ -27,7 +28,7 @@ class DiskMetrics {
      * @param prefix
      * @return The object
      */
-    static DiskMetrics fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+    static DiskMetrics fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
     uint64_t fBsize;
     uint64_t fFrsize;
@@ -46,7 +47,7 @@ typedef std::shared_ptr<DiskMetrics> DiskMetricsPtr;
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(DiskMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const DiskMetrics& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 

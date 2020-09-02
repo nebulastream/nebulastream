@@ -8,6 +8,7 @@ namespace NES {
 class TupleBuffer;
 class Schema;
 class MonitoringPlan;
+typedef std::shared_ptr<Schema> SchemaPtr;
 
 class MemoryMetrics {
   public:
@@ -18,7 +19,7 @@ class MemoryMetrics {
      * @param prefix
      * @return the schema
      */
-    static std::shared_ptr<Schema> getSchema(const std::string& prefix="");
+    static SchemaPtr getSchema(const std::string& prefix="");
 
     /**
      * @brief Parses a MemoryMetrics objects from a given Schema and TupleBuffer.
@@ -27,7 +28,7 @@ class MemoryMetrics {
      * @param prefix
      * @return The MemoryMetrics object
      */
-    static MemoryMetrics fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+    static MemoryMetrics fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
     //equality operators
     bool operator==(const MemoryMetrics& rhs) const;
@@ -56,7 +57,7 @@ class MemoryMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(MemoryMetrics metrics, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const MemoryMetrics& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
 
 typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
 }// namespace NES

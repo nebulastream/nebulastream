@@ -297,17 +297,16 @@ const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
 
 bool UtilityFunctions::endsWith(const std::string& fullString, const std::string& ending) {
     if (fullString.length() >= ending.length()) {
+        // get the start of the ending index of the full string and compare with the ending string
         return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
     } else {
+        // if full string is smaller than the ending automatically return false
         return false;
     }
 }
 
 bool UtilityFunctions::startsWith(const std::string& fullString, const std::string& ending) {
-    if (fullString.rfind(ending, 0) == 0) {
-        return true;
-    }
-    return false;
+    return (fullString.rfind(ending, 0) == 0);
 }
 
 uint64_t UtilityFunctions::getNextQueryId() {

@@ -31,15 +31,19 @@ void MonitoringPlan::addMetric(MetricValueType metric) {
     switch (metric) {
         case CpuMetric: {
             cpuMetrics = true;
+            break;
         };
         case DiskMetric: {
             diskMetrics = true;
+            break;
         };
         case MemoryMetric: {
             memoryMetrics = true;
+            break;
         };
         case NetworkMetric: {
             networkMetrics = true;
+            break;
         };
     }
 }
@@ -54,18 +58,22 @@ std::shared_ptr<MetricGroup> MonitoringPlan::createMetricGroup() const {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     if (cpuMetrics) {
+        NES_DEBUG("MonitoringPlan: Adding " + MonitoringPlan::CPU_METRICS_DESC + " to monitoring plan.");
         Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
         metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, cpuStats);
     }
     if (diskMetrics) {
+        NES_DEBUG("MonitoringPlan: Adding " + MonitoringPlan::DISK_METRICS_DESC + " to monitoring plan.");
         Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
         metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, diskStats);
     }
     if (memoryMetrics) {
+        NES_DEBUG("MonitoringPlan: Adding " + MonitoringPlan::MEMORY_METRICS_DESC + " to monitoring plan.");
         Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
         metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
     }
     if (networkMetrics) {
+        NES_DEBUG("MonitoringPlan: Adding " + MonitoringPlan::NETWORK_METRICS_DESC + " to monitoring plan.");
         Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
         metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, networkStats);
     }

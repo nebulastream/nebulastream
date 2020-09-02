@@ -8,7 +8,7 @@
 
 namespace NES {
 
-std::shared_ptr<Schema> DiskMetrics::getSchema(const std::string& prefix) {
+SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create()
                            ->addField(prefix + "F_BSIZE", BasicType::UINT64)
                            ->addField(prefix + "F_FRSIZE", BasicType::UINT64)
@@ -18,7 +18,7 @@ std::shared_ptr<Schema> DiskMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void serialize(DiskMetrics metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const DiskMetrics& metric, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     auto noFields = schema->getSize();
     schema->copyFields(DiskMetrics::getSchema(prefix));
 
@@ -31,7 +31,7 @@ void serialize(DiskMetrics metric, std::shared_ptr<Schema> schema, TupleBuffer& 
     buf.setNumberOfTuples(1);
 }
 
-DiskMetrics DiskMetrics::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     DiskMetrics output{};
     auto i = schema->getIndex(prefix);
 

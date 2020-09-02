@@ -19,7 +19,7 @@ std::shared_ptr<MetricCatalog> MetricCatalog::NesMetrics() {
 }
 
 bool MetricCatalog::add(MetricValueType type, const Metric& metric) {
-    if (metrics.count(type)) {
+    if (metrics.count(type) > 0) {
         return false;
     }
     else {
