@@ -51,7 +51,9 @@ void OperatorNode::setOutputSchema(SchemaPtr outputSchema) {
 }
 
 bool OperatorNode::isNAryOperator() {
+    //has multiple child operator
     bool hasMultipleChildren = (!getChildren().empty()) && getChildren().size() > 1;
+    //has multiple parent operator
     bool hasMultipleParent = (!getParents().empty()) && getParents().size() > 1;
     NES_DEBUG("OperatorNode: has multiple children " << hasMultipleChildren << " or has multiple parent " << hasMultipleParent);
     return hasMultipleChildren || hasMultipleParent;
@@ -95,7 +97,7 @@ OperatorNodePtr OperatorNode::getDuplicateOfParent(OperatorNodePtr operatorNode)
 
 OperatorNodePtr OperatorNode::getDuplicateOfChild(OperatorNodePtr operatorNode) {
     NES_DEBUG("OperatorNode: create copy of the input operator");
-    const OperatorNodePtr& copyOfOperator = operatorNode->copy();
+    OperatorNodePtr copyOfOperator = operatorNode->copy();
     if (operatorNode->getChildren().empty()) {
         NES_TRACE("OperatorNode: No children of the input node. Returning the copy of the input operator");
         return copyOfOperator;
@@ -109,7 +111,7 @@ OperatorNodePtr OperatorNode::getDuplicateOfChild(OperatorNodePtr operatorNode) 
     return copyOfOperator;
 }
 
-bool OperatorNode::addChild(const NodePtr newNode) {
+bool OperatorNode::addChild(NodePtr newNode) {
 
     if (newNode->as<OperatorNode>()->getId() == id) {
         NES_ERROR("OperatorNode: can not add self as child to itself");
@@ -131,7 +133,7 @@ bool OperatorNode::addChild(const NodePtr newNode) {
     return false;
 }
 
-bool OperatorNode::addParent(const NodePtr newNode) {
+bool OperatorNode::addParent(NodePtr newNode) {
 
     if (newNode->as<OperatorNode>()->getId() == id) {
         NES_ERROR("OperatorNode: can not add self as parent to itself");

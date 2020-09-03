@@ -270,8 +270,8 @@ bool Node::removeAndJoinParentAndChildren() {
     try {
         NES_DEBUG("Node: Joining parents with children");
 
-        for (auto parent : parents) {
-            for (auto child : children) {
+        for (auto& parent : parents) {
+            for (auto& child : children) {
 
                 NES_DEBUG("Node: Add child of this node as child of this node's parent");
                 parent->addChild(child);
@@ -321,13 +321,13 @@ std::vector<NodePtr> Node::getAllRootNodes() {
         rootNodes.push_back(shared_from_this());
     }
 
-    for (auto parent : parents) {
+    for (auto& parent : parents) {
         if (parent->getParents().empty()) {
             NES_DEBUG("Node: Inserting root node to the collection");
             rootNodes.push_back(parent);
         } else {
             NES_DEBUG("Node: Iterating over all parents to find more root nodes");
-            for (auto parentOfParent : parent->getParents()) {
+            for (auto& parentOfParent : parent->getParents()) {
                 std::vector<NodePtr> parentNodes = parentOfParent->getAllRootNodes();
                 NES_DEBUG("Node: inserting parent nodes into the collection of parent nodes");
                 rootNodes.insert(rootNodes.end(), parentNodes.begin(), parentNodes.end());
@@ -341,13 +341,13 @@ std::vector<NodePtr> Node::getAllRootNodes() {
 std::vector<NodePtr> Node::getAllLeafNodes() {
     NES_DEBUG("Node: Get all leaf nodes for this node");
     std::vector<NodePtr> leafNodes;
-    for (auto child : children) {
+    for (auto& child : children) {
         if (child->getChildren().empty()) {
             NES_DEBUG("Node: Inserting leaf node to the collection");
             leafNodes.push_back(child);
         } else {
             NES_DEBUG("Node: Iterating over all children to find more leaf nodes");
-            for (auto childOfChild : child->getChildren()) {
+            for (auto& childOfChild : child->getChildren()) {
                 std::vector<NodePtr> childrenLeafNodes = childOfChild->getAllLeafNodes();
                 NES_DEBUG("Node: inserting leaf nodes into the collection of leaf nodes");
                 leafNodes.insert(leafNodes.end(), childrenLeafNodes.begin(), childrenLeafNodes.end());

@@ -75,14 +75,14 @@ void BottomUpStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
     NES_DEBUG("BottomUpStrategy: Finished placing query operators into the global execution plan");
 }
 
-void BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode) {
+void BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode) {
 
-    NES_DEBUG("BottomUpStrategy: Place " << candidateOperator);
-    if (candidateOperator->isNAryOperator()) {
+    NES_DEBUG("BottomUpStrategy: Place " << operatorNode);
+    if (operatorNode->isNAryOperator()) {
         NES_TRACE("BottomUpStrategy: Received an NAry operator for placement.");
         //Check if all children operators already placed
         NES_TRACE("BottomUpStrategy: Get the topology nodes where child operators are placed.");
-        std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(candidateOperator);
+        std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(operatorNode);
         if (childTopologyNodes.empty()) {
             NES_WARNING("BottomUpStrategy: No topology node found where child operators are placed.");
             return;
@@ -93,9 +93,9 @@ void BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr candidateO
             NES_ERROR("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
             throw QueryPlacementException("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
         }
-    } else if (candidateOperator->instanceOf<SinkLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_ERROR("BottomUpStrategy: Received Sink operator for placement.");
-        candidateTopologyNode = getTopologyNodeForPinnedOperator(candidateOperator->getId());
+        candidateTopologyNode = getTopologyNodeForPinnedOperator(operatorNode->getId());
         if (candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
             throw QueryPlacementException("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
@@ -124,8 +124,8 @@ void BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr candidateO
     ExecutionNodePtr candidateExecutionNode = getExecutionNode(candidateTopologyNode);
 
     NES_TRACE("BottomUpStrategy: Get the candidate query plan where operator is to be appended.");
-    QueryPlanPtr candidateQueryPlan = getCandidateQueryPlan(queryId, candidateOperator, candidateExecutionNode);
-    candidateQueryPlan->appendOperator(candidateOperator->copy());
+    QueryPlanPtr candidateQueryPlan = getCandidateQueryPlan(queryId, operatorNode, candidateExecutionNode);
+    candidateQueryPlan->appendOperator(operatorNode->copy());
 
     NES_TRACE("BottomUpStrategy: Add the query plan to the candidate execution node.");
     if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
@@ -136,7 +136,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr candidateO
     globalExecutionPlan->scheduleExecutionNode(candidateExecutionNode);
 
     NES_TRACE("BottomUpStrategy: Place the information about the candidate execution plan and operator id in the map.");
-    operatorToExecutionNodeMap[candidateOperator->getId()] = candidateExecutionNode;
+    operatorToExecutionNodeMap[operatorNode->getId()] = candidateExecutionNode;
     NES_DEBUG("BottomUpStrategy: Reducing the node remaining CPU capacity by 1");
     // Reduce the processing capacity by 1
     // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
@@ -144,14 +144,14 @@ void BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr candidateO
     topology->reduceResources(candidateTopologyNode->getId(), 1);
 
     NES_TRACE("BottomUpStrategy: Place the parent operators.");
-    for (auto& parent : candidateOperator->getParents()) {
+    for (auto& parent : operatorNode->getParents()) {
         placeOperator(queryId, parent->as<OperatorNode>(), candidateTopologyNode);
     }
 }
 
-QueryPlanPtr BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode) {
+QueryPlanPtr BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNodePtr operatorNode, ExecutionNodePtr executionNode) {
 
-    NES_DEBUG("BottomUpStrategy: Get candidate query plan for the operator " << candidateOperator << " on execution node with id " << executionNode->getId());
+    NES_DEBUG("BottomUpStrategy: Get candidate query plan for the operator " << operatorNode << " on execution node with id " << executionNode->getId());
     NES_TRACE("BottomUpStrategy: Get all query sub plans for the query id on the execution node.");
     std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
     QueryPlanPtr candidateQueryPlan;
@@ -165,7 +165,7 @@ QueryPlanPtr BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNo
 
     std::vector<QueryPlanPtr> queryPlansWithChildren;
     NES_TRACE("BottomUpStrategy: Find query plans with child operators for the input logical operator.");
-    std::vector<NodePtr> children = candidateOperator->getChildren();
+    std::vector<NodePtr> children = operatorNode->getChildren();
     //NOTE: we do not check for parent operators as we are performing bottom up placement.
     for (auto& child : children) {
         auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](QueryPlanPtr querySubPlan) {
@@ -206,11 +206,11 @@ QueryPlanPtr BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNo
     return candidateQueryPlan;
 }
 
-std::vector<TopologyNodePtr> BottomUpStrategy::getTopologyNodesForChildrenOperators(OperatorNodePtr candidateOperator) {
+std::vector<TopologyNodePtr> BottomUpStrategy::getTopologyNodesForChildrenOperators(OperatorNodePtr operatorNode) {
 
     std::vector<TopologyNodePtr> childTopologyNodes;
     NES_DEBUG("BottomUpStrategy: Get topology nodes with children operators");
-    std::vector<NodePtr> children = candidateOperator->getChildren();
+    std::vector<NodePtr> children = operatorNode->getChildren();
     for (auto& child : children) {
         const auto& found = operatorToExecutionNodeMap.find(child->as<OperatorNode>()->getId());
         if (found == operatorToExecutionNodeMap.end()) {
