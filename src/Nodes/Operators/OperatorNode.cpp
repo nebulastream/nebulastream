@@ -153,13 +153,13 @@ bool OperatorNode::addParent(const NodePtr newNode) {
     return false;
 }
 
-NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorIdToFind) {
+NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorId) {
 
-    if (id == operatorIdToFind) {
+    if (id == operatorId) {
         return shared_from_this();
     }
     for (auto& child : children) {
-        auto found = child->as<OperatorNode>()->getChildWithOperatorId(operatorIdToFind);
+        auto found = child->as<OperatorNode>()->getChildWithOperatorId(operatorId);
         if (found) {
             return found;
         }

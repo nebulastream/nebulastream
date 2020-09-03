@@ -77,10 +77,10 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(std::vector<TopologyNodeP
         startNodesOfGraph.push_back(startNodeOfGraph);
     }
     NES_TRACE("Topology: Merge all found sub-graphs together to create a single sub graph and return the set of start nodes of the merged graph.");
-    return mergeGraphs(startNodesOfGraph);
+    return mergeSubGraphs(startNodesOfGraph);
 }
 
-std::vector<TopologyNodePtr> Topology::mergeGraphs(std::vector<TopologyNodePtr> startNodes) {
+std::vector<TopologyNodePtr> Topology::mergeSubGraphs(std::vector<TopologyNodePtr> startNodes) {
     NES_INFO("Topology: Merge " << startNodes.size() << " sub-graphs to create a single sub-graph");
 
     NES_DEBUG("Topology: Compute a map storing number of times a node occurred in different sub-graphs");
@@ -483,7 +483,7 @@ std::vector<TopologyNodePtr> Topology::findTopologyNodesBetween(TopologyNodePtr 
     NES_DEBUG("Topology: iterate over parent of the source node and find path between its parent and destination nodes.");
     for (auto& sourceParent : sourceNode->getParents()) {
         std::vector<TopologyNodePtr> foundBetweenNodes = findTopologyNodesBetween(sourceParent->as<TopologyNode>(), destinationNode);
-        if(!foundBetweenNodes.empty()){
+        if (!foundBetweenNodes.empty()) {
             NES_TRACE("Topology: found a path between source nodes parent and destination nodes.");
             nodesBetween.push_back(sourceNode);
             nodesBetween.insert(nodesBetween.end(), foundBetweenNodes.begin(), foundBetweenNodes.end());

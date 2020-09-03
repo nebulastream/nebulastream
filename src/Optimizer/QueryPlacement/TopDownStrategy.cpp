@@ -52,13 +52,11 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     placeQueryPlan(queryPlan);
     NES_DEBUG("TopDownStrategy: Add system generated operators for query with id : " << queryId);
     addSystemGeneratedOperators(queryPlan);
-    NES_DEBUG("TopDownStrategy: Run type inference phase for query plans in global execution plan for query with id : " << queryId);
-    runTypeInferencePhase(queryId);
-
     NES_DEBUG("TopDownStrategy: clear the temporary map : " << queryId);
     operatorToExecutionNodeMap.clear();
     pinnedOperatorLocationMap.clear();
-    return true;
+    NES_DEBUG("TopDownStrategy: Run type inference phase for query plans in global execution plan for query with id : " << queryId);
+    return runTypeInferencePhase(queryId);
 }
 
 void TopDownStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
@@ -134,7 +132,7 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr candidateOp
     }
 
     NES_TRACE("TopDownStrategy: Get the candidate execution node for the candidate topology node.");
-    ExecutionNodePtr candidateExecutionNode = getCandidateExecutionNode(candidateTopologyNode);
+    ExecutionNodePtr candidateExecutionNode = getExecutionNode(candidateTopologyNode);
 
     NES_TRACE("TopDownStrategy: Get the candidate query plan where operator is to be pre-pended.");
     QueryPlanPtr candidateQueryPlan = getCandidateQueryPlan(queryId, candidateOperator, candidateExecutionNode);

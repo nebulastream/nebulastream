@@ -1,12 +1,12 @@
 #ifndef NES_INCLUDE_PLANS_QUERY_HPP_
 #define NES_INCLUDE_PLANS_QUERY_HPP_
 #include <API/QueryId.hpp>
-#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <memory>
-#include <vector>
 #include <set>
+#include <vector>
 
 namespace NES {
 

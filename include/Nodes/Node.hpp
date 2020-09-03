@@ -278,13 +278,6 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     std::vector<NodePtr> getAndFlattenAllAncestors();
 
-    /**
-     * @brief Find the ancestor node of the given set of children
-     * @param children: set of children
-     * @return returns the youngest ancestor node that can reach to all of the children else nullptr
-     */
-    NodePtr getImmediateAncestorOf(std::vector<NodePtr> children);
-
   protected:
     /**
      * @brief the parents of this node. There is no equal nodes
