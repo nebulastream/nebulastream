@@ -3,20 +3,20 @@
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/KafkaSource.hpp>
+#include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <Util/Logger.hpp>
-#include <Sources/OPCSource.hpp>
 
 namespace NES {
 
@@ -78,11 +78,11 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             NES_INFO("ConvertPhysicalToLogicalSource: Creating OPC source");
             const OPCSourcePtr opcSourcePtr = std::dynamic_pointer_cast<OPCSource>(dataSource);
             const SourceDescriptorPtr opcSourceDescriptor =
-                    OPCSourceDescriptor::create(opcSourcePtr->getSchema(),
-                                                  opcSourcePtr->getUrl(),
-                                                  opcSourcePtr->getNodeId(),
-                                                  opcSourcePtr->getUser(),
-                                                  opcSourcePtr->getPassword());
+                OPCSourceDescriptor::create(opcSourcePtr->getSchema(),
+                                            opcSourcePtr->getUrl(),
+                                            opcSourcePtr->getNodeId(),
+                                            opcSourcePtr->getUser(),
+                                            opcSourcePtr->getPassword());
             return opcSourceDescriptor;
         }
 #endif
