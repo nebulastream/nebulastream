@@ -10,10 +10,10 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/KafkaSource.hpp>
+#include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Sources/ZmqSource.hpp>
-#include <Sources/OPCSource.hpp>
 
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
@@ -78,7 +78,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
 #ifdef ENABLE_OPC_BUILD
 
 const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& url,
-                                    UA_NodeId *nodeId,
+                                    UA_NodeId* nodeId,
                                     const std::string& user,
                                     const std::string& password) {
     return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password);

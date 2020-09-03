@@ -47,7 +47,6 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(Buf
  */
 const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& host, const uint16_t port);
 
-
 /**
  * @brief function to create a binary file source
  * @param schema of data source
@@ -107,7 +106,6 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
 #endif
 
 #ifdef ENABLE_OPC_BUILD
-
 
 /**
  * @brief Create OPC source
