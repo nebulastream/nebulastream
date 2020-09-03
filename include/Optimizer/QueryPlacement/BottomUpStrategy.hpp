@@ -37,26 +37,26 @@ class BottomUpStrategy : public BasePlacementStrategy {
     /**
      * @brief Try to place input operator on the input topology node
      * @param queryId :  the query id
-     * @param candidateOperator : the input operator to place
+     * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void placeOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode);
+    void placeOperator(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode);
 
     /**
      * @brief Get topology node where all children operators of the input operator are placed
-     * @param candidateOperator: the input operator
+     * @param operatorNode: the input operator
      * @return vector of topology nodes where child operator was placed or empty if not all children operators are placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(OperatorNodePtr candidateOperator);
+    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(OperatorNodePtr operatorNode);
 
     /**
      * @brief Get the candidate query plan where input operator is to be appended
      * @param queryId : the query id
-     * @param candidateOperator : the candidate operator
+     * @param operatorNode : the candidate operator
      * @param executionNode : the execution node where operator is to be placed
      * @return the query plan to which the input operator is to be appended
      */
-    QueryPlanPtr getCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode);
+    QueryPlanPtr getCandidateQueryPlan(QueryId queryId, OperatorNodePtr operatorNode, ExecutionNodePtr executionNode);
 };
 }// namespace NES
 

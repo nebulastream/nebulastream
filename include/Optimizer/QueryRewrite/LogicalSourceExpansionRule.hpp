@@ -24,6 +24,42 @@ typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePt
  * Note: Apart from replicating the logical source operator we also replicate its down stream operators till we
  * encounter first n-ary operator or we encounter sink operator.
  *
+ * Example: a query :                       Sink
+ *                                           |
+ *                                           Map
+ *                                           |
+ *                                        Source(Car)
+ *
+ * will be expanded to:                            Sink
+ *                                                /     \
+ *                                              /        \
+ *                                           Map1        Map2
+ *                                           |             |
+ *                                      Source(Car1)    Source(Car2)
+ *
+ *                                                     or
+ *
+ * a query :                                   Sink
+ *                                               |
+ *                                             Merge
+ *                                             /   \
+ *                                            /    Filter
+ *                                          /        |
+ *                                   Source(Car)   Source(Truck)
+ *
+ * will be expanded to:                            Sink
+ *                                                   |
+ *                                                 Merge
+ *                                              /  / \   \
+ *                                            /  /    \    \
+ *                                         /   /       \     \
+ *                                       /   /          \      \
+ *                                    /    /         Filter1   Filter2
+ *                                 /     /               \         \
+ *                               /      /                 \          \
+ *                         Src(Car1) Src(Car2)       Src(Truck1)  Src(Truck2)
+ *
+ *
  */
 class LogicalSourceExpansionRule {
   public:
