@@ -307,8 +307,8 @@
 #if defined(BACKWARD_SYSTEM_WINDOWS)
 
 #include <condition_variable>
-#include <thread>
 #include <mutex>
+#include <thread>
 
 #include <BaseTsd.h>
 typedef SSIZE_T ssize_t;

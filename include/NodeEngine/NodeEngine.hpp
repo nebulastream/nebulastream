@@ -64,7 +64,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param new query plan
      * @return true if succeeded, else false
      */
-    bool deployQueryInNodeEngine(QueryExecutionPlanPtr qep);
+    bool deployQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPlan);
 
     /**
      * @brief undeploy stops and undeploy a query
@@ -78,7 +78,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(QueryExecutionPlanPtr qep);
+    bool registerQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPlan);
 
     /**
      * @brief registers a query
@@ -156,7 +156,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     * @param id of the query
     * @return vector of queryStatistics
     */
-    std::vector<QueryStatisticsPtr> getQueryStatistics(const QueryId queryId);
+    std::vector<QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
 
     Network::PartitionManagerPtr getPartitionManager();
 

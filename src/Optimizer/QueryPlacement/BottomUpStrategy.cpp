@@ -51,13 +51,11 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     placeQueryPlan(queryPlan);
     NES_DEBUG("BottomUpStrategy: Add system generated operators for query with id : " << queryId);
     addSystemGeneratedOperators(queryPlan);
-    NES_DEBUG("BottomUpStrategy: Run type inference phase for query plans in global execution plan for query with id : " << queryId);
-    runTypeInferencePhase(queryId);
-
     NES_DEBUG("BottomUpStrategy: clear the temporary map : " << queryId);
     operatorToExecutionNodeMap.clear();
     pinnedOperatorLocationMap.clear();
-    return true;
+    NES_DEBUG("BottomUpStrategy: Run type inference phase for query plans in global execution plan for query with id : " << queryId);
+    return runTypeInferencePhase(queryId);
 }
 
 void BottomUpStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
@@ -123,7 +121,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr candidateO
     }
 
     NES_TRACE("BottomUpStrategy: Get the candidate execution node for the candidate topology node.");
-    ExecutionNodePtr candidateExecutionNode = getCandidateExecutionNode(candidateTopologyNode);
+    ExecutionNodePtr candidateExecutionNode = getExecutionNode(candidateTopologyNode);
 
     NES_TRACE("BottomUpStrategy: Get the candidate query plan where operator is to be appended.");
     QueryPlanPtr candidateQueryPlan = getCandidateQueryPlan(queryId, candidateOperator, candidateExecutionNode);

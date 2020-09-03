@@ -11,8 +11,8 @@
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <NodeEngine/internal/backtrace.hpp>
-#include <thread>
 #include <mutex>
+#include <thread>
 #endif
 
 namespace NES {

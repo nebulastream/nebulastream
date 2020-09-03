@@ -83,7 +83,7 @@ class BasePlacementStrategy {
      * @param candidateTopologyNode: topology node
      * @return Execution Node pointer
      */
-    ExecutionNodePtr getCandidateExecutionNode(TopologyNodePtr candidateTopologyNode);
+    ExecutionNodePtr getExecutionNode(TopologyNodePtr candidateTopologyNode);
 
     /**
      * @brief Get the physical node for the logical source
@@ -101,8 +101,9 @@ class BasePlacementStrategy {
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id
      * @param queryId: the input query id
+     * @return true if successful else false
      */
-    void runTypeInferencePhase(QueryId queryId);
+    bool runTypeInferencePhase(QueryId queryId);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
@@ -110,8 +111,8 @@ class BasePlacementStrategy {
     StreamCatalogPtr streamCatalog;
     std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
-  private:
 
+  private:
     /**
      * @brief create a new network sink operator
      * @param queryId : the query id to which the sink belongs to

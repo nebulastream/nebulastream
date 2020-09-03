@@ -28,7 +28,7 @@ bool WindowDistributionRefinement::execute(GlobalExecutionPlanPtr globalPlan, Qu
     //find out if there is a window operator in the query
     for (auto& node : nodes) {
         std::vector<QueryPlanPtr> plans = node->getQuerySubPlans(queryId);
-        for(auto& plan : plans){
+        for (auto& plan : plans) {
             std::vector<OperatorNodePtr> windowOps = plan->getOperatorByType<WindowLogicalOperatorNode>();
             if (windowOps.size() > 0) {
                 NES_DEBUG("WindowDistributionRefinement::execute: window operator found on " << windowOps.size() << " nodes");
@@ -49,7 +49,7 @@ bool WindowDistributionRefinement::execute(GlobalExecutionPlanPtr globalPlan, Qu
                         NES_DEBUG("WindowDistributionRefinement::execute: plan after replace " << plan->toString());
                     } else {//distributed window
                         NES_DEBUG("WindowDistributionRefinement::execute: introduce distributed window operator on node " << node->toString() << " windowOp=" << windowOp->toString());
-                       //TODO: here we have to split the operator into the three part operators and deploy them
+                        //TODO: here we have to split the operator into the three part operators and deploy them
                     }
                 }
             } else {

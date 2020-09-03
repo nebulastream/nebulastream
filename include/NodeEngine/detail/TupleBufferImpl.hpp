@@ -7,8 +7,8 @@
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <deque>
-#include <thread>
 #include <mutex>
+#include <thread>
 #include <unordered_map>
 #endif
 

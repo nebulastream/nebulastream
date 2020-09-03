@@ -74,10 +74,10 @@ class OperatorNode : public Node {
 
     /**
      * @brief Get the operator with input operator id
-     * @param operatorIdToFind : the operator to find and return
-     * @return nulptr if not found else the operator node
+     * @param operatorId : the if of the operator to find
+     * @return nullptr if not found else the operator node
      */
-    NodePtr getChildWithOperatorId(uint64_t operatorIdToFind);
+    NodePtr getChildWithOperatorId(uint64_t operatorId);
 
   protected:
     /**
