@@ -71,7 +71,7 @@ bool WorkerRPCClient::registerQuery(std::string address, QueryPlanPtr queryPlan)
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
     request.set_queryid(queryId);
-    request.set_queryexecutionid(querySubPlanId);
+    request.set_querysubplanid(querySubPlanId);
     // serialize query operators.
     OperatorNodePtr rootOperator = queryPlan->getRootOperators()[0];
     OperatorSerializationUtil::serializeOperator(rootOperator, request.mutable_operatortree());
