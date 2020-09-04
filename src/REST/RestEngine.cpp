@@ -72,7 +72,7 @@ void RestEngine::handlePost(http_request message) {
     auto paths = splitPath(path);
 
     if (!paths.empty()) {
-        if (paths[0] == "query") {
+        if (paths[0] == "query" || paths[0] == "pattern" ) {
             queryController->handlePost(paths, message);
             return;
         } else if (paths[0] == "streamCatalog") {

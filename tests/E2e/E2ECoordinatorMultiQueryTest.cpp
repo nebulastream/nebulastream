@@ -206,7 +206,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     ssQuery3 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery3 << pathQuery3;
     ssQuery3 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
-    NES_INFO("string submit for query2=" << ssQuery3.str());
+    NES_INFO("string submit for query3=" << ssQuery3.str());
 
     web::json::value jsonReturnQ1;
     web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
@@ -266,9 +266,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 
     NES_INFO("return from q3");
 
-    QueryId queryId1 = jsonReturnQ2.at("queryId").as_integer();
+    QueryId queryId1 = jsonReturnQ1.at("queryId").as_integer();
     QueryId queryId2 = jsonReturnQ2.at("queryId").as_integer();
-    QueryId queryId3 = jsonReturnQ2.at("queryId").as_integer();
+    QueryId queryId3 = jsonReturnQ3.at("queryId").as_integer();
 
     EXPECT_NE(queryId1, INVALID_QUERY_ID);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
@@ -293,6 +293,131 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------+";
+
+    std::ifstream ifsQ1(pathQuery1.c_str());
+    EXPECT_TRUE(ifsQ1.good());
+    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
+                          (std::istreambuf_iterator<char>()));
+    NES_INFO("content Q1=" << contentQ1);
+    NES_INFO("expContent=" << expectedContent);
+    EXPECT_EQ(contentQ1, expectedContent);
+
+    std::ifstream ifsQ2(pathQuery2.c_str());
+    EXPECT_TRUE(ifsQ2.good());
+    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)),
+                          (std::istreambuf_iterator<char>()));
+    NES_INFO("content Q2=" << contentQ2);
+    NES_INFO("expContent=" << expectedContent);
+    EXPECT_EQ(contentQ2, expectedContent);
+
+    NES_INFO("Killing worker process->PID: " << workerPid);
+    workerProc.terminate();
+    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
+    coordinatorProc.terminate();
+}
+
+/**
+ * @brief This test starts two workers and a coordinator and submits two pattern-queries
+ */
+TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
+    NES_INFO(" start coordinator");
+    std::string pathQuery1 = "query1.out";
+    std::string pathQuery2 = "query2.out";
+
+    remove(pathQuery1.c_str());
+    remove(pathQuery2.c_str());
+
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12346";
+    bp::child coordinatorProc(cmdCoord.c_str());
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+    sleep(1);
+
+    string cmdWrk = "./nesWorker --coordinatorPort=12346";
+    bp::child workerProc(cmdWrk.c_str());
+    NES_INFO("started worker with pid = " << workerProc.id());
+
+    size_t coordinatorPid = coordinatorProc.id();
+    size_t workerPid = workerProc.id();
+    sleep(3);
+
+    std::stringstream ssQuery1;
+    ssQuery1
+        << "{\"pattern\" : \"Pattern::from(\\\"default_logical\\\").filter(Attribute(\\\"value\\\") < 42).sink(FileSinkDescriptor::create(\\\"";
+    ssQuery1 << pathQuery1;
+    ssQuery1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
+    NES_INFO("string submit for query1=" << ssQuery1.str());
+
+    std::stringstream ssQuery2;
+    ssQuery2 << "{\"pattern\" : \"Pattern::from(\\\"default_logical\\\").filter(Attribute(\\\"value\\\") < 42).sink(FileSinkDescriptor::create(\\\"";
+    ssQuery2 << pathQuery2;
+    ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
+    NES_INFO("string submit for query2=" << ssQuery2.str());
+
+    NES_INFO("send query 1:");
+    web::json::value jsonReturnQ1;
+    web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
+    clientQ1.request(web::http::methods::POST, "/pattern/execute-pattern", ssQuery1.str())
+        .then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
+        .then([&jsonReturnQ1](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("set return" << task.get().to_string());
+              jsonReturnQ1 = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_INFO("error while setting return");
+              NES_INFO("error " << e.what());
+          }
+        })
+        .wait();
+
+    NES_INFO("return from q1");
+
+    NES_INFO("send query 2:");
+    web::json::value jsonReturnQ2;
+    web::http::client::http_client clientQ2("http://127.0.0.1:8081/v1/nes/query/execute-query");
+    clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
+        .then([&jsonReturnQ2](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("set return" << task.get().to_string());
+              jsonReturnQ2 = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_INFO("error while setting return");
+              NES_INFO("error " << e.what());
+          }
+        })
+        .wait();
+    NES_INFO("return from q2");
+
+
+    QueryId queryId1 = jsonReturnQ1.at("queryId").as_integer();
+    QueryId queryId2 = jsonReturnQ2.at("queryId").as_integer();
+
+    EXPECT_NE(queryId1, INVALID_QUERY_ID);
+    EXPECT_NE(queryId2, INVALID_QUERY_ID);
+
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
+
+    std::string expectedContent = "+----------------------------------------------------+\n"
+                           "|id:UINT32|value:UINT64|PatternId:INT32|\n"
+                           "+----------------------------------------------------+\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "+----------------------------------------------------+";
 
     std::ifstream ifsQ1(pathQuery1.c_str());
     EXPECT_TRUE(ifsQ1.good());
