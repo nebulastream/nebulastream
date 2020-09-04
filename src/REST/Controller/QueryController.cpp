@@ -61,9 +61,14 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
 
 void QueryController::handlePost(vector<utility::string_t> path, http_request message) {
 
-    if (path[1] == "execute-query") {
+    if (path[1] == "execute-query" || path[1] == "execute-pattern") {
 
-        NES_DEBUG(" QueryController: Trying to execute query");
+        if (path[1] == "execute-query"){
+            NES_DEBUG(" QueryController: Trying to execute query");
+        }
+        else if (path[1] == "execute-pattern"){
+            NES_DEBUG(" QueryController: Trying to execute pattern as stream query");
+        }
 
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
@@ -73,7 +78,14 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << userRequest << "try to parse query");
                     json::value req = json::value::parse(userRequest);
                     NES_DEBUG("QueryController: handlePost -execute-query: get user query");
-                    string userQuery = req.at("userQuery").as_string();
+                    string userQuery = "";
+                    if (req.has_field("userQuery")){
+                        userQuery = req.at("userQuery").as_string();
+                    }
+                    else if (req.has_field("pattern")){
+                        userQuery = req.at("pattern").as_string();
+                    }
+
                     string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);

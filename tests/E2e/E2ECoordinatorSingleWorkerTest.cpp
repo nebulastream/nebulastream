@@ -430,4 +430,88 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithF
     NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
     coordinatorProc.terminate();
 }
+
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
+    NES_INFO(" start coordinator");
+    std::string outputFilePath = "testExecutingSimplePattern.out";
+    remove(outputFilePath.c_str());
+
+    string path = "./nesCoordinator --coordinatorPort=12267";
+    bp::child coordinatorProc(path.c_str());
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+    sleep(1);
+
+    string path2 = "./nesWorker --coordinatorPort=12267";
+    bp::child workerProc(path2.c_str());
+    NES_INFO("started worker with pid = " << workerProc.id());
+    size_t coordinatorPid = coordinatorProc.id();
+    size_t workerPid = workerProc.id();
+
+    std::stringstream ss;
+    ss << "{\"pattern\" : ";
+    ss << "\"Pattern::from(\\\"default_logical\\\").filter(Attribute(\\\"value\\\") < 42).sink(FileSinkDescriptor::create(\\\"";
+    ss << outputFilePath;
+    ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ss << endl;
+
+    NES_INFO("query string submit=" << ss.str());
+    string body = ss.str();
+
+    web::json::value json_return;
+
+    web::http::client::http_client client(
+        "http://127.0.0.1:8081/v1/nes/pattern/execute-pattern");
+    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
+        .then([&json_return](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("set return");
+              json_return = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_ERROR("error while setting return");
+              NES_ERROR("error " << e.what());
+          }
+        })
+        .wait();
+
+    NES_INFO("try to acc return");
+    QueryId queryId = json_return.at("queryId").as_integer();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+
+    // if filter is applied correctly, no output is generated
+    NES_INFO("read file=" << outputFilePath);
+    ifstream outFile(outputFilePath);
+    EXPECT_TRUE(outFile.good());
+    std::string content((std::istreambuf_iterator<char>(outFile)),
+                        (std::istreambuf_iterator<char>()));
+    NES_INFO("content=" << content);
+    std::string expected = "+----------------------------------------------------+\n"
+                           "|id:UINT32|value:UINT64|PatternId:INT32|\n"
+                           "+----------------------------------------------------+\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "|1|1|1|\n"
+                           "+----------------------------------------------------+";
+
+    NES_INFO("expected=" << expected);
+    EXPECT_EQ(expected, content);
+
+    NES_INFO("Killing worker process->PID: " << workerPid);
+    workerProc.terminate();
+    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
+    coordinatorProc.terminate();
+}
+
 }// namespace NES
