@@ -1,11 +1,11 @@
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
-#include <API/QueryId.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <chrono>

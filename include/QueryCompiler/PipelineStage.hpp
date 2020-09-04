@@ -1,7 +1,7 @@
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <memory>
 #include <vector>
 
@@ -31,7 +31,7 @@ class PipelineStage {
   public:
     PipelineStage(
         uint32_t pipelineStageId,
-        QueryExecutionPlanId qepId,
+        QuerySubPlanId qepId,
         ExecutablePipelinePtr executablePipeline,
         QueryExecutionContextPtr pipelineContext,
         PipelineStagePtr nextPipelineStage,
@@ -69,13 +69,13 @@ class PipelineStage {
     */
     uint32_t getPipeStageId();
 
-    QueryExecutionPlanId getQepParentId() const;
+    QuerySubPlanId getQepParentId() const;
 
     ~PipelineStage() = default;
 
   public:
     static PipelineStagePtr create(uint32_t pipelineStageId,
-                                   const QueryExecutionPlanId queryExecutionPlanId,
+                                   const QuerySubPlanId querySubPlanId,
                                    const ExecutablePipelinePtr compiledCode,
                                    QueryExecutionContextPtr pipelineContext,
                                    const PipelineStagePtr nextPipelineStage,
@@ -83,7 +83,7 @@ class PipelineStage {
 
   private:
     uint32_t pipelineStageId;
-    QueryExecutionPlanId qepId;
+    QuerySubPlanId qepId;
     ExecutablePipelinePtr executablePipeline;
     WindowHandlerPtr windowHandler;
     PipelineStagePtr nextStage;

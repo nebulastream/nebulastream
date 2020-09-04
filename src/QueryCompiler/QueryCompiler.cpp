@@ -142,7 +142,7 @@ void QueryCompiler::compilePipelineStages(
         }
         PipelineStagePtr pipelineStage = PipelineStage::create(
             stageId,
-            builder.getQueryExecutionPlanId(),
+            builder.getQuerySubPlanId(),
             holder.executablePipeline,
             executionContext,
             pipelines[*holder.consumers.begin()],

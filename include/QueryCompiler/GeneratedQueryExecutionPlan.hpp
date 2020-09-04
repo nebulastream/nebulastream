@@ -16,7 +16,7 @@ typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlan
 class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
   public:
     explicit GeneratedQueryExecutionPlan(QueryId queryId,
-                                         QueryExecutionPlanId queryExecutionPlanId,
+                                         QuerySubPlanId querySubPlanId,
                                          std::vector<DataSourcePtr>&& sources,
                                          std::vector<DataSinkPtr>&& sinks,
                                          std::vector<PipelineStagePtr>&& stages,

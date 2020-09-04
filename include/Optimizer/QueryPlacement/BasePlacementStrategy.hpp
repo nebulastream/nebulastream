@@ -1,8 +1,8 @@
 #ifndef NESPLACEMENTOPTIMIZER_HPP
 #define NESPLACEMENTOPTIMIZER_HPP
 
-#include <API/QueryId.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -96,7 +96,7 @@ class BasePlacementStrategy {
      * @brief Add network source and sinks between query sub plans allocated on different execution nodes
      * @param queryPlan: the original query plan
      */
-    void addSystemGeneratedOperators(QueryPlanPtr queryPlan);
+    void addNetworkSourceAndSinkOperators(QueryPlanPtr queryPlan);
 
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id

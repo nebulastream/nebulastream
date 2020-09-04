@@ -37,7 +37,7 @@ TEST_F(QueryPlanTest, testHasOperator) {
     bool exists = queryPlan->hasOperator(op1);
     EXPECT_FALSE(exists);
 
-    queryPlan->appendOperator(op1);
+    queryPlan->appendOperatorAsNewRoot(op1);
     exists = queryPlan->hasOperator(op1);
     EXPECT_TRUE(exists);
 }
@@ -46,7 +46,7 @@ TEST_F(QueryPlanTest, testLeafOperators) {
     LogicalOperatorNodePtr op1 = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create("test_stream"));
     QueryPlanPtr queryPlan = QueryPlan::create(op1);
     LogicalOperatorNodePtr op2 = createSinkLogicalOperatorNode(PrintSinkDescriptor::create());
-    queryPlan->appendOperator(op2);
+    queryPlan->appendOperatorAsNewRoot(op2);
 
     std::vector<OperatorNodePtr> leafOptrs = queryPlan->getLeafOperators();
     EXPECT_TRUE(std::find(leafOptrs.begin(), leafOptrs.end(), op1) != leafOptrs.end());

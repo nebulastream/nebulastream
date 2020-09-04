@@ -32,7 +32,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param queryPlan: query plan to place
      * @throws exception if the operator can't be placed.
      */
-    void placeQueryPlan(QueryPlanPtr queryPlan);
+    void placeQueryPlanOnTopology(QueryPlanPtr queryPlan);
 
     /**
      * @brief Try to place input operator on the input topology node
@@ -40,7 +40,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void placeOperator(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode);
+    void placeOperatorOnTopologyNode(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode);
 
     /**
      * @brief Get topology node where all children operators of the input operator are placed

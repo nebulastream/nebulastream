@@ -30,7 +30,7 @@ Pattern& Pattern::sink(const SinkDescriptorPtr sinkDescriptor) {
     this->map(Attribute("PatternId") = 1);
     NES_DEBUG("Pattern: add sink operator to query");
     OperatorNodePtr op = createSinkLogicalOperatorNode(sinkDescriptor);
-    queryPlan->appendOperator(op);
+    queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
 

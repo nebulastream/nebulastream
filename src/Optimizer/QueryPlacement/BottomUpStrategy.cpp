@@ -48,9 +48,9 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     }
 
     NES_DEBUG("BottomUpStrategy: place query plan with id : " << queryId);
-    placeQueryPlan(queryPlan);
+    placeQueryPlanOnTopology(queryPlan);
     NES_DEBUG("BottomUpStrategy: Add system generated operators for query with id : " << queryId);
-    addSystemGeneratedOperators(queryPlan);
+    addNetworkSourceAndSinkOperators(queryPlan);
     NES_DEBUG("BottomUpStrategy: clear the temporary map : " << queryId);
     operatorToExecutionNodeMap.clear();
     pinnedOperatorLocationMap.clear();
@@ -58,7 +58,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     return runTypeInferencePhase(queryId);
 }
 
-void BottomUpStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
+void BottomUpStrategy::placeQueryPlanOnTopology(QueryPlanPtr queryPlan) {
 
     QueryId queryId = queryPlan->getQueryId();
     NES_DEBUG("BottomUpStrategy: Get the all source operators for performing the placement.");
@@ -70,12 +70,12 @@ void BottomUpStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
             NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
             throw QueryPlacementException("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
         }
-        placeOperator(queryId, sourceOperator, candidateTopologyNode);
+        placeOperatorOnTopologyNode(queryId, sourceOperator, candidateTopologyNode);
     }
     NES_DEBUG("BottomUpStrategy: Finished placing query operators into the global execution plan");
 }
 
-void BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode) {
+void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("BottomUpStrategy: Place " << operatorNode);
     if (operatorNode->isNAryOperator()) {
@@ -125,7 +125,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNo
 
     NES_TRACE("BottomUpStrategy: Get the candidate query plan where operator is to be appended.");
     QueryPlanPtr candidateQueryPlan = getCandidateQueryPlan(queryId, operatorNode, candidateExecutionNode);
-    candidateQueryPlan->appendOperator(operatorNode->copy());
+    candidateQueryPlan->appendOperatorAsNewRoot(operatorNode->copy());
 
     NES_TRACE("BottomUpStrategy: Add the query plan to the candidate execution node.");
     if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
@@ -145,7 +145,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNo
 
     NES_TRACE("BottomUpStrategy: Place the parent operators.");
     for (auto& parent : operatorNode->getParents()) {
-        placeOperator(queryId, parent->as<OperatorNode>(), candidateTopologyNode);
+        placeOperatorOnTopologyNode(queryId, parent->as<OperatorNode>(), candidateTopologyNode);
     }
 }
 
@@ -159,7 +159,7 @@ QueryPlanPtr BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNo
         NES_TRACE("BottomUpStrategy: no query plan exists for this query on the executionNode. Returning an empty query plan.");
         candidateQueryPlan = QueryPlan::create();
         candidateQueryPlan->setQueryId(queryId);
-        candidateQueryPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
+        candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQueryExecutionId());
         return candidateQueryPlan;
     }
 
@@ -185,7 +185,7 @@ QueryPlanPtr BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNo
             NES_TRACE("BottomUpStrategy: Found more than 1 query plan with the child operators of the input logical operator.");
             candidateQueryPlan = QueryPlan::create();
             candidateQueryPlan->setQueryId(queryId);
-            candidateQueryPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
+            candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQueryExecutionId());
             NES_TRACE("BottomUpStrategy: Prepare a new query plan and add the root of the query plans with parent operators as the root of the new query plan.");
             for (auto& queryPlanWithChildren : queryPlansWithChildren) {
                 for (auto& root : queryPlanWithChildren->getRootOperators()) {
@@ -202,7 +202,7 @@ QueryPlanPtr BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNo
     NES_TRACE("BottomUpStrategy: no query plan exists with the child operator of the input logical operator. Returning an empty query plan.");
     candidateQueryPlan = QueryPlan::create();
     candidateQueryPlan->setQueryId(queryId);
-    candidateQueryPlan->setQueryExecutionPlanId(UtilityFunctions::getNextQueryExecutionId());
+    candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQueryExecutionId());
     return candidateQueryPlan;
 }
 

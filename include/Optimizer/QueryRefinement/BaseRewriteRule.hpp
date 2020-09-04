@@ -2,7 +2,7 @@
 #define NES_IMPL_OPTIMIZER_QUERYREFINEMENT_BASERULE_HPP_
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 
-#include <API/QueryId.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 

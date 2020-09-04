@@ -1,8 +1,8 @@
+#include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <string>
 #include <unistd.h>
-#include <API/QueryId.hpp>
 
 #define GetCurrentDir getcwd
 #include <Util/TestUtils.hpp>

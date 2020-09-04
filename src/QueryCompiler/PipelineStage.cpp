@@ -8,7 +8,7 @@ namespace NES {
 
 PipelineStage::PipelineStage(
     uint32_t pipelineStageId,
-    QueryExecutionPlanId qepId,
+    QuerySubPlanId qepId,
     ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineExecutionContext,
     PipelineStagePtr nextPipelineStage,
@@ -59,7 +59,7 @@ uint32_t PipelineStage::getPipeStageId() {
     return pipelineStageId;
 }
 
-QueryExecutionPlanId PipelineStage::getQepParentId() const {
+QuerySubPlanId PipelineStage::getQepParentId() const {
     return qepId;
 }
 
@@ -69,12 +69,12 @@ bool PipelineStage::hasWindowHandler() {
 
 PipelineStagePtr PipelineStage::create(
     uint32_t pipelineStageId,
-    const QueryExecutionPlanId queryExecutionPlanId,
+    const QuerySubPlanId querySubPlanId,
     const ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineContext,
     const PipelineStagePtr nextPipelineStage,
     const WindowHandlerPtr& windowHandler) {
 
-    return std::make_shared<PipelineStage>(pipelineStageId, queryExecutionPlanId, executablePipeline, pipelineContext, nextPipelineStage, windowHandler);
+    return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipeline, pipelineContext, nextPipelineStage, windowHandler);
 }
 }// namespace NES

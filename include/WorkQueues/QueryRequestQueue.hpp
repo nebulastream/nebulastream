@@ -1,7 +1,7 @@
 #ifndef NES_QUERYREQUESTQUEUE_HPP
 #define NES_QUERYREQUESTQUEUE_HPP
 
-#include <API/QueryId.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <condition_variable>
 #include <deque>
 #include <iostream>

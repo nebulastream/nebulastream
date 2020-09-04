@@ -37,9 +37,11 @@ typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePt
  *                                           |             |
  *                                      Source(Car1)    Source(Car2)
  *
+ * Given that logical source car has two physical sources: i.e. car1 and car2
+ *
  *                                                     or
  *
- * a query :                                   Sink
+ * a query :                                    Sink
  *                                               |
  *                                             Merge
  *                                             /   \
@@ -47,7 +49,7 @@ typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePt
  *                                          /        |
  *                                   Source(Car)   Source(Truck)
  *
- * will be expanded to:                            Sink
+ * will be expanded to:                             Sink
  *                                                   |
  *                                                 Merge
  *                                              /  / \   \
@@ -59,6 +61,8 @@ typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePt
  *                               /      /                 \          \
  *                         Src(Car1) Src(Car2)       Src(Truck1)  Src(Truck2)
  *
+ * Given that logical source car has two physical sources: i.e. car1 and car2 and
+ * logical source truck has two physical sources: i.e. truck1 and truck2
  *
  */
 class LogicalSourceExpansionRule {

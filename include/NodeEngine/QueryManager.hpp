@@ -3,8 +3,8 @@
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/ThreadPool.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -123,7 +123,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      * @param qep of the particular query
      * @return
      */
-    QueryStatisticsPtr getQueryStatistics(QueryExecutionPlanId qepId);
+    QueryStatisticsPtr getQueryStatistics(QuerySubPlanId qepId);
 
   private:
     friend class ThreadPool;
@@ -150,7 +150,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
-    cuckoohash_map<QueryExecutionPlanId, QueryStatisticsPtr> queryToStatisticsMap;
+    cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
     std::shared_mutex queryMutex;
     std::mutex workMutex;

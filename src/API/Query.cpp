@@ -29,7 +29,7 @@ Query& Query::merge(Query* subQuery) {
     OperatorNodePtr op = createMergeLogicalOperatorNode();
     op->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
-    queryPlan->appendOperator(op);
+    queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
 
@@ -38,7 +38,7 @@ Query& Query::window(const WindowTypePtr windowType, const WindowAggregationPtr 
     auto windowDefinition = createWindowDefinition(aggregation, windowType);
     auto windowOperator = createWindowLogicalOperatorNode(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
-    queryPlan->appendOperator(windowOperator);
+    queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;
 }
 
@@ -53,7 +53,7 @@ Query& Query::windowByKey(ExpressionItem onKey, const WindowTypePtr windowType, 
     auto windowDefinition = createWindowDefinition(keyField, aggregation, windowType);
     auto windowOperator = createWindowLogicalOperatorNode(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
-    queryPlan->appendOperator(windowOperator);
+    queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;
 }
 
@@ -61,7 +61,7 @@ Query& Query::filter(const ExpressionNodePtr filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
     OperatorNodePtr op = createFilterLogicalOperatorNode(filterExpression);
     op->setId(UtilityFunctions::getNextOperatorId());
-    queryPlan->appendOperator(op);
+    queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
 
@@ -69,7 +69,7 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr mapExpression) {
     NES_DEBUG("Query: add map operator to query");
     OperatorNodePtr op = createMapLogicalOperatorNode(mapExpression);
     op->setId(UtilityFunctions::getNextOperatorId());
-    queryPlan->appendOperator(op);
+    queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
 
@@ -77,7 +77,7 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Query: add sink operator to query");
     OperatorNodePtr op = createSinkLogicalOperatorNode(sinkDescriptor);
     op->setId(UtilityFunctions::getNextOperatorId());
-    queryPlan->appendOperator(op);
+    queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
 

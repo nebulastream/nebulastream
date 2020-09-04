@@ -1,12 +1,12 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
-#include <API/QueryId.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <iostream>
@@ -87,7 +87,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param operatorTree: query sub plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(QueryId queryId, QueryExecutionPlanId queryExecutionId, OperatorNodePtr operatorTree);
+    bool registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId queryExecutionId, OperatorNodePtr operatorTree);
 
     /**
      * @brief ungregisters a query
@@ -185,8 +185,8 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
 
   private:
     NodeStatsProviderPtr nodeStatsProvider;
-    std::map<QueryId, std::vector<QueryExecutionPlanId>> deployedQueryToExecutionPlanId;
-    std::map<QueryExecutionPlanId, QueryExecutionPlanPtr> deployedQEPs;
+    std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
+    std::map<QuerySubPlanId, QueryExecutionPlanPtr> deployedQEPs;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;
