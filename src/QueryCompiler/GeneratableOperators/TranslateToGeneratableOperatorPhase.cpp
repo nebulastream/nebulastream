@@ -5,14 +5,21 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/SliceMergingOperator.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+
+#include <QueryCompiler/GeneratableOperators/GeneratableCentralWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableDistributedlWindowSliceCreationOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableDistributedlWindowCombinerOperator.hpp>
+
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMergeOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -46,12 +53,23 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         scanOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        auto childOperator = GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
-        return childOperator;
-    } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+        return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
+    } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        auto windowOperator = GeneratableCentralWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        scanOperator->addChild(windowOperator);
+        return windowOperator;
+    } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
+        auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
+        generatableParentOperator->addChild(scanOperator);
+        auto windowOperator = GeneratableDistributedlWindowSliceCreationOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        scanOperator->addChild(windowOperator);
+        return windowOperator;
+    } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
+        auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
+        generatableParentOperator->addChild(scanOperator);
+        auto windowOperator = GeneratableDistributedlWindowCombinerOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     }
@@ -62,7 +80,6 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
 OperatorNodePtr TranslateToGeneratableOperatorPhase::transform(OperatorNodePtr operatorNode, OperatorNodePtr legacyParent) {
     NES_DEBUG("TranslateToGeneratableOperatorPhase: translate " << operatorNode);
     auto legacyOperator = transformIndividualOperator(operatorNode, legacyParent);
-
     for (const NodePtr& child : operatorNode->getChildren()) {
         auto generatableOperator = transform(child->as<OperatorNode>(), legacyOperator);
     }

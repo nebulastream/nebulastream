@@ -48,12 +48,31 @@ class CCodeGenerator : public CodeGenerator {
     bool generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPtr context) override;
 
     /**
-    * @brief Code generation for a window operator, which depends on a particular window definition.
+    * @brief Code generation for a central window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForWindow(WindowDefinitionPtr window, PipelineContextPtr context) override;
+    bool generateCodeForCentralWindow(WindowDefinitionPtr window, PipelineContextPtr context) override;
+
+    /**
+    * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
+    * @param window The window definition, which contains all properties of the window.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForDistributedWindowSliceCreation(WindowDefinitionPtr window, PipelineContextPtr context) override;
+
+    /**
+    * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
+    * @param window The window definition, which contains all properties of the window.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForDistributedWindowWindowCombiner(WindowDefinitionPtr window, PipelineContextPtr context) override;
+
+
+
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

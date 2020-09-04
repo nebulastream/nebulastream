@@ -102,6 +102,38 @@ void Compiler::formatAndPrintSource(const std::string& filename) {
     ret = system(formatCommand.c_str());
 }
 
+std::string Compiler::formatAndGetSource(const std::string& filename)
+{
+    int ret = system("which clang-format > /dev/null");
+    if (ret != 0) {
+        NES_ERROR("Compiler: Did not find external tool 'clang-format'. "
+                  "Please install 'clang-format' and try again."
+                  "If 'clang-format-X' is installed, try to create a "
+                  "symbolic link.");
+        return "";
+    }
+
+    auto formatCommand = std::string("clang-format ") + filename;
+    /* try a syntax highlighted output first */
+    /* command highlight available? */
+    ret = system("which highlight > /dev/null");
+    if (ret == 0) {
+        formatCommand += " | highlight --src-lang=c++ -O ansi";
+    }
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(formatCommand.c_str(), "r"), pclose);
+    if (!pipe) {
+        throw std::runtime_error("popen() failed!");
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    NES_DEBUG("Compiler: generate code " << result);
+    return result;
+}
+
+
 void Compiler::writeSourceToFile(const std::string& filename,
                                  const std::string& source) {
     std::ofstream result_file(filename, std::ios::trunc | std::ios::out);

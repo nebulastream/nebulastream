@@ -42,11 +42,11 @@ void WindowHandler::trigger() {
         for (auto& it : windowStateVariable->rangeAll()) {
             // write all window aggregates to the tuple buffer
             // TODO we currently have no handling in the case the tuple buffer is full
-            this->aggregateWindows<int64_t, int64_t>(it.second, this->windowDefinition, tupleBuffer);
+            this->aggregateWindows<int64_t, int64_t>(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
         }
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
         if (tupleBuffer.getNumberOfTuples() > 0) {
-            NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records");
+            NES_DEBUG( "WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records");
             queryManager->addWorkForNextPipeline(
                 tupleBuffer,
                 this->nextPipeline);

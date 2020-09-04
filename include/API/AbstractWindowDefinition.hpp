@@ -3,6 +3,7 @@
 
 #ifndef INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
 #define INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
+#include <API/Window/DistributionCharacteristic.hpp>
 
 namespace NES {
 
@@ -25,6 +26,10 @@ typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
 class TimeCharacteristic;
 typedef std::shared_ptr<TimeCharacteristic> TimeCharacteristicPtr;
+
+class DistributionCharacteristic;
+typedef std::shared_ptr<DistributionCharacteristic> DistributionCharacteristicPtr;
+
 
 class WindowType {
   public:
@@ -79,19 +84,25 @@ typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
 class WindowDefinition {
   public:
-    WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType);
+    WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, const DistributionCharacteristicPtr distrType);
+
     WindowDefinition(const AttributeFieldPtr onKey,
                      const WindowAggregationPtr windowAggregation,
-                     const WindowTypePtr windowType);
+                     const WindowTypePtr windowType,
+                     const DistributionCharacteristicPtr distrType);
 
     const WindowAggregationPtr windowAggregation;
     const WindowTypePtr windowType;
     const AttributeFieldPtr onKey;
+    const DistributionCharacteristicPtr distributionType;
 
     /**
      * @brief Returns true if this window is keyed.
      */
     bool isKeyed();
+
+    DistributionCharacteristicPtr getDistributionType();
+
 };
 
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
@@ -103,7 +114,8 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
  * @return Window Definition
  */
 WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggregation,
-                                           const WindowTypePtr windowType);
+                                           const WindowTypePtr windowType,
+                                           const DistributionCharacteristicPtr distrType);
 
 /**
  * @brief Create a new window definition for a keyed window
@@ -113,7 +125,8 @@ WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggr
  */
 WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey,
                                            const WindowAggregationPtr windowAggregation,
-                                           const WindowTypePtr windowType);
+                                           const WindowTypePtr windowType,
+                                           const DistributionCharacteristicPtr distrType);
 }// namespace NES
 
 #endif//INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_

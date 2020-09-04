@@ -63,15 +63,12 @@ class WindowHandler {
     /**
      * @brief This method iterates over all slices in the slice store and creates the final window aggregates,
      * which are written to the tuple buffer.
-     * @tparam FinalAggregateType
-     * @tparam PartialAggregateType
-     * @param watermark
      * @param store
      * @param windowDefinition
      * @param tupleBuffer
      */
     template<class FinalAggregateType, class PartialAggregateType>
-    void aggregateWindows(WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
+    void aggregateWindows(int64_t key, WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
                           TupleBuffer& tupleBuffer);
 
     void* getWindowState();
@@ -92,7 +89,7 @@ class WindowHandler {
 
 // TODO Maybe we could define template specialization of this method when generating compiled code so that we dont need casting
 template<class FinalAggregateType, class PartialAggregateType>
-void WindowHandler::aggregateWindows(WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
+void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
                                      TupleBuffer& tupleBuffer) {
 
     // For event time we use the maximal records ts as watermark.
@@ -113,42 +110,72 @@ void WindowHandler::aggregateWindows(WindowSliceStore<PartialAggregateType>* sto
         NES_DEBUG("WindowHandler::aggregateWindows: last watermak is=" << store->getLastWatermark());
     }
 
+    //generates a list of windows that have to be outputted
     windowDefinition->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);
+
     // allocate partial final aggregates for each window
+    //because we trigger each second, there could be multiple windows ready
     auto partialFinalAggregates = std::vector<PartialAggregateType>(windows->size());
+
     // iterate over all slices and update the partial final aggregates
     auto slices = store->getSliceMetadata();
     auto partialAggregates = store->getPartialAggregates();
     NES_DEBUG("WindowHandler: trigger " << windows->size() << " windows, on " << slices.size() << " slices");
-    for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-        for (uint64_t windowId = 0; windowId < windows->size(); windowId++) {
-            auto window = (*windows)[windowId];
-            // A slice is contained in a window if the window starts before the slice and ends after the slice
-            if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
-                // TODO Because of this condition we currently only support SUM aggregations
-                if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
-                    if (partialFinalAggregates.size() <= windowId) {
-                        // initial the partial aggregate
-                        partialFinalAggregates[windowId] = partialAggregates[sliceId];
-                    } else {
-                        // update the partial aggregate
-                        partialFinalAggregates[windowId] = sumAggregation->combine<PartialAggregateType>(
-                            partialFinalAggregates[windowId], partialAggregates[sliceId]);
+
+    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Centralized) {
+        //does not have to be done
+        for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
+            for (uint64_t windowId = 0; windowId < windows->size(); windowId++) {
+                auto window = (*windows)[windowId];
+                // A slice is contained in a window if the window starts before the slice and ends after the slice
+                if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
+                    // TODO Because of this condition we currently only support SUM aggregations
+                    if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
+                        if (partialFinalAggregates.size() <= windowId) {
+                            // initial the partial aggregate
+                            partialFinalAggregates[windowId] = partialAggregates[sliceId];
+                        } else {
+                            // update the partial aggregate
+                            partialFinalAggregates[windowId] = sumAggregation->combine<PartialAggregateType>(
+                                partialFinalAggregates[windowId], partialAggregates[sliceId]);
+                        }
                     }
                 }
             }
         }
-    }
-    // calculate the final aggregate
-    auto intBuffer = tupleBuffer.getBufferAs<FinalAggregateType>();
-    for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
-        // TODO Because of this condition we currently only support SUM aggregations
-        if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
-            intBuffer[tupleBuffer.getNumberOfTuples()] =
-                sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
+        // calculate the final aggregate
+        auto intBuffer = tupleBuffer.getBufferAs<FinalAggregateType>();
+        for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
+            // TODO Because of this condition we currently only support SUM aggregations
+
+            //TODO::windowstart, windowend, key, value //edit the schema !"!
+            auto window = (*windows)[i];
+            window.getStartTs();
+
+            if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
+                intBuffer[tupleBuffer.getNumberOfTuples()] =
+                    sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
+            }
+            tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
         }
-        tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
     }
+    else
+    {
+        auto intBuffer = tupleBuffer.getBufferAs<FinalAggregateType>();
+
+        //if slice creator, find slices which can be send but did not send already
+        for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
+            //test if latest tuple in window is after slice end
+            if (slices[sliceId].getEndTs() < store->getMaxTs()) {
+                intBuffer[tupleBuffer.getNumberOfTuples()] = partialAggregates[sliceId];
+                tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
+                NES_DEBUG("do for key=" << key);
+                //write it to output buffer
+                //            copy partialAggregates[sliceId] to tuple buffer
+            }
+        }
+    }
+
     store->setLastWatermark(watermark);
 }
 

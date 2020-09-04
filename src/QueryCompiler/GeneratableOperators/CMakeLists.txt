@@ -5,6 +5,8 @@ add_source_nes(
         GeneratableMergeOperator.cpp
         GeneratableSinkOperator.cpp
         GeneratableScanOperator.cpp
-        GeneratableWindowOperator.cpp
+        GeneratableCentralWindowOperator.cpp
         TranslateToGeneratableOperatorPhase
+        GeneratableDistributedWindowCombinerOperator.cpp
+        GeneratableDistributedWindowSliceCreationOperator.cpp
 )

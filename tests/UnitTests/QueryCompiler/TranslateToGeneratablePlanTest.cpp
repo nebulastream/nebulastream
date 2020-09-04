@@ -28,11 +28,13 @@
 #include <Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 using namespace std;
@@ -58,36 +60,36 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
         sourceOp = createSourceLogicalOperatorNode(sourceDescriptor);
-        sourceOp->setId(UtilityFunctions::getNextOperatorId());
+        sourceOp->setId(0);
         filterOp1 = createFilterLogicalOperatorNode(pred1);
-        filterOp1->setId(UtilityFunctions::getNextOperatorId());
+        filterOp1->setId(1);
         filterOp2 = createFilterLogicalOperatorNode(pred2);
-        filterOp2->setId(UtilityFunctions::getNextOperatorId());
+        filterOp2->setId(2);
         filterOp3 = createFilterLogicalOperatorNode(pred3);
-        filterOp3->setId(UtilityFunctions::getNextOperatorId());
+        filterOp3->setId(3);
         filterOp4 = createFilterLogicalOperatorNode(pred4);
-        filterOp4->setId(UtilityFunctions::getNextOperatorId());
+        filterOp4->setId(4);
         filterOp5 = createFilterLogicalOperatorNode(pred5);
-        filterOp5->setId(UtilityFunctions::getNextOperatorId());
+        filterOp5->setId(5);
         filterOp6 = createFilterLogicalOperatorNode(pred6);
-        filterOp6->setId(UtilityFunctions::getNextOperatorId());
+        filterOp6->setId(6);
         filterOp7 = createFilterLogicalOperatorNode(pred7);
-        filterOp7->setId(UtilityFunctions::getNextOperatorId());
+        filterOp7->setId(7);
 
         filterOp1Copy = createFilterLogicalOperatorNode(pred1);
-        filterOp1Copy->setId(UtilityFunctions::getNextOperatorId());
+        filterOp1Copy->setId(8);
         filterOp2Copy = createFilterLogicalOperatorNode(pred2);
-        filterOp2Copy->setId(UtilityFunctions::getNextOperatorId());
+        filterOp2Copy->setId(9);
         filterOp3Copy = createFilterLogicalOperatorNode(pred3);
-        filterOp3Copy->setId(UtilityFunctions::getNextOperatorId());
+        filterOp3Copy->setId(10);
         filterOp4Copy = createFilterLogicalOperatorNode(pred4);
-        filterOp4Copy->setId(UtilityFunctions::getNextOperatorId());
+        filterOp4Copy->setId(11);
         filterOp5Copy = createFilterLogicalOperatorNode(pred5);
-        filterOp5Copy->setId(UtilityFunctions::getNextOperatorId());
+        filterOp5Copy->setId(12);
         filterOp6Copy = createFilterLogicalOperatorNode(pred6);
-        filterOp6Copy->setId(UtilityFunctions::getNextOperatorId());
+        filterOp6Copy->setId(13);
         filterOp7Copy = createFilterLogicalOperatorNode(pred7);
-        filterOp7Copy->setId(UtilityFunctions::getNextOperatorId());
+        filterOp7Copy->setId(14);
 
         removed = false;
         replaced = false;
@@ -197,11 +199,15 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
 
     ASSERT_TRUE(generatableSinkOperator->instanceOf<GeneratableSinkOperator>());
 
+
     auto generatableWindowScanOperator = generatableSinkOperator->getChildren()[0];
     ASSERT_TRUE(generatableWindowScanOperator->instanceOf<GeneratableScanOperator>());
 
+
     auto generatableWindowOperator = generatableWindowScanOperator->getChildren()[0];
-    ASSERT_TRUE(generatableWindowOperator->instanceOf<GeneratableWindowOperator>());
+    ASSERT_TRUE(generatableWindowOperator->instanceOf<GeneratableCentralWindowOperator>());
+
+
 
     auto generatableSourceOperator = generatableWindowOperator->getChildren()[0];
     ASSERT_TRUE(generatableSourceOperator->instanceOf<GeneratableScanOperator>());
