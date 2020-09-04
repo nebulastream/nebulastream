@@ -86,12 +86,28 @@ class CodeGenerator {
     virtual bool generateCodeForEmit(SchemaPtr schema, PipelineContextPtr context) = 0;
 
     /**
-    * @brief Code generation for a window operator, which depends on a particular window definition.
+    * @brief Code generation for a central window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForCentralWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+
+    /**
+   * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
+   * @param window The window definition, which contains all properties of the window.
+   * @param context The context of the current pipeline.
+   * @return flag if the generation was successful.
+   */
+    virtual bool generateCodeForDistributedWindowSliceCreation(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+
+    /**
+    * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
+    * @param window The window definition, which contains all properties of the window.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    virtual bool generateCodeForDistributedWindowWindowCombiner(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

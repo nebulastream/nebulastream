@@ -4,4 +4,5 @@ add_source_nes(
         WindowMeasure.cpp
         WindowDefinition.cpp
         TimeCharacteristic.cpp
+        DistributionCharacteristic.cpp
 )

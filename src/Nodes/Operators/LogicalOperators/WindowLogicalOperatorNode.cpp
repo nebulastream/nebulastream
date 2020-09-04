@@ -63,6 +63,7 @@ bool WindowLogicalOperatorNode::inferSchema() {
     // create result schema
     auto aggregationField = inputSchema->get(windowAggregation->on()->name);
     outputSchema = Schema::create();
+    //TODO::add start and and key
     outputSchema->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
     return true;
 }

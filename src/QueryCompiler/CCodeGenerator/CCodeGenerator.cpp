@@ -128,7 +128,6 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr schema, PipelineContextPtr co
     code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
 
     code->returnStmt = ReturnStatement(VarRefStatement(*code->varDeclarationReturnValue)).createCopy();
-
     return true;
 }
 
@@ -327,7 +326,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
  * @param out
  * @return
  */
-bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForCentralWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
     context->setWindow(window);
     auto tf = getTypeFactory();
     auto constStatement = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0")));
@@ -434,6 +433,18 @@ bool CCodeGenerator::generateCodeForWindow(WindowDefinitionPtr window, PipelineC
     // context->code->cleanupStmts.push_back(emitTupleBuffer(context->code->varDeclarationExecutionContext,
     //                                                      context->code->varDeclarationResultBuffer)
     //                                          .copy());
+    return true;
+}
+
+bool CCodeGenerator::generateCodeForDistributedWindowSliceCreation(WindowDefinitionPtr window, PipelineContextPtr context)
+{
+    NES_DEBUG("CCodeGenerator::generateCodeForDistributedWindowSliceCreation with " << window << " pipeline " << context);
+    return true;
+}
+
+bool CCodeGenerator::generateCodeForDistributedWindowWindowCombiner(WindowDefinitionPtr window, PipelineContextPtr context)
+{
+    NES_DEBUG("CCodeGenerator::generateCodeForDistributedWindowWindowCombiner with " << window << " pipeline " << context);
     return true;
 }
 

@@ -13,8 +13,14 @@ typedef std::shared_ptr<GeneratableMapOperator> GeneratableMapOperatorPtr;
 class GeneratableMergeOperator;
 typedef std::shared_ptr<GeneratableMergeOperator> GeneratableMergeOperatorPtr;
 
-class GeneratableWindowOperator;
-typedef std::shared_ptr<GeneratableWindowOperator> GeneratableWindowOperatorPtr;
+class GeneratableCentralWindowOperator;
+typedef std::shared_ptr<GeneratableCentralWindowOperator> GeneratableWindowOperatorPtr;
+
+class GeneratableDistributedlWindowSliceCreationOperator;
+typedef std::shared_ptr<GeneratableDistributedlWindowSliceCreationOperator> GeneratableDistributedlWindowSliceCreationOperatorPtr;
+
+class GeneratableDistributedlWindowCombinerOperator;
+typedef std::shared_ptr<GeneratableDistributedlWindowCombinerOperator> GeneratableDistributedlWindowCombinerOperatorPtr;
 
 class GeneratableSinkOperator;
 typedef std::shared_ptr<GeneratableSinkOperator> GeneratableSinkOperatorPtr;

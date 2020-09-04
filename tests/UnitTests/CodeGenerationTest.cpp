@@ -787,10 +787,26 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     }
 }
 
+TEST_F(CodeGenerationTest, codeGenerationScanOperator) {
+    /* prepare objects for test */
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+
+    auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = CCodeGenerator::create();
+    auto context1 = PipelineContext::create();
+
+    auto input_schema = source->getSchema();
+
+    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+
+    /* compile code to pipeline stage */
+    auto stage1 = codeGenerator->compile(context1->code);
+}
+
 /**
  * @brief This test generates a window assigner
  */
-TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
+TEST_F(CodeGenerationTest, codeGenerationCentralWindow) {
     /* prepare objects for test */
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
 
@@ -807,7 +823,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
         input_schema->get("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)));
 
-    codeGenerator->generateCodeForWindow(windowDefinition, context1);
+    codeGenerator->generateCodeForCentralWindow(windowDefinition, context1);
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
@@ -833,6 +849,63 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     stage1->execute(inputBuffer, windowHandler->getWindowState(),
                    windowHandler->getWindowManager(), queryContext);
+
+    //check partial aggregates in window state
+    auto stateVar =
+        (StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) windowHandler
+            ->getWindowState();
+    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
+    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
+}
+
+
+
+/**
+ * @brief This test generates a window assigner
+ */
+TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
+    /* prepare objects for test */
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+
+    auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = CCodeGenerator::create();
+    auto context1 = PipelineContext::create();
+
+    auto input_schema = source->getSchema();
+
+    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+
+    auto sum = Sum::on(Attribute("value"));
+    auto windowDefinition = createWindowDefinition(
+        input_schema->get("key"), sum,
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)));
+
+    codeGenerator->generateCodeForDistributedWindowSliceCreation(windowDefinition, context1);
+
+    /* compile code to pipeline stage */
+    auto stage1 = codeGenerator->compile(context1->code);
+
+
+    auto context2 = PipelineContext::create();
+    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    auto stage2 = codeGenerator->compile(context2->code);
+
+    // init window handler
+    auto windowHandler =
+        new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
+
+    //auto context = PipelineContext::create();
+    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer &buff){buff.isValid();});//valid check due to compiler error for unused var
+    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr); // TODO Philipp, plz add pass-through pipeline here
+    windowHandler->setup(nextPipeline, 0);
+
+    /* prepare input tuple buffer */
+    auto inputBuffer = source->receiveData().value();
+
+    /* execute Stage */
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
+    stage1->execute(inputBuffer, windowHandler->getWindowState(),
+                    windowHandler->getWindowManager(), queryContext);
 
     //check partial aggregates in window state
     auto stateVar =
