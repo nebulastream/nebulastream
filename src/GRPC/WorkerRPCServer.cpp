@@ -11,7 +11,7 @@ WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request,
                                       RegisterQueryReply* reply) {
     auto queryId = request->queryid();
-    auto querySubPlanId = request->queryexecutionid();
+    auto querySubPlanId = request->querysubplanid();
 
     auto queryPlan = OperatorSerializationUtil::deserializeOperator((SerializableOperator*) &request->operatortree());
     NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryId);
