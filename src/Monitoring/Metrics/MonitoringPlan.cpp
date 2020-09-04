@@ -11,6 +11,8 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger.hpp>
 
+#include <WorkerRPCService.pb.h>
+
 namespace NES {
 
 const std::string MonitoringPlan::CPU_METRICS_DESC = "cpuMetrics_";
@@ -20,11 +22,15 @@ const std::string MonitoringPlan::NETWORK_VALUES_DESC = "networkValues_";
 const std::string MonitoringPlan::MEMORY_METRICS_DESC = "memoryMetrics_";
 const std::string MonitoringPlan::DISK_METRICS_DESC = "diskMetrics_";
 
-MonitoringPlan::MonitoringPlan(std::shared_ptr<MetricCatalog> catalog, const std::vector<MetricValueType>& metrics)
-    : catalog(catalog), cpuMetrics(false), networkMetrics(false), memoryMetrics(false),
-      diskMetrics(false) {
+MonitoringPlan::MonitoringPlan(const std::vector<MetricValueType>& metrics)
+    : cpuMetrics(false), networkMetrics(false), memoryMetrics(false), diskMetrics(false) {
     NES_DEBUG("MonitoringPlan: Initializing");
     addMetrics(metrics);
+}
+
+MonitoringPlan::MonitoringPlan(const SerializableMonitoringPlan plan): cpuMetrics(plan.cpumetrics()), networkMetrics(plan.networkmetrics()),
+                                                                        memoryMetrics(plan.memorymetrics()), diskMetrics(plan.diskmetrics()) {
+    NES_DEBUG("MonitoringPlan: Initializing from shippable protobuf object.");
 }
 
 void MonitoringPlan::addMetric(MetricValueType metric) {
@@ -54,7 +60,7 @@ void MonitoringPlan::addMetrics(const std::vector<MetricValueType>& metrics) {
     }
 }
 
-std::shared_ptr<MetricGroup> MonitoringPlan::createMetricGroup() const {
+std::shared_ptr<MetricGroup> MonitoringPlan::createMetricGroup(MetricCatalogPtr) const {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     if (cpuMetrics) {
@@ -122,6 +128,20 @@ bool MonitoringPlan::hasMetric(MetricValueType metric) const {
             return false;
         }
     }
+}
+
+SerializableMonitoringPlan MonitoringPlan::serialize() const {
+    SerializableMonitoringPlan splan;
+    splan.set_cpumetrics(cpuMetrics);
+    splan.set_diskmetrics(diskMetrics);
+    splan.set_memorymetrics(memoryMetrics);
+    splan.set_networkmetrics(networkMetrics);
+    return splan;
+}
+
+std::ostream& operator<<(std::ostream &strm, const MonitoringPlan &plan) {
+    return strm << "MonitoringPlan: CPU(" << std::to_string(plan.cpuMetrics) << "), disk(" << std::to_string(plan.diskMetrics) + "), " <<
+        "memory(" <<  std::to_string(plan.memoryMetrics) << "), network(" << std::to_string(plan.networkMetrics) << ")";
 }
 
 }// namespace NES

@@ -18,6 +18,8 @@
 
 //GRPC Includes
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Monitoring/Metrics/MetricGroup.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
@@ -228,6 +230,13 @@ QueryServicePtr NesCoordinator::getQueryService() {
 
 QueryCatalogPtr NesCoordinator::getQueryCatalog() {
     return queryCatalog;
+}
+
+SchemaPtr NesCoordinator::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, const MonitoringPlan& plan, TupleBuffer buf) {
+    std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
+    NES_DEBUG("NesCoordinator: Requesting monitoring data from worker address= " + destAddress);
+
+    return workerRpcClient->requestMonitoringData(destAddress, plan, buf);
 }
 
 }// namespace NES

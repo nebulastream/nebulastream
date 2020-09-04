@@ -1,5 +1,7 @@
 syntax = "proto3";
 import "SerializableOperator.proto";
+import "SerializableDataType.proto";
+
 service WorkerRPCService {
   rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
   rpc UndeployQuery (UndeployQueryRequest) returns (UndeployQueryReply) {}
@@ -9,6 +11,8 @@ service WorkerRPCService {
 
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
+
+  rpc RequestMonitoringData (MonitoringRequest) returns (MonitoringReply) {}
 }
 
 message DeployQueryRequest {
@@ -62,4 +66,13 @@ message StopQueryRequest {
 
 message StopQueryReply {
   bool success = 1;
+}
+
+message MonitoringRequest {
+  NES.SerializableMonitoringPlan monitoringPlan = 1;
+}
+
+message MonitoringReply {
+  NES.SerializableSchema schema = 1;
+  bytes buffer = 2;
 }
