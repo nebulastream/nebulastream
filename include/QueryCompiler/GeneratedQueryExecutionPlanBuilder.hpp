@@ -1,10 +1,10 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_
 
-#include <API/QueryId.hpp>
 #include <Common/ForwardDeclaration.hpp>
+#include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
-#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <map>
 #include <memory>
 #include <vector>
@@ -79,7 +79,7 @@ class GeneratedQueryExecutionPlanBuilder {
     /**
      * @return the query execution plan id
      */
-    QueryExecutionPlanId getQueryId() const;
+    QuerySubPlanId getQueryId() const;
 
     /**
      * @return a query execution plan with the specified configuration
@@ -123,23 +123,23 @@ class GeneratedQueryExecutionPlanBuilder {
 
     /**
      * @brief Add query execution id
-     * @param queryExecutionId : the input query execution id
+     * @param querySubPlanId : the input query execution id
      * @return this
      */
-    GeneratedQueryExecutionPlanBuilder& setQueryExecutionId(QueryExecutionPlanId queryExecutionId);
+    GeneratedQueryExecutionPlanBuilder& setQuerySubPlanId(QuerySubPlanId querySubPlanId);
 
     /**
      * @brief Get the query execution plan id
      * @return the query execution plan id
      */
-    QueryExecutionPlanId getQueryExecutionPlanId() const;
+    QuerySubPlanId getQuerySubPlanId() const;
 
   private:
     GeneratedQueryExecutionPlanBuilder();
 
   private:
     QueryId queryId;
-    QueryExecutionPlanId queryExecutionPlanId;
+    QuerySubPlanId querySubPlanId;
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;
     QueryCompilerPtr queryCompiler;

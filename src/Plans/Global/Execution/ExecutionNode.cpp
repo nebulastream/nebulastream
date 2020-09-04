@@ -15,7 +15,7 @@ namespace NES {
 
 ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) : id(physicalNode->getId()), topologyNode(physicalNode) {
     QueryPlanPtr queryPlan = QueryPlan::create();
-    queryPlan->appendOperator(operatorNode);
+    queryPlan->appendOperatorAsNewRoot(operatorNode);
     queryPlan->setQueryId(queryId);
     std::vector<QueryPlanPtr> querySubPlans{queryPlan};
     mapOfQuerySubPlans.emplace(queryId, querySubPlans);

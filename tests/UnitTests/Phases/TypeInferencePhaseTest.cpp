@@ -61,8 +61,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     sink->setId(UtilityFunctions::getNextOperatorId());
 
     auto plan = QueryPlan::create(source);
-    plan->appendOperator(map);
-    plan->appendOperator(sink);
+    plan->appendOperatorAsNewRoot(map);
+    plan->appendOperatorAsNewRoot(sink);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
@@ -136,8 +136,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     sink->setId(UtilityFunctions::getNextOperatorId());
 
     auto plan = QueryPlan::create(source);
-    plan->appendOperator(map);
-    plan->appendOperator(sink);
+    plan->appendOperatorAsNewRoot(map);
+    plan->appendOperatorAsNewRoot(sink);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);

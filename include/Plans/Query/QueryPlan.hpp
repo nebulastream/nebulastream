@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_PLANS_QUERY_HPP_
 #define NES_INCLUDE_PLANS_QUERY_HPP_
-#include <API/QueryId.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
-#include <QueryCompiler/QueryExecutionPlanId.hpp>
+#include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>
 #include <set>
 #include <vector>
@@ -57,10 +57,9 @@ class QueryPlan {
 
     /**
      * @brief Appends an operator to the query plan and make the new operator as root.
-     * This updates the operator id of the query.
      * @param operatorNode : new operator
      */
-    void appendOperator(OperatorNodePtr operatorNode);
+    void appendOperatorAsNewRoot(OperatorNodePtr operatorNode);
 
     /**
      * @brief Pre-pend the pre-existing operator to the leaf of the query plan.
@@ -69,7 +68,7 @@ class QueryPlan {
      * Note: this operation will add the pre-existing operator without assigning it a new Id.
      * @param operatorNode
      */
-    void prependOperator(OperatorNodePtr operatorNode);
+    void prependOperatorAsLeafNode(OperatorNodePtr operatorNode);
 
     /**
      * @brief Returns string representation of the query.
@@ -122,7 +121,7 @@ class QueryPlan {
     }
 
     /**
-    * @brief Get all the leaf operators in the query plan
+    * @brief Get all the leaf operators in the query plan (leaf operator is the one without any child)
      * Note: in certain stages the source operators might not be Leaf operators
     * @return returns a vector of leaf operators
     */
@@ -157,16 +156,16 @@ class QueryPlan {
     const QueryId getQueryId() const;
 
     /**
-     * @brief get query execution id
-     * @return return query execution id
+     * @brief get query sub plan id
+     * @return return query sub plan id
      */
-    QueryExecutionPlanId getQueryExecutionPlanId();
+    QuerySubPlanId getQuerySubPlanId();
 
     /**
-     * @brief Set query execution id
-     * @param queryExecutionPlanId : input query execution id
+     * @brief Set query sub plan id
+     * @param querySubPlanId : input query sub plan id
      */
-    void setQueryExecutionPlanId(uint64_t queryExecutionPlanId);
+    void setQuerySubPlanId(uint64_t querySubPlanId);
 
   private:
     /**
@@ -182,7 +181,7 @@ class QueryPlan {
 
     std::vector<OperatorNodePtr> rootOperators;
     QueryId queryId;
-    QueryExecutionPlanId queryExecutionPlanId;
+    QuerySubPlanId querySubPlanId;
 };
 }// namespace NES
 #endif//NES_INCLUDE_PLANS_QUERY_HPP_

@@ -1,8 +1,8 @@
 #ifndef INCLUDE_CATALOGS_QUERYCATALOG_HPP_
 #define INCLUDE_CATALOGS_QUERYCATALOG_HPP_
 
-#include <API/QueryId.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <condition_variable>
 #include <map>
 #include <memory>

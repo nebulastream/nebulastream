@@ -19,9 +19,9 @@ QueryPlanPtr QueryPlan::create() {
     return std::make_shared<QueryPlan>(QueryPlan());
 }
 
-QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), queryExecutionPlanId(INVALID_QUERY_EXECUTION_PLAN_ID) {}
+QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID) {}
 
-QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), queryExecutionPlanId(INVALID_QUERY_EXECUTION_PLAN_ID) {
+QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID) {
     if (rootOperator->getId() == 0) {
         rootOperator->setId(UtilityFunctions::getNextOperatorId());
     }
@@ -52,7 +52,7 @@ std::vector<SinkLogicalOperatorNodePtr> QueryPlan::getSinkOperators() {
     return sinkOperators;
 }
 
-void QueryPlan::appendOperator(OperatorNodePtr operatorNode) {
+void QueryPlan::appendOperatorAsNewRoot(OperatorNodePtr operatorNode) {
     NES_DEBUG("QueryPlan: Appending operator " << operatorNode->toString() << " as new root of the plan.");
     for (auto rootOperator : rootOperators) {
         if (!rootOperator->addParent(operatorNode)) {
@@ -65,7 +65,7 @@ void QueryPlan::appendOperator(OperatorNodePtr operatorNode) {
     rootOperators.push_back(operatorNode);
 }
 
-void QueryPlan::prependOperator(OperatorNodePtr operatorNode) {
+void QueryPlan::prependOperatorAsLeafNode(OperatorNodePtr operatorNode) {
     NES_DEBUG("QueryPlan: Prepending operator " << operatorNode->toString() << " as new leaf of the plan.");
     auto leafOperators = getLeafOperators();
     if (leafOperators.empty()) {
@@ -170,11 +170,11 @@ void QueryPlan::addRootOperator(std::shared_ptr<OperatorNode> root) {
     rootOperators.push_back(root);
 }
 
-QueryExecutionPlanId QueryPlan::getQueryExecutionPlanId() {
-    return queryExecutionPlanId;
+QuerySubPlanId QueryPlan::getQuerySubPlanId() {
+    return querySubPlanId;
 }
 
-void QueryPlan::setQueryExecutionPlanId(uint64_t queryExecutionPlanId) {
-    this->queryExecutionPlanId = queryExecutionPlanId;
+void QueryPlan::setQuerySubPlanId(uint64_t querySubPlanId) {
+    this->querySubPlanId = querySubPlanId;
 }
 }// namespace NES

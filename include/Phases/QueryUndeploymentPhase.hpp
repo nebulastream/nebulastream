@@ -1,7 +1,7 @@
 #ifndef NES_QUERYUNDEPLOYMENTPHASE_HPP
 #define NES_QUERYUNDEPLOYMENTPHASE_HPP
 
-#include <API/QueryId.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <iostream>
 #include <memory>
 #include <vector>

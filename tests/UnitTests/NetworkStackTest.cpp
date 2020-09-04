@@ -872,14 +872,14 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
     GeneratedQueryExecutionPlanBuilder builderReceiverQEP = GeneratedQueryExecutionPlanBuilder::create()
-        .setCompiler(nodeEngine->getCompiler())
-        .addOperatorQueryPlan(generatableOperators)
-        .addSink(testSink)
-        .addSource(networkSource1)
-        .setBufferManager(nodeEngine->getBufferManager())
-        .setQueryManager(nodeEngine->getQueryManager())
-        .setQueryId(1)
-        .setQueryExecutionId(1);
+                                                                .setCompiler(nodeEngine->getCompiler())
+                                                                .addOperatorQueryPlan(generatableOperators)
+                                                                .addSink(testSink)
+                                                                .addSource(networkSource1)
+                                                                .setBufferManager(nodeEngine->getBufferManager())
+                                                                .setQueryManager(nodeEngine->getQueryManager())
+                                                                .setQueryId(1)
+                                                                .setQuerySubPlanId(1);
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
@@ -895,14 +895,14 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
 
 
     GeneratedQueryExecutionPlanBuilder builderGeneratorQEP = GeneratedQueryExecutionPlanBuilder::create()
-        .setCompiler(nodeEngine->getCompiler())
-        .addSink(networkSink)
-        .addOperatorQueryPlan(generatableOperators2)
-        .addSource(testSource)
-        .setBufferManager(nodeEngine->getBufferManager())
-        .setQueryManager(nodeEngine->getQueryManager())
-        .setQueryId(2)
-        .setQueryExecutionId(2);
+                                                                 .setCompiler(nodeEngine->getCompiler())
+                                                                 .addSink(networkSink)
+                                                                 .addOperatorQueryPlan(generatableOperators2)
+                                                                 .addSource(testSource)
+                                                                 .setBufferManager(nodeEngine->getBufferManager())
+                                                                 .setQueryManager(nodeEngine->getQueryManager())
+                                                                 .setQueryId(2)
+                                                                 .setQuerySubPlanId(2);
 
     //    auto generatorQep = nodeEngine->getCompiler()->compile(sink);
     //    generatorQep->addDataSink(networkSink);

@@ -3,7 +3,7 @@
 #define QUERYSERVICE_HPP
 
 #include <API/Query.hpp>
-#include <API/QueryId.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <cpprest/json.h>
 
 namespace NES {

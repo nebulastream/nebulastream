@@ -1,8 +1,8 @@
 #ifndef NES_EXECUTIONNODE_H
 #define NES_EXECUTIONNODE_H
 
-#include <API/QueryId.hpp>
 #include <Nodes/Node.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <list>
 #include <map>
 #include <memory>

@@ -4,7 +4,7 @@
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
 
-#include <API/QueryId.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <grpcpp/grpcpp.h>
 #include <string>
 

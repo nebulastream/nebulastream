@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_CATALOGS_QUERYCATALOGENTRY_HPP_
 #define NES_INCLUDE_CATALOGS_QUERYCATALOGENTRY_HPP_
 
-#include <API/QueryId.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <map>
 #include <memory>
 #include <string>

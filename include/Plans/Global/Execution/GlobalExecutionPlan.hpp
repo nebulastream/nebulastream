@@ -1,7 +1,7 @@
 #ifndef NES_GLOBALEXECUTIONPLAN_HPP
 #define NES_GLOBALEXECUTIONPLAN_HPP
 
-#include <API/QueryId.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <cpprest/json.h>
 #include <map>
 #include <memory>

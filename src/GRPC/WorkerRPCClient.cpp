@@ -65,13 +65,13 @@ bool WorkerRPCClient::undeployQuery(std::string address, QueryId queryId) {
 
 bool WorkerRPCClient::registerQuery(std::string address, QueryPlanPtr queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
-    QueryExecutionPlanId queryExecutionPlanId = queryPlan->getQueryExecutionPlanId();
-    NES_DEBUG("WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId << " queryExecutionPlanId = " << queryExecutionPlanId);
+    QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
+    NES_DEBUG("WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId << " querySubPlanId = " << querySubPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
     request.set_queryid(queryId);
-    request.set_queryexecutionid(queryExecutionPlanId);
+    request.set_queryexecutionid(querySubPlanId);
     // serialize query operators.
     OperatorNodePtr rootOperator = queryPlan->getRootOperators()[0];
     OperatorSerializationUtil::serializeOperator(rootOperator, request.mutable_operatortree());

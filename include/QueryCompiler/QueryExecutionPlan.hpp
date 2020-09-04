@@ -1,8 +1,8 @@
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
-#include <API/QueryId.hpp>
+#include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
-#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Windows/WindowHandler.hpp>
@@ -34,7 +34,7 @@ class QueryExecutionPlan {
   protected:
     explicit QueryExecutionPlan(
         QueryId queryId,
-        QueryExecutionPlanId queryExecutionPlanId,
+        QuerySubPlanId querySubPlanId,
         std::vector<DataSourcePtr>&& sources,
         std::vector<DataSinkPtr>&& sinks,
         std::vector<PipelineStagePtr>&& stages,
@@ -99,11 +99,11 @@ class QueryExecutionPlan {
      * @brief Get the query execution plan id
      * @return the query execution plan id
      */
-    QueryExecutionPlanId getQueryExecutionPlanId() const;
+    QuerySubPlanId getQuerySubPlanId() const;
 
   protected:
     const QueryId queryId;
-    const QueryExecutionPlanId queryExecutionPlanId;
+    const QuerySubPlanId querySubPlanId;
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<PipelineStagePtr> stages;

@@ -5,11 +5,11 @@
 
 namespace NES {
 
-QueryExecutionPlan::QueryExecutionPlan(QueryId queryId, QueryExecutionPlanId queryExecutionPlanId, std::vector<DataSourcePtr>&& sources,
+QueryExecutionPlan::QueryExecutionPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
                                        std::vector<DataSinkPtr>&& sinks, std::vector<PipelineStagePtr>&& stages,
                                        QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
     : queryId(queryId),
-      queryExecutionPlanId(queryExecutionPlanId),
+      querySubPlanId(querySubPlanId),
       sources(std::move(sources)),
       sinks(std::move(sinks)),
       stages(std::move(stages)),
@@ -22,8 +22,8 @@ QueryId QueryExecutionPlan::getQueryId() {
     return queryId;
 }
 
-QueryExecutionPlanId QueryExecutionPlan::getQueryExecutionPlanId() const {
-    return queryExecutionPlanId;
+QuerySubPlanId QueryExecutionPlan::getQuerySubPlanId() const {
+    return querySubPlanId;
 }
 
 QueryExecutionPlan::~QueryExecutionPlan() {

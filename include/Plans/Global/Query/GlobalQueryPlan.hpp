@@ -1,8 +1,8 @@
 #ifndef NES_GLOBALQUERYPLAN_HPP
 #define NES_GLOBALQUERYPLAN_HPP
 
-#include <API/QueryId.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
 #include <algorithm>
 #include <iostream>
