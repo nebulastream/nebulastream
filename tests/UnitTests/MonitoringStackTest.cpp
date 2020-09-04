@@ -7,7 +7,6 @@
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/DiscMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/Metrics/IntCounter.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
@@ -18,14 +17,23 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Util/Logger.hpp>
 
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <CoordinatorRPCService.pb.h>
 #include <Monitoring/MetricValues/GroupedValues.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <memory>
 
 namespace NES {
+
+//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
+// by assigning a different RPC port for each test case
+uint64_t rpcPort = 5000;
+
 class MonitoringStackTest : public testing::Test {
   public:
     BufferManagerPtr bufferManager;
+    std::string ipAddress = "127.0.0.1";
+    uint64_t restPort = 8081;
 
     static void SetUpTestCase() {
         NES::setupLogging("MonitoringStackTest.log", NES::LOG_DEBUG);
@@ -40,6 +48,7 @@ class MonitoringStackTest : public testing::Test {
     void SetUp() override {
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
         bufferManager = std::make_shared<BufferManager>(4096, 10);
+        rpcPort = rpcPort + 30;
     }
 
     /* Will be called before a test is executed. */
@@ -269,10 +278,10 @@ TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
 
 TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    MonitoringPlan plan = MonitoringPlan(MetricCatalog::NesMetrics(), metrics);
-    MetricGroupPtr metricGroup = plan.createMetricGroup();
+    MonitoringPlan plan = MonitoringPlan(metrics);
 
     //worker side
+    MetricGroupPtr metricGroup = plan.createMetricGroup(MetricCatalog::NesMetrics());
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto schema = Schema::create();
     metricGroup->getSample(schema, tupleBuffer);
@@ -296,6 +305,43 @@ TEST_F(MonitoringStackTest, testSamplingProtocol) {
     });
 
     auto output = samplingProtocolPtr->getSample();
+}
+
+TEST_F(MonitoringStackTest, requestMonitoringData) {
+    NES_INFO("MonitoringStackTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(false);
+    EXPECT_NE(port, 0);
+    NES_INFO("MonitoringStackTest: Coordinator started successfully");
+
+    NES_INFO("MonitoringStackTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
+                                                    port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(false,false);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MonitoringStackTest: Worker1 started successfully");
+
+    bool retConWrk1 = wrk1->connect();
+    EXPECT_TRUE(retConWrk1);
+    NES_INFO("MonitoringStackTest: Worker 1 connected ");
+
+    // requesting the monitoring data
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    MonitoringPlan plan = MonitoringPlan(metrics);
+
+    auto schema = crd->requestMonitoringData("127.0.0.1", port + 10, plan, tupleBuffer);
+    NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port+10));
+    ASSERT_TRUE(schema->getSize()>1);
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+
+    NES_INFO("MonitoringStackTest: Stopping worker");
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("MonitoringStackTest: stopping coordinator");
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
 }
 
 }

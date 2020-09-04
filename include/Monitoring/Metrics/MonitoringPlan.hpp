@@ -14,10 +14,15 @@ namespace NES {
 class MetricCatalog;
 class MetricGroup;
 class GroupedValues;
+class SerializableMonitoringPlan;
+class MetricCatalog;
+
+typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
 
 class MonitoringPlan {
   public:
-    MonitoringPlan(std::shared_ptr<MetricCatalog> catalog, const std::vector<MetricValueType>& metrics);
+    MonitoringPlan(const std::vector<MetricValueType>& metrics);
+    MonitoringPlan(const SerializableMonitoringPlan shippable);
 
     /**
      * @brief Add a specific metric to the plan
@@ -42,7 +47,7 @@ class MonitoringPlan {
      * @brief creates a MetricGroup out of the MonitoringPlan;
      * @return
      */
-    std::shared_ptr<MetricGroup> createMetricGroup() const;
+    std::shared_ptr<MetricGroup> createMetricGroup(MetricCatalogPtr catalog) const;
 
     /**
      * @brief
@@ -52,6 +57,14 @@ class MonitoringPlan {
      */
     GroupedValues fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf);
 
+    /**
+     * @brief Creates a serializable monitoring plan according to the Protobuf definition.
+     * @return the serializable monitoring plan
+     */
+    SerializableMonitoringPlan serialize() const;
+
+    friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
+
   public:
     static const std::string CPU_METRICS_DESC;
     static const std::string CPU_VALUES_DESC;
@@ -59,9 +72,6 @@ class MonitoringPlan {
     static const std::string NETWORK_VALUES_DESC;
     static const std::string MEMORY_METRICS_DESC;
     static const std::string DISK_METRICS_DESC;
-
-  private:
-    std::shared_ptr<MetricCatalog> catalog;
 
   private:
     //the metrics for monitoring

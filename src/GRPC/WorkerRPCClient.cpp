@@ -1,4 +1,10 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
+
+#include <NodeEngine/TupleBuffer.hpp>
+#include <API/Schema.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
+
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
@@ -171,6 +177,30 @@ bool WorkerRPCClient::stopQuery(std::string address, QueryId queryId) {
                   << status.error_code() << ": "
                   << status.error_message());
         throw Exception("Error while WorkerRPCClient::stopQuery");
+    }
+}
+
+SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, MonitoringPlan plan, TupleBuffer buf) {
+    NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
+
+    MonitoringRequest request;
+    request.mutable_monitoringplan()->CopyFrom(plan.serialize());
+
+    ClientContext context;
+    MonitoringReply reply;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->RequestMonitoringData(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
+        auto parsedSchema = SchemaSerializationUtil::deserializeSchema(reply.mutable_schema());
+        //TODO: fix this
+        std::memcpy(buf.getBuffer(), reply.mutable_buffer(), parsedSchema->getSchemaSizeInBytes());
+        return parsedSchema;
+    } else {
+        NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": " + status.error_message());
     }
 }
 

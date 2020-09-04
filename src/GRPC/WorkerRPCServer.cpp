@@ -1,5 +1,9 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
+#include <Monitoring/Metrics/MetricGroup.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include <Monitoring/Metrics/MetricCatalog.hpp>
 
 using namespace NES;
 
@@ -76,4 +80,20 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
         reply->set_success(false);
         return Status::CANCELLED;
     }
+}
+
+Status WorkerRPCServer::RequestMonitoringData(ServerContext*, const MonitoringRequest* request, MonitoringReply* reply) {
+    auto plan = MonitoringPlan{request->monitoringplan()};
+    NES_DEBUG("WorkerRPCServer::RequestMonitoringData: Got request" << plan);
+
+    MetricGroupPtr metricGroup = plan.createMetricGroup(MetricCatalog::NesMetrics());
+    auto tupleBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    auto schema = Schema::create();
+    metricGroup->getSample(schema, tupleBuffer);
+
+    // add schema and buffer to the reply object
+    SchemaSerializationUtil::serializeSchema(schema, reply->mutable_schema());
+    reply->set_buffer(tupleBuffer.getBuffer(), schema->getSchemaSizeInBytes());
+
+    return Status::OK;
 }

@@ -79,3 +79,10 @@ message SerializableDataValue {
   }
   google.protobuf.Any value = 1;
 }
+
+message SerializableMonitoringPlan {
+  bool cpuMetrics = 1;
+  bool networkMetrics = 2;
+  bool memoryMetrics = 3;
+  bool diskMetrics = 4;
+}

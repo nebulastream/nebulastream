@@ -17,6 +17,12 @@ namespace NES {
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
+class TupleBuffer;
+class MonitoringPlan;
+
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
@@ -70,6 +76,15 @@ class WorkerRPCClient {
      * @return bool indicating success
      */
     bool stopQuery(std::string address, QueryId queryId);
+
+    /**
+     * @brief Requests from a remote worker node its monitoring data.
+     * @param ipAddress
+     * @param the mutable schema to be extended
+     * @param the buffer where the data will be written into
+     * @return true if successful, else false
+     */
+    SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlan plan, TupleBuffer buf);
 
   private:
 };
