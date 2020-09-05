@@ -116,7 +116,7 @@ class UtilityFunctions {
      * @param nodes JSON array to store the traversed node
      * @param edges JSOn array to store the traversed edge
      */
-    static void getQueryPlanChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
+    static void getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
                               std::vector<web::json::value>& edges);
 
     /**

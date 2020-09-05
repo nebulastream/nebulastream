@@ -11,7 +11,6 @@
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -339,73 +338,85 @@ uint64_t UtilityFunctions::getNextNodeId() {
     return ++id;
 }
 web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
+    NES_INFO("UtilityFunctions: getting topology as JSON");
+
     web::json::value topologyJson{};
 
-    std::deque<TopologyNodePtr> parentToPrint{root};
-    std::deque<TopologyNodePtr> childToPrint;
+    std::deque<TopologyNodePtr> parentToAdd{root};
+    std::deque<TopologyNodePtr> childToAdd;
 
     std::vector<web::json::value> nodes = {};
     std::vector<web::json::value> edges = {};
 
 
-    while (!parentToPrint.empty()) {
-        TopologyNodePtr nodeToPrint = parentToPrint.front();
+    while (!parentToAdd.empty()) {
+        // Current topology node to add to the JSON
+        TopologyNodePtr currentNode = parentToAdd.front();
         web::json::value currentNodeJsonValue{};
 
-        parentToPrint.pop_front();
-        currentNodeJsonValue["id"] = web::json::value::number(nodeToPrint->getId());
-        currentNodeJsonValue["available_resources"] = web::json::value::number(nodeToPrint->getAvailableResources());
-        currentNodeJsonValue["ip_address"] = web::json::value::string(nodeToPrint->getIpAddress());
+        parentToAdd.pop_front();
+        // Add properties for current topology node
+        currentNodeJsonValue["id"] = web::json::value::number(currentNode->getId());
+        currentNodeJsonValue["available_resources"] = web::json::value::number(currentNode->getAvailableResources());
+        currentNodeJsonValue["ip_address"] = web::json::value::string(currentNode->getIpAddress());
 
-        for (auto& child : nodeToPrint->getChildren()) {
+        for (auto& child : currentNode->getChildren()) {
+            // Add edge information for current topology node
             web::json::value currentEdgeJsonValue{};
             currentEdgeJsonValue["source"] = web::json::value::number(child->as<TopologyNode>()->getId());
-            currentEdgeJsonValue["target"] = web::json::value::number(nodeToPrint->getId());
+            currentEdgeJsonValue["target"] = web::json::value::number(currentNode->getId());
             edges.push_back(currentEdgeJsonValue);
 
-            childToPrint.push_back(child->as<TopologyNode>());
+            childToAdd.push_back(child->as<TopologyNode>());
         }
 
-        if (parentToPrint.empty()) {
-            parentToPrint.insert(parentToPrint.end(), childToPrint.begin(), childToPrint.end());
-            childToPrint.clear();
+        if (parentToAdd.empty()) {
+            parentToAdd.insert(parentToAdd.end(), childToAdd.begin(), childToAdd.end());
+            childToAdd.clear();
         }
 
         nodes.push_back(currentNodeJsonValue);
-
     }
+    NES_INFO("UtilityFunctions: no more topology node to add");
 
+    // add `nodes` and `edges` JSON array to the final JSON result
     topologyJson["nodes"] = web::json::value::array(nodes);
     topologyJson["edges"] = web::json::value::array(edges);
     return topologyJson;
 }
 
 std::string UtilityFunctions::getOperatorType(OperatorNodePtr operatorNode) {
+    NES_INFO("UtilityFunctions: getting the type of the operator");
+
+    std::string operatorType;
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        return "SOURCE";
+        operatorType = "SOURCE";
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-        return "FILTER";
+        operatorType =  "FILTER";
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-        return "MAP";
+        operatorType =  "MAP";
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        return "MERGE";
+        operatorType =  "MERGE";
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
-        return "WINDOW";
+        operatorType =  "WINDOW";
     }  else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        return "SINK";
+        operatorType =  "SINK";
+    } else {
+        operatorType =  "UNDEFINED";
     }
-    return std::string();
+    NES_DEBUG("UtilityFunctions: operatorType = " << operatorType);
+    return operatorType;
 }
 
 web::json::value UtilityFunctions::getQueryPlanAsJson(QueryCatalogPtr queryCatalog, QueryId queryId) {
 
-    NES_INFO("QueryService: Get the registered query");
+    NES_DEBUG("UtilityFunctions: Get the registered query");
     if (!queryCatalog->queryExists(queryId)) {
         throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
     }
     QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
 
-    NES_INFO("QueryService: Getting the json representation of the query plan");
+    NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
 
     web::json::value result{};
     std::vector<web::json::value> nodes{};
@@ -414,62 +425,72 @@ web::json::value UtilityFunctions::getQueryPlanAsJson(QueryCatalogPtr queryCatal
     const OperatorNodePtr root = queryCatalogEntry->getQueryPlan()->getRootOperators()[0];
 
     if (!root) {
+        NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is empty");
         auto node = web::json::value::object();
         node["id"] = web::json::value::string("NONE");
-        node["title"] = web::json::value::string("NONE");
+        node["name"] = web::json::value::string("NONE");
         nodes.push_back(node);
     } else {
+        NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is not empty");
         std::string rootOperatorType = getOperatorType(root);
 
+        // Create a node JSON object for the root operator
         auto node = web::json::value::object();
-        node["id"] = web::json::value::string(
-            getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
-        node["title"] =
+
+        // use the id of the root operator to fill the id field
+        node["id"] = web::json::value::string(std::to_string(root->getId()));
+
+        // use concatenation of <operator type>(OP-<operator id>) to fill name field
+        node["name"] =
             web::json::value::string(
                 rootOperatorType + +"(OP-" + std::to_string(root->getId()) + ")");
-        if (rootOperatorType == "SOURCE" || rootOperatorType == "SINK") {
-            node["nodeType"] = web::json::value::string("Source");
-        } else {
-            node["nodeType"] = web::json::value::string("Processor");
-        }
+
+        node["nodeType"] = web::json::value::string(rootOperatorType);
+
         nodes.push_back(node);
-        getQueryPlanChildren(root, nodes, edges);
+
+        // traverse to the children of the current operator
+        getChildren(root, nodes, edges);
     }
 
+    // add `nodes` and `edges` JSON array to the final JSON result
     result["nodes"] = web::json::value::array(nodes);
     result["edges"] = web::json::value::array(edges);
 
     return result;
 }
 
-void UtilityFunctions::getQueryPlanChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
+void UtilityFunctions::getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
                                         std::vector<web::json::value>& edges) {
 
     std::vector<web::json::value> childrenNode;
 
     std::vector<NodePtr> children = root->getChildren();
     if (children.empty()) {
+        NES_DEBUG("UtilityFunctions::getChildren : children is empty()");
         return;
     }
 
+    NES_DEBUG("UtilityFunctions::getChildren : children size = " << children.size());
     for (NodePtr child : children) {
+        // Create a node JSON object for the current operator
         auto node = web::json::value::object();
         auto childLogicalOperatorNode = child->as<LogicalOperatorNode>();
         std::string childOPeratorType = getOperatorType(childLogicalOperatorNode);
 
-        node["id"] =
-            web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
-        node["title"] =
+        // use the id of the current operator to fill the id field
+        node["id"] = node["id"] = web::json::value::string(std::to_string(childLogicalOperatorNode->getId()));
+        // use concatenation of <operator type>(OP-<operator id>) to fill name field
+        // e.g. FILTER(OP-1)
+        node["name"] =
             web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
 
-        if (childOPeratorType == "SOURCE"|| childOPeratorType == "SINK") {
-            node["nodeType"] = web::json::value::string("Source");
-        } else {
-            node["nodeType"] = web::json::value::string("Processor");
-        }
+        node["nodeType"] = web::json::value::string(childOPeratorType);
 
+        // store current node JSON object to the `nodes` JSON array
         nodes.push_back(node);
 
+        // Create an edge JSON object for current operator
         auto edge = web::json::value::object();
         edge["source"] =
             web::json::value::string(
@@ -478,8 +499,11 @@ void UtilityFunctions::getQueryPlanChildren(const OperatorNodePtr root, std::vec
             web::json::value::string(
                 getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
 
+        // store current edge JSON object to `edges` JSON array
         edges.push_back(edge);
-        getQueryPlanChildren(childLogicalOperatorNode, nodes, edges);
+
+        // traverse to the children of current operator
+        getChildren(childLogicalOperatorNode, nodes, edges);
     }
 }
 
