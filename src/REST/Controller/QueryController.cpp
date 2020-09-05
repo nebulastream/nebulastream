@@ -9,6 +9,7 @@
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 using namespace web;
 using namespace http;
@@ -16,8 +17,8 @@ using namespace std;
 
 namespace NES {
 
-QueryController::QueryController(QueryServicePtr queryService, TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan)
-    : queryService(queryService), topology(topology), globalExecutionPlan(globalExecutionPlan) {}
+QueryController::QueryController(QueryServicePtr queryService, QueryCatalogPtr queryCatalog, TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan)
+    : queryService(queryService), queryCatalog(queryCatalog), topology(topology), globalExecutionPlan(globalExecutionPlan) {}
 
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 
@@ -38,7 +39,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     QueryId queryId = req.at("userQuery").as_integer();
 
                     //Call the service
-                    auto basePlan = queryService->getQueryPlanAsJson(queryId);
+                    auto basePlan = UtilityFunctions::getQueryPlanAsJson(queryCatalog, queryId);
 
                     //Prepare the response
                     successMessageImpl(message, basePlan);

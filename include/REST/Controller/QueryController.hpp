@@ -30,7 +30,7 @@ typedef std::shared_ptr<Topology> TopologyPtr;
 
 class QueryController : public BaseController {
   public:
-    explicit QueryController(QueryServicePtr queryService, TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan);
+    explicit QueryController(QueryServicePtr queryService, QueryCatalogPtr queryCatalog, TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~QueryController() = default;
 
@@ -58,6 +58,7 @@ class QueryController : public BaseController {
   private:
     TopologyPtr topology;
     QueryServicePtr queryService;
+    QueryCatalogPtr queryCatalog;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 

@@ -1,10 +1,20 @@
 #include <API/Pattern.hpp>
 #include <API/Query.hpp>
+#include <Catalogs/QueryCatalogEntry.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/QueryNotFoundException.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
@@ -327,6 +337,150 @@ uint64_t UtilityFunctions::getNextQueryExecutionId() {
 uint64_t UtilityFunctions::getNextNodeId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
+}
+web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
+    web::json::value topologyJson{};
+
+    std::deque<TopologyNodePtr> parentToPrint{root};
+    std::deque<TopologyNodePtr> childToPrint;
+
+    std::vector<web::json::value> nodes = {};
+    std::vector<web::json::value> edges = {};
+
+
+    while (!parentToPrint.empty()) {
+        TopologyNodePtr nodeToPrint = parentToPrint.front();
+        web::json::value currentNodeJsonValue{};
+
+        parentToPrint.pop_front();
+        currentNodeJsonValue["id"] = web::json::value::number(nodeToPrint->getId());
+        currentNodeJsonValue["available_resources"] = web::json::value::number(nodeToPrint->getAvailableResources());
+        currentNodeJsonValue["ip_address"] = web::json::value::string(nodeToPrint->getIpAddress());
+
+        for (auto& child : nodeToPrint->getChildren()) {
+            web::json::value currentEdgeJsonValue{};
+            currentEdgeJsonValue["source"] = web::json::value::number(child->as<TopologyNode>()->getId());
+            currentEdgeJsonValue["target"] = web::json::value::number(nodeToPrint->getId());
+            edges.push_back(currentEdgeJsonValue);
+
+            childToPrint.push_back(child->as<TopologyNode>());
+        }
+
+        if (parentToPrint.empty()) {
+            parentToPrint.insert(parentToPrint.end(), childToPrint.begin(), childToPrint.end());
+            childToPrint.clear();
+        }
+
+        nodes.push_back(currentNodeJsonValue);
+
+    }
+
+    topologyJson["nodes"] = web::json::value::array(nodes);
+    topologyJson["edges"] = web::json::value::array(edges);
+    return topologyJson;
+}
+
+std::string UtilityFunctions::getOperatorType(OperatorNodePtr operatorNode) {
+    if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+        return "SOURCE";
+    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+        return "FILTER";
+    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+        return "MAP";
+    } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
+        return "MERGE";
+    } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+        return "WINDOW";
+    }  else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+        return "SINK";
+    }
+    return std::string();
+}
+
+web::json::value UtilityFunctions::getQueryPlanAsJson(QueryCatalogPtr queryCatalog, QueryId queryId) {
+
+    NES_INFO("QueryService: Get the registered query");
+    if (!queryCatalog->queryExists(queryId)) {
+        throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
+    }
+    QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+
+    NES_INFO("QueryService: Getting the json representation of the query plan");
+
+    web::json::value result{};
+    std::vector<web::json::value> nodes{};
+    std::vector<web::json::value> edges{};
+
+    const OperatorNodePtr root = queryCatalogEntry->getQueryPlan()->getRootOperators()[0];
+
+    if (!root) {
+        auto node = web::json::value::object();
+        node["id"] = web::json::value::string("NONE");
+        node["title"] = web::json::value::string("NONE");
+        nodes.push_back(node);
+    } else {
+        std::string rootOperatorType = getOperatorType(root);
+
+        auto node = web::json::value::object();
+        node["id"] = web::json::value::string(
+            getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
+        node["title"] =
+            web::json::value::string(
+                rootOperatorType + +"(OP-" + std::to_string(root->getId()) + ")");
+        if (rootOperatorType == "SOURCE" || rootOperatorType == "SINK") {
+            node["nodeType"] = web::json::value::string("Source");
+        } else {
+            node["nodeType"] = web::json::value::string("Processor");
+        }
+        nodes.push_back(node);
+        getQueryPlanChildren(root, nodes, edges);
+    }
+
+    result["nodes"] = web::json::value::array(nodes);
+    result["edges"] = web::json::value::array(edges);
+
+    return result;
+}
+
+void UtilityFunctions::getQueryPlanChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
+                                        std::vector<web::json::value>& edges) {
+
+    std::vector<web::json::value> childrenNode;
+
+    std::vector<NodePtr> children = root->getChildren();
+    if (children.empty()) {
+        return;
+    }
+
+    for (NodePtr child : children) {
+        auto node = web::json::value::object();
+        auto childLogicalOperatorNode = child->as<LogicalOperatorNode>();
+        std::string childOPeratorType = getOperatorType(childLogicalOperatorNode);
+
+        node["id"] =
+            web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
+        node["title"] =
+            web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
+
+        if (childOPeratorType == "SOURCE"|| childOPeratorType == "SINK") {
+            node["nodeType"] = web::json::value::string("Source");
+        } else {
+            node["nodeType"] = web::json::value::string("Processor");
+        }
+
+        nodes.push_back(node);
+
+        auto edge = web::json::value::object();
+        edge["source"] =
+            web::json::value::string(
+                childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
+        edge["target"] =
+            web::json::value::string(
+                getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
+
+        edges.push_back(edge);
+        getQueryPlanChildren(childLogicalOperatorNode, nodes, edges);
+    }
 }
 
 }// namespace NES

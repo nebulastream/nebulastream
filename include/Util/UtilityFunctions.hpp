@@ -2,6 +2,9 @@
 #define UTILITY_FUNCTIONS_HPP
 
 #include <API/Query.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+#include <Topology/TopologyNode.hpp>
+#include <cpprest/json.h>
 #include <string>
 
 /**
@@ -91,6 +94,36 @@ class UtilityFunctions {
     * @return string of the buffer content
     */
     static std::string printTupleBufferAsCSV(TupleBuffer& tbuffer, SchemaPtr schema);
+
+    /**
+      * @brief function to obtain JSON representation of a NES Topology
+      * @param root of the Topology
+      * @return JSON representation of the Topology
+      */
+    static web::json::value getTopologyAsJson(TopologyNodePtr root);
+
+    /**
+     * @brief function to generate the query plan from of a query.
+     * @param queryCatalog in which the query is stored
+     * @param the id of the query
+     * @return a JSON object representing the query plan
+     */
+    static web::json::value getQueryPlanAsJson(QueryCatalogPtr queryCatalog, QueryId queryId);
+
+    /**
+     * @brief function to traverse to queryPlanChildren
+     * @param root root operator of the queryPlan
+     * @param nodes JSON array to store the traversed node
+     * @param edges JSOn array to store the traversed edge
+     */
+    static void getQueryPlanChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
+                              std::vector<web::json::value>& edges);
+
+    /**
+     * @param an operator node
+     * @return the type of operator in String
+     */
+    static std::string getOperatorType(OperatorNodePtr operatorNode);
 
     /**
      * @brief function to replace all string occurrences
