@@ -46,21 +46,9 @@ class QueryService {
      */
     bool validateAndQueueStopRequest(QueryId queryId);
 
-    /**
-     * This method is used for generating the base query plan from the input query as string.
-     * @param queryId : user query as string
-     * @return a json object representing the query plan
-     */
-    web::json::value getQueryPlanAsJson(QueryId queryId);
-
   private:
     QueryCatalogPtr queryCatalog;
     QueryRequestQueuePtr queryRequestQueue;
-
-    void getQueryPlanChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
-                             std::vector<web::json::value>& edges);
-
-    std::string getOperatorType(OperatorNodePtr);
 };
 
 };// namespace NES

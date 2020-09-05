@@ -162,12 +162,6 @@ class Topology {
      */
     std::vector<TopologyNodePtr> findTopologyNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode);
 
-    /**
-      * @brief Return graph as json
-      * @return json object representing topology information
-      */
-    web::json::value getAsJson();
-
     ~Topology();
 
   private:
