@@ -2,28 +2,31 @@
 #include <API/Window/WindowDefinition.hpp>
 namespace NES {
 
-WindowDefinition::WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, const DistributionCharacteristicPtr distrType)
-    : windowAggregation(windowAggregation), windowType(windowType), onKey(nullptr), distributionType(distrType) {}
+WindowDefinition::WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType)
+    : windowAggregation(windowAggregation), windowType(windowType), onKey(nullptr){}
 
 WindowDefinition::WindowDefinition(const AttributeFieldPtr onKey,
                                    const WindowAggregationPtr windowAggregation,
-                                   const WindowTypePtr windowType,
-                                   const DistributionCharacteristicPtr distrType
+                                   const WindowTypePtr windowType
                                    )
-    : windowAggregation(windowAggregation), windowType(windowType), onKey(onKey), distributionType(distrType) {
+    : windowAggregation(windowAggregation), windowType(windowType), onKey(onKey) {
 }
 
 bool WindowDefinition::isKeyed() {
     return onKey != nullptr;
 }
 
-WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, const DistributionCharacteristicPtr distrType) {
-    return std::make_shared<WindowDefinition>(windowAggregation, windowType, distrType);
+WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType) {
+    return std::make_shared<WindowDefinition>(windowAggregation, windowType);
 }
-WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey, const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, const DistributionCharacteristicPtr distrType) {
-    return std::make_shared<WindowDefinition>(onKey, windowAggregation, windowType, distrType);
+WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey, const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType) {
+    return std::make_shared<WindowDefinition>(onKey, windowAggregation, windowType);
 }
 
+void WindowDefinition::setDistributionCharacteristic(DistributionCharacteristicPtr characteristic)
+{
+    this->distributionType = characteristic;
+}
 
 DistributionCharacteristicPtr WindowDefinition::getDistributionType()
 {

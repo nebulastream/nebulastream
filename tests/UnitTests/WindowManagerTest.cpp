@@ -135,8 +135,8 @@ TEST_F(WindowManagerTest, testWindowTrigger) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    w.aggregateWindows<int64_t, int64_t>(store, windowDef, buf);
-    w.aggregateWindows<int64_t, int64_t>(store, windowDef, buf);
+    w.aggregateWindows<int64_t, int64_t>(10, store, windowDef, buf);
+    w.aggregateWindows<int64_t, int64_t>(10, store, windowDef, buf);
 
     size_t tupleCnt = buf.getNumberOfTuples();
 
