@@ -1,14 +1,14 @@
-#ifndef ES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEDISTRIBUTEDLWINDOWSLICECREATIONOPERATOR_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEDISTRIBUTEDLWINDOWSLICECREATIONOPERATOR_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECOMBININGWINDOWOPERATOR_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECOMBININGWINDOWOPERATOR_HPP_
 
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {
 
-class GeneratableDistributedlWindowSliceCreationOperator : public WindowLogicalOperatorNode, public GeneratableOperator {
+class GeneratableCombiningWindowOperator : public WindowLogicalOperatorNode, public GeneratableOperator {
   public:
-    static GeneratableDistributedlWindowSliceCreationOperatorPtr create(WindowLogicalOperatorNodePtr);
+    static GeneratableDistributedlWindowCombinerOperatorPtr create(WindowLogicalOperatorNodePtr);
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -31,9 +31,9 @@ class GeneratableDistributedlWindowSliceCreationOperator : public WindowLogicalO
     const std::string toString() const override;
 
   private:
-    explicit GeneratableDistributedlWindowSliceCreationOperator(WindowDefinitionPtr windowDefinition);
+    explicit GeneratableCombiningWindowOperator(WindowDefinitionPtr windowDefinition);
 };
 
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEDISTRIBUTEDLWINDOWSLICECREATIONOPERATOR_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECOMBININGWINDOWOPERATOR_HPP_

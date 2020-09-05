@@ -326,7 +326,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
  * @param out
  * @return
  */
-bool CCodeGenerator::generateCodeForCentralWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
     context->setWindow(window);
     auto tf = getTypeFactory();
     auto constStatement = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0")));
@@ -436,15 +436,16 @@ bool CCodeGenerator::generateCodeForCentralWindow(WindowDefinitionPtr window, Pi
     return true;
 }
 
-bool CCodeGenerator::generateCodeForDistributedWindowSliceCreation(WindowDefinitionPtr window, PipelineContextPtr context)
+bool CCodeGenerator::generateCodeForSlicingWindow(WindowDefinitionPtr window, PipelineContextPtr context)
 {
-    NES_DEBUG("CCodeGenerator::generateCodeForDistributedWindowSliceCreation with " << window << " pipeline " << context);
-    return true;
+    NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
+    //NOTE: the distinction currently only happens in the trigger
+    return generateCodeForCompleteWindow(window, context);
 }
 
-bool CCodeGenerator::generateCodeForDistributedWindowWindowCombiner(WindowDefinitionPtr window, PipelineContextPtr context)
+bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, PipelineContextPtr context)
 {
-    NES_DEBUG("CCodeGenerator::generateCodeForDistributedWindowWindowCombiner with " << window << " pipeline " << context);
+    NES_DEBUG("CCodeGenerator::generateCodeForCombiningWindow with " << window << " pipeline " << context);
     return true;
 }
 

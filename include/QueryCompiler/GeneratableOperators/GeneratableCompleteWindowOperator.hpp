@@ -1,12 +1,12 @@
-#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECENTRALWINDOWOPERATOR_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECENTRALWINDOWOPERATOR_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECOMPLETEWINDOWOPERATOR_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECOMPLETEWINDOWOPERATOR_HPP_
 
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {
 
-class GeneratableCentralWindowOperator : public WindowLogicalOperatorNode, public GeneratableOperator {
+class GeneratableCompleteWindowOperator : public WindowLogicalOperatorNode, public GeneratableOperator {
   public:
     static GeneratableWindowOperatorPtr create(WindowLogicalOperatorNodePtr);
 
@@ -31,9 +31,9 @@ class GeneratableCentralWindowOperator : public WindowLogicalOperatorNode, publi
     const std::string toString() const override;
 
   private:
-    explicit GeneratableCentralWindowOperator(WindowDefinitionPtr windowDefinition);
+    explicit GeneratableCompleteWindowOperator(WindowDefinitionPtr windowDefinition);
 };
 
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECENTRALWINDOWOPERATOR_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECOMPLETEWINDOWOPERATOR_HPP_

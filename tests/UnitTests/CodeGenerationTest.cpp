@@ -823,7 +823,7 @@ TEST_F(CodeGenerationTest, codeGenerationCentralWindow) {
         input_schema->get("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)));
 
-    codeGenerator->generateCodeForCentralWindow(windowDefinition, context1);
+    codeGenerator->generateCodeForCompleteWindow(windowDefinition, context1);
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
@@ -859,7 +859,6 @@ TEST_F(CodeGenerationTest, codeGenerationCentralWindow) {
 }
 
 
-
 /**
  * @brief This test generates a window assigner
  */
@@ -880,7 +879,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
         input_schema->get("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)));
 
-    codeGenerator->generateCodeForDistributedWindowSliceCreation(windowDefinition, context1);
+    codeGenerator->generateCodeForSlicingWindow(windowDefinition, context1);
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
