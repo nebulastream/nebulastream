@@ -16,22 +16,30 @@ class DistributionCharacteristic {
      * @brief The type as enum.
      */
     enum Type {
-        Centralized,
-        Distributed
+        Complete,
+        Slicing,
+        Combining
     };
     explicit DistributionCharacteristic(Type type);
 
     /**
-     * @brief Factory to create a distributed window type
+     * @brief Factory to create central window that do slcicing and combining
      * @return DistributionCharacteristicPtr
      */
-    static DistributionCharacteristicPtr createCentralizedWindowType();
+    static DistributionCharacteristicPtr createCompleteWindowType();
 
     /**
-     * @brief Factory to create a distributed window type
+     * @brief Factory to to create a window slicer
      * @return
      */
-    static DistributionCharacteristicPtr createDistributedWindowType();
+    static DistributionCharacteristicPtr createSlicingWindowType();
+
+    /**
+    * @brief Factory to create a window combiner
+    * @return
+    */
+    static DistributionCharacteristicPtr createCombiningWindowType();
+
 
     /**
      * @return The DistributionCharacteristic type.

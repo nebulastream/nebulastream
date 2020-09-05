@@ -10,9 +10,9 @@
 #include <Nodes/Operators/SpecializedWindowOperators/SliceMergingOperator.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 
-#include <QueryCompiler/GeneratableOperators/GeneratableCentralWindowOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableDistributedlWindowSliceCreationOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableDistributedlWindowCombinerOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableCombiningWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableSlicingWindowOperator.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
@@ -57,19 +57,19 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableCentralWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        auto windowOperator = GeneratableCompleteWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableDistributedlWindowSliceCreationOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        auto windowOperator = GeneratableSlicingWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableDistributedlWindowCombinerOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        auto windowOperator = GeneratableCombiningWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     }

@@ -23,17 +23,15 @@
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -149,12 +147,10 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
 
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
-    sinkOperator->setId(UtilityFunctions::getNextOperatorId());
     auto constValue = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
     auto fieldRead = FieldAccessExpressionNode::create(DataTypeFactory::createInt8(), "FieldName");
     auto andNode = EqualsExpressionNode::create(constValue, fieldRead);
     auto filter = createFilterLogicalOperatorNode(andNode);
-    filter->setId(UtilityFunctions::getNextOperatorId());
     sinkOperator->addChild(filter);
     filter->addChild(sourceOp);
 
@@ -205,7 +201,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
 
 
     auto generatableWindowOperator = generatableWindowScanOperator->getChildren()[0];
-    ASSERT_TRUE(generatableWindowOperator->instanceOf<GeneratableCentralWindowOperator>());
+    ASSERT_TRUE(generatableWindowOperator->instanceOf<GeneratableCompleteWindowOperator>());
 
 
 

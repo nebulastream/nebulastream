@@ -122,7 +122,7 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
     auto partialAggregates = store->getPartialAggregates();
     NES_DEBUG("WindowHandler: trigger " << windows->size() << " windows, on " << slices.size() << " slices");
 
-    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Centralized) {
+    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete) {
         //does not have to be done
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows->size(); windowId++) {
@@ -158,11 +158,8 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
             }
             tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
         }
-    }
-    else
-    {
+    } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
         auto intBuffer = tupleBuffer.getBufferAs<FinalAggregateType>();
-
         //if slice creator, find slices which can be send but did not send already
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             //test if latest tuple in window is after slice end
@@ -174,6 +171,11 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
                 //            copy partialAggregates[sliceId] to tuple buffer
             }
         }
+    }
+    else
+    {
+        NES_ERROR("Window combiner not implemented yet");
+        NES_NOT_IMPLEMENTED();
     }
 
     store->setLastWatermark(watermark);

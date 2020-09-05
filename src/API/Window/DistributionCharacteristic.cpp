@@ -8,12 +8,16 @@ namespace NES {
 
 DistributionCharacteristic::DistributionCharacteristic(Type type) : type(type) {}
 
-DistributionCharacteristicPtr DistributionCharacteristic::createCentralizedWindowType() {
-    return std::make_shared<DistributionCharacteristic>(Type::Centralized);
+DistributionCharacteristicPtr DistributionCharacteristic::createCompleteWindowType() {
+    return std::make_shared<DistributionCharacteristic>(Type::Complete);
 }
 
-DistributionCharacteristicPtr DistributionCharacteristic::createDistributedWindowType() {
-    return std::make_shared<DistributionCharacteristic>(Type::Distributed);
+DistributionCharacteristicPtr DistributionCharacteristic::createSlicingWindowType() {
+    return std::make_shared<DistributionCharacteristic>(Type::Slicing);
+}
+
+DistributionCharacteristicPtr DistributionCharacteristic::createCombiningWindowType() {
+    return std::make_shared<DistributionCharacteristic>(Type::Combining);
 }
 
 DistributionCharacteristic::Type DistributionCharacteristic::getType() {

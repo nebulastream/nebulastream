@@ -1,29 +1,29 @@
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableDistributedlWindowSliceCreationOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableSlicingWindowOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES {
 
-void GeneratableDistributedlWindowSliceCreationOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableSlicingWindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     // The window operator is a pipeline breaker -> we create a new pipeline context for the children
     auto newPipelineContext = PipelineContext::create();
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext);
     context->addNextPipeline(newPipelineContext);
 }
 
-void GeneratableDistributedlWindowSliceCreationOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateCodeForCentralWindow(getWindowDefinition(), context);
+void GeneratableSlicingWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    codegen->generateCodeForSlicingWindow(getWindowDefinition(), context);
 }
-GeneratableDistributedlWindowSliceCreationOperatorPtr GeneratableDistributedlWindowSliceCreationOperator::create(WindowLogicalOperatorNodePtr windowLogicalOperatorNode) {
-    return std::make_shared<GeneratableDistributedlWindowSliceCreationOperator>(GeneratableDistributedlWindowSliceCreationOperator(windowLogicalOperatorNode->getWindowDefinition()));
-}
-
-GeneratableDistributedlWindowSliceCreationOperator::GeneratableDistributedlWindowSliceCreationOperator(WindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(windowDefinition) {
+GeneratableDistributedlWindowSliceCreationOperatorPtr GeneratableSlicingWindowOperator::create(WindowLogicalOperatorNodePtr windowLogicalOperatorNode) {
+    return std::make_shared<GeneratableSlicingWindowOperator>(GeneratableSlicingWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
 }
 
-const std::string GeneratableDistributedlWindowSliceCreationOperator::toString() const {
+GeneratableSlicingWindowOperator::GeneratableSlicingWindowOperator(WindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(windowDefinition) {
+}
+
+const std::string GeneratableSlicingWindowOperator::toString() const {
     std::stringstream ss;
-    ss << "GeneratableDistributedlWindowSliceCreationOperator(" << outputSchema->toString() << ")";
+    ss << "GeneratableSlicingWindowOperator(" << outputSchema->toString() << ")";
     return ss.str();
 }
 

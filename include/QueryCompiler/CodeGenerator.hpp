@@ -91,7 +91,7 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForCentralWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForCompleteWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
 
     /**
    * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -99,7 +99,7 @@ class CodeGenerator {
    * @param context The context of the current pipeline.
    * @return flag if the generation was successful.
    */
-    virtual bool generateCodeForDistributedWindowSliceCreation(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForSlicingWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -107,7 +107,7 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForDistributedWindowWindowCombiner(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForCombiningWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

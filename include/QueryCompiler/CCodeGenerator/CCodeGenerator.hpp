@@ -53,7 +53,7 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForCentralWindow(WindowDefinitionPtr window, PipelineContextPtr context) override;
+    bool generateCodeForCompleteWindow(WindowDefinitionPtr window, PipelineContextPtr context) override;
 
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -61,7 +61,7 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForDistributedWindowSliceCreation(WindowDefinitionPtr window, PipelineContextPtr context) override;
+    bool generateCodeForSlicingWindow(WindowDefinitionPtr window, PipelineContextPtr context) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -69,10 +69,7 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForDistributedWindowWindowCombiner(WindowDefinitionPtr window, PipelineContextPtr context) override;
-
-
-
+    bool generateCodeForCombiningWindow(WindowDefinitionPtr window, PipelineContextPtr context) override;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.
