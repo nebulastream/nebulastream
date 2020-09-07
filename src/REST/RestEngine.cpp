@@ -58,9 +58,9 @@ void RestEngine::handleGet(http_request message) {
         } else if (paths[0] == "queryCatalog") {
             queryCatalogController->handleGet(paths, message);
             return;
-        } else if (paths[0] == "connectivity") {
+        } else if (paths[0] == "connectivity" && paths.size()==1) {
             connectivityController->handleGet(paths, message);
-        } else if (paths[0] == "topology") {
+        } else if (paths[0] == "topology" && paths.size()==1) {
             topologyController->handleGet(paths, message);
         }
     }
