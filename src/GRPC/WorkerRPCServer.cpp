@@ -96,6 +96,7 @@ Status WorkerRPCServer::RequestMonitoringData(ServerContext*, const MonitoringRe
     // add schema and buffer to the reply object
     SchemaSerializationUtil::serializeSchema(schema, reply->mutable_schema());
     reply->set_buffer(buf.getBuffer(), schema->getSchemaSizeInBytes());
+    reply->release_buffer();
 
     return Status::OK;
 }
