@@ -333,6 +333,7 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
     auto schema = crd->requestMonitoringData("127.0.0.1", port + 10, plan, tupleBuffer);
     NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port+10));
     ASSERT_TRUE(schema->getSize()>1);
+    ASSERT_TRUE(tupleBuffer.getNumberOfTuples()==1);
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 
     NES_INFO("MonitoringStackTest: Stopping worker");

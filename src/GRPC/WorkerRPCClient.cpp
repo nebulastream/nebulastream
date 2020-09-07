@@ -188,6 +188,7 @@ SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, Mon
 
     ClientContext context;
     MonitoringReply reply;
+    reply.set_buffer(buf.getBufferAs<char>());
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
@@ -196,8 +197,9 @@ SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, Mon
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
         auto parsedSchema = SchemaSerializationUtil::deserializeSchema(reply.mutable_schema());
-        //TODO: fix this
-        std::memcpy(buf.getBuffer(), reply.mutable_buffer(), parsedSchema->getSchemaSizeInBytes());
+        buf.setNumberOfTuples(1);
+        reply.release_buffer();
+
         return parsedSchema;
     } else {
         NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": " + status.error_message());
