@@ -195,12 +195,11 @@ if __name__ == '__main__':
 
 	today = datetime.now()
 	benchmarkName = str(options.benchmark).split("/")[-1]
-	#plotFolder = os.path.join(options.plotFolder, today.strftime('%Y%m%d_%H%M%S'))
-	plotFolder = os.path.join(options.plotFolder, "20200831_205843")
+	plotFolder = os.path.join(options.plotFolder, today.strftime('%Y%m%d_%H%M%S'))
 	logFile = os.path.join(plotFolder, f"{benchmarkName}_log.json")
 
 	createFolder(plotFolder)
-	#runBenchmark(options.benchmark, logFile)
+	runBenchmark(options.benchmark, logFile)
 	benchmarkDataFrame = loadDataIntoDataFrame(logFile)
 	benchmarkGroups = createPlotableGroups(benchmarkDataFrame)
 
