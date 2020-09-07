@@ -328,7 +328,7 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
     // requesting the monitoring data
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    MonitoringPlan plan = MonitoringPlan(metrics);
+    auto plan = MonitoringPlan(metrics);
 
     auto schema = crd->requestMonitoringData("127.0.0.1", port + 10, plan, tupleBuffer);
     NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port+10));
