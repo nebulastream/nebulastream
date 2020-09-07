@@ -4,8 +4,8 @@
 #include <API/Query.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <string>
 #include <cpprest/json.h>
+#include <string>
 
 /*
 - * The above undef ensures that NES will compile.
@@ -159,7 +159,6 @@ class UtilityFunctions {
     static uint64_t getNextNodeId();
 
   private:
-
     /**
      * @brief function to traverse to queryPlanChildren
      * @param root root operator of the queryPlan
