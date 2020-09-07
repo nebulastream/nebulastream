@@ -26,8 +26,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
         // There will be change in the structure of globalExecutionPlan, so we will wait for that to be resolve
         // then create the execution-plan based on the new structure
         message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path[1]));
-    }
-    else if (path[1] == "query-plan") {
+    } else if (path[1] == "query-plan") {
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                 try {

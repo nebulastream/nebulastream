@@ -8,12 +8,12 @@
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
@@ -348,7 +348,6 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     std::vector<web::json::value> nodes = {};
     std::vector<web::json::value> edges = {};
 
-
     while (!parentToAdd.empty()) {
         // Current topology node to add to the JSON
         TopologyNodePtr currentNode = parentToAdd.front();
@@ -392,17 +391,17 @@ std::string UtilityFunctions::getOperatorType(OperatorNodePtr operatorNode) {
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         operatorType = "SOURCE";
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-        operatorType =  "FILTER";
+        operatorType = "FILTER";
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-        operatorType =  "MAP";
+        operatorType = "MAP";
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        operatorType =  "MERGE";
+        operatorType = "MERGE";
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
-        operatorType =  "WINDOW";
-    }  else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        operatorType =  "SINK";
+        operatorType = "WINDOW";
+    } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+        operatorType = "SINK";
     } else {
-        operatorType =  "UNDEFINED";
+        operatorType = "UNDEFINED";
     }
     NES_DEBUG("UtilityFunctions: operatorType = " << operatorType);
     return operatorType;
@@ -461,7 +460,7 @@ web::json::value UtilityFunctions::getQueryPlanAsJson(QueryCatalogPtr queryCatal
 }
 
 void UtilityFunctions::getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
-                                        std::vector<web::json::value>& edges) {
+                                   std::vector<web::json::value>& edges) {
 
     std::vector<web::json::value> childrenNode;
 
