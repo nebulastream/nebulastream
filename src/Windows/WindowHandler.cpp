@@ -1,4 +1,3 @@
-
 #include <NodeEngine/QueryManager.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
