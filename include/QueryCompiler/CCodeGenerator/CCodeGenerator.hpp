@@ -96,6 +96,9 @@ class CCodeGenerator : public CodeGenerator {
                                        StructDeclaration structDeclarationResultTuple);
 
     StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
+
+    StructDeclaration getStructDeclarationFromWindow(std::string structName);
+
 };
 
 }// namespace NES

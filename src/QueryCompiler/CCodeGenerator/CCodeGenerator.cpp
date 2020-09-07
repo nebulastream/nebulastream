@@ -43,6 +43,21 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string str
     return structDeclarationTuple;
 }
 
+StructDeclaration CCodeGenerator::getStructDeclarationFromWindow(std::string structName) {
+    StructDeclaration structDeclarationTuple = StructDeclaration::create(structName, "");
+    /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
+    structDeclarationTuple.makeStructCompact();
+
+    SchemaPtr schema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
+
+    for (size_t i = 0; i < schema->getSize(); ++i) {
+        structDeclarationTuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(),
+                                                                    schema->get(i)->name));
+        NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->name);
+    }
+    return structDeclarationTuple;
+}
+
 const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& structDeclaration,
                                                             const AttributeFieldPtr field) {
     if (structDeclaration.getField(field->name))
@@ -429,23 +444,144 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
         partialRef,
         context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
-
-    // context->code->cleanupStmts.push_back(emitTupleBuffer(context->code->varDeclarationExecutionContext,
-    //                                                      context->code->varDeclarationResultBuffer)
-    //                                          .copy());
     return true;
 }
 
-bool CCodeGenerator::generateCodeForSlicingWindow(WindowDefinitionPtr window, PipelineContextPtr context)
-{
+bool CCodeGenerator::generateCodeForSlicingWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
     NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
     //NOTE: the distinction currently only happens in the trigger
     return generateCodeForCompleteWindow(window, context);
 }
 
-bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, PipelineContextPtr context)
-{
-    NES_DEBUG("CCodeGenerator::generateCodeForCombiningWindow with " << window << " pipeline " << context);
+bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
+    auto tf = getTypeFactory();
+    NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
+
+    auto code = context->code;
+    // set result schema to context
+    // generate result tuple struct
+    auto structDeclarationWindowtTuple = getStructDeclarationFromWindow("WindowTuple");
+    // add type declaration for the result tuple
+    code->typeDeclarations.push_back(structDeclarationWindowtTuple);
+
+    //    WindowTuple* windowTuples = (WindowTuple*) resultTupleBuffer.getBuffer();
+    auto varDeclWindowTuple =
+        VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(structDeclarationWindowtTuple)),
+                                    "windowTuples");
+
+    code->variableInitStmts.push_back(
+        VarDeclStatement(varDeclWindowTuple)
+            .assign(getTypedBuffer(code->varDeclarationInputBuffer, structDeclarationWindowtTuple))
+            .copy());
+
+    /**
+     * within the loop
+     */
+
+    //        NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>* state_variable = (NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) state_var;
+    auto stateVariableDeclaration = VariableDeclaration::create(
+        tf->createPointer(tf->createAnonymusDataType(
+            "NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>")),
+        "state_variable");
+
+    auto stateVarDeclarationStatement = VarDeclStatement(stateVariableDeclaration)
+                                            .assign(TypeCast(VarRef(context->code->varDeclarationState), stateVariableDeclaration.getDataType()));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        stateVarDeclarationStatement));
+
+    // Read key value from record
+    //        int64_t key = windowTuples[recordIndex].key;
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
+    if (window->isKeyed()) {
+        auto keyVariableAttributeDeclaration =
+            structDeclarationWindowtTuple.getVariableDeclaration(window->onKey->name);
+        auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
+                                                 .assign(VarRef(varDeclWindowTuple)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                                                     VarRef(
+                                                         keyVariableAttributeDeclaration)));
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+            keyVariableAttributeStatement));
+    } else {
+        auto defaultKeyAssignment = VarDeclStatement(keyVariableDeclaration).assign(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+            defaultKeyAssignment));
+    }
+
+    // get key handle for current key
+    //        auto key_value_handle = state_variable->get(key);
+    auto keyHandlerVariableDeclaration = VariableDeclaration::create(
+        tf->createAnonymusDataType("auto"), "key_value_handle");
+    auto getKeyStateVariable = FunctionCallStatement("get");
+    getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
+    auto keyHandlerVariableStatement = VarDeclStatement(keyHandlerVariableDeclaration)
+                                           .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        keyHandlerVariableStatement));
+
+    //    auto windowState = key_value_handle.valueOrDefault(0);
+    // access window slice state from state variable via key
+    auto windowStateVariableDeclaration = VariableDeclaration::create(
+        tf->createAnonymusDataType("auto"), "windowState");
+    auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
+    getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
+    auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
+                                            .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        windowStateVariableStatement));
+
+    // get current timestamp
+    // TODO add support for event time
+    auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "end");
+    if (window->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+        auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(VarRef(varDeclWindowTuple)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(VarRef(currentTimeVariableDeclaration)));
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
+    } else {
+        NES_NOT_IMPLEMENTED();
+        auto tsVariableDeclaration =
+            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->windowType->getTimeCharacteristic()->getField()->name);
+        auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration)
+                                                  .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                                                      VarRef(tsVariableDeclaration)));
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
+    }
+
+    // update slices
+    auto sliceStream = FunctionCallStatement("sliceStream");
+    sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
+    sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
+    auto call =
+        std::make_shared<BinaryOperatorStatement>(VarRef(context->code->varDeclarationWindowManager).accessPtr(sliceStream));
+    context->code->currentCodeInsertionPoint->addStatement(call);
+
+    // find the slices for a time stamp
+    auto getSliceIndexByTs = FunctionCallStatement("getSliceIndexByTs");
+    getSliceIndexByTs.addParameter(VarRef(currentTimeVariableDeclaration));
+    auto getSliceIndexByTsCall = VarRef(windowStateVariableDeclaration).accessPtr(getSliceIndexByTs);
+    auto currentSliceIndexVariableDeclaration = VariableDeclaration::create(
+        tf->createDataType(DataTypeFactory::createUInt64()), "current_slice_index");
+    auto current_slice_ref = VarRef(currentSliceIndexVariableDeclaration);
+    auto currentSliceIndexVariableStatement = VarDeclStatement(currentSliceIndexVariableDeclaration)
+                                                  .assign(getSliceIndexByTsCall);
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        currentSliceIndexVariableStatement));
+
+    // get the partial aggregates
+    auto getPartialAggregates = FunctionCallStatement("getPartialAggregates");
+    auto getPartialAggregatesCall = VarRef(windowStateVariableDeclaration).accessPtr(getPartialAggregates);
+    VariableDeclaration partialAggregatesVarDeclaration = VariableDeclaration::create(
+        tf->createAnonymusDataType("std::vector<int64_t>&"), "partialAggregates");
+    auto assignment = VarDeclStatement(partialAggregatesVarDeclaration)
+                          .assign(getPartialAggregatesCall);
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
+
+    // update partial aggregate
+    const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
+    window->windowAggregation->compileLiftCombine(
+        context->code->currentCodeInsertionPoint,
+        partialRef,
+        context->code->structDeclaratonInputTuple,
+        VarRef(varDeclWindowTuple)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
+
     return true;
 }
 

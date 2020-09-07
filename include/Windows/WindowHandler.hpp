@@ -150,7 +150,6 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
             }
         }
         // calculate the final aggregate
-//        auto intBuffer = tupleBuffer.getBufferAs<FinalAggregateType>();
         for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
             // TODO Because of this condition we currently only support SUM aggregations
 
@@ -158,28 +157,23 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
 
             if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
                 auto window = (*windows)[i];
-
                 windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 0)->write(tupleBuffer, window.getStartTs());
                 windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 1)->write(tupleBuffer, window.getEndTs());
                 windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 2)->write(tupleBuffer, key);
                 windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 3)->write(tupleBuffer, sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]));
-//                intBuffer[tupleBuffer.getNumberOfTuples()] =
-//                    sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
             }
-            //NOTE: numberOfTuples now presenting the bytes not the tuple cnt
             tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
         }
     } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
-        auto intBuffer = tupleBuffer.getBufferAs<FinalAggregateType>();
         //if slice creator, find slices which can be send but did not send already
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             //test if latest tuple in window is after slice end
             if (slices[sliceId].getEndTs() < store->getMaxTs()) {
-                intBuffer[tupleBuffer.getNumberOfTuples()] = partialAggregates[sliceId];
+                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 0)->write(tupleBuffer, slices[sliceId].getStartTs());
+                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 1)->write(tupleBuffer, slices[sliceId].getEndTs());
+                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 2)->write(tupleBuffer, key);
+                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 3)->write(tupleBuffer, partialAggregates[sliceId]);
                 tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
-                NES_DEBUG("do for key=" << key);
-                //write it to output buffer
-                //            copy partialAggregates[sliceId] to tuple buffer
             }
         }
     } else {

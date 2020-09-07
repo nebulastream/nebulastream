@@ -165,7 +165,6 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
                 tuples[i].text[j] = ((i + 1) % 64) + 64;
             }
             tuples[i].text[11] = '\0';
-
         }
 
         //buf->setBufferSizeInBytes(sizeof(InputTuple));
@@ -183,8 +182,7 @@ const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, Quer
                 ->addField("valueFloat", DataTypeFactory::createFloat())
                 ->addField("valueDouble", DataTypeFactory::createDouble())
                 ->addField("valueChar", DataTypeFactory::createChar())
-                ->addField("text", DataTypeFactory::createFixedChar(12))
-            ,
+                ->addField("text", DataTypeFactory::createFixedChar(12)),
             bPtr, dPtr,
             1));
 
@@ -225,12 +223,58 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
     }
 };
 
+class WindowTestingWindowGeneratorSource : public GeneratorSource {
+  public:
+    WindowTestingWindowGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
+                                     const uint64_t pNum_buffers_to_process)
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
+    }
+
+    ~WindowTestingWindowGeneratorSource() = default;
+
+    struct __attribute__((packed)) WindowTuple {
+        uint64_t start;
+        uint64_t end;
+        uint64_t key;
+        uint64_t value;
+    };
+
+    std::optional<TupleBuffer> receiveData() override {
+        // 10 tuples of size one
+        TupleBuffer buf = bufferManager->getBufferBlocking();
+        uint64_t tupleCnt = 10;
+
+        assert(buf.getBuffer() != NULL);
+
+        WindowTuple* tuples = (WindowTuple*) buf.getBuffer();
+
+        for (uint32_t i = 0; i < tupleCnt; i++) {
+            tuples[i].start = i;
+            tuples[i].end = i * 2;
+            tuples[i].key = 1;
+            tuples[i].value = 1;
+        }
+
+        //bufsetBufferSizeInBytes(sizeof(InputTuple));
+        buf.setNumberOfTuples(tupleCnt);
+        return buf;
+    }
+};
+
 const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
     DataSourcePtr source(
         std::make_shared<WindowTestingDataGeneratorSource>(
             Schema::create()
                 ->addField("key", DataTypeFactory::createUInt64())
                 ->addField("value", DataTypeFactory::createUInt64()),
+            bPtr, dPtr,
+            10));
+    return source;
+}
+
+const DataSourcePtr createWindowTestSliceSource(BufferManagerPtr bPtr, QueryManagerPtr dPtr, SchemaPtr schema) {
+    DataSourcePtr source(
+        std::make_shared<WindowTestingWindowGeneratorSource>(schema,
             bPtr, dPtr,
             10));
     return source;
@@ -806,7 +850,7 @@ TEST_F(CodeGenerationTest, codeGenerationScanOperator) {
 /**
  * @brief This test generates a window assigner
  */
-TEST_F(CodeGenerationTest, codeGenerationCentralWindow) {
+TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     /* prepare objects for test */
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
 
@@ -828,7 +872,6 @@ TEST_F(CodeGenerationTest, codeGenerationCentralWindow) {
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
 
-
     auto context2 = PipelineContext::create();
     codeGenerator->generateCodeForScan(source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
@@ -838,8 +881,10 @@ TEST_F(CodeGenerationTest, codeGenerationCentralWindow) {
         new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
     //auto context = PipelineContext::create();
-    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer &buff){buff.isValid();});//valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr); // TODO Philipp, plz add pass-through pipeline here
+    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer& buff) {
+        buff.isValid();
+    });                                                                                          //valid check due to compiler error for unused var
+    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nextPipeline, 0);
 
     /* prepare input tuple buffer */
@@ -848,7 +893,7 @@ TEST_F(CodeGenerationTest, codeGenerationCentralWindow) {
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     stage1->execute(inputBuffer, windowHandler->getWindowState(),
-                   windowHandler->getWindowManager(), queryContext);
+                    windowHandler->getWindowManager(), queryContext);
 
     //check partial aggregates in window state
     auto stateVar =
@@ -858,9 +903,8 @@ TEST_F(CodeGenerationTest, codeGenerationCentralWindow) {
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
 
-
 /**
- * @brief This test generates a window assigner
+ * @brief This test generates a window slicer
  */
 TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     /* prepare objects for test */
@@ -893,8 +937,10 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
         new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
     //auto context = PipelineContext::create();
-    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer &buff){buff.isValid();});//valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr); // TODO Philipp, plz add pass-through pipeline here
+    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer& buff) {
+        buff.isValid();
+    });                                                                                          //valid check due to compiler error for unused var
+    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nextPipeline, 0);
 
     /* prepare input tuple buffer */
@@ -911,6 +957,91 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
             ->getWindowState();
     EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
+}
+
+/**
+ * @brief This test generates a window assigner
+ */
+TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
+    /* prepare objects for test */
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+    SchemaPtr  schema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
+    auto source = createWindowTestSliceSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), schema);
+
+    auto codeGenerator = CCodeGenerator::create();
+    auto context1 = PipelineContext::create();
+
+    auto input_schema = source->getSchema();
+
+    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+
+    auto sum = Sum::on(Attribute("value"));
+    auto windowDefinition = createWindowDefinition(
+        input_schema->get("key"), sum,
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)));
+
+    codeGenerator->generateCodeForCombiningWindow(windowDefinition, context1);
+
+    /* compile code to pipeline stage */
+    auto stage1 = codeGenerator->compile(context1->code);
+
+    auto context2 = PipelineContext::create();
+    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    auto stage2 = codeGenerator->compile(context2->code);
+
+    // init window handler
+    auto windowHandler =
+        new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
+
+    //auto context = PipelineContext::create();
+    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer& buff) {
+        buff.isValid();
+    });                                                                                          //valid check due to compiler error for unused var
+    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
+    windowHandler->setup(nextPipeline, 0);
+
+    /* prepare input tuple buffer */
+    auto inputBuffer = source->receiveData().value();
+    std::cout << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, schema) << std::endl;
+    /* execute Stage */
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
+    stage1->execute(inputBuffer, windowHandler->getWindowState(),
+                    windowHandler->getWindowManager(), queryContext);
+
+    //check partial aggregates in window state
+    auto stateVar =
+        (StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) windowHandler
+            ->getWindowState();
+
+    std::vector<uint64_t> results;
+    for (auto& [key, val] : stateVar->rangeAll()) {
+        NES_DEBUG("Key: " << key << " Value: " << val);
+        for(auto& slice : val->getSliceMetadata())
+        {
+            std::cout << "start=" << slice.getStartTs() << " end=" << slice.getEndTs() << std::endl;
+            results.push_back(slice.getStartTs());
+            results.push_back(slice.getEndTs());
+        }
+        for(auto& agg : val->getPartialAggregates())
+        {
+            std::cout << "value=" << agg  << std::endl;
+            results.push_back(agg);
+        }
+    }
+
+    /**
+     * @expected result:
+        start=0 end=10
+        start=10 end=20
+        value=5
+        value=5
+     */
+    EXPECT_EQ(results[0], 0);
+    EXPECT_EQ(results[1], 10);
+    EXPECT_EQ(results[2], 10);
+    EXPECT_EQ(results[3], 20);
+    EXPECT_EQ(results[4], 5);
+    EXPECT_EQ(results[5], 5);
 }
 
 /**
