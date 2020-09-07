@@ -14,6 +14,8 @@ namespace NES {
 WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)
     : windowDefinition(std::move(windowDefinitionPtr)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)) {
     this->thread.reset();
+    windowTupleSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
+    windowTupleLayout = createRowLayout(windowTupleSchema);
 }
 
 bool WindowHandler::setup(PipelineStagePtr nextPipeline, uint32_t pipelineStageId) {
@@ -46,7 +48,7 @@ void WindowHandler::trigger() {
         }
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
         if (tupleBuffer.getNumberOfTuples() > 0) {
-            NES_DEBUG( "WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records");
+            NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records");
             queryManager->addWorkForNextPipeline(
                 tupleBuffer,
                 this->nextPipeline);
