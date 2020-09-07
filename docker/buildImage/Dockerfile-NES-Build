@@ -20,17 +20,15 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   git \
   wget \
   tar \
-  && apt-get clean -qq
-
-RUN apt-get install -y software-properties-common -qq && \
-  add-apt-repository ppa:open62541-team/ppa && \
+  software-properties-common \
+  && add-apt-repository ppa:open62541-team/ppa && \
   apt-get update -qq && \
   apt-get install libopen62541-1-dev -qq \
   && apt-get clean -qq
 
 RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && \
-  make -j && make install && cd ${HOME} && rm -rf grpc && \
+  make -j2 && make install && cd ${HOME} && rm -rf grpc && \
   cd ${HOME} && git clone --single-branch --branch v0.3.1 https://github.com/mfontanini/cppkafka.git && \
   cd cppkafka && mkdir -p build && cd build && \
   cmake -DCPPKAFKA_BUILD_SHARED=ON -DCPPKAFKA_DISABLE_TESTS=ON -DCPPKAFKA_DISABLE_EXAMPLES=ON -DCPPKAFKA_RDKAFKA_STATIC_LIB=OFF .. && \
