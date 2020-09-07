@@ -342,10 +342,17 @@ BENCHMARK(BM_Statemanager_KeyRange_Skewed_Distribution_KeyVec)
 
 BENCHMARK(BM_Multithreaded_Key_Updates)
                         //Number of Updates, Number of Keys, Distribution Type, Number of Threads
-    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {0, 2}, {1, 2}})
-    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {0, 2}, {3, 4}})
+    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {1, 1}, {1, 2}})
+    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {1, 1}, {3, 4}})
+    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {1, 1}, {5, 6}})
+    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {1, 1}, {7, 8}})
+    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {1, 1}, {9, 10}})
+    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {1, 1}, {11, 12}})
+    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {1, 1}, {13, 14}})
+    ->RangeMultiplier(1000)->Ranges({{1e7, 1e7}, {1, 1e7}, {1, 1}, {15, 16}})
     ->Repetitions(5)->ReportAggregatesOnly(true)
-    ->MeasureProcessCPUTime()->Unit(benchmark::kMillisecond);
+    ->UseRealTime()
+    ->Unit(benchmark::kMillisecond);
 
 
 int main(int argc, char** argv) {

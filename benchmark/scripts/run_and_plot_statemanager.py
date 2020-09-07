@@ -14,7 +14,7 @@ import math
 
 BENCHMARK_PARAMS = ["Updates", "Keys", "Type of Distribution", "Threads"]
 PRE_SI_UNIT = ["", "k", "M", "B"]
-CHUNK_SIZE = 12
+CHUNK_SIZE = 8
 
 
 def parseArguments():
@@ -58,7 +58,7 @@ def millify(n):
     idx = max(0,min(len(PRE_SI_UNIT)-1,
                         int(math.floor(0 if n == 0 else math.log10(abs(n))/3))))
 
-    return '{:.0f}{}'.format(n / 10**(3 * idx), PRE_SI_UNIT[idx])
+    return '{:.1f}{}'.format(n / 10**(3 * idx), PRE_SI_UNIT[idx])
 
 
 def createPlotableGroups(df):
@@ -105,6 +105,7 @@ def createPlotableGroups(df):
 	df["stddev"] = stddev
 
 	return df.groupby(["name"])
+
 
 
 class DataPoint(object):
@@ -194,11 +195,12 @@ if __name__ == '__main__':
 
 	today = datetime.now()
 	benchmarkName = str(options.benchmark).split("/")[-1]
-	plotFolder = os.path.join(options.plotFolder, today.strftime('%Y%m%d_%H%M%S'))
+	#plotFolder = os.path.join(options.plotFolder, today.strftime('%Y%m%d_%H%M%S'))
+	plotFolder = os.path.join(options.plotFolder, "20200831_205843")
 	logFile = os.path.join(plotFolder, f"{benchmarkName}_log.json")
 
 	createFolder(plotFolder)
-	runBenchmark(options.benchmark, logFile)
+	#runBenchmark(options.benchmark, logFile)
 	benchmarkDataFrame = loadDataIntoDataFrame(logFile)
 	benchmarkGroups = createPlotableGroups(benchmarkDataFrame)
 
