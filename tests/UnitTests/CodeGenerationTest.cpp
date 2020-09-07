@@ -884,7 +884,6 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
 
-
     auto context2 = PipelineContext::create();
     codeGenerator->generateCodeForScan(source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);

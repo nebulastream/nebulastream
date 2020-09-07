@@ -12,6 +12,8 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <boost/serialization/export.hpp>
+#include <cstring>
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 
 namespace NES {
 class QueryManager;
@@ -85,6 +87,9 @@ class WindowHandler {
     uint32_t pipelineStageId;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
+
+    MemoryLayoutPtr windowTupleLayout;
+    SchemaPtr windowTupleSchema;
 };
 
 // TODO Maybe we could define template specialization of this method when generating compiled code so that we dont need casting
@@ -122,6 +127,7 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
     auto partialAggregates = store->getPartialAggregates();
     NES_DEBUG("WindowHandler: trigger " << windows->size() << " windows, on " << slices.size() << " slices");
 
+    //trigger a central window operator
     if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete) {
         //does not have to be done
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
@@ -144,18 +150,23 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
             }
         }
         // calculate the final aggregate
-        auto intBuffer = tupleBuffer.getBufferAs<FinalAggregateType>();
+//        auto intBuffer = tupleBuffer.getBufferAs<FinalAggregateType>();
         for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
             // TODO Because of this condition we currently only support SUM aggregations
 
             //TODO::windowstart, windowend, key, value //edit the schema !"!
-            auto window = (*windows)[i];
-            window.getStartTs();
 
             if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
-                intBuffer[tupleBuffer.getNumberOfTuples()] =
-                    sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
+                auto window = (*windows)[i];
+
+                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 0)->write(tupleBuffer, window.getStartTs());
+                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 1)->write(tupleBuffer, window.getEndTs());
+                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 2)->write(tupleBuffer, key);
+                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 3)->write(tupleBuffer, sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]));
+//                intBuffer[tupleBuffer.getNumberOfTuples()] =
+//                    sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
             }
+            //NOTE: numberOfTuples now presenting the bytes not the tuple cnt
             tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
         }
     } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
@@ -171,9 +182,7 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
                 //            copy partialAggregates[sliceId] to tuple buffer
             }
         }
-    }
-    else
-    {
+    } else {
         NES_ERROR("Window combiner not implemented yet");
         NES_NOT_IMPLEMENTED();
     }

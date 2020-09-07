@@ -145,7 +145,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCentralizedWindow) {
     ASSERT_EQ(tupleCnt, 1);
 
     uint64_t* tuples = (uint64_t*) buf.getBuffer();
-    ASSERT_EQ(tuples[0], 1);
+    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
+    ASSERT_EQ(tuples[0], 0);
+    ASSERT_EQ(tuples[1], 10);
+    ASSERT_EQ(tuples[2], 10);
+    ASSERT_EQ(tuples[2], 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerDistributedWindow) {
