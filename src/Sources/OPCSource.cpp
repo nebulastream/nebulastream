@@ -22,17 +22,10 @@ namespace NES {
 
 OPCSource::OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string url,
                      UA_NodeId* nodeId, std::string password, std::string user)
-    : DataSource(schema, bufferManager, queryManager),
-      url(url),
-      nodeId(nodeId),
-      retval(UA_STATUSCODE_GOOD),
-      client(UA_Client_new()),
-      connected(false),
-      user(user),
-      password(password) {
+    : DataSource(schema, bufferManager, queryManager), url(url), nodeId(nodeId), retval(UA_STATUSCODE_GOOD),
+      client(UA_Client_new()), connected(false), user(user), password(password) {
 
-    NES_DEBUG(
-        "OPCSOURCE  " << this << ": Init OPC Source to " << url << " with user and password.");
+    NES_DEBUG("OPCSOURCE  " << this << ": Init OPC Source to " << url << " with user and password.");
 }
 
 OPCSource::~OPCSource() {
