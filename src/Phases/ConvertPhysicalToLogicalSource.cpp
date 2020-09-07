@@ -77,12 +77,9 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
         case OPC_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating OPC source");
             const OPCSourcePtr opcSourcePtr = std::dynamic_pointer_cast<OPCSource>(dataSource);
-            const SourceDescriptorPtr opcSourceDescriptor =
-                OPCSourceDescriptor::create(opcSourcePtr->getSchema(),
-                                            opcSourcePtr->getUrl(),
-                                            opcSourcePtr->getNodeId(),
-                                            opcSourcePtr->getUser(),
-                                            opcSourcePtr->getPassword());
+            const SourceDescriptorPtr opcSourceDescriptor = OPCSourceDescriptor::create(opcSourcePtr->getSchema(), opcSourcePtr->getUrl(),
+                                                                                        opcSourcePtr->getNodeId(), opcSourcePtr->getUser(),
+                                                                                        opcSourcePtr->getPassword());
             return opcSourceDescriptor;
         }
 #endif

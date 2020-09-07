@@ -69,10 +69,8 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
  * @return a const data source pointer
  */
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                        const std::string& path_to_file,
-                                        const std::string& delimiter,
-                                        size_t numBuffersToProcess,
-                                        size_t frequency);
+                                        const std::string& path_to_file, const std::string& delimiter,
+                                        size_t numBuffersToProcess, size_t frequency);
 
 /**
  * @brief function to create a network source
@@ -116,11 +114,8 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
  * @param password for authentication if needed
  * @return
  */
-const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                    const std::string& url,
-                                    UA_NodeId* nodeId,
-                                    const std::string& user,
-                                    const std::string& password);
+const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& url,
+                                    UA_NodeId* nodeId, const std::string& user, const std::string& password);
 #endif
 
 }// namespace NES

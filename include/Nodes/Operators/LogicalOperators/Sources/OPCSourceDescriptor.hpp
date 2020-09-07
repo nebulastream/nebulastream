@@ -30,23 +30,23 @@ class OPCSourceDescriptor : public SourceDescriptor {
                                       std::string password);
 
     /**
-         * @brief get OPC server url
-         */
+     * @brief get OPC server url
+     */
     const std::string& getUrl() const;
 
     /**
-         * @brief get desired node id
-         */
+     * @brief get desired node id
+     */
     UA_NodeId* getNodeId() const;
 
     /**
-         * @brief get user name
-         */
+     * @brief get user name
+     */
     const std::string getUser() const;
 
     /**
-         * @brief get password
-         */
+     * @brief get password
+     */
     const std::string getPassword() const;
 
     bool equal(SourceDescriptorPtr other) override;
@@ -54,18 +54,11 @@ class OPCSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit OPCSourceDescriptor(SchemaPtr schema,
-                                 const std::string& url,
-                                 UA_NodeId* nodeId,
-                                 std::string user,
-                                 std::string password);
+    explicit OPCSourceDescriptor(SchemaPtr schema, const std::string& url, UA_NodeId* nodeId,
+                                 std::string user, std::string password);
 
-    explicit OPCSourceDescriptor(SchemaPtr schema,
-                                 std::string streamName,
-                                 const std::string& url,
-                                 UA_NodeId* nodeId,
-                                 std::string user,
-                                 std::string password);
+    explicit OPCSourceDescriptor(SchemaPtr schema, std::string streamName, const std::string& url,
+                                 UA_NodeId* nodeId, std::string user, std::string password);
 
     const std::string& url;
     UA_NodeId* nodeId;
