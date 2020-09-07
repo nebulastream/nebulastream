@@ -13,7 +13,7 @@ namespace NES {
 WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)
     : windowDefinition(std::move(windowDefinitionPtr)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)) {
     this->thread.reset();
-    windowTupleSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
+    windowTupleSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField("value", INT64);
     windowTupleLayout = createRowLayout(windowTupleSchema);
 }
 
