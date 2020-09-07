@@ -112,7 +112,7 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
         NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << watermark - tumb->getSize().getTime());
         store->setLastWatermark(watermark - tumb->getSize().getTime());
     } else {
-        NES_DEBUG("WindowHandler::aggregateWindows: last watermak is=" << store->getLastWatermark());
+        NES_DEBUG("WindowHandler::aggregateWindows: last watermark is=" << store->getLastWatermark());
     }
 
     //generates a list of windows that have to be outputted
@@ -128,12 +128,13 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
     NES_DEBUG("WindowHandler: trigger " << windows->size() << " windows, on " << slices.size() << " slices");
 
     //trigger a central window operator
-    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete) {
+    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
         //does not have to be done
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows->size(); windowId++) {
                 auto window = (*windows)[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
+                NES_DEBUG("window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
                     // TODO Because of this condition we currently only support SUM aggregations
                     if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
@@ -152,15 +153,14 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
         // calculate the final aggregate
         for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
             // TODO Because of this condition we currently only support SUM aggregations
-
-            //TODO::windowstart, windowend, key, value //edit the schema !"!
-
             if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
                 auto window = (*windows)[i];
                 windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 0)->write(tupleBuffer, window.getStartTs());
                 windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 1)->write(tupleBuffer, window.getEndTs());
-                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 2)->write(tupleBuffer, key);
-                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 3)->write(tupleBuffer, sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]));
+                windowTupleLayout->getValueField<int64_t>(tupleBuffer.getNumberOfTuples(), 2)->write(tupleBuffer, key);
+                std::cout << " value=" << partialFinalAggregates[i] << std::endl;
+                windowTupleLayout->getValueField<int64_t>(tupleBuffer.getNumberOfTuples(), 3)->write(tupleBuffer,
+                                          sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]));
             }
             tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
         }
@@ -171,8 +171,8 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
             if (slices[sliceId].getEndTs() < store->getMaxTs()) {
                 windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 0)->write(tupleBuffer, slices[sliceId].getStartTs());
                 windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 1)->write(tupleBuffer, slices[sliceId].getEndTs());
-                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 2)->write(tupleBuffer, key);
-                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 3)->write(tupleBuffer, partialAggregates[sliceId]);
+                windowTupleLayout->getValueField<int64_t>(tupleBuffer.getNumberOfTuples(), 2)->write(tupleBuffer, key);
+                windowTupleLayout->getValueField<int64_t>(tupleBuffer.getNumberOfTuples(), 3)->write(tupleBuffer, partialAggregates[sliceId]);
                 tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
             }
         }

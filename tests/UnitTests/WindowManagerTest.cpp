@@ -287,23 +287,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     size_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 2);
+    ASSERT_EQ(tupleCnt, 1);
 
     uint64_t* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
-    std::cout << "tuples[4]=" << tuples[4] << " tuples[5=" << tuples[5] << " tuples[6=" << tuples[6] << " tuples[7=" << tuples[7] << std::endl;
-
-    std::cout << "tuples[0]=" << tuples[0] << std::endl;
-    std::cout << "tuples[1]=" << tuples[1] << std::endl;
     ASSERT_EQ(tuples[0], 0);
     ASSERT_EQ(tuples[1], 10);
     ASSERT_EQ(tuples[2], 10);
     ASSERT_EQ(tuples[3], 1);
-
-    ASSERT_EQ(tuples[4], 0);
-    ASSERT_EQ(tuples[5], 10);
-    ASSERT_EQ(tuples[6], 11);
-    ASSERT_EQ(tuples[7], 1);
 }
 
 }// namespace NES
