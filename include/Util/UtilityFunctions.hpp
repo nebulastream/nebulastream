@@ -120,21 +120,6 @@ class UtilityFunctions {
     static web::json::value getQueryPlanAsJson(QueryCatalogPtr queryCatalog, QueryId queryId);
 
     /**
-     * @brief function to traverse to queryPlanChildren
-     * @param root root operator of the queryPlan
-     * @param nodes JSON array to store the traversed node
-     * @param edges JSOn array to store the traversed edge
-     */
-    static void getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
-                              std::vector<web::json::value>& edges);
-
-    /**
-     * @param an operator node
-     * @return the type of operator in String
-     */
-    static std::string getOperatorType(OperatorNodePtr operatorNode);
-
-    /**
      * @brief function to replace all string occurrences
      * @param data input string will be replaced in-place
      * @param toSearch search string
@@ -172,6 +157,23 @@ class UtilityFunctions {
      * @return node id
      */
     static uint64_t getNextNodeId();
+
+  private:
+
+    /**
+     * @brief function to traverse to queryPlanChildren
+     * @param root root operator of the queryPlan
+     * @param nodes JSON array to store the traversed node
+     * @param edges JSOn array to store the traversed edge
+     */
+    static void getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
+                            std::vector<web::json::value>& edges);
+
+    /**
+     * @param an operator node
+     * @return the type of operator in String
+     */
+    static std::string getOperatorType(OperatorNodePtr operatorNode);
 };
 }// namespace NES
 
