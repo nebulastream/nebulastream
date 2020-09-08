@@ -9,11 +9,11 @@
 #include <memory>
 #include <thread>
 
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <boost/serialization/export.hpp>
 #include <cstring>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 
 namespace NES {
 class QueryManager;
@@ -69,8 +69,8 @@ class WindowHandler {
      * @param windowDefinition
      * @param tupleBuffer
      */
-    template<class FinalAggregateType, class PartialAggregateType>
-    void aggregateWindows(int64_t key, WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
+    template<class KeyType, class FinalAggregateType, class PartialAggregateType>
+    void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
                           TupleBuffer& tupleBuffer);
 
     void* getWindowState();
@@ -90,11 +90,22 @@ class WindowHandler {
 
     MemoryLayoutPtr windowTupleLayout;
     SchemaPtr windowTupleSchema;
+
+    template<class KeyType, class AggregationType>
+    void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key, AggregationType value);
 };
 
+template<class KeyType, class AggregationType>
+void WindowHandler::writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key, AggregationType value) {
+    windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
+    windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
+    windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
+    windowTupleLayout->getValueField<AggregationType>(index, 3)->write(tupleBuffer, value);
+}
+
 // TODO Maybe we could define template specialization of this method when generating compiled code so that we dont need casting
-template<class FinalAggregateType, class PartialAggregateType>
-void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
+template<class KeyType, class FinalAggregateType, class PartialAggregateType>
+void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
                                      TupleBuffer& tupleBuffer) {
 
     // For event time we use the maximal records ts as watermark.
@@ -109,8 +120,7 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
     // the window type adds result windows to the windows vectors
     if (store->getLastWatermark() == 0) {
         TumblingWindow* tumb = dynamic_cast<TumblingWindow*>(windowDefinition->windowType.get());
-        auto initWatermark = watermark < tumb->getSize().getTime() ? 0 :  watermark - tumb->getSize().getTime();
-
+        auto initWatermark = watermark < tumb->getSize().getTime() ? 0 : watermark - tumb->getSize().getTime();
         NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << initWatermark);
         store->setLastWatermark(initWatermark);
     } else {
@@ -154,27 +164,33 @@ void WindowHandler::aggregateWindows(int64_t key, WindowSliceStore<PartialAggreg
         }
         // calculate the final aggregate
         for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
+            auto window = (*windows)[i];
             // TODO Because of this condition we currently only support SUM aggregations
+            FinalAggregateType value;
             if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
-                auto window = (*windows)[i];
-                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 0)->write(tupleBuffer, window.getStartTs());
-                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 1)->write(tupleBuffer, window.getEndTs());
-                windowTupleLayout->getValueField<int64_t>(tupleBuffer.getNumberOfTuples(), 2)->write(tupleBuffer, key);
-                std::cout << " value=" << partialFinalAggregates[i] << std::endl;
-                windowTupleLayout->getValueField<int64_t>(tupleBuffer.getNumberOfTuples(), 3)->write(tupleBuffer,
-                                          sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]));
+                 value = sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
+            } else {
+                NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
             }
+            writeResultRecord<KeyType, FinalAggregateType>(tupleBuffer,
+                                                           tupleBuffer.getNumberOfTuples(),
+                                                           window.getStartTs(),
+                                                           window.getEndTs(),
+                                                           key,
+                                                           value);
             tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
         }
     } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
         //if slice creator, find slices which can be send but did not send already
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             //test if latest tuple in window is after slice end
-            if (slices[sliceId].getEndTs() < store->getMaxTs()) {
-                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 0)->write(tupleBuffer, slices[sliceId].getStartTs());
-                windowTupleLayout->getValueField<uint64_t>(tupleBuffer.getNumberOfTuples(), 1)->write(tupleBuffer, slices[sliceId].getEndTs());
-                windowTupleLayout->getValueField<int64_t>(tupleBuffer.getNumberOfTuples(), 2)->write(tupleBuffer, key);
-                windowTupleLayout->getValueField<int64_t>(tupleBuffer.getNumberOfTuples(), 3)->write(tupleBuffer, partialAggregates[sliceId]);
+            if (slices[sliceId].getEndTs() < watermark) {
+                writeResultRecord<KeyType, FinalAggregateType>(tupleBuffer,
+                                                               tupleBuffer.getNumberOfTuples(),
+                                                               slices[sliceId].getStartTs(),
+                                                               slices[sliceId].getEndTs(),
+                                                               key,
+                                                               partialAggregates[sliceId]);
                 tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
             }
         }
