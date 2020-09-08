@@ -40,6 +40,12 @@ namespace NES {
 
 class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
   public:
+
+    static void SetUpTestCase() {
+        NES::setupLogging("QueryDeploymentTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup QueryDeploymentTest test class.");
+    }
+
     void SetUp() {
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
@@ -113,29 +119,6 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
 
     std::vector<NodePtr> children{};
     std::vector<NodePtr> parents{};
-
-    static void setupLogging() {
-        // create PatternLayout
-        log4cxx::LayoutPtr layoutPtr(
-            new log4cxx::PatternLayout(
-                "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-        // create FileAppender
-        LOG4CXX_DECODE_CHAR(fileName, "WindowManager.log");
-        log4cxx::FileAppenderPtr file(
-            new log4cxx::FileAppender(layoutPtr, fileName));
-
-        // create ConsoleAppender
-        log4cxx::ConsoleAppenderPtr console(
-            new log4cxx::ConsoleAppender(layoutPtr));
-
-        // set log level
-        NESLogger->setLevel(log4cxx::Level::getDebug());
-
-        // add appenders and other will inherit the settings
-        NESLogger->addAppender(file);
-        NESLogger->addAppender(console);
-    }
 };
 
 TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
@@ -143,14 +126,14 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
      * Sink -> Filter -> Source
      */
     auto schema = Schema::create();
-
-
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
+    sinkOperator->setId(UtilityFunctions::getNextOperatorId());
     auto constValue = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
     auto fieldRead = FieldAccessExpressionNode::create(DataTypeFactory::createInt8(), "FieldName");
     auto andNode = EqualsExpressionNode::create(constValue, fieldRead);
     auto filter = createFilterLogicalOperatorNode(andNode);
+    filter->setId(UtilityFunctions::getNextOperatorId());
     sinkOperator->addChild(filter);
     filter->addChild(sourceOp);
 
@@ -192,18 +175,13 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     auto queryPlan = typeInferencePhase->execute(QueryPlan::create(sinkOperator));
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableSinkOperator = translatePhase->transform(queryPlan->getRootOperators()[0]);
-
     ASSERT_TRUE(generatableSinkOperator->instanceOf<GeneratableSinkOperator>());
-
 
     auto generatableWindowScanOperator = generatableSinkOperator->getChildren()[0];
     ASSERT_TRUE(generatableWindowScanOperator->instanceOf<GeneratableScanOperator>());
 
-
     auto generatableWindowOperator = generatableWindowScanOperator->getChildren()[0];
     ASSERT_TRUE(generatableWindowOperator->instanceOf<GeneratableCompleteWindowOperator>());
-
-
 
     auto generatableSourceOperator = generatableWindowOperator->getChildren()[0];
     ASSERT_TRUE(generatableSourceOperator->instanceOf<GeneratableScanOperator>());
