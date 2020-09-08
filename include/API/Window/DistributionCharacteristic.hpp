@@ -40,12 +40,10 @@ class DistributionCharacteristic {
     */
     static DistributionCharacteristicPtr createCombiningWindowType();
 
-
     /**
      * @return The DistributionCharacteristic type.
      */
     Type getType();
-
 
   private:
     Type type;

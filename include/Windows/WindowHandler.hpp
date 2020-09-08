@@ -37,8 +37,7 @@ class WindowHandler {
     WindowHandler(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
 
     static WindowHandlerPtr create(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager,
-                                               BufferManagerPtr bufferManager);
-
+                                   BufferManagerPtr bufferManager);
 
     ~WindowHandler();
 
@@ -143,8 +142,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     NES_DEBUG("WindowHandler: trigger " << windows->size() << " windows, on " << slices.size() << " slices");
 
     //trigger a central window operator
-    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete ||
-        windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
+    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
         //does not have to be done
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows->size(); windowId++) {
@@ -172,7 +170,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
             // TODO Because of this condition we currently only support SUM aggregations
             FinalAggregateType value;
             if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
-                 value = sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
+                value = sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
             } else {
                 NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
             }

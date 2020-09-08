@@ -161,7 +161,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     return operatorNode;
 }
 
-
 SerializableOperator_WindowDetails OperatorSerializationUtil::serializeCentralWindowOperator(CentralWindowOperatorPtr windowOperator) {
     auto windowDetails = SerializableOperator_WindowDetails();
     auto windowDefinition = windowOperator->getWindowDefinition();
@@ -217,7 +216,6 @@ CentralWindowOperatorPtr OperatorSerializationUtil::deserializeCentralWindowOper
     auto serializedWindowAggregation = sinkDetails->windowaggregation();
     auto serializedWindowType = sinkDetails->windowtype();
 
-
     WindowAggregationPtr aggregation;
     if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM) {
         aggregation = Sum::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
@@ -258,13 +256,10 @@ CentralWindowOperatorPtr OperatorSerializationUtil::deserializeCentralWindowOper
 
     LogicalOperatorNodePtr ptr;
     if (sinkDetails->onkey() == "") {
-         return createCentralWindowSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<CentralWindowOperator>();
+        return createCentralWindowSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<CentralWindowOperator>();
     } else {
         return createCentralWindowSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<CentralWindowOperator>();
     }
-
-
-
 }
 
 SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator) {
@@ -278,7 +273,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(Serializabl
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDetails);
     return createSourceLogicalOperatorNode(sourceDescriptor);
 }
-
 
 SerializableOperator_SinkDetails OperatorSerializationUtil::serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator) {
     auto sinkDetails = SerializableOperator_SinkDetails();

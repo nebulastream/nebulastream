@@ -65,7 +65,7 @@ class Compiler {
      * @brief Helper function to format and print a source file using clang-format. This function is creating a temp file.
      * @param filename
      */
-    std::string  formatAndPrintSource(const std::string& filename);
+    std::string formatAndPrintSource(const std::string& filename);
 
     const static std::string IncludePath;
 };
