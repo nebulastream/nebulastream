@@ -61,7 +61,7 @@ class QueryExecutionTest : public testing::Test {
  */
 class WindowSource : public NES::DefaultSource {
   public:
-    int64_t timestamp = 1;
+    int64_t timestamp = 5;
     WindowSource(SchemaPtr schema,
                  BufferManagerPtr bufferManager,
                  QueryManagerPtr queryManager,
@@ -74,7 +74,7 @@ class WindowSource : public NES::DefaultSource {
         for (int i = 0; i < 10; i++) {
             rowLayout->getValueField<int64_t>(i, 0)->write(buffer, 1);
             rowLayout->getValueField<int64_t>(i, 1)->write(buffer, 1);
-            rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, 0);
+            rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp);
         }
         buffer.setNumberOfTuples(10);
         timestamp = timestamp + 10;
@@ -241,6 +241,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
 /**
  * @brief This tests creates a windowed query.
  * WindowSource -> windowOperator -> windowScan -> TestSink
+ * The source generates 2. buffers.
  */
 TEST_F(QueryExecutionTest, windowQuery) {
 
@@ -250,7 +251,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(
         nodeEngine->getBufferManager(),
-        nodeEngine->getQueryManager(), /*bufferCnt*/ 1, /*frequency*/ 1);
+        nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
@@ -262,7 +263,11 @@ TEST_F(QueryExecutionTest, windowQuery) {
 
     // 3. add sink. We expect that this sink will receive one buffer
 //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
-    auto windowResultSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", INT64))->addField("value", INT64);
+    auto windowResultSchema = Schema::create()
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField(createField("key", INT64))
+                                  ->addField("value", INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
@@ -296,12 +301,19 @@ TEST_F(QueryExecutionTest, windowQuery) {
 
     std::cout << "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema) << std::endl;
 
-//    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
-//    auto resultLayout = createRowLayout(windowResultSchema);
-//    for (int recordIndex = 0; recordIndex < 2; recordIndex++) {
-//        auto windowAggregationValue = resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer);
-//        EXPECT_EQ(windowAggregationValue, 5);
-//    }
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
+    auto resultLayout = createRowLayout(windowResultSchema);
+    for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
+        // start
+        EXPECT_EQ(resultLayout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), 0);
+        // end
+        EXPECT_EQ(resultLayout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 1)->read(resultBuffer), 10);
+        // key
+        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 2)->read(resultBuffer), 1);
+        // value
+        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
+
+    }
     nodeEngine->stopQuery(1);
 }
 
