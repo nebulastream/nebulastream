@@ -81,14 +81,6 @@ class OperatorSerializationUtil {
     static SerializableOperator_WindowDetails serializeCentralWindowOperator(CentralWindowOperatorPtr windowOperator);
 
     /**
-    * @brief Serializes an window operator and all its properties to a SerializableOperator_WindowDetails object.
-    * @param CentralWindowOperatorPtr The window operator node.
-    * @return the serialized SerializableOperator_SinkDetails.
-     */
-
-    static SerializableOperator_WindowDetails serializeWindowOperator(CentralWindowOperatorPtr windowOperator);
-
-    /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
      * @param sinkDetails The serialized sink operator details.
      * @return SinkLogicalOperatorNodePtr

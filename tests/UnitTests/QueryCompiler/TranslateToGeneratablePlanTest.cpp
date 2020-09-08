@@ -28,8 +28,8 @@
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
@@ -179,7 +179,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
     sinkOperator->setId(UtilityFunctions::getNextOperatorId());
-    auto windowOperator = createWindowLogicalOperatorNode(createWindowDefinition(Sum::on(Attribute("f1")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10))));
+    auto windowOperator = createWindowLogicalOperatorNode(createWindowDefinition(Sum::on(Attribute("f1")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Complete)));
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);
