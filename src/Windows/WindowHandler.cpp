@@ -99,7 +99,7 @@ WindowHandler::~WindowHandler() {
     stop();
 }
 
-const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
+WindowHandlerPtr WindowHandler::create(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
     return std::make_shared<WindowHandler>(windowDefinition, queryManager, bufferManager);
 }
 

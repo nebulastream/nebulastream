@@ -35,7 +35,10 @@ class WindowHandler {
   public:
     WindowHandler() = default;
     WindowHandler(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
-    //    WindowHandler(WindowDefinitionPtr windowDefinition, BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
+
+    static WindowHandlerPtr create(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager,
+                                               BufferManagerPtr bufferManager);
+
 
     ~WindowHandler();
 
@@ -140,7 +143,8 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     NES_DEBUG("WindowHandler: trigger " << windows->size() << " windows, on " << slices.size() << " slices");
 
     //trigger a central window operator
-    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
+    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete ||
+        windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
         //does not have to be done
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows->size(); windowId++) {
@@ -201,11 +205,6 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
 
     store->setLastWatermark(watermark);
 }
-
-// just for test compability
-const WindowHandlerPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
-const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager,
-                                           BufferManagerPtr bufferManager);
 
 }// namespace NES
 #endif /* INCLUDE_WINDOWS_WINDOW_HPP_ */
