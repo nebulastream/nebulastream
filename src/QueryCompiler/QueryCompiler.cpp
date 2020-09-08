@@ -71,7 +71,7 @@ void generateExecutablePipelines(
                 NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");
             }
             if (currContext->hasWindow()) {
-                auto windowHandler = createWindowHandler(
+                auto windowHandler = WindowHandler::create(
                     currContext->getWindow(),
                     queryManagerPtr,
                     bufferManager);
