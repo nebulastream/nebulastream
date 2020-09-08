@@ -1,3 +1,5 @@
+#include <API/Window/DistributionCharacteristic.hpp>
+#include <API/Window/WindowDefinition.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
@@ -5,8 +7,6 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <API/Window/DistributionCharacteristic.hpp>
-#include <API/Window/WindowDefinition.hpp>
 
 #include <Util/UtilityFunctions.hpp>
 #include <string>
