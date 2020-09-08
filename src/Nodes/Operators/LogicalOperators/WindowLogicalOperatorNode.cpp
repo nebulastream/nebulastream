@@ -62,7 +62,8 @@ bool WindowLogicalOperatorNode::inferSchema() {
 
     // create result schema
     auto aggregationField = inputSchema->get(windowAggregation->on()->name);
-    outputSchema->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
+//    outputSchema->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
+    outputSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
 //    outputSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField("value", INT64);
 //    outputSchema->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
     return true;

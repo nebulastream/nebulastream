@@ -114,6 +114,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
     auto phase = TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
+    std::cout << resultPlan->getSinkOperators()[0]->getOutputSchema()->toString() << std::endl;
     // we just access the old references
     ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(),4);
 }
