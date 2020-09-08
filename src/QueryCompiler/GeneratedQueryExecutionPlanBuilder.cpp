@@ -50,7 +50,7 @@ QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
     NES_ASSERT(!sources.empty(), "GeneratedQueryExecutionPlanBuilder: Invalid number of sources");
     NES_ASSERT(!sinks.empty(), "GeneratedQueryExecutionPlanBuilder: Invalid number of sinks");
     NES_ASSERT(queryId != INVALID_QUERY_ID, "GeneratedQueryExecutionPlanBuilder: Invalid Query Id");
-    NES_ASSERT(querySubPlanId != INVALID_QUERY_SUB_PLAN_ID, "GeneratedQueryExecutionPlanBuilder: Invalid Query Execution Id");
+    NES_ASSERT(querySubPlanId != INVALID_QUERY_SUB_PLAN_ID, "GeneratedQueryExecutionPlanBuilder: Invalid Query Subplan Id");
     NES_ASSERT(queryCompiler, "GeneratedQueryExecutionPlanBuilder: Invalid compiler or no stages");
 
     if (stages.empty() && !leaves.empty()) {
