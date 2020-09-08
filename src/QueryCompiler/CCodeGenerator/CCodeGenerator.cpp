@@ -460,19 +460,6 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
     auto code = context->code;
     // set result schema to context
     // generate result tuple struct
-    auto structDeclarationWindowtTuple = getStructDeclarationFromWindow("WindowTuple");
-    // add type declaration for the result tuple
-    code->typeDeclarations.push_back(structDeclarationWindowtTuple);
-
-    //    WindowTuple* windowTuples = (WindowTuple*) resultTupleBuffer.getBuffer();
-    auto varDeclWindowTuple =
-        VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(structDeclarationWindowtTuple)),
-                                    "windowTuples");
-
-    code->variableInitStmts.push_back(
-        VarDeclStatement(varDeclWindowTuple)
-            .assign(getTypedBuffer(code->varDeclarationInputBuffer, structDeclarationWindowtTuple))
-            .copy());
 
     /**
      * within the loop
@@ -494,11 +481,11 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration =
-            structDeclarationWindowtTuple.getVariableDeclaration(window->onKey->name);
+            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
-                                                 .assign(VarRef(varDeclWindowTuple)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                                                     VarRef(
-                                                         keyVariableAttributeDeclaration)));
+            .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                VarRef(
+                    keyVariableAttributeDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
             keyVariableAttributeStatement));
     } else {
@@ -533,7 +520,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
     // TODO add support for event time
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "end");
     if (window->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
-        auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(VarRef(varDeclWindowTuple)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(VarRef(currentTimeVariableDeclaration)));
+        auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(VarRef(currentTimeVariableDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
     } else {
         NES_NOT_IMPLEMENTED();
@@ -580,7 +567,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
         context->code->currentCodeInsertionPoint,
         partialRef,
         context->code->structDeclaratonInputTuple,
-        VarRef(varDeclWindowTuple)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
+        VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
 
     return true;
 }

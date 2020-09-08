@@ -247,7 +247,7 @@ CentralWindowOperatorPtr OperatorSerializationUtil::deserializeCentralWindowOper
     auto distrChar = sinkDetails->distrchar();
     DistributionCharacteristicPtr distChar;
     if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-        distChar = std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Complete);
+        distChar = DistributionCharacteristic::createCompleteWindowType();
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
         distChar = std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Combining);
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {

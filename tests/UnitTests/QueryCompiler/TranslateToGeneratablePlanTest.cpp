@@ -162,7 +162,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
     sinkOperator->setId(UtilityFunctions::getNextOperatorId());
-    auto windowOperator = createWindowLogicalOperatorNode(createWindowDefinition(Sum::on(Attribute("f1")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Complete)));
+    auto windowOperator = createWindowLogicalOperatorNode(createWindowDefinition(Sum::on(Attribute("f1")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType()));
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);
