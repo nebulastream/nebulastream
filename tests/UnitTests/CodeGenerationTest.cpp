@@ -226,7 +226,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
 class WindowTestingWindowGeneratorSource : public GeneratorSource {
   public:
     WindowTestingWindowGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
-                                     const uint64_t pNum_buffers_to_process)
+                                       const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
     }
 
@@ -275,8 +275,8 @@ const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, QueryManag
 const DataSourcePtr createWindowTestSliceSource(BufferManagerPtr bPtr, QueryManagerPtr dPtr, SchemaPtr schema) {
     DataSourcePtr source(
         std::make_shared<WindowTestingWindowGeneratorSource>(schema,
-            bPtr, dPtr,
-            10));
+                                                             bPtr, dPtr,
+                                                             10));
     return source;
 }
 
@@ -865,7 +865,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto sum = Sum::on(Attribute("value"));
     auto windowDefinition = createWindowDefinition(
         input_schema->get("key"), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)));
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Complete));
 
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, context1);
 
@@ -921,7 +921,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto sum = Sum::on(Attribute("value"));
     auto windowDefinition = createWindowDefinition(
         input_schema->get("key"), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)));
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Complete));
 
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, context1);
 
@@ -965,7 +965,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
 TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
-    SchemaPtr  schema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
+    SchemaPtr schema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
     auto source = createWindowTestSliceSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), schema);
 
     auto codeGenerator = CCodeGenerator::create();
@@ -978,7 +978,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto sum = Sum::on(Attribute("value"));
     auto windowDefinition = createWindowDefinition(
         input_schema->get("key"), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)));
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Complete));
 
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, context1);
 
@@ -1016,15 +1016,13 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     std::vector<uint64_t> results;
     for (auto& [key, val] : stateVar->rangeAll()) {
         NES_DEBUG("Key: " << key << " Value: " << val);
-        for(auto& slice : val->getSliceMetadata())
-        {
+        for (auto& slice : val->getSliceMetadata()) {
             std::cout << "start=" << slice.getStartTs() << " end=" << slice.getEndTs() << std::endl;
             results.push_back(slice.getStartTs());
             results.push_back(slice.getEndTs());
         }
-        for(auto& agg : val->getPartialAggregates())
-        {
-            std::cout << "value=" << agg  << std::endl;
+        for (auto& agg : val->getPartialAggregates()) {
+            std::cout << "value=" << agg << std::endl;
             results.push_back(agg);
         }
     }

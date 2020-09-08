@@ -115,8 +115,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     // we just access the old references
-
-    ASSERT_TRUE(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize() == 1);
+    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(),4);
 }
 
 /**
