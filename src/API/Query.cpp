@@ -35,7 +35,7 @@ Query& Query::merge(Query* subQuery) {
 
 Query& Query::window(const WindowTypePtr windowType, const WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add window operator");
-    auto windowDefinition = createWindowDefinition(aggregation, windowType);
+    auto windowDefinition = createWindowDefinition(aggregation, windowType, std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Complete));
     auto windowOperator = createWindowLogicalOperatorNode(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(windowOperator);
