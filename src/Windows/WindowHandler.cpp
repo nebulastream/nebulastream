@@ -13,7 +13,11 @@ namespace NES {
 WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)
     : windowDefinition(std::move(windowDefinitionPtr)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)) {
     this->thread.reset();
-    windowTupleSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField("value", INT64);
+    windowTupleSchema = Schema::create()
+                            ->addField(createField("start", UINT64))
+                            ->addField(createField("end", UINT64))
+                            ->addField(createField("key", INT64))
+                            ->addField("value", INT64);
     windowTupleLayout = createRowLayout(windowTupleSchema);
 }
 
@@ -32,8 +36,7 @@ bool WindowHandler::setup(PipelineStagePtr nextPipeline, uint32_t pipelineStageI
 void WindowHandler::trigger() {
     while (running) {
         sleep(1);
-        // we currently assume processing time and only want to check for new window results every 1 second
-        // todo change this when we support event time.
+
         NES_DEBUG("WindowHandler: check widow trigger");
         auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
         // create the output tuple buffer
@@ -43,7 +46,7 @@ void WindowHandler::trigger() {
         for (auto& it : windowStateVariable->rangeAll()) {
             // write all window aggregates to the tuple buffer
             // TODO we currently have no handling in the case the tuple buffer is full
-            this->aggregateWindows<int64_t, int64_t>(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
+            this->aggregateWindows<int64_t, int64_t, int64_t>(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
         }
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
         if (tupleBuffer.getNumberOfTuples() > 0) {
