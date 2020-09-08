@@ -87,11 +87,11 @@ class WindowSource : public NES::DefaultSource {
                                 QueryManagerPtr queryManager,
                                 const uint64_t numbersOfBufferToProduce,
                                 size_t frequency) {
-//        auto windowSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
-                auto windowSchema = Schema::create()
-                                        ->addField("key", BasicType::INT64)
-                                        ->addField("value", BasicType::INT64)
-                                        ->addField("ts", BasicType::UINT64);
+        //        auto windowSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
+        auto windowSchema = Schema::create()
+                                ->addField("key", BasicType::INT64)
+                                ->addField("value", BasicType::INT64)
+                                ->addField("ts", BasicType::UINT64);
         return std::make_shared<WindowSource>(windowSchema, bufferManager, queryManager, numbersOfBufferToProduce, frequency);
     }
 };
@@ -208,6 +208,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
                     .setBufferManager(nodeEngine->getBufferManager())
                     .setQueryManager(nodeEngine->getQueryManager())
                     .setQueryId(1)
+                    .setQuerySubPlanId(1)
                     .build();
 
     // The plan should have one pipeline
@@ -262,7 +263,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
     query = query.windowByKey(Attribute("key"), windowType, aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
-//    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
+    //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
                                   ->addField(createField("start", UINT64))
                                   ->addField(createField("end", UINT64))
@@ -284,6 +285,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
                        .setBufferManager(nodeEngine->getBufferManager())
                        .setCompiler(nodeEngine->getCompiler())
                        .setQueryId(1)
+                       .setQuerySubPlanId(1)
                        .addSource(windowSource)
                        .addSink(testSink)
                        .addOperatorQueryPlan(generatableOperators);
@@ -312,7 +314,6 @@ TEST_F(QueryExecutionTest, windowQuery) {
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 2)->read(resultBuffer), 1);
         // value
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
-
     }
     nodeEngine->stopQuery(1);
 }
@@ -355,6 +356,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
                        .setCompiler(nodeEngine->getCompiler())
                        .addOperatorQueryPlan(generatableOperators)
                        .setQueryId(1)
+                       .setQuerySubPlanId(1)
                        .addSource(testSource1)
                        .addSource(testSource2)
                        .addSink(testSink);
