@@ -5,6 +5,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 
 namespace NES {
 
@@ -19,13 +20,11 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG("LogicalSourceExpansionRule: Get all logical source operators in the query.");
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
     for (auto& sourceOperator : sourceOperators) {
-
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
         NES_DEBUG("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
         std::vector<TopologyNodePtr> sourceLocations = streamCatalog->getSourceNodesForLogicalStream(sourceDescriptor->getStreamName());
 
         if (sourceLocations.size() > 1) {
-
             NES_DEBUG("LogicalSourceExpansionRule: Found " << sourceLocations.size() << " physical source locations in the topology.");
             OperatorNodePtr operatorNode;
             std::vector<OperatorNodePtr> originalRootOperators;
@@ -36,7 +35,6 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             NES_TRACE("LogicalSourceExpansionRule: Create " << sourceLocations.size() - 1 << " duplicated logical sub-graph and add to original graph");
 
             for (uint32_t i = 0; i < sourceLocations.size() - 1; i++) {
-
                 NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
                 OperatorNodePtr copyOfGraph = operatorNode->duplicate();
                 NES_TRACE("LogicalSourceExpansionRule: Get all root nodes of the duplicated logical sub-graph to connect with original graph");
@@ -78,7 +76,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
 
 std::tuple<OperatorNodePtr, std::vector<OperatorNodePtr>> LogicalSourceExpansionRule::getLogicalGraphToDuplicate(OperatorNodePtr operatorNode) {
     NES_DEBUG("LogicalSourceExpansionRule: Get the logical graph to duplicate.");
-    if (operatorNode->isNAryOperator() || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+    if (operatorNode->isNAryOperator() || operatorNode->instanceOf<SinkLogicalOperatorNode>() || operatorNode->isNAryOperator() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         NES_TRACE("LogicalSourceExpansionRule: Found the first binary or sink operator.");
         return std::tuple<OperatorNodePtr, std::vector<OperatorNodePtr>>();
     }
