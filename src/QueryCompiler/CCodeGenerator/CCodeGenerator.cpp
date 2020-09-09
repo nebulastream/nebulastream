@@ -346,6 +346,19 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
     auto tf = getTypeFactory();
     auto constStatement = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0")));
 
+    if (context->pipelineName != "SlicingWindowType") {
+        context->pipelineName = "CompleteWindowType";
+    }
+
+    VariableDeclaration var_decl_id = VariableDeclaration::create(
+        tf->createDataType(DataTypeFactory::createInt64()),
+        context->pipelineName);
+
+    auto stateVarDeclarationStatement2 = VarDeclStatement(var_decl_id)
+                                             .assign(TypeCast(VarRef(context->code->varDeclarationState), var_decl_id.getDataType()));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        stateVarDeclarationStatement2));
+
     auto stateVariableDeclaration = VariableDeclaration::create(
         tf->createPointer(tf->createAnonymusDataType(
             "NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>")),
@@ -376,6 +389,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
     // get key handle for current key
     auto keyHandlerVariableDeclaration = VariableDeclaration::create(
         tf->createAnonymusDataType("auto"), "key_value_handle");
+
     auto getKeyStateVariable = FunctionCallStatement("get");
     getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
     auto keyHandlerVariableStatement = VarDeclStatement(keyHandlerVariableDeclaration)
@@ -444,12 +458,17 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
         partialRef,
         context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
+
+    NES_DEBUG("CCodeGenerator: Generate code for pipetype" << context->pipelineName << ": "
+                                                           << " with code=" << context->code);
+
     return true;
 }
 
 bool CCodeGenerator::generateCodeForSlicingWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
     NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
     //NOTE: the distinction currently only happens in the trigger
+    context->pipelineName = "SlicingWindowType";
     return generateCodeForCompleteWindow(window, context);
 }
 
@@ -458,6 +477,15 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
 
     auto code = context->code;
+    context->pipelineName = "combining";
+    VariableDeclaration var_decl_id = VariableDeclaration::create(
+        tf->createDataType(DataTypeFactory::createInt64()),
+        context->pipelineName);
+
+    auto stateVarDeclarationStatement2 = VarDeclStatement(var_decl_id)
+        .assign(TypeCast(VarRef(context->code->varDeclarationState), var_decl_id.getDataType()));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        stateVarDeclarationStatement2));
     // set result schema to context
     // generate result tuple struct
 
@@ -480,12 +508,12 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
     //        int64_t key = windowTuples[recordIndex].key;
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
     if (window->isKeyed()) {
-//        auto keyVariableAttributeDeclaration =
-//            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
+                auto keyVariableAttributeDeclaration =
+                    context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
                                                  .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                      VarRef(
-                                                         keyVariableDeclaration)));
+                                                         keyVariableAttributeDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
             keyVariableAttributeStatement));
     } else {
@@ -569,6 +597,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
         context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
 
+    NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
+                                                  << " with code=" << context->code);
     return true;
 }
 

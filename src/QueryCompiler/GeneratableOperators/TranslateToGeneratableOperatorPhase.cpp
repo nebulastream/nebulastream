@@ -55,13 +55,6 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
     }
-    else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {//some test require this
-        auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
-        generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableCompleteWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
-        scanOperator->addChild(windowOperator);
-        return windowOperator;
-    }
     else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);

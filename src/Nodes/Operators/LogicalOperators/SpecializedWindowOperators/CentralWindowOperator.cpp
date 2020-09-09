@@ -10,6 +10,7 @@ LogicalOperatorNodePtr createCentralWindowSpecializedOperatorNode(const WindowDe
 
 CentralWindowOperator::CentralWindowOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
+    windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 }
 
 const std::string CentralWindowOperator::toString() const {
