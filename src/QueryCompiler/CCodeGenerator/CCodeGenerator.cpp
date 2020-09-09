@@ -480,12 +480,12 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
     //        int64_t key = windowTuples[recordIndex].key;
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
     if (window->isKeyed()) {
-        auto keyVariableAttributeDeclaration =
-            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
+//        auto keyVariableAttributeDeclaration =
+//            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
                                                  .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                      VarRef(
-                                                         keyVariableAttributeDeclaration)));
+                                                         keyVariableDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
             keyVariableAttributeStatement));
     } else {

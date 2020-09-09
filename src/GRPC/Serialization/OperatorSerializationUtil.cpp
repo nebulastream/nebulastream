@@ -257,10 +257,13 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
     auto distrChar = sinkDetails->distrchar();
     DistributionCharacteristicPtr distChar;
     if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
+        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete");
         distChar = DistributionCharacteristic::createCompleteWindowType();
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
+        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
         distChar = std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Combining);
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
+        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
         distChar = std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Slicing);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -273,7 +276,7 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
             return createWindowComputationSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            return createCentralWindowSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<SliceCreationOperator>();
+            return createSliceCreationSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<SliceCreationOperator>();
         } else {
             NES_NOT_IMPLEMENTED();
         }
@@ -283,7 +286,7 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
             return createWindowComputationSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            return createCentralWindowSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<SliceCreationOperator>();
+            return createSliceCreationSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<SliceCreationOperator>();
         } else {
             NES_NOT_IMPLEMENTED();
         }
