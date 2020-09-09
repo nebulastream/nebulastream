@@ -1,4 +1,3 @@
-
 #include <API/Schema.hpp>
 #include <API/Window/TimeCharacteristic.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
@@ -25,6 +24,9 @@
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+
 
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -69,7 +71,17 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // serialize window operator
         NES_TRACE("OperatorSerializationUtil:: serialize to CentralWindowOperator");
-        auto windowDetails = serializeCentralWindowOperator(operatorNode->as<CentralWindowOperator>());
+        auto windowDetails = serializeWindowOperator(operatorNode->as<CentralWindowOperator>());
+        serializedOperator->mutable_details()->PackFrom(windowDetails);
+    } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
+        // serialize window operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to SliceCreationOperator");
+        auto windowDetails = serializeWindowOperator(operatorNode->as<SliceCreationOperator>());
+        serializedOperator->mutable_details()->PackFrom(windowDetails);
+    } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
+        // serialize window operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to WindowComputationOperator");
+        auto windowDetails = serializeWindowOperator(operatorNode->as<WindowComputationOperator>());
         serializedOperator->mutable_details()->PackFrom(windowDetails);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
@@ -141,9 +153,9 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
         auto serializedWindowOperator = SerializableOperator_WindowDetails();
         details.UnpackTo(&serializedWindowOperator);
-        operatorNode = deserializeCentralWindowOperator(&serializedWindowOperator);
+        operatorNode = deserializeWindowOperator(&serializedWindowOperator);
     } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: " << details.type_url());
+        NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
     }
 
     // de-serialize operator output schema
@@ -161,7 +173,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     return operatorNode;
 }
 
-SerializableOperator_WindowDetails OperatorSerializationUtil::serializeCentralWindowOperator(CentralWindowOperatorPtr windowOperator) {
+SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOperator(WindowLogicalOperatorNodePtr windowOperator) {
     auto windowDetails = SerializableOperator_WindowDetails();
     auto windowDefinition = windowOperator->getWindowDefinition();
 
@@ -211,7 +223,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeCentralWi
     return windowDetails;
 }
 
-CentralWindowOperatorPtr OperatorSerializationUtil::deserializeCentralWindowOperator(SerializableOperator_WindowDetails* sinkDetails) {
+WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails) {
 
     auto serializedWindowAggregation = sinkDetails->windowaggregation();
     auto serializedWindowType = sinkDetails->windowtype();
@@ -256,9 +268,25 @@ CentralWindowOperatorPtr OperatorSerializationUtil::deserializeCentralWindowOper
 
     LogicalOperatorNodePtr ptr;
     if (sinkDetails->onkey() == "") {
-        return createCentralWindowSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<CentralWindowOperator>();
+        if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
+            return createCentralWindowSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<CentralWindowOperator>();
+        } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
+            return createWindowComputationSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<WindowComputationOperator>();
+        } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
+            return createCentralWindowSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<SliceCreationOperator>();
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
     } else {
-        return createCentralWindowSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<CentralWindowOperator>();
+        if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
+            return createCentralWindowSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<CentralWindowOperator>();
+        } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
+            return createWindowComputationSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<WindowComputationOperator>();
+        } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
+            return createCentralWindowSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<SliceCreationOperator>();
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
     }
 }
 

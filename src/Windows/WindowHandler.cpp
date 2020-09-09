@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -45,12 +46,13 @@ void WindowHandler::trigger() {
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
             // write all window aggregates to the tuple buffer
-            // TODO we currently have no handling in the case the tuple buffer is full
             this->aggregateWindows<int64_t, int64_t, int64_t>(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
+            // TODO we currently have no handling in the case the tuple buffer is full
         }
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
         if (tupleBuffer.getNumberOfTuples() > 0) {
-            NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records");
+            NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
+                                                                    << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowTupleSchema) << std::endl);
             queryManager->addWorkForNextPipeline(
                 tupleBuffer,
                 this->nextPipeline);

@@ -1,7 +1,6 @@
 #ifndef NES_QueryPlacementRefinementPhase_HPP
 #define NES_QueryPlacementRefinementPhase_HPP
 
-#include <Optimizer/QueryRefinement/WindowDistributionRefinement.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <memory>
@@ -29,7 +28,6 @@ class QueryPlacementRefinementPhase {
   private:
     explicit QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan);
 
-    WindowDistributionRefinementPtr windowDistributionRefinement;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 }// namespace NES
