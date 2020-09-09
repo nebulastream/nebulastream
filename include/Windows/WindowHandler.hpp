@@ -143,19 +143,23 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
 
     //trigger a central window operator
     if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
-        //does not have to be done
+        NES_DEBUG("WindowHandler: trigger Complete or combining window");
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows->size(); windowId++) {
                 auto window = (*windows)[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_DEBUG("window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
+                NES_DEBUG("WindowHandler CC: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
+                    NES_DEBUG("WindowHandler CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
                     // TODO Because of this condition we currently only support SUM aggregations
                     if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
                         if (partialFinalAggregates.size() <= windowId) {
                             // initial the partial aggregate
+                            NES_DEBUG("WindowHandler CC: assign partialAggregates[sliceId]=" << partialAggregates[sliceId] << " old value was " << partialFinalAggregates[windowId]);
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
                         } else {
+                            NES_DEBUG("WindowHandler CC: update partialFinalAggregates[windowId]=" << partialFinalAggregates[windowId] << " with " << sumAggregation->combine<PartialAggregateType>(
+                                          partialFinalAggregates[windowId], partialAggregates[sliceId]));
                             // update the partial aggregate
                             partialFinalAggregates[windowId] = sumAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
@@ -181,12 +185,17 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                                                            key,
                                                            value);
             tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
+
         }
     } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
         //if slice creator, find slices which can be send but did not send already
+        NES_DEBUG("WindowHandler: trigger Slicing");
+
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             //test if latest tuple in window is after slice end
+            NES_DEBUG("WindowHandler SL: slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs() << " watermark=" << watermark);
             if (slices[sliceId].getEndTs() < watermark) {
+                NES_DEBUG("WindowHandler SL: write result");
                 writeResultRecord<KeyType, FinalAggregateType>(tupleBuffer,
                                                                tupleBuffer.getNumberOfTuples(),
                                                                slices[sliceId].getStartTs(),
@@ -194,6 +203,10 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                                                                key,
                                                                partialAggregates[sliceId]);
                 tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
+            }
+            else
+            {
+                NES_DEBUG("WindowHandler SL: Dont write result");
             }
         }
     } else {

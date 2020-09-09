@@ -1,5 +1,5 @@
 #include <Phases/QueryPlacementRefinementPhase.hpp>
-
+#include <Util/Logger.hpp>
 namespace NES {
 
 QueryPlacementRefinementPhasePtr QueryPlacementRefinementPhase::create(GlobalExecutionPlanPtr globalPlan) {
@@ -12,11 +12,10 @@ QueryPlacementRefinementPhase::~QueryPlacementRefinementPhase() {
 QueryPlacementRefinementPhase::QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan) {
     NES_DEBUG("QueryPlacementRefinementPhase()");
     globalExecutionPlan = globalPlan;
-    windowDistributionRefinement = WindowDistributionRefinement::create();
 }
 
 bool QueryPlacementRefinementPhase::execute(QueryId queryId) {
-    windowDistributionRefinement->execute(globalExecutionPlan, queryId);
+    NES_DEBUG("QueryPlacementRefinementPhase() execute for query " << queryId);
     return true;
 }
 

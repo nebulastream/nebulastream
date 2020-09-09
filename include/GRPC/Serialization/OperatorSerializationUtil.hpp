@@ -74,11 +74,11 @@ class OperatorSerializationUtil {
     static SerializableOperator_SinkDetails serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator);
 
     /**
-     * @brief Serializes an central window operator and all its properties to a SerializableOperator_WindowDetails object.
-     * @param CentralWindowOperatorPtr The window operator node.
+     * @brief Serializes an all window operator and all its properties to a SerializableOperator_WindowDetails object.
+     * @param WindowLogicalOperatorNode The window operator node.
      * @return the serialized SerializableOperator_SinkDetails.
      */
-    static SerializableOperator_WindowDetails serializeCentralWindowOperator(CentralWindowOperatorPtr windowOperator);
+    static SerializableOperator_WindowDetails serializeWindowOperator(WindowLogicalOperatorNodePtr windowOperator);
 
     /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
@@ -86,13 +86,6 @@ class OperatorSerializationUtil {
      * @return SinkLogicalOperatorNodePtr
      */
     static OperatorNodePtr deserializeSinkOperator(SerializableOperator_SinkDetails* sinkDetails);
-
-    /**
-     * @brief De-serializes the SerializableOperator_WindowDetails and all its properties back to a central window operatorNodePtr
-     * @param sinkDetails The serialized sink operator details.
-     * @return SinkLogicalOperatorNodePtr
-     */
-    static CentralWindowOperatorPtr deserializeCentralWindowOperator(SerializableOperator_WindowDetails* sinkDetails);
 
     /**
     * @brief De-serializes the SerializableOperator_WindowDetails and all its properties back to a central window operatorNodePtr
