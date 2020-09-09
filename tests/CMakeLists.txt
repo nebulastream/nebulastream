@@ -180,6 +180,12 @@ add_executable(filter-push-down-rule-test "UnitTests/Optimizer/QueryRewrite/Filt
 target_link_libraries(filter-push-down-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME filter-push-down-rule-test COMMAND filter-push-down-rule-test)
 
+# DistributeWindowRuleTest
+add_executable(window-distr-rule-test "UnitTests/Optimizer/QueryRewrite/DistributeWindowRuleTest.cpp")
+target_link_libraries(window-distr-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME window-distr-rule-test COMMAND window-distr-rule-test)
+
+
 # SerializationUtilTest
 add_executable(serialize-operator-test "UnitTests/Nodes/SerializationUtilTest.cpp")
 target_link_libraries(serialize-operator-test nes ${GTEST_LIBRARIES})

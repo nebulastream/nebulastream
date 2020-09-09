@@ -1,5 +1,6 @@
 #include <Nodes/Operators/SpecializedWindowOperators/SliceMergingOperator.hpp>
-
+#include <API/Schema.hpp>
+#include <API/Window/WindowDefinition.hpp>
 namespace NES {
 
 LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition) {
@@ -8,6 +9,29 @@ LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const WindowDef
 
 SliceMergingOperator::SliceMergingOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
+}
+
+
+const std::string SliceMergingOperator::toString() const {
+    std::stringstream ss;
+    ss << "SliceMergingOperator(" << outputSchema->toString() << ")";
+    return ss.str();
+}
+
+bool SliceMergingOperator::isIdentical(NodePtr rhs) const {
+    return equal(rhs) && rhs->as<SliceMergingOperator>()->getId() == id;
+}
+
+bool SliceMergingOperator::equal(const NodePtr rhs) const {
+    return rhs->instanceOf<SliceMergingOperator>();
+}
+
+OperatorNodePtr SliceMergingOperator::copy() {
+    auto copy = createSliceMergingSpecializedOperatorNode(windowDefinition);
+    copy->setId(id);
+    copy->setInputSchema(inputSchema);
+    copy->setOutputSchema(outputSchema);
+    return copy;
 }
 
 }// namespace NES

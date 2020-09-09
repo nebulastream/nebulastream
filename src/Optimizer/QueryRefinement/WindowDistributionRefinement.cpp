@@ -20,6 +20,7 @@ WindowDistributionRefinementPtr WindowDistributionRefinement::create() {
 WindowDistributionRefinement::WindowDistributionRefinement() : BaseRewriteRule() {}
 
 bool WindowDistributionRefinement::execute(GlobalExecutionPlanPtr globalPlan, QueryId queryId) {
+    return true;
     NES_DEBUG("WindowDistributionRefinement::execute for globalPlan=" << globalPlan << " queryId=" << queryId);
 
     std::vector<ExecutionNodePtr> nodes = globalPlan->getExecutionNodesByQueryId(queryId);

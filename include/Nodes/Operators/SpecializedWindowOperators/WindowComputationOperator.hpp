@@ -11,6 +11,11 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 class WindowComputationOperator : public WindowLogicalOperatorNode {
   public:
     WindowComputationOperator(const WindowDefinitionPtr windowDefinition);
+
+    bool equal(const NodePtr rhs) const override;
+    const std::string toString() const override;
+    OperatorNodePtr copy() override;
+    bool isIdentical(NodePtr rhs) const override;
 };
 
 }// namespace NES
