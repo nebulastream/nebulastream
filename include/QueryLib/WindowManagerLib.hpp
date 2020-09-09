@@ -4,7 +4,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
-
+#include <Util/Logger.hpp>
 #ifndef WINDOWMANAGERLIB_HPP
 #define WINDOWMANAGERLIB_HPP
 
@@ -82,6 +82,12 @@ class WindowSliceStore {
      */
     inline uint64_t getCurrentSliceIndex() {
         return sliceMetaData.size() - 1;
+    }
+
+    inline void cleanupToPos(uint64_t pos) {
+        sliceMetaData.erase(sliceMetaData.begin(), sliceMetaData.size() > pos ? sliceMetaData.begin() + pos + 1 : sliceMetaData.end());
+        partialAggregates.erase(partialAggregates.begin(), partialAggregates.size() > pos ? partialAggregates.begin() + pos + 1 : partialAggregates.end());
+        NES_DEBUG("cleanupToPos size after cleanup slice=" << sliceMetaData.size() << " aggs=" << partialAggregates.size());
     }
 
     inline uint64_t empty() {

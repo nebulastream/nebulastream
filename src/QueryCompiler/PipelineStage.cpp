@@ -39,6 +39,7 @@ bool PipelineStage::setup() {
 
 bool PipelineStage::start() {
     if (hasWindowHandler()) {
+        NES_DEBUG("PipelineStage::start: windowhandler start");
         return windowHandler->start();
     }
     return true;
@@ -46,6 +47,7 @@ bool PipelineStage::start() {
 
 bool PipelineStage::stop() {
     if (hasWindowHandler()) {
+        NES_DEBUG("PipelineStage::stop: windowhandler stop");
         return windowHandler->stop();
     }
     return true;
