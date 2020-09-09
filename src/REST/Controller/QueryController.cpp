@@ -85,6 +85,9 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     else if (req.has_field("pattern")){
                         userQuery = req.at("pattern").as_string();
                     }
+                    else{
+                        NES_ERROR("QueryController: handlePost -execute-query: Wrong key word for user query or pattern. Use either 'userQuery' or 'pattern'.");
+                    }
 
                     string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
