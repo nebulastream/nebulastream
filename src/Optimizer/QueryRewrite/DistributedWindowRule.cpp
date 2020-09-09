@@ -51,11 +51,13 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                 NES_DEBUG("DistributeWindowRule::apply: plan after replace " << queryPlan->toString());
 
                 //add a slicer to each child
-                for(auto& child : newWindowOp->getChildren())
+                std::vector<NodePtr> copyOfChilds = newWindowOp->getChildren();
+                for(auto& child : copyOfChilds)
                 {
                     NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());
                     NES_DEBUG("DistributeWindowRule::apply: plan before insert child " << queryPlan->toString());
-                    LogicalOperatorNodePtr sliceOp = createCentralWindowSpecializedOperatorNode(winOp->getWindowDefinition());
+                    LogicalOperatorNodePtr sliceOp = createSliceCreationSpecializedOperatorNode(winOp->getWindowDefinition());
+                    sliceOp->setId(UtilityFunctions::getNextOperatorId());
                     child->insertBetweenThisAndParentNodes(sliceOp);
                     NES_DEBUG("DistributeWindowRule::apply: plan after insert child " << queryPlan->toString());
                 }
