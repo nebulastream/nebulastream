@@ -270,8 +270,10 @@ bool Node::removeAndJoinParentAndChildren() {
     try {
         NES_DEBUG("Node: Joining parents with children");
 
-        for (auto& parent : parents) {
-            for (auto& child : children) {
+        std::vector<NodePtr> childCopy = this->children;
+        std::vector<NodePtr> parentCopy = this->parents;
+        for (auto& parent : parentCopy) {
+            for (auto& child : childCopy) {
 
                 NES_DEBUG("Node: Add child of this node as child of this node's parent");
                 parent->addChild(child);
