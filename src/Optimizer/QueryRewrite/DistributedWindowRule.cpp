@@ -41,7 +41,6 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
 
                 WindowLogicalOperatorNode* winOp = dynamic_cast<WindowLogicalOperatorNode*>(windowOp.get());
                 WindowDefinitionPtr windDef = winOp->getWindowDefinition();
-                windDef->setDistributionCharacteristic(DistributionCharacteristic::createCombiningWindowType());
                 LogicalOperatorNodePtr newWindowOp = createWindowComputationSpecializedOperatorNode(winOp->getWindowDefinition());
                 newWindowOp->setInputSchema(winOp->getInputSchema());
                 newWindowOp->setOutputSchema(winOp->getOutputSchema());
@@ -59,9 +58,10 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                 {
                     NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());
                     NES_DEBUG("DistributeWindowRule::apply: plan before insert child " << queryPlan->toString());
-                    WindowDefinitionPtr windDef = winOp->getWindowDefinition();
-                    windDef->setDistributionCharacteristic(DistributionCharacteristic::createSlicingWindowType());
+//                    WindowDefinitionPtr windDef = winOp->getWindowDefinition();
+//                    windDef->setDistributionCharacteristic(DistributionCharacteristic::createSlicingWindowType());
                     LogicalOperatorNodePtr sliceOp = createSliceCreationSpecializedOperatorNode(winOp->getWindowDefinition());
+
 
                     sliceOp->setId(UtilityFunctions::getNextOperatorId());
                     child->insertBetweenThisAndParentNodes(sliceOp);

@@ -9,6 +9,7 @@ LogicalOperatorNodePtr createSliceCreationSpecializedOperatorNode(const WindowDe
 
 SliceCreationOperator::SliceCreationOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
+    windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createSlicingWindowType());
 }
 
 const std::string SliceCreationOperator::toString() const {

@@ -40,6 +40,7 @@ class PipelineContext {
     void addNextPipeline(PipelineContextPtr nextPipeline);
     bool hasNextPipeline() const;
 
+    std::string pipelineName;
   private:
     std::vector<PipelineContextPtr> nextPipelines;
     WindowDefinitionPtr windowDefinition;

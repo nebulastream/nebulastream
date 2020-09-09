@@ -20,7 +20,7 @@ static uint64_t rpcPort = 4000;
 class QueryDeploymentTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("QueryDeploymentTest.log", NES::LOG_TRACE);
+        NES::setupLogging("QueryDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup QueryDeploymentTest test class.");
     }
 

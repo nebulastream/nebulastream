@@ -9,6 +9,7 @@ LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const Wind
 
 WindowComputationOperator::WindowComputationOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
+    windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createCombiningWindowType());
 }
 
 
