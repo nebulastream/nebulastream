@@ -232,7 +232,7 @@ QueryCatalogPtr NesCoordinator::getQueryCatalog() {
     return queryCatalog;
 }
 
-SchemaPtr NesCoordinator::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, const MonitoringPlan& plan, TupleBuffer buf) {
+SchemaPtr NesCoordinator::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan, TupleBuffer buf) {
     std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
     NES_DEBUG("NesCoordinator: Requesting monitoring data from worker address= " + destAddress);
 

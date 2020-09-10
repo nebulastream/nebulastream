@@ -15,14 +15,18 @@ class MetricCatalog;
 class MetricGroup;
 class GroupedValues;
 class SerializableMonitoringPlan;
+class MonitoringPlan;
 class MetricCatalog;
 
 typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
+typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
+typedef std::shared_ptr<MetricGroup> MetricGroupPtr;
+
 
 class MonitoringPlan {
   public:
-    MonitoringPlan(const std::vector<MetricValueType>& metrics);
-    MonitoringPlan(const SerializableMonitoringPlan shippable);
+    static MonitoringPlanPtr create(const std::vector<MetricValueType>& metrics);
+    static MonitoringPlanPtr create(const SerializableMonitoringPlan& shippable);
 
     /**
      * @brief Add a specific metric to the plan
@@ -47,7 +51,7 @@ class MonitoringPlan {
      * @brief creates a MetricGroup out of the MonitoringPlan;
      * @return
      */
-    std::shared_ptr<MetricGroup> createMetricGroup(MetricCatalogPtr catalog) const;
+    MetricGroupPtr createMetricGroup(MetricCatalogPtr catalog) const;
 
     /**
      * @brief
@@ -63,7 +67,10 @@ class MonitoringPlan {
      */
     SerializableMonitoringPlan serialize() const;
 
+    std::string toString() const;
+
     friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
+
 
   public:
     static const std::string CPU_METRICS_DESC;
@@ -74,12 +81,17 @@ class MonitoringPlan {
     static const std::string DISK_METRICS_DESC;
 
   private:
+    MonitoringPlan(const std::vector<MetricValueType>& metrics);
+    MonitoringPlan(const SerializableMonitoringPlan& shippable);
+
     //the metrics for monitoring
     bool cpuMetrics;
     bool networkMetrics;
     bool memoryMetrics;
     bool diskMetrics;
 };
+
+typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 
 }// namespace NES
 

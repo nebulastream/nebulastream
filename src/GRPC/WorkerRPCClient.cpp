@@ -180,11 +180,11 @@ bool WorkerRPCClient::stopQuery(std::string address, QueryId queryId) {
     }
 }
 
-SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, MonitoringPlan plan, TupleBuffer buf) {
+SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, TupleBuffer buf) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
 
     MonitoringRequest request;
-    request.mutable_monitoringplan()->CopyFrom(plan.serialize());
+    request.mutable_monitoringplan()->CopyFrom(plan->serialize());
 
     ClientContext context;
     MonitoringReply reply;

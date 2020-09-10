@@ -84,19 +84,24 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
 }
 
 Status WorkerRPCServer::RequestMonitoringData(ServerContext*, const MonitoringRequest* request, MonitoringReply* reply) {
-    auto plan = MonitoringPlan{request->monitoringplan()};
-    NES_DEBUG("WorkerRPCServer::RequestMonitoringData: Got request" << plan);
+    try {
+        auto plan = MonitoringPlan::create(request->monitoringplan());
+        NES_DEBUG("WorkerRPCServer::RequestMonitoringData: Got request" << plan);
 
-    MetricGroupPtr metricGroup = plan.createMetricGroup(MetricCatalog::NesMetrics());
-    auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
+        MetricGroupPtr metricGroup = plan->createMetricGroup(MetricCatalog::NesMetrics());
+        auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    auto schema = Schema::create();
-    metricGroup->getSample(schema, buf);
+        auto schema = Schema::create();
+        metricGroup->getSample(schema, buf);
 
-    // add schema and buffer to the reply object
-    SchemaSerializationUtil::serializeSchema(schema, reply->mutable_schema());
-    reply->set_buffer(buf.getBuffer(), schema->getSchemaSizeInBytes());
-    reply->release_buffer();
+        // add schema and buffer to the reply object
+        SchemaSerializationUtil::serializeSchema(schema, reply->mutable_schema());
+        reply->set_buffer(buf.getBuffer(), schema->getSchemaSizeInBytes());
+        return Status::OK;
+    }
+    catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: Requesting monitoring data failed: " << ex.what());
+        return Status::CANCELLED;
+    }
 
-    return Status::OK;
 }
