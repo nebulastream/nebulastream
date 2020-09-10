@@ -63,10 +63,9 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
 
     if (path[1] == "execute-query" || path[1] == "execute-pattern") {
 
-        if (path[1] == "execute-query"){
+        if (path[1] == "execute-query") {
             NES_DEBUG(" QueryController: Trying to execute query");
-        }
-        else if (path[1] == "execute-pattern"){
+        } else if (path[1] == "execute-pattern") {
             NES_DEBUG(" QueryController: Trying to execute pattern as stream query");
         }
 
@@ -79,13 +78,11 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     json::value req = json::value::parse(userRequest);
                     NES_DEBUG("QueryController: handlePost -execute-query: get user query");
                     string userQuery = "";
-                    if (req.has_field("userQuery")){
+                    if (req.has_field("userQuery")) {
                         userQuery = req.at("userQuery").as_string();
-                    }
-                    else if (req.has_field("pattern")){
+                    } else if (req.has_field("pattern")) {
                         userQuery = req.at("pattern").as_string();
-                    }
-                    else{
+                    } else {
                         NES_ERROR("QueryController: handlePost -execute-query: Wrong key word for user query or pattern. Use either 'userQuery' or 'pattern'.");
                     }
 
