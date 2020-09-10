@@ -11,7 +11,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
+#include <Util/UtilityFunctions.hpp>
 namespace NES {
 
 CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& _file_path,
@@ -151,12 +151,13 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     }
 
     currentPosInFile = input.tellg();
-
+    buf.setNumberOfTuples(generated_tuples_this_pass);
     NES_DEBUG(
         "CSVSource::fillBuffer: readin finished read " << generated_tuples_this_pass << " tuples at posInFile="
                                                        << currentPosInFile);
+    NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
     generatedTuples += generated_tuples_this_pass;
-    buf.setNumberOfTuples(generated_tuples_this_pass);
+
     generatedBuffers++;
 }
 

@@ -49,6 +49,7 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
             return 0;
         }
 
+        //add default logical
         PhysicalStreamConfig streamConf;
         //check if logical stream exists
         if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf.logicalStreamName)) {
