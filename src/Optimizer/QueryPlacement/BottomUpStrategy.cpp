@@ -94,7 +94,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
             throw QueryPlacementException("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
         }
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        NES_ERROR("BottomUpStrategy: Received Sink operator for placement.");
+        NES_TRACE("BottomUpStrategy: Received Sink operator for placement.");
         candidateTopologyNode = getTopologyNodeForPinnedOperator(operatorNode->getId());
         if (candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
