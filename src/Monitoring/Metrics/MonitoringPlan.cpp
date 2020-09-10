@@ -28,8 +28,8 @@ MonitoringPlan::MonitoringPlan(const std::vector<MetricValueType>& metrics)
     addMetrics(metrics);
 }
 
-MonitoringPlan::MonitoringPlan(const SerializableMonitoringPlan& plan): cpuMetrics(plan.cpumetrics()), networkMetrics(plan.networkmetrics()),
-                                                                        memoryMetrics(plan.memorymetrics()), diskMetrics(plan.diskmetrics()) {
+MonitoringPlan::MonitoringPlan(const SerializableMonitoringPlan& plan) : cpuMetrics(plan.cpumetrics()), networkMetrics(plan.networkmetrics()),
+                                                                         memoryMetrics(plan.memorymetrics()), diskMetrics(plan.diskmetrics()) {
     NES_DEBUG("MonitoringPlan: Initializing from shippable protobuf object.");
 }
 
@@ -148,11 +148,10 @@ SerializableMonitoringPlan MonitoringPlan::serialize() const {
 }
 
 std::string MonitoringPlan::toString() const {
-    return "MonitoringPlan: CPU(" + std::to_string(cpuMetrics) + "), disk(" + std::to_string(diskMetrics) + "), " +
-                "memory(" +  std::to_string(memoryMetrics) + "), network(" + std::to_string(networkMetrics) + ")";
+    return "MonitoringPlan: CPU(" + std::to_string(cpuMetrics) + "), disk(" + std::to_string(diskMetrics) + "), " + "memory(" + std::to_string(memoryMetrics) + "), network(" + std::to_string(networkMetrics) + ")";
 }
 
-std::ostream& operator<<(std::ostream &strm, const MonitoringPlan &plan) {
+std::ostream& operator<<(std::ostream& strm, const MonitoringPlan& plan) {
     return strm << plan.toString();
 }
 

@@ -98,10 +98,8 @@ Status WorkerRPCServer::RequestMonitoringData(ServerContext*, const MonitoringRe
         SchemaSerializationUtil::serializeSchema(schema, reply->mutable_schema());
         reply->set_buffer(buf.getBuffer(), schema->getSchemaSizeInBytes());
         return Status::OK;
-    }
-    catch (std::exception& ex) {
+    } catch (std::exception& ex) {
         NES_ERROR("WorkerRPCServer: Requesting monitoring data failed: " << ex.what());
         return Status::CANCELLED;
     }
-
 }
