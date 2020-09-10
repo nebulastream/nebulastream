@@ -8,7 +8,6 @@ CoordinatorRPCServer::CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngin
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request,
                                           RegisterNodeReply* reply) {
     NES_DEBUG("CoordinatorEngine::RegisterNode: request =" << request);
-
     size_t id = coordinatorEngine->registerNode(request->address(),
                                                 request->grpcport(),
                                                 request->dataport(),

@@ -485,7 +485,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
         context->pipelineName);
 
     auto stateVarDeclarationStatement2 = VarDeclStatement(var_decl_id)
-        .assign(TypeCast(VarRef(context->code->varDeclarationState), var_decl_id.getDataType()));
+                                             .assign(TypeCast(VarRef(context->code->varDeclarationState), var_decl_id.getDataType()));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         stateVarDeclarationStatement2));
     // set result schema to context
@@ -511,8 +511,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
 
     if (window->isKeyed()) {
-                auto keyVariableAttributeDeclaration =
-                    context->code->structDeclaratonInputTuple.getVariableDeclaration("key");
+        auto keyVariableAttributeDeclaration =
+            context->code->structDeclaratonInputTuple.getVariableDeclaration("key");
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
                                                  .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                      VarRef(
@@ -554,12 +554,11 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(VarRef(currentTimeVariableDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
     } else {
-        NES_NOT_IMPLEMENTED();
-        auto tsVariableDeclaration =
-            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->windowType->getTimeCharacteristic()->getField()->name);
+        currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "end");
+//        auto tsVariableDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(window->windowType->getTimeCharacteristic()->getField()->name);
         auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration)
                                                   .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                                                      VarRef(tsVariableDeclaration)));
+                                                      VarRef(currentTimeVariableDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
     }
 
