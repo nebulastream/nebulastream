@@ -90,6 +90,7 @@ class WindowDefinition {
                      const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
 
     void setDistributionCharacteristic(DistributionCharacteristicPtr characteristic);
+
     const WindowAggregationPtr windowAggregation;
     const WindowTypePtr windowType;
     const AttributeFieldPtr onKey;

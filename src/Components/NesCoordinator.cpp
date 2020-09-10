@@ -34,6 +34,7 @@ namespace NES {
 NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort)
     : serverIp(serverIp), restPort(restPort), rpcPort(rpcPort) {
     NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
+    MDC::put("threadName", "NesCoordinator");
     stopped = false;
 
     topology = Topology::create();
@@ -96,6 +97,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
 
     queryRequestProcessorThread = std::make_shared<std::thread>(([&]() {
         setThreadName("RqstProc");
+
         NES_INFO("NesCoordinator: started queryRequestProcessor");
         queryRequestProcessorService->start();
         NES_WARNING("NesCoordinator: finished queryRequestProcessor");
@@ -106,6 +108,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
 
     rpcThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesRPC");
+
         NES_DEBUG("NesCoordinator: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
         NES_DEBUG("NesCoordinator: buildAndStartGRPCServer: end listening");

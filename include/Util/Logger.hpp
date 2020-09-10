@@ -92,7 +92,7 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
     // create PatternLayout
     log4cxx::LayoutPtr layoutPtr(
         new log4cxx::PatternLayout(
-            "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+            "%d{MMM dd yyyy HH:mm:ss} %c: %l %X{threadName} [%-5t] [%p] : %m%n"));
 
     // create FileAppender
     LOG4CXX_DECODE_CHAR(fileName, logFileName);

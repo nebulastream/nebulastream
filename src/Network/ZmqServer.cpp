@@ -79,6 +79,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
 
     for (int i = 0; i < numHandlerThreads; ++i) {
         handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
+            std::string thName = "DataSrc-" + i;
             setThreadName("zmq-evt-%d", i);
             messageHandlerEventLoop(barrier, i);
         }));

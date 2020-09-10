@@ -40,8 +40,11 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                 NES_DEBUG("DistributeWindowRule::apply: introduce distributed window operator for window " << windowOp << " << windowOp->toString()");
 
                 WindowLogicalOperatorNode* winOp = dynamic_cast<WindowLogicalOperatorNode*>(windowOp.get());
-                WindowDefinitionPtr windDef = winOp->getWindowDefinition();
-                LogicalOperatorNodePtr newWindowOp = createWindowComputationSpecializedOperatorNode(winOp->getWindowDefinition());
+                WindowDefinitionPtr winDef = winOp->getWindowDefinition();
+
+                WindowDefinitionPtr newWinDef = createWindowDefinition(winDef->onKey, winDef->windowAggregation, winDef->windowType, DistributionCharacteristic::createCombiningWindowType());
+
+                LogicalOperatorNodePtr newWindowOp = createWindowComputationSpecializedOperatorNode(newWinDef);
                 newWindowOp->setInputSchema(winOp->getInputSchema());
                 newWindowOp->setOutputSchema(winOp->getOutputSchema());
                 newWindowOp->setId(UtilityFunctions::getNextOperatorId());
@@ -60,8 +63,8 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                     NES_DEBUG("DistributeWindowRule::apply: plan before insert child " << queryPlan->toString());
 //                    WindowDefinitionPtr windDef = winOp->getWindowDefinition();
 //                    windDef->setDistributionCharacteristic(DistributionCharacteristic::createSlicingWindowType());
-                    LogicalOperatorNodePtr sliceOp = createSliceCreationSpecializedOperatorNode(winOp->getWindowDefinition());
-
+                    WindowDefinitionPtr newWinDef2 = createWindowDefinition(winDef->onKey, winDef->windowAggregation, winDef->windowType, DistributionCharacteristic::createSlicingWindowType());
+                    LogicalOperatorNodePtr sliceOp = createSliceCreationSpecializedOperatorNode(newWinDef2);
 
                     sliceOp->setId(UtilityFunctions::getNextOperatorId());
                     child->insertBetweenThisAndParentNodes(sliceOp);

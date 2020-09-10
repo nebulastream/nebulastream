@@ -7,6 +7,7 @@
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <string>
 
 using namespace std;
@@ -14,6 +15,10 @@ namespace NES {
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() {
     return nodeStatsProvider;
+}
+
+uint64_t NodeEngine::getNodeId() {
+    return nodeId;
 }
 
 std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, size_t bufferSize, size_t numBuffers) {
@@ -39,6 +44,7 @@ std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint
         } else {
             NES_DEBUG("NodeEngine(): thread pool successfully started");
         }
+
         auto compiler = createDefaultQueryCompiler();
         if (!compiler) {
             NES_ERROR("NodeEngine: error while creating compiler");
@@ -66,9 +72,10 @@ NodeEngine::NodeEngine(
     QueryManagerPtr&& queryManager,
     std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
     Network::PartitionManagerPtr&& partitionManager,
-    QueryCompilerPtr&& queryCompiler)
-    : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>() {
-    NES_TRACE("NodeEngine()");
+    QueryCompilerPtr&& queryCompiler) : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>() {
+
+    nodeId = UtilityFunctions::getNextNodeEngineId();
+    NES_TRACE("NodeEngine() id=" << nodeId);
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
     this->queryCompiler = std::move(queryCompiler);
     this->queryManager = std::move(queryManager);
