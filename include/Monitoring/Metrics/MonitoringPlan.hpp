@@ -22,7 +22,6 @@ typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
 typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 typedef std::shared_ptr<MetricGroup> MetricGroupPtr;
 
-
 class MonitoringPlan {
   public:
     static MonitoringPlanPtr create(const std::vector<MetricValueType>& metrics);
@@ -70,7 +69,6 @@ class MonitoringPlan {
     std::string toString() const;
 
     friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
-
 
   public:
     static const std::string CPU_METRICS_DESC;
