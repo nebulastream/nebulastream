@@ -94,7 +94,7 @@ class GlobalQueryPlan {
      * @param queryId: the query id to which the logical operator belongs
      * @param operatorNode: the logical operator
      */
-    void addUpstreamLogicalOperatorsAsNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const QueryId queryId, const OperatorNodePtr& operatorNode);
+    void addNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const QueryId queryId, const OperatorNodePtr& operatorNode);
 
     /**
      * @brief Get all global query nodes containing given queryId
