@@ -278,16 +278,16 @@ TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
 
 TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    MonitoringPlan plan = MonitoringPlan(metrics);
+    auto plan = MonitoringPlan::create(metrics);
 
     //worker side
-    MetricGroupPtr metricGroup = plan.createMetricGroup(MetricCatalog::NesMetrics());
+    MetricGroupPtr metricGroup = plan->createMetricGroup(MetricCatalog::NesMetrics());
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto schema = Schema::create();
     metricGroup->getSample(schema, tupleBuffer);
 
     // coordinator side
-    GroupedValues parsedValues = plan.fromBuffer(schema, tupleBuffer);
+    GroupedValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
 
     ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().USER > 0);
     ASSERT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
@@ -328,7 +328,7 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
     // requesting the monitoring data
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    auto plan = MonitoringPlan(metrics);
+    auto plan = MonitoringPlan::create(metrics);
 
     auto schema = crd->requestMonitoringData("127.0.0.1", port + 10, plan, tupleBuffer);
     NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port+10));

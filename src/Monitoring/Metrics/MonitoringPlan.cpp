@@ -28,9 +28,17 @@ MonitoringPlan::MonitoringPlan(const std::vector<MetricValueType>& metrics)
     addMetrics(metrics);
 }
 
-MonitoringPlan::MonitoringPlan(const SerializableMonitoringPlan plan): cpuMetrics(plan.cpumetrics()), networkMetrics(plan.networkmetrics()),
+MonitoringPlan::MonitoringPlan(const SerializableMonitoringPlan& plan): cpuMetrics(plan.cpumetrics()), networkMetrics(plan.networkmetrics()),
                                                                         memoryMetrics(plan.memorymetrics()), diskMetrics(plan.diskmetrics()) {
     NES_DEBUG("MonitoringPlan: Initializing from shippable protobuf object.");
+}
+
+MonitoringPlanPtr MonitoringPlan::create(const std::vector<MetricValueType>& metrics) {
+    return std::make_shared<MonitoringPlan>(MonitoringPlan(metrics));
+}
+
+MonitoringPlanPtr MonitoringPlan::create(const SerializableMonitoringPlan& shippable) {
+    return std::make_shared<MonitoringPlan>(MonitoringPlan(shippable));
 }
 
 void MonitoringPlan::addMetric(MetricValueType metric) {
@@ -60,7 +68,7 @@ void MonitoringPlan::addMetrics(const std::vector<MetricValueType>& metrics) {
     }
 }
 
-std::shared_ptr<MetricGroup> MonitoringPlan::createMetricGroup(MetricCatalogPtr) const {
+MetricGroupPtr MonitoringPlan::createMetricGroup(MetricCatalogPtr) const {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     if (cpuMetrics) {
@@ -131,17 +139,21 @@ bool MonitoringPlan::hasMetric(MetricValueType metric) const {
 }
 
 SerializableMonitoringPlan MonitoringPlan::serialize() const {
-    SerializableMonitoringPlan splan;
-    splan.set_cpumetrics(cpuMetrics);
-    splan.set_diskmetrics(diskMetrics);
-    splan.set_memorymetrics(memoryMetrics);
-    splan.set_networkmetrics(networkMetrics);
-    return splan;
+    SerializableMonitoringPlan serPlan;
+    serPlan.set_cpumetrics(cpuMetrics);
+    serPlan.set_diskmetrics(diskMetrics);
+    serPlan.set_memorymetrics(memoryMetrics);
+    serPlan.set_networkmetrics(networkMetrics);
+    return serPlan;
+}
+
+std::string MonitoringPlan::toString() const {
+    return "MonitoringPlan: CPU(" + std::to_string(cpuMetrics) + "), disk(" + std::to_string(diskMetrics) + "), " +
+                "memory(" +  std::to_string(memoryMetrics) + "), network(" + std::to_string(networkMetrics) + ")";
 }
 
 std::ostream& operator<<(std::ostream &strm, const MonitoringPlan &plan) {
-    return strm << "MonitoringPlan: CPU(" << std::to_string(plan.cpuMetrics) << "), disk(" << std::to_string(plan.diskMetrics) + "), " <<
-        "memory(" <<  std::to_string(plan.memoryMetrics) << "), network(" << std::to_string(plan.networkMetrics) << ")";
+    return strm << plan.toString();
 }
 
 }// namespace NES

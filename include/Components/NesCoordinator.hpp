@@ -45,6 +45,7 @@ class QueryService;
 typedef std::shared_ptr<QueryService> QueryServicePtr;
 
 class MonitoringPlan;
+typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
@@ -114,7 +115,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      * @param the buffer where the data will be written into
      * @return true if successful, else false
      */
-    SchemaPtr requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, const MonitoringPlan& plan, TupleBuffer buf);
+    SchemaPtr requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan, TupleBuffer buf);
 
   private:
     /**

@@ -23,6 +23,9 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 class TupleBuffer;
 class MonitoringPlan;
 
+class MonitoringPlan;
+typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
+
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
@@ -84,7 +87,7 @@ class WorkerRPCClient {
      * @param the buffer where the data will be written into
      * @return true if successful, else false
      */
-    SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlan plan, TupleBuffer buf);
+    SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, TupleBuffer buf);
 
   private:
 };
