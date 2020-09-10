@@ -183,6 +183,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      */
     void onChannelError(Network::Messages::ErrorMessage) override;
 
+    uint64_t getNodeId();
   private:
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
@@ -195,6 +196,8 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
 
     bool isReleased;
     std::recursive_mutex engineMutex;
+
+    uint64_t nodeId;
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

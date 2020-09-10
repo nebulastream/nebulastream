@@ -473,11 +473,13 @@ bool CCodeGenerator::generateCodeForSlicingWindow(WindowDefinitionPtr window, Pi
 }
 
 bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
+    context->setWindow(window);
+
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
 
     auto code = context->code;
-    context->pipelineName = "combining";
+    context->pipelineName = "combiningWindowType";
     VariableDeclaration var_decl_id = VariableDeclaration::create(
         tf->createDataType(DataTypeFactory::createInt64()),
         context->pipelineName);
@@ -507,9 +509,10 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
     // Read key value from record
     //        int64_t key = windowTuples[recordIndex].key;
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
+
     if (window->isKeyed()) {
                 auto keyVariableAttributeDeclaration =
-                    context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
+                    context->code->structDeclaratonInputTuple.getVariableDeclaration("key");
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
                                                  .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                      VarRef(
@@ -546,7 +549,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
 
     // get current timestamp
     // TODO add support for event time
-    auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "end");
+    auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "start");
     if (window->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(VarRef(currentTimeVariableDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));

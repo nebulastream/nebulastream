@@ -40,6 +40,7 @@ void WindowHandler::trigger() {
 
         NES_DEBUG("WindowHandler: check widow trigger");
         auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
+
         // create the output tuple buffer
         // TODO can we make it get the buffer only once?
         auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -72,7 +73,7 @@ bool WindowHandler::start() {
     running = true;
     NES_DEBUG("WindowHandler " << this << ": Spawn thread");
     thread = std::make_shared<std::thread>([this]() {
-        setThreadName("whdlr");
+        setThreadName("whdlr-%d-%d", pipelineStageId, nextPipeline->getQepParentId());
         trigger();
     });
     return true;

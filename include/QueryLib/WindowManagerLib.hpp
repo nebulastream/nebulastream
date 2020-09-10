@@ -62,6 +62,7 @@ class WindowSliceStore {
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
             auto slice = sliceMetaData[i];
             if (slice.getStartTs() <= ts && slice.getEndTs() > ts) {
+                NES_DEBUG("getSliceIndexByTs for ts=" << ts << " return index=" << i);
                 return i;
             }
         }
@@ -140,6 +141,7 @@ class WindowManager {
     template<class PartialAggregateType>
     inline void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store) {
 
+        NES_DEBUG("sliceStream for ts=" << ts);
         // updates the maximal record ts
         store->updateMaxTs(ts);
 
@@ -151,15 +153,20 @@ class WindowManager {
             }
             // we create the first slice for all windows between 0 and record ts - allowedLateness.
             store->nextEdge = windowDefinition->windowType->calculateNextWindowEnd(ts - allowedLateness);
-            store->appendSlice(SliceMetaData(0, store->nextEdge));
+            store->appendSlice(SliceMetaData(ts, store->nextEdge));
+            NES_DEBUG("sliceStream empty store, set ts as LastWatermark, nextWindowEnd=" << store->nextEdge);
         }
 
+        NES_DEBUG("sliceStream check store-nextEdge=" << store->nextEdge << " <=" << " ts=" << ts);
         // append new slices if needed
         while (store->nextEdge <= ts) {
             auto currentSlice = store->getCurrentSliceIndex();
+            NES_DEBUG("sliceStream currentSlice=" << currentSlice);
             auto& sliceMetaData = store->getSliceMetadata();
             auto newStart = sliceMetaData[currentSlice].getEndTs();
+            NES_DEBUG("sliceStream newStart=" << sliceMetaData[currentSlice].getEndTs());
             auto nextEdge = windowDefinition->windowType->calculateNextWindowEnd(ts);
+            NES_DEBUG("sliceStream nextEdge=" << windowDefinition->windowType->calculateNextWindowEnd(ts));
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }

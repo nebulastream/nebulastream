@@ -115,7 +115,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     // TODO we should add a allowed lateness to support out of order events
     auto windowTimeType = windowDefinition->windowType->getTimeCharacteristic();
     auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMaxTs();
-    NES_DEBUG("WindowHandler::aggregateWindows: current watermak is=" << watermark);
+    NES_DEBUG("WindowHandler::aggregateWindows: current watermak is=" << watermark  << " lastTS=" << store->getMaxTs());
 
     // create result vector of windows
     auto windows = std::make_shared<std::vector<WindowState>>();
@@ -136,9 +136,12 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
 
     //trigger a central window operator
     if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
-        NES_DEBUG("WindowHandler: trigger Complete or combining window");
+        for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
+            NES_DEBUG("WindowHandler: trigger sliceid=" << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
+        }
         //generates a list of windows that have to be outputted
-        windowDefinition->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);
+        windowDefinition->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);//watermark
+        NES_DEBUG("WindowHandler: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows->size());
 
         // allocate partial final aggregates for each window
         //because we trigger each second, there could be multiple windows ready
@@ -147,7 +150,8 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
             for (uint64_t windowId = 0; windowId < windows->size(); windowId++) {
                 auto window = (*windows)[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_DEBUG("WindowHandler CC: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
+                NES_DEBUG("WindowHandler CC: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
+                                                                   << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
                     NES_DEBUG("WindowHandler CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
                     // TODO Because of this condition we currently only support SUM aggregations
@@ -163,6 +167,10 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }
                     }
+                }
+                else
+                {
+                    NES_DEBUG("WindowHandler CC: condition not true");
                 }
             }
         }
@@ -182,6 +190,8 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                                                            window.getEndTs(),
                                                            key,
                                                            value);
+
+            //TODO: we have to determine which windwos and keys to delete
             tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
         }
         //TODO: remove content from state

@@ -8,6 +8,8 @@
 #ifdef _POSIX_THREADS
 #define HAS_POSIX_THREAD
 #include <pthread.h>
+#include <Util/Logger.hpp>
+#include <string>
 #else
 #error "Unsupported architecture"
 #endif
@@ -21,6 +23,9 @@ void setThreadName(const char* threadNameFmt, ...) {
     vsprintf(buffer, threadNameFmt, args);
     auto sz = std::min<size_t>(15, std::strlen(buffer));
     std::strncpy(resized_buffer, buffer, sz);
+    std::string thName(resized_buffer);
+    MDC::put("threadName", thName);
+
     resized_buffer[sz] = 0;
 #ifdef HAS_POSIX_THREAD
     pthread_setname_np(pthread_self(), resized_buffer);
