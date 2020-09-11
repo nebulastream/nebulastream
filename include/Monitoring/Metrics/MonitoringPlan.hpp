@@ -31,7 +31,7 @@ class MonitoringPlan {
      * @brief Add a specific metric to the plan
      * @param metric
      */
-    void addMetric(MetricValueType metric);
+    bool addMetric(MetricValueType metric);
 
     /**
      * @brief Add an array of metrics to the plan

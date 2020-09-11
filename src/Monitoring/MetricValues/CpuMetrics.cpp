@@ -18,8 +18,8 @@ CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues
 }
 
 CpuMetrics::~CpuMetrics() {
-    cpuValues.clear();
     NES_DEBUG("CpuMetrics: Freeing memory for metrics.");
+    cpuValues.clear();
 }
 
 uint16_t CpuMetrics::getNumCores() const {
@@ -35,15 +35,18 @@ CpuValues CpuMetrics::getTotal() const {
 }
 
 CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
-    auto i = schema->getIndex(prefix + "CORE_NO");
+    //get index where the schema for CpuMetrics is starting
+    auto idx = schema->getIndex(prefix + "CORE_NO");
 
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->name, "CORE_NO")) {
+    if (idx < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[idx]->name, "CORE_NO")) {
+        //if schema contains cpuMetrics parse the wrapper object
         auto layout = createRowLayout(schema);
-        auto numCores = layout->getValueField<uint16_t>(0, i)->read(buf);
+        auto numCores = layout->getValueField<uint16_t>(0, idx)->read(buf);
         auto cpu = std::vector<CpuValues>(numCores);
         auto totalCpu = CpuValues::fromBuffer(schema, buf, prefix + "CPU[TOTAL]_");
 
         for (int n = 0; n < numCores; n++) {
+            //for each core parse the according CpuValues
             cpu[n] = CpuValues::fromBuffer(schema, buf, prefix + "CPU[" + std::to_string(n + 1) + "]_");
         }
         return CpuMetrics{totalCpu, numCores, std::move(cpu)};

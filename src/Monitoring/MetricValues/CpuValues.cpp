@@ -25,6 +25,7 @@ SchemaPtr CpuValues::getSchema(const std::string& prefix) {
 
 CpuValues CpuValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     CpuValues output{};
+    //get index where the schema for CpuValues is starting
     auto i = schema->getIndex(prefix + "USER");
 
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1
@@ -32,6 +33,7 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::s
         && UtilityFunctions::endsWith(schema->fields[i + 9]->name, "GUESTNICE")) {
         NES_DEBUG("CpuValues: Index found for " + prefix + "USER" + " at " + std::to_string(i));
         auto layout = createRowLayout(schema);
+        //set the values to the output object
         output.USER = layout->getValueField<uint64_t>(0, i)->read(buf);
         output.NICE = layout->getValueField<uint64_t>(0, i + 1)->read(buf);
         output.SYSTEM = layout->getValueField<uint64_t>(0, i + 2)->read(buf);

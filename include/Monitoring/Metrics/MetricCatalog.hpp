@@ -23,13 +23,13 @@ class MetricCatalog {
      * @param metric metric to register
      * @return true if successful, else false
      */
-    bool add(MetricValueType type, const Metric& metric);
+    bool add(MetricValueType type, const Metric&& metric);
 
   private:
     MetricCatalog(std::map<MetricValueType, Metric> metrics);
 
   private:
-    std::map<MetricValueType, Metric> metrics;
+    std::map<MetricValueType, Metric> metricValueTypeToMetricMap;
 };
 
 }// namespace NES

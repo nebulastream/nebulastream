@@ -26,8 +26,8 @@ std::vector<std::string> NetworkMetrics::getInterfaceNames() {
     std::vector<std::string> keys;
     keys.reserve(networkValues.size());
 
-    for (auto kv : networkValues) {
-        keys.push_back(kv.interfaceName);
+    for (const auto& netVal : networkValues) {
+        keys.push_back(netVal.interfaceName);
     }
 
     return keys;

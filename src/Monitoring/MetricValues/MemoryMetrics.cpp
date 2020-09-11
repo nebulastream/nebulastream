@@ -50,11 +50,13 @@ void serialize(const MemoryMetrics& metric, SchemaPtr schema, TupleBuffer& buf, 
 
 MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     MemoryMetrics output{};
+    //get index where the schema for MemoryMetrics is starting
     auto i = schema->getIndex(prefix + "TOTAL_RAM");
 
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1
         && UtilityFunctions::endsWith(schema->fields[i]->name, "TOTAL_RAM")
         && UtilityFunctions::endsWith(schema->fields[i + 12]->name, "LOADS_15MIN")) {
+        //if buffer contains memory metric information read the values from each buffer and assign them to the output wrapper object
         auto layout = createRowLayout(schema);
         output.TOTAL_RAM = layout->getValueField<uint64_t>(0, i)->read(buf);
         output.TOTAL_SWAP = layout->getValueField<uint64_t>(0, i + 1)->read(buf);

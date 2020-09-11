@@ -5,7 +5,7 @@
 
 namespace NES {
 
-MetricCatalog::MetricCatalog(std::map<MetricValueType, Metric> metrics) : metrics(std::move(metrics)) {
+MetricCatalog::MetricCatalog(std::map<MetricValueType, Metric> metrics) : metricValueTypeToMetricMap(std::move(metrics)) {
 }
 
 std::shared_ptr<MetricCatalog> MetricCatalog::create(std::map<MetricValueType, Metric> metrics) {
@@ -17,11 +17,11 @@ std::shared_ptr<MetricCatalog> MetricCatalog::NesMetrics() {
     return create(nesMetrics);
 }
 
-bool MetricCatalog::add(MetricValueType type, const Metric& metric) {
-    if (metrics.count(type) > 0) {
+bool MetricCatalog::add(MetricValueType type, const Metric&& metric) {
+    if (metricValueTypeToMetricMap.count(type) > 0) {
         return false;
     } else {
-        metrics.insert(std::pair<MetricValueType, Metric>(type, metric));
+        metricValueTypeToMetricMap.insert(std::pair<MetricValueType, Metric>(type, metric));
         return false;
     }
 }
