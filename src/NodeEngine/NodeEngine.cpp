@@ -9,6 +9,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
+#include <Nodes/Node.hpp>
 
 using namespace std;
 namespace NES {
@@ -38,7 +39,7 @@ std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint
             NES_ERROR("NodeEngine: error while creating queryManager");
             throw Exception("Error while creating queryManager");
         }
-        if (!queryManager->startThreadPool(0)) {
+        if (!queryManager->startThreadPool(UtilityFunctions::getNextNodeEngineId())) {
             NES_ERROR("NodeEngine: error while start thread pool");
             throw Exception("Error while start thread pool");
         } else {
@@ -74,7 +75,7 @@ NodeEngine::NodeEngine(
     Network::PartitionManagerPtr&& partitionManager,
     QueryCompilerPtr&& queryCompiler) : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>() {
 
-    nodeId = UtilityFunctions::getNextNodeEngineId();
+    nodeId = queryManager->getNodeId();
     NES_TRACE("NodeEngine() id=" << nodeId);
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
     this->queryCompiler = std::move(queryCompiler);
@@ -123,6 +124,12 @@ bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId query
         //auto translationPhase = TranslateToLegacyPlanPhase::create();
         auto translationPhase = TranslateToGeneratableOperatorPhase::create();
         auto generatableOperatorPlan = translationPhase->transform(queryOperators);
+        std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps = generatableOperatorPlan->getNodesByType<WindowLogicalOperatorNode>();
+
+        std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps = queryOperators->getNodesByType<SourceLogicalOperatorNode>();
+
+        NES_ASSERT(winOps.size() == 1, "is not implemented");
+        TimeCharacteristicPtr timeChar = winOps[0]->getWindowDefinition()->windowType->getTimeCharacteristic();
 
         // Compile legacy operators with qep builder.
         auto qepBuilder = GeneratedQueryExecutionPlanBuilder::create()
@@ -131,6 +138,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId query
                               .setCompiler(queryCompiler)
                               .setQueryId(queryId)
                               .setQuerySubPlanId(queryExecutionId)
+                              .setWinDef(winOps[0]->getWindowDefinition())
+                              .setSchema(leafOps[0]->getInputSchema())
                               .addOperatorQueryPlan(generatableOperatorPlan);
 
         // Translate all operator source to the physical sources and add them to the query plan

@@ -74,6 +74,7 @@ class WindowSliceStore {
      * @param slice
      */
     inline void appendSlice(SliceMetaData slice) {
+        NES_DEBUG("appendSlice " << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
         sliceMetaData.push_back(slice);
         partialAggregates.push_back(defaultValue);
     }
@@ -148,9 +149,10 @@ class WindowManager {
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
-            if (windowDefinition->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
-                store->setLastWatermark(ts - allowedLateness);
-            }
+            store->setLastWatermark(ts - allowedLateness);
+//            if (windowDefinition->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+//                store->setLastWatermark(ts - allowedLateness);
+//            }
             // we create the first slice for all windows between 0 and record ts - allowedLateness.
             store->nextEdge = windowDefinition->windowType->calculateNextWindowEnd(ts - allowedLateness);
             store->appendSlice(SliceMetaData(ts, store->nextEdge));

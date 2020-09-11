@@ -125,6 +125,8 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      */
     QueryStatisticsPtr getQueryStatistics(QuerySubPlanId qepId);
 
+    size_t getNodeId() const;
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;
@@ -156,6 +158,9 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     std::mutex workMutex;
 
     std::condition_variable cv;
+
+    size_t nodeId;
+
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

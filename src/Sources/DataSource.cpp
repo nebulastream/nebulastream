@@ -22,6 +22,7 @@ DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, 
     NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source with schema");
     NES_ASSERT(this->bufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
+
     watermark = std::make_shared<ProcessingTimeWatermarkGenerator>();
 }
 
@@ -146,11 +147,12 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                         NES_DEBUG("DataSource::runningRoutine sending regular buffer");
                         recNow = true;
                     } else {//produce watermark only buffer
-                        NES_DEBUG("DataSource::runningRoutine sending watermark-only buffer");
-                        auto buffer = bufferManager->getBufferBlocking();
-                        buffer.setWatermark(watermark->getWatermark());
-                        buffer.setNumberOfTuples(0);
-                        queryManager->addWork(this->sourceId, buffer);
+                        //TODO: enable again
+//                        NES_DEBUG("DataSource::runningRoutine sending watermark-only buffer");
+//                        auto buffer = bufferManager->getBufferBlocking();
+//                        buffer.setWatermark(watermark->getWatermark());
+//                        buffer.setNumberOfTuples(0);
+//                        queryManager->addWork(this->sourceId, buffer);
                     }
                 }
             }

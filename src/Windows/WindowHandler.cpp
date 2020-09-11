@@ -34,6 +34,15 @@ bool WindowHandler::setup(PipelineStagePtr nextPipeline, uint32_t pipelineStageI
     return true;
 }
 
+void WindowHandler::updateAllTs(uint64_t ts) {
+    NES_DEBUG("WindowHandler: updateAllTs with ts=" << ts);
+    auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
+    for (auto& it : windowStateVariable->rangeAll()) {
+        NES_DEBUG("WindowHandler: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs() << " nextEdge=" << it.second->nextEdge);
+        it.second->updateMaxTs(ts);
+    }
+}
+
 void WindowHandler::trigger() {
     while (running) {
         sleep(1);
@@ -46,6 +55,8 @@ void WindowHandler::trigger() {
         auto tupleBuffer = bufferManager->getBufferBlocking();
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
+            NES_DEBUG("WindowHandler: check key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs() << " nextEdge=" << it.second->nextEdge);
+
             // write all window aggregates to the tuple buffer
             this->aggregateWindows<int64_t, int64_t, int64_t>(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
             // TODO we currently have no handling in the case the tuple buffer is full
