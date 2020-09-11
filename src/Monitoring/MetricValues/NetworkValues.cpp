@@ -73,6 +73,7 @@ void serialize(const NetworkValues& metric, SchemaPtr schema, TupleBuffer& buf, 
     schema->copyFields(NetworkValues::getSchema(prefix));
 
     auto layout = createRowLayout(schema);
+    //get buffer location to write to from the layout and write the specific value to it
     layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rBytes);
     layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rPackets);
     layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rErrs);

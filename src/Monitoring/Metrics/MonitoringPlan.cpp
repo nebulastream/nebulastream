@@ -41,24 +41,27 @@ MonitoringPlanPtr MonitoringPlan::create(const SerializableMonitoringPlan& shipp
     return std::make_shared<MonitoringPlan>(MonitoringPlan(shippable));
 }
 
-void MonitoringPlan::addMetric(MetricValueType metric) {
+bool MonitoringPlan::addMetric(MetricValueType metric) {
     switch (metric) {
         case CpuMetric: {
             cpuMetrics = true;
-            break;
+            return true;
         };
         case DiskMetric: {
             diskMetrics = true;
-            break;
+            return true;
         };
         case MemoryMetric: {
             memoryMetrics = true;
-            break;
+            return true;
         };
         case NetworkMetric: {
             networkMetrics = true;
-            break;
+            return true;
         };
+        default: {
+            return false;
+        }
     }
 }
 
