@@ -1,7 +1,9 @@
 FROM nebulastream/nes-build-image:latest
 
 ADD ./resources/*.deb *.deb
-RUN dpkg -i *.deb
+RUN dpkg -i *.deb && \
+    apt install iproute2 ifupdown net-tools -y -qq && \
+    apt autoclean -y -qq
 ADD ./resources/exdra.csv /opt/local/nebula-stream/exdra.csv
 ADD ./entrypoint-nes-executable.sh /entrypoint.sh
 
