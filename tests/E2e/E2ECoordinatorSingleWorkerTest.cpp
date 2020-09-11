@@ -440,16 +440,47 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
+    size_t coordinatorPid = coordinatorProc.id();
 
-    string path2 = "./nesWorker --coordinatorPort=12267";
+    std::stringstream schema;
+    schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
+    schema << endl;
+    NES_INFO("schema submit=" << schema.str());
+    string schemabody = schema.str();
+
+    web::json::value json_returnSchema;
+
+    web::http::client::http_client clientSchema(
+        "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
+    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
+        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("set return");
+              json_returnSchema = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_ERROR("error while setting return");
+              NES_ERROR("error " << e.what());
+          }
+        })
+        .wait();
+
+    NES_INFO("try to acc return");
+    bool success = json_returnSchema.at("Success").as_bool();
+    NES_INFO("RegisteredStream: " << success);
+    EXPECT_TRUE(success);
+
+    string path2 = "./nesWorker --coordinatorPort=12267 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
+    sleep(1);
 
     std::stringstream ss;
     ss << "{\"pattern\" : ";
-    ss << "\"Pattern::from(\\\"default_logical\\\").filter(Attribute(\\\"value\\\") < 42).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Pattern::from(\\\"QnV\\\").filter(Attribute(\\\"velocity\\\") > 100).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
@@ -490,23 +521,17 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     std::string content((std::istreambuf_iterator<char>(outFile)),
                         (std::istreambuf_iterator<char>()));
     NES_INFO("content=" << content);
-    std::string expected = "+----------------------------------------------------+\n"
-                           "|id:UINT32|value:UINT64|PatternId:INT32|\n"
-                           "+----------------------------------------------------+\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|R2000073|1543624020000|102.629631|8|1|\n"
+        "|R2000070|1543625280000|108.166664|5|1|\n"
+        "+----------------------------------------------------+";
 
-    NES_INFO("expected=" << expected);
-    EXPECT_EQ(expected, content);
+    NES_INFO("content=" << content);
+    NES_INFO("expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
