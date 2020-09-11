@@ -321,42 +321,77 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     NES_INFO(" start coordinator");
-    std::string pathQuery1 = "query1.out";
-    std::string pathQuery2 = "query2.out";
+    std::string pathPattern1 = "patternQnV1.out";
+    std::string pathPattern2 = "patternQnV2.out";
+    remove(pathPattern1.c_str());
+    remove(pathPattern2.c_str());
 
-    remove(pathQuery1.c_str());
-    remove(pathQuery2.c_str());
-
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12346";
-    bp::child coordinatorProc(cmdCoord.c_str());
+    string path = "./nesCoordinator --coordinatorPort=12346";
+    bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
-
-    string cmdWrk = "./nesWorker --coordinatorPort=12346";
-    bp::child workerProc(cmdWrk.c_str());
-    NES_INFO("started worker with pid = " << workerProc.id());
-
     size_t coordinatorPid = coordinatorProc.id();
+
+    std::stringstream schema;
+    schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
+    schema << endl;
+    NES_INFO("schema submit=" << schema.str());
+    string schemabody = schema.str();
+
+    web::json::value json_returnSchema;
+
+    web::http::client::http_client clientSchema(
+        "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
+    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
+        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("set return");
+              json_returnSchema = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_ERROR("error while setting return");
+              NES_ERROR("error " << e.what());
+          }
+        })
+        .wait();
+
+    NES_INFO("try to acc return");
+    bool success = json_returnSchema.at("Success").as_bool();
+    NES_INFO("RegisteredStream: " << success);
+    EXPECT_TRUE(success);
+
+    string path2 = "./nesWorker --coordinatorPort=12267 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
+    bp::child workerProc(path2.c_str());
+    NES_INFO("started worker with pid = " << workerProc.id());
     size_t workerPid = workerProc.id();
     sleep(3);
 
-    std::stringstream ssQuery1;
-    ssQuery1
-        << "{\"pattern\" : \"Pattern::from(\\\"default_logical\\\").filter(Attribute(\\\"value\\\") < 42).sink(FileSinkDescriptor::create(\\\"";
-    ssQuery1 << pathQuery1;
-    ssQuery1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
-    NES_INFO("string submit for query1=" << ssQuery1.str());
+    std::stringstream ssPattern1;
+    ssPattern1 << "{\"pattern\" : ";
+    ssPattern1 << "\"Pattern::from(\\\"QnV\\\").filter(Attribute(\\\"velocity\\\") > 100).sink(FileSinkDescriptor::create(\\\"";
+    ssPattern1 << pathPattern1;
+    ssPattern1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ssPattern1 << endl;
 
-    std::stringstream ssQuery2;
-    ssQuery2 << "{\"pattern\" : \"Pattern::from(\\\"default_logical\\\").filter(Attribute(\\\"value\\\") < 42).sink(FileSinkDescriptor::create(\\\"";
-    ssQuery2 << pathQuery2;
-    ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
-    NES_INFO("string submit for query2=" << ssQuery2.str());
+    NES_INFO("pattern1 string submit=" << ssPattern1.str());
+    string bodyPattern1 = ssPattern1.str();
+
+    std::stringstream ssPattern2;
+    ssPattern2 << "{\"pattern\" : ";
+    ssPattern2 << "\"Pattern::from(\\\"QnV\\\").filter(Attribute(\\\"quantity\\\") > 10).sink(FileSinkDescriptor::create(\\\"";
+    ssPattern2 << pathPattern2;
+    ssPattern2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ssPattern2 << endl;
+
+    NES_INFO("pattern2 string submit=" << ssPattern2.str());
+    string bodyPattern2 = ssPattern2.str();
 
     NES_INFO("send query 1:");
     web::json::value jsonReturnQ1;
     web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
-    clientQ1.request(web::http::methods::POST, "/pattern/execute-pattern", ssQuery1.str())
+    clientQ1.request(web::http::methods::POST, "/pattern/execute-pattern", ssPattern1.str())
         .then([](const web::http::http_response& response) {
           NES_INFO("get first then");
           return response.extract_json();
@@ -377,7 +412,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     NES_INFO("send query 2:");
     web::json::value jsonReturnQ2;
     web::http::client::http_client clientQ2("http://127.0.0.1:8081/v1/nes/query/execute-query");
-    clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then([](const web::http::http_response& response) {
+    clientQ2.request(web::http::methods::POST, "/", ssPattern2.str()).then([](const web::http::http_response& response) {
           NES_INFO("get first then");
           return response.extract_json();
         })
@@ -404,36 +439,43 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
 
-    std::string expectedContent = "+----------------------------------------------------+\n"
-                           "|id:UINT32|value:UINT64|PatternId:INT32|\n"
-                           "+----------------------------------------------------+\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "|1|1|1|\n"
-                           "+----------------------------------------------------+";
+    string expectedContent1 =
+        "+----------------------------------------------------+\n"
+        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|R2000073|1543624020000|102.629631|8|1|\n"
+        "|R2000070|1543625280000|108.166664|5|1|\n"
+        "+----------------------------------------------------+";
 
-    std::ifstream ifsQ1(pathQuery1.c_str());
+    string expectedContent2 =
+        "+----------------------------------------------------+\n"
+        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|R2000073|1543622760000|63.277779|11|1|\n"
+        "|R2000073|1543622940000|66.222221|12|1|\n"
+        "|R2000073|1543623000000|74.666664|11|1|\n"
+        "|R2000073|1543623480000|62.444443|13|1|\n"
+        "|R2000073|1543624200000|64.611115|12|1|\n"
+        "|R2000073|1543624260000|68.407410|11|1|\n"
+        "|R2000073|1543625040000|56.666668|11|1|\n"
+        "|R2000073|1543625400000|62.333332|11|1|\n"
+        "+----------------------------------------------------+";
+
+    std::ifstream ifsQ1(pathPattern1.c_str());
     EXPECT_TRUE(ifsQ1.good());
     std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
                           (std::istreambuf_iterator<char>()));
     NES_INFO("content Q1=" << contentQ1);
-    NES_INFO("expContent=" << expectedContent);
-    EXPECT_EQ(contentQ1, expectedContent);
+    NES_INFO("expContent=" << expectedContent1);
+    EXPECT_EQ(contentQ1, expectedContent1);
 
-    std::ifstream ifsQ2(pathQuery2.c_str());
+    std::ifstream ifsQ2(pathPattern2.c_str());
     EXPECT_TRUE(ifsQ2.good());
     std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)),
                           (std::istreambuf_iterator<char>()));
     NES_INFO("content Q2=" << contentQ2);
-    NES_INFO("expContent=" << expectedContent);
-    EXPECT_EQ(contentQ2, expectedContent);
+    NES_INFO("expContent=" << expectedContent2);
+    EXPECT_EQ(contentQ2, expectedContent2);
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
