@@ -47,7 +47,15 @@ void WindowHandler::trigger() {
     while (running) {
         sleep(1);
 
-        NES_DEBUG("WindowHandler: check widow trigger");
+        std::string triggerType;
+        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
+            triggerType = "Combining";
+        }
+        else
+        {
+            triggerType = "Slicing";
+        }
+            NES_DEBUG("WindowHandler: check widow trigger " << triggerType);
         auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
 
         // create the output tuple buffer
@@ -55,7 +63,7 @@ void WindowHandler::trigger() {
         auto tupleBuffer = bufferManager->getBufferBlocking();
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
-            NES_DEBUG("WindowHandler: check key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs() << " nextEdge=" << it.second->nextEdge);
+            NES_DEBUG("WindowHandler: " << triggerType <<" check key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs() << " nextEdge=" << it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
             this->aggregateWindows<int64_t, int64_t, int64_t>(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
@@ -63,7 +71,7 @@ void WindowHandler::trigger() {
         }
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
         if (tupleBuffer.getNumberOfTuples() > 0) {
-            NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
+            NES_DEBUG("WindowHandler: " << triggerType << " Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
                                                                     << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowTupleSchema) << std::endl);
             queryManager->addWorkForNextPipeline(
                 tupleBuffer,
