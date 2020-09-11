@@ -466,6 +466,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     conf.sourceType = "CSVSource";
     conf.sourceConfig = "../tests/test_data/window.csv";
     conf.numberOfBuffersToProduce = 1;
+    conf.numberOfTuplesToProducePerBuffer = 1;
     conf.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf);
 

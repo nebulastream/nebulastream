@@ -55,6 +55,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
                 CsvSourceDescriptor::create(csvSourcePtr->getSchema(),
                                             csvSourcePtr->getFilePath(),
                                             csvSourcePtr->getDelimiter(),
+                                            csvSourcePtr->getNumberOfTuplesToProducePerBuffer(),
                                             csvSourcePtr->getNumBuffersToProcess(),
                                             csvSourcePtr->getGatheringInterval());
             return csvSourceDescriptor;

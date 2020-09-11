@@ -44,6 +44,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
         const CsvSourceDescriptorPtr csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         return createCSVFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
                                    csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
+                                   csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
                                    csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency());
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {

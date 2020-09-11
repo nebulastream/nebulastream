@@ -50,6 +50,7 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*,
                                                              request->sourcetype(),
                                                              request->sourceconf(),
                                                              request->sourcefrequency(),
+                                                             request->numberoftuplestoproduceperbuffer(),
                                                              request->numberofbufferstoproduce(),
                                                              request->physicalstreamname(),
                                                              request->logicalstreamname());

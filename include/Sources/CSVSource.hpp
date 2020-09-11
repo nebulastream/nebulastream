@@ -20,8 +20,8 @@ class CSVSource : public DataSource {
    * @param delimiter inside the file, default ","
    * @param number of buffers to create
    */
-    explicit CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& file_path,
-                       const std::string& delimiter, size_t numBuffersToProcess, size_t frequency);
+    explicit CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
+                       const std::string delimiter, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency);
 
     /**
      * @brief override the receiveData method for the csv source
@@ -57,9 +57,15 @@ class CSVSource : public DataSource {
      */
     const std::string getDelimiter() const;
 
+    /**
+     * @brief Get number of tuples per buffer
+     */
+    const size_t getNumberOfTuplesToProducePerBuffer() const;
+
   private:
     std::string filePath;
     size_t tupleSize;
+    size_t numberOfTuplesToProducePerBuffer;
     std::string delimiter;
     size_t currentPosInFile;
 };

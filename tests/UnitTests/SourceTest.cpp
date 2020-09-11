@@ -159,7 +159,7 @@ TEST_F(SourceTest, testCSVSource) {
     size_t num_of_buffers = 10;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
                                                      frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
@@ -206,7 +206,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
     size_t num_of_buffers = 10;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
                                                      frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
@@ -255,7 +255,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     size_t num_of_buffers = 2;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
                                                      frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
@@ -337,7 +337,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     size_t num_of_buffers = 2;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
                                                      frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
@@ -387,7 +387,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     size_t num_of_buffers = 2;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
                                                      frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {

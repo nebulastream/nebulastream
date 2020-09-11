@@ -15,12 +15,14 @@ class CsvSourceDescriptor : public SourceDescriptor {
                                       std::string filePath,
                                       std::string delimiter,
                                       size_t numBuffersToProcess,
+                                      size_t numberOfTuplesToProducePerBuffer,
                                       size_t frequency);
 
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string streamName,
                                       std::string filePath,
                                       std::string delimiter,
+                                      size_t numberOfTuplesToProducePerBuffer,
                                       size_t numBuffersToProcess,
                                       size_t frequency);
 
@@ -40,6 +42,11 @@ class CsvSourceDescriptor : public SourceDescriptor {
     size_t getNumBuffersToProcess() const;
 
     /**
+    * @brief Get number of number of tuples within the buffer
+    */
+    size_t getNumberOfTuplesToProducePerBuffer() const;
+
+    /**
      * @brief get the frequency of reading the csv file
      */
     size_t getFrequency() const;
@@ -50,17 +57,20 @@ class CsvSourceDescriptor : public SourceDescriptor {
     explicit CsvSourceDescriptor(SchemaPtr schema,
                                  std::string filePath,
                                  std::string delimiter,
+                                 size_t numberOfTuplesToProducePerBuffer,
                                  size_t numBuffersToProcess,
                                  size_t frequency);
     explicit CsvSourceDescriptor(SchemaPtr schema,
                                  std::string streamName,
                                  std::string filePath,
                                  std::string delimiter,
+                                 size_t numberOfTuplesToProducePerBuffer,
                                  size_t numBuffersToProcess,
                                  size_t frequency);
     std::string filePath;
     std::string delimiter;
     size_t numBuffersToProcess;
+    size_t numberOfTuplesToProducePerBuffer;
     size_t frequency;
 };
 

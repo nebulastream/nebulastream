@@ -31,6 +31,7 @@ bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfig conf) {
     request.set_sourcetype(conf.sourceType);
     request.set_sourceconf(conf.sourceConfig);
     request.set_sourcefrequency(conf.sourceFrequency);
+    request.set_numberoftuplestoproduceperbuffer(conf.numberOfTuplesToProducePerBuffer);
     request.set_numberofbufferstoproduce(conf.numberOfBuffersToProduce);
     request.set_physicalstreamname(conf.physicalStreamName);
     request.set_logicalstreamname(conf.logicalStreamName);

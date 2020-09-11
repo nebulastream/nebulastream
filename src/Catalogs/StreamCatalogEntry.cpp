@@ -35,6 +35,9 @@ size_t StreamCatalogEntry::getNumberOfBuffersToProduce() {
     return streamConf.numberOfBuffersToProduce;
 }
 
+size_t StreamCatalogEntry::getNumberOfTuplesToProducePerBuffer() {
+    return streamConf.numberOfTuplesToProducePerBuffer;
+}
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
     ss << "physicalName=" << streamConf.physicalStreamName
