@@ -75,17 +75,17 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
     web::http::client::http_client client(
         "http://127.0.0.1:8081/v1/nes/query/execute-query");
     client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-                                                                      NES_INFO("get first then");
-                                                                      return response.extract_json();
-                                                                  })
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
         .then([&json_return](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                json_return = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_INFO("error while setting return");
-                NES_INFO("error " << e.what());
-            }
+          try {
+              NES_INFO("set return");
+              json_return = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_INFO("error while setting return");
+              NES_INFO("error " << e.what());
+          }
         })
         .wait();
 
@@ -147,36 +147,67 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
 
 TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorker) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath =
-        "ValidSimplePatternWithFileOutputTwoWorkerTestResult.txt";
+    std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
-    bp::child coordinatorProc(cmdCoord.c_str());
-
+    string path = "./nesCoordinator --coordinatorPort=12346";
+    bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
-    sleep(2);
-
-    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352";
-    bp::child workerProc1(cmdWrk1.c_str());
-    NES_INFO("started worker 1 with pid = " << workerProc1.id());
-
-    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354";
-    bp::child workerProc2(cmdWrk2.c_str());
-    NES_INFO("started worker 2 with pid = " << workerProc2.id());
-
+    sleep(1);
     size_t coordinatorPid = coordinatorProc.id();
+
+    std::stringstream schema;
+    schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
+    schema << endl;
+    NES_INFO("schema submit=" << schema.str());
+    string schemabody = schema.str();
+
+    web::json::value json_returnSchema;
+
+    web::http::client::http_client clientSchema(
+        "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
+    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
+        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("set return");
+              json_returnSchema = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_ERROR("error while setting return");
+              NES_ERROR("error " << e.what());
+          }
+        })
+        .wait();
+
+    NES_INFO("try to acc return");
+    bool success = json_returnSchema.at("Success").as_bool();
+    NES_INFO("RegisteredStream: " << success);
+    EXPECT_TRUE(success);
+
+    string path2 = "./nesWorker --coordinatorPort=12346 --rpcPort=12351 --dataPort=12352 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
+    bp::child workerProc1(path2.c_str());
+    NES_INFO("started worker 1 with pid = " << workerProc1.id());
     size_t workerPid1 = workerProc1.id();
+    sleep(1);
+
+    string path3 = "./nesWorker --coordinatorPort=12346 --rpcPort=12353 --dataPort=12354 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
+    bp::child workerProc2(path3.c_str());
+    NES_INFO("started worker 2 with pid = " << workerProc2.id());
     size_t workerPid2 = workerProc2.id();
+    sleep(1);
 
     std::stringstream ss;
     ss << "{\"pattern\" : ";
-    ss << "\"Pattern::from(\\\"default_logical\\\").filter(Attribute(\\\"value\\\") < 42).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Pattern::from(\\\"QnV\\\").filter(Attribute(\\\"velocity\\\") > 100).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
-    NES_INFO("string submit=" << ss.str());
+
+    NES_INFO("query string submit=" << ss.str());
     string body = ss.str();
+
 
     web::json::value json_return;
 
@@ -212,32 +243,17 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|PatternId:INT32|\n"
+        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
+        "|R2000073|1543624020000|102.629631|8|1|\n"
+        "|R2000070|1543625280000|108.166664|5|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|PatternId:INT32|\n"
+        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
-        "|1|1|1|\n"
+        "|R2000073|1543624020000|102.629631|8|1|\n"
+        "|R2000070|1543625280000|108.166664|5|1|\n"
         "+----------------------------------------------------+";
+
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
