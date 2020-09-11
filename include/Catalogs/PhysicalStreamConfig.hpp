@@ -19,7 +19,7 @@ struct PhysicalStreamConfig {
     PhysicalStreamConfig();
 
     PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
-                         size_t sourceFrequency, size_t numberOfBuffersToProduce,
+                         size_t sourceFrequency, size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
                          std::string physicalStreamName,
                          std::string logicalStreamName);
 
@@ -28,6 +28,7 @@ struct PhysicalStreamConfig {
     std::string sourceType;
     std::string sourceConfig;
     size_t sourceFrequency;
+    size_t numberOfTuplesToProducePerBuffer;
     size_t numberOfBuffersToProduce;
     std::string physicalStreamName;
     std::string logicalStreamName;

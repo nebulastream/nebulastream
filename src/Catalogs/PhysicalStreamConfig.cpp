@@ -15,12 +15,14 @@ PhysicalStreamConfig::PhysicalStreamConfig() {
 PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
                                            std::string sourceConfig,
                                            size_t sourceFrequency,
+                                           size_t numberOfTuplesToProducePerBuffer,
                                            size_t numberOfBuffersToProduce,
                                            std::string physicalStreamName,
                                            std::string logicalStreamName)
     : sourceType(sourceType),
       sourceConfig(sourceConfig),
       sourceFrequency(sourceFrequency),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
       numberOfBuffersToProduce(numberOfBuffersToProduce),
       physicalStreamName(physicalStreamName),
       logicalStreamName(logicalStreamName){};
@@ -28,7 +30,8 @@ PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
 std::string PhysicalStreamConfig::toString() {
     std::stringstream ss;
     ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig
-       << " sourceFrequency=" << sourceFrequency << " numberOfBuffersToProduce="
+       << " sourceFrequency=" << sourceFrequency << " numberOfTuplesToProducePerBuffer="
+       << numberOfTuplesToProducePerBuffer << " numberOfBuffersToProduce="
        << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
        << " logicalStreamName=" << logicalStreamName;
     return ss.str();

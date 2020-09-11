@@ -27,7 +27,6 @@
 #include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 
-
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
@@ -369,6 +368,7 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
         csvSerializedSourceDescriptor.set_filepath(csvSourceDescriptor->getFilePath());
         csvSerializedSourceDescriptor.set_frequency(csvSourceDescriptor->getFrequency());
         csvSerializedSourceDescriptor.set_delimiter(csvSourceDescriptor->getDelimiter());
+        csvSerializedSourceDescriptor.set_numberoftuplestoproduceperbuffer(csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer());
         csvSerializedSourceDescriptor.set_numbufferstoprocess(csvSourceDescriptor->getNumBuffersToProcess());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(csvSourceDescriptor->getSchema(), csvSerializedSourceDescriptor.mutable_sourceschema());
@@ -443,7 +443,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&csvSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.release_sourceschema());
-        return CsvSourceDescriptor::create(schema, csvSerializedSourceDescriptor.filepath(), csvSerializedSourceDescriptor.delimiter(), csvSerializedSourceDescriptor.numbufferstoprocess(), csvSerializedSourceDescriptor.frequency());
+        return CsvSourceDescriptor::create(schema, csvSerializedSourceDescriptor.filepath(), csvSerializedSourceDescriptor.delimiter(), csvSerializedSourceDescriptor.numberoftuplestoproduceperbuffer(), csvSerializedSourceDescriptor.numbufferstoprocess(), csvSerializedSourceDescriptor.frequency());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
         // de-serialize sense source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as SenseSourceDescriptor");

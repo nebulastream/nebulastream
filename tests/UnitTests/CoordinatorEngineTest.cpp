@@ -122,6 +122,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
                                                                                    conf.sourceType,
                                                                                    conf.sourceConfig,
                                                                                    conf.sourceFrequency,
+                                                                                   conf.numberOfTuplesToProducePerBuffer,
                                                                                    conf.numberOfBuffersToProduce,
                                                                                    conf.physicalStreamName,
                                                                                    conf.logicalStreamName);
@@ -132,6 +133,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
                                                                                            conf.sourceType,
                                                                                            conf.sourceConfig,
                                                                                            conf.sourceFrequency,
+                                                                                           conf.numberOfTuplesToProducePerBuffer,
                                                                                            conf.numberOfBuffersToProduce,
                                                                                            conf.physicalStreamName,
                                                                                            conf.logicalStreamName);

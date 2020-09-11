@@ -53,9 +53,10 @@ message RegisterPhysicalStreamRequest {
   string sourceType = 2;
   string sourceConf = 3;
   int64 sourceFrequency = 4;
-  int64 numberOfBuffersToProduce = 5;
-  string physicalStreamName = 6;
-  string logicalStreamName = 7;
+  uint64 numberOfTuplesToProducePerBuffer = 5;
+  int64 numberOfBuffersToProduce = 6;
+  string physicalStreamName = 7;
+  string logicalStreamName = 8;
 }
 
 message RegisterPhysicalStreamReply {

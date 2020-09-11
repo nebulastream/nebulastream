@@ -58,10 +58,11 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                         const std::string& pathToFile,
                                         const std::string& delimiter,
+                                        size_t numberOfTuplesToProducePerBuffer,
                                         size_t numbersOfBufferToProduce,
                                         size_t frequency) {
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
-                                       numbersOfBufferToProduce, frequency);
+                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency);
 }
 
 const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,

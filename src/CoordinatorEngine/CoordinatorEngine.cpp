@@ -132,13 +132,13 @@ bool CoordinatorEngine::unregisterNode(size_t nodeId) {
     return successCatalog && successTopology;
 }
 
-bool CoordinatorEngine::registerPhysicalStream(size_t nodeId, std::string sourcetype, std::string sourceconf, size_t sourcefrequency,
-                                               size_t numberofbufferstoproduce, std::string physicalstreamname, std::string logicalstreamname) {
-    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id " << nodeId << " physical stream=" << physicalstreamname
-                                                                                             << " logical stream=" << logicalstreamname);
+bool CoordinatorEngine::registerPhysicalStream(size_t nodeId, std::string sourceType, std::string sourceConf, size_t sourceFrequency,
+                                               size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce, std::string physicalStreamname, std::string logicalStreamname) {
+    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id " << nodeId << " physical stream=" << physicalStreamname
+                                                                                             << " logical stream=" << logicalStreamname);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
-    PhysicalStreamConfig streamConf(sourcetype, sourceconf, sourcefrequency, numberofbufferstoproduce, physicalstreamname,
-                                    logicalstreamname);
+    PhysicalStreamConfig streamConf(sourceType, sourceConf, sourceFrequency, numberOfTuplesToProducePerBuffer, numberOfBuffersToProduce, physicalStreamname,
+                                    logicalStreamname);
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream with conf= " << streamConf.toString()
                                                                                                        << " for workerId=" << nodeId);
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);

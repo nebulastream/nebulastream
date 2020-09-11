@@ -25,18 +25,52 @@ class StreamCatalogEntry {
   public:
     StreamCatalogEntry(PhysicalStreamConfig streamConf, TopologyNodePtr node);
 
+    /**
+     * @brief get source type
+     * @return type as string
+     */
     std::string getSourceType();
 
+    /**
+     * @brief get source config
+     * @return config as string
+     */
     std::string getSourceConfig();
 
+    /**
+     * @brief get topology pointer
+     * @return ptr to node
+     */
     TopologyNodePtr getNode();
 
+    /**
+     * @brief get physical stream name
+     * @return name as string
+     */
     std::string getPhysicalName();
 
+    /**
+     * @brief get logical stream name
+     * @return name as string
+     */
     std::string getLogicalName();
 
+    /**
+     * @brief get source fequence
+     * @return frequency as double
+     */
     double getSourceFrequency();
 
+    /**
+     * @brief get number of tuples per buffer
+     * @return tuple cnt
+     */
+    size_t getNumberOfTuplesToProducePerBuffer();
+
+    /**
+     * @brief get number of buffers to produce
+     * @return buffer cnt
+     */
     size_t getNumberOfBuffersToProduce();
 
     std::string toString();

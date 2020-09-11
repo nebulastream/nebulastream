@@ -47,9 +47,10 @@ message SerializableOperator{
     message SerializableCsvSourceDescriptor {
       string filePath = 1;
       string delimiter = 2;
-      uint64 numBuffersToProcess = 3;
-      uint64 frequency = 4;
-      SerializableSchema sourceSchema = 5;
+      uint64 numberOfTuplesToProducePerBuffer = 3;
+      uint64 numBuffersToProcess = 4;
+      uint64 frequency = 5;
+      SerializableSchema sourceSchema = 6;
     }
 
     message SerializableDefaultSourceDescriptor {

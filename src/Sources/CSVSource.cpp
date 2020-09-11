@@ -14,18 +14,21 @@
 #include <Util/UtilityFunctions.hpp>
 namespace NES {
 
-CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& _file_path,
-                     const std::string& delimiter, size_t numBuffersToProcess,
+CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
+                     const std::string delimiter, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess,
                      size_t frequency)
     : DataSource(schema, bufferManager, queryManager),
-      filePath(_file_path),
+      filePath(filePath),
       delimiter(delimiter),
-      currentPosInFile(0) {
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
+      currentPosInFile(0)
+
+{
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = frequency;
     tupleSize = schema->getSchemaSizeInBytes();
     NES_DEBUG(
-        "CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess);
+        "CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer);
 }
 
 std::optional<TupleBuffer> CSVSource::receiveData() {
@@ -58,7 +61,17 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     NES_DEBUG("CSVSource::fillBuffer: start at pos=" << currentPosInFile << " fileSize=" << file_size);
     input.seekg(currentPosInFile, input.beg);
 
-    uint64_t generated_tuples_this_pass = buf.getBufferSize() / tupleSize;
+    size_t generated_tuples_this_pass;
+    //fill buffer maximally
+    if(numberOfTuplesToProducePerBuffer == 0)
+    {
+        generated_tuples_this_pass = buf.getBufferSize() / tupleSize;
+    }
+    else
+    {
+        generated_tuples_this_pass = numberOfTuplesToProducePerBuffer;
+    }
+//    uint64_t generated_tuples_this_pass = buf.getBufferSize() / tupleSize;
 
     std::string line;
     uint64_t i = 0;
@@ -171,5 +184,9 @@ const std::string CSVSource::getFilePath() const {
 
 const std::string CSVSource::getDelimiter() const {
     return delimiter;
+}
+
+const size_t CSVSource::getNumberOfTuplesToProducePerBuffer() const {
+    return numberOfTuplesToProducePerBuffer;
 }
 }// namespace NES
