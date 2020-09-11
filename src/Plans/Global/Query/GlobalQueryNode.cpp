@@ -128,4 +128,8 @@ const std::string GlobalQueryNode::toString() const {
     return "Operators [" + operatorString.str() + "], Queries [" + queryString.str() + "]";
 }
 
+std::vector<OperatorNodePtr> GlobalQueryNode::getOperators() {
+    return logicalOperators;
+}
+
 }// namespace NES

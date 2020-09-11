@@ -98,6 +98,12 @@ class GlobalQueryNode : public Node {
         }
     }
 
+    /**
+     * @brief Get all registered operators
+     * @return the list of operators
+     */
+    std::vector<OperatorNodePtr> getOperators();
+
     const std::string toString() const override;
 
   private:

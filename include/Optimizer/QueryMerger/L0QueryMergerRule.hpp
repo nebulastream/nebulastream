@@ -63,9 +63,10 @@ class L0QueryMergerRule {
 
     /**
      * @brief apply L0QueryMerger rule on the globalQuery plan
+     * @param queryPlans: the input query plans to merge
      * @param globalQueryPlan: the global query plan
      */
-    void apply(GlobalQueryPlanPtr globalQueryPlan);
+    void apply(std::vector<QueryPlanPtr> queryPlans, GlobalQueryPlanPtr globalQueryPlan);
 
   private:
     explicit L0QueryMergerRule();
