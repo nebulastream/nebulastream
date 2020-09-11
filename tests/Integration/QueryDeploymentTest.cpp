@@ -439,12 +439,12 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker 1 started successfully");
-    //
-    //    NES_INFO("QueryDeploymentTest: Start worker 2");
-    //    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
-    //    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    //    EXPECT_TRUE(retStart2);
-    //    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 2");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -466,21 +466,42 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     conf.sourceType = "CSVSource";
     conf.sourceConfig = "../tests/test_data/window.csv";
     conf.numberOfBuffersToProduce = 3;
-    conf.numberOfTuplesToProducePerBuffer = 1;
-    conf.sourceFrequency = 2;
+    conf.numberOfTuplesToProducePerBuffer = 3;
+    conf.sourceFrequency = 3;
     wrk1->registerPhysicalStream(conf);
+    wrk2->registerPhysicalStream(conf);
 
     NES_INFO("QueryDeploymentTest: Submit query");
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"ts\")), "
-                   "Seconds(1)), Sum::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"query.out\"));";
+                   "Seconds(1)), Sum::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"testDeployOneWorkerDistributedWindowQueryEventTime.out\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     cout << "wait start" << endl;
-    sleep(10);
+    sleep(15);
     cout << "wakeup" << endl;
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
-    //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+//    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+
+    ifstream my_file("testDeployOneWorkerDistributedWindowQueryEventTime.out");
+    EXPECT_TRUE(my_file.good());
+
+    std::ifstream ifs("testDeployOneWorkerDistributedWindowQueryEventTime.out");
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1000|2000|1|17|\n"
+        "|2000|3000|1|0|\n"
+        "|2000|3000|2|28|\n"
+        "+----------------------------------------------------+";
+
+    NES_INFO("QueryDeploymentTest: content=" << content);
+    NES_INFO("QueryDeploymentTest: expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -490,9 +511,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    //    NES_INFO("QueryDeploymentTest: Stop worker 2");
-    //    bool retStopWrk2 = wrk2->stop(true);
-    //    EXPECT_TRUE(retStopWrk2);
+    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
