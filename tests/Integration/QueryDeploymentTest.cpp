@@ -465,9 +465,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     conf.physicalStreamName = "test_stream";
     conf.sourceType = "CSVSource";
     conf.sourceConfig = "../tests/test_data/window.csv";
-    conf.numberOfBuffersToProduce = 1;
+    conf.numberOfBuffersToProduce = 3;
     conf.numberOfTuplesToProducePerBuffer = 1;
-    conf.sourceFrequency = 1;
+    conf.sourceFrequency = 2;
     wrk1->registerPhysicalStream(conf);
 
     NES_INFO("QueryDeploymentTest: Submit query");

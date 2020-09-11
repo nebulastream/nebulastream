@@ -8,6 +8,8 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+
 
 namespace NES {
 
@@ -134,10 +136,17 @@ class GeneratedQueryExecutionPlanBuilder {
      */
     QuerySubPlanId getQuerySubPlanId() const;
 
+    /**
+     * @brief Get the window definition
+     * @return window definition
+     */
+    GeneratedQueryExecutionPlanBuilder& setWinDef(const WindowDefinitionPtr& winDef);
+
+    GeneratedQueryExecutionPlanBuilder& setSchema(const SchemaPtr& schema);
+
   private:
     GeneratedQueryExecutionPlanBuilder();
 
-  private:
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
     BufferManagerPtr bufferManager;
@@ -147,6 +156,8 @@ class GeneratedQueryExecutionPlanBuilder {
     std::vector<DataSinkPtr> sinks;
     std::vector<PipelineStagePtr> stages;
     std::vector<OperatorNodePtr> leaves;
+    WindowDefinitionPtr winDef;
+    SchemaPtr schema;
 };
-}// namespace NES
+}
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_

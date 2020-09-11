@@ -65,6 +65,12 @@ class WindowHandler {
     void trigger();
 
     /**
+     * @brief updates all maxTs in all stores
+     * @param ts
+     */
+    void updateAllTs(uint64_t ts);
+
+    /**
      * @brief This method iterates over all slices in the slice store and creates the final window aggregates,
      * which are written to the tuple buffer.
      * @param store
@@ -115,7 +121,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     // TODO we should add a allowed lateness to support out of order events
     auto windowTimeType = windowDefinition->windowType->getTimeCharacteristic();
     auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMaxTs();
-    NES_DEBUG("WindowHandler::aggregateWindows: current watermak is=" << watermark  << " lastTS=" << store->getMaxTs());
+    NES_DEBUG("WindowHandler::aggregateWindows: current watermark is=" << watermark  << " maxTs=" << store->getMaxTs());
 
     // create result vector of windows
     auto windows = std::make_shared<std::vector<WindowState>>();
@@ -202,8 +208,8 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
 
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             //test if latest tuple in window is after slice end
-            NES_DEBUG("WindowHandler SL: slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs() << " watermark=" << watermark << " sliceID=" << sliceId);
-            if (slices[sliceId].getEndTs() < watermark) {
+            NES_DEBUG("WindowHandler SL:  << slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs() <<"slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs() << " watermark=" << watermark << " sliceID=" << sliceId);
+            if (slices[sliceId].getEndTs() <= watermark) {
                 NES_DEBUG("WindowHandler SL: write result");
                 writeResultRecord<KeyType, FinalAggregateType>(tupleBuffer,
                                                                tupleBuffer.getNumberOfTuples(),

@@ -27,7 +27,57 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
     // only get the window manager and state if the pipeline has a window handler.
     auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;               // TODO Philipp, do we need this check?
     auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : WindowManagerPtr();// TODO Philipp, do we need this check?
-    return !executablePipeline->execute(inputBuffer, windowStage, windowManager, pipelineContext);
+
+    size_t maxWaterMark = 0;
+    if (hasWindowHandler()) {
+        if (winDef->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+            NES_DEBUG("Execute Pipeline Stage set processing time watermark from buffer=" << inputBuffer.getWatermark());
+            windowHandler->updateAllTs(inputBuffer.getWatermark());
+        } else {
+            auto distType = winDef->getDistributionType()->getType();
+            std::string tsFieldName = "";
+            if(distType == DistributionCharacteristic::Combining)
+            {
+                NES_DEBUG("PipelineStage: process combining window");
+                tsFieldName = "end";
+                if (!schema->has(tsFieldName)) {
+                    NES_ERROR("PipelineStage::execute: Window Operator: key field " << tsFieldName << " does not exist!");
+                    NES_FATAL_ERROR("PipelineStage type error");
+                }
+            }
+            else if(distType == DistributionCharacteristic::Slicing)
+            {
+                NES_DEBUG("PipelineStage: process slicing window");
+                tsFieldName = winDef->windowType->getTimeCharacteristic()->getField()->name;
+                if (!schema->has(tsFieldName)) {
+                    NES_ERROR("PipelineStage::execute: Window Operator: key field " << tsFieldName << " does not exist!");
+                    NES_FATAL_ERROR("PipelineStage type error");
+                }
+            }
+            else
+            {
+                NES_DEBUG("PipelineStage: process complete window");
+            }
+
+            auto layout = createRowLayout(std::make_shared<Schema>(schema));
+            auto fields = schema->fields;
+            size_t keyIndex = schema->getIndex(tsFieldName);
+
+            for (uint64_t recordIndex = 0; recordIndex < inputBuffer.getNumberOfTuples(); recordIndex++) {
+                auto val = layout->getValueField<uint64_t>(recordIndex, keyIndex)->read(inputBuffer);
+                maxWaterMark = std::max(maxWaterMark, val);
+            }
+        }
+    }
+
+    //
+    uint32_t ret = !executablePipeline->execute(inputBuffer, windowStage, windowManager, pipelineContext);
+    if(maxWaterMark != 0)
+    {
+        NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark);
+        windowHandler->updateAllTs(maxWaterMark);
+    }
+    return ret;
 }
 
 bool PipelineStage::setup() {
@@ -41,9 +91,7 @@ bool PipelineStage::start() {
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::start: windowhandler start");
         return windowHandler->start();
-    }
-    else
-    {
+    } else {
         NES_DEBUG("PipelineStage::start: NO windowhandler started");
     }
     return true;
@@ -53,9 +101,7 @@ bool PipelineStage::stop() {
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::stop: windowhandler stop");
         return windowHandler->stop();
-    }
-    else
-    {
+    } else {
         NES_DEBUG("PipelineStage::stop: NO windowhandler stopped");
     }
     return true;
@@ -86,5 +132,12 @@ PipelineStagePtr PipelineStage::create(
     const WindowHandlerPtr& windowHandler) {
 
     return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipeline, pipelineContext, nextPipelineStage, windowHandler);
+}
+
+void PipelineStage::setWinDef(const WindowDefinitionPtr& winDef) {
+    PipelineStage::winDef = winDef;
+}
+void PipelineStage::setSchema(const SchemaPtr& schema) {
+    PipelineStage::schema = schema;
 }
 }// namespace NES

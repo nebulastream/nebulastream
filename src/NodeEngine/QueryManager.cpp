@@ -18,10 +18,11 @@ QueryManager::~QueryManager() {
 }
 
 bool QueryManager::startThreadPool(uint64_t nodeEngineId) {
-    NES_DEBUG("startThreadPool: setup thread pool ");
+    NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     NES_ASSERT(threadPool == nullptr, "thread pool already running");
     threadPool = std::make_shared<ThreadPool>(nodeEngineId, shared_from_this());
+    nodeId = nodeEngineId;
     return threadPool->start();
 }
 
@@ -283,6 +284,9 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
     std::unique_lock lock(statisticsMutex);
     NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qepId);
     return queryToStatisticsMap.find(qepId);
+}
+size_t QueryManager::getNodeId() const {
+    return nodeId;
 }
 
 }// namespace NES
