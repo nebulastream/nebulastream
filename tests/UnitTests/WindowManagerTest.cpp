@@ -156,8 +156,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto aggregation = Sum::on(Attribute("id"));
 
     auto windowDef = std::make_shared<WindowDefinition>(
-        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType()));
-    windowDef->setDistributionCharacteristic(DistributionCharacteristic::createSlicingWindowType());
+        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType()));
 
     auto w = WindowHandler(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
@@ -171,7 +170,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
         MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&) {
-        }) {
+                                           }) {
             // nop
         }
     };
@@ -203,28 +202,18 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
     w.aggregateWindows<int64_t, int64_t>(10, store, windowDef, buf);
-    w.aggregateWindows<int64_t, int64_t>(11, store, windowDef, buf);
-
-    size_t tupleCnt = buf.getNumberOfTuples();
+    w.aggregateWindows<int64_t, int64_t>(11, store, windowDef, buf);//this call should not change anything
 
     ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 2);
 
     uint64_t* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
-    std::cout << "tuples[4]=" << tuples[4] << " tuples[5=" << tuples[5] << " tuples[6=" << tuples[6] << " tuples[7=" << tuples[7] << std::endl;
 
-    std::cout << "tuples[0]=" << tuples[0] << std::endl;
-    std::cout << "tuples[1]=" << tuples[1] << std::endl;
     ASSERT_EQ(tuples[0], 0);
     ASSERT_EQ(tuples[1], 10);
     ASSERT_EQ(tuples[2], 10);
     ASSERT_EQ(tuples[3], 1);
 
-    ASSERT_EQ(tuples[4], 0);
-    ASSERT_EQ(tuples[5], 10);
-    ASSERT_EQ(tuples[6], 11);
-    ASSERT_EQ(tuples[7], 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
@@ -233,8 +222,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto aggregation = Sum::on(Attribute("id"));
 
     auto windowDef = std::make_shared<WindowDefinition>(
-        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType()));
-    windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCombiningWindowType());
+        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType()));
 
     auto w = WindowHandler(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
@@ -248,7 +236,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
         MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&) {
-        }) {
+                                           }) {
             // nop
         }
     };

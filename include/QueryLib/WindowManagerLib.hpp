@@ -155,8 +155,8 @@ class WindowManager {
 //            }
             // we create the first slice for all windows between 0 and record ts - allowedLateness.
             store->nextEdge = windowDefinition->windowType->calculateNextWindowEnd(ts - allowedLateness);
-            store->appendSlice(SliceMetaData(ts, store->nextEdge));
-            NES_DEBUG("sliceStream empty store, set ts as LastWatermark, nextWindowEnd=" << store->nextEdge);
+            store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->windowType->getTime() , store->nextEdge));
+            NES_DEBUG("sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - windowDefinition->windowType->getTime() << " nextWindowEnd=" << store->nextEdge);
         }
 
         NES_DEBUG("sliceStream check store-nextEdge=" << store->nextEdge << " <=" << " ts=" << ts);

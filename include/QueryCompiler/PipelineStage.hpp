@@ -104,7 +104,6 @@ class PipelineStage {
   public:
     void setSchema(const SchemaPtr& schema);
 
-  private:
     bool hasWindowHandler();
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;

@@ -34,6 +34,7 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 
 using namespace std;
 namespace NES {
@@ -173,6 +174,9 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
 
     auto typeInferencePhase = TypeInferencePhase::create(std::make_shared<StreamCatalog>());
     auto queryPlan = typeInferencePhase->execute(QueryPlan::create(sinkOperator));
+    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    queryPlan = distributeWindowRule->apply(queryPlan);
+
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableSinkOperator = translatePhase->transform(queryPlan->getRootOperators()[0]);
     ASSERT_TRUE(generatableSinkOperator->instanceOf<GeneratableSinkOperator>());

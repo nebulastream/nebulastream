@@ -71,7 +71,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     {
         generated_tuples_this_pass = numberOfTuplesToProducePerBuffer;
     }
-//    uint64_t generated_tuples_this_pass = buf.getBufferSize() / tupleSize;
+    NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generated_tuples_this_pass);
 
     std::string line;
     uint64_t i = 0;
