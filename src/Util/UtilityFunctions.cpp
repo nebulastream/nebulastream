@@ -14,6 +14,8 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
@@ -411,6 +413,75 @@ std::string UtilityFunctions::getOperatorType(OperatorNodePtr operatorNode) {
     }
     NES_DEBUG("UtilityFunctions: operatorType = " << operatorType);
     return operatorType;
+}
+
+web::json::value UtilityFunctions::getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId) {
+    NES_INFO("UtilityFunctions: getting execution plan as JSON");
+
+    web::json::value executionPlanJson{};
+    std::vector<web::json::value> nodes = {};
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    if (executionNodes.empty()) {
+        NES_ERROR("UtilityFunctions: Unable to find ExecutionNodes for query " << queryId);
+        throw std::invalid_argument("Unable to find ExecutionNodes for query " + queryId);
+    }
+
+    for (ExecutionNodePtr executionNode: executionNodes) {
+        web::json::value currentExecutionNodeJsonValue{};
+
+        currentExecutionNodeJsonValue["executionNodeId"] = web::json::value::number(executionNode->getId());
+
+        std::vector<web::json::value> currentExecutionPlanQuerySubPlans = {};
+
+        // loop over all query sub plans inside the current executionNode
+        for (QueryPlanPtr querySubPlan: executionNode->getQuerySubPlans(queryId)){
+            // prepare json object to hold information on current query sub plan
+            web::json::value currentQuerySubPlan{};
+
+            // id of current query sub plan
+            currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
+
+            // traverse to all operator in the current query sub plan
+            // starting from the root node
+            const OperatorNodePtr root = querySubPlan->getRootOperators()[0];
+            std::string operatorString;
+
+            std::deque<LogicalOperatorNodePtr> operatorsToPrint;
+            operatorsToPrint.push_front(root->as<LogicalOperatorNode>());
+
+            // traverse to the children
+            while (operatorsToPrint.size() != 0){
+                LogicalOperatorNodePtr currentOperator = operatorsToPrint.back();
+                operatorsToPrint.pop_back();
+
+                for (auto child: currentOperator->getChildren()) {
+                    operatorsToPrint.push_front(child->as<LogicalOperatorNode>());
+                }
+
+                // build a string containing operators in the current query sub plan
+                // example: SOURCE(OP-1)=>FILTER(OP-2)=>SINK(OP-5)
+                std::string currentOperatorString = getOperatorType(currentOperator) +"(OP-" + std::to_string(currentOperator->getId()) + ")";
+                if (getOperatorType(currentOperator) != "SINK") {
+                    currentOperatorString += "=>";
+                }
+                operatorString.insert(0, currentOperatorString);
+            }
+
+            // add the string containing operator to the json object of current query sub plan
+            currentQuerySubPlan["operator"] = web::json::value::string(operatorString);
+
+            // TODO: Add source and target
+            currentExecutionPlanQuerySubPlans.push_back(currentQuerySubPlan);
+        }
+        currentExecutionNodeJsonValue["querySubPlan"] = web::json::value::array(currentExecutionPlanQuerySubPlans);
+        nodes.push_back(currentExecutionNodeJsonValue);
+    }
+
+    // add `executionNodes` JSON array to the final JSON result
+    executionPlanJson["executionNodes"] = web::json::value::array(nodes);
+
+    return executionPlanJson;
 }
 
 web::json::value UtilityFunctions::getQueryPlanAsJson(QueryCatalogPtr queryCatalog, QueryId queryId) {
