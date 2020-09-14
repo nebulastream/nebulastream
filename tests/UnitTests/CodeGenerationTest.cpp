@@ -966,18 +966,15 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
     SchemaPtr schema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
-    auto source = createWindowTestSliceSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), schema);
 
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
 
-    auto input_schema = source->getSchema();
-
-    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    codeGenerator->generateCodeForScan(schema, context1);
 
     auto sum = Sum::on(Attribute("value"));
     auto windowDefinition = createWindowDefinition(
-        input_schema->get("key"), sum,
+        schema->get("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType());
 
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, context1);
@@ -986,7 +983,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage1 = codeGenerator->compile(context1->code);
 
     auto context2 = PipelineContext::create();
-    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    codeGenerator->generateCodeForScan(schema, context2);
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
@@ -1000,12 +997,42 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nextPipeline, 0);
 
-    /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData().value();
-    std::cout << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, schema) << std::endl;
+    auto layout = createRowLayout(schema);
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    layout->getValueField<uint64_t>(0, 0)->write(buffer, 100);//start 100
+    layout->getValueField<uint64_t>(0, 1)->write(buffer, 110);//stop 200
+    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);//key 1
+    layout->getValueField<uint64_t>(0, 3)->write(buffer, 10);//value 10
+    buffer.setNumberOfTuples(1);
+
+    layout->getValueField<uint64_t>(1, 0)->write(buffer, 100);//start 100
+    layout->getValueField<uint64_t>(1, 1)->write(buffer, 110);//stop 200
+    layout->getValueField<uint64_t>(1, 2)->write(buffer, 1);//key 1
+    layout->getValueField<uint64_t>(1, 3)->write(buffer, 8);//value 10
+    buffer.setNumberOfTuples(2);
+
+    layout->getValueField<uint64_t>(2, 0)->write(buffer, 100);//start 100
+    layout->getValueField<uint64_t>(2, 1)->write(buffer, 110);//stop 200
+    layout->getValueField<uint64_t>(2, 2)->write(buffer, 1);//key 1
+    layout->getValueField<uint64_t>(2, 3)->write(buffer, 2);//value 10
+    buffer.setNumberOfTuples(3);
+
+    layout->getValueField<uint64_t>(3, 0)->write(buffer, 200);//start 100
+    layout->getValueField<uint64_t>(3, 1)->write(buffer, 210);//stop 200
+    layout->getValueField<uint64_t>(3, 2)->write(buffer, 3);//key 1
+    layout->getValueField<uint64_t>(3, 3)->write(buffer, 2);//value 10
+    buffer.setNumberOfTuples(4);
+
+    layout->getValueField<uint64_t>(4, 0)->write(buffer, 200);//start 100
+    layout->getValueField<uint64_t>(4, 1)->write(buffer, 210);//stop 200
+    layout->getValueField<uint64_t>(4, 2)->write(buffer, 5);//key 1
+    layout->getValueField<uint64_t>(4, 3)->write(buffer, 12);//value 10
+    buffer.setNumberOfTuples(5);
+
+    std::cout << "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema) << std::endl;
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
-    stage1->execute(inputBuffer, windowHandler->getWindowState(),
+    stage1->execute(buffer, windowHandler->getWindowState(),
                     windowHandler->getWindowManager(), queryContext);
 
     //check partial aggregates in window state
@@ -1022,24 +1049,27 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
             results.push_back(slice.getEndTs());
         }
         for (auto& agg : val->getPartialAggregates()) {
+            std::cout << "key=" << key << std::endl;
+            results.push_back(key);
             std::cout << "value=" << agg << std::endl;
             results.push_back(agg);
         }
     }
 
-    /**
-     * @expected result:
-        start=0 end=10
-        start=10 end=20
-        value=5
-        value=5
-     */
-    EXPECT_EQ(results[0], 0);
-    EXPECT_EQ(results[1], 10);
-    EXPECT_EQ(results[2], 10);
+    EXPECT_EQ(results[0], 100);
+    EXPECT_EQ(results[1], 110);
+    EXPECT_EQ(results[2], 1);
     EXPECT_EQ(results[3], 20);
-    EXPECT_EQ(results[4], 5);
-    EXPECT_EQ(results[5], 5);
+
+    EXPECT_EQ(results[4], 200);
+    EXPECT_EQ(results[5], 210);
+    EXPECT_EQ(results[6], 3);
+    EXPECT_EQ(results[7], 2);
+
+    EXPECT_EQ(results[8], 200);
+    EXPECT_EQ(results[9], 210);
+    EXPECT_EQ(results[10], 5);
+    EXPECT_EQ(results[11], 12);
 }
 
 /**
