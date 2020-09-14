@@ -31,11 +31,11 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
     auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;               // TODO Philipp, do we need this check?
     auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : WindowManagerPtr();// TODO Philipp, do we need this check?
 
-    size_t maxWaterMark = 0;
+    uint64_t maxWaterMark = 0;
     if (hasWindowHandler()) {
         if (winDef->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
             NES_DEBUG("Execute Pipeline Stage set processing time watermark from buffer=" << inputBuffer.getWatermark());
-            windowHandler->updateAllTs(inputBuffer.getWatermark());
+            windowHandler->updateAllMaxTs(inputBuffer.getWatermark());
         } else {//Eventtime
             auto distType = winDef->getDistributionType()->getType();
             std::string tsFieldName = "";
@@ -85,7 +85,7 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
     uint32_t ret = !executablePipeline->execute(inputBuffer, windowStage, windowManager, pipelineContext);
     if (maxWaterMark != 0) {
         NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark);
-        windowHandler->updateAllTs(maxWaterMark);
+        windowHandler->updateAllMaxTs(maxWaterMark);
     }
     return ret;
 }
