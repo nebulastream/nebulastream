@@ -34,8 +34,8 @@ bool WindowHandler::setup(PipelineStagePtr nextPipeline, uint32_t pipelineStageI
     return true;
 }
 
-void WindowHandler::updateAllTs(uint64_t ts) {
-    NES_DEBUG("WindowHandler: updateAllTs with ts=" << ts);
+void WindowHandler::updateAllMaxTs(uint64_t ts) {
+    NES_DEBUG("WindowHandler: updateAllMaxTs with ts=" << ts);
     auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
     for (auto& it : windowStateVariable->rangeAll()) {
         NES_DEBUG("WindowHandler: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs() << " nextEdge=" << it.second->nextEdge);

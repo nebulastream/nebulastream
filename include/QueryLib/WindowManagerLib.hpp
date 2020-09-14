@@ -113,6 +113,7 @@ class WindowSliceStore {
     uint64_t getMaxTs() {
         return maxTs;
     };
+
     void updateMaxTs(uint64_t ts) {
         maxTs = std::max(maxTs, ts);
     };

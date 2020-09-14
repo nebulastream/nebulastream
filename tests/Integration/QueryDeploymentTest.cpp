@@ -295,8 +295,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryEventTime) {
     remove(filePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"features_properties_time\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"metadata_generated\")), "
-                   "Seconds(10)), Sum::on(Attribute(\"features_properties_time\"))).sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"metadata_generated\")), "
+                   "Seconds(10)), Sum::on(Attribute(\"features_properties_capacity\"))).sink(PrintSinkDescriptor::create());";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -351,8 +351,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
     remove(filePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"features_properties_time\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
-                   "Seconds(1)), Sum::on(Attribute(\"features_properties_time\"))).sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
+                   "Seconds(1)), Sum::on(Attribute(\"metadata_generated\"))).sink(PrintSinkDescriptor::create());";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place

@@ -68,7 +68,7 @@ class WindowHandler {
      * @brief updates all maxTs in all stores
      * @param ts
      */
-    void updateAllTs(uint64_t ts);
+    void updateAllMaxTs(uint64_t ts);
 
     /**
      * @brief This method iterates over all slices in the slice store and creates the final window aggregates,

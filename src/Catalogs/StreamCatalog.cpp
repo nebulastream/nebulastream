@@ -20,7 +20,7 @@ void StreamCatalog::addDefaultStreams() {
 
     //TODO I think we should get rid of this soon
     SchemaPtr schemaExdra = Schema::create()
-                                ->addField("type", DataTypeFactory::createFixedChar(30))
+                                ->addField("id", DataTypeFactory::createUInt64())
                                 ->addField("metadata_generated", DataTypeFactory::createUInt64())
                                 ->addField("metadata_title", DataTypeFactory::createFixedChar(50))
                                 ->addField("metadata_id", DataTypeFactory::createFixedChar(50))

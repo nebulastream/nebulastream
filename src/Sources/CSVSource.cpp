@@ -168,7 +168,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     NES_DEBUG(
         "CSVSource::fillBuffer: readin finished read " << generated_tuples_this_pass << " tuples at posInFile="
                                                        << currentPosInFile);
-    NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
+    NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
     generatedTuples += generated_tuples_this_pass;
 
     generatedBuffers++;
