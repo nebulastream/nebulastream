@@ -12,39 +12,93 @@ L0QueryMergerRulePtr L0QueryMergerRule::create() {
     return std::make_shared<L0QueryMergerRule>(L0QueryMergerRule());
 }
 
-void L0QueryMergerRule::apply(std::vector<QueryPlanPtr> queryPlans, GlobalQueryPlanPtr globalQueryPlan) {
-    std::vector<GlobalQueryNodePtr> globalQueryNodeWithSourceOperator = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SourceLogicalOperatorNode>();
+void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    for (auto& queryPlan : queryPlans) {
-        bool merged = false;
-        OperatorNodePtr sourceOperator = queryPlan->getOperatorByType<SourceLogicalOperatorNode>()[0];
-        std::string targetLogicalSourceName = sourceOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->getStreamName();
+    std::vector<GlobalQueryNodePtr> sinkGQNodes = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
-        for (auto& globalQuerySourceNode : globalQueryNodeWithSourceOperator) {
+    for (int i = 0; i < sinkGQNodes.size(); i++) {
+        GlobalQueryNodePtr targetGQN = sinkGQNodes[i];
+        for (int j = i + 1; j < sinkGQNodes.size(); j++) {
+            GlobalQueryNodePtr hostSinkGQN = sinkGQNodes[j];
+            std::vector<NodePtr> targetSourceGQNs = targetGQN->getAllLeafNodes();
+            std::vector<NodePtr> hostSourceGQNs = hostSinkGQN->getAllLeafNodes();
 
-            std::vector<OperatorNodePtr> sourceOperators = globalQuerySourceNode->getOperators();
-            if (sourceOperators.empty()) {
-                //throw exception
-            }
-            std::string logicalSourceName = sourceOperators[0]->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->getStreamName();
-
-            if (logicalSourceName == targetLogicalSourceName) {
-                merged = true;
+            if (areSourceGQNodesEqual(targetSourceGQNs, hostSourceGQNs)) {
+                continue;
             }
 
-            if (merged) {
-                break;
+            for (auto& targetSourceGQN : targetSourceGQNs) {
+                bool found = false;
+                for (auto& hostSourceGQN : hostSourceGQNs) {
+                    if (isGQNMerged(targetSourceGQN->as<GlobalQueryNode>(), hostSourceGQN->as<GlobalQueryNode>())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    break;
+                }
             }
-        }
-        if (!merged) {
-            globalQueryPlan->addQueryPlan(queryPlan);
-            globalQueryNodeWithSourceOperator = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SourceLogicalOperatorNode>();
         }
     }
 }
 
-bool operatorContainedInGlobalQueryNode(OperatorNodePtr logicalOperator, )
+bool L0QueryMergerRule::isGQNMerged(GlobalQueryNodePtr targetGQNode, GlobalQueryNodePtr hostGQNode) {
 
+    std::vector<OperatorNodePtr> targetOperators = targetGQNode->getOperators();
+    std::vector<OperatorNodePtr> hostOperators = hostGQNode->getOperators();
 
+    if (targetOperators.size() != hostOperators.size()) {
+        return false;
+    }
+
+    for (auto& targetOperator : targetOperators) {
+        bool found = false;
+        for (auto& hostOperator : hostOperators) {
+            if (targetOperator->equal(hostOperator)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return false;
+        }
+    }
+
+    for (auto& targetParentGQN : targetGQNode->getParents()) {
+        bool found = false;
+        for (auto& hostParentGQN : hostGQNode->getParents()) {
+            if (isGQNMerged(targetParentGQN->as<GlobalQueryNode>(), hostParentGQN->as<GlobalQueryNode>())) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return false;
+        }
+    }
+
+    for (auto& [queryId, operatorNode] : targetGQNode->getMapOfQueryIdToOperator()) {
+        hostGQNode->addQueryAndOperator(queryId, operatorNode);
+    }
+    return true;
+}
+
+bool L0QueryMergerRule::areSourceGQNodesEqual(std::vector<NodePtr> targetSourceGQNs, std::vector<NodePtr> hostSourceGQNs) {
+
+    for (auto& targetSourceGQN : targetSourceGQNs) {
+        bool found = false;
+        for (auto& hostSourceGQN : hostSourceGQNs) {
+            if (targetSourceGQN->as<GlobalQueryNode>()->getId() == hostSourceGQN->as<GlobalQueryNode>()->getId()) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return false;
+        }
+    }
+    return true;
+}
 
 }// namespace NES

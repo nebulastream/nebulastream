@@ -104,6 +104,12 @@ class GlobalQueryNode : public Node {
      */
     std::vector<OperatorNodePtr> getOperators();
 
+    /**
+     * @brief Get all registered query ids and corresponding operators
+     * @return the list of operators
+     */
+    std::map<QueryId ,OperatorNodePtr> getMapOfQueryIdToOperator();
+
     const std::string toString() const override;
 
   private:
