@@ -9,6 +9,9 @@ namespace NES {
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
+class GlobalQueryNode;
+typedef std::shared_ptr<GlobalQueryNode> GlobalQueryNodePtr;
+
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
@@ -63,14 +66,15 @@ class L0QueryMergerRule {
 
     /**
      * @brief apply L0QueryMerger rule on the globalQuery plan
-     * @param queryPlans: the input query plans to merge
      * @param globalQueryPlan: the global query plan
      */
-    void apply(std::vector<QueryPlanPtr> queryPlans, GlobalQueryPlanPtr globalQueryPlan);
+    void apply(GlobalQueryPlanPtr globalQueryPlan);
 
   private:
     explicit L0QueryMergerRule();
 
+    bool isGQNMerged(GlobalQueryNodePtr targetGQNode, GlobalQueryNodePtr hostGQNode);
+    bool areSourceGQNodesEqual(std::vector<NodePtr> targetSourceGQNs, std::vector<NodePtr> hostSourceGQNs);
 };
 }// namespace NES
 #endif//NES_L0QUERYMERGERRULE_HPP

@@ -132,4 +132,8 @@ std::vector<OperatorNodePtr> GlobalQueryNode::getOperators() {
     return logicalOperators;
 }
 
+std::map<QueryId, OperatorNodePtr> GlobalQueryNode::getMapOfQueryIdToOperator() {
+    return queryToOperatorMap;
+}
+
 }// namespace NES
