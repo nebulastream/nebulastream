@@ -47,8 +47,7 @@ bool MonitoringPlan::addMetric(MetricValueType metric) {
             if (cpuMetrics) {
                 NES_INFO("MonitoringPlan: Metric already set for CpuMetric.");
                 return false;
-            }
-            else {
+            } else {
                 cpuMetrics = true;
                 return true;
             }
@@ -57,8 +56,7 @@ bool MonitoringPlan::addMetric(MetricValueType metric) {
             if (diskMetrics) {
                 NES_INFO("MonitoringPlan: Metric already set for DiskMetric.");
                 return false;
-            }
-            else {
+            } else {
                 diskMetrics = true;
                 return true;
             }
@@ -67,8 +65,7 @@ bool MonitoringPlan::addMetric(MetricValueType metric) {
             if (memoryMetrics) {
                 NES_INFO("MonitoringPlan: Metric already set for MemoryMetric.");
                 return false;
-            }
-            else {
+            } else {
                 memoryMetrics = true;
                 return true;
             }
@@ -77,8 +74,7 @@ bool MonitoringPlan::addMetric(MetricValueType metric) {
             if (networkMetrics) {
                 NES_INFO("MonitoringPlan: Metric already set for NetworkMetric.");
                 return false;
-            }
-            else {
+            } else {
                 networkMetrics = true;
                 return true;
             }
