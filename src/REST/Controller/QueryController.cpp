@@ -23,9 +23,26 @@ QueryController::QueryController(QueryServicePtr queryService, QueryCatalogPtr q
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 
     if (path[1] == "execution-plan") {
-        // There will be change in the structure of globalExecutionPlan, so we will wait for that to be resolve
-        // then create the execution-plan based on the new structure
-        message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path[1]));
+
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try{
+                    // get the queryId from user input
+                    string userRequest(body.begin(), body.end());
+                    json::value req = json::value::parse(userRequest);
+                    QueryId queryId = req.at("queryId").as_integer();
+
+                    // get the execution-plan for given query id
+                    auto executionPlanJson = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan, queryId);
+                    //Prepare the response
+                    successMessageImpl(message, executionPlanJson);
+                    return;
+                }
+                catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                }
+            });
     } else if (path[1] == "query-plan") {
         message.extract_string(true)
             .then([this, message](utility::string_t body) {

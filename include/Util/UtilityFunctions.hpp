@@ -2,8 +2,6 @@
 #define UTILITY_FUNCTIONS_HPP
 
 #include <API/Query.hpp>
-#include <Catalogs/QueryCatalog.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <cpprest/json.h>
 #include <string>
 
@@ -164,6 +162,13 @@ class UtilityFunctions {
      */
     static uint64_t getNextNodeEngineId();
 
+    /**
+     * @brief get the json representation of execution plan of a query
+     * @param the global execution plan
+     * @param id of the query
+     * @return
+     */
+    static web::json::value getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId);
   private:
     /**
      * @brief function to traverse to queryPlanChildren
