@@ -23,7 +23,7 @@ QueryController::QueryController(QueryServicePtr queryService, QueryCatalogPtr q
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 
     if (path[1] == "execution-plan") {
-
+        NES_INFO("QueryController:: execution-plan");
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                 try{
@@ -32,8 +32,10 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     json::value req = json::value::parse(userRequest);
                     QueryId queryId = req.at("queryId").as_integer();
 
+                    NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
                     // get the execution-plan for given query id
                     auto executionPlanJson = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan, queryId);
+                    NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.serialize());
                     //Prepare the response
                     successMessageImpl(message, executionPlanJson);
                     return;

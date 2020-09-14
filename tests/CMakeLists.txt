@@ -272,6 +272,11 @@ add_executable(worker-coordinator-starter-tests "Integration/WorkerCoordinatorSt
 target_link_libraries(worker-coordinator-starter-tests nes ${GTEST_LIBRARIES})
 add_test(NAME worker-coordinator-starter-tests COMMAND worker-coordinator-starter-tests)
 
+# RESTEndpointTest
+add_executable(rest-endpoint-test "Integration/RESTEndpointTest.cpp")
+target_link_libraries(rest-endpoint-test nes ${GTEST_LIBRARIES})
+add_test(NAME rest-endpoint-test COMMAND rest-endpoint-test)
+
 ### WorkerCoordinatorStarter Tests ###
 add_executable(update-topology-remote-test "Integration/UpdateTopologyRemoteTest.cpp")
 target_link_libraries(update-topology-remote-test nes ${GTEST_LIBRARIES})
