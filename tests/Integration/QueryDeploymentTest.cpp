@@ -287,8 +287,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryEventTime) {
     conf.physicalStreamName = "test_stream";
     conf.sourceType = "CSVSource";
     conf.sourceConfig = "../tests/test_data/exdra.csv";
-    conf.numberOfBuffersToProduce = 2;
-    conf.sourceFrequency = 2;
+    conf.numberOfBuffersToProduce = 3;
+    conf.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf);
 
     std::string filePath = "contTestOut.csv";
@@ -300,7 +300,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryEventTime) {
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
-    sleep(3);
+    sleep(7);
+    //TODO: check result
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 2));
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));
 

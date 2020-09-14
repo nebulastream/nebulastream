@@ -150,10 +150,7 @@ class WindowManager {
         if (store->empty()) {
             // set last watermark to current ts for processing time
             store->setLastWatermark(ts - allowedLateness);
-//            if (windowDefinition->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
-//                store->setLastWatermark(ts - allowedLateness);
-//            }
-            // we create the first slice for all windows between 0 and record ts - allowedLateness.
+
             store->nextEdge = windowDefinition->windowType->calculateNextWindowEnd(ts - allowedLateness);
             store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->windowType->getTime() , store->nextEdge));
             NES_DEBUG("sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - windowDefinition->windowType->getTime() << " nextWindowEnd=" << store->nextEdge);
