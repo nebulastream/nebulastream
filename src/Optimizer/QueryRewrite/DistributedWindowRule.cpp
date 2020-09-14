@@ -21,7 +21,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
         NES_DEBUG("DistributeWindowRule::apply: found " << windowOps.size()  << " window operators");
         for (auto& windowOp : windowOps) {
             NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp << " << windowOp->toString()");
-            if(windowOp->getChildren().size() < 1) {//TODO:change this back
+            if(windowOp->getChildren().size() < 2) {//TODO:change this back
                 NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp << " << windowOp->toString()");
 
                 WindowLogicalOperatorNode* winOp = dynamic_cast<WindowLogicalOperatorNode*>(windowOp.get());

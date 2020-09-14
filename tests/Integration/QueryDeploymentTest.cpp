@@ -440,11 +440,11 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker 1 started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
+//    NES_INFO("QueryDeploymentTest: Start worker 2");
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -467,9 +467,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     conf.sourceConfig = "../tests/test_data/window.csv";
     conf.numberOfBuffersToProduce = 3;
     conf.numberOfTuplesToProducePerBuffer = 3;
-    conf.sourceFrequency = 3;
+    conf.sourceFrequency = 2;
     wrk1->registerPhysicalStream(conf);
-    wrk2->registerPhysicalStream(conf);
+//    wrk2->registerPhysicalStream(conf);
 
     NES_INFO("QueryDeploymentTest: Submit query");
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -511,9 +511,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("QueryDeploymentTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
+//    NES_INFO("QueryDeploymentTest: Stop worker 2");
+//    bool retStopWrk2 = wrk2->stop(true);
+//    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
