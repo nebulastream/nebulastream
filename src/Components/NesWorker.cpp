@@ -21,12 +21,14 @@ NesWorker::NesWorker(
     std::string localIp,
     uint16_t localWorkerRpcPort,
     uint16_t localWorkerZmqPort,
+    uint16_t numberOfCpus,
     NodeType type)
     : coordinatorIp(std::move(coordinatorIp)),
       coordinatorPort(coordinatorPort),
       localWorkerIp(std::move(localIp)),
       localWorkerRpcPort(localWorkerRpcPort),
       localWorkerZmqPort(localWorkerZmqPort),
+      numberOfCpus(numberOfCpus),
       type(type) {
     connected = false;
     withRegisterStream = false;
@@ -178,7 +180,7 @@ bool NesWorker::connect() {
     auto nodeStatsProvider = nodeEngine->getNodeStatsProvider();
     nodeStatsProvider->update();
     auto nodeStats = nodeStatsProvider->getNodeStats();
-    bool successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, 200, type, nodeStats);
+    bool successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfCpus, type, nodeStats);
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;

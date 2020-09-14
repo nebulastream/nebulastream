@@ -36,6 +36,7 @@ int main(int argc, const char* argv[]) {
     uint16_t restPort = 8081;
     uint16_t rpcPort = 4000;
     std::string serverIp = "127.0.0.1";
+    uint16_t numberOfCpus = UINT16_MAX;
 
     po::options_description serverOptions("Nes Coordinator Server Options");
     serverOptions.add_options()(
@@ -46,7 +47,10 @@ int main(int argc, const char* argv[]) {
 
         (
             "coordinatorPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort),
-            "Set NES rpc server port (default: 4000).")("help", "Display help message");
+            "Set NES rpc server port (default: 4000).")
+
+        ("numberOfCpus", po::value<uint16_t>(&numberOfCpus)->default_value(numberOfCpus),
+             "Set the computing capacity (default UINT16_MAX).")("help", "Display help message");
 
     /* Parse parameters. */
     po::variables_map vm;
@@ -75,7 +79,7 @@ int main(int argc, const char* argv[]) {
     }
 
     NES_INFO("creating coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(serverIp, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(serverIp, restPort, rpcPort, numberOfCpus);
 
     if (changed) {
         NES_INFO("config changed thus rest params");
@@ -85,7 +89,7 @@ int main(int argc, const char* argv[]) {
         crd->setServerIp(serverIp);
     }
 
-    NES_INFO("start coordinator ip=" << serverIp << " with rpc port " << rpcPort << " restPort=" << restPort);
+    NES_INFO("start coordinator ip=" << serverIp << " with rpc port " << rpcPort << " restPort=" << restPort << " computingCapacity=" << numberOfCpus);
     crd->startCoordinator(/**blocking**/ true);//blocking call
     crd->stopCoordinator(true);
     NES_INFO("coordinator started");

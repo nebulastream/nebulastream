@@ -19,6 +19,9 @@ class UpdateTopologyRemoteTest : public testing::Test {
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 
+    uint16_t coordinatorNumberOfCpus = 128;
+    uint16_t workerNumberOfCpus = 16;
+
     static void SetUpTestCase() {
         NES::setupLogging("UpdateTopologyRemoteTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup UpdateTopologyRemoteTest test class.");
@@ -34,20 +37,20 @@ class UpdateTopologyRemoteTest : public testing::Test {
 };
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfCpus);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("coordinator started successfully");
 
     NES_INFO("start worker");
     size_t node1RpcPort = port + 10;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, node1RpcPort, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, node1RpcPort, port + 11, workerNumberOfCpus, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
     size_t node2RpcPort = port + 20;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, node2RpcPort, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, node2RpcPort, port + 21, workerNumberOfCpus, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("worker started successfully");
@@ -61,10 +64,13 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     TopologyNodePtr rootNode = topology->getRoot();
     ASSERT_TRUE(rootNode->getGrpcPort() == port + 1);
     ASSERT_TRUE(rootNode->getChildren().size() == 2);
+    ASSERT_TRUE(rootNode->getAvailableResources() == coordinatorNumberOfCpus);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
     ASSERT_TRUE(node1->getGrpcPort() == node1RpcPort);
+    ASSERT_TRUE(node1->getAvailableResources() == workerNumberOfCpus);
     TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
     ASSERT_TRUE(node2->getGrpcPort() == node2RpcPort);
+    ASSERT_TRUE(node2->getAvailableResources() == workerNumberOfCpus);
 
     NES_INFO("ADD NEW PARENT");
     bool successAddPar = wrk->addParent(node2->getId());
@@ -94,20 +100,20 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 }
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfCpus);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("coordinator started successfully");
 
     NES_INFO("start worker");
     size_t node1RpcPort = port + 10;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, node1RpcPort, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, node1RpcPort, port + 11, workerNumberOfCpus, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
     size_t node2RpcPort = port + 20;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, node2RpcPort, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, node2RpcPort, port + 21, workerNumberOfCpus, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("worker started successfully");

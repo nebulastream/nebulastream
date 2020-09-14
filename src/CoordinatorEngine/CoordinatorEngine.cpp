@@ -21,7 +21,7 @@ CoordinatorEngine::~CoordinatorEngine() {
     NES_DEBUG("~CoordinatorEngine()");
 };
 
-size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, int8_t numberOfCPUs, NodeStats nodeStats, NodeType type) {
+size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, int16_t numberOfCPUs, NodeStats nodeStats, NodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address
                                                           << " numberOfCpus=" << numberOfCPUs
                                                           << " nodeProperties=" << nodeStats.DebugString()

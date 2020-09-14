@@ -35,6 +35,9 @@ class MonitoringStackTest : public testing::Test {
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 
+    uint16_t coordinatorNumberOfCpus = 128;
+    uint16_t workerNumberOfCpus = 16;
+
     static void SetUpTestCase() {
         NES::setupLogging("MonitoringStackTest.log", NES::LOG_DEBUG);
         NES_INFO("MonitoringStackTest: Setup MonitoringStackTest test class.");
@@ -309,14 +312,14 @@ TEST_F(MonitoringStackTest, testSamplingProtocol) {
 
 TEST_F(MonitoringStackTest, requestMonitoringData) {
     NES_INFO("MonitoringStackTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfCpus);
     size_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0);
     NES_INFO("MonitoringStackTest: Coordinator started successfully");
 
     NES_INFO("MonitoringStackTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
-                                                    port + 10, port + 11, NodeType::Sensor);
+                                                    port + 10, port + 11, workerNumberOfCpus, NodeType::Sensor);
     bool retStart1 = wrk1->start(false,false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");

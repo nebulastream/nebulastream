@@ -44,6 +44,7 @@ int main(int argc, char** argv) {
     std::string dataPort = "3001";
     std::string coordinatorIp = "127.0.0.1";
     std::string localWorkerIp = "127.0.0.1";
+    uint16_t numberOfCpus = UINT16_MAX;
 
     std::string sourceType = "";
     std::string sourceConfig = "";
@@ -83,6 +84,8 @@ int main(int argc, char** argv) {
          "Set the parentId of this node")
         ("localWorkerIp", po::value<string>(&localWorkerIp)->default_value(localWorkerIp),
          "Set worker ip (default: 127.0.0.1)")
+        ("numberOfCpus", po::value<uint16_t>(&numberOfCpus)->default_value(numberOfCpus),
+         "Set the computing capacity (default UINT16_MAX).")
         ("help", "Display help message");
 
     po::variables_map vm;
@@ -120,6 +123,7 @@ int main(int argc, char** argv) {
         localWorkerIp,
         localPort,
         zmqDataPort,
+        numberOfCpus,
         NodeType::Sensor // TODO what is this?!
     );
 
