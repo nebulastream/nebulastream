@@ -62,8 +62,14 @@ QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
     }
     for(auto& stage : stages)
     {
-        stage->setWinDef(winDef);
-        stage->setSchema(schema);
+        if(stage->hasWindowHandler())
+        {
+            NES_ASSERT(winDef, "GeneratedQueryExecutionPlanBuilder: windowDef");
+            NES_ASSERT(schema, "GeneratedQueryExecutionPlanBuilder: schema");
+            stage->setWinDef(winDef);
+            stage->setSchema(schema);
+        }
+
     }
     return std::make_shared<GeneratedQueryExecutionPlan>(queryId, querySubPlanId, std::move(sources), std::move(sinks), std::move(stages), std::move(queryManager), std::move(bufferManager));
 }

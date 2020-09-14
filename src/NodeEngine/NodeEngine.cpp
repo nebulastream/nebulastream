@@ -124,12 +124,6 @@ bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId query
         //auto translationPhase = TranslateToLegacyPlanPhase::create();
         auto translationPhase = TranslateToGeneratableOperatorPhase::create();
         auto generatableOperatorPlan = translationPhase->transform(queryOperators);
-        std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps = generatableOperatorPlan->getNodesByType<WindowLogicalOperatorNode>();
-
-        std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps = queryOperators->getNodesByType<SourceLogicalOperatorNode>();
-
-        NES_ASSERT(winOps.size() == 1, "is not implemented");
-        TimeCharacteristicPtr timeChar = winOps[0]->getWindowDefinition()->windowType->getTimeCharacteristic();
 
         // Compile legacy operators with qep builder.
         auto qepBuilder = GeneratedQueryExecutionPlanBuilder::create()
@@ -138,9 +132,21 @@ bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId query
                               .setCompiler(queryCompiler)
                               .setQueryId(queryId)
                               .setQuerySubPlanId(queryExecutionId)
-                              .setWinDef(winOps[0]->getWindowDefinition())
-                              .setSchema(leafOps[0]->getInputSchema())
                               .addOperatorQueryPlan(generatableOperatorPlan);
+
+        std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps = generatableOperatorPlan->getNodesByType<WindowLogicalOperatorNode>();
+        std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps = queryOperators->getNodesByType<SourceLogicalOperatorNode>();
+
+        if(winOps.size() == 1)
+        {
+            qepBuilder.setWinDef(winOps[0]->getWindowDefinition())
+                .setSchema(leafOps[0]->getInputSchema());
+        }
+        else if(winOps.size() > 1)
+        {
+            //currently we only support one window per query
+            NES_NOT_IMPLEMENTED();
+        }
 
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : queryOperators->getNodesByType<SourceLogicalOperatorNode>()) {

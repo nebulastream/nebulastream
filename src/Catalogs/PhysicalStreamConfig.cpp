@@ -8,6 +8,7 @@ PhysicalStreamConfig::PhysicalStreamConfig() {
     sourceConfig = "1";
     sourceFrequency = 0;
     numberOfBuffersToProduce = 1;
+    numberOfTuplesToProducePerBuffer = 0;
     physicalStreamName = "default_physical";
     logicalStreamName = "default_logical";
 };

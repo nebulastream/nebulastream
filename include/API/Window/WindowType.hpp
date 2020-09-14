@@ -37,6 +37,8 @@ class TumblingWindow : public WindowType {
 
     TimeMeasure getSize();
 
+    uint64_t getTime() const override;
+
   private:
     TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
     const TimeMeasure size;
@@ -57,6 +59,8 @@ class SlidingWindow : public WindowType {
     uint64_t calculateNextWindowEnd(uint64_t) const override {
         return 0;
     }
+
+    uint64_t getTime() const override;
 
   private:
     SlidingWindow(TimeCharacteristicPtr timeType, TimeMeasure size, TimeMeasure slide);
@@ -89,6 +93,8 @@ class SessionWindow : public WindowType {
     }
 
     void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
+
+    uint64_t getTime() const override;
 
   private:
     SessionWindow(TimeCharacteristicPtr timeType, TimeMeasure gap);

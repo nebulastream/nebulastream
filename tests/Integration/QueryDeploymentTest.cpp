@@ -427,7 +427,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
 }
 
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerDistributedWindowQueryEventTime) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -498,6 +498,17 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
         "|2000|3000|1|0|\n"
         "|2000|3000|2|28|\n"
         "+----------------------------------------------------+";
+
+//    "+----------------------------------------------------+\n"
+//    "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+//    "+----------------------------------------------------+\n"
+//    "|1000|2000|1|17|\n"
+//    "+----------------------------------------------------++----------------------------------------------------+\n"
+//    "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+//    "+----------------------------------------------------+\n"
+//    "|2000|3000|1|0|\n"
+//    "|2000|3000|2|28|\n"
+//    "+----------------------------------------------------+"
 
     NES_INFO("QueryDeploymentTest: content=" << content);
     NES_INFO("QueryDeploymentTest: expContent=" << expectedContent);

@@ -1,3 +1,6 @@
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
@@ -33,29 +36,24 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
         if (winDef->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
             NES_DEBUG("Execute Pipeline Stage set processing time watermark from buffer=" << inputBuffer.getWatermark());
             windowHandler->updateAllTs(inputBuffer.getWatermark());
-        } else {
+        } else {//Eventtime
             auto distType = winDef->getDistributionType()->getType();
             std::string tsFieldName = "";
-            if(distType == DistributionCharacteristic::Combining)
-            {
+            if (distType == DistributionCharacteristic::Combining) {
                 NES_DEBUG("PipelineStage: process combining window");
                 tsFieldName = "end";
                 if (!schema->has(tsFieldName)) {
                     NES_ERROR("PipelineStage::execute: Window Operator: key field " << tsFieldName << " does not exist!");
                     NES_FATAL_ERROR("PipelineStage type error");
                 }
-            }
-            else if(distType == DistributionCharacteristic::Slicing)
-            {
+            } else if (distType == DistributionCharacteristic::Slicing) {
                 NES_DEBUG("PipelineStage: process slicing window");
                 tsFieldName = winDef->windowType->getTimeCharacteristic()->getField()->name;
                 if (!schema->has(tsFieldName)) {
                     NES_ERROR("PipelineStage::execute: Window Operator: key field " << tsFieldName << " does not exist!");
                     NES_FATAL_ERROR("PipelineStage type error");
                 }
-            }
-            else
-            {
+            } else {
                 NES_DEBUG("PipelineStage: process complete window");
             }
 
@@ -64,16 +62,28 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
             size_t keyIndex = schema->getIndex(tsFieldName);
 
             for (uint64_t recordIndex = 0; recordIndex < inputBuffer.getNumberOfTuples(); recordIndex++) {
-                auto val = layout->getValueField<uint64_t>(recordIndex, keyIndex)->read(inputBuffer);
-                maxWaterMark = std::max(maxWaterMark, val);
+                auto dataType = fields[keyIndex]->getDataType();
+                auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+                auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+                if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                    auto val = layout->getValueField<int64_t>(recordIndex, keyIndex)->read(inputBuffer);
+                    maxWaterMark = std::max(maxWaterMark, (size_t) val);
+                    NES_DEBUG("PipelineStage: maxWaterMark=" << maxWaterMark << " or " << (size_t) val << " val=" << val);
+
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                    auto val = layout->getValueField<uint64_t>(recordIndex, keyIndex)->read(inputBuffer);
+                    maxWaterMark = std::max(maxWaterMark, val);
+                    NES_DEBUG("PipelineStage: maxWaterMark=" << maxWaterMark << " or " <<"  val=" << val);
+                } else {
+                    NES_NOT_IMPLEMENTED();
+                }
             }
         }
     }
 
     //
     uint32_t ret = !executablePipeline->execute(inputBuffer, windowStage, windowManager, pipelineContext);
-    if(maxWaterMark != 0)
-    {
+    if (maxWaterMark != 0) {
         NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark);
         windowHandler->updateAllTs(maxWaterMark);
     }

@@ -25,6 +25,11 @@
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+
+#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+
 using namespace NES;
 
 class QueryExecutionTest : public testing::Test {
@@ -275,10 +280,15 @@ TEST_F(QueryExecutionTest, windowQuery) {
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    queryPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan=" << queryPlan->toString() << std::endl;
 
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+
+    std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps = generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
+    std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps = queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
@@ -288,6 +298,8 @@ TEST_F(QueryExecutionTest, windowQuery) {
                        .setQuerySubPlanId(1)
                        .addSource(windowSource)
                        .addSink(testSink)
+                       .setWinDef(winOps[0]->getWindowDefinition())
+                       .setSchema(leafOps[0]->getInputSchema())
                        .addOperatorQueryPlan(generatableOperators);
 
     auto plan = builder.build();
