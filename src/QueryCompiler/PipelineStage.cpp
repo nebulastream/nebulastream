@@ -46,8 +46,8 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
                     NES_ERROR("PipelineStage::execute: Window Operator: key field " << tsFieldName << " does not exist!");
                     NES_FATAL_ERROR("PipelineStage type error");
                 }
-            } else if (distType == DistributionCharacteristic::Slicing) {
-                NES_DEBUG("PipelineStage: process slicing window");
+            } else if (distType == DistributionCharacteristic::Slicing || distType == DistributionCharacteristic::Complete) {
+                NES_DEBUG("PipelineStage: process slicing window or complete window");
                 tsFieldName = winDef->windowType->getTimeCharacteristic()->getField()->name;
                 if (!schema->has(tsFieldName)) {
                     NES_ERROR("PipelineStage::execute: Window Operator: key field " << tsFieldName << " does not exist!");
