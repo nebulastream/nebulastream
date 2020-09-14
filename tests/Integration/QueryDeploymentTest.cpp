@@ -287,7 +287,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryEventTime) {
     conf.physicalStreamName = "test_stream";
     conf.sourceType = "CSVSource";
     conf.sourceConfig = "../tests/test_data/exdra.csv";
-    conf.numberOfBuffersToProduce = 3;
+    conf.numberOfBuffersToProduce = 1;
     conf.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf);
 
