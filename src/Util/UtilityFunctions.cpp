@@ -14,6 +14,8 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -397,7 +399,11 @@ std::string UtilityFunctions::getOperatorType(OperatorNodePtr operatorNode) {
 
     std::string operatorType;
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        operatorType = "SOURCE";
+        if (operatorNode->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()){
+            operatorType = "SOURCE_SYS";
+        } else {
+            operatorType = "SOURCE";
+        }
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         operatorType = "FILTER";
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
@@ -407,7 +413,11 @@ std::string UtilityFunctions::getOperatorType(OperatorNodePtr operatorNode) {
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         operatorType = "WINDOW";
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        operatorType = "SINK";
+        if (operatorNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()){
+            operatorType = "SINK_SYS";
+        } else {
+            operatorType = "SINK";
+        }
     } else {
         operatorType = "UNDEFINED";
     }
@@ -462,7 +472,7 @@ web::json::value UtilityFunctions::getExecutionPlanAsJson(GlobalExecutionPlanPtr
                 // build a string containing operators in the current query sub plan
                 // example: SOURCE(OP-1)=>FILTER(OP-2)=>SINK(OP-5)
                 std::string currentOperatorString = getOperatorType(currentOperator) +"(OP-" + std::to_string(currentOperator->getId()) + ")";
-                if (getOperatorType(currentOperator) != "SINK") {
+                if (getOperatorType(currentOperator) != "SINK" && getOperatorType(currentOperator) != "SINK_SYS") {
                     currentOperatorString += "=>";
                 }
                 operatorString.insert(0, currentOperatorString);
