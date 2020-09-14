@@ -44,22 +44,47 @@ MonitoringPlanPtr MonitoringPlan::create(const SerializableMonitoringPlan& shipp
 bool MonitoringPlan::addMetric(MetricValueType metric) {
     switch (metric) {
         case CpuMetric: {
-            cpuMetrics = true;
-            return true;
+            if (cpuMetrics) {
+                NES_INFO("MonitoringPlan: Metric already set for CpuMetric.");
+                return false;
+            }
+            else {
+                cpuMetrics = true;
+                return true;
+            }
         };
         case DiskMetric: {
-            diskMetrics = true;
-            return true;
+            if (diskMetrics) {
+                NES_INFO("MonitoringPlan: Metric already set for DiskMetric.");
+                return false;
+            }
+            else {
+                diskMetrics = true;
+                return true;
+            }
         };
         case MemoryMetric: {
-            memoryMetrics = true;
-            return true;
+            if (memoryMetrics) {
+                NES_INFO("MonitoringPlan: Metric already set for MemoryMetric.");
+                return false;
+            }
+            else {
+                memoryMetrics = true;
+                return true;
+            }
         };
         case NetworkMetric: {
-            networkMetrics = true;
-            return true;
+            if (networkMetrics) {
+                NES_INFO("MonitoringPlan: Metric already set for NetworkMetric.");
+                return false;
+            }
+            else {
+                networkMetrics = true;
+                return true;
+            }
         };
         default: {
+            NES_INFO("MonitoringPlan: Metric not defined.");
             return false;
         }
     }
