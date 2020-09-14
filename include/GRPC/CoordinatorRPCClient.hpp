@@ -76,7 +76,7 @@ class CoordinatorRPCClient {
      * @param nodeProperties
      * @return bool indicating success
      */
-    bool registerNode(std::string ipAddress, int64_t grpcPort, int64_t dataPort, int8_t numberOfCpus,
+    bool registerNode(std::string ipAddress, int64_t grpcPort, int64_t dataPort, int16_t numberOfCpus,
                       NodeType type, NodeStats nodeStats);
 
     /**

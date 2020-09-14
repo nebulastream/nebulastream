@@ -20,6 +20,7 @@ class NesWorker {
               std::string localWorkerIp,
               uint16_t localWorkerRpcPort,
               uint16_t localWorkerZmqPort,
+              uint16_t numberOfCpus,
               NodeType type);
 
     /**
@@ -150,6 +151,7 @@ class NesWorker {
     std::string localWorkerIp;
     uint16_t localWorkerRpcPort;
     uint16_t localWorkerZmqPort;
+    uint16_t numberOfCpus;
 
     NodeType type;
     std::atomic<bool> stopped;

@@ -49,7 +49,7 @@ typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
-    explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort);
+    explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfCpus);
 
     /**
      * @brief dtor
@@ -127,6 +127,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     std::string serverIp;
     uint16_t restPort;
     uint16_t rpcPort;
+    uint16_t numberOfCpus;
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     std::shared_ptr<std::thread> queryRequestProcessorThread;
