@@ -136,7 +136,6 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     auto windows = std::make_shared<std::vector<WindowState>>();
     // the window type adds result windows to the windows vectors
     if (store->getLastWatermark() == 0) {
-        assert(0);
         TumblingWindow* tumb = dynamic_cast<TumblingWindow*>(windowDefinition->windowType.get());
         auto initWatermark = watermark < tumb->getSize().getTime() ? 0 : watermark - tumb->getSize().getTime();
         NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << initWatermark);
@@ -157,9 +156,10 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
         }
         //generates a list of windows that have to be outputted
 
-        if(store->getNumberOfMappings() < 2)
+        NES_DEBUG("WindowHandler: trigger test if mappings=" << store->getNumberOfMappings() << " < inputEdges=" << windowDefinition->getNumberOfInputEdges());
+        if(store->getNumberOfMappings() < windowDefinition->getNumberOfInputEdges())
         {
-            NES_DEBUG("WindowHandler: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermarkt to last=" << store->getLastWatermark());
+            NES_DEBUG("WindowHandler: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermark to last=" << store->getLastWatermark());
             watermark = store->getLastWatermark();
         }
         windowDefinition->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);//watermark

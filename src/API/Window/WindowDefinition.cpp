@@ -3,13 +3,14 @@
 namespace NES {
 
 WindowDefinition::WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar)
-    : windowAggregation(windowAggregation), windowType(windowType), onKey(nullptr), distributionType(distChar) {}
+    : windowAggregation(windowAggregation), windowType(windowType), onKey(nullptr), distributionType(distChar), numberOfInputEdges(1) {}
 
 WindowDefinition::WindowDefinition(const AttributeFieldPtr onKey,
                                    const WindowAggregationPtr windowAggregation,
                                    const WindowTypePtr windowType,
-                                   DistributionCharacteristicPtr distChar)
-    : windowAggregation(windowAggregation), windowType(windowType), onKey(onKey), distributionType(distChar) {
+                                   DistributionCharacteristicPtr distChar,
+                                   uint64_t numberOfInputEdges)
+    : windowAggregation(windowAggregation), windowType(windowType), onKey(onKey), distributionType(distChar), numberOfInputEdges(numberOfInputEdges) {
 }
 
 bool WindowDefinition::isKeyed() {
@@ -19,8 +20,10 @@ bool WindowDefinition::isKeyed() {
 WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar) {
     return std::make_shared<WindowDefinition>(windowAggregation, windowType, distChar);
 }
-WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey, const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar) {
-    return std::make_shared<WindowDefinition>(onKey, windowAggregation, windowType, distChar);
+
+WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey, const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges) {
+
+    return std::make_shared<WindowDefinition>(onKey, windowAggregation, windowType, distChar, numberOfInputEdges);
 }
 
 void WindowDefinition::setDistributionCharacteristic(DistributionCharacteristicPtr characteristic) {
@@ -29,6 +32,12 @@ void WindowDefinition::setDistributionCharacteristic(DistributionCharacteristicP
 
 DistributionCharacteristicPtr WindowDefinition::getDistributionType() {
     return distributionType;
+}
+uint64_t WindowDefinition::getNumberOfInputEdges() const {
+    return numberOfInputEdges;
+}
+void WindowDefinition::setNumberOfInputEdges(uint64_t numberOfInputEdges) {
+    this->numberOfInputEdges = numberOfInputEdges;
 }
 
 }// namespace NES

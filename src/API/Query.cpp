@@ -50,7 +50,7 @@ Query& Query::windowByKey(ExpressionItem onKey, const WindowTypePtr windowType, 
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    auto windowDefinition = createWindowDefinition(keyField, aggregation, windowType, DistributionCharacteristic::createCompleteWindowType());
+    auto windowDefinition = createWindowDefinition(keyField, aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1);
     auto windowOperator = createWindowLogicalOperatorNode(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(windowOperator);

@@ -68,13 +68,11 @@ class WindowType {
     */
     virtual bool isSessionWindow();
 
-
     /**
      * @brief return the time value
      * @return
      */
     virtual uint64_t getTime() const = 0;
-
 
   private:
     TimeCharacteristicPtr timeCharacteristic;
@@ -97,19 +95,28 @@ class WindowDefinition {
                      const WindowAggregationPtr windowAggregation,
                      const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
 
+    WindowDefinition(const AttributeFieldPtr onKey,
+                     const WindowAggregationPtr windowAggregation,
+                     const WindowTypePtr windowType,
+                     DistributionCharacteristicPtr distChar,
+                     uint64_t numberOfInputEdges);
+
     void setDistributionCharacteristic(DistributionCharacteristicPtr characteristic);
+    DistributionCharacteristicPtr getDistributionType();
+    uint64_t getNumberOfInputEdges() const;
+    void setNumberOfInputEdges(uint64_t numberOfInputEdges);
 
     const WindowAggregationPtr windowAggregation;
     const WindowTypePtr windowType;
     const AttributeFieldPtr onKey;
     DistributionCharacteristicPtr distributionType;
-
     /**
      * @brief Returns true if this window is keyed.
      */
     bool isKeyed();
 
-    DistributionCharacteristicPtr getDistributionType();
+  private:
+    uint64_t numberOfInputEdges;
 };
 
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
@@ -131,7 +138,9 @@ WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggr
  */
 WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey,
                                            const WindowAggregationPtr windowAggregation,
-                                           const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
+                                           const WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
+                                           uint64_t numberOfInputEdges);
+
 }// namespace NES
 
 #endif//INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
