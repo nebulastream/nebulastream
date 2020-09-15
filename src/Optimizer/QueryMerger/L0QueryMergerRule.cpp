@@ -1,4 +1,6 @@
+#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -27,10 +29,11 @@ void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                 continue;
             }
 
+            std::map<GlobalQueryNodePtr, GlobalQueryNodePtr> targetGQNToHostGQNMap;
             for (auto& targetSourceGQN : targetSourceGQNs) {
                 bool found = false;
                 for (auto& hostSourceGQN : hostSourceGQNs) {
-                    if (isGQNMerged(targetSourceGQN->as<GlobalQueryNode>(), hostSourceGQN->as<GlobalQueryNode>())) {
+                    if (checkIfGQNCanMerge(targetSourceGQN->as<GlobalQueryNode>(), hostSourceGQN->as<GlobalQueryNode>(), targetGQNToHostGQNMap)) {
                         found = true;
                         break;
                     }
@@ -39,14 +42,35 @@ void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                     break;
                 }
             }
+
+            for (auto& [targetGQN, hostGQN] : targetGQNToHostGQNMap) {
+                for (auto& [queryId, operatorNode] : targetGQN->getMapOfQueryIdToOperator()) {
+                    hostGQN->addQueryAndOperator(queryId, operatorNode);
+                }
+            }
         }
     }
 }
 
-bool L0QueryMergerRule::isGQNMerged(GlobalQueryNodePtr targetGQNode, GlobalQueryNodePtr hostGQNode) {
+bool L0QueryMergerRule::checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, GlobalQueryNodePtr hostGQNode, std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap) {
+
+    //Check if a match was established previously
+    if(targetGQNToHostGQNMap.find(targetGQNode) != targetGQNToHostGQNMap.end()){
+        return true;
+    }
 
     std::vector<OperatorNodePtr> targetOperators = targetGQNode->getOperators();
     std::vector<OperatorNodePtr> hostOperators = hostGQNode->getOperators();
+
+    if (targetOperators.empty() || hostOperators.empty()) {
+        return false;
+    }
+
+    if (targetOperators[0]->instanceOf<SinkLogicalOperatorNode>() && hostOperators[0]->instanceOf<SinkLogicalOperatorNode>()) {
+        return true;
+    } else if (targetOperators[0]->instanceOf<SinkLogicalOperatorNode>() || hostOperators[0]->instanceOf<SinkLogicalOperatorNode>()) {
+        return false;
+    }
 
     if (targetOperators.size() != hostOperators.size()) {
         return false;
@@ -65,10 +89,13 @@ bool L0QueryMergerRule::isGQNMerged(GlobalQueryNodePtr targetGQNode, GlobalQuery
         }
     }
 
+    targetGQNToHostGQNMap[targetGQNode] = hostGQNode;
+
+    //Check if all target parents have a matching host parent
     for (auto& targetParentGQN : targetGQNode->getParents()) {
         bool found = false;
         for (auto& hostParentGQN : hostGQNode->getParents()) {
-            if (isGQNMerged(targetParentGQN->as<GlobalQueryNode>(), hostParentGQN->as<GlobalQueryNode>())) {
+            if (checkIfGQNCanMerge(targetParentGQN->as<GlobalQueryNode>(), hostParentGQN->as<GlobalQueryNode>(), targetGQNToHostGQNMap)) {
                 found = true;
                 break;
             }
@@ -78,9 +105,20 @@ bool L0QueryMergerRule::isGQNMerged(GlobalQueryNodePtr targetGQNode, GlobalQuery
         }
     }
 
-    for (auto& [queryId, operatorNode] : targetGQNode->getMapOfQueryIdToOperator()) {
-        hostGQNode->addQueryAndOperator(queryId, operatorNode);
+    //Check if all target children have a matching host child
+    for (auto& targetChildGQN : targetGQNode->getChildren()) {
+        bool found = false;
+        for (auto& hostChildGQN : hostGQNode->getChildren()) {
+            if (checkIfGQNCanMerge(targetChildGQN->as<GlobalQueryNode>(), hostChildGQN->as<GlobalQueryNode>(), targetGQNToHostGQNMap)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return false;
+        }
     }
+
     return true;
 }
 
