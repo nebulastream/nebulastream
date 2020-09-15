@@ -865,7 +865,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto sum = Sum::on(Attribute("value"));
     auto windowDefinition = createWindowDefinition(
         input_schema->get("key"), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType());
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, context1);
 
@@ -921,7 +921,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto sum = Sum::on(Attribute("value"));
     auto windowDefinition = createWindowDefinition(
         input_schema->get("key"), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType());
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, context1);
 
@@ -975,7 +975,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto sum = Sum::on(Attribute("value"));
     auto windowDefinition = createWindowDefinition(
         schema->get("key"), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType());
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, context1);
 

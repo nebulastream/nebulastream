@@ -178,6 +178,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
 
     if (windowDefinition->isKeyed()) {
         windowDetails.set_onkey(windowDefinition->onKey->name);
+        windowDetails.set_numberofinputedges(windowDefinition->getNumberOfInputEdges());
     }
 
     auto windowType = windowDefinition->windowType;
@@ -281,11 +282,11 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
         }
     } else {
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-            return createCentralWindowSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<CentralWindowOperator>();
+            return createCentralWindowSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar, 1))->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-            return createWindowComputationSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<WindowComputationOperator>();
+            return createWindowComputationSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar, sinkDetails->numberofinputedges()))->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            return createSliceCreationSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar))->as<SliceCreationOperator>();
+            return createSliceCreationSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar, 1))->as<SliceCreationOperator>();
         } else {
             NES_NOT_IMPLEMENTED();
         }

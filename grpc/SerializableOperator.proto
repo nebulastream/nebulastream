@@ -188,6 +188,7 @@ message SerializableOperator{
     Aggregation windowAggregation = 2;
     DistributionCharacteristic distrChar = 3;
     string onKey = 4;
+    uint64 numberOfInputEdges = 5;
 
   }
   google.protobuf.Any details = 1;

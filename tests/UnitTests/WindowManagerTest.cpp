@@ -118,6 +118,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto store = keyRef.value();
 
     uint64_t ts = 7;
+    w.updateAllMaxTs(ts, 0);
     w.getWindowManager()->sliceStream(ts, store);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
@@ -125,6 +126,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     store->setLastWatermark(7);
 
     ts = 14;
+    w.updateAllMaxTs(ts, 0);
     w.getWindowManager()->sliceStream(ts, store);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
@@ -185,6 +187,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto store = keyRef.value();
 
     uint64_t ts = 7;
+    w.updateAllMaxTs(ts, 0);
     w.getWindowManager()->sliceStream(ts, store);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
@@ -192,6 +195,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     store->setLastWatermark(7);
 
     ts = 14;
+    w.updateAllMaxTs(ts, 0);
     w.getWindowManager()->sliceStream(ts, store);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
@@ -251,6 +255,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto store = keyRef.value();
 
     uint64_t ts = 7;
+    w.updateAllMaxTs(ts, 0);
     w.getWindowManager()->sliceStream(ts, store);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
@@ -258,6 +263,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     store->setLastWatermark(7);
 
     ts = 14;
+    w.updateAllMaxTs(ts, 0);
     w.getWindowManager()->sliceStream(ts, store);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
@@ -284,3 +290,4 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 }
 
 }// namespace NES
+

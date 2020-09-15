@@ -9,7 +9,8 @@ LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const Wind
 
 WindowComputationOperator::WindowComputationOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
-    windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createCombiningWindowType());
+    this->windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createCombiningWindowType());
+    this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
 }
 
 
