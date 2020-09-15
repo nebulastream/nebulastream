@@ -119,6 +119,9 @@ class TupleBuffer {
      */
     void setWatermark(int64_t value);
 
+    void setOriginId(int64_t id);
+    uint64_t getOriginId();
+
   private:
     detail::BufferControlBlock* controlBlock;
     uint8_t* ptr;

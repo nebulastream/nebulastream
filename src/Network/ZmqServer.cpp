@@ -180,6 +180,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     TupleBuffer buffer = bufferManager->getBufferBlocking();
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize());
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
+                    buffer.setOriginId(bufferHeader->getOriginId());
 
                     exchangeProtocol.onBuffer(nesPartition, buffer);
                     break;

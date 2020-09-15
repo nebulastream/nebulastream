@@ -104,13 +104,14 @@ std::unique_ptr<OutputChannel> OutputChannel::create(
 bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, size_t tupleSize) {
     auto bufferSize = inputBuffer.getBufferSize();
     auto numOfTuples = inputBuffer.getNumberOfTuples();
+    auto originId = inputBuffer.getOriginId();
     auto payloadSize = tupleSize * numOfTuples;
     auto ptr = inputBuffer.getBuffer<uint8_t>();
     auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize);// DON'T TRY THIS AT HOME :P
     if (payloadSize == 0) {
         return true;
     }
-    sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples);
+    sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples, originId);
     inputBuffer.retain();
     auto sentBytesOpt =
         zmqSocket.send(zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer), zmq::send_flags::none);

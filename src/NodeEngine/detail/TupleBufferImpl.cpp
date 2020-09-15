@@ -59,7 +59,7 @@ MemorySegment::~MemorySegment() {
 }
 
 BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback) : referenceCounter(0), numberOfTuples(0), owner(owner),
-                                                                                                                      recycleCallback(recycleCallback), watermark(0) {
+                                                                                                                      recycleCallback(recycleCallback), watermark(0), originId(0) {
 }
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
@@ -68,6 +68,7 @@ BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     recycleCallback = that.recycleCallback;
     owner = that.owner;
     watermark.store(that.watermark.load());
+    originId.store(that.originId.load());
 }
 
 BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that) {
@@ -76,6 +77,7 @@ BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that
     recycleCallback = that.recycleCallback;
     owner = that.owner;
     watermark.store(that.watermark.load());
+    originId.store(that.originId.load());
     return *this;
 }
 
@@ -189,6 +191,12 @@ int64_t BufferControlBlock::getWatermark() const {
 
 void BufferControlBlock::setWatermark(int64_t watermark) {
     this->watermark = watermark;
+}
+const uint64_t BufferControlBlock::getOriginId() const {
+    return originId;
+}
+void BufferControlBlock::setOriginId(uint64_t originId) {
+    this->originId = originId;
 }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

@@ -110,12 +110,28 @@ class WindowSliceStore {
         lastWatermark = last_watermark;
     }
 
-    uint64_t getMaxTs() {
-        return maxTs;
+    uint64_t getMaxTs(uint64_t originId) {
+        return originIdToMaxTsMap[originId];
     };
 
-    void updateMaxTs(uint64_t ts) {
-        maxTs = std::max(maxTs, ts);
+    uint64_t getNumberOfMappings() {
+        return originIdToMaxTsMap.size();
+    };
+
+    uint64_t getMinWatermark() {
+        if(originIdToMaxTsMap.empty())
+        {
+            NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet");
+            return 0;//TODO: we have to figure out how many downstream positions are there
+        }
+        std::map<uint64_t, uint64_t>::iterator min
+            = std::min_element(originIdToMaxTsMap.begin(),originIdToMaxTsMap.end(),[]
+                               (const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b)->bool{ return a.second < b.second; } );
+        return min->second;
+    };
+
+    void updateMaxTs(uint64_t ts, uint64_t originId) {
+        originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
     };
 
     const PartialAggregateType defaultValue;
@@ -125,14 +141,14 @@ class WindowSliceStore {
     std::vector<SliceMetaData> sliceMetaData;
     std::vector<PartialAggregateType> partialAggregates;
     uint64_t lastWatermark = 0;
-    uint64_t maxTs = 0;
+    std::map<uint64_t, uint64_t> originIdToMaxTsMap;
 };
 
 class WindowManager {
 
   public:
     WindowManager(WindowDefinitionPtr windowDefinition)
-        : windowDefinition(std::move(windowDefinition)), allowedLateness(0) {}
+        : windowDefinition(std::move(windowDefinition)), allowedLateness(0){}
 
     /**
      * Creates slices for in the window slice store if needed.
@@ -145,12 +161,12 @@ class WindowManager {
 
         NES_DEBUG("sliceStream for ts=" << ts);
         // updates the maximal record ts
-        store->updateMaxTs(ts);
+//        store->updateMaxTs(ts);//TODO I am not use if we still need this
 
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
-            store->setLastWatermark(ts - allowedLateness);
+            store->setLastWatermark(ts - allowedLateness);//TODO: I am not sure if we still need this
 
             store->nextEdge = windowDefinition->windowType->calculateNextWindowEnd(ts - allowedLateness);
             store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->windowType->getTime() , store->nextEdge));

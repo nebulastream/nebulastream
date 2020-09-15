@@ -67,8 +67,9 @@ class WindowHandler {
     /**
      * @brief updates all maxTs in all stores
      * @param ts
+     * @param originId
      */
-    void updateAllMaxTs(uint64_t ts);
+    void updateAllMaxTs(uint64_t ts, uint64_t originId);
 
     /**
      * @brief This method iterates over all slices in the slice store and creates the final window aggregates,
@@ -84,6 +85,13 @@ class WindowHandler {
     void* getWindowState();
     WindowManagerPtr getWindowManager() { return windowManager; };
 
+    uint64_t getOriginId() const {
+        return originId;
+    }
+    void setOriginId(uint64_t originId) {
+        this->originId = originId;
+    }
+
   private:
     std::atomic_bool running{false};
     WindowDefinitionPtr windowDefinition;
@@ -95,6 +103,7 @@ class WindowHandler {
     uint32_t pipelineStageId;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
+    uint64_t originId;
 
     MemoryLayoutPtr windowTupleLayout;
     SchemaPtr windowTupleSchema;
@@ -120,13 +129,14 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     // For processing time we use the current wall clock as watermark.
     // TODO we should add a allowed lateness to support out of order events
     auto windowTimeType = windowDefinition->windowType->getTimeCharacteristic();
-    auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMaxTs();
-    NES_DEBUG("WindowHandler::aggregateWindows: current watermark is=" << watermark << " maxTs=" << store->getMaxTs());
+    auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMinWatermark();
+    NES_DEBUG("WindowHandler::aggregateWindows: current watermark is=" << watermark << " minWatermark=" << store->getMinWatermark());
 
     // create result vector of windows
     auto windows = std::make_shared<std::vector<WindowState>>();
     // the window type adds result windows to the windows vectors
     if (store->getLastWatermark() == 0) {
+        assert(0);
         TumblingWindow* tumb = dynamic_cast<TumblingWindow*>(windowDefinition->windowType.get());
         auto initWatermark = watermark < tumb->getSize().getTime() ? 0 : watermark - tumb->getSize().getTime();
         NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << initWatermark);
@@ -146,6 +156,12 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
             NES_DEBUG("WindowHandler: trigger sliceid=" << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
         }
         //generates a list of windows that have to be outputted
+
+        if(store->getNumberOfMappings() < 2)
+        {
+            NES_DEBUG("WindowHandler: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermarkt to last=" << store->getLastWatermark());
+            watermark = store->getLastWatermark();
+        }
         windowDefinition->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);//watermark
         NES_DEBUG("WindowHandler: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows->size());
 
