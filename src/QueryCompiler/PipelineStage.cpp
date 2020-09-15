@@ -23,10 +23,32 @@ PipelineStage::PipelineStage(
                                       pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
+    if (hasWindowHandler()) {
+        NES_DEBUG("Pipelinestage ctor set origin id=" << qepId);
+        this->windowHandler->setOriginId(qepId);
+    }
 }
 
 bool PipelineStage::execute(TupleBuffer& inputBuffer) {
-    NES_DEBUG("Execute Pipeline Stage with id=" << pipelineStageId);
+
+    std::stringstream dbgMsg;
+    dbgMsg << "Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId() << " stage=" << pipelineStageId;
+    if (hasWindowHandler()) {
+        dbgMsg << "  withWindow_";
+        auto distType = winDef->getDistributionType()->getType();
+        if (distType == DistributionCharacteristic::Combining) {
+            dbgMsg << "Combining";
+        }
+        else
+        {
+            dbgMsg << "Slicing";
+        }
+    }
+    else
+    {
+        dbgMsg << "NoWindow";
+    }
+    NES_DEBUG(dbgMsg.str());
     // only get the window manager and state if the pipeline has a window handler.
     auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;               // TODO Philipp, do we need this check?
     auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : WindowManagerPtr();// TODO Philipp, do we need this check?
@@ -35,8 +57,8 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
     if (hasWindowHandler()) {
         if (winDef->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
             NES_DEBUG("Execute Pipeline Stage set processing time watermark from buffer=" << inputBuffer.getWatermark());
-            windowHandler->updateAllMaxTs(inputBuffer.getWatermark());
-        } else {//Eventtime
+            windowHandler->updateAllMaxTs(inputBuffer.getWatermark(), inputBuffer.getOriginId());
+        } else {//Event time
             auto distType = winDef->getDistributionType()->getType();
             std::string tsFieldName = "";
             if (distType == DistributionCharacteristic::Combining) {
@@ -73,7 +95,8 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
                 } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
                     auto val = layout->getValueField<uint64_t>(recordIndex, keyIndex)->read(inputBuffer);
                     maxWaterMark = std::max(maxWaterMark, val);
-                    NES_DEBUG("PipelineStage: maxWaterMark=" << maxWaterMark << " or " <<"  val=" << val);
+                    NES_DEBUG("PipelineStage: maxWaterMark=" << maxWaterMark << " or "
+                                                             << "  val=" << val);
                 } else {
                     NES_NOT_IMPLEMENTED();
                 }
@@ -83,9 +106,10 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
 
     //
     uint32_t ret = !executablePipeline->execute(inputBuffer, windowStage, windowManager, pipelineContext);
+
     if (maxWaterMark != 0) {
-        NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark);
-        windowHandler->updateAllMaxTs(maxWaterMark);
+        NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());
+        windowHandler->updateAllMaxTs(maxWaterMark, inputBuffer.getOriginId());
     }
     return ret;
 }

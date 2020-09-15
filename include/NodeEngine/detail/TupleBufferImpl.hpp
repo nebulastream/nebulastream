@@ -81,11 +81,25 @@ class BufferControlBlock {
      */
     int64_t getWatermark() const;
 
+
     /**
    * @brief method to set the watermark with a timestamp
    * @param value timestamp
    */
     void setWatermark(int64_t value);
+
+
+    /**
+     * @brief get id where this buffer was created
+     * @return origin id
+     */
+    const uint64_t getOriginId() const;
+
+    /**
+     * @brief set originId
+     * @param originId
+     */
+    void setOriginId(uint64_t originId);
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
@@ -95,8 +109,12 @@ class BufferControlBlock {
     std::atomic<uint32_t> referenceCounter;
     std::atomic<uint32_t> numberOfTuples;
     std::atomic<int64_t> watermark;
+    std::atomic<uint64_t> originId;
+
+  private:
     MemorySegment* owner;
     std::function<void(MemorySegment*)> recycleCallback;
+
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
   private:
     class ThreadOwnershipInfo {

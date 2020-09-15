@@ -2,17 +2,17 @@
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <atomic>
 #include <iostream>
 #include <memory>
 #include <utility>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
 WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)
-    : windowDefinition(std::move(windowDefinitionPtr)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)) {
+    : windowDefinition(std::move(windowDefinitionPtr)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)), originId(0) {
     this->thread.reset();
     windowTupleSchema = Schema::create()
                             ->addField(createField("start", UINT64))
@@ -34,12 +34,12 @@ bool WindowHandler::setup(PipelineStagePtr nextPipeline, uint32_t pipelineStageI
     return true;
 }
 
-void WindowHandler::updateAllMaxTs(uint64_t ts) {
-    NES_DEBUG("WindowHandler: updateAllMaxTs with ts=" << ts);
+void WindowHandler::updateAllMaxTs(uint64_t ts, uint64_t originId) {
+    NES_DEBUG("WindowHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
     auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
     for (auto& it : windowStateVariable->rangeAll()) {
-        NES_DEBUG("WindowHandler: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs() << " nextEdge=" << it.second->nextEdge);
-        it.second->updateMaxTs(ts);
+        NES_DEBUG("WindowHandler: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
+        it.second->updateMaxTs(ts, originId);
     }
 }
 
@@ -50,20 +50,20 @@ void WindowHandler::trigger() {
         std::string triggerType;
         if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
             triggerType = "Combining";
-        }
-        else
-        {
+        } else {
             triggerType = "Slicing";
         }
-            NES_DEBUG("WindowHandler: check widow trigger " << triggerType);
         auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
 
         // create the output tuple buffer
         // TODO can we make it get the buffer only once?
         auto tupleBuffer = bufferManager->getBufferBlocking();
+        NES_DEBUG("WindowHandler: check widow trigger " << triggerType << " origin id=" << originId);
+
+        tupleBuffer.setOriginId(originId);
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
-            NES_DEBUG("WindowHandler: " << triggerType <<" check key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs() << " nextEdge=" << it.second->nextEdge);
+            NES_DEBUG("WindowHandler: " << triggerType << " check key=" << it.first << " store=" << it.second << " nextEdge=" << it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
             this->aggregateWindows<int64_t, int64_t, int64_t>(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
@@ -72,7 +72,9 @@ void WindowHandler::trigger() {
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
         if (tupleBuffer.getNumberOfTuples() > 0) {
             NES_DEBUG("WindowHandler: " << triggerType << " Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
-                                                                    << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowTupleSchema) << std::endl);
+                                        << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowTupleSchema)
+                                        << " originId=" << tupleBuffer.getOriginId() << "type=" << triggerType
+                                        << std::endl);
             queryManager->addWorkForNextPipeline(
                 tupleBuffer,
                 this->nextPipeline);

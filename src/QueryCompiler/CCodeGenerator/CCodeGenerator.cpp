@@ -89,16 +89,20 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr schema, PipelineContextPtr co
     /* === declarations === */
     auto tupleBufferType = tf->createAnonymusDataType("NES::TupleBuffer");
     auto pipelineExecutionContextType = tf->createAnonymusDataType("NES::PipelineExecutionContext");
+
     VariableDeclaration varDeclarationInputBuffer = VariableDeclaration::create(
         tf->createReference(tupleBufferType), "inputTupleBuffer");
+
     VariableDeclaration varDeclarationPipelineExecutionContext = VariableDeclaration::create(
         tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
+
     VariableDeclaration varDeclarationState =
         VariableDeclaration::create(tf->createPointer(tf->createAnonymusDataType("void")), "state_var");
     VariableDeclaration varDeclarationWindowManager =
         VariableDeclaration::create(tf->createPointer(tf->createAnonymusDataType("NES::WindowManager")),
                                     "windowManager");
     auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
+
     code->varDeclarationInputBuffer = varDeclarationInputBuffer;
     code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
     code->varDeclarationResultBuffer = varDeclarationResultBuffer;
@@ -276,12 +280,18 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
     code->cleanupStmts.push_back(setNumberOfTuples(code->varDeclarationResultBuffer,
                                                    code->varDeclarationNumberOfResultTuples)
                                      .copy());
+
     // 2. copy watermark
     code->cleanupStmts.push_back(setWatermark(code->varDeclarationResultBuffer,
                                               code->varDeclarationInputBuffer)
                                      .copy());
 
-    // 3. emit the buffer to the runtime.
+    // 3. copy origin id
+    code->cleanupStmts.push_back(setOriginId(code->varDeclarationResultBuffer,
+                                              code->varDeclarationInputBuffer)
+                                     .copy());
+
+    // 4. emit the buffer to the runtime.
     code->cleanupStmts.push_back(emitTupleBuffer(code->varDeclarationExecutionContext,
                                                  code->varDeclarationResultBuffer)
                                      .copy());
@@ -322,6 +332,19 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
         setNumberOfTuples(code->varDeclarationResultBuffer,
                           code->varDeclarationNumberOfResultTuples)
             .copy());
+
+    // 1.1 set the origin id to the output buffer -> resultTupleBuffer.setOriginId(numberOfResultTuples);
+
+    thenStatement->addStatement(
+        setOriginId(code->varDeclarationResultBuffer,
+                     code->varDeclarationInputBuffer)
+            .copy());
+    // 1.1 set the watermar to the output buffer -> resultTupleBuffer.setWatermark(numberOfResultTuples);
+    thenStatement->addStatement(
+        setWatermark(code->varDeclarationResultBuffer,
+                     code->varDeclarationInputBuffer)
+            .copy());
+
     // 1.2 emit the output buffers to the runtime -> pipelineExecutionContext.emitBuffer(resultTupleBuffer);
     thenStatement->addStatement(emitTupleBuffer(code->varDeclarationExecutionContext,
                                                 code->varDeclarationResultBuffer)
@@ -677,6 +700,14 @@ BinaryOperatorStatement CCodeGenerator::setWatermark(VariableDeclaration tupleBu
     return VarRef(tupleBufferVariable).accessRef(setWatermarkFunctionCall);
 }
 
+BinaryOperatorStatement CCodeGenerator::setOriginId(VariableDeclaration tupleBufferVariable,
+                                                     VariableDeclaration inputBufferVariable) {
+    auto setOriginIdFunctionCall = FunctionCallStatement("setOriginId");
+    setOriginIdFunctionCall.addParameter(getOriginId(inputBufferVariable));
+    /* copy watermark */
+    return VarRef(tupleBufferVariable).accessRef(setOriginIdFunctionCall);
+}
+
 CCodeGenerator::~CCodeGenerator(){};
 
 BinaryOperatorStatement CCodeGenerator::emitTupleBuffer(VariableDeclaration pipelineContext,
@@ -691,6 +722,11 @@ BinaryOperatorStatement CCodeGenerator::getBuffer(VariableDeclaration tupleBuffe
 }
 BinaryOperatorStatement CCodeGenerator::getWatermark(VariableDeclaration tupleBufferVariable) {
     auto getWatermarkFunctionCall = FunctionCallStatement("getWatermark");
+    return VarRef(tupleBufferVariable).accessRef(getWatermarkFunctionCall);
+}
+
+BinaryOperatorStatement CCodeGenerator::getOriginId(VariableDeclaration tupleBufferVariable) {
+    auto getWatermarkFunctionCall = FunctionCallStatement("getOriginId");
     return VarRef(tupleBufferVariable).accessRef(getWatermarkFunctionCall);
 }
 

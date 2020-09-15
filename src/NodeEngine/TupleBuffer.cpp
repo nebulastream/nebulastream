@@ -97,6 +97,15 @@ int64_t TupleBuffer::getWatermark() {
     return controlBlock->getWatermark();
 }
 
+uint64_t TupleBuffer::getOriginId() {
+    return controlBlock->getOriginId();
+}
+
+void TupleBuffer::setOriginId(int64_t id)
+{
+    controlBlock->setOriginId(id);
+}
+
 void TupleBuffer::setWatermark(int64_t value) {
     controlBlock->setWatermark(value);
 }
