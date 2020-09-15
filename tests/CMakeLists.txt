@@ -236,6 +236,11 @@ add_executable(logical-source-expansion-rule-test "UnitTests/Optimizer/QueryRewr
 target_link_libraries(logical-source-expansion-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME logical-source-expansion-rule-test COMMAND logical-source-expansion-rule-test)
 
+### L0 Query Merger Rule Tests ###
+add_executable(l0-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/L0QueryMergerRuleTest.cpp")
+target_link_libraries(l0-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME l0-query-merger-rule-test COMMAND l0-query-merger-rule-test)
+
 ### Thread Naming Test ###
 add_executable(thread-naming-tests "UnitTests/ThreadNamingTest.cpp")
 target_link_libraries(thread-naming-tests nes ${GTEST_LIBRARIES})

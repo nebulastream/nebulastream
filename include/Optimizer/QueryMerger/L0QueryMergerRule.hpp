@@ -73,7 +73,7 @@ class L0QueryMergerRule {
   private:
     explicit L0QueryMergerRule();
 
-    bool isGQNMerged(GlobalQueryNodePtr targetGQNode, GlobalQueryNodePtr hostGQNode);
+    bool checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, GlobalQueryNodePtr hostGQNode, std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap);
     bool areSourceGQNodesEqual(std::vector<NodePtr> targetSourceGQNs, std::vector<NodePtr> hostSourceGQNs);
 };
 }// namespace NES
