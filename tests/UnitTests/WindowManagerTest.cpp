@@ -237,8 +237,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&) {
-        }) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {}) {
             // nop
         }
     };

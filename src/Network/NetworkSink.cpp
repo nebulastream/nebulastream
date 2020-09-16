@@ -34,7 +34,6 @@ SinkMediumTypes NetworkSink::getSinkMediumType() {
 
 NetworkSink::~NetworkSink() {
     NES_INFO("NetworkSink: Destructor called");
-    shutdown();
 }
 
 bool NetworkSink::writeData(TupleBuffer& inputBuffer, WorkerContext& workerContext) {
@@ -44,23 +43,41 @@ bool NetworkSink::writeData(TupleBuffer& inputBuffer, WorkerContext& workerConte
 }
 
 void NetworkSink::setup() {
-    NES_DEBUG("NetworkSink: Empty method setup() called " << nesPartition.toString());
-    queryManager->addReconfigurationTask(parentPlanId, ReconfigurationTask(Initialize, this));
+    NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString());
+    queryManager->addReconfigurationTask(parentPlanId, ReconfigurationTask(parentPlanId, Initialize,this));
 }
 
 void NetworkSink::shutdown() {
+    NES_DEBUG("NetworkSink: shutdown() called " << nesPartition.toString());
+    queryManager->addReconfigurationTask(parentPlanId, ReconfigurationTask(parentPlanId, Destroy, this));
 }
 
 const std::string NetworkSink::toString() const {
     return "NetworkSink: " + nesPartition.toString();
 }
 
-void NetworkSink::reconfigure(WorkerContext& workerContext) {
-    Reconfigurable::reconfigure(workerContext);
-    auto channel = networkManager->registerSubpartitionProducer(
-        nodeLocation, nesPartition,
-        waitTime, retryTimes);
-    workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
+void NetworkSink::reconfigure(ReconfigurationTask& task, WorkerContext& workerContext) {
+    NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString());
+    Reconfigurable::reconfigure(task, workerContext);
+    switch (task.getType()) {
+        case Initialize: {
+            auto channel = networkManager->registerSubpartitionProducer(
+                nodeLocation, nesPartition,
+                waitTime, retryTimes);
+            workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
+            NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread " << NesThread::getId);
+            break;
+        }
+        case Destroy: {
+            workerContext.releaseChannel(nesPartition.getOperatorId());
+            NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread " << NesThread::getId);
+            break;
+        }
+        default: {
+            NES_THROW_RUNTIME_ERROR("unsupported");
+        }
+    }
+
 }
 
 }// namespace Network

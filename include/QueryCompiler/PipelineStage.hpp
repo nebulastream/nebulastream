@@ -83,6 +83,8 @@ class PipelineStage {
 
     ~PipelineStage() = default;
 
+    bool isReconfiguration() const;
+
   public:
     static PipelineStagePtr create(uint32_t pipelineStageId,
                                    const QuerySubPlanId querySubPlanId,

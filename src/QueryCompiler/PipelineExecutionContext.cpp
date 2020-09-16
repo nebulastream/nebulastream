@@ -23,6 +23,7 @@ void PipelineExecutionContext::emitBuffer(TupleBuffer& outputBuffer, WorkerConte
     // call the function handler
     emitFunctionHandler(outputBuffer, workerContext);
 }
+
 WindowDefinitionPtr PipelineExecutionContext::getWindowDef() {
     return windowDef;
 }

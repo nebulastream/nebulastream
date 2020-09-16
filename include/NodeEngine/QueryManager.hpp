@@ -43,8 +43,14 @@ typedef std::shared_ptr<BufferManager> BufferManagerPtr;
  * @Limitations:
  *    - statistics do not cover intermediate buffers
  */
-class QueryManager : public std::enable_shared_from_this<QueryManager> {
+class QueryManager : public std::enable_shared_from_this<QueryManager>, public Reconfigurable {
   public:
+
+    enum ExecutionResult : uint8_t {
+        Ok = 0,
+        Error,
+        Finished
+    };
 
     QueryManager() = delete;
     QueryManager(const QueryManager&) = delete;
@@ -74,12 +80,13 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     bool deregisterQuery(QueryExecutionPlanPtr qep);
 
     /**
-     * @brief get task from task queue
+     * @brief process task from task queue
      * @param bool indicating if the thread pool is still running
-     * @return Pointer to task to execute
-     * if thread pool was shut down while waiting, pointer points to empty task
+     * @param worker context
+     * @return an execution result
+     *
      */
-    Task getWork(std::atomic<bool>& threadPool_running);
+    ExecutionResult step(std::atomic<bool>& running, WorkerContext& workerContext);
 
     /**
      * @brief add work to the query manager, this methods is source-driven and is called
@@ -97,6 +104,11 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      */
     void addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr nextPipeline);
 
+    void destroyCallback(ReconfigurationTask& task) override;
+
+    void reconfigure(ReconfigurationTask&, WorkerContext& context) override;
+
+  private:
     /**
      * @brief finalize task execution by:
      * 1.) update statistics (number of processed tuples and tasks)
@@ -105,7 +117,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      * @oaram reference to worker context
      */
     void completedWork(Task& task, WorkerContext& workerContext);
-
+  public:
     /**
      * @brief get general statistics of QueryManager and Buffer Manager
      */
@@ -164,15 +176,14 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     */
     bool startThreadPool();
 
-    void cleanup();
-    void cleanupUnsafe();
+    QueryManager::ExecutionResult terminateLoop(WorkerContext&);
 
     std::deque<Task> taskQueue;
     ThreadPoolPtr threadPool;
 
     std::map<std::string, std::unordered_set<QueryExecutionPlanPtr>> sourceIdToQueryMap;
 
-    std::unordered_set<QueryExecutionPlanPtr> runningQEPs;
+    std::unordered_map<QuerySubPlanId, QueryExecutionPlanPtr> runningQEPs;
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;

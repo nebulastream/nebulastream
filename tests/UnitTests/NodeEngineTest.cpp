@@ -108,18 +108,18 @@ class HandCodedExecutablePipeline : public ExecutablePipeline {
             "Test: query result = Processed Block:" << inBuf.getNumberOfTuples() << " count: " << count << " psum: "
                                                     << psum << " sum: " << sum);
 
-        TupleBuffer outputBuffer = context->allocateTupleBuffer();
-
-        NES_DEBUG("TEST: got buffer");
-        auto arr = outputBuffer.getBufferAs<uint32_t>();
-        arr[0] = static_cast<uint32_t>(sum.load());
-        outputBuffer.setNumberOfTuples(1);
-        NES_DEBUG("TEST: written " << arr[0]);
-        WorkerContext wctx{0};
-        context->emitBuffer(outputBuffer, wctx);
-
         if (sum == 10) {
             NES_DEBUG("TEST: result correct");
+
+            TupleBuffer outputBuffer = context->allocateTupleBuffer();
+
+            NES_DEBUG("TEST: got buffer");
+            auto arr = outputBuffer.getBufferAs<uint32_t>();
+            arr[0] = static_cast<uint32_t>(sum.load());
+            outputBuffer.setNumberOfTuples(1);
+            NES_DEBUG("TEST: written " << arr[0]);
+            WorkerContext wctx{0};
+            context->emitBuffer(outputBuffer, wctx);
             completedPromise.set_value(true);
         } else {
             NES_DEBUG("TEST: result wrong ");
@@ -127,7 +127,7 @@ class HandCodedExecutablePipeline : public ExecutablePipeline {
         }
 
         NES_DEBUG("TEST: return");
-        return 1;
+        return 0;
     }
 
 

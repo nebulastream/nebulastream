@@ -31,6 +31,8 @@ class WorkerContext {
 
     void storeChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel);
 
+    void releaseChannel(Network::OperatorId id);
+
     Network::OutputChannel* getChannel(Network::OperatorId ownerId);
 };
 }// namespace NES
