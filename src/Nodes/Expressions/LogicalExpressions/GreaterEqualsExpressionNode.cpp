@@ -11,12 +11,13 @@ ExpressionNodePtr GreaterEqualsExpressionNode::create(const ExpressionNodePtr le
 }
 
 bool GreaterEqualsExpressionNode::equal(const NodePtr rhs) const {
-    if (this->isIdentical(rhs)) {
-        return true;
+    if (rhs->instanceOf<GreaterEqualsExpressionNode>()) {
+        auto other = rhs->as<GreaterEqualsExpressionNode>();
+        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
     }
-
-    return rhs->instanceOf<GreaterEqualsExpressionNode>();
+    return false;
 }
+
 const std::string GreaterEqualsExpressionNode::toString() const {
     return "GreaterThenNode(" + stamp->toString() + ")";
 }

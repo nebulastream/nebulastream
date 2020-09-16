@@ -51,32 +51,32 @@ void QueryRequestProcessorService::start() {
                 QueryId queryId = queryPlan->getQueryId();
                 try {
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::MarkedForStop) {
-                        NES_INFO("QueryProcessingService: Request received for stopping the query " + queryId);
+                        NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                         bool successful = queryUndeploymentPhase->execute(queryId);
                         if (!successful) {
                             throw QueryUndeploymentException("Unable to stop the query " + queryId);
                         }
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
                     } else if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
-                        NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " + queryId << " status=" << queryCatalogEntry.getQueryStatusAsString());
+                        NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " << queryId << " status=" << queryCatalogEntry.getQueryStatusAsString());
                         queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
                         std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
-                        NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " + queryId);
+                        NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
                         queryPlan = queryRewritePhase->execute(queryPlan);
                         if (!queryPlan) {
                             throw Exception("QueryProcessingService: Failed during query rewrite phase for query: " + queryId);
                         }
-                        NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " + queryId);
+                        NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                         queryPlan = typeInferencePhase->execute(queryPlan);
                         if (!queryPlan) {
                             throw Exception("QueryProcessingService: Failed during Type inference phase for query: " + queryId);
                         }
-                        NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query: " + queryId);
+                        NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query: " << queryId);
                         bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
                         if (!placementSuccessful) {
                             throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for query: " + queryId);
                         }
-                        NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query: " + queryId);
+                        NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query: " << queryId);
                         bool refinementSuccessful = queryPlacementRefinementPhase->execute(queryPlan->getQueryId());
                         if (!refinementSuccessful) {
                             throw QueryPlacementException("QueryProcessingService: Failed to perform query refinement for query: " + queryId);

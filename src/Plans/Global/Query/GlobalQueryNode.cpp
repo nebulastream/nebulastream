@@ -136,4 +136,8 @@ std::map<QueryId, OperatorNodePtr> GlobalQueryNode::getMapOfQueryIdToOperator() 
     return queryToOperatorMap;
 }
 
+const std::vector<QueryId> GlobalQueryNode::getQueryIds() {
+    return queryIds;
+}
+
 }// namespace NES
