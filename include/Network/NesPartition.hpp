@@ -12,6 +12,7 @@ using SubpartitionId = uint64_t;
 using PartitionId = uint64_t;
 using OperatorId = uint64_t;
 using QueryId = uint64_t;
+
 class NesPartition {
   public:
     explicit NesPartition(QueryId queryId, OperatorId operatorId, PartitionId partitionId,

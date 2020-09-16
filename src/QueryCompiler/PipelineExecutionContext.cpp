@@ -8,7 +8,7 @@ namespace NES {
 
 
 PipelineExecutionContext::PipelineExecutionContext(
-    QueryExecutionPlanId queryId,
+    QuerySubPlanId queryId,
     BufferManagerPtr bufferManager,
     std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction)
     : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)) {

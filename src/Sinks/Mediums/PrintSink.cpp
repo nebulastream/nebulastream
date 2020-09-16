@@ -6,8 +6,8 @@
 #include <string>
 
 namespace NES {
-PrintSink::PrintSink(SinkFormatPtr format, std::ostream& pOutputStream)
-    : SinkMedium(format),
+PrintSink::PrintSink(SinkFormatPtr format, QuerySubPlanId parentPlanId, std::ostream& pOutputStream)
+    : SinkMedium(format, parentPlanId),
       outputStream(pOutputStream) {
 }
 
@@ -22,7 +22,7 @@ SinkMediumTypes PrintSink::getSinkMediumType() {
     return PRINT_SINK;
 }
 
-bool PrintSink::writeData(TupleBuffer& inputBuffer) {
+bool PrintSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     NES_DEBUG("PrintSink: getSchema medium " << toString() << " format " << sinkFormat->toString());
 

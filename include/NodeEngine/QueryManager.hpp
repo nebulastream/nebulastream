@@ -19,17 +19,36 @@
 #include <Sources/DataSource.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <Windows/WindowHandler.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
 
 namespace NES {
 
 class TupleBuffer;
 
 enum ReconfigurationType : uint8_t {
-    CreateSink,
+    Initialize,
 };
 
-struct ReconfigurationDescriptor {
+class ReconfigurationDescriptor {
+  public:
+    explicit ReconfigurationDescriptor(ReconfigurationType type, Reconfigurable* instance = nullptr) : type(type), instance(instance) {
+        // nop
+    }
+
+    ReconfigurationType getType() const {
+        return type;
+    }
+
+    Reconfigurable* getInstance() const {
+        return instance;
+    };
+
+  private:
+    /// type of the reconfiguration
     ReconfigurationType type;
+
+    /// pointer to reconfigurable instance
+    Reconfigurable* instance;
 };
 
 class CompiledExecutablePipeline;
@@ -156,7 +175,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      * @param queryExecutionPlanId: the local QEP to reconfigure
      * @param reconfigurationDescriptor: what to do
      */
-    bool addReconfigurationTask(QueryExecutionPlanId queryExecutionPlanId, ReconfigurationDescriptor reconfigurationDescriptor);
+    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationDescriptor reconfigurationDescriptor);
 
   private:
     friend class ThreadPool;

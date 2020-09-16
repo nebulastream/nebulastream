@@ -17,7 +17,7 @@ PipelineStage::PipelineStage(
     QueryExecutionContextPtr pipelineExecutionContext,
     PipelineStagePtr nextPipelineStage,
     WindowHandlerPtr windowHandler) : pipelineStageId(pipelineStageId),
-                                      qepId(std::move(qepId)),
+                                      qepId(qepId),
                                       executablePipeline(std::move(executablePipeline)),
                                       windowHandler(std::move(windowHandler)),
                                       nextStage(std::move(nextPipelineStage)),

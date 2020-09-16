@@ -5,6 +5,7 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <NodeEngine/NesThread.hpp>
 #include <functional>
 #include <string.h>
 namespace NES {
@@ -61,7 +62,7 @@ bool ThreadPool::start() {
         threads.emplace_back([this, i, barrier]() {
             setThreadName("Wrk-%d-%d", nodeId, i);
             barrier->wait();
-            runningRoutine(WorkerContext(i));
+            runningRoutine(WorkerContext(NesThread::getId()));
         });
     }
     barrier->wait();

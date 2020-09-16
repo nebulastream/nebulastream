@@ -9,13 +9,17 @@ namespace Network {
 
 NetworkSink::NetworkSink(
     SchemaPtr schema,
+    QuerySubPlanId parentPlanId,
     NetworkManagerPtr networkManager,
     const NodeLocation nodeLocation,
     NesPartition nesPartition,
     BufferManagerPtr bufferManager,
+    QueryManagerPtr queryManager,
     std::chrono::seconds waitTime,
     uint8_t retryTimes)
-    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager)), networkManager(std::move(networkManager)), nodeLocation(nodeLocation), nesPartition(nesPartition),
+    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId),
+      networkManager(std::move(networkManager)), nodeLocation(nodeLocation),
+      nesPartition(nesPartition), queryManager(queryManager),
       waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
 }
@@ -33,33 +37,30 @@ NetworkSink::~NetworkSink() {
     shutdown();
 }
 
-bool NetworkSink::writeData(TupleBuffer& inputBuffer) {
-    if (!outputChannel.get()) {
-        NES_DEBUG("NetworkSink: Initializing thread specific OutputChannel");
-        auto channel = networkManager->registerSubpartitionProducer(
-            nodeLocation, nesPartition,
-            waitTime, retryTimes);
-        outputChannel.reset(channel.release());
-    }
-
-    return outputChannel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+bool NetworkSink::writeData(TupleBuffer& inputBuffer, WorkerContext& workerContext) {
+    auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
+    NES_VERIFY(channel, "invalid channel on " << nesPartition);
+    return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
 }
 
 void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: Empty method setup() called " << nesPartition.toString());
+    queryManager->addReconfigurationTask(parentPlanId, ReconfigurationDescriptor(Initialize, this));
 }
 
 void NetworkSink::shutdown() {
-    if (outputChannel.get()) {
-        NES_DEBUG("NetworkSink: Shutdown called for thread specific OutputChannel.");
-        outputChannel.reset();
-    } else {
-        NES_DEBUG("NetworkSink: Shutdown called, but no OutputChannel has been initialized.");
-    }
 }
 
 const std::string NetworkSink::toString() const {
     return "NetworkSink: " + nesPartition.toString();
+}
+
+void NetworkSink::reconfigure(WorkerContext& workerContext) {
+    Reconfigurable::reconfigure(workerContext);
+    auto channel = networkManager->registerSubpartitionProducer(
+        nodeLocation, nesPartition,
+        waitTime, retryTimes);
+    workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
 }
 
 }// namespace Network

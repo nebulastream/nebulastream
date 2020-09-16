@@ -2,6 +2,8 @@
 #define INCLUDE_DATASINK_H_
 
 #include <API/Schema.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 
 namespace NES {
@@ -18,13 +20,13 @@ enum SinkMediumTypes {
  * @brief Base class for all data sinks in NES
  * @note this code is not thread safe
  */
-class SinkMedium {
+class SinkMedium : public Reconfigurable {
 
   public:
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat);
+    explicit SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId);
 
     /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
@@ -49,7 +51,15 @@ class SinkMedium {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    virtual bool writeData(TupleBuffer& inputBuffer) = 0;
+    virtual bool writeData(TupleBuffer& inputBuffer, WorkerContext& workerContext) = 0;
+
+    /**
+     * @brief get the id of the owning plan
+     * @return the id
+     */
+    QuerySubPlanId getParentPlanId() {
+        return parentPlanId;
+    }
 
     /**
      * @brief debug function for testing to get number of written buffers
@@ -110,6 +120,8 @@ class SinkMedium {
     SinkFormatPtr sinkFormat;
     bool append;
     std::atomic_bool schemaWritten;
+
+    QuerySubPlanId parentPlanId;
 
     size_t sentBuffer;
     size_t sentTuples;

@@ -3,6 +3,7 @@
 
 #include <API/Schema.hpp>
 #include <Windows/Watermark/Watermark.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
 #include <atomic>
 #include <mutex>
 #include <optional>
@@ -22,7 +23,6 @@ enum SourceType {
     ZMQ_SOURCE,
     CSV_SOURCE,
     KAFKA_SOURCE,
-    YSB_SOURCE,
     TEST_SOURCE,
     BINARY_SOURCE,
     SENSE_SOURCE,
@@ -34,7 +34,7 @@ enum SourceType {
 /**
  * @brief Base class for all data sources in NES
  */
-class DataSource {
+class DataSource : public Reconfigurable {
   public:
     /**
      * @brief public constructor for data source

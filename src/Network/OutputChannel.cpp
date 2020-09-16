@@ -1,9 +1,11 @@
 #include <Network/NetworkMessage.hpp>
+#include <Network/ExchangeProtocol.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqUtils.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
+#include <NodeEngine/NesThread.hpp>
 
 namespace NES {
 namespace Network {
@@ -19,12 +21,11 @@ std::unique_ptr<OutputChannel> OutputChannel::create(
     NesPartition nesPartition,
     ExchangeProtocol& protocol,
     std::chrono::seconds waitTime,
-    uint8_t retryTimes,
-    size_t threadId) {
+    uint8_t retryTimes) {
     bool connected = false;
     int linger = -1;
     try {
-        ChannelId channelId(nesPartition, threadId);
+        ChannelId channelId(nesPartition, NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
         NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << linger << ", id=" << channelId);
         zmqSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));

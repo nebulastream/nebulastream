@@ -1,7 +1,6 @@
 #ifndef NES_OUTPUTCHANNEL_HPP
 #define NES_OUTPUTCHANNEL_HPP
 
-#include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <iostream>
@@ -10,6 +9,8 @@
 
 namespace NES {
 namespace Network {
+
+class ExchangeProtocol;
 
 /**
  * NOT THREAD SAFE! DON'T SHARE AMONG THREADS!
@@ -46,7 +47,6 @@ class OutputChannel {
      * @param protocol the protocol implementation
      * @param waitTime the backoff time in case of failure when connecting
      * @param retryTimes the number of retries before the methods will raise error
-     * @param threadId the id of the thread accessing the channel (this will go away when #766 is in place)
      * @return
      */
     static OutputChannelPtr create(std::shared_ptr<zmq::context_t> zmqContext,
@@ -54,8 +54,7 @@ class OutputChannel {
                                    NesPartition nesPartition,
                                    ExchangeProtocol& protocol,
                                    std::chrono::seconds waitTime,
-                                   uint8_t retryTimes,
-                                   size_t threadId = std::hash<std::thread::id>{}(std::this_thread::get_id()));
+                                   uint8_t retryTimes);
 
     /**
      * @brief Send buffer to the destination defined in the constructor. Note that this method will internally

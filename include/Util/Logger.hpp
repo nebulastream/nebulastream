@@ -87,6 +87,20 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         }                                                                           \
     } while (0)
 
+
+#ifdef NES_DEBUG
+#define NES_VERIFY(CONDITION, TEXT)                                                 \
+    do {                                                                            \
+        if (!(CONDITION)) {                                                         \
+            NES::collectAndPrintStacktrace();                                       \
+            NES_FATAL_ERROR(TEXT);                                                  \
+            throw std::runtime_error("NES Runtime Error on condition " #CONDITION); \
+        }                                                                           \
+    } while (0)
+#else
+#define NES_VERIFY(...) ((void)0)
+#endif
+
 static void setupLogging(std::string logFileName, DebugLevel level) {
     std::cout << "SETUP_LOGGING" << std::endl;
     // create PatternLayout

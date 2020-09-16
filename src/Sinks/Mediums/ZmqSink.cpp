@@ -23,8 +23,9 @@ SinkMediumTypes ZmqSink::getSinkMediumType() {
 ZmqSink::ZmqSink(SinkFormatPtr format,
                  const std::string& host,
                  const uint16_t port,
-                 bool internal)
-    : SinkMedium(format),
+                 bool internal,
+                 QuerySubPlanId parentPlanId)
+    : SinkMedium(format, parentPlanId),
       host(host.substr(0, host.find(":"))),
       port(port),
       connected(false),
@@ -48,7 +49,7 @@ ZmqSink::~ZmqSink() {
     NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
 }
 
-bool ZmqSink::writeData(TupleBuffer& inputBuffer) {
+bool ZmqSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     connect();
     if (!connected) {

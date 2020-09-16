@@ -155,7 +155,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId query
             auto sinkDescriptor = sink->getSinkDescriptor();
             auto schema = sink->getOutputSchema();
             // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this());
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), queryExecutionId);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySink->toString());
         }

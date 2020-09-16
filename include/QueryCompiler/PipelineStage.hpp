@@ -3,9 +3,9 @@
 #include "CodeGenerator.hpp"
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-#include <QueryCompiler/QueryExecutionPlanId.hpp>
 #include <memory>
 #include <vector>
+#include <NodeEngine/WorkerContext.hpp>
 
 namespace NES {
 class TupleBuffer;

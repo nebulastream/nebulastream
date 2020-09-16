@@ -1,5 +1,6 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
+#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Util/Logger.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <iostream>
@@ -9,10 +10,12 @@
 namespace NES {
 using std::string;
 namespace detail {
-uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, void*, WindowManager*, PipelineExecutionContext&, WorkerContextRef) {
+uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, void*, WindowManager*, PipelineExecutionContext&, WorkerContextRef workerContext) {
+    NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint");
     auto* descriptor = buffer.getBufferAs<ReconfigurationDescriptor>();
-    switch (descriptor->type) {
-        case CreateSink: {
+    switch (descriptor->getType()) {
+        case Initialize: {
+            descriptor->getInstance()->reconfigure(workerContext);
             break;
         }
         default: NES_THROW_RUNTIME_ERROR("unsupported switch condition");
@@ -187,14 +190,15 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool QueryManager::addReconfigurationTask(QueryExecutionPlanId queryExecutionPlanId, ReconfigurationDescriptor descriptor) {
-    NES_DEBUG("QueryManager: QueryManager::getWork addReconfigurationTask get lock");
+bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationDescriptor descriptor) {
+    NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask begin");
     std::unique_lock<std::mutex> lock(workMutex);
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationDescriptor));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
     new (buffer.getBuffer()) ReconfigurationDescriptor(descriptor); // memcpy using copy ctor
-    auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, nullptr, nullptr);
+    auto pipelineContext = std::make_shared<PipelineExecutionContext>(queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&){});
+    auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
         taskQueue.emplace_back(pipeline, buffer);
     }
