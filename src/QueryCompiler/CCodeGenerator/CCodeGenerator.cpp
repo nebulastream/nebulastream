@@ -24,7 +24,7 @@
 
 namespace NES {
 
-CCodeGenerator::CCodeGenerator() : CodeGenerator() {}
+CCodeGenerator::CCodeGenerator() : CodeGenerator(), compiler(Compiler::create()) {}
 
 StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string structName, SchemaPtr schema) {
     /* struct definition for tuples */
@@ -669,8 +669,7 @@ ExecutablePipelinePtr CCodeGenerator::compile(GeneratedCodePtr code) {
     }
 
     CodeFile file = fileBuilder.addDeclaration(functionBuilder.build()).build();
-    Compiler compiler;
-    CompiledCodePtr compiledCode = compiler.compile(file.code, true /*debugging flag replace later*/);
+    CompiledCodePtr compiledCode = compiler->compile(file.code, true /*debugging flag replace later*/);
     return CompiledExecutablePipeline::create(compiledCode);
 }
 

@@ -14,6 +14,7 @@
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
 #include <Util/Logger.hpp>
+#include <filesystem>
 
 #pragma GCC diagnostic pop
 
@@ -93,9 +94,6 @@ std::string Compiler::formatAndPrintSource(const std::string& filename) {
     }
 
     auto formatCommand = std::string("clang-format ") + filename;
-    /* try a syntax highlighted output first */
-    /* command highlight available? */
-    ret = system("which highlight > /dev/null");
     std::array<char, 128> buffer;
     std::string result;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(formatCommand.c_str(), "r"), pclose);
@@ -105,12 +103,14 @@ std::string Compiler::formatAndPrintSource(const std::string& filename) {
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         result += buffer.data();
     }
-    NES_DEBUG("Compiler: generate code " << result);
+    NES_DEBUG("Compiler: generate code: \n" << result);
     return result;
 }
 
 void Compiler::writeSourceToFile(const std::string& filename,
                                  const std::string& source) {
+    auto path = std::filesystem::current_path().string();
+    NES_DEBUG("Compiler: write source to " << path <<"/"<< filename);
     std::ofstream result_file(filename, std::ios::trunc | std::ios::out);
     result_file << source;
 }
