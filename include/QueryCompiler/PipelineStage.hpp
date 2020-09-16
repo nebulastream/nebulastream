@@ -28,9 +28,6 @@ class WindowManager;
 class PipelineExecutionContext;
 typedef std::shared_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
-
 
 class PipelineStage {
   public:
@@ -85,11 +82,6 @@ class PipelineStage {
                                    QueryExecutionContextPtr pipelineContext,
                                    const PipelineStagePtr nextPipelineStage,
                                    const WindowHandlerPtr& windowHandler = WindowHandlerPtr());
-    /**
-     * @brief Get the window definition
-     * @return window definition
-     */
-    void setWinDef(const WindowDefinitionPtr& winDef);
 
   private:
     uint32_t pipelineStageId;
@@ -98,12 +90,8 @@ class PipelineStage {
     WindowHandlerPtr windowHandler;
     PipelineStagePtr nextStage;
     QueryExecutionContextPtr pipelineContext;
-    WindowDefinitionPtr winDef;
-    SchemaPtr schema;
 
   public:
-    void setSchema(const SchemaPtr& schema);
-
     bool hasWindowHandler();
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;

@@ -177,11 +177,11 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     auto windowDefinition = windowOperator->getWindowDefinition();
 
     if (windowDefinition->isKeyed()) {
-        windowDetails.set_onkey(windowDefinition->onKey->name);
+        windowDetails.set_onkey(windowDefinition->getOnKey()->name);
         windowDetails.set_numberofinputedges(windowDefinition->getNumberOfInputEdges());
     }
 
-    auto windowType = windowDefinition->windowType;
+    auto windowType = windowDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
     auto timeCharacteristicDetails = SerializableOperator_WindowDetails_TimeCharacteristic();
     if (timeCharacteristic->getType() == TimeCharacteristic::EventTime) {
@@ -204,10 +204,10 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
 
     // serialize aggregation
     auto windowAggregation = windowDetails.mutable_windowaggregation();
-    windowAggregation->set_asfield(windowDefinition->windowAggregation->as()->name);
-    windowAggregation->set_onfield(windowDefinition->windowAggregation->on()->name);
+    windowAggregation->set_asfield(windowDefinition->getWindowAggregation()->as()->name);
+    windowAggregation->set_onfield(windowDefinition->getWindowAggregation()->on()->name);
     // check if SUM aggregation
-    if (std::dynamic_pointer_cast<Sum>(windowDefinition->windowAggregation) != nullptr) {
+    if (std::dynamic_pointer_cast<Sum>(windowDefinition->getWindowAggregation()) != nullptr) {
         windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
     }
     auto distributionCharacteristics = SerializableOperator_WindowDetails_DistributionCharacteristic();

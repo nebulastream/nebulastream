@@ -44,17 +44,17 @@ bool WindowLogicalOperatorNode::inferSchema() {
     // infer the default input and output schema
     OperatorNode::inferSchema();
 
-    auto windowType = windowDefinition->windowType;
+    auto windowType = windowDefinition->getWindowType();
     if (windowDefinition->isKeyed()) {
         // check if key exist on input schema
-        auto key = windowDefinition->onKey;
+        auto key = windowDefinition->getOnKey();
         if (!inputSchema->has(key->name)) {
             NES_ERROR("inferSchema() Window Operator: key  field " << key->name << " does not exist!");
             return false;
         }
     }
     // check if aggregation field exist
-    auto windowAggregation = windowDefinition->windowAggregation;
+    auto windowAggregation = windowDefinition->getWindowAggregation();
     if (!inputSchema->has(windowAggregation->on()->name)) {
         NES_ERROR("Window Operator: aggregation field dose not exist!");
         return false;

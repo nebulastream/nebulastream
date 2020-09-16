@@ -39,5 +39,23 @@ uint64_t WindowDefinition::getNumberOfInputEdges() const {
 void WindowDefinition::setNumberOfInputEdges(uint64_t numberOfInputEdges) {
     this->numberOfInputEdges = numberOfInputEdges;
 }
+ WindowAggregationPtr& WindowDefinition::getWindowAggregation() {
+    return windowAggregation;
+}
+WindowTypePtr& WindowDefinition::getWindowType(){
+    return windowType;
+}
+AttributeFieldPtr& WindowDefinition::getOnKey(){
+    return onKey;
+}
+void WindowDefinition::setWindowAggregation(WindowAggregationPtr& windowAggregation) {
+    WindowDefinition::windowAggregation = windowAggregation;
+}
+void WindowDefinition::setWindowType(WindowTypePtr& windowType) {
+    WindowDefinition::windowType = windowType;
+}
+void WindowDefinition::setOnKey(AttributeFieldPtr& onKey) {
+    WindowDefinition::onKey = onKey;
+}
 
 }// namespace NES

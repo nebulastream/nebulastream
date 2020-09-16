@@ -128,7 +128,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     // For event time we use the maximal records ts as watermark.
     // For processing time we use the current wall clock as watermark.
     // TODO we should add a allowed lateness to support out of order events
-    auto windowTimeType = windowDefinition->windowType->getTimeCharacteristic();
+    auto windowTimeType = windowDefinition->getWindowType()->getTimeCharacteristic();
     auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMinWatermark();
     NES_DEBUG("WindowHandler::aggregateWindows: current watermark is=" << watermark << " minWatermark=" << store->getMinWatermark());
 
@@ -136,7 +136,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     auto windows = std::make_shared<std::vector<WindowState>>();
     // the window type adds result windows to the windows vectors
     if (store->getLastWatermark() == 0) {
-        TumblingWindow* tumb = dynamic_cast<TumblingWindow*>(windowDefinition->windowType.get());
+        TumblingWindow* tumb = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
         auto initWatermark = watermark < tumb->getSize().getTime() ? 0 : watermark - tumb->getSize().getTime();
         NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << initWatermark);
         store->setLastWatermark(initWatermark);
@@ -162,7 +162,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
             NES_DEBUG("WindowHandler: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermark to last=" << store->getLastWatermark());
             watermark = store->getLastWatermark();
         }
-        windowDefinition->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);//watermark
+        windowDefinition->getWindowType()->triggerWindows(windows, store->getLastWatermark(), watermark);//watermark
         NES_DEBUG("WindowHandler: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows->size());
 
         // allocate partial final aggregates for each window
@@ -177,7 +177,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
                     NES_DEBUG("WindowHandler CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
                     // TODO Because of this condition we currently only support SUM aggregations
-                    if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
+                    if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->getWindowAggregation().get())) {
                         if (partialFinalAggregates.size() <= windowId) {
                             // initial the partial aggregate
                             NES_DEBUG("WindowHandler CC: assign partialAggregates[sliceId]=" << partialAggregates[sliceId] << " old value was " << partialFinalAggregates[windowId]);
@@ -199,7 +199,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
             auto window = (*windows)[i];
             // TODO Because of this condition we currently only support SUM aggregations
             FinalAggregateType value;
-            if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
+            if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->getWindowAggregation().get())) {
                 value = sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
             } else {
                 NES_FATAL_ERROR("Window Handler: could not cast aggregation type");

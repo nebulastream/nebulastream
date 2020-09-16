@@ -8,6 +8,10 @@ namespace NES {
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
+/**
+ * @brief this class represents the intermediate merger for distributed windowing that is deployed on the worker
+ * nodes between the slicer and combiner to do intermediate merging
+ */
 class SliceMergingOperator : public WindowLogicalOperatorNode {
   public:
     SliceMergingOperator(const WindowDefinitionPtr windowDefinition);

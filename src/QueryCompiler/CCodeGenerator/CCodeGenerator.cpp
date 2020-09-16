@@ -396,7 +396,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration =
-            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
+            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->getOnKey()->name);
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
                                                  .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                      VarRef(
@@ -432,13 +432,13 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
     // get current timestamp
     // TODO add support for event time
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
-    if (window->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+    if (window->getWindowType()->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
         auto getCurrentTs = FunctionCallStatement("NES::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
     } else {
         auto tsVariableDeclaration =
-            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->windowType->getTimeCharacteristic()->getField()->name);
+            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->getWindowType()->getTimeCharacteristic()->getField()->name);
         auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration)
                                                   .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                       VarRef(tsVariableDeclaration)));
@@ -476,7 +476,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
 
     // update partial aggregate
     const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
-    window->windowAggregation->compileLiftCombine(
+    window->getWindowAggregation()->compileLiftCombine(
         context->code->currentCodeInsertionPoint,
         partialRef,
         context->code->structDeclaratonInputTuple,
@@ -573,12 +573,12 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
     // get current timestamp
     // TODO add support for event time
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "start");
-    if (window->windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+    if (window->getWindowType()->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(VarRef(currentTimeVariableDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
     } else {
         currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "start");
-//        auto tsVariableDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(window->windowType->getTimeCharacteristic()->getField()->name);
+//        auto tsVariableDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(window->getWindowType()->getTimeCharacteristic()->getField()->name);
         auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration)
                                                   .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                       VarRef(currentTimeVariableDeclaration)));
@@ -616,7 +616,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
 
     // update partial aggregate
     const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
-    window->windowAggregation->compileLiftCombine(
+    window->getWindowAggregation()->compileLiftCombine(
         context->code->currentCodeInsertionPoint,
         partialRef,
         context->code->structDeclaratonInputTuple,

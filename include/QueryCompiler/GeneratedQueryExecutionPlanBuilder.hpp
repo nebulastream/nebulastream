@@ -137,12 +137,16 @@ class GeneratedQueryExecutionPlanBuilder {
     QuerySubPlanId getQuerySubPlanId() const;
 
     /**
-     * @brief Get the window definition
-     * @return window definition
+     * @brief Getter/setter the window definition
      */
     GeneratedQueryExecutionPlanBuilder& setWinDef(const WindowDefinitionPtr& winDef);
+    WindowDefinitionPtr getWinDef();
 
+    /**
+     * @brief Getter/setter the input schema
+     */
     GeneratedQueryExecutionPlanBuilder& setSchema(const SchemaPtr& schema);
+    SchemaPtr getSchema();
 
   private:
     GeneratedQueryExecutionPlanBuilder();
@@ -157,6 +161,10 @@ class GeneratedQueryExecutionPlanBuilder {
     std::vector<PipelineStagePtr> stages;
     std::vector<OperatorNodePtr> leaves;
     WindowDefinitionPtr winDef;
+
+  public:
+
+  private:
     SchemaPtr schema;
 };
 }

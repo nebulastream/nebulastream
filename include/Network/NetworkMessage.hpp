@@ -145,7 +145,7 @@ class DataBufferMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kDataBuffer;
 
-    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords, uint32_t originId) : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId) {
+    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords, uint64_t originId) : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId) {
     }
 
     /**
@@ -168,14 +168,14 @@ class DataBufferMessage {
       * @brief get the origin id within the current BufferMessage
       * @return the origin id
     */
-    const uint32_t getOriginId() const {
+    const uint64_t getOriginId() const {
         return originId;
     }
 
   private:
     const uint32_t payloadSize;
     const uint32_t numOfRecords;
-    const uint32_t originId;
+    const uint64_t originId;
 };
 
 class NesNetworkError : public std::runtime_error {

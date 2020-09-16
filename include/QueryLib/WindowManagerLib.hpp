@@ -110,7 +110,7 @@ class WindowSliceStore {
         lastWatermark = last_watermark;
     }
 
-    uint64_t getMaxTs(uint64_t originId) {
+    uint32_t getMaxTs(uint32_t originId) {
         return originIdToMaxTsMap[originId];
     };
 
@@ -169,9 +169,9 @@ class WindowManager {
             // set last watermark to current ts for processing time
             store->setLastWatermark(ts - allowedLateness);//TODO: I am not sure if we still need this
 
-            store->nextEdge = windowDefinition->windowType->calculateNextWindowEnd(ts - allowedLateness);
-            store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->windowType->getTime() , store->nextEdge));
-            NES_DEBUG("sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - windowDefinition->windowType->getTime() << " nextWindowEnd=" << store->nextEdge);
+            store->nextEdge = windowDefinition->getWindowType()->calculateNextWindowEnd(ts - allowedLateness);
+            store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->getWindowType()->getTime() , store->nextEdge));
+            NES_DEBUG("sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - windowDefinition->getWindowType()->getTime() << " nextWindowEnd=" << store->nextEdge);
         }
 
         NES_DEBUG("sliceStream check store-nextEdge=" << store->nextEdge << " <=" << " ts=" << ts);
@@ -182,8 +182,8 @@ class WindowManager {
             auto& sliceMetaData = store->getSliceMetadata();
             auto newStart = sliceMetaData[currentSlice].getEndTs();
             NES_DEBUG("sliceStream newStart=" << sliceMetaData[currentSlice].getEndTs());
-            auto nextEdge = windowDefinition->windowType->calculateNextWindowEnd(ts);
-            NES_DEBUG("sliceStream nextEdge=" << windowDefinition->windowType->calculateNextWindowEnd(ts));
+            auto nextEdge = windowDefinition->getWindowType()->calculateNextWindowEnd(ts);
+            NES_DEBUG("sliceStream nextEdge=" << windowDefinition->getWindowType()->calculateNextWindowEnd(ts));
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }
