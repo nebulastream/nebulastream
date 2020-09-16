@@ -26,6 +26,7 @@ class SimplePatternTest : public testing::Test {
 
     void SetUp() {
         rpcPort = rpcPort + 30;
+        restPort = restPort + 2;
     }
 
     void TearDown() {
@@ -160,21 +161,19 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    NES_DEBUG("coordinator started successfully");
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("worker 1 started successfully");
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-
-    NES_DEBUG("start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), "127.0.0.1",
-                                                    port + 20, port + 21, NodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
+    NES_INFO("QueryDeploymentTest: Start worker 2");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_DEBUG("worker 2 started successfully");
+    NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -189,7 +188,6 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     out.close();
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
     wrk2->registerLogicalStream("QnV", testSchemaFileName);
-
 
     //register physical stream R2000070
     PhysicalStreamConfig conf70;
@@ -223,6 +221,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
     ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
