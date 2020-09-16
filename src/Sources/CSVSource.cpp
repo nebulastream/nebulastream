@@ -6,12 +6,12 @@
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <assert.h>
 #include <boost/algorithm/string.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <Util/UtilityFunctions.hpp>
 namespace NES {
 
 CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
@@ -63,12 +63,9 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
 
     size_t generated_tuples_this_pass;
     //fill buffer maximally
-    if(numberOfTuplesToProducePerBuffer == 0)
-    {
+    if (numberOfTuplesToProducePerBuffer == 0) {
         generated_tuples_this_pass = buf.getBufferSize() / tupleSize;
-    }
-    else
-    {
+    } else {
         generated_tuples_this_pass = numberOfTuplesToProducePerBuffer;
     }
     NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generated_tuples_this_pass);

@@ -1,8 +1,8 @@
 #ifndef NES_DistributeWindowRule_HPP
 #define NES_DistributeWindowRule_HPP
 
-#include <memory>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+#include <memory>
 
 namespace NES {
 class QueryPlan;

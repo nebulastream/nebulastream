@@ -122,10 +122,10 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setSchem
     this->schema = schema;
     return *this;
 }
-WindowDefinitionPtr GeneratedQueryExecutionPlanBuilder::getWinDef(){
+WindowDefinitionPtr GeneratedQueryExecutionPlanBuilder::getWinDef() {
     return winDef;
 }
-SchemaPtr GeneratedQueryExecutionPlanBuilder::getSchema(){
+SchemaPtr GeneratedQueryExecutionPlanBuilder::getSchema() {
     return schema;
 }
 }// namespace NES

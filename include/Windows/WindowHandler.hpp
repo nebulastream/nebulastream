@@ -157,8 +157,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
         //generates a list of windows that have to be outputted
 
         NES_DEBUG("WindowHandler: trigger test if mappings=" << store->getNumberOfMappings() << " < inputEdges=" << windowDefinition->getNumberOfInputEdges());
-        if(store->getNumberOfMappings() < windowDefinition->getNumberOfInputEdges())
-        {
+        if (store->getNumberOfMappings() < windowDefinition->getNumberOfInputEdges()) {
             NES_DEBUG("WindowHandler: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermark to last=" << store->getLastWatermark());
             watermark = store->getLastWatermark();
         }

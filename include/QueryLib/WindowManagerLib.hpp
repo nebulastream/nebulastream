@@ -1,10 +1,10 @@
 #include <API/AbstractWindowDefinition.hpp>
 #include <API/Window/TimeCharacteristic.hpp>
 #include <State/StateVariable.hpp>
+#include <Util/Logger.hpp>
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Util/Logger.hpp>
 #ifndef WINDOWMANAGERLIB_HPP
 #define WINDOWMANAGERLIB_HPP
 
@@ -74,7 +74,8 @@ class WindowSliceStore {
      * @param slice
      */
     inline void appendSlice(SliceMetaData slice) {
-        NES_DEBUG("appendSlice " << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
+        NES_DEBUG("appendSlice "
+                  << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
         sliceMetaData.push_back(slice);
         partialAggregates.push_back(defaultValue);
     }
@@ -119,14 +120,13 @@ class WindowSliceStore {
     };
 
     uint64_t getMinWatermark() {
-        if(originIdToMaxTsMap.empty())
-        {
+        if (originIdToMaxTsMap.empty()) {
             NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet");
             return 0;//TODO: we have to figure out how many downstream positions are there
         }
-        std::map<uint64_t, uint64_t>::iterator min
-            = std::min_element(originIdToMaxTsMap.begin(),originIdToMaxTsMap.end(),[]
-                               (const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b)->bool{ return a.second < b.second; } );
+        std::map<uint64_t, uint64_t>::iterator min = std::min_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(), [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
+            return a.second < b.second;
+        });
         NES_DEBUG("getMinWatermark() return min =" << min->second);
         return min->second;
     };
@@ -149,7 +149,7 @@ class WindowManager {
 
   public:
     WindowManager(WindowDefinitionPtr windowDefinition)
-        : windowDefinition(std::move(windowDefinition)), allowedLateness(0){}
+        : windowDefinition(std::move(windowDefinition)), allowedLateness(0) {}
 
     /**
      * Creates slices for in the window slice store if needed.
@@ -162,7 +162,7 @@ class WindowManager {
 
         NES_DEBUG("sliceStream for ts=" << ts);
         // updates the maximal record ts
-//        store->updateMaxTs(ts);//TODO I am not use if we still need this
+        //        store->updateMaxTs(ts);//TODO I am not use if we still need this
 
         // check if the slice store is empty
         if (store->empty()) {
@@ -170,11 +170,12 @@ class WindowManager {
             store->setLastWatermark(ts - allowedLateness);//TODO: I am not sure if we still need this
 
             store->nextEdge = windowDefinition->getWindowType()->calculateNextWindowEnd(ts - allowedLateness);
-            store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->getWindowType()->getTime() , store->nextEdge));
+            store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->getWindowType()->getTime(), store->nextEdge));
             NES_DEBUG("sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - windowDefinition->getWindowType()->getTime() << " nextWindowEnd=" << store->nextEdge);
         }
 
-        NES_DEBUG("sliceStream check store-nextEdge=" << store->nextEdge << " <=" << " ts=" << ts);
+        NES_DEBUG("sliceStream check store-nextEdge=" << store->nextEdge << " <="
+                                                      << " ts=" << ts);
         // append new slices if needed
         while (store->nextEdge <= ts) {
             auto currentSlice = store->getCurrentSliceIndex();

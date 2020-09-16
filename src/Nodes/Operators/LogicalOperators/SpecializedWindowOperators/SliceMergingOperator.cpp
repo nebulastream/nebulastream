@@ -1,6 +1,6 @@
-#include <Nodes/Operators/SpecializedWindowOperators/SliceMergingOperator.hpp>
 #include <API/Schema.hpp>
 #include <API/Window/WindowDefinition.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/SliceMergingOperator.hpp>
 namespace NES {
 
 LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition) {
@@ -10,7 +10,6 @@ LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const WindowDef
 SliceMergingOperator::SliceMergingOperator(const WindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
 }
-
 
 const std::string SliceMergingOperator::toString() const {
     std::stringstream ss;

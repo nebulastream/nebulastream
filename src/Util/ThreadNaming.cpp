@@ -7,8 +7,8 @@
 #include <unistd.h>
 #ifdef _POSIX_THREADS
 #define HAS_POSIX_THREAD
-#include <pthread.h>
 #include <Util/Logger.hpp>
+#include <pthread.h>
 #include <string>
 #else
 #error "Unsupported architecture"

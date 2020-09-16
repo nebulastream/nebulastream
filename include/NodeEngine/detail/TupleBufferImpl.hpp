@@ -81,13 +81,11 @@ class BufferControlBlock {
      */
     int64_t getWatermark() const;
 
-
     /**
    * @brief method to set the watermark with a timestamp
    * @param value timestamp
    */
     void setWatermark(int64_t value);
-
 
     /**
      * @brief get id where this buffer was created

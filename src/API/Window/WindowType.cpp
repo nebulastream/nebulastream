@@ -31,9 +31,7 @@ WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeM
     return std::make_shared<TumblingWindow>(TumblingWindow(timeCharacteristic, size));
 }
 
-
-uint64_t TumblingWindow::getTime() const
-{
+uint64_t TumblingWindow::getTime() const {
     return size.getTime();
 }
 
@@ -58,8 +56,7 @@ TimeMeasure TumblingWindow::getSize() {
     return size;
 }
 
-uint64_t SlidingWindow::getTime() const
-{
+uint64_t SlidingWindow::getTime() const {
     NES_NOT_IMPLEMENTED();
 }
 
@@ -71,7 +68,6 @@ SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasu
 WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
     return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));
 }
-
 
 void SlidingWindow::triggerWindows(WindowListPtr,
                                    uint64_t,
@@ -94,11 +90,9 @@ void SessionWindow::triggerWindows(WindowListPtr,
     NES_NOT_IMPLEMENTED();
 }
 
-uint64_t SessionWindow::getTime() const
-{
+uint64_t SessionWindow::getTime() const {
     NES_NOT_IMPLEMENTED();
 }
-
 
 WindowState::WindowState(uint64_t start, uint64_t an_end) : start(start), end(an_end) {}
 

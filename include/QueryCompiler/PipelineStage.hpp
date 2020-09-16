@@ -28,7 +28,6 @@ class WindowManager;
 class PipelineExecutionContext;
 typedef std::shared_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
 
-
 class PipelineStage {
   public:
     PipelineStage(

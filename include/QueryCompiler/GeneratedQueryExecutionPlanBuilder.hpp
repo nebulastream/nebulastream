@@ -2,14 +2,13 @@
 #define NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_
 
 #include <Common/ForwardDeclaration.hpp>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 #include <map>
 #include <memory>
 #include <vector>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-
 
 namespace NES {
 
@@ -163,9 +162,8 @@ class GeneratedQueryExecutionPlanBuilder {
     WindowDefinitionPtr winDef;
 
   public:
-
   private:
     SchemaPtr schema;
 };
-}
+}// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_

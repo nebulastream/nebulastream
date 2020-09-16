@@ -69,7 +69,6 @@ SourceDescriptorPtr TypeInferencePhase::createSourceDescriptor(std::string strea
     size_t numBuffers = physicalStream->getNumberOfBuffersToProduce();
     size_t numberOfTuplesToProducePerBuffer = physicalStream->getNumberOfTuplesToProducePerBuffer();
 
-
     NES_DEBUG("TypeInferencePhase: logical stream name=" << streamName << " pyhName=" << name
                                                          << " srcType=" << type << " srcConf=" << conf
                                                          << " frequency=" << frequency << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer << " numBuffers=" << numBuffers);

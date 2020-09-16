@@ -101,8 +101,7 @@ uint64_t TupleBuffer::getOriginId() {
     return controlBlock->getOriginId();
 }
 
-void TupleBuffer::setOriginId(uint64_t id)
-{
+void TupleBuffer::setOriginId(uint64_t id) {
     controlBlock->setOriginId(id);
 }
 
