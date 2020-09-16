@@ -13,6 +13,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
+#include <thread>
 
 namespace po = boost::program_options;
 
@@ -44,7 +45,10 @@ int main(int argc, char** argv) {
     std::string dataPort = "3001";
     std::string coordinatorIp = "127.0.0.1";
     std::string localWorkerIp = "127.0.0.1";
-    uint16_t numberOfCpus = UINT16_MAX;
+
+    // set the default numberOfCpu to the number of processor
+    const auto processorCount = std::thread::hardware_concurrency();
+    uint16_t numberOfCpus = processorCount;
 
     std::string sourceType = "";
     std::string sourceConfig = "";
@@ -85,7 +89,7 @@ int main(int argc, char** argv) {
         ("localWorkerIp", po::value<string>(&localWorkerIp)->default_value(localWorkerIp),
          "Set worker ip (default: 127.0.0.1)")
         ("numberOfCpus", po::value<uint16_t>(&numberOfCpus)->default_value(numberOfCpus),
-         "Set the computing capacity (default UINT16_MAX).")
+         "Set the computing capacity (default: number of processor.")
         ("help", "Display help message");
 
     po::variables_map vm;
