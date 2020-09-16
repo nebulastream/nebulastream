@@ -2,16 +2,12 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Nodes/Node.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Catalogs/StreamCatalog.hpp>
