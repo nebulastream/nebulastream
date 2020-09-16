@@ -19,8 +19,11 @@ class UpdateTopologyRemoteTest : public testing::Test {
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 
-    uint16_t coordinatorNumberOfCpus = 128;
-    uint16_t workerNumberOfCpus = 16;
+    // set the default numberOfCpu to the number of processor
+    const uint16_t processorCount = std::thread::hardware_concurrency();
+
+    uint16_t coordinatorNumberOfCpus = processorCount * 2;
+    uint16_t workerNumberOfCpus = processorCount;
 
     static void SetUpTestCase() {
         NES::setupLogging("UpdateTopologyRemoteTest.log", NES::LOG_DEBUG);

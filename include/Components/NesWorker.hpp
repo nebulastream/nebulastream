@@ -24,6 +24,16 @@ class NesWorker {
               NodeType type);
 
     /**
+     * @brief constructor with default numberOfCpus
+     */
+    NesWorker(std::string coordinatorIp,
+              std::string coordinatorPort,
+              std::string localWorkerIp,
+              uint16_t localWorkerRpcPort,
+              uint16_t localWorkerZmqPort,
+              NodeType type);
+
+    /**
      * @brief default dtor
      */
     ~NesWorker();

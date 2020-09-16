@@ -37,6 +37,20 @@ NesWorker::NesWorker(
     NES_DEBUG("NesWorker: constructed");
 }
 
+// constructor with default numberOfCpus set to the number of processors
+NesWorker::NesWorker(
+    std::string coordinatorIp,
+    std::string coordinatorPort,
+    std::string localWorkerIp,
+    uint16_t localWorkerRpcPort,
+    uint16_t localWorkerZmqPort,
+    NodeType type) :NesWorker(coordinatorIp,
+                               coordinatorPort,
+                               localWorkerIp,
+                               localWorkerRpcPort,
+                               localWorkerZmqPort,
+                               std::thread::hardware_concurrency(),
+                               type) {}
 NesWorker::~NesWorker() {
     NES_DEBUG("NesWorker::~NesWorker()");
     NES_DEBUG("NesWorker::~NesWorker() use count of node engine: " << nodeEngine.use_count());
