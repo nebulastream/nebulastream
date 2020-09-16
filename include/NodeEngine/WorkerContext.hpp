@@ -1,9 +1,15 @@
 #ifndef NES_WORKERCONTEXT_HPP_
 #define NES_WORKERCONTEXT_HPP_
 
+#include <NodeEngine/NesThread.hpp>
 #include <cstdint>
+#include <unordered_map>
+#include <Network/NesPartition.hpp>
+#include <Network/OutputChannel.hpp>
+#include <memory>
 
 namespace NES {
+
 
 /**
  * @brief A WorkerContext represents the current state of a worker thread
@@ -11,17 +17,21 @@ namespace NES {
  * a thread-safe manner by the ThreadPool.
  */
 class WorkerContext {
+  private:
 
-    uint32_t worker_id;
+    /// the id of this worker context (unique per thread).
+    uint32_t workerId;
+
+    std::unordered_map<Network::OperatorId, Network::OutputChannelPtr> channels;
 
   public:
-    explicit WorkerContext(uint32_t worker_id) : worker_id(worker_id) {
-        // nop
-    }
+    explicit WorkerContext(uint32_t workerId);
 
-    uint32_t id() const {
-        return worker_id;
-    }
+    uint32_t getId() const;
+
+    void storeChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel);
+
+    Network::OutputChannel* getChannel(Network::OperatorId ownerId);
 };
 }// namespace NES
 #endif//NES_WORKERCONTEXT_HPP_

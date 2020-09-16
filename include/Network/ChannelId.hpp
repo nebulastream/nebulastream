@@ -2,12 +2,15 @@
 #define NES_INCLUDE_NETWORK_CHANNELID_HPP_
 
 #include <Network/NesPartition.hpp>
+#include <NodeEngine/NesThread.hpp>
+
 namespace NES {
 namespace Network {
 
 class ChannelId {
   public:
-    ChannelId(NesPartition nesPartition, size_t threadId) : nesPartition(nesPartition), threadId(threadId) {
+    explicit ChannelId(NesPartition nesPartition, uint32_t threadId) : nesPartition(nesPartition), threadId(threadId) {
+        // nop
     }
 
     NesPartition getNesPartition() const {
@@ -28,7 +31,7 @@ class ChannelId {
 
   private:
     const NesPartition nesPartition;
-    const size_t threadId;
+    const uint32_t threadId;
 };
 }// namespace Network
 }// namespace NES

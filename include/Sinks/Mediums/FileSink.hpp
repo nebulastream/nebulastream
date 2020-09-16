@@ -20,7 +20,7 @@ class FileSink : public SinkMedium {
      * @param filePath location of file on sink server
      * @param modus of writting (overwrite or append)
      */
-    FileSink(SinkFormatPtr format, std::string filePath, bool append);
+    explicit FileSink(SinkFormatPtr format, std::string filePath, bool append, QuerySubPlanId parentPlanId);
 
     /**
      * @brief dtor
@@ -44,7 +44,7 @@ class FileSink : public SinkMedium {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    bool writeData(TupleBuffer& input_buffer);
+    bool writeData(TupleBuffer& input_buffer, WorkerContextRef);
 
     /**
      * @brief override the toString method for the file output sink

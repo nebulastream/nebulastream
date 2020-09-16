@@ -9,5 +9,7 @@ add_source_nes(
         detail/TupleBufferImpl.cpp
         SignalHandling.cpp
         QueryStatistics.cpp
+        NesThread.cpp
+        WorkerContext.cpp
 )
 add_subdirectory(MemoryLayout)

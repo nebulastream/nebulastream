@@ -24,15 +24,23 @@ class NetworkSink : public SinkMedium {
      * @param nodeLocation
      * @param nesPartition
      */
-    explicit NetworkSink(SchemaPtr schema, NetworkManagerPtr networkManager, const NodeLocation nodeLocation,
-                         NesPartition nesPartition, BufferManagerPtr bufferManager, std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes = 5);
+    explicit NetworkSink(SchemaPtr schema,
+                         QuerySubPlanId parentPlanId,
+                         NetworkManagerPtr networkManager,
+                         const NodeLocation nodeLocation,
+                         NesPartition nesPartition,
+                         BufferManagerPtr bufferManager,
+                         QueryManagerPtr queryManager,
+                         std::chrono::seconds waitTime = std::chrono::seconds(2),
+                         uint8_t retryTimes = 5);
 
     ~NetworkSink();
 
-    bool writeData(TupleBuffer& inputBuffer) override;
+    bool writeData(TupleBuffer& inputBuffer, WorkerContext& workerContext) override;
 
     const std::string toString() const override;
 
+    void reconfigure(WorkerContext& workerContext) override;
     void setup() override;
     void shutdown() override;
 
@@ -45,9 +53,8 @@ class NetworkSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType();
 
   private:
-    boost::thread_specific_ptr<OutputChannel> outputChannel;
-
     NetworkManagerPtr networkManager;
+    QueryManagerPtr queryManager;
     const NodeLocation nodeLocation;
     NesPartition nesPartition;
 

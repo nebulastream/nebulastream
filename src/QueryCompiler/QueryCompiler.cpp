@@ -145,9 +145,9 @@ void QueryCompiler::compilePipelineStages(
             executionContext = std::make_shared<PipelineExecutionContext>(
                 builder.getQueryId(),
                 builder.getBufferManager(),
-                [sinks](TupleBuffer& buffer, WorkerContextRef) {
+                [sinks](TupleBuffer& buffer, WorkerContextRef workerContext) {
                     for (auto& sink : sinks) {
-                        sink->writeData(buffer);
+                        sink->writeData(buffer, workerContext);
                     }
                 });
             if (builder.getWinDef() != nullptr) {

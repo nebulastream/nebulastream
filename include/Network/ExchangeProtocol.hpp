@@ -1,7 +1,6 @@
 #ifndef NES_EXCHANGEPROTOCOL_HPP
 #define NES_EXCHANGEPROTOCOL_HPP
 
-#include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Network/PartitionManager.hpp>
 #include <NodeEngine/QueryManager.hpp>

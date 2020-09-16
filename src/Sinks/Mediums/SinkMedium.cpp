@@ -6,8 +6,9 @@
 
 namespace NES {
 
-SinkMedium::SinkMedium(SinkFormatPtr sinkFormat)
+SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId)
     : sinkFormat(std::move(sinkFormat)),
+      parentPlanId(parentPlanId),
       sentBuffer(0),
       sentTuples(0),
       schemaWritten(false),
@@ -17,9 +18,11 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat)
 }
 
 size_t SinkMedium::getNumberOfWrittenOutBuffers() {
+    std::unique_lock lock(writeMutex);
     return sentBuffer;
 }
 size_t SinkMedium::getNumberOfWrittenOutTuples() {
+    std::unique_lock lock(writeMutex);
     return sentTuples;
 }
 

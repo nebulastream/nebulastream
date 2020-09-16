@@ -15,8 +15,8 @@ SinkMediumTypes FileSink::getSinkMediumType() {
     return FILE_SINK;
 }
 
-FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append)
-    : SinkMedium(std::move(format)) {
+FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append, QuerySubPlanId parentPlanId)
+    : SinkMedium(std::move(format), parentPlanId) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {
@@ -46,7 +46,7 @@ void FileSink::setup() {
 void FileSink::shutdown() {
 }
 
-bool FileSink::writeData(TupleBuffer& inputBuffer) {
+bool FileSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
     std::unique_lock lock(writeMutex);
 
     NES_DEBUG("FileSink: getSchema medium " << toString() << " format " << sinkFormat->toString()
