@@ -30,7 +30,7 @@ class Compiler {
      * The object can be reused to compile code of multiple source files.
      * @return CompilerPtr
      */
-    CompilerPtr create();
+    static CompilerPtr create();
 
     /**
      * @brief Compiles the source string.

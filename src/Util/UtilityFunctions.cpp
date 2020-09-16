@@ -80,21 +80,21 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
             std::string tmp = queryCodeSnippet.substr(pos1);
             auto pos2 = tmp.find(").");//find the end bracket of merge query
             std::string subquery = tmp.substr(6, pos2 - 6);
-            NES_DEBUG("subquery = " << subquery);
+            NES_DEBUG("UtilityFunctions: subquery = " << subquery);
             code << "auto subQuery = " << subquery << ";" << std::endl;
             newQuery.replace(pos1, pos2, "merge(&subQuery");
-            NES_DEBUG("newQuery = " << newQuery);
+            NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
             boost::replace_all(newQuery, "Query::from", "return Query::from");
         } else {
             // add return statement in front of input query
             // NOTE: This will not work if you have created object of Input query and do further manipulation
             boost::replace_all(newQuery, "Query::from", "return Query::from");
         }
-        NES_DEBUG("newQuery = " << newQuery);
+        NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
         code << newQuery << std::endl;
         code << "}" << std::endl;
         code << "}" << std::endl;
-        NES_DEBUG(code.str());
+        NES_DEBUG("UtilityFunctions: query code \n" << code.str());
         Compiler compiler;
         CompiledCodePtr compiled_code = compiler.compile(code.str(), true);
         if (!code) {
@@ -105,7 +105,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>(
             "_ZN3NES11createQueryEv");
         if (!func) {
-            NES_ERROR("Error retrieving function! Symbol not found!");
+            NES_ERROR("UtilityFunctions: Error retrieving function! Symbol not found!");
         }
         /* call loaded function to create query object */
         Query query((*func)());

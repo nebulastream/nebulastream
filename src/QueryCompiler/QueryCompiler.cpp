@@ -62,9 +62,10 @@ void generateExecutablePipelines(
     std::deque<std::tuple<int32_t, int32_t, PipelineContextPtr>> queue;
     queue.emplace_back(0, -1, std::move(context));
     while (!queue.empty()) {
-        auto [currIndex, consumerIndex, currContext] = queue.front();
+        auto [currentPipelineStateId, consumerPipelineStateId, currContext] = queue.front();
         queue.pop_front();
         try {
+            NES_DEBUG("QueryCompiler: Compile pipeline with id: " << currentPipelineStateId);
             auto executablePipeline = codeGenerator->compile(currContext->code);
             if (executablePipeline == nullptr) {
                 NES_ERROR("Cannot compile pipeline " << currContext->code);
@@ -75,12 +76,12 @@ void generateExecutablePipelines(
                     currContext->getWindow(),
                     queryManagerPtr,
                     bufferManager);
-                accumulator[currIndex] = PipelineStageHolder(currIndex, executablePipeline, windowHandler);
+                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, windowHandler);
             } else {
-                accumulator[currIndex] = PipelineStageHolder(currIndex, executablePipeline, nullptr);
+                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, nullptr);
             }
-            if (consumerIndex >= 0) {
-                accumulator[currIndex].consumers.emplace(consumerIndex);
+            if (consumerPipelineStateId >= 0) {
+                accumulator[currentPipelineStateId].consumers.emplace(consumerPipelineStateId);
             }
         } catch (std::exception& err) {
             NES_ERROR("Error while compiling pipeline: " << err.what());
@@ -88,8 +89,8 @@ void generateExecutablePipelines(
         }
         uint32_t i = 1;
         for (const auto& nextPipelineContext : currContext->getNextPipelineContexts()) {
-            queue.emplace_back(currIndex + i, currIndex, nextPipelineContext);
-            accumulator[currIndex].producers.emplace(currIndex + i);
+            queue.emplace_back(currentPipelineStateId + i, currentPipelineStateId, nextPipelineContext);
+            accumulator[currentPipelineStateId].producers.emplace(currentPipelineStateId + i);
             i++;
         }
     }
