@@ -427,7 +427,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerDistributedWindowQueryEventTime) {
     ::testing::GTEST_FLAG(throw_on_failure) = true;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
@@ -479,7 +479,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     cout << "wait start" << endl;
-    sleep(505);
+    sleep(25);
     cout << "wakeup" << endl;
 
     ifstream my_file("testDeployOneWorkerDistributedWindowQueryEventTime.out");
