@@ -11,10 +11,11 @@ ExpressionNodePtr GreaterExpressionNode::create(const ExpressionNodePtr left,
 }
 
 bool GreaterExpressionNode::equal(const NodePtr rhs) const {
-    if (this->isIdentical(rhs)) {
-        return true;
+    if (rhs->instanceOf<GreaterExpressionNode>()) {
+        auto other = rhs->as<GreaterExpressionNode>();
+        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
     }
-    return rhs->instanceOf<GreaterExpressionNode>();
+    return false;
 }
 
 const std::string GreaterExpressionNode::toString() const {

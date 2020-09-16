@@ -11,10 +11,11 @@ ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr left, con
 EqualsExpressionNode::EqualsExpressionNode() : LogicalBinaryExpressionNode() {}
 
 bool EqualsExpressionNode::equal(const NodePtr rhs) const {
-    if (this->isIdentical(rhs)) {
-        return true;
+    if (rhs->instanceOf<EqualsExpressionNode>()) {
+        auto other = rhs->as<EqualsExpressionNode>();
+        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
     }
-    return rhs->instanceOf<EqualsExpressionNode>();
+    return false;
 }
 
 const std::string EqualsExpressionNode::toString() const {

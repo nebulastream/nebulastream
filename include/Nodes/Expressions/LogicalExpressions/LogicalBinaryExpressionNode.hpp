@@ -10,6 +10,9 @@ class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalE
   protected:
     LogicalBinaryExpressionNode();
     ~LogicalBinaryExpressionNode() = default;
+
+  public:
+    bool equal(const NodePtr rhs) const override;
 };
 }// namespace NES
 

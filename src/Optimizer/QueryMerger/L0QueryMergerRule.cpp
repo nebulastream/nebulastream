@@ -1,6 +1,6 @@
 #include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -19,10 +19,18 @@ void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     std::vector<GlobalQueryNodePtr> sinkGQNodes = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     for (int i = 0; i < sinkGQNodes.size(); i++) {
-        GlobalQueryNodePtr targetGQN = sinkGQNodes[i];
+        GlobalQueryNodePtr targetSinkGQN = sinkGQNodes[i];
+        auto queryIds = targetSinkGQN->getQueryIds();
+        if (queryIds.size() > 1) {
+            NES_ERROR("L0QueryMergerRule: can't have sink GQN with more than one query");
+            throw Exception("L0QueryMergerRule: can't have sink GQN with more than one query");
+        }
+        
+        QueryId targetQueryId = queryIds.at(0);
+
         for (int j = i + 1; j < sinkGQNodes.size(); j++) {
             GlobalQueryNodePtr hostSinkGQN = sinkGQNodes[j];
-            std::vector<NodePtr> targetSourceGQNs = targetGQN->getAllLeafNodes();
+            std::vector<NodePtr> targetSourceGQNs = targetSinkGQN->getAllLeafNodes();
             std::vector<NodePtr> hostSourceGQNs = hostSinkGQN->getAllLeafNodes();
 
             if (areSourceGQNodesEqual(targetSourceGQNs, hostSourceGQNs)) {
@@ -30,24 +38,47 @@ void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             }
 
             std::map<GlobalQueryNodePtr, GlobalQueryNodePtr> targetGQNToHostGQNMap;
+            bool allTargetGQNFoundMatch;
             for (auto& targetSourceGQN : targetSourceGQNs) {
-                bool found = false;
+                allTargetGQNFoundMatch = false;
                 for (auto& hostSourceGQN : hostSourceGQNs) {
                     if (checkIfGQNCanMerge(targetSourceGQN->as<GlobalQueryNode>(), hostSourceGQN->as<GlobalQueryNode>(), targetGQNToHostGQNMap)) {
-                        found = true;
+                        allTargetGQNFoundMatch = true;
                         break;
                     }
                 }
-                if (!found) {
+                if (!allTargetGQNFoundMatch) {
                     break;
                 }
             }
 
+            if (!allTargetGQNFoundMatch) {
+                continue;
+            }
+
+            auto gqnListForTargetQuery = globalQueryPlan->getGQNListForQueryId(targetQueryId);
+
             for (auto& [targetGQN, hostGQN] : targetGQNToHostGQNMap) {
+                uint64_t targetGQNId = targetGQN->getId();
+                auto found = std::find_if(gqnListForTargetQuery.begin(), gqnListForTargetQuery.end(), [&](GlobalQueryNodePtr currentGQN) {
+                    return targetGQNId == currentGQN->getId();
+                });
+
+                if(found == gqnListForTargetQuery.end()){
+                    NES_ERROR("L0QueryMergerRule: can't find the target GQN node");
+                    throw Exception("L0QueryMergerRule: can't find the target GQN node");
+                }
+
                 for (auto& [queryId, operatorNode] : targetGQN->getMapOfQueryIdToOperator()) {
                     hostGQN->addQueryAndOperator(queryId, operatorNode);
                 }
+
+                targetGQN->replace(hostGQN);
+                gqnListForTargetQuery.erase(found);
+                gqnListForTargetQuery.push_back(hostGQN);
             }
+
+            globalQueryPlan->updateGQNListForQueryId(targetQueryId, gqnListForTargetQuery);
         }
     }
 }
@@ -55,7 +86,7 @@ void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 bool L0QueryMergerRule::checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, GlobalQueryNodePtr hostGQNode, std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap) {
 
     //Check if a match was established previously
-    if(targetGQNToHostGQNMap.find(targetGQNode) != targetGQNToHostGQNMap.end()){
+    if (targetGQNToHostGQNMap.find(targetGQNode) != targetGQNToHostGQNMap.end()) {
         return true;
     }
 

@@ -49,6 +49,21 @@ class GlobalQueryPlan {
     void removeQuery(QueryId queryId);
 
     /**
+     * @brief This is to bulk update the list of global query nodes for the given query id
+     * @param queryId : the query id
+     * @param globalQueryNodes : the new list of GQNs
+     * @return true if successful else false
+     */
+    bool updateGQNListForQueryId(QueryId queryId, std::vector<GlobalQueryNodePtr> globalQueryNodes);
+
+    /**
+     * @brief Get all global query nodes containing given queryId
+     * @param queryId: queryId for which to get global query nodes
+     * @return vector containing all GlobalQueryNodes or empty list
+     */
+    std::vector<GlobalQueryNodePtr> getGQNListForQueryId(QueryId queryId);
+
+    /**
      * @brief Get all newly added Global Query Nodes with NodeType operators
      * @tparam NodeType: type of logical operator
      * @return vector of global query nodes
@@ -95,13 +110,6 @@ class GlobalQueryPlan {
      * @param operatorNode: the logical operator
      */
     void addNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const QueryId queryId, const OperatorNodePtr& operatorNode);
-
-    /**
-     * @brief Get all global query nodes containing given queryId
-     * @param queryId: queryId for which to get global query nodes
-     * @return vector containing all GlobalQueryNodes or empty list
-     */
-    std::vector<GlobalQueryNodePtr> getGlobalQueryNodesForQuery(QueryId queryId);
 
     /**
      * @brief Add global query node entry to the input query Id

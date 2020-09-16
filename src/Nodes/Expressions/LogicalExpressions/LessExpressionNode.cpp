@@ -11,10 +11,11 @@ ExpressionNodePtr LessExpressionNode::create(const ExpressionNodePtr left,
 }
 
 bool LessExpressionNode::equal(const NodePtr rhs) const {
-    if (this->isIdentical(rhs)) {
-        return true;
+    if (rhs->instanceOf<LessExpressionNode>()) {
+        auto other = rhs->as<LessExpressionNode>();
+        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
     }
-    return rhs->instanceOf<LessExpressionNode>();
+    return false;
 }
 
 const std::string LessExpressionNode::toString() const {

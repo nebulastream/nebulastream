@@ -9,6 +9,9 @@ namespace NES {
 class LogicalUnaryExpressionNode : public UnaryExpressionNode, public LogicalExpressionNode {
   protected:
     LogicalUnaryExpressionNode();
+
+  public:
+    bool equal(const NodePtr rhs) const override;
 };
 }// namespace NES
 
