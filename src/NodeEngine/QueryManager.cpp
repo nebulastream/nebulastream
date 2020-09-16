@@ -12,15 +12,16 @@ using std::string;
 namespace detail {
 uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, void*, WindowManager*, PipelineExecutionContext&, WorkerContextRef workerContext) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint");
-    auto* descriptor = buffer.getBufferAs<ReconfigurationDescriptor>();
-    descriptor->wait();
-    switch (descriptor->getType()) {
+    auto* task = buffer.getBufferAs<ReconfigurationTask>();
+    task->wait();
+    switch (task->getType()) {
         case Initialize: {
-            descriptor->getInstance()->reconfigure(workerContext);
+            task->getInstance()->reconfigure(workerContext);
             break;
         }
         default: NES_THROW_RUNTIME_ERROR("unsupported switch condition");
     }
+    task->postReconfiguration();
     return 0;
 }
 }
@@ -191,13 +192,13 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationDescriptor descriptor) {
+bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask descriptor) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask begin");
     std::unique_lock<std::mutex> lock(workMutex);
-    auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationDescriptor));
+    auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationTask));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
-    new (buffer.getBuffer()) ReconfigurationDescriptor(descriptor, threadPool->getNumberOfThreads()); // memcpy using copy ctor
+    new (buffer.getBuffer()) ReconfigurationTask(descriptor, threadPool->getNumberOfThreads()); // memcpy using copy ctor
     auto pipelineContext = std::make_shared<PipelineExecutionContext>(queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&){});
     auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {

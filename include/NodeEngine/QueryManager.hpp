@@ -15,14 +15,14 @@
 #include <unordered_set>
 
 #include <NodeEngine/QueryStatistics.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
+#include <NodeEngine/ReconfigurationTask.hpp>
 #include <NodeEngine/Task.hpp>
 #include <Sources/DataSource.hpp>
-#include <Util/libcuckoo/cuckoohash_map.hh>
 #include <Util/ThreadBarrier.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
 #include <Windows/WindowHandler.hpp>
-#include <NodeEngine/Reconfigurable.hpp>
 #include <memory>
-#include <NodeEngine/ReconfigurationDescriptor.hpp>
 
 namespace NES {
 
@@ -152,7 +152,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      * @param queryExecutionPlanId: the local QEP to reconfigure
      * @param reconfigurationDescriptor: what to do
      */
-    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationDescriptor reconfigurationDescriptor);
+    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor);
 
   private:
     friend class ThreadPool;
