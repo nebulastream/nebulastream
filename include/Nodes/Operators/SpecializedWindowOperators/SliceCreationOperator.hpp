@@ -8,6 +8,9 @@ namespace NES {
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
+/**
+ * @brief this class represents the slicing operator for distributed windowing that is deployed on the source nodes and send all sliches to the combiner
+ */
 class SliceCreationOperator : public WindowLogicalOperatorNode {
   public:
     SliceCreationOperator(const WindowDefinitionPtr windowDefinition);

@@ -8,6 +8,9 @@ namespace NES {
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
+/**
+ * @brief this class represents the computation operator for distributed windowing that is deployed on the sink node and which merges all slices
+ */
 class WindowComputationOperator : public WindowLogicalOperatorNode {
   public:
     WindowComputationOperator(const WindowDefinitionPtr windowDefinition);

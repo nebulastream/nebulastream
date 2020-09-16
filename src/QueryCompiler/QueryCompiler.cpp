@@ -125,6 +125,12 @@ void QueryCompiler::compilePipelineStages(
                         childPipeline->execute(buffer);
                     }
                 });
+            if (builder.getWinDef() != nullptr) {
+                executionContext->setWindowDef(builder.getWinDef());
+            }
+            if (builder.getSchema() != nullptr) {
+                executionContext->setInputSchema(builder.getSchema());
+            }
         } else {
             // invoke sink
             auto& sinks = builder.getSinks();
@@ -139,6 +145,12 @@ void QueryCompiler::compilePipelineStages(
                         sink->writeData(buffer);
                     }
                 });
+            if (builder.getWinDef() != nullptr) {
+                executionContext->setWindowDef(builder.getWinDef());
+            }
+            if (builder.getSchema() != nullptr) {
+                executionContext->setInputSchema(builder.getSchema());
+            }
         }
         PipelineStagePtr pipelineStage = PipelineStage::create(
             stageId,

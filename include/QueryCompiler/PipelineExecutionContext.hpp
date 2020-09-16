@@ -6,6 +6,9 @@ namespace NES {
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
+class WindowDefinition;
+typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+
 class TupleBuffer;
 
 // TODO Philipp, please clarify if we should introduce WindowManager, StateVars, etc... here
@@ -39,6 +42,20 @@ class PipelineExecutionContext {
      */
     void emitBuffer(TupleBuffer& outputBuffer);
 
+    /**
+     * @brief getter/setter window definition
+     * @return
+     */
+    WindowDefinitionPtr getWindowDef();
+    void setWindowDef(WindowDefinitionPtr windowDef);
+
+    /**
+     * @brief getter/setter input schema
+     * @return
+     */
+    SchemaPtr getInputSchema();
+    void setInputSchema(SchemaPtr inputSchema);
+
   private:
     /**
      * @brief Reference to the buffer manager to enable buffer allocation
@@ -48,6 +65,9 @@ class PipelineExecutionContext {
      * @brief The emit function handler to react on an emitted tuple buffer.
      */
     std::function<void(TupleBuffer&)> emitFunctionHandler;
+
+    WindowDefinitionPtr windowDef;
+    SchemaPtr inputSchema;
 };
 
 }// namespace NES

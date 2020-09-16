@@ -33,10 +33,24 @@ class TumblingWindow : public WindowType {
     }
     bool isTumblingWindow() override;
 
+    /**
+    * @brief Generates and adds all windows between which ended size the last watermark till the current watermark.
+    * @param windows vector of windows
+    * @param lastWatermark
+    * @param currentWatermark
+    */
     void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 
+    /**
+    * @brief return size of the window
+    * @return
+    */
     TimeMeasure getSize();
 
+    /**
+    * @brief return the time value
+    * @return
+    */
     uint64_t getTime() const override;
 
   private:

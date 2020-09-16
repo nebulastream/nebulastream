@@ -89,33 +89,69 @@ typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
 class WindowDefinition {
   public:
+    /**
+     * @brief This constructor construts a key-less window
+     * @param windowAggregation
+     * @param windowType
+     * @param distChar
+     */
     WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
 
-    WindowDefinition(const AttributeFieldPtr onKey,
-                     const WindowAggregationPtr windowAggregation,
-                     const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
-
+    /**
+     * @brief This constructor constructs a key-by window
+     * @param onKey key on which the window is constructed
+     * @param windowAggregation
+     * @param windowType
+     * @param distChar
+     * @param numberOfInputEdges
+     */
     WindowDefinition(const AttributeFieldPtr onKey,
                      const WindowAggregationPtr windowAggregation,
                      const WindowTypePtr windowType,
                      DistributionCharacteristicPtr distChar,
                      uint64_t numberOfInputEdges);
 
+    /**
+     * @brief getter and setter for the distribution type (centralized or distributed)
+     */
     void setDistributionCharacteristic(DistributionCharacteristicPtr characteristic);
     DistributionCharacteristicPtr getDistributionType();
+
+    /**
+     * @brief getter and setter for the number of input edges, which is used for the low watermarks
+     */
     uint64_t getNumberOfInputEdges() const;
     void setNumberOfInputEdges(uint64_t numberOfInputEdges);
 
-    const WindowAggregationPtr windowAggregation;
-    const WindowTypePtr windowType;
-    const AttributeFieldPtr onKey;
-    DistributionCharacteristicPtr distributionType;
     /**
      * @brief Returns true if this window is keyed.
-     */
+     * @return
+    */
     bool isKeyed();
 
+    /**
+     * @brief getter/setter for window aggregation
+     */
+    WindowAggregationPtr& getWindowAggregation();
+    void setWindowAggregation(WindowAggregationPtr& windowAggregation);
+
+    /**
+     * @brief getter/setter for window type
+     */
+    WindowTypePtr& getWindowType();
+    void setWindowType(WindowTypePtr& windowType);
+
+    /**
+     * @brief getter/setter for on key
+     */
+    AttributeFieldPtr& getOnKey();
+    void setOnKey(AttributeFieldPtr& onKey);
+
   private:
+    WindowAggregationPtr windowAggregation;
+    WindowTypePtr windowType;
+    AttributeFieldPtr onKey;
+    DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdges;
 };
 

@@ -119,7 +119,7 @@ class TupleBuffer {
      */
     void setWatermark(int64_t value);
 
-    void setOriginId(int64_t id);
+    void setOriginId(uint64_t id);
     uint64_t getOriginId();
 
   private:

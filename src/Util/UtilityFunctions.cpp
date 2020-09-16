@@ -338,7 +338,7 @@ uint64_t UtilityFunctions::getNextNodeId() {
     return ++id;
 }
 uint64_t UtilityFunctions::getNextNodeEngineId() {
-    static std::atomic_uint64_t id = 0;
+    static std::atomic_uint64_t id = time(NULL) ^ getpid();
     return ++id;
 }
 

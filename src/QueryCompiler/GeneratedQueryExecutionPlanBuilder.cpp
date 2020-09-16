@@ -60,17 +60,7 @@ QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
         NES_ASSERT(!stages.empty(), "GeneratedQueryExecutionPlanBuilder: No stages after query compilation");
         std::reverse(stages.begin(), stages.end());// this is necessary, check plan generator documentation
     }
-    for(auto& stage : stages)
-    {
-        if(stage->hasWindowHandler())
-        {
-            NES_ASSERT(winDef, "GeneratedQueryExecutionPlanBuilder: windowDef");
-            NES_ASSERT(schema, "GeneratedQueryExecutionPlanBuilder: schema");
-            stage->setWinDef(winDef);
-            stage->setSchema(schema);
-        }
 
-    }
     return std::make_shared<GeneratedQueryExecutionPlan>(queryId, querySubPlanId, std::move(sources), std::move(sinks), std::move(stages), std::move(queryManager), std::move(bufferManager));
 }
 
@@ -131,5 +121,11 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setWinDe
 GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setSchema(const SchemaPtr& schema) {
     this->schema = schema;
     return *this;
+}
+WindowDefinitionPtr GeneratedQueryExecutionPlanBuilder::getWinDef(){
+    return winDef;
+}
+SchemaPtr GeneratedQueryExecutionPlanBuilder::getSchema(){
+    return schema;
 }
 }// namespace NES
