@@ -1,19 +1,18 @@
 #ifndef NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_
 #define NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_
 
+#include <NodeEngine/ReconfigurationType.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <memory>
 #include <Util/ThreadBarrier.hpp>
 
 namespace NES {
 
-enum ReconfigurationType : uint8_t {
-    Initialize,
-};
+
 
 class ReconfigurationTask {
   public:
-    explicit ReconfigurationTask(ReconfigurationType type, Reconfigurable* instance = nullptr) : type(type), instance(instance), barrier(nullptr) {
+    explicit ReconfigurationTask(const QuerySubPlanId parentPlanId, ReconfigurationType type, Reconfigurable* instance = nullptr) : parentPlanId(parentPlanId), type(type), instance(instance), barrier(nullptr) {
         refCnt.store(0);
     }
 
@@ -22,7 +21,7 @@ class ReconfigurationTask {
         refCnt.store(numThreads);
     }
 
-    ReconfigurationTask(const ReconfigurationTask& that) : type(that.type), instance(that.instance), barrier(nullptr) {
+    ReconfigurationTask(const ReconfigurationTask& that) : parentPlanId(that.parentPlanId), type(that.type), instance(that.instance), barrier(nullptr) {
         // nop
     }
 
@@ -32,6 +31,10 @@ class ReconfigurationTask {
 
     ReconfigurationType getType() const {
         return type;
+    }
+
+    QuerySubPlanId getParentPlanId() const {
+        return parentPlanId;
     }
 
     Reconfigurable* getInstance() const {
@@ -44,6 +47,7 @@ class ReconfigurationTask {
 
     void postReconfiguration() {
         if (refCnt.fetch_sub(1) == 1) {
+            instance->destroyCallback(*this);
             destroy();
         }
     }
@@ -65,6 +69,9 @@ class ReconfigurationTask {
 
     /// ref counter
     std::atomic<uint32_t> refCnt;
+
+    /// owning plan id
+    const QuerySubPlanId parentPlanId;
 };
 }
 #endif//NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_

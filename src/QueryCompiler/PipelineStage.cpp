@@ -154,6 +154,11 @@ bool PipelineStage::hasWindowHandler() {
     return windowHandler != nullptr;
 }
 
+
+bool PipelineStage::isReconfiguration() const {
+    return executablePipeline->isReconfiguration();
+}
+
 PipelineStagePtr PipelineStage::create(
     uint32_t pipelineStageId,
     const QuerySubPlanId querySubPlanId,

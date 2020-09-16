@@ -12,6 +12,11 @@ void WorkerContext::storeChannel(Network::OperatorId id, Network::OutputChannelP
     channels[id] = std::move(channel);
 }
 
+void WorkerContext::releaseChannel(Network::OperatorId id) {
+    channels[id]->close();
+    channels.erase(id);
+}
+
 Network::OutputChannel* WorkerContext::getChannel(Network::OperatorId ownerId) {
     return channels[ownerId].get();
 }

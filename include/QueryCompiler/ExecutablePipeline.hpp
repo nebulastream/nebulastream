@@ -23,7 +23,14 @@ typedef WorkerContext& WorkerContextRef;
 
 // TODO move state and windowManager inside the PipelineExecutionContext
 class ExecutablePipeline {
+
+  protected:
+    bool reconfiguration;
+
   public:
+
+    explicit ExecutablePipeline(bool reconfiguration = false) : reconfiguration(reconfiguration) {}
+
     virtual ~ExecutablePipeline() = default;
 
     /**
@@ -36,6 +43,10 @@ class ExecutablePipeline {
                              WindowManagerPtr window_manager,
                              QueryExecutionContextPtr context,
                              WorkerContextRef wctx) = 0;
+
+    bool isReconfiguration() const {
+        return reconfiguration;
+    }
 };
 
 }// namespace NES

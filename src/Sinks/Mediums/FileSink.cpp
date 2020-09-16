@@ -28,6 +28,7 @@ FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
 }
+
 FileSink::~FileSink() {
     NES_DEBUG("~FileSink: close file=" << filePath);
     outputFile.close();

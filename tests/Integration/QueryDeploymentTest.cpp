@@ -356,7 +356,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
-    sleep(3);
+    sleep(7);
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
@@ -427,8 +427,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-
 TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) {
+    ::testing::GTEST_FLAG(throw_on_failure) = true;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -479,7 +479,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     cout << "wait start" << endl;
-    sleep(15);
+    sleep(505);
     cout << "wakeup" << endl;
 
     ifstream my_file("testDeployOneWorkerDistributedWindowQueryEventTime.out");

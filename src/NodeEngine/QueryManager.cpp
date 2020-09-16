@@ -14,13 +14,7 @@ uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, void*, WindowManager
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint");
     auto* task = buffer.getBufferAs<ReconfigurationTask>();
     task->wait();
-    switch (task->getType()) {
-        case Initialize: {
-            task->getInstance()->reconfigure(workerContext);
-            break;
-        }
-        default: NES_THROW_RUNTIME_ERROR("unsupported switch condition");
-    }
+    task->getInstance()->reconfigure(*task, workerContext);
     task->postReconfiguration();
     return 0;
 }
@@ -115,7 +109,7 @@ bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
         }
     }
 
-    runningQEPs.emplace(qep);
+    runningQEPs.emplace(qep->getQuerySubPlanId(), qep);
     return true;
 }
 
@@ -188,7 +182,8 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
         sink->shutdown();
     }
     NES_DEBUG("QueryManager::stopQuery: query finished " << qep);
-    runningQEPs.erase(qep);
+    addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), DestroyQep, this));
+
     return true;
 }
 
@@ -207,48 +202,64 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     return true;
 }
 
-Task QueryManager::getWork(std::atomic<bool>& threadPool_running) {
+QueryManager::ExecutionResult QueryManager::step(std::atomic<bool>& running, WorkerContext& workerContext) {
     NES_DEBUG("QueryManager: QueryManager::getWork wait get lock");
-    std::unique_lock<std::mutex> lock(workMutex);
+    std::unique_lock lock(workMutex);
     NES_DEBUG("QueryManager:getWork wait got lock");
     // wait while queue is empty but thread pool is running
-    while (taskQueue.empty() && threadPool_running) {
+    while (taskQueue.empty() && running) {
         cv.wait(lock);
-        if (!threadPool_running) {
+        if (!running) {
             // return empty task if thread pool was shut down
             NES_DEBUG("QueryManager: Thread pool was shut down while waiting");
-            return Task();
+            lock.unlock();
+            return terminateLoop(workerContext);
         }
     }
     NES_DEBUG("QueryManager::getWork queue is not empty");
     // there is a potential task in the queue and the thread pool is running
-    if (threadPool_running) {
+    if (running) {
         auto task = taskQueue.front();
         NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         taskQueue.pop_front();
-        return task;
+        lock.unlock();
+        auto ret = task(workerContext);
+        if (ret) {
+            completedWork(task, workerContext);
+            return Ok;
+        }
+        return Error;
     } else {
         NES_DEBUG("QueryManager: Thread pool was shut down while waiting");
-        cleanupUnsafe();
-        return Task();
+        lock.unlock();
+        return terminateLoop(workerContext);
     }
 }
 
-void QueryManager::cleanupUnsafe() {
-    // Call this only if you are holding workMutex
-    if (taskQueue.size()) {
-        NES_DEBUG("QueryManager::cleanupUnsafe: Thread pool was shut down while waiting but data is queued.");
-        taskQueue.clear();
+QueryManager::ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
+    std::unique_lock lock(workMutex);
+    // must run this to execute all pending reconfiguration task (Destroy)
+    bool hitReconfiguration = false;
+    while (!taskQueue.empty()) {
+        auto task = taskQueue.front();
+        taskQueue.pop_front();
+        lock.unlock();
+        if (!hitReconfiguration) { // execute all pending tasks until first reconfiguration
+            task(workerContext);
+            if (task.getPipelineStage()->isReconfiguration()) {
+                hitReconfiguration = true;
+            }
+            lock.lock();
+            continue;
+        } else {
+            if (task.getPipelineStage()->isReconfiguration()) { // execute only pending reconfigurations
+                task(workerContext);
+            }
+            lock.lock();
+        }
     }
-    NES_DEBUG("QueryManager::cleanupUnsafe: finished");
-}
-
-void QueryManager::cleanup() {
-    NES_DEBUG("QueryManager::cleanup: get lock");
-    std::unique_lock<std::mutex> lock(workMutex);
-    NES_DEBUG("QueryManager::cleanup: got lock");
-    cleanupUnsafe();
-    NES_DEBUG("QueryManager::cleanup: finished");
+    lock.unlock();
+    return Finished;
 }
 
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr nextPipeline) {
@@ -292,9 +303,9 @@ std::string QueryManager::getQueryManagerStatistics() {
     std::unique_lock lock(statisticsMutex);
     std::stringstream ss;
     ss << "QueryManager Statistics:";
-    for (auto& qep : runningQEPs) {
+    for (auto& [qepId, qep] : runningQEPs) {
         auto stats = queryToStatisticsMap.find(qep->getQuerySubPlanId());
-        ss << "Query=" << qep;
+        ss << "Query=" << qepId;
         ss << "\t processedTasks =" << stats->getProcessedTasks();
         ss << "\t processedTuple =" << stats->getProcessedTuple();
         ss << "\t processedBuffers =" << stats->getProcessedBuffers();
@@ -319,6 +330,31 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
     std::unique_lock lock(statisticsMutex);
     NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qepId);
     return queryToStatisticsMap.find(qepId);
+}
+
+void QueryManager::reconfigure(ReconfigurationTask& task, WorkerContext& context) {
+    Reconfigurable::reconfigure(task, context);
+    switch (task.getType()) {
+        case DestroyQep: {
+            break;
+        }
+        default: {
+            NES_THROW_RUNTIME_ERROR("not supported");
+        }
+    }
+}
+void QueryManager::destroyCallback(ReconfigurationTask& task) {
+    Reconfigurable::destroyCallback(task);
+    switch (task.getType()) {
+        case DestroyQep: {
+            std::unique_lock lock(queryMutex);
+            runningQEPs.erase(task.getParentPlanId());
+            break;
+        }
+        default: {
+            NES_THROW_RUNTIME_ERROR("not supported");
+        }
+    }
 }
 
 }// namespace NES

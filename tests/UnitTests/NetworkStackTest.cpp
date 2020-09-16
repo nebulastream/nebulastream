@@ -648,7 +648,8 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             std::thread sendingThread([&] {
               // register the incoming channel
               WorkerContext workerContext(NesThread::getId());
-              networkSink.reconfigure(workerContext);
+              auto rt = ReconfigurationTask(0, Initialize, &networkSink);
+              networkSink.reconfigure(rt, workerContext);
               std::mt19937 rnd;
               std::uniform_int_distribution gen(50'000, 100'000);
               auto buffMgr = bMgr;
@@ -824,7 +825,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             std::thread sendingThread([&] {
               // register the incoming channel
               WorkerContext workerContext(NesThread::getId());
-              networkSink.reconfigure(workerContext);
+              auto rt = ReconfigurationTask(0, Initialize, &networkSink);
+              networkSink.reconfigure(rt, workerContext);
               for (size_t i = 0; i < totalNumBuffer; ++i) {
                   auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
                   for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {

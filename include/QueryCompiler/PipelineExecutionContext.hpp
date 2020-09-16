@@ -9,6 +9,12 @@ class WorkerContext;
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
+class WindowDefinition;
+typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
 typedef WorkerContext& WorkerContextRef;
 
 class Schema;
@@ -76,7 +82,13 @@ class PipelineExecutionContext {
     /**
      * @brief The emit function handler to react on an emitted tuple buffer.
      */
-    std::function<void(TupleBuffer&)> emitFunctionHandler;
+    std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
+
+
+    // TODO remove this stuff from here
+    WindowDefinitionPtr windowDef;
+    SchemaPtr inputSchema;
+
 };
 
 }// namespace NES

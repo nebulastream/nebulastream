@@ -26,25 +26,33 @@ ThreadPool::~ThreadPool() {
 }
 
 void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
-    while (running) {
-        Task task;
-        if (!!(task = queryManager->getWork(running))) {
-            auto success = task(workerContext);
-            if (success) {
-                queryManager->completedWork(task, workerContext);
-                NES_TRACE("Threadpool: finished task " << task.toString() << " with success");
-            } else {
-                // TODO add here error handling (see issues 524 and 463)
-                NES_TRACE("Threadpool: finished task " << task.toString() << " with error");
+    try {
+        while (running) {
+            switch (queryManager->step(running, workerContext)) {
+                case QueryManager::Ok: {
+                    break;
+                }
+                case QueryManager::Finished: {
+                    running = false;
+                    break;
+                }
+                case QueryManager::Error: {
+                    // TODO add here error handling (see issues 524 and 463)
+                    NES_ERROR("Threadpool: finished task with error");
+                    running = false;
+                    break;
+                }
+                default: {
+                    NES_THROW_RUNTIME_ERROR("unsupported");
+                }
             }
-        } else {
-            NES_ERROR("Threadpool: task invalid");
-            running = false;
         }
+        queryManager->step(running, workerContext);
+        NES_DEBUG("Threadpool: end runningRoutine");
+    } catch (std::exception& error) {
+        NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
+        NES_ASSERT(false, "fatal error");
     }
-    NES_DEBUG("Threadpool: end running now cleanup");
-    queryManager->cleanup();
-    NES_DEBUG("Threadpool: end running end cleanup");
 }
 
 bool ThreadPool::start() {
@@ -75,10 +83,10 @@ bool ThreadPool::stop() {
     NES_DEBUG(
         "ThreadPool: stop thread pool while " << (running.load() ? "running" : "not running") << " with " << numThreads
                                               << " threads");
-    running = false;
     /* wake up all threads in the query manager,
      * so they notice the change in the run variable */
     NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads");
+    running = false;
     queryManager->unblockThreads();
     /* join all threads if possible */
     for (auto& thread : threads) {

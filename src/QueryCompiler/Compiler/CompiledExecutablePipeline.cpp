@@ -8,12 +8,12 @@ namespace NES {
 static constexpr auto mangledEntryPoint = "_Z14compiled_queryRN3NES11TupleBufferEPvPNS_13WindowManagerERNS_24PipelineExecutionContextERNS_13WorkerContextE";
 
 CompiledExecutablePipeline::CompiledExecutablePipeline(CompiledCodePtr compiled_code)
-    : compiledCode(std::move(compiled_code)), pipelineFunc(compiledCode->getFunctionPointer<PipelineFunctionPtr>(mangledEntryPoint)) {
+    : ExecutablePipeline(false), compiledCode(std::move(compiled_code)), pipelineFunc(compiledCode->getFunctionPointer<PipelineFunctionPtr>(mangledEntryPoint)) {
     // nop
 }
 
-CompiledExecutablePipeline::CompiledExecutablePipeline(PipelineFunctionPtr func) : compiledCode(nullptr), pipelineFunc(func) {
-
+CompiledExecutablePipeline::CompiledExecutablePipeline(PipelineFunctionPtr func) : ExecutablePipeline(true), compiledCode(nullptr), pipelineFunc(func) {
+    // nop
 }
 
 uint32_t CompiledExecutablePipeline::execute(TupleBuffer& inputBuffer,
