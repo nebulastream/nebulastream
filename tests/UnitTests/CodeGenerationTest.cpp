@@ -65,9 +65,10 @@ class CodeGenerationTest : public testing::Test {
 
 class TestPipelineExecutionContext : public PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(BufferManagerPtr bufferManager) : PipelineExecutionContext(std::move(bufferManager), [this](TupleBuffer& buffer, WorkerContextRef) {
-                                                                       this->buffers.emplace_back(std::move(buffer));
-                                                                   }){};
+    TestPipelineExecutionContext(BufferManagerPtr bufferManager)
+        : PipelineExecutionContext(0, std::move(bufferManager), [this](TupleBuffer& buffer, WorkerContextRef) { this->buffers.emplace_back(std::move(buffer));}) {
+            // nop
+        };
 
     std::vector<TupleBuffer> buffers;
 };
@@ -861,6 +862,7 @@ TEST_F(CodeGenerationTest, codeGenerationScanOperator) {
 TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     /* prepare objects for test */
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+    WorkerContext wctx(NesThread::getId());
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -889,9 +891,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
         new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
     //auto context = PipelineContext::create();
-    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer& buff) {
-        buff.isValid();
-    });                                                                                          //valid check due to compiler error for unused var
+    auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) { buff.isValid(); });                                                                                          //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nextPipeline, 0);
 
@@ -901,7 +901,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     stage1->execute(inputBuffer, windowHandler->getWindowState(),
-                    windowHandler->getWindowManager(), queryContext);
+                    windowHandler->getWindowManager(), queryContext, wctx);
 
     //check partial aggregates in window state
     auto stateVar =
@@ -945,7 +945,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
         new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
     //auto context = PipelineContext::create();
-    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer& buff) {
+    auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
         buff.isValid();
     });                                                                                          //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
@@ -955,10 +955,10 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    WorkerContext wctx{0};
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
+    WorkerContext wctx(NesThread::getId());
     stage1->execute(inputBuffer, windowHandler->getWindowState(),
-                    windowHandler->getWindowManager(), queryContext);
+                    windowHandler->getWindowManager(), queryContext, wctx);
 
     //check partial aggregates in window state
     auto stateVar =
@@ -973,6 +973,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
  */
 TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
+    WorkerContext wctx(NesThread::getId());
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
     SchemaPtr schema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
 
@@ -1000,7 +1001,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
         new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
     //auto context = PipelineContext::create();
-    auto executionContext = std::make_shared<PipelineExecutionContext>(nodeEngine->getBufferManager(), [](TupleBuffer& buff) {
+    auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
         buff.isValid();
     });                                                                                          //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
@@ -1042,7 +1043,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
     stage1->execute(buffer, windowHandler->getWindowState(),
-                    windowHandler->getWindowManager(), queryContext);
+                    windowHandler->getWindowManager(), queryContext, wctx);
 
     //check partial aggregates in window state
     auto stateVar =

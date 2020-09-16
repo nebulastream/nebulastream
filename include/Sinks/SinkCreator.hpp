@@ -105,11 +105,12 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPla
 /**
  * @brief create a print test sink with a schema
  * @param schema of sink
+ * @param parentPlanId id of the parent qep
  * @param bufferManager
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVPrintSink(SchemaPtr schema, BufferManagerPtr bufferManager, std::ostream& out);
+const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::ostream& out);
 
 /**
  * @brief create a network data sink

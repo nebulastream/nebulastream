@@ -204,7 +204,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch = Schema::create()
         ->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createTextFileSink(sch, engine->getBufferManager(), filePath, true);
+    DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
     builder.addSource(source);
     builder.addSink(sink);
     builder.setQueryId(queryId);
@@ -212,8 +212,9 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
     builder.setQueryManager(engine->getQueryManager());
     builder.setBufferManager(engine->getBufferManager());
     builder.setCompiler(engine->getCompiler());
-    auto context = std::make_shared<PipelineExecutionContext>(queryId, engine->getBufferManager(), [sink](TupleBuffer& buffer, WorkerContext&) {
-        sink->writeData(buffer);
+
+    auto context = std::make_shared<PipelineExecutionContext>(queryId, engine->getBufferManager(), [sink](TupleBuffer& buffer, WorkerContext& wctx) {
+        sink->writeData(buffer, wctx);
     });
     auto executable = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline = PipelineStage::create(0, queryId, executable, context, nullptr);
@@ -282,7 +283,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, engine->getBufferManager(), "qep1.txt", true);
+    DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep1.txt", true);
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
@@ -290,8 +291,8 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
-    auto context1 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext&) {
-      sink1->writeData(buffer);
+    auto context1 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
+      sink1->writeData(buffer, w);
     });
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
@@ -301,7 +302,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(),
                                                                                      engine->getQueryManager());
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink2 = createTextFileSink(sch2, engine->getBufferManager(), "qep2.txt", true);
+    DataSinkPtr sink2 = createTextFileSink(sch2, 0, engine, "qep2.txt", true);
     builder2.addSource(source2);
     builder2.addSink(sink2);
     builder2.setQueryId(2);
@@ -309,8 +310,8 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
-    auto context2 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink2](TupleBuffer& buffer, WorkerContext&) {
-      sink2->writeData(buffer);
+    auto context2 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink2](TupleBuffer& buffer, WorkerContext& w) {
+      sink2->writeData(buffer, w);
     });
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
@@ -350,7 +351,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, engine->getBufferManager(), "qep1.txt", true);
+    DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep1.txt", true);
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
@@ -358,8 +359,8 @@ TEST_F(EngineTest, testParallelSameSource) {
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
-    auto context1 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext&) {
-      sink1->writeData(buffer);
+    auto context1 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
+      sink1->writeData(buffer, w);
     });
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
@@ -369,7 +370,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(),
                                                                                      engine->getQueryManager());
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink2 = createTextFileSink(sch2, engine->getBufferManager(), "qep2.txt", true);
+    DataSinkPtr sink2 = createTextFileSink(sch2, 0, engine, "qep2.txt", true);
     builder2.addSource(source2);
     builder2.addSink(sink2);
     builder2.setQueryId(2);
@@ -377,8 +378,8 @@ TEST_F(EngineTest, testParallelSameSource) {
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
-    auto context2 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink2](TupleBuffer& buffer, WorkerContext&) {
-      sink2->writeData(buffer);
+    auto context2 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink2](TupleBuffer& buffer, WorkerContext& w) {
+      sink2->writeData(buffer, w);
     });
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
@@ -411,7 +412,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, engine->getBufferManager(), "qep12.txt", true);
+    DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep12.txt", true);
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
@@ -419,8 +420,8 @@ TEST_F(EngineTest, testParallelSameSink) {
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
-    auto context1 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext&) {
-      sink1->writeData(buffer);
+    auto context1 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
+      sink1->writeData(buffer, w);
     });
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
@@ -437,8 +438,8 @@ TEST_F(EngineTest, testParallelSameSink) {
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
-    auto context2 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext&) {
-      sink1->writeData(buffer);
+    auto context2 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
+      sink1->writeData(buffer, w);
     });
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
@@ -469,7 +470,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, engine->getBufferManager(), "qep3.txt", true);
+    DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep3.txt", true);
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
@@ -477,8 +478,8 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
-    auto context1 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext&) {
-      sink1->writeData(buffer);
+    auto context1 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
+      sink1->writeData(buffer, w);
     });
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
@@ -494,8 +495,8 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
-    auto context2 = std::make_shared<PipelineExecutionContext>(engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext&) {
-      sink1->writeData(buffer);
+    auto context2 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
+      sink1->writeData(buffer, w);
     });
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);

@@ -105,14 +105,14 @@ typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;
 
 class TestSink : public SinkMedium {
   public:
-    TestSink(uint64_t expectedBuffer, SchemaPtr schema, BufferManagerPtr bufferManager) : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager)),
+    TestSink(uint64_t expectedBuffer, SchemaPtr schema, BufferManagerPtr bufferManager) : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0),
                                                                                           expectedBuffer(expectedBuffer){};
 
     static std::shared_ptr<TestSink> create(uint64_t expectedBuffer, SchemaPtr schema, BufferManagerPtr bufferManager) {
         return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
     }
 
-    bool writeData(TupleBuffer& input_buffer) override {
+    bool writeData(TupleBuffer& input_buffer, WorkerContext&) override {
         std::unique_lock lock(m);
         NES_DEBUG("TestSink: got buffer " << input_buffer);
         NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));

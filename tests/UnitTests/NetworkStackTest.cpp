@@ -66,10 +66,10 @@ class TestSink : public SinkMedium {
     }
 
     TestSink(SchemaPtr schema, BufferManagerPtr bufferManager) :
-        SinkMedium(std::make_shared<NesFormat>(schema, bufferManager))
+        SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0)
     {};
 
-    bool writeData(TupleBuffer& input_buffer) override {
+    bool writeData(TupleBuffer& input_buffer, WorkerContextRef) override {
         std::unique_lock lock(m);
         NES_DEBUG("TestSink:\n" <<UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
 
@@ -642,11 +642,13 @@ TEST_F(NetworkStackTest, testNetworkSink) {
           ASSERT_FALSE(pManager->isRegistered(nesPartition));
         });
 
-        NetworkSink networkSink(schema, netManager, nodeLocation, nesPartition, bMgr);
+        NetworkSink networkSink(schema, 0, netManager, nodeLocation, nesPartition, bMgr, nullptr);
 
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
               // register the incoming channel
+              WorkerContext workerContext(NesThread::getId());
+              networkSink.reconfigure(workerContext);
               std::mt19937 rnd;
               std::uniform_int_distribution gen(50'000, 100'000);
               auto buffMgr = bMgr;
@@ -657,7 +659,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                   }
                   buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
                   usleep(gen(rnd));
-                  networkSink.writeData(buffer);
+                  networkSink.writeData(buffer, workerContext);
               }
             });
             sendingThreads.emplace_back(std::move(sendingThread));
@@ -703,7 +705,7 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
                                                          nodeEngine->getNetworkManager(), nesPartition);
     ASSERT_TRUE(networkSource->start());
 
-    auto networkSink = std::make_shared<NetworkSink>(schema, nodeEngine->getNetworkManager(), nodeLocation, nesPartition, nodeEngine->getBufferManager());
+    auto networkSink = std::make_shared<NetworkSink>(schema, 0, nodeEngine->getNetworkManager(), nodeLocation, nesPartition, nodeEngine->getBufferManager(), nullptr);
 
     ASSERT_TRUE(networkSource->stop());
 }
@@ -718,7 +720,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(
     try {
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
-        auto queryManager = std::make_shared<QueryManager>(0);
+        auto queryManager = std::make_shared<QueryManager>(bufferManager, 0);
         auto networkManagerCreator = [=](NodeEnginePtr engine) {
           return Network::NetworkManager::create(
               hostname,
@@ -817,17 +819,19 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
           ASSERT_TRUE(source.stop());
         });
 
-        NetworkSink networkSink(schema, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager());
+        NetworkSink networkSink(schema, 0, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager(), nullptr);
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
               // register the incoming channel
+              WorkerContext workerContext(NesThread::getId());
+              networkSink.reconfigure(workerContext);
               for (size_t i = 0; i < totalNumBuffer; ++i) {
                   auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
                   for (size_t j = 0; j < bufferSize/sizeof(uint64_t); ++j) {
                       buffer.getBuffer<uint64_t>()[j] = j;
                   }
                   buffer.setNumberOfTuples(bufferSize/sizeof(uint64_t));
-                  networkSink.writeData(buffer);
+                  networkSink.writeData(buffer, workerContext);
                   usleep(rand()%10000 + 1000);
               }
             });
@@ -885,7 +889,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
                                                                     nodeEngine->getQueryManager());
-    auto networkSink = std::make_shared<NetworkSink>(schema, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager());
+    auto networkSink = std::make_shared<NetworkSink>(schema, 2, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
 
     auto query2 = TestQuery::from(schema)
         .filter(Attribute("id")< 5)
@@ -904,13 +908,6 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                                  .setQueryManager(nodeEngine->getQueryManager())
                                                                  .setQueryId(2)
                                                                  .setQuerySubPlanId(2);
-
-    //    auto generatorQep = nodeEngine->getCompiler()->compile(sink);
-    //    generatorQep->addDataSink(networkSink);
-    //    generatorQep->addDataSource(testSource);
-    //    generatorQep->setBufferManager(nodeEngine->getBufferManager());
-    //    generatorQep->setQueryManager(nodeEngine->getQueryManager());
-    //    generatorQep->setQueryId("2");
 
     nodeEngine->registerQueryInNodeEngine(builderGeneratorQEP.build());
     nodeEngine->registerQueryInNodeEngine(builderReceiverQEP.build());
