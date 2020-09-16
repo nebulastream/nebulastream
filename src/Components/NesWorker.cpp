@@ -31,7 +31,7 @@ NesWorker::NesWorker(
     connected = false;
     withRegisterStream = false;
     withParent = false;
-    MDC::put( "threadName", "NesWorker");
+    MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
 }
 

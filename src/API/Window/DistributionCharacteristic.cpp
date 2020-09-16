@@ -24,4 +24,4 @@ DistributionCharacteristic::Type DistributionCharacteristic::getType() {
     return type;
 }
 
-}// namespace nes
+}// namespace NES

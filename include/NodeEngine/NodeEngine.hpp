@@ -52,7 +52,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * and initialize QueryManager, BufferManager and ThreadPool
      */
     explicit NodeEngine(BufferManagerPtr&&, QueryManagerPtr&&, std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
-        Network::PartitionManagerPtr&&, QueryCompilerPtr&&, uint64_t nodeEngineId);
+                        Network::PartitionManagerPtr&&, QueryCompilerPtr&&, uint64_t nodeEngineId);
 
     ~NodeEngine();
 

@@ -2,11 +2,11 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <QueryCompiler/ExecutablePipeline.hpp>
+#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <utility>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
 
 namespace NES {
 
@@ -39,14 +39,10 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer) {
         auto distType = pipelineContext->getWindowDef()->getDistributionType()->getType();
         if (distType == DistributionCharacteristic::Combining) {
             dbgMsg << "Combining";
-        }
-        else
-        {
+        } else {
             dbgMsg << "Slicing";
         }
-    }
-    else
-    {
+    } else {
         dbgMsg << "NoWindow";
     }
     NES_DEBUG(dbgMsg.str());

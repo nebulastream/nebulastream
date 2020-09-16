@@ -1,5 +1,6 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
+#include <Nodes/Node.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
@@ -9,7 +10,6 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
-#include <Nodes/Node.hpp>
 
 using namespace std;
 namespace NES {
@@ -133,13 +133,10 @@ bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId query
         std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps = generatableOperatorPlan->getNodesByType<WindowLogicalOperatorNode>();
         std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps = queryOperators->getNodesByType<SourceLogicalOperatorNode>();
 
-        if(winOps.size() == 1)
-        {
+        if (winOps.size() == 1) {
             qepBuilder.setWinDef(winOps[0]->getWindowDefinition())
                 .setSchema(leafOps[0]->getInputSchema());
-        }
-        else if(winOps.size() > 1)
-        {
+        } else if (winOps.size() > 1) {
             //currently we only support one window per query
             NES_NOT_IMPLEMENTED();
         }

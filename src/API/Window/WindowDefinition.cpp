@@ -39,13 +39,13 @@ uint64_t WindowDefinition::getNumberOfInputEdges() const {
 void WindowDefinition::setNumberOfInputEdges(uint64_t numberOfInputEdges) {
     this->numberOfInputEdges = numberOfInputEdges;
 }
- WindowAggregationPtr& WindowDefinition::getWindowAggregation() {
+WindowAggregationPtr& WindowDefinition::getWindowAggregation() {
     return windowAggregation;
 }
-WindowTypePtr& WindowDefinition::getWindowType(){
+WindowTypePtr& WindowDefinition::getWindowType() {
     return windowType;
 }
-AttributeFieldPtr& WindowDefinition::getOnKey(){
+AttributeFieldPtr& WindowDefinition::getOnKey() {
     return onKey;
 }
 void WindowDefinition::setWindowAggregation(WindowAggregationPtr& windowAggregation) {

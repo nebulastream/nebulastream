@@ -160,7 +160,6 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     std::condition_variable cv;
 
     size_t nodeEngineId;
-
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

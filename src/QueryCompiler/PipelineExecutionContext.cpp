@@ -9,7 +9,7 @@ PipelineExecutionContext::PipelineExecutionContext(
     BufferManagerPtr bufferManager,
     std::function<void(TupleBuffer&)>&& emitFunctionHandler)
     : bufferManager(std::move(bufferManager)),
-      emitFunctionHandler(std::move(emitFunctionHandler)){
+      emitFunctionHandler(std::move(emitFunctionHandler)) {
     // nop
 }
 
@@ -21,7 +21,7 @@ void PipelineExecutionContext::emitBuffer(TupleBuffer& outputBuffer) {
     // call the function handler
     emitFunctionHandler(outputBuffer);
 }
-WindowDefinitionPtr PipelineExecutionContext::getWindowDef(){
+WindowDefinitionPtr PipelineExecutionContext::getWindowDef() {
     return windowDef;
 }
 void PipelineExecutionContext::setWindowDef(WindowDefinitionPtr windowDef) {

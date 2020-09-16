@@ -1,6 +1,6 @@
+#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 
 #include <Phases/QueryRewritePhase.hpp>
 

@@ -91,7 +91,7 @@ class CCodeGenerator : public CodeGenerator {
     BinaryOperatorStatement setWatermark(VariableDeclaration tupleBufferVariable,
                                          VariableDeclaration inputBufferVariable);
     BinaryOperatorStatement setOriginId(VariableDeclaration tupleBufferVariable,
-                                         VariableDeclaration inputBufferVariable);
+                                        VariableDeclaration inputBufferVariable);
 
     BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
     BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,

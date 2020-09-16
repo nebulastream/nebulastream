@@ -1,6 +1,6 @@
-#include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 #include <API/Schema.hpp>
 #include <API/Window/WindowDefinition.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 namespace NES {
 
 LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition) {
@@ -12,7 +12,6 @@ WindowComputationOperator::WindowComputationOperator(const WindowDefinitionPtr w
     this->windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createCombiningWindowType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
 }
-
 
 const std::string WindowComputationOperator::toString() const {
     std::stringstream ss;

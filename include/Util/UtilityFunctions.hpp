@@ -164,8 +164,6 @@ class UtilityFunctions {
      */
     static uint64_t getNextNodeEngineId();
 
-
-
   private:
     /**
      * @brief function to traverse to queryPlanChildren

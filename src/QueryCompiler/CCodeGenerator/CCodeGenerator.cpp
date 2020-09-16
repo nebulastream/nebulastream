@@ -288,7 +288,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
 
     // 3. copy origin id
     code->cleanupStmts.push_back(setOriginId(code->varDeclarationResultBuffer,
-                                              code->varDeclarationInputBuffer)
+                                             code->varDeclarationInputBuffer)
                                      .copy());
 
     // 4. emit the buffer to the runtime.
@@ -337,7 +337,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
 
     thenStatement->addStatement(
         setOriginId(code->varDeclarationResultBuffer,
-                     code->varDeclarationInputBuffer)
+                    code->varDeclarationInputBuffer)
             .copy());
     // 1.1 set the watermar to the output buffer -> resultTupleBuffer.setWatermark(numberOfResultTuples);
     thenStatement->addStatement(
@@ -578,7 +578,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, 
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
     } else {
         currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "start");
-//        auto tsVariableDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(window->getWindowType()->getTimeCharacteristic()->getField()->name);
+        //        auto tsVariableDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(window->getWindowType()->getTimeCharacteristic()->getField()->name);
         auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration)
                                                   .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                       VarRef(currentTimeVariableDeclaration)));
@@ -701,7 +701,7 @@ BinaryOperatorStatement CCodeGenerator::setWatermark(VariableDeclaration tupleBu
 }
 
 BinaryOperatorStatement CCodeGenerator::setOriginId(VariableDeclaration tupleBufferVariable,
-                                                     VariableDeclaration inputBufferVariable) {
+                                                    VariableDeclaration inputBufferVariable) {
     auto setOriginIdFunctionCall = FunctionCallStatement("setOriginId");
     setOriginIdFunctionCall.addParameter(getOriginId(inputBufferVariable));
     /* copy watermark */

@@ -20,7 +20,6 @@ class SliceMergingOperator : public WindowLogicalOperatorNode {
     const std::string toString() const override;
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
-
 };
 
 }// namespace NES

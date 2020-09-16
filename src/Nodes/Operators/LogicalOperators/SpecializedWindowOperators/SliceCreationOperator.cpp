@@ -1,6 +1,6 @@
-#include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
 #include <API/Schema.hpp>
 #include <API/Window/WindowDefinition.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
 namespace NES {
 
 LogicalOperatorNodePtr createSliceCreationSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition) {
