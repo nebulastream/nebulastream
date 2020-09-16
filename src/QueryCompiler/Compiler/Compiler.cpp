@@ -93,24 +93,26 @@ std::string Compiler::formatAndPrintSource(const std::string& filename) {
         return "";
     }
 
-    auto formatCommand = std::string("clang-format ") + filename;
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(formatCommand.c_str(), "r"), pclose);
-    if (!pipe) {
-        throw std::runtime_error("popen() failed!");
+    auto formatCommand = "clang-format -i " + filename;
+
+    auto res = popen(formatCommand.c_str(), "r");
+    if (!res) {
+       NES_FATAL_ERROR("Compiler: popen() failed!");
     }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-    NES_DEBUG("Compiler: generate code: \n" << result);
-    return result;
+    std::string sourceCode;
+    std::ifstream sourceFile(filename);
+    sourceFile.seekg(0, std::ios::end);
+    sourceCode.resize(sourceFile.tellg());
+    sourceFile.seekg(0);
+    sourceFile.read(sourceCode.data(), sourceCode.size());
+    NES_DEBUG("Compiler: generate code: \n" << sourceCode);
+    return sourceCode;
 }
 
 void Compiler::writeSourceToFile(const std::string& filename,
                                  const std::string& source) {
     auto path = std::filesystem::current_path().string();
-    NES_DEBUG("Compiler: write source to " << path <<"/"<< filename);
+    NES_DEBUG("Compiler: write source to file://" << path <<"/"<< filename);
     std::ofstream result_file(filename, std::ios::trunc | std::ios::out);
     result_file << source;
 }
