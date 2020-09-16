@@ -102,8 +102,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&, WorkerContextRef) {
-                                           }) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {}) {
             // nop
         }
     };
@@ -164,15 +163,14 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
-        uint32_t execute(TupleBuffer&, void*, WindowManagerPtr, QueryExecutionContextPtr) override {
+        uint32_t execute(TupleBuffer&, void*, WindowManagerPtr, QueryExecutionContextPtr, WorkerContext&) override {
             return 0;
         }
     };
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&) {
-                                           }) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContext&) {}) {
             // nop
         }
     };
@@ -232,7 +230,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
-        uint32_t execute(TupleBuffer&, void*, WindowManagerPtr, QueryExecutionContextPtr) override {
+        uint32_t execute(TupleBuffer&, void*, WindowManagerPtr, QueryExecutionContextPtr, WorkerContext&) override {
             return 0;
         }
     };
@@ -240,7 +238,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
         MockedPipelineExecutionContext() : PipelineExecutionContext(nullptr, [](TupleBuffer&) {
-                                           }) {
+        }) {
             // nop
         }
     };
