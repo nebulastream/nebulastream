@@ -34,21 +34,18 @@ class ContinuousSourceTest : public testing::Test {
 
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
-
-    uint16_t coordinatorNumberOfCpus = 128;
-    uint16_t workerNumberOfCpus = 16;
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfCpus);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress,
-                                                    port + 10, port + 11, workerNumberOfCpus, NodeType::Sensor);
+                                                    port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -113,14 +110,14 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfCpus);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
-                                                    port + 10, port + 11, workerNumberOfCpus, NodeType::Sensor);
+                                                    port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -166,14 +163,14 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, coordinatorNumberOfCpus, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
-                                                    port + 10, port + 11, workerNumberOfCpus, NodeType::Sensor);
+                                                    port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -219,14 +216,14 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfCpus);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
-                                                    port + 10, port + 11, workerNumberOfCpus, NodeType::Sensor);
+                                                    port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -334,14 +331,14 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfCpus);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
-                                                    port + 10, port + 11, workerNumberOfCpus, NodeType::Sensor);
+                                                    port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -449,14 +446,14 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfCpus);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
-                                                    port + 10, port + 11, workerNumberOfCpus, NodeType::Sensor);
+                                                    port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -513,14 +510,14 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfCpus);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
-                                                    port + 10, port + 11, workerNumberOfCpus, NodeType::Sensor);
+                                                    port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -1119,14 +1116,14 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
 
 TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfCpus);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
-                                                    port + 10, port + 11, workerNumberOfCpus, NodeType::Sensor);
+                                                    port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");

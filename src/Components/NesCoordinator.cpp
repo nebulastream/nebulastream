@@ -49,6 +49,9 @@ NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
 
+// constructor with default numberOfCpus set to the number of processors
+NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort) : NesCoordinator(serverIp, restPort, rpcPort, std::thread::hardware_concurrency()) {}
+
 NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator()");
     NES_DEBUG("NesCoordinator::~NesCoordinator() ptr usage=" << workerRpcClient.use_count());
