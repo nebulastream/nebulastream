@@ -147,12 +147,11 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                         NES_DEBUG("DataSource::runningRoutine sending regular buffer");
                         recNow = true;
                     } else {//produce watermark only buffer
-                        //TODO: enable again
-//                        NES_DEBUG("DataSource::runningRoutine sending watermark-only buffer");
-//                        auto buffer = bufferManager->getBufferBlocking();
-//                        buffer.setWatermark(watermark->getWatermark());
-//                        buffer.setNumberOfTuples(0);
-//                        queryManager->addWork(this->sourceId, buffer);
+                        NES_DEBUG("DataSource::runningRoutine sending watermark-only buffer");
+                        auto buffer = bufferManager->getBufferBlocking();
+                        buffer.setWatermark(watermark->getWatermark());
+                        buffer.setNumberOfTuples(0);
+                        queryManager->addWork(this->sourceId, buffer);
                     }
                 }
             }

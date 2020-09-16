@@ -38,7 +38,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     /**
      * @brief Default constrcutor
      */
-    QueryManager();
+    QueryManager(uint64_t nodeEngineId);
     ~QueryManager();
     /**
      * @brief register a query by extracting sources, windows and sink and add them to
@@ -135,7 +135,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     * @param nodeEngineId the id of the owning node engine
     * @return bool indicating success
     */
-    bool startThreadPool(uint64_t nodeEngineId);
+    bool startThreadPool();
 
     QueryManager(const QueryManager&);
     QueryManager& operator=(const QueryManager&);
@@ -159,7 +159,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
 
     std::condition_variable cv;
 
-    size_t nodeId;
+    size_t nodeEngineId;
 
 };
 

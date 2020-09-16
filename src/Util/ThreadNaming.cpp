@@ -24,6 +24,7 @@ void setThreadName(const char* threadNameFmt, ...) {
     auto sz = std::min<size_t>(15, std::strlen(buffer));
     std::strncpy(resized_buffer, buffer, sz);
     std::string thName(resized_buffer);
+    //this will add the thread name in the log
     MDC::put("threadName", thName);
 
     resized_buffer[sz] = 0;
