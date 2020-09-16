@@ -161,19 +161,19 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_INFO("SimplePatternTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
+    NES_INFO("SimplePatternTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    NES_INFO("SimplePatternTest: Worker1 started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
+    NES_INFO("SimplePatternTest: Start worker 2");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+    NES_INFO("SimplePatternTest: Worker2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -255,5 +255,4 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
-
 }// namespace NES
