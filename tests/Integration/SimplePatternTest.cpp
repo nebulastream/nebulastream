@@ -188,7 +188,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     out.close();
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
 
-    //register physical stream R2000070
+   //register physical stream R2000070
     PhysicalStreamConfig conf70;
     conf70.logicalStreamName = "QnV";
     conf70.physicalStreamName = "test_stream_R2000070";
