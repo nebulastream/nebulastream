@@ -45,7 +45,7 @@ bool NetworkSink::writeData(TupleBuffer& inputBuffer, WorkerContext& workerConte
 
 void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: Empty method setup() called " << nesPartition.toString());
-    queryManager->addReconfigurationTask(parentPlanId, ReconfigurationDescriptor(Initialize, this));
+    queryManager->addReconfigurationTask(parentPlanId, ReconfigurationTask(Initialize, this));
 }
 
 void NetworkSink::shutdown() {
