@@ -85,7 +85,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     NES_DEBUG("coordinator started successfully");
 
     NES_DEBUG("start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_DEBUG("worker1 started successfully");
@@ -147,6 +147,111 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+/* 3.Test
+ * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
+ */
+TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
+    NES_DEBUG("start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_DEBUG("coordinator started successfully");
+
+    NES_DEBUG("start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_DEBUG("worker 1 started successfully");
+
+
+    NES_DEBUG("start worker 2");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), "127.0.0.1",
+                                                    port + 20, port + 21, NodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart2);
+    NES_DEBUG("worker 2 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    //register logical stream qnv
+    //TODO: update CHAR (sensor id is in result set )
+    std::string qnv =
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+    std::string testSchemaFileName = "QnV.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << qnv;
+    out.close();
+    wrk1->registerLogicalStream("QnV", testSchemaFileName);
+    wrk2->registerLogicalStream("QnV", testSchemaFileName);
+
+
+    //register physical stream R2000070
+    PhysicalStreamConfig conf70;
+    conf70.logicalStreamName = "QnV";
+    conf70.physicalStreamName = "test_stream_R2000070";
+    conf70.sourceType = "CSVSource";
+    conf70.sourceConfig = "../tests/test_data/QnV_short_R2000070.csv";
+    conf70.numberOfBuffersToProduce = 1;
+    conf70.sourceFrequency = 1;
+    wrk1->registerPhysicalStream(conf70);
+
+    //register physical stream R2000073
+    PhysicalStreamConfig conf73;
+    conf73.logicalStreamName = "QnV";
+    conf73.physicalStreamName = "test_stream_R2000073";
+    conf73.sourceType = "CSVSource";
+    conf73.sourceConfig = "../tests/test_data/QnV_short_R2000073.csv";
+    conf73.numberOfBuffersToProduce = 1;
+    conf73.sourceFrequency = 1;
+    wrk2->registerPhysicalStream(conf73);
+
+    std::string outputFilePath =
+        "testPatternWithTestStream.out";
+    remove(outputFilePath.c_str());
+
+    //register query
+    std::string query = R"(Pattern::from("QnV").filter(Attribute("velocity") > 100).sink(FileSinkDescriptor::create(")"
+                        + outputFilePath + "\")); ";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    //TODO Patternname waiting for String support in map operator
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|R2000073|1543624020000|102.629631|8|1|\n"
+        "|R2000070|1543625280000|108.166664|5|1|\n"
+        "+----------------------------------------------------+";
+
+    std::ifstream ifs(outputFilePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    NES_DEBUG("content=" << content);
+    NES_DEBUG("expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
+
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+
+    bool retStopWrk2 = wrk2->stop(false);
+    EXPECT_TRUE(retStopWrk2);
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
