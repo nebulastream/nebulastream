@@ -18,38 +18,15 @@
 #include <NodeEngine/Task.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
+#include <Util/ThreadBarrier.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
+#include <memory>
+#include <NodeEngine/ReconfigurationDescriptor.hpp>
 
 namespace NES {
 
 class TupleBuffer;
-
-enum ReconfigurationType : uint8_t {
-    Initialize,
-};
-
-class ReconfigurationDescriptor {
-  public:
-    explicit ReconfigurationDescriptor(ReconfigurationType type, Reconfigurable* instance = nullptr) : type(type), instance(instance) {
-        // nop
-    }
-
-    ReconfigurationType getType() const {
-        return type;
-    }
-
-    Reconfigurable* getInstance() const {
-        return instance;
-    };
-
-  private:
-    /// type of the reconfiguration
-    ReconfigurationType type;
-
-    /// pointer to reconfigurable instance
-    Reconfigurable* instance;
-};
 
 class CompiledExecutablePipeline;
 

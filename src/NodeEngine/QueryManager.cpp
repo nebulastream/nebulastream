@@ -13,6 +13,7 @@ namespace detail {
 uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, void*, WindowManager*, PipelineExecutionContext&, WorkerContextRef workerContext) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint");
     auto* descriptor = buffer.getBufferAs<ReconfigurationDescriptor>();
+    descriptor->wait();
     switch (descriptor->getType()) {
         case Initialize: {
             descriptor->getInstance()->reconfigure(workerContext);
@@ -196,7 +197,7 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationDescriptor));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
-    new (buffer.getBuffer()) ReconfigurationDescriptor(descriptor); // memcpy using copy ctor
+    new (buffer.getBuffer()) ReconfigurationDescriptor(descriptor, threadPool->getNumberOfThreads()); // memcpy using copy ctor
     auto pipelineContext = std::make_shared<PipelineExecutionContext>(queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&){});
     auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
