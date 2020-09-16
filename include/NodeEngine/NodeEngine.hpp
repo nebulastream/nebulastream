@@ -51,7 +51,8 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(BufferManagerPtr&&, QueryManagerPtr&&, std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&, Network::PartitionManagerPtr&&, QueryCompilerPtr&&);
+    explicit NodeEngine(BufferManagerPtr&&, QueryManagerPtr&&, std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
+        Network::PartitionManagerPtr&&, QueryCompilerPtr&&, uint64_t nodeEngineId);
 
     ~NodeEngine();
 
@@ -183,7 +184,6 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      */
     void onChannelError(Network::Messages::ErrorMessage) override;
 
-    uint64_t getNodeId();
   private:
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
@@ -196,7 +196,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
 
     bool isReleased;
     std::recursive_mutex engineMutex;
-    uint64_t nodeId;
+    uint64_t nodeEngineId;
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

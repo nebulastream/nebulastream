@@ -18,15 +18,12 @@ NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() {
     return nodeStatsProvider;
 }
 
-uint64_t NodeEngine::getNodeId() {
-    return nodeId;
-}
-
 std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, size_t bufferSize, size_t numBuffers) {
     try {
+        auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
-        auto queryManager = std::make_shared<QueryManager>();
+        auto queryManager = std::make_shared<QueryManager>(nodeEngineId);
         if (!partitionManager) {
             NES_ERROR("NodeEngine: error while creating partition manager");
             throw Exception("Error while creating partition manager");
@@ -39,7 +36,7 @@ std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint
             NES_ERROR("NodeEngine: error while creating queryManager");
             throw Exception("Error while creating queryManager");
         }
-        if (!queryManager->startThreadPool(UtilityFunctions::getNextNodeEngineId())) {
+        if (!queryManager->startThreadPool()) {
             NES_ERROR("NodeEngine: error while start thread pool");
             throw Exception("Error while start thread pool");
         } else {
@@ -61,7 +58,7 @@ std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint
                     Network::ExchangeProtocol(engine->getPartitionManager(), engine),
                     engine->getBufferManager());
             },
-            std::move(partitionManager), std::move(compiler));
+            std::move(partitionManager), std::move(compiler), nodeEngineId);
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
@@ -73,10 +70,9 @@ NodeEngine::NodeEngine(
     QueryManagerPtr&& queryManager,
     std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
     Network::PartitionManagerPtr&& partitionManager,
-    QueryCompilerPtr&& queryCompiler) : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>() {
+    QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId) : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>(), nodeEngineId(nodeEngineId) {
 
-    nodeId = queryManager->getNodeId();
-    NES_TRACE("NodeEngine() id=" << nodeId);
+    NES_TRACE("NodeEngine() id=" << nodeEngineId);
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
     this->queryCompiler = std::move(queryCompiler);
     this->queryManager = std::move(queryManager);

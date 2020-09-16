@@ -718,7 +718,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(
     try {
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
-        auto queryManager = std::make_shared<QueryManager>();
+        auto queryManager = std::make_shared<QueryManager>(0);
         auto networkManagerCreator = [=](NodeEnginePtr engine) {
           return Network::NetworkManager::create(
               hostname,
@@ -772,8 +772,9 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                                   std::promise<bool>& completed,
                                   NesPartition nesPartition,
                                   std::atomic<int>& bufferCnt)
-            : NodeEngine(std::move(bufferManager), std::move(queryManager), std::move(networkManagerCreator), std::move(partitionManager), std::move(queryCompiler)),
-              completed(completed), nesPartition(nesPartition), bufferCnt(bufferCnt) {
+            : NodeEngine(std::move(bufferManager), std::move(queryManager), std::move(networkManagerCreator), std::move(partitionManager),
+                         std::move(queryCompiler), 0),
+              completed(completed), nesPartition(nesPartition), bufferCnt(bufferCnt){
 
         }
         void onDataBuffer(Network::NesPartition id, TupleBuffer&) override {

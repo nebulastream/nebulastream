@@ -217,7 +217,6 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
 
             //TODO: we have to determine which windwos and keys to delete
             tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
-            //            store->cleanupToPos(i);
         }
         //TODO: remove content from state
 
