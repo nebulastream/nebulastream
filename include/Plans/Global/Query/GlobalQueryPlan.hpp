@@ -88,8 +88,8 @@ class GlobalQueryPlan {
     std::vector<GlobalQueryNodePtr> getAllGlobalQueryNodesWithOperatorType() {
         NES_DEBUG("GlobalQueryPlan: Get all Global query nodes with specific logical operators");
         std::vector<GlobalQueryNodePtr> vector;
-        for (const auto& rootGlobalQueryNode : root->getChildren()) {
-            rootGlobalQueryNode->as<GlobalQueryNode>()->getNodesWithTypeHelper<T>(vector);
+        for (const auto& childGlobalQueryNode : root->getChildren()) {
+            childGlobalQueryNode->as<GlobalQueryNode>()->getNodesWithTypeHelper<T>(vector);
         }
         return vector;
     }

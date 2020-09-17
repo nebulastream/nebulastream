@@ -110,6 +110,10 @@ class GlobalQueryNode : public Node {
      */
     std::map<QueryId ,OperatorNodePtr> getMapOfQueryIdToOperator();
 
+    /**
+     * @brief Get the set of query ids sharing the GQN
+     * @return set of query ids
+     */
     const std::vector<QueryId> getQueryIds();
 
     const std::string toString() const override;
