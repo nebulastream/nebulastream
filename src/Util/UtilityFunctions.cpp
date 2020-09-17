@@ -94,7 +94,8 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << newQuery << std::endl;
         code << "}" << std::endl;
         code << "}" << std::endl;
-        NES_DEBUG("UtilityFunctions: query code \n" << code.str());
+        NES_DEBUG("UtilityFunctions: query code \n"
+                  << code.str());
         Compiler compiler;
         CompiledCodePtr compiled_code = compiler.compile(code.str(), true);
         if (!code) {
