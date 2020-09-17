@@ -27,12 +27,30 @@ class WorkerContext {
   public:
     explicit WorkerContext(uint32_t workerId);
 
+    /**
+     * @brief get current worker context thread id. This is assigned by calling NesThread::getId()
+     * @return current worker context thread id
+     */
     uint32_t getId() const;
 
+    /**
+     * @brief This stores an output channel for an operator
+     * @param id of the operator that we want to store the output channel
+     * @param channel the output channel
+     */
     void storeChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel);
 
+    /**
+     * @brief removes a registered output channel
+     * @param id of the operator that we want to store the output channel
+     */
     void releaseChannel(Network::OperatorId id);
 
+    /**
+     * @brief retrieve a registered output channel
+     * @param ownerId id of the operator that we want to store the output channel
+     * @return an output channel
+     */
     Network::OutputChannel* getChannel(Network::OperatorId ownerId);
 };
 }// namespace NES

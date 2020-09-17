@@ -50,15 +50,11 @@ class NesThread {
   private:
     /// Methods ReserveEntry() and ReleaseEntry() do the real work.
     inline static uint32_t reserveEntry() {
-#ifdef COUNT_ACTIVE_THREADS
-        int32_t result = ++current_num_threads_;
-    assert(result < kMaxNumThreads);
-#endif
         uint32_t start = next_index++;
         uint32_t end = start + 2 * MaxNumThreads;
         for (uint32_t id = start; id < end; ++id) {
             bool expected = false;
-            if(id_used[id % MaxNumThreads].compare_exchange_strong(expected, true)) {
+            if (id_used[id % MaxNumThreads].compare_exchange_strong(expected, true)) {
                 return id % MaxNumThreads;
             }
         }
