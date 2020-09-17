@@ -73,15 +73,7 @@ class SlidingWindow : public WindowType {
     uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
         return currentTs + size.getTime() - (currentTs % size.getTime());
     }
-    /**
-    * Calculates the next window start based on a given timestamp.
-    * @param currentTs
-    * @return the next window start
-    */
-    uint64_t calculateNextWindowStart(uint64_t currentTs) const {
-        return currentTs + slide.getTime() - (currentTs % slide.getTime());
-    }
-    /**
+     /**
      *  TODO not use, check if needed
     * @brief return the time value
     * @return
