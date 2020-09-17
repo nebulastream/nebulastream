@@ -21,9 +21,9 @@ CoordinatorEngine::~CoordinatorEngine() {
     NES_DEBUG("~CoordinatorEngine()");
 };
 
-size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, int16_t numberOfCPUs, NodeStats nodeStats, NodeType type) {
+size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, NodeStats nodeStats, NodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address
-                                                          << " numberOfCpus=" << numberOfCPUs
+                                                          << " numberOfSlots=" << numberOfSlots
                                                           << " nodeProperties=" << nodeStats.DebugString()
                                                           << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
@@ -42,7 +42,7 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
     TopologyNodePtr physicalNode;
     if (type == NodeType::Sensor) {
         NES_DEBUG("CoordinatorEngine::registerNode: register sensor node");
-        physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfCPUs);
+        physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
 
         if (!physicalNode) {
             NES_ERROR("CoordinatorEngine::RegisterNode : node not created");
@@ -80,7 +80,7 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
 
     } else if (type == NodeType::Worker) {
         NES_DEBUG("CoordinatorEngine::registerNode: register worker node");
-        physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfCPUs);
+        physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
 
         if (!physicalNode) {
             NES_ERROR("CoordinatorEngine::RegisterNode : node not created");

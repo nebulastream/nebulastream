@@ -219,7 +219,7 @@ bool CoordinatorRPCClient::unregisterNode() {
     }
 }
 
-bool CoordinatorRPCClient::registerNode(std::string ipAddress, int64_t grpcPort, int64_t dataPort, int16_t numberOfCpus,
+bool CoordinatorRPCClient::registerNode(std::string ipAddress, int64_t grpcPort, int64_t dataPort, int16_t numberOfSlots,
                                         NodeType type, NodeStats nodeStats) {
     if (type == NodeType::Sensor) {
         NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
@@ -234,7 +234,7 @@ bool CoordinatorRPCClient::registerNode(std::string ipAddress, int64_t grpcPort,
     request.set_address(ipAddress);
     request.set_grpcport(grpcPort);
     request.set_dataport(dataPort);
-    request.set_numberofcpus(numberOfCpus);
+    request.set_numberofslots(numberOfSlots);
     request.mutable_nodeproperties()->CopyFrom(nodeStats);
     request.set_type(type);
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());

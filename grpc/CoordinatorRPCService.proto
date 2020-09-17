@@ -31,7 +31,7 @@ message RegisterNodeRequest {
   string address = 1;
   uint32 grpcPort = 2;
   uint32 dataPort = 3;
-  uint32 numberOfCpus = 4;
+  uint32 numberOfSlots = 4;
   NES.NodeStats nodeProperties = 5;
   NodeType type = 6;
 }

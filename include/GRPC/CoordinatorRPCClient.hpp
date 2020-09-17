@@ -71,12 +71,12 @@ class CoordinatorRPCClient {
      * @param ipAddress: where this node is listening
      * @param grpcPort: the grpc port of the node
      * @param dataPort: the data port of the node
-     * @param numberOfCpus: cpu capacity
+     * @param numberOfSlots: processing slots capacity
      * @param type: of this node, e.g., sensor or worker
      * @param nodeProperties
      * @return bool indicating success
      */
-    bool registerNode(std::string ipAddress, int64_t grpcPort, int64_t dataPort, int16_t numberOfCpus,
+    bool registerNode(std::string ipAddress, int64_t grpcPort, int64_t dataPort, int16_t numberOfSlots,
                       NodeType type, NodeStats nodeStats);
 
     /**
