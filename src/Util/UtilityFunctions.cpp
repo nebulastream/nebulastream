@@ -441,6 +441,9 @@ web::json::value UtilityFunctions::getExecutionPlanAsJson(GlobalExecutionPlanPtr
         web::json::value currentExecutionNodeJsonValue{};
 
         currentExecutionNodeJsonValue["executionNodeId"] = web::json::value::number(executionNode->getId());
+        currentExecutionNodeJsonValue["topologyNodeIpId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
+        currentExecutionNodeJsonValue["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
+
 
         std::vector<web::json::value> currentExecutionPlanQuerySubPlans = {};
 
