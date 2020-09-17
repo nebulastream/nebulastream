@@ -288,7 +288,12 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
                                               code->varDeclarationInputBuffer)
                                      .copy());
 
-    // 3. emit the buffer to the runtime.
+    // 3. copy origin id
+    code->cleanupStmts.push_back(setOriginId(code->varDeclarationResultBuffer,
+                                             code->varDeclarationInputBuffer)
+                                     .copy());
+
+    // 4. emit the buffer to the runtime.
     code->cleanupStmts.push_back(
         emitTupleBuffer(code->varDeclarationExecutionContext,
                         code->varDeclarationResultBuffer,
