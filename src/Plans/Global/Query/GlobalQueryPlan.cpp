@@ -13,7 +13,7 @@ GlobalQueryPlanPtr GlobalQueryPlan::create() {
 }
 
 void GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
-    NES_ERROR("GlobalQueryPlan: Adding new query plan to the Global query plan");
+    NES_INFO("GlobalQueryPlan: Adding new query plan to the Global query plan");
     QueryId queryId = queryPlan->getQueryId();
     if (queryId == INVALID_QUERY_ID) {
         NES_ERROR("GlobalQueryPlan: Found query plan without query id");

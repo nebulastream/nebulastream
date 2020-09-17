@@ -339,6 +339,12 @@ std::vector<NodePtr> Node::getAllRootNodes() {
 std::vector<NodePtr> Node::getAllLeafNodes() {
     NES_DEBUG("Node: Get all leaf nodes for this node");
     std::vector<NodePtr> leafNodes;
+
+    if(children.empty()){
+        NES_DEBUG("Node: found no children. Returning itself as leaf.");
+        leafNodes.push_back(shared_from_this());
+    }
+
     for (auto& child : children) {
         if (child->getChildren().empty()) {
             NES_DEBUG("Node: Inserting leaf node to the collection");
