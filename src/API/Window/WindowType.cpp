@@ -56,24 +56,51 @@ TimeMeasure TumblingWindow::getSize() {
     return size;
 }
 
-uint64_t SlidingWindow::getTime() const {
-    NES_NOT_IMPLEMENTED();
+uint64_t SlidingWindow::getSizeTime() const {
+    return size.getTime();
+}
+
+uint64_t SlidingWindow::getSlideTime() const {
+    return slide.getTime();
 }
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
-    : size(size), slide(slide), WindowType(timeCharacteristic) {
-    NES_NOT_IMPLEMENTED();
-}
+    : size(size), slide(slide), WindowType(timeCharacteristic) { }
 
 WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
     return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));
 }
 
-void SlidingWindow::triggerWindows(WindowListPtr,
-                                   uint64_t,
-                                   uint64_t) const {
-    NES_NOT_IMPLEMENTED();
+uint64_t SlidingWindow::getTime() const {
+    return size.getTime();
 }
+
+void SlidingWindow::triggerWindows(WindowListPtr windows,
+                                   uint64_t lastWatermark,
+                                   uint64_t currentWatermark) const {
+    NES_DEBUG("SlidingWindow::triggerWindows windows before=" << windows->size());
+    long lastStart = lastWatermark - ((lastWatermark + slide.getTime()) % slide.getTime());
+    NES_DEBUG("SlidingWindow::triggerWindows= lastStart=" << lastStart << " size.getTime()=" << size.getTime() << " lastWatermark=" << lastWatermark);
+    for (long windowStart = lastStart; windowStart + size.getTime() > lastWatermark; windowStart = windowStart - slide.getTime()) {
+        if (windowStart>=0 && ((windowStart + size.getTime()) <= currentWatermark + 1)) {
+            NES_DEBUG("SlidingWindow::triggerWindows add window to be triggered = windowStart=" << windowStart);
+            windows->emplace_back(windowStart, windowStart + size.getTime());
+        }
+    }
+}
+
+bool SlidingWindow::isSlidingWindow() {
+    return true;
+}
+
+TimeMeasure SlidingWindow::getSize() {
+    return size;
+}
+
+TimeMeasure SlidingWindow::getSlide() {
+    return slide;
+}
+
 
 SessionWindow::SessionWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure gap)
     : gap(gap), WindowType(timeCharacteristic) {

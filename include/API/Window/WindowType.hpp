@@ -70,18 +70,58 @@ class SlidingWindow : public WindowType {
   * @param currentTs
   * @return the next window end
   */
-    uint64_t calculateNextWindowEnd(uint64_t) const override {
-        return 0;
+    uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
+        return currentTs + size.getTime() - (currentTs % size.getTime());
     }
-
+    /**
+    * Calculates the next window start based on a given timestamp.
+    * @param currentTs
+    * @return the next window start
+    */
+    uint64_t calculateNextWindowStart(uint64_t currentTs) const {
+        return currentTs + slide.getTime() - (currentTs % slide.getTime());
+    }
+    /**
+     *  TODO not use, check if needed
+    * @brief return the time value
+    * @return
+    */
     uint64_t getTime() const override;
+
+    /**
+   * @brief Generates and adds all windows between which ended size the last watermark till the current watermark.
+   * @param windows vector of windows
+   * @param lastWatermark
+   * @param currentWatermark
+   */
+    void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
+
+    bool isSlidingWindow() override;
+    /**
+    * @brief return size of the window
+    * @return
+    */
+    TimeMeasure getSize();
+    /**
+    * @brief return size of the slide
+    * @return
+    */
+    TimeMeasure getSlide();
+    /**
+    * @brief return the time value of the window size
+    * @return window size in time
+    */
+    uint64_t getSizeTime() const;
+    /**
+    * @brief return the time value of the window slide
+    * @return slide size in time
+    */
+    uint64_t getSlideTime() const;
 
   private:
     SlidingWindow(TimeCharacteristicPtr timeType, TimeMeasure size, TimeMeasure slide);
-
     const TimeMeasure size;
     const TimeMeasure slide;
-    void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 };
 
 /**
