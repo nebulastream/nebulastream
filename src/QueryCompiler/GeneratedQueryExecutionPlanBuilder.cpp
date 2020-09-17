@@ -21,7 +21,7 @@ BufferManagerPtr GeneratedQueryExecutionPlanBuilder::getBufferManager() const {
     return bufferManager;
 }
 
-QuerySubPlanId GeneratedQueryExecutionPlanBuilder::getQueryId() const {
+QueryId GeneratedQueryExecutionPlanBuilder::getQueryId() const {
     return queryId;
 }
 

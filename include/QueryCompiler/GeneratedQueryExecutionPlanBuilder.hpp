@@ -80,7 +80,7 @@ class GeneratedQueryExecutionPlanBuilder {
     /**
      * @return the query execution plan id
      */
-    QuerySubPlanId getQueryId() const;
+    [[nodiscard]] QueryId getQueryId() const;
 
     /**
      * @return a query execution plan with the specified configuration
