@@ -96,10 +96,6 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
         return false;
     }
 
-//    NES_INFO("Node: Remove children and parents for the input node.");
-//    newNode->removeChildren();
-//    newNode->removeAllParent();
-
     NES_INFO("Node: Create temporary copy of this nodes parents.");
     std::vector<NodePtr> copyOfParents = parents;
 
