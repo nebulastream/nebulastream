@@ -54,7 +54,7 @@ class PipelineStageHolder {
 
 void generateExecutablePipelines(
     QueryId queryId,
-    QuerySubPlanId  querySubPlanId,
+    QuerySubPlanId querySubPlanId,
     CodeGeneratorPtr codeGenerator,
     BufferManagerPtr bufferManager,
     QueryManagerPtr queryManagerPtr,

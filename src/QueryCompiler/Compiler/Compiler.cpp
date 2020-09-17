@@ -97,7 +97,7 @@ std::string Compiler::formatAndPrintSource(const std::string& filename) {
 
     auto res = popen(formatCommand.c_str(), "r");
     if (!res) {
-       NES_FATAL_ERROR("Compiler: popen() failed!");
+        NES_FATAL_ERROR("Compiler: popen() failed!");
     }
     // wait till command is complete executed.
     pclose(res);
@@ -105,15 +105,16 @@ std::string Compiler::formatAndPrintSource(const std::string& filename) {
     std::ifstream file(filename);
     file.clear();
     std::string sourceCode((std::istreambuf_iterator<char>(file)),
-                    std::istreambuf_iterator<char>());
-    NES_DEBUG("Compiler: generate code: \n" << sourceCode);
+                           std::istreambuf_iterator<char>());
+    NES_DEBUG("Compiler: generate code: \n"
+              << sourceCode);
     return sourceCode;
 }
 
 void Compiler::writeSourceToFile(const std::string& filename,
                                  const std::string& source) {
     auto path = std::filesystem::current_path().string();
-    NES_DEBUG("Compiler: write source to file://" << path <<"/"<< filename);
+    NES_DEBUG("Compiler: write source to file://" << path << "/" << filename);
     std::ofstream result_file(filename, std::ios::trunc | std::ios::out);
     result_file << source;
 }
