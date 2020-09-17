@@ -75,7 +75,7 @@ TEST_F(QueryTest, testQueryFilter) {
     EXPECT_EQ(sinkOperators.size(), 1);
 }
 
-TEST_F(QueryTest, testQueryWindow) {
+TEST_F(QueryTest, testQueryTumblingWindow) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
@@ -97,6 +97,41 @@ TEST_F(QueryTest, testQueryWindow) {
                           TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
                           Sum::on(Attribute("value")))
                       .sink(printSinkDescriptor);
+    auto plan = query.getQueryPlan();
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
+    EXPECT_EQ(sourceOperators.size(), 1);
+
+    SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+
+    const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
+    EXPECT_EQ(sinkOperators.size(), 1);
+
+    SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
+    EXPECT_EQ(sinkOperators.size(), 1);
+}
+
+TEST_F(QueryTest, testQuerySlidingWindow) {
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+
+    PhysicalStreamConfig streamConf;
+    streamConf.physicalStreamName = "test2";
+    streamConf.logicalStreamName = "test_stream";
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("default_logical")
+        .window(
+            SlidingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10), Seconds(2)),
+            Sum::on(Attribute("value")))
+        .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 1);
