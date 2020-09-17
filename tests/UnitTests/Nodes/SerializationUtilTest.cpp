@@ -355,12 +355,12 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
 
 TEST_F(SerializationUtilTest, operatorSerialization) {
 
-    auto source = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create("testStream"));
-    auto filter = createFilterLogicalOperatorNode(Attribute("f1") == 10);
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+    auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source);
-    auto map = createMapLogicalOperatorNode(Attribute("f2") = 10);
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
     map->addChild(filter);
-    auto sink = createSinkLogicalOperatorNode(PrintSinkDescriptor::create());
+    auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     sink->addChild(map);
 
     auto serializedOperator = OperatorSerializationUtil::serializeOperator(sink, new SerializableOperator());

@@ -16,18 +16,16 @@ DistributeWindowRulePtr DistributeWindowRule::create() {
 QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("DistributeWindowRule: Apply DistributeWindowRule.");
 
-    std::vector<OperatorNodePtr> windowOps = queryPlan->getOperatorByType<WindowLogicalOperatorNode>();
-    if (windowOps.size() > 0) {
+    auto windowOps = queryPlan->getOperatorByType<WindowLogicalOperatorNode>();
+    if (!windowOps.empty()) {
         NES_DEBUG("DistributeWindowRule::apply: found " << windowOps.size() << " window operators");
         for (auto& windowOp : windowOps) {
             NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp << " << windowOp->toString()");
-            if (windowOp->getChildren().size() < 2) {//TODO:change this back to 2
+            if (windowOp->getChildren().size() < CHILD_NODE_THRESHOLD) {
                 NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp << " << windowOp->toString()");
-
-                WindowLogicalOperatorNode* winOp = dynamic_cast<WindowLogicalOperatorNode*>(windowOp.get());
-                LogicalOperatorNodePtr newWindowOp = createCentralWindowSpecializedOperatorNode(winOp->getWindowDefinition());
-                newWindowOp->setInputSchema(winOp->getInputSchema());
-                newWindowOp->setOutputSchema(winOp->getOutputSchema());
+                auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
+                newWindowOp->setInputSchema(windowOp->getInputSchema());
+                newWindowOp->setOutputSchema(windowOp->getOutputSchema());
                 newWindowOp->setId(UtilityFunctions::getNextOperatorId());
 
                 NES_DEBUG("DistributeWindowRule::apply: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
@@ -36,15 +34,17 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                 NES_DEBUG("DistributeWindowRule::apply: plan after replace " << queryPlan->toString());
             } else {
                 NES_DEBUG("DistributeWindowRule::apply: introduce distributed window operator for window " << windowOp << " << windowOp->toString()");
+                auto winDef = windowOp->getWindowDefinition();
 
-                WindowLogicalOperatorNode* winOp = dynamic_cast<WindowLogicalOperatorNode*>(windowOp.get());
-                WindowDefinitionPtr winDef = winOp->getWindowDefinition();
+                auto newWinDef = WindowDefinition::create(winDef->getOnKey(),
+                                                        winDef->getWindowAggregation(),
+                                                        winDef->getWindowType(),
+                                                        DistributionCharacteristic::createCombiningWindowType(),
+                                                        windowOp->getChildren().size());
 
-                WindowDefinitionPtr newWinDef = createWindowDefinition(winDef->getOnKey(), winDef->getWindowAggregation(), winDef->getWindowType(), DistributionCharacteristic::createCombiningWindowType(), windowOp->getChildren().size());
-
-                LogicalOperatorNodePtr newWindowOp = createWindowComputationSpecializedOperatorNode(newWinDef);
-                newWindowOp->setInputSchema(winOp->getInputSchema());
-                newWindowOp->setOutputSchema(winOp->getOutputSchema());
+                auto newWindowOp = LogicalOperatorFactory::createWindowComputationSpecializedOperator(newWinDef);
+                newWindowOp->setInputSchema(newWindowOp->getInputSchema());
+                newWindowOp->setOutputSchema(newWindowOp->getOutputSchema());
                 newWindowOp->setId(UtilityFunctions::getNextOperatorId());
 
                 //replace logical window op with combiner
@@ -58,9 +58,11 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                 for (auto& child : copyOfChilds) {
                     NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());
                     NES_DEBUG("DistributeWindowRule::apply: plan before insert child " << queryPlan->toString());
-                    WindowDefinitionPtr newWinDef2 = createWindowDefinition(winDef->getOnKey(), winDef->getWindowAggregation(), winDef->getWindowType(), DistributionCharacteristic::createSlicingWindowType(), 1);
-                    LogicalOperatorNodePtr sliceOp = createSliceCreationSpecializedOperatorNode(newWinDef2);
-
+                    auto newWinDef2 = WindowDefinition::create(winDef->getOnKey(),
+                                                             winDef->getWindowAggregation(),
+                                                             winDef->getWindowType(),
+                                                             DistributionCharacteristic::createSlicingWindowType(), 1);
+                    auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(newWinDef2);
                     sliceOp->setId(UtilityFunctions::getNextOperatorId());
                     child->insertBetweenThisAndParentNodes(sliceOp);
                     NES_DEBUG("DistributeWindowRule::apply: plan after insert child " << queryPlan->toString());

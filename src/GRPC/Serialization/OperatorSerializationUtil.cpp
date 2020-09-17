@@ -115,7 +115,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedSourceDescriptor);
         // de-serialize source descriptor
         auto sourceDescriptor = deserializeSourceDescriptor(&serializedSourceDescriptor);
-        operatorNode = createSourceLogicalOperatorNode(sourceDescriptor);
+        operatorNode = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
     } else if (details.Is<SerializableOperator_SinkDetails>()) {
         // de-serialize sink operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to SinkLogicalOperator");
@@ -123,7 +123,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedSinkDescriptor);
         // de-serialize sink descriptor
         auto sinkDescriptor = deserializeSinkDescriptor(&serializedSinkDescriptor);
-        operatorNode = createSinkLogicalOperatorNode(sinkDescriptor);
+        operatorNode = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
     } else if (details.Is<SerializableOperator_FilterDetails>()) {
         // de-serialize filter operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to FilterLogicalOperator");
@@ -131,14 +131,14 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedFilterOperator);
         // de-serialize filter expression
         auto filterExpression = ExpressionSerializationUtil::deserializeExpression(serializedFilterOperator.mutable_predicate());
-        operatorNode = createFilterLogicalOperatorNode(filterExpression);
+        operatorNode = LogicalOperatorFactory::createFilterOperator(filterExpression);
     } else if (details.Is<SerializableOperator_MergeDetails>()) {
         // de-serialize merge operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to MergeLogicalOperator");
         auto serializedMergeDescriptor = SerializableOperator_MergeDetails();
         details.UnpackTo(&serializedMergeDescriptor);
         // de-serialize merge descriptor
-        operatorNode = createMergeLogicalOperatorNode();
+        operatorNode = LogicalOperatorFactory::createMergeOperator();
     } else if (details.Is<SerializableOperator_MapDetails>()) {
         // de-serialize map operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to MapLogicalOperator");
@@ -146,7 +146,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedMapOperator);
         // de-serialize map expression
         auto fieldAssignmentExpression = ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
-        operatorNode = createMapLogicalOperatorNode(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>());
+        operatorNode = LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>());
     } else if (details.Is<SerializableOperator_WindowDetails>()) {
         // de-serialize window operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
@@ -271,22 +271,23 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
 
     LogicalOperatorNodePtr ptr;
     if (sinkDetails->onkey() == "") {
+        auto windowDef = WindowDefinition::create(aggregation, window, distChar);
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-            return createCentralWindowSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<CentralWindowOperator>();
+            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef)->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-            return createWindowComputationSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<WindowComputationOperator>();
+            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef)->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            return createSliceCreationSpecializedOperatorNode(createWindowDefinition(aggregation, window, distChar))->as<SliceCreationOperator>();
+            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef)->as<SliceCreationOperator>();
         } else {
             NES_NOT_IMPLEMENTED();
         }
     } else {
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-            return createCentralWindowSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar, 1))->as<CentralWindowOperator>();
+            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(WindowDefinition::create(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar, 1))->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-            return createWindowComputationSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar, sinkDetails->numberofinputedges()))->as<WindowComputationOperator>();
+            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(WindowDefinition::create(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar, sinkDetails->numberofinputedges()))->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            return createSliceCreationSpecializedOperatorNode(createWindowDefinition(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar, 1))->as<SliceCreationOperator>();
+            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(WindowDefinition::create(AttributeField::create(sinkDetails->onkey(), DataTypeFactory::createUndefined()), aggregation, window, distChar, 1))->as<SliceCreationOperator>();
         } else {
             NES_NOT_IMPLEMENTED();
         }
@@ -302,7 +303,7 @@ SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOpe
 
 OperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails) {
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDetails);
-    return createSourceLogicalOperatorNode(sourceDescriptor);
+    return LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
 }
 
 SerializableOperator_SinkDetails OperatorSerializationUtil::serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator) {
@@ -314,7 +315,7 @@ SerializableOperator_SinkDetails OperatorSerializationUtil::serializeSinkOperato
 
 OperatorNodePtr OperatorSerializationUtil::deserializeSinkOperator(SerializableOperator_SinkDetails* sinkDetails) {
     auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
-    return createSinkLogicalOperatorNode(sinkDescriptor);
+    return LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
 }
 
 SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor, SerializableOperator_SourceDetails* sourceDetails) {

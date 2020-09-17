@@ -25,10 +25,6 @@ const std::string SourceLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-LogicalOperatorNodePtr createSourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor) {
-    return std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor);
-}
-
 SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() {
     return sourceDescriptor;
 }
@@ -43,7 +39,7 @@ void SourceLogicalOperatorNode::setSourceDescriptor(SourceDescriptorPtr sourceDe
 }
 
 OperatorNodePtr SourceLogicalOperatorNode::copy() {
-    auto copy = createSourceLogicalOperatorNode(sourceDescriptor);
+    auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

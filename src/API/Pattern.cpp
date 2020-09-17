@@ -18,7 +18,7 @@ Pattern::Pattern(QueryPlanPtr queryPlan) : Query(queryPlan) {
 
 Pattern Pattern::from(const std::string sourceStreamName) {
     NES_DEBUG("Pattern: create query for input stream " << sourceStreamName);
-    auto sourceOperator = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create(sourceStreamName));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceOperator);
     return Pattern(queryPlan);
 }
@@ -29,7 +29,7 @@ Pattern& Pattern::sink(const SinkDescriptorPtr sinkDescriptor) {
     //TODO: replace '1'  with patternId or name after strings are supported by map
     this->map(Attribute("PatternId") = 1);
     NES_DEBUG("Pattern: add sink operator to query");
-    OperatorNodePtr op = createSinkLogicalOperatorNode(sinkDescriptor);
+    OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }

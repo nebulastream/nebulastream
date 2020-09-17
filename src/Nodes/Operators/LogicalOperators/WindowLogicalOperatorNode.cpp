@@ -1,4 +1,5 @@
 #include <API/Schema.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
@@ -32,7 +33,7 @@ bool WindowLogicalOperatorNode::equal(const NodePtr rhs) const {
 }
 
 OperatorNodePtr WindowLogicalOperatorNode::copy() {
-    auto copy = createWindowLogicalOperatorNode(windowDefinition);
+    auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition);
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -67,10 +68,6 @@ bool WindowLogicalOperatorNode::inferSchema() {
     //    outputSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField("value", INT64);
     //    outputSchema->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
     return true;
-}
-
-LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinitionPtr) {
-    return std::make_shared<WindowLogicalOperatorNode>(windowDefinitionPtr);
 }
 
 }// namespace NES

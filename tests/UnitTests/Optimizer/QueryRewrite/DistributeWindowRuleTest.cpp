@@ -89,7 +89,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     const QueryPlanPtr updatedPlan = distributeWindowRule->apply(queryPlan);
 
     std::cout << " plan after=" << queryPlan->toString() << std::endl;
-    std::vector<OperatorNodePtr> windowOps = queryPlan->getOperatorByType<CentralWindowOperator>();
+    auto windowOps = queryPlan->getOperatorByType<CentralWindowOperator>();
     ASSERT_EQ(windowOps.size(), 1);
 }
 
@@ -117,9 +117,9 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     updatedPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
 
-    std::vector<OperatorNodePtr> compOps = queryPlan->getOperatorByType<WindowComputationOperator>();
+    auto compOps = queryPlan->getOperatorByType<WindowComputationOperator>();
     ASSERT_EQ(compOps.size(), 1);
 
-    std::vector<OperatorNodePtr> sliceOps = queryPlan->getOperatorByType<SliceCreationOperator>();
+    auto sliceOps = queryPlan->getOperatorByType<SliceCreationOperator>();
     ASSERT_EQ(sliceOps.size(), 2);
 }

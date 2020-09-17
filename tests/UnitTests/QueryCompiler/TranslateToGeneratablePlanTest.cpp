@@ -64,36 +64,36 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
         pred6 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
-        sourceOp = createSourceLogicalOperatorNode(sourceDescriptor);
+        sourceOp = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
         sourceOp->setId(0);
-        filterOp1 = createFilterLogicalOperatorNode(pred1);
+        filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
         filterOp1->setId(1);
-        filterOp2 = createFilterLogicalOperatorNode(pred2);
+        filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
         filterOp2->setId(2);
-        filterOp3 = createFilterLogicalOperatorNode(pred3);
+        filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
         filterOp3->setId(3);
-        filterOp4 = createFilterLogicalOperatorNode(pred4);
+        filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
         filterOp4->setId(4);
-        filterOp5 = createFilterLogicalOperatorNode(pred5);
+        filterOp5 = LogicalOperatorFactory::createFilterOperator(pred5);
         filterOp5->setId(5);
-        filterOp6 = createFilterLogicalOperatorNode(pred6);
+        filterOp6 = LogicalOperatorFactory::createFilterOperator(pred6);
         filterOp6->setId(6);
-        filterOp7 = createFilterLogicalOperatorNode(pred7);
+        filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
         filterOp7->setId(7);
 
-        filterOp1Copy = createFilterLogicalOperatorNode(pred1);
+        filterOp1Copy = LogicalOperatorFactory::createFilterOperator(pred1);
         filterOp1Copy->setId(8);
-        filterOp2Copy = createFilterLogicalOperatorNode(pred2);
+        filterOp2Copy = LogicalOperatorFactory::createFilterOperator(pred2);
         filterOp2Copy->setId(9);
-        filterOp3Copy = createFilterLogicalOperatorNode(pred3);
+        filterOp3Copy = LogicalOperatorFactory::createFilterOperator(pred3);
         filterOp3Copy->setId(10);
-        filterOp4Copy = createFilterLogicalOperatorNode(pred4);
+        filterOp4Copy = LogicalOperatorFactory::createFilterOperator(pred4);
         filterOp4Copy->setId(11);
-        filterOp5Copy = createFilterLogicalOperatorNode(pred5);
+        filterOp5Copy = LogicalOperatorFactory::createFilterOperator(pred5);
         filterOp5Copy->setId(12);
-        filterOp6Copy = createFilterLogicalOperatorNode(pred6);
+        filterOp6Copy = LogicalOperatorFactory::createFilterOperator(pred6);
         filterOp6Copy->setId(13);
-        filterOp7Copy = createFilterLogicalOperatorNode(pred7);
+        filterOp7Copy = LogicalOperatorFactory::createFilterOperator(pred7);
         filterOp7Copy->setId(14);
 
         removed = false;
@@ -128,12 +128,12 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
      */
     auto schema = Schema::create();
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
-    auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
+    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(printSinkDescriptorPtr);
     sinkOperator->setId(UtilityFunctions::getNextOperatorId());
     auto constValue = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
     auto fieldRead = FieldAccessExpressionNode::create(DataTypeFactory::createInt8(), "FieldName");
     auto andNode = EqualsExpressionNode::create(constValue, fieldRead);
-    auto filter = createFilterLogicalOperatorNode(andNode);
+    auto filter = LogicalOperatorFactory::createFilterOperator(andNode);
     filter->setId(UtilityFunctions::getNextOperatorId());
     sinkOperator->addChild(filter);
     filter->addChild(sourceOp);
@@ -161,9 +161,9 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     schema->addField(AttributeField::create("f1", DataTypeFactory::createInt64()));
 
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
-    auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
+    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(printSinkDescriptorPtr);
     sinkOperator->setId(UtilityFunctions::getNextOperatorId());
-    auto windowOperator = createWindowLogicalOperatorNode(createWindowDefinition(Sum::on(Attribute("f1")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType()));
+    auto windowOperator = LogicalOperatorFactory::createWindowOperator(WindowDefinition::create(Sum::on(Attribute("f1")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType()));
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);

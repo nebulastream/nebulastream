@@ -87,6 +87,10 @@ typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
+
+class WindowDefinition;
+typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+
 class WindowDefinition {
   public:
     /**
@@ -110,6 +114,26 @@ class WindowDefinition {
                      const WindowTypePtr windowType,
                      DistributionCharacteristicPtr distChar,
                      uint64_t numberOfInputEdges);
+
+    /**
+ * @brief Create a new window definition for a global window
+ * @param windowAggregation
+ * @param windowType
+ * @return Window Definition
+ */
+    static WindowDefinitionPtr create(const WindowAggregationPtr windowAggregation,
+                                               const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
+
+    /**
+     * @brief Create a new window definition for a keyed window
+     * @param windowAggregation
+     * @param windowType
+     * @return Window Definition
+     */
+    static WindowDefinitionPtr create(const AttributeFieldPtr onKey,
+                                               const WindowAggregationPtr windowAggregation,
+                                               const WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
+                                               uint64_t numberOfInputEdges);
 
     /**
      * @brief getter and setter for the distribution type (centralized or distributed)
@@ -155,27 +179,7 @@ class WindowDefinition {
     uint64_t numberOfInputEdges;
 };
 
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
-/**
- * @brief Create a new window definition for a global window
- * @param windowAggregation
- * @param windowType
- * @return Window Definition
- */
-WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggregation,
-                                           const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
-
-/**
- * @brief Create a new window definition for a keyed window
- * @param windowAggregation
- * @param windowType
- * @return Window Definition
- */
-WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey,
-                                           const WindowAggregationPtr windowAggregation,
-                                           const WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
-                                           uint64_t numberOfInputEdges);
 
 }// namespace NES
 
