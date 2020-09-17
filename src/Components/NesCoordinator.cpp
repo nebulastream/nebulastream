@@ -31,8 +31,8 @@ using grpc::Status;
 
 namespace NES {
 
-NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfCpus)
-    : serverIp(serverIp), restPort(restPort), rpcPort(rpcPort), numberOfCpus(numberOfCpus) {
+NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots)
+    : serverIp(serverIp), restPort(restPort), rpcPort(rpcPort), numberOfSlots(numberOfSlots) {
     NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     stopped = false;
@@ -49,7 +49,7 @@ NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
 
-// constructor with default numberOfCpus set to the number of processors
+// constructor with default numberOfSlots set to the number of processors
 NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort) : NesCoordinator(serverIp, restPort, rpcPort, std::thread::hardware_concurrency()) {}
 
 NesCoordinator::~NesCoordinator() {
@@ -123,7 +123,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     worker = std::make_shared<NesWorker>(serverIp, std::to_string(rpcPort), serverIp,
-                                         rpcPort + 1, rpcPort + 2, numberOfCpus, NodeType::Worker);
+                                         rpcPort + 1, rpcPort + 2, numberOfSlots, NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //Start rest that accepts queries form the outsides

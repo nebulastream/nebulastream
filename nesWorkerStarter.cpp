@@ -46,9 +46,9 @@ int main(int argc, char** argv) {
     std::string coordinatorIp = "127.0.0.1";
     std::string localWorkerIp = "127.0.0.1";
 
-    // set the default numberOfCpu to the number of processor
+    // set the default numberOfSlots to the number of processor
     const auto processorCount = std::thread::hardware_concurrency();
-    uint16_t numberOfCpus = processorCount;
+    uint16_t numberOfSlots = processorCount;
 
     std::string sourceType = "";
     std::string sourceConfig = "";
@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
          "Set the parentId of this node")
         ("localWorkerIp", po::value<string>(&localWorkerIp)->default_value(localWorkerIp),
          "Set worker ip (default: 127.0.0.1)")
-        ("numberOfCpus", po::value<uint16_t>(&numberOfCpus)->default_value(numberOfCpus),
+        ("numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
          "Set the computing capacity (default: number of processor.")
         ("help", "Display help message");
 
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
         localWorkerIp,
         localPort,
         zmqDataPort,
-        numberOfCpus,
+        numberOfSlots,
         NodeType::Sensor // TODO what is this?!
     );
 

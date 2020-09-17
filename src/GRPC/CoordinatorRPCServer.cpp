@@ -11,7 +11,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
     size_t id = coordinatorEngine->registerNode(request->address(),
                                                 request->grpcport(),
                                                 request->dataport(),
-                                                request->numberofcpus(),
+                                                request->numberofslots(),
                                                 request->nodeproperties(),
                                                 (NodeType) request->type());
     if (id != 0) {

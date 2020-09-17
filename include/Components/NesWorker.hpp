@@ -20,11 +20,11 @@ class NesWorker {
               std::string localWorkerIp,
               uint16_t localWorkerRpcPort,
               uint16_t localWorkerZmqPort,
-              uint16_t numberOfCpus,
+              uint16_t numberOfSlots,
               NodeType type);
 
     /**
-     * @brief constructor with default numberOfCpus
+     * @brief constructor with default numberOfSlots
      */
     NesWorker(std::string coordinatorIp,
               std::string coordinatorPort,
@@ -161,7 +161,7 @@ class NesWorker {
     std::string localWorkerIp;
     uint16_t localWorkerRpcPort;
     uint16_t localWorkerZmqPort;
-    uint16_t numberOfCpus;
+    uint16_t numberOfSlots;
 
     NodeType type;
     std::atomic<bool> stopped;
