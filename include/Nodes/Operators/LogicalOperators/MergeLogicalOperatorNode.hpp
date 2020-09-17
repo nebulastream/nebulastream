@@ -25,6 +25,7 @@ class MergeLogicalOperatorNode : public LogicalOperatorNode {
     bool inferSchema() override;
 
     OperatorNodePtr copy() override;
+    bool equal(const NodePtr rhs) const override;
 };
 }// namespace NES
 #endif// Merge_LOGICAL_OPERATOR_NODE_HPP

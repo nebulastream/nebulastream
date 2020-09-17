@@ -170,8 +170,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
     Query subQuery1 = Query::from("truck");
     Query query1 = Query::from("car")
                        .merge(&subQuery1)
-                       //                       .map(Attribute("value") = 40)
-                       //                       .filter(Attribute("id") < 45)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -181,8 +181,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
                        .merge(&subQuery2)
-                       //                       .map(Attribute("value") = 40)
-                       //                       .filter(Attribute("id") < 45)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -222,6 +222,136 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+        }
+    }
+}
+
+/**
+ * @brief Test applying L0 merge on Global query plan with queries with different order of merge operator children
+ */
+TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) {
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query subQuery1 = Query::from("car");
+    Query query1 = Query::from("truck")
+        .merge(&subQuery1)
+        .map(Attribute("value") = 40)
+        .filter(Attribute("id") < 45)
+        .sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    Query subQuery2 = Query::from("truck");
+    Query query2 = Query::from("car")
+        .merge(&subQuery2)
+        .map(Attribute("value") = 40)
+        .filter(Attribute("id") < 45)
+        .sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+
+    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+      return sinkGQN->getOperators()[0]->getId() == sinkOperator1->getId();
+    });
+    GlobalQueryNodePtr sinkOperator1GQN = *found;
+
+    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+      return sinkGQN->getOperators()[0]->getId() == sinkOperator2->getId();
+    });
+    GlobalQueryNodePtr sinkOperator2GQN = *found;
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+        }
+    }
+
+    sinkOperator2GQN->getChildren();
+
+    //execute
+    auto l0QueryMergerRule = L0QueryMergerRule::create();
+    l0QueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+        }
+    }
+}
+
+/**
+ * @brief Test applying L0 merge on Global query plan with queries with merge operators but different children
+ */
+TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query subQuery1 = Query::from("bike");
+    Query query1 = Query::from("truck")
+        .merge(&subQuery1)
+        .map(Attribute("value") = 40)
+        .filter(Attribute("id") < 45)
+        .sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    Query subQuery2 = Query::from("truck");
+    Query query2 = Query::from("car")
+        .merge(&subQuery2)
+        .map(Attribute("value") = 40)
+        .filter(Attribute("id") < 45)
+        .sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+
+    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+      return sinkGQN->getOperators()[0]->getId() == sinkOperator1->getId();
+    });
+    GlobalQueryNodePtr sinkOperator1GQN = *found;
+
+    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+      return sinkGQN->getOperators()[0]->getId() == sinkOperator2->getId();
+    });
+    GlobalQueryNodePtr sinkOperator2GQN = *found;
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+        }
+    }
+
+    sinkOperator2GQN->getChildren();
+
+    //execute
+    auto l0QueryMergerRule = L0QueryMergerRule::create();
+    l0QueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_NE(sink1GQNChild, sink2GQNChild);
         }
     }
 }

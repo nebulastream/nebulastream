@@ -18,13 +18,13 @@ void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("L0QueryMergerRule: Applying L0 Merging rule to the Global Query Plan");
 
-    std::vector<GlobalQueryNodePtr> sinkGQNodes = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+    std::vector<GlobalQueryNodePtr> globalQueryNodesWithSinkOperators = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     NES_DEBUG("L0QueryMergerRule: Iterating over all sink GQNs in the Global Query Plan");
-    for (int i = 0; i < sinkGQNodes.size(); i++) {
+    for (int i = 0; i < globalQueryNodesWithSinkOperators.size(); i++) {
         NES_DEBUG("L0QueryMergerRule: Get the sink GQN and find another sink GQN with same upstream operator chain");
-        GlobalQueryNodePtr targetSinkGQN = sinkGQNodes[i];
-        auto queryIds = targetSinkGQN->getQueryIds();
+        GlobalQueryNodePtr targetGlobalQueryNodesWithSinkOperator = globalQueryNodesWithSinkOperators[i];
+        auto queryIds = targetGlobalQueryNodesWithSinkOperator->getQueryIds();
         if (queryIds.size() > 1) {
             NES_ERROR("L0QueryMergerRule: can't have sink GQN with more than one query");
             throw Exception("L0QueryMergerRule: can't have sink GQN with more than one query");
@@ -33,27 +33,27 @@ void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
         NES_DEBUG("L0QueryMergerRule: Get the target query id to find an equivalent operator chains");
         QueryId targetQueryId = queryIds.at(0);
 
-        for (int j = i + 1; j < sinkGQNodes.size(); j++) {
+        for (int j = i + 1; j < globalQueryNodesWithSinkOperators.size(); j++) {
             NES_DEBUG("L0QueryMergerRule: Get a host sink GQN for comparison");
-            GlobalQueryNodePtr hostSinkGQN = sinkGQNodes[j];
+            GlobalQueryNodePtr hostGlobalQueryNodesWithSinkOperator = globalQueryNodesWithSinkOperators[j];
 
             //Get the source GQNs for both target and host sink GQNs
-            std::vector<NodePtr> targetSourceGQNs = targetSinkGQN->getAllLeafNodes();
-            std::vector<NodePtr> hostSourceGQNs = hostSinkGQN->getAllLeafNodes();
+            std::vector<NodePtr> targetGQNsWithSourceOperator = targetGlobalQueryNodesWithSinkOperator->getAllLeafNodes();
+            std::vector<NodePtr> hostGQNsWithSourceOperator = hostGlobalQueryNodesWithSinkOperator->getAllLeafNodes();
 
             //Check if both host and target GQNs have same source GQN nodes
-            if (areSourceGQNodesEqual(targetSourceGQNs, hostSourceGQNs)) {
+            if (areGQNodesEqual(targetGQNsWithSourceOperator, hostGQNsWithSourceOperator)) {
                 NES_DEBUG("L0QueryMergerRule: Skipping execution as both target and host sink GQNs belong to same query plan.");
                 continue;
             }
 
             NES_DEBUG("L0QueryMergerRule: Start with the first target Source GQN and find match for all downstream GQNs.");
-            auto& targetSourceGQN = targetSourceGQNs[0];
+            auto& targetSourceGQN = targetGQNsWithSourceOperator[0];
 
             std::map<GlobalQueryNodePtr, GlobalQueryNodePtr> targetGQNToHostGQNMap;
             bool allTargetGQNFoundMatch = false;
-            for (auto& hostSourceGQN : hostSourceGQNs) {
-                if (checkIfGQNCanMerge(targetSourceGQN->as<GlobalQueryNode>(), hostSourceGQN->as<GlobalQueryNode>(), targetGQNToHostGQNMap)) {
+            for (auto& hostGQNWithSourceOperator : hostGQNsWithSourceOperator) {
+                if (checkIfGQNCanMerge(targetSourceGQN->as<GlobalQueryNode>(), hostGQNWithSourceOperator->as<GlobalQueryNode>(), targetGQNToHostGQNMap)) {
                     NES_DEBUG("L0QueryMergerRule: Start with the first target Source GQN and find match for all downstream GQNs.");
                     allTargetGQNFoundMatch = true;
                     break;
@@ -188,13 +188,13 @@ bool L0QueryMergerRule::checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, Glob
     return true;
 }
 
-bool L0QueryMergerRule::areSourceGQNodesEqual(std::vector<NodePtr> targetSourceGQNs, std::vector<NodePtr> hostSourceGQNs) {
+bool L0QueryMergerRule::areGQNodesEqual(std::vector<NodePtr> targetGQNs, std::vector<NodePtr> hostGQNs) {
 
     NES_DEBUG("L0QueryMergerRule: Checking if the two set of GQNs are equal or not");
-    for (auto& targetSourceGQN : targetSourceGQNs) {
+    for (auto& targetGQN : targetGQNs) {
         bool found = false;
-        for (auto& hostSourceGQN : hostSourceGQNs) {
-            if (targetSourceGQN->as<GlobalQueryNode>()->getId() == hostSourceGQN->as<GlobalQueryNode>()->getId()) {
+        for (auto& hostGQN : hostGQNs) {
+            if (targetGQN->as<GlobalQueryNode>()->getId() == hostGQN->as<GlobalQueryNode>()->getId()) {
                 found = true;
                 break;
             }

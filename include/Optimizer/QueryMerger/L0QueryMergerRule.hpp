@@ -73,8 +73,25 @@ class L0QueryMergerRule {
   private:
     explicit L0QueryMergerRule();
 
+    /**
+     * @brief Check if the target GQN can be merged into host GQN
+     * For two GQNs to be merged:
+     *   - Their set of operators should be equal or they both have sink operators
+     *   - Their child and parent GQN nodes should be equal
+     * @param targetGQNode : the target GQN node
+     * @param hostGQNode : the host GQN node
+     * @param targetGQNToHostGQNMap : the map containing list of target and host pairs with eaqual operator sets
+     * @return true if the GQN can be merged else false
+     */
     bool checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, GlobalQueryNodePtr hostGQNode, std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap);
-    bool areSourceGQNodesEqual(std::vector<NodePtr> targetSourceGQNs, std::vector<NodePtr> hostSourceGQNs);
+
+    /**
+     * @brief Check if the two set of GQNs are equal
+     * @param targetGQNs : the target GQNs
+     * @param hostGQNs : the source GQNs
+     * @return false if not equal else true
+     */
+    bool areGQNodesEqual(std::vector<NodePtr> targetGQNs, std::vector<NodePtr> hostGQNs);
 };
 }// namespace NES
 #endif//NES_L0QUERYMERGERRULE_HPP
