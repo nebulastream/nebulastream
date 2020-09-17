@@ -108,7 +108,7 @@ class GlobalQueryNode : public Node {
      * @brief Get all registered query ids and corresponding operators
      * @return the list of operators
      */
-    std::map<QueryId ,OperatorNodePtr> getMapOfQueryIdToOperator();
+    std::map<QueryId, OperatorNodePtr> getMapOfQueryIdToOperator();
 
     /**
      * @brief Get the set of query ids sharing the GQN

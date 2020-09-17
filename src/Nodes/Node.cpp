@@ -340,7 +340,7 @@ std::vector<NodePtr> Node::getAllLeafNodes() {
     NES_DEBUG("Node: Get all leaf nodes for this node");
     std::vector<NodePtr> leafNodes;
 
-    if(children.empty()){
+    if (children.empty()) {
         NES_DEBUG("Node: found no children. Returning itself as leaf.");
         leafNodes.push_back(shared_from_this());
     }

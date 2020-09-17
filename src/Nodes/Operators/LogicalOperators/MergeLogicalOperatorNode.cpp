@@ -50,7 +50,7 @@ OperatorNodePtr MergeLogicalOperatorNode::copy() {
 }
 
 bool MergeLogicalOperatorNode::equal(const NodePtr rhs) const {
-    if(rhs->instanceOf<MergeLogicalOperatorNode>()){
+    if (rhs->instanceOf<MergeLogicalOperatorNode>()) {
         return true;
     }
     return false;
