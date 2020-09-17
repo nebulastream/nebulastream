@@ -312,12 +312,11 @@ TEST_F(QueryExecutionTest, TumblingWindowQuery) {
     testSink->completed.get_future().get();
 
     // get result buffer, which should contain two results.
-    // TODO 2 results - > 0 - 10 - 1 - 10; 10 - 20 - 1 - 10 -> das finde ich nicht
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto& resultBuffer = testSink->get(0);
 
     std::cout << "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema) << std::endl;
-    //TODO 1 Tuple im result buffer ?
+    //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
     auto resultLayout = createRowLayout(windowResultSchema);
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
@@ -359,7 +358,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQuery) {
         ->addField(createField("key", INT64))
         ->addField("value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
@@ -394,14 +393,12 @@ TEST_F(QueryExecutionTest, SlidingWindowQuery) {
     testSink->completed.get_future().get();
     NES_INFO("The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers." );
     // get result buffer
-    // TODO wielange hab ich den nur 1 Result Buffer?
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
 
     auto& resultBuffer = testSink->get(0);
 
     //NES_INFO( "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     NES_INFO( "The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples." );
-    // TODO wann hört der auf? (last ts 15)
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
     auto resultLayout = createRowLayout(windowResultSchema);
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
