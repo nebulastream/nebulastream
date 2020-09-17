@@ -280,7 +280,7 @@ class StateVariable : public detail::Destroyable {
         return KeyValueHandle(backend, key);
     }
 
-    KeyValueRangeHandle range(Key start, Key end) {
+    KeyValueRangeHandle range(Key, Key) {
         assert(false && "not implemented yet");
     }
 

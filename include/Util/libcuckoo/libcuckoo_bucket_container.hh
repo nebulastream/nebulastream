@@ -253,7 +253,7 @@ private:
     }
 
     template <typename A>
-    void copy_allocator(A &dst, const A &src, std::false_type) {}
+    void copy_allocator(A &, const A &, std::false_type) {}
 
     // true here means the allocators from `src` are propagated on libcuckoo_swap
     template <typename A> void swap_allocator(A &dst, A &src, std::true_type) {

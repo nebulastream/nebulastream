@@ -9,6 +9,9 @@ typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
 class TupleBuffer;
 
 // TODO Philipp, please clarify if we should introduce WindowManager, StateVars, etc... here
