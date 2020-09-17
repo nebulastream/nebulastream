@@ -99,12 +99,13 @@ std::string Compiler::formatAndPrintSource(const std::string& filename) {
     if (!res) {
        NES_FATAL_ERROR("Compiler: popen() failed!");
     }
-    std::string sourceCode;
-    std::ifstream sourceFile(filename);
-    sourceFile.seekg(0, std::ios::end);
-    sourceCode.resize(sourceFile.tellg());
-    sourceFile.seekg(0);
-    sourceFile.read(sourceCode.data(), sourceCode.size());
+    // wait till command is complete executed.
+    pclose(res);
+    // read source file in
+    std::ifstream file(filename);
+    file.clear();
+    std::string sourceCode((std::istreambuf_iterator<char>(file)),
+                    std::istreambuf_iterator<char>());
     NES_DEBUG("Compiler: generate code: \n" << sourceCode);
     return sourceCode;
 }

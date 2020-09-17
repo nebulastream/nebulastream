@@ -53,6 +53,8 @@ class PipelineStageHolder {
 };
 
 void generateExecutablePipelines(
+    QueryId queryId,
+    QuerySubPlanId  querySubPlanId,
     CodeGeneratorPtr codeGenerator,
     BufferManagerPtr bufferManager,
     QueryManagerPtr queryManagerPtr,
@@ -65,10 +67,10 @@ void generateExecutablePipelines(
         auto [currentPipelineStateId, consumerPipelineStateId, currContext] = queue.front();
         queue.pop_front();
         try {
-            NES_DEBUG("QueryCompiler: Compile pipeline with id: " << currentPipelineStateId);
+            NES_DEBUG("QueryCompiler: Compile query:" << queryId << " querySubPlan:" << querySubPlanId << " pipeline:" << currentPipelineStateId);
             auto executablePipeline = codeGenerator->compile(currContext->code);
             if (executablePipeline == nullptr) {
-                NES_ERROR("Cannot compile pipeline " << currContext->code);
+                NES_ERROR("Cannot compile pipeline:" << currContext->code);
                 NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");
             }
             if (currContext->hasWindow()) {
@@ -102,7 +104,7 @@ void QueryCompiler::compilePipelineStages(
     PipelineContextPtr context) {
 
     std::map<uint32_t, detail::PipelineStageHolder, std::greater<>> executableStages;
-    detail::generateExecutablePipelines(std::move(codeGenerator), builder.getBufferManager(), builder.getQueryManager(), std::move(context), executableStages);
+    detail::generateExecutablePipelines(builder.getQueryId(), builder.getQuerySubPlanId(), std::move(codeGenerator), builder.getBufferManager(), builder.getQueryManager(), std::move(context), executableStages);
 
     if (executableStages.empty()) {
         NES_ERROR("compilePipelineStages failure: no pipelines to generate");
