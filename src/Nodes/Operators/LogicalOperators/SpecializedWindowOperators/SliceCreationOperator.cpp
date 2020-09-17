@@ -27,7 +27,7 @@ bool SliceCreationOperator::equal(const NodePtr rhs) const {
 }
 
 OperatorNodePtr SliceCreationOperator::copy() {
-    auto copy = createSliceCreationSpecializedOperatorNode(windowDefinition);
+    auto copy = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition);
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

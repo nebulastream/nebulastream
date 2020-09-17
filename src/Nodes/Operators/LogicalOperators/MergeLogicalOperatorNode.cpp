@@ -18,10 +18,6 @@ const std::string MergeLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-LogicalOperatorNodePtr createMergeLogicalOperatorNode() {
-    return std::make_shared<MergeLogicalOperatorNode>();
-}
-
 bool MergeLogicalOperatorNode::inferSchema() {
     OperatorNode::inferSchema();
     if (getChildren().size() != 2) {
@@ -42,7 +38,7 @@ bool MergeLogicalOperatorNode::inferSchema() {
 }
 
 OperatorNodePtr MergeLogicalOperatorNode::copy() {
-    auto copy = createMergeLogicalOperatorNode();
+    auto copy = LogicalOperatorFactory::createMergeOperator();
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

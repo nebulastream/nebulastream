@@ -863,7 +863,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
 
     auto sum = Sum::on(Attribute("value"));
-    auto windowDefinition = createWindowDefinition(
+    auto windowDefinition = WindowDefinition::create(
         input_schema->get("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
@@ -919,7 +919,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
 
     auto sum = Sum::on(Attribute("value"));
-    auto windowDefinition = createWindowDefinition(
+    auto windowDefinition = WindowDefinition::create(
         input_schema->get("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
@@ -973,7 +973,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     codeGenerator->generateCodeForScan(schema, context1);
 
     auto sum = Sum::on(Attribute("value"));
-    auto windowDefinition = createWindowDefinition(
+    auto windowDefinition = WindowDefinition::create(
         schema->get("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 

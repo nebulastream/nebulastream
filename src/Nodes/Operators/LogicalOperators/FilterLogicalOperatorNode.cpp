@@ -32,10 +32,6 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr predicate) {
-    return std::make_shared<FilterLogicalOperatorNode>(predicate);
-}
-
 bool FilterLogicalOperatorNode::inferSchema() {
     OperatorNode::inferSchema();
     predicate->inferStamp(inputSchema);
@@ -46,7 +42,7 @@ bool FilterLogicalOperatorNode::inferSchema() {
 }
 
 OperatorNodePtr FilterLogicalOperatorNode::copy() {
-    auto copy = createFilterLogicalOperatorNode(predicate);
+    auto copy = LogicalOperatorFactory::createFilterOperator(predicate);
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

@@ -13,7 +13,7 @@ namespace NES{
 class TestQuery : public Query{
   public:
     static Query from(SchemaPtr inputSchme){
-        auto sourceOperator = createSourceLogicalOperatorNode(SchemaSourceDescriptor::create(inputSchme));
+        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(inputSchme));
         auto queryPlan = QueryPlan::create(sourceOperator);
         return Query(queryPlan);
     }

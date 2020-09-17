@@ -17,11 +17,11 @@ bool WindowDefinition::isKeyed() {
     return onKey != nullptr;
 }
 
-WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar) {
+WindowDefinitionPtr WindowDefinition::create(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar) {
     return std::make_shared<WindowDefinition>(windowAggregation, windowType, distChar);
 }
 
-WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey, const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges) {
+WindowDefinitionPtr WindowDefinition::create(const AttributeFieldPtr onKey, const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges) {
 
     return std::make_shared<WindowDefinition>(onKey, windowAggregation, windowType, distChar, numberOfInputEdges);
 }

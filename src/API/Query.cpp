@@ -19,14 +19,14 @@ Query::Query(const Query& query)
 
 Query Query::from(const std::string sourceStreamName) {
     NES_DEBUG("Query: create query for input stream " << sourceStreamName);
-    auto sourceOperator = createSourceLogicalOperatorNode(LogicalStreamSourceDescriptor::create(sourceStreamName));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceOperator);
     return Query(queryPlan);
 }
 
 Query& Query::merge(Query* subQuery) {
     NES_DEBUG("Query: merge the subQuery to current query");
-    OperatorNodePtr op = createMergeLogicalOperatorNode();
+    OperatorNodePtr op = LogicalOperatorFactory::createMergeOperator();
     op->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
@@ -35,8 +35,8 @@ Query& Query::merge(Query* subQuery) {
 
 Query& Query::window(const WindowTypePtr windowType, const WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add window operator");
-    auto windowDefinition = createWindowDefinition(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType());
-    auto windowOperator = createWindowLogicalOperatorNode(windowDefinition);
+    auto windowDefinition = WindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType());
+    auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;
@@ -50,8 +50,8 @@ Query& Query::windowByKey(ExpressionItem onKey, const WindowTypePtr windowType, 
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    auto windowDefinition = createWindowDefinition(keyField, aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1);
-    auto windowOperator = createWindowLogicalOperatorNode(windowDefinition);
+    auto windowDefinition = WindowDefinition::create(keyField, aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1);
+    auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;
@@ -59,7 +59,7 @@ Query& Query::windowByKey(ExpressionItem onKey, const WindowTypePtr windowType, 
 
 Query& Query::filter(const ExpressionNodePtr filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
-    OperatorNodePtr op = createFilterLogicalOperatorNode(filterExpression);
+    OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression);
     op->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
@@ -67,7 +67,7 @@ Query& Query::filter(const ExpressionNodePtr filterExpression) {
 
 Query& Query::map(const FieldAssignmentExpressionNodePtr mapExpression) {
     NES_DEBUG("Query: add map operator to query");
-    OperatorNodePtr op = createMapLogicalOperatorNode(mapExpression);
+    OperatorNodePtr op = LogicalOperatorFactory::createMapOperator(mapExpression);
     op->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
@@ -75,7 +75,7 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr mapExpression) {
 
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Query: add sink operator to query");
-    OperatorNodePtr op = createSinkLogicalOperatorNode(sinkDescriptor);
+    OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
     op->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;

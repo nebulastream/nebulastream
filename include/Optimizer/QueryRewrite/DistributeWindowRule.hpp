@@ -49,6 +49,8 @@ typedef std::shared_ptr<DistributeWindowRule> DistributeWindowRulePtr;
  */
 class DistributeWindowRule : public BaseRewriteRule {
   public:
+    // The number of child nodes from which on we will replace a central window operator with a distributed window operator.
+    static const uint64_t CHILD_NODE_THRESHOLD = 2;
     static DistributeWindowRulePtr create();
 
     /**

@@ -53,7 +53,7 @@ FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() {
 }
 
 OperatorNodePtr MapLogicalOperatorNode::copy() {
-    auto copy = createMapLogicalOperatorNode(mapExpression);
+    auto copy = LogicalOperatorFactory::createMapOperator(mapExpression);
     copy->setId(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

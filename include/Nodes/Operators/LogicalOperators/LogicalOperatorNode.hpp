@@ -2,39 +2,17 @@
 #define LOGICAL_OPERATOR_NODE_HPP
 
 #include <API/ParameterTypes.hpp>
-#include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 
 namespace NES {
-
-class LogicalOperatorNode;
-typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 
 class LogicalOperatorNode : public OperatorNode {
   public:
     LogicalOperatorNode();
 };
 
-class FieldAssignmentExpressionNode;
-typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
-
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
-
-LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr predicate);
-LogicalOperatorNodePtr createSinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor);
-LogicalOperatorNodePtr createMapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression);
-LogicalOperatorNodePtr createSourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor);
-LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition);
-
-LogicalOperatorNodePtr createCentralWindowSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition);
-LogicalOperatorNodePtr createSliceCreationSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition);
-LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition);
-LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition);
-
-LogicalOperatorNodePtr createMergeLogicalOperatorNode();
 }// namespace NES
 
 #endif// LOGICAL_OPERATOR_NODE_HPP
