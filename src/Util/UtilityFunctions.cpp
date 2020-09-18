@@ -25,6 +25,10 @@
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
 #include <random>
+#include <Topology/TopologyNode.hpp>
+#include <Topology/Topology.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+
 
 namespace NES {
 
@@ -438,7 +442,6 @@ web::json::value UtilityFunctions::getExecutionPlanAsJson(GlobalExecutionPlanPtr
         executionNodes = globalExecutionPlan->getAllExecutionNodes();
     }
 
-
     for (ExecutionNodePtr executionNode : executionNodes) {
         web::json::value currentExecutionNodeJsonValue{};
 
@@ -448,18 +451,18 @@ web::json::value UtilityFunctions::getExecutionPlanAsJson(GlobalExecutionPlanPtr
 
         std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();
         const std::vector<QueryPlanPtr> querySubPlans;
-        if(queryId == INVALID_QUERY_ID){
+        if (queryId == INVALID_QUERY_ID) {
             queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();
-        } else{
+        } else {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            if(!querySubPlans.empty()){
+            if (!querySubPlans.empty()) {
                 queryToQuerySubPlansMap[queryId] = querySubPlans;
             }
         }
 
         std::vector<web::json::value> scheduledQueries = {};
 
-        for(auto& [queryId, querySubPlans]: queryToQuerySubPlansMap){
+        for (auto& [queryId, querySubPlans] : queryToQuerySubPlansMap) {
 
             std::vector<web::json::value> scheduledSubQueries;
             web::json::value queryToQuerySubPlans{};

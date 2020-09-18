@@ -1,10 +1,9 @@
 #ifndef UTILITY_FUNCTIONS_HPP
 #define UTILITY_FUNCTIONS_HPP
 
-#include <API/Query.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <cpprest/json.h>
 #include <string>
-
 /*
 - * The above undef ensures that NES will compile.
 - * There is a 3rd-party library that defines U as a macro for some internal stuff.
@@ -20,6 +19,23 @@
 namespace NES {
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
+class TupleBuffer;
+
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+
+class Query;
+typedef std::shared_ptr<Query> QueryPtr;
+
+class TopologyNode;
+typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
+
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
+class GlobalExecutionPlan;
+typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class UtilityFunctions {
   public:
@@ -168,7 +184,8 @@ class UtilityFunctions {
      * @param id of the query
      * @return
      */
-    static web::json::value getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId=INVALID_QUERY_ID);
+    static web::json::value getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId = INVALID_QUERY_ID);
+
   private:
     /**
      * @brief function to traverse to queryPlanChildren
