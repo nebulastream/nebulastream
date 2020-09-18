@@ -156,7 +156,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 /* 3.Test
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
-TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
+TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkers) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
