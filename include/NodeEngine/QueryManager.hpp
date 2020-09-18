@@ -29,6 +29,7 @@ namespace NES {
 class TupleBuffer;
 
 class CompiledExecutablePipeline;
+typedef std::shared_ptr<CompiledExecutablePipeline> CompiledExecutablePipelinePtr;
 
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
@@ -86,7 +87,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @return an execution result
      *
      */
-    ExecutionResult step(std::atomic<bool>& running, WorkerContext& workerContext);
+    ExecutionResult processNextTask(std::atomic<bool>& running, WorkerContext& workerContext);
 
     /**
      * @brief add work to the query manager, this methods is source-driven and is called
@@ -195,7 +196,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     std::condition_variable cv;
 
     BufferManagerPtr bufferManager;
-    std::shared_ptr<CompiledExecutablePipeline> reconfigurationExecutable;
+    CompiledExecutablePipelinePtr reconfigurationExecutable;
 
     size_t nodeEngineId;
 };

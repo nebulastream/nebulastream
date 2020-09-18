@@ -44,6 +44,9 @@ class ExecutablePipeline {
                              QueryExecutionContextPtr context,
                              WorkerContextRef wctx) = 0;
 
+    /**
+     * @return returns true if the pipeline contains a function pointer for a reconfiguration task
+     */
     bool isReconfiguration() const {
         return reconfiguration;
     }

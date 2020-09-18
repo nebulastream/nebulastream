@@ -5,9 +5,10 @@
 
 namespace NES {
 enum ReconfigurationType : uint8_t {
+    /// use Initialize for reconfiguration tasks that initialize a reconfigurable instance
     Initialize,
+    /// use Destroy for reconfiguration tasks that cleans up a reconfigurable instance
     Destroy,
-    DestroyQep
 };
 }
 

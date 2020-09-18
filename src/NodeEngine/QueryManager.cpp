@@ -11,11 +11,15 @@ namespace NES {
 using std::string;
 namespace detail {
 uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, void*, WindowManager*, PipelineExecutionContext&, WorkerContextRef workerContext) {
-    NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint");
+    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint begin on thread " << workerContext.getId());
     auto* task = buffer.getBufferAs<ReconfigurationTask>();
+    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to wait on thread " << workerContext.getId());
     task->wait();
+    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to reconfigure on thread " << workerContext.getId());
     task->getInstance()->reconfigure(*task, workerContext);
+    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint post callback on thread " << workerContext.getId());
     task->postReconfiguration();
+    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint completed on thread " << workerContext.getId());
     return 0;
 }
 }
@@ -182,14 +186,14 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
         sink->shutdown();
     }
     NES_DEBUG("QueryManager::stopQuery: query finished " << qep);
-    addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), DestroyQep, this));
+    addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, this));
 
     return true;
 }
 
 bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask descriptor) {
-    NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask begin");
-    std::unique_lock<std::mutex> lock(workMutex);
+    NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask begins on plan " << queryExecutionPlanId);
+    std::unique_lock lock(workMutex);
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationTask));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
@@ -202,7 +206,7 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     return true;
 }
 
-QueryManager::ExecutionResult QueryManager::step(std::atomic<bool>& running, WorkerContext& workerContext) {
+QueryManager::ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, WorkerContext& workerContext) {
     NES_DEBUG("QueryManager: QueryManager::getWork wait get lock");
     std::unique_lock lock(workMutex);
     NES_DEBUG("QueryManager:getWork wait got lock");
@@ -230,7 +234,7 @@ QueryManager::ExecutionResult QueryManager::step(std::atomic<bool>& running, Wor
         }
         return Error;
     } else {
-        NES_DEBUG("QueryManager: Thread pool was shut down while waiting");
+        NES_DEBUG("QueryManager: Thread pool was shut down but has still tasks");
         lock.unlock();
         return terminateLoop(workerContext);
     }
@@ -335,24 +339,25 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
 void QueryManager::reconfigure(ReconfigurationTask& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
     switch (task.getType()) {
-        case DestroyQep: {
+        case Destroy: {
             break;
         }
         default: {
-            NES_THROW_RUNTIME_ERROR("not supported");
+            NES_THROW_RUNTIME_ERROR("QueryManager: task type not supported");
         }
     }
 }
 void QueryManager::destroyCallback(ReconfigurationTask& task) {
     Reconfigurable::destroyCallback(task);
     switch (task.getType()) {
-        case DestroyQep: {
+        case Destroy: {
             std::unique_lock lock(queryMutex);
-            runningQEPs.erase(task.getParentPlanId());
+            runningQEPs.erase(task.getParentPlanId()); // note that this will release all shared pointers stored in a QEP object
+            NES_DEBUG("QueryManager: removed running QEP " << task.getParentPlanId());
             break;
         }
         default: {
-            NES_THROW_RUNTIME_ERROR("not supported");
+            NES_THROW_RUNTIME_ERROR("QueryManager: task type not supported");
         }
     }
 }
