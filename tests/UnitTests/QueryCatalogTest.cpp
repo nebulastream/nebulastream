@@ -1,15 +1,16 @@
 #include "gtest/gtest.h"
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <NodeStats.pb.h>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <API/Query.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
-#include <Exceptions/InvalidArgumentException.hpp>
 
 using namespace NES;
 using namespace std;
@@ -42,7 +43,6 @@ class QueryCatalogTest : public testing::Test {
         std::cout << "Tear down QueryCatalogTest test class." << std::endl;
     }
 };
-
 
 TEST_F(QueryCatalogTest, testAddNewQuery) {
 
