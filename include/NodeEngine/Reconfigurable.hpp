@@ -38,7 +38,6 @@ class Reconfigurable {
     }
 };
 
-}
-
+}// namespace NES
 
 #endif//NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_

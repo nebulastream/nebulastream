@@ -1,11 +1,11 @@
-#include <Network/NetworkMessage.hpp>
 #include <Network/ExchangeProtocol.hpp>
+#include <Network/NetworkMessage.hpp>
 #include <Network/OutputChannel.hpp>
 #include <Network/ZmqUtils.hpp>
+#include <NodeEngine/NesThread.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
-#include <NodeEngine/NesThread.hpp>
 
 namespace NES {
 namespace Network {

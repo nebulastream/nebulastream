@@ -28,7 +28,6 @@ class ExecutablePipeline {
     bool reconfiguration;
 
   public:
-
     explicit ExecutablePipeline(bool reconfiguration = false) : reconfiguration(reconfiguration) {}
 
     virtual ~ExecutablePipeline() = default;

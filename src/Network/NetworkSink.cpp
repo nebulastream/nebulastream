@@ -44,7 +44,7 @@ bool NetworkSink::writeData(TupleBuffer& inputBuffer, WorkerContext& workerConte
 
 void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString());
-    queryManager->addReconfigurationTask(parentPlanId, ReconfigurationTask(parentPlanId, Initialize,this));
+    queryManager->addReconfigurationTask(parentPlanId, ReconfigurationTask(parentPlanId, Initialize, this));
 }
 
 void NetworkSink::shutdown() {
@@ -77,7 +77,6 @@ void NetworkSink::reconfigure(ReconfigurationTask& task, WorkerContext& workerCo
             NES_THROW_RUNTIME_ERROR("unsupported");
         }
     }
-
 }
 
 }// namespace Network

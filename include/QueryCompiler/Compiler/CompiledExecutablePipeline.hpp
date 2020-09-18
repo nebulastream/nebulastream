@@ -18,7 +18,6 @@ class CompiledExecutablePipeline : public ExecutablePipeline {
     typedef PipelineFunctionReturnType (*PipelineFunctionPtr)(TupleBuffer&, void*, WindowManager*, PipelineExecutionContext&, WorkerContextRef);
 
   public:
-
     CompiledExecutablePipeline() = delete;
 
     explicit CompiledExecutablePipeline(PipelineFunctionPtr func);

@@ -6,7 +6,6 @@
 
 namespace NES {
 
-
 PipelineExecutionContext::PipelineExecutionContext(
     QuerySubPlanId queryId,
     BufferManagerPtr bufferManager,

@@ -154,7 +154,6 @@ bool PipelineStage::hasWindowHandler() {
     return windowHandler != nullptr;
 }
 
-
 bool PipelineStage::isReconfiguration() const {
     return executablePipeline->isReconfiguration();
 }

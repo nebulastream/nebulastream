@@ -1,3 +1,4 @@
+#include <NodeEngine/NesThread.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/Task.hpp>
 #include <NodeEngine/ThreadPool.hpp>
@@ -5,7 +6,6 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <NodeEngine/NesThread.hpp>
 #include <functional>
 #include <string.h>
 namespace NES {

@@ -46,7 +46,6 @@ typedef std::shared_ptr<BufferManager> BufferManagerPtr;
  */
 class QueryManager : public std::enable_shared_from_this<QueryManager>, public Reconfigurable {
   public:
-
     enum ExecutionResult : uint8_t {
         Ok = 0,
         Error,
@@ -118,6 +117,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @oaram reference to worker context
      */
     void completedWork(Task& task, WorkerContext& workerContext);
+
   public:
     /**
      * @brief get general statistics of QueryManager and Buffer Manager

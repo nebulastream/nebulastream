@@ -1,10 +1,10 @@
 #ifndef NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_
 #define NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_
 
-#include <NodeEngine/ReconfigurationType.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
-#include <memory>
+#include <NodeEngine/ReconfigurationType.hpp>
 #include <Util/ThreadBarrier.hpp>
+#include <memory>
 
 namespace NES {
 
@@ -14,6 +14,7 @@ namespace NES {
  */
 class ReconfigurationTask {
     using ThreadBarrierPtr = std::unique_ptr<ThreadBarrier>;
+
   public:
     /**
      * @brief create a reconfiguration task that will be used to kickstart the reconfiguration process
@@ -112,5 +113,5 @@ class ReconfigurationTask {
     /// owning plan id
     const QuerySubPlanId parentPlanId;
 };
-}
+}// namespace NES
 #endif//NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_
