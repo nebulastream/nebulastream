@@ -115,6 +115,15 @@ std::vector<ExecutionNodePtr> GlobalExecutionPlan::getExecutionNodesByQueryId(Qu
     return {};
 }
 
+std::vector<ExecutionNodePtr> GlobalExecutionPlan::getAllExecutionNodes() {
+    NES_INFO("GlobalExecutionPlan: get all execution nodes");
+    std::vector<ExecutionNodePtr> executionNodes;
+    for(auto&[nodeId, executionNode] : nodeIdIndex){
+        executionNodes.push_back(executionNode);
+    }
+    return executionNodes;
+}
+
 std::vector<ExecutionNodePtr> GlobalExecutionPlan::getExecutionNodesToSchedule() {
     NES_DEBUG("GlobalExecutionPlan: Returning vector of Execution nodes to be scheduled");
     return executionNodesToSchedule;

@@ -1,4 +1,3 @@
-#include <API/Pattern.hpp>
 #include <API/Query.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Catalogs/StreamCatalog.hpp>
@@ -11,11 +10,11 @@
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -333,7 +332,7 @@ uint64_t UtilityFunctions::getNextOperatorId() {
     return ++id;
 }
 
-uint64_t UtilityFunctions::getNextQueryExecutionId() {
+uint64_t UtilityFunctions::getNextQuerySubPlanId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
@@ -399,7 +398,7 @@ std::string UtilityFunctions::getOperatorType(OperatorNodePtr operatorNode) {
 
     std::string operatorType;
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        if (operatorNode->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()){
+        if (operatorNode->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
             operatorType = "SOURCE_SYS";
         } else {
             operatorType = "SOURCE";
@@ -413,7 +412,7 @@ std::string UtilityFunctions::getOperatorType(OperatorNodePtr operatorNode) {
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         operatorType = "WINDOW";
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        if (operatorNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()){
+        if (operatorNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
             operatorType = "SINK_SYS";
         } else {
             operatorType = "SINK";
@@ -426,68 +425,91 @@ std::string UtilityFunctions::getOperatorType(OperatorNodePtr operatorNode) {
 }
 
 web::json::value UtilityFunctions::getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId) {
+
     NES_INFO("UtilityFunctions: getting execution plan as JSON");
 
     web::json::value executionPlanJson{};
     std::vector<web::json::value> nodes = {};
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    if (executionNodes.empty()) {
-        NES_ERROR("UtilityFunctions: Unable to find ExecutionNodes for query " << queryId);
-        throw std::invalid_argument("Unable to find ExecutionNodes for query " + queryId);
+    std::vector<ExecutionNodePtr> executionNodes;
+    if (queryId != INVALID_QUERY_ID) {
+        executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    } else {
+        executionNodes = globalExecutionPlan->getAllExecutionNodes();
     }
 
-    for (ExecutionNodePtr executionNode: executionNodes) {
+
+    for (ExecutionNodePtr executionNode : executionNodes) {
         web::json::value currentExecutionNodeJsonValue{};
 
         currentExecutionNodeJsonValue["executionNodeId"] = web::json::value::number(executionNode->getId());
-        currentExecutionNodeJsonValue["topologyNodeIpId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
+        currentExecutionNodeJsonValue["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
         currentExecutionNodeJsonValue["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
 
-
-        std::vector<web::json::value> currentExecutionPlanQuerySubPlans = {};
-
-        // loop over all query sub plans inside the current executionNode
-        for (QueryPlanPtr querySubPlan: executionNode->getQuerySubPlans(queryId)){
-            // prepare json object to hold information on current query sub plan
-            web::json::value currentQuerySubPlan{};
-
-            // id of current query sub plan
-            currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
-
-            // traverse to all operator in the current query sub plan
-            // starting from the root node
-            const OperatorNodePtr root = querySubPlan->getRootOperators()[0];
-            std::string operatorString;
-
-            std::deque<LogicalOperatorNodePtr> operatorsToPrint;
-            operatorsToPrint.push_front(root->as<LogicalOperatorNode>());
-
-            // traverse to the children
-            while (operatorsToPrint.size() != 0){
-                LogicalOperatorNodePtr currentOperator = operatorsToPrint.back();
-                operatorsToPrint.pop_back();
-
-                for (auto child: currentOperator->getChildren()) {
-                    operatorsToPrint.push_front(child->as<LogicalOperatorNode>());
-                }
-
-                // build a string containing operators in the current query sub plan
-                // example: SOURCE(OP-1)=>FILTER(OP-2)=>SINK(OP-5)
-                std::string currentOperatorString = getOperatorType(currentOperator) +"(OP-" + std::to_string(currentOperator->getId()) + ")";
-                if (getOperatorType(currentOperator) != "SINK" && getOperatorType(currentOperator) != "SINK_SYS") {
-                    currentOperatorString += "=>";
-                }
-                operatorString.insert(0, currentOperatorString);
+        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();
+        const std::vector<QueryPlanPtr> querySubPlans;
+        if(queryId == INVALID_QUERY_ID){
+            queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();
+        } else{
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            if(!querySubPlans.empty()){
+                queryToQuerySubPlansMap[queryId] = querySubPlans;
             }
-
-            // add the string containing operator to the json object of current query sub plan
-            currentQuerySubPlan["operator"] = web::json::value::string(operatorString);
-
-            // TODO: Add source and target
-            currentExecutionPlanQuerySubPlans.push_back(currentQuerySubPlan);
         }
-        currentExecutionNodeJsonValue["querySubPlan"] = web::json::value::array(currentExecutionPlanQuerySubPlans);
+
+        std::vector<web::json::value> scheduledQueries = {};
+
+        for(auto& [queryId, querySubPlans]: queryToQuerySubPlansMap){
+
+            std::vector<web::json::value> scheduledSubQueries;
+            web::json::value queryToQuerySubPlans{};
+            queryToQuerySubPlans["queryId"] = web::json::value::number(queryId);
+
+            // loop over all query sub plans inside the current executionNode
+            for (QueryPlanPtr querySubPlan : querySubPlans) {
+                // prepare json object to hold information on current query sub plan
+                web::json::value currentQuerySubPlan{};
+
+                // id of current query sub plan
+                currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
+
+                // traverse to all operator in the current query sub plan
+                // starting from the root node
+                const OperatorNodePtr root = querySubPlan->getRootOperators()[0];
+                std::string operatorString;
+
+                std::deque<LogicalOperatorNodePtr> operatorsToPrint;
+                operatorsToPrint.push_front(root->as<LogicalOperatorNode>());
+
+                // traverse to the children
+                while (operatorsToPrint.size() != 0) {
+                    LogicalOperatorNodePtr currentOperator = operatorsToPrint.back();
+                    operatorsToPrint.pop_back();
+
+                    for (auto child : currentOperator->getChildren()) {
+                        operatorsToPrint.push_front(child->as<LogicalOperatorNode>());
+                    }
+
+                    // build a string containing operators in the current query sub plan
+                    // example: SOURCE(OP-1)=>FILTER(OP-2)=>SINK(OP-5)
+                    std::string currentOperatorString = getOperatorType(currentOperator) + "(OP-" + std::to_string(currentOperator->getId()) + ")";
+                    if (getOperatorType(currentOperator) != "SINK" && getOperatorType(currentOperator) != "SINK_SYS") {
+                        currentOperatorString += "=>";
+                    }
+                    operatorString.insert(0, currentOperatorString);
+                }
+
+                // add the string containing operator to the json object of current query sub plan
+                currentQuerySubPlan["operator"] = web::json::value::string(operatorString);
+
+                // TODO: Add source and target
+                scheduledSubQueries.push_back(currentQuerySubPlan);
+            }
+            queryToQuerySubPlans["querySubPlans"] = web::json::value::array(scheduledSubQueries);
+            scheduledQueries.push_back(queryToQuerySubPlans);
+        }
+
+        currentExecutionNodeJsonValue["ScheduledQueries"] = web::json::value::array(scheduledQueries);
         nodes.push_back(currentExecutionNodeJsonValue);
     }
 

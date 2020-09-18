@@ -246,6 +246,11 @@ add_executable(thread-naming-tests "UnitTests/ThreadNamingTest.cpp")
 target_link_libraries(thread-naming-tests nes ${GTEST_LIBRARIES})
 add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
 
+### Thread Naming Test ###
+add_executable(global-execution-plan-tests "UnitTests/Plans/Global/Execution/GlobalExecutionPlanTest.cpp")
+target_link_libraries(global-execution-plan-tests nes ${GTEST_LIBRARIES})
+add_test(NAME global-execution-plan-tests COMMAND global-execution-plan-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

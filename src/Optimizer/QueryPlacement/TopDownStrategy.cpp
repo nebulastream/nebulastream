@@ -170,7 +170,7 @@ QueryPlanPtr TopDownStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNod
         NES_TRACE("TopDownStrategy: no query plan exists for this query on the executionNode. Returning an empty query plan.");
         candidateQueryPlan = QueryPlan::create();
         candidateQueryPlan->setQueryId(queryId);
-        candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQueryExecutionId());
+        candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQuerySubPlanId());
         return candidateQueryPlan;
     }
 
@@ -196,7 +196,7 @@ QueryPlanPtr TopDownStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNod
             NES_TRACE("TopDownStrategy: Found more than 1 query plan with the parent operators of the input logical operator.");
             candidateQueryPlan = QueryPlan::create();
             candidateQueryPlan->setQueryId(queryId);
-            candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQueryExecutionId());
+            candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQuerySubPlanId());
             NES_TRACE("TopDownStrategy: Prepare a new query plan and add the root of the query plans with parent operators as the root of the new query plan.");
             for (auto& queryPlanWithChildren : queryPlansWithParent) {
                 for (auto& root : queryPlanWithChildren->getRootOperators()) {
@@ -213,7 +213,7 @@ QueryPlanPtr TopDownStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNod
     NES_TRACE("TopDownStrategy: no query plan exists with the parent operator of the input logical operator. Returning an empty query plan.");
     candidateQueryPlan = QueryPlan::create();
     candidateQueryPlan->setQueryId(queryId);
-    candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQueryExecutionId());
+    candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQuerySubPlanId());
     return candidateQueryPlan;
 }
 
