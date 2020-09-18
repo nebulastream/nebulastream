@@ -1,8 +1,8 @@
+#include <API/Query.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <API/Query.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -87,7 +87,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto printSinkDescriptor = PrintSinkDescriptor::create();
-    auto query = Query::from("default_logical").sink(printSinkDescriptor);
+    auto subQuery = Query::from("car");
+    auto query = Query::from("truck").merge(&subQuery).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     QueryId queryId = UtilityFunctions::getNextQueryId();
     QuerySubPlanId querySubPlanId = UtilityFunctions::getNextQuerySubPlanId();
@@ -95,7 +96,9 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     plan->setQuerySubPlanId(querySubPlanId);
     executionNode->addNewQuerySubPlan(queryId, plan);
 
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
+
+    NES_INFO(globalExecutionPlan->getAsString());
 
     const json::value& actualPlan = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan);
     NES_INFO("Actual query plan " << actualPlan);
@@ -111,7 +114,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     web::json::value scheduledQueries{};
     scheduledQueries["queryId"] = web::json::value::number(queryId);
     web::json::value scheduledSubQuery{};
-    scheduledSubQuery["operator"] = web::json::value::string("SOURCE(OP-1)=>SINK(OP-2)");
+    scheduledSubQuery["operator"] = web::json::value::string(query.getQueryPlan()->toString());
     scheduledSubQuery["querySubPlanId"] = web::json::value::number(querySubPlanId);
     scheduledQueries["querySubPlans"] = web::json::value::array({scheduledSubQuery});
     expectedExecutionNode["ScheduledQueries"] = web::json::value::array({scheduledQueries});
@@ -167,11 +170,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     scheduledQueries["queryId"] = web::json::value::number(queryId);
     std::vector<web::json::value> scheduledSubQueries;
     web::json::value scheduledSubQuery1{};
-    scheduledSubQuery1["operator"] = web::json::value::string("SOURCE(OP-1)=>SINK(OP-2)");
+    scheduledSubQuery1["operator"] = web::json::value::string(query1.getQueryPlan()->toString());
     scheduledSubQuery1["querySubPlanId"] = web::json::value::number(querySubPlanId1);
     scheduledSubQueries.push_back(scheduledSubQuery1);
     web::json::value scheduledSubQuery2{};
-    scheduledSubQuery2["operator"] = web::json::value::string("SOURCE(OP-3)=>SINK(OP-4)");
+    scheduledSubQuery2["operator"] = web::json::value::string(query2.getQueryPlan()->toString());
     scheduledSubQuery2["querySubPlanId"] = web::json::value::number(querySubPlanId2);
     scheduledSubQueries.push_back(scheduledSubQuery2);
     scheduledQueries["querySubPlans"] = web::json::value::array(scheduledSubQueries);
@@ -229,13 +232,9 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     scheduledQueries["queryId"] = web::json::value::number(queryId1);
     std::vector<web::json::value> scheduledSubQueries;
     web::json::value scheduledSubQuery1{};
-    scheduledSubQuery1["operator"] = web::json::value::string("SOURCE(OP-1)=>SINK(OP-2)");
+    scheduledSubQuery1["operator"] = web::json::value::string(query1.getQueryPlan()->toString());
     scheduledSubQuery1["querySubPlanId"] = web::json::value::number(querySubPlanId1);
     scheduledSubQueries.push_back(scheduledSubQuery1);
-//    web::json::value scheduledSubQuery2{};
-//    scheduledSubQuery2["operator"] = web::json::value::string("SOURCE(OP-3)=>SINK(OP-4)");
-//    scheduledSubQuery2["querySubPlanId"] = web::json::value::number(querySubPlanId2);
-//    scheduledSubQueries.push_back(scheduledSubQuery2);
     scheduledQueries["querySubPlans"] = web::json::value::array(scheduledSubQueries);
     expectedExecutionNode["ScheduledQueries"] = web::json::value::array({scheduledQueries});
 
@@ -311,11 +310,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     scheduledSubQueries1["queryId"] = web::json::value::number(queryId1);
     std::vector<web::json::value> scheduledSubQueriesFor1;
     web::json::value scheduledSubQuery11{};
-    scheduledSubQuery11["operator"] = web::json::value::string("SOURCE(OP-1)=>SINK(OP-2)");
+    scheduledSubQuery11["operator"] = web::json::value::string(query11.getQueryPlan()->toString());
     scheduledSubQuery11["querySubPlanId"] = web::json::value::number(querySubPlanId11);
     scheduledSubQueriesFor1.push_back(scheduledSubQuery11);
     web::json::value scheduledSubQuery12{};
-    scheduledSubQuery12["operator"] = web::json::value::string("SOURCE(OP-3)=>SINK(OP-4)");
+    scheduledSubQuery12["operator"] = web::json::value::string(query12.getQueryPlan()->toString());
     scheduledSubQuery12["querySubPlanId"] = web::json::value::number(querySubPlanId12);
     scheduledSubQueriesFor1.push_back(scheduledSubQuery12);
     scheduledSubQueries1["querySubPlans"] = web::json::value::array(scheduledSubQueriesFor1);
@@ -324,11 +323,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     scheduledSubQueries2["queryId"] = web::json::value::number(queryId2);
     std::vector<web::json::value> scheduledSubQueriesFor2;
     web::json::value scheduledSubQuery21{};
-    scheduledSubQuery21["operator"] = web::json::value::string("SOURCE(OP-5)=>SINK(OP-6)");
+    scheduledSubQuery21["operator"]= web::json::value::string(query21.getQueryPlan()->toString());
     scheduledSubQuery21["querySubPlanId"] = web::json::value::number(querySubPlanId21);
     scheduledSubQueriesFor2.push_back(scheduledSubQuery21);
     web::json::value scheduledSubQuery22{};
-    scheduledSubQuery22["operator"] = web::json::value::string("SOURCE(OP-7)=>SINK(OP-8)");
+    scheduledSubQuery22["operator"] = web::json::value::string(query22.getQueryPlan()->toString());
     scheduledSubQuery22["querySubPlanId"] = web::json::value::number(querySubPlanId22);
     scheduledSubQueriesFor2.push_back(scheduledSubQuery22);
     scheduledSubQueries2["querySubPlans"] = web::json::value::array(scheduledSubQueriesFor2);
@@ -392,7 +391,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     web::json::value scheduledQueries1{};
     scheduledQueries1["queryId"] = web::json::value::number(queryId1);
     web::json::value scheduledSubQuery1{};
-    scheduledSubQuery1["operator"] = web::json::value::string("SOURCE(OP-1)=>SINK(OP-2)");
+    scheduledSubQuery1["operator"] = web::json::value::string(query1.getQueryPlan()->toString());
     scheduledSubQuery1["querySubPlanId"] = web::json::value::number(querySubPlanId1);
     scheduledQueries1["querySubPlans"] = web::json::value::array({scheduledSubQuery1});
     expectedExecutionNode1["ScheduledQueries"] = web::json::value::array({scheduledQueries1});
@@ -405,7 +404,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     web::json::value scheduledQueries2{};
     scheduledQueries2["queryId"] = web::json::value::number(queryId2);
     web::json::value scheduledSubQuery2{};
-    scheduledSubQuery2["operator"] = web::json::value::string("SOURCE(OP-3)=>SINK(OP-4)");
+    scheduledSubQuery2["operator"] = web::json::value::string(query2.getQueryPlan()->toString());
     scheduledSubQuery2["querySubPlanId"] = web::json::value::number(querySubPlanId2);
     scheduledQueries2["querySubPlans"] = web::json::value::array({scheduledSubQuery2});
     expectedExecutionNode2["ScheduledQueries"] = web::json::value::array({scheduledQueries2});

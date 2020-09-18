@@ -476,34 +476,8 @@ web::json::value UtilityFunctions::getExecutionPlanAsJson(GlobalExecutionPlanPtr
                 // id of current query sub plan
                 currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
 
-                // traverse to all operator in the current query sub plan
-                // starting from the root node
-                const OperatorNodePtr root = querySubPlan->getRootOperators()[0];
-                std::string operatorString;
-
-                std::deque<LogicalOperatorNodePtr> operatorsToPrint;
-                operatorsToPrint.push_front(root->as<LogicalOperatorNode>());
-
-                // traverse to the children
-                while (operatorsToPrint.size() != 0) {
-                    LogicalOperatorNodePtr currentOperator = operatorsToPrint.back();
-                    operatorsToPrint.pop_back();
-
-                    for (auto child : currentOperator->getChildren()) {
-                        operatorsToPrint.push_front(child->as<LogicalOperatorNode>());
-                    }
-
-                    // build a string containing operators in the current query sub plan
-                    // example: SOURCE(OP-1)=>FILTER(OP-2)=>SINK(OP-5)
-                    std::string currentOperatorString = getOperatorType(currentOperator) + "(OP-" + std::to_string(currentOperator->getId()) + ")";
-                    if (getOperatorType(currentOperator) != "SINK" && getOperatorType(currentOperator) != "SINK_SYS") {
-                        currentOperatorString += "=>";
-                    }
-                    operatorString.insert(0, currentOperatorString);
-                }
-
                 // add the string containing operator to the json object of current query sub plan
-                currentQuerySubPlan["operator"] = web::json::value::string(operatorString);
+                currentQuerySubPlan["operator"] = web::json::value::string(querySubPlan->toString());
 
                 // TODO: Add source and target
                 scheduledSubQueries.push_back(currentQuerySubPlan);

@@ -21,7 +21,7 @@ bool SourceLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 const std::string SourceLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "SOURCE(" << outputSchema->toString() << ")";
+    ss << "SOURCE(" << id << ")";
     return ss.str();
 }
 

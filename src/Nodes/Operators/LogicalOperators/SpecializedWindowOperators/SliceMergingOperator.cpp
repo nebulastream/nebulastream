@@ -13,7 +13,7 @@ SliceMergingOperator::SliceMergingOperator(const WindowDefinitionPtr windowDefin
 
 const std::string SliceMergingOperator::toString() const {
     std::stringstream ss;
-    ss << "SliceMergingOperator(" << outputSchema->toString() << ")";
+    ss << "SliceMergingOperator(" << id << ")";
     return ss.str();
 }
 
