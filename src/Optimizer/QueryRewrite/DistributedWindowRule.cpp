@@ -43,8 +43,8 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                                                         windowOp->getChildren().size());
 
                 auto newWindowOp = LogicalOperatorFactory::createWindowComputationSpecializedOperator(newWinDef);
-                newWindowOp->setInputSchema(newWindowOp->getInputSchema());
-                newWindowOp->setOutputSchema(newWindowOp->getOutputSchema());
+                newWindowOp->setInputSchema(windowOp->getInputSchema());
+                newWindowOp->setOutputSchema(windowOp->getOutputSchema());
                 newWindowOp->setId(UtilityFunctions::getNextOperatorId());
 
                 //replace logical window op with combiner
