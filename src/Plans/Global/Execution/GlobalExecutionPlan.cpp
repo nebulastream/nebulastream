@@ -69,6 +69,7 @@ bool GlobalExecutionPlan::addExecutionNodeAsRoot(ExecutionNodePtr executionNode)
 bool GlobalExecutionPlan::addExecutionNode(ExecutionNodePtr executionNode) {
     NES_DEBUG("GlobalExecutionPlan: Added Execution node with id " << executionNode->getId());
     nodeIdIndex[executionNode->getId()] = executionNode;
+    scheduleExecutionNode(executionNode);
     return true;
 }
 
