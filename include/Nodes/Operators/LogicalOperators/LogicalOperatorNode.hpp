@@ -2,9 +2,9 @@
 #define LOGICAL_OPERATOR_NODE_HPP
 
 #include <API/ParameterTypes.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
 
 namespace NES {
 

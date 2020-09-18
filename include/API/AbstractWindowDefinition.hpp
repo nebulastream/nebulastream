@@ -87,7 +87,6 @@ typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
-
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
@@ -122,7 +121,7 @@ class WindowDefinition {
  * @return Window Definition
  */
     static WindowDefinitionPtr create(const WindowAggregationPtr windowAggregation,
-                                               const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
+                                      const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
 
     /**
      * @brief Create a new window definition for a keyed window
@@ -131,9 +130,9 @@ class WindowDefinition {
      * @return Window Definition
      */
     static WindowDefinitionPtr create(const AttributeFieldPtr onKey,
-                                               const WindowAggregationPtr windowAggregation,
-                                               const WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
-                                               uint64_t numberOfInputEdges);
+                                      const WindowAggregationPtr windowAggregation,
+                                      const WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
+                                      uint64_t numberOfInputEdges);
 
     /**
      * @brief getter and setter for the distribution type (centralized or distributed)
@@ -178,8 +177,6 @@ class WindowDefinition {
     DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdges;
 };
-
-
 
 }// namespace NES
 

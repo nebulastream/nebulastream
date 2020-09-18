@@ -27,10 +27,8 @@ typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpression
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
-
 class SinkDescriptor;
 typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
-
 
 }// namespace NES
 
