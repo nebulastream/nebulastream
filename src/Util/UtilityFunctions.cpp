@@ -449,7 +449,7 @@ web::json::value UtilityFunctions::getExecutionPlanAsJson(GlobalExecutionPlanPtr
         currentExecutionNodeJsonValue["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
         currentExecutionNodeJsonValue["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
 
-        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();
+        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap;
         const std::vector<QueryPlanPtr> querySubPlans;
         if (queryId == INVALID_QUERY_ID) {
             queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();

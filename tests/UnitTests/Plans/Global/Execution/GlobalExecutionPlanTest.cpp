@@ -182,6 +182,68 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 }
 
 /**
+ * @brief This test is for validating behaviour for a global execution plan with single execution node with two plan for different queries
+ */
+TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWithTwoPlanForDifferentqueries) {
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+
+    //create execution node
+    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10);
+    const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
+
+    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
+    auto printSinkDescriptor1 = PrintSinkDescriptor::create();
+    auto query1 = Query::from("default_logical").sink(printSinkDescriptor1);
+    auto plan1 = query1.getQueryPlan();
+    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QuerySubPlanId querySubPlanId1 = UtilityFunctions::getNextQuerySubPlanId();
+    plan1->setQueryId(queryId1);
+    plan1->setQuerySubPlanId(querySubPlanId1);
+    executionNode->addNewQuerySubPlan(queryId1, plan1);
+
+    NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
+    auto printSinkDescriptor2 = PrintSinkDescriptor::create();
+    auto query2 = Query::from("default_logical").sink(printSinkDescriptor2);
+    auto plan2 = query2.getQueryPlan();
+    QuerySubPlanId querySubPlanId2 = UtilityFunctions::getNextQuerySubPlanId();
+    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    plan2->setQueryId(queryId2);
+    plan2->setQuerySubPlanId(querySubPlanId2);
+    executionNode->addNewQuerySubPlan(queryId2, plan2);
+
+    globalExecutionPlan->addExecutionNode(executionNode);
+
+    const json::value& actualPlan = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan, queryId1);
+    NES_INFO("Actual query plan " << actualPlan);
+
+    web::json::value expectedPlan{};
+    expectedPlan["executionNodes"] = web::json::value::array();
+
+    web::json::value expectedExecutionNode{};
+    expectedExecutionNode["executionNodeId"] = web::json::value::number(executionNode->getId());
+    expectedExecutionNode["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
+    expectedExecutionNode["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
+
+    web::json::value scheduledQueries{};
+    scheduledQueries["queryId"] = web::json::value::number(queryId1);
+    std::vector<web::json::value> scheduledSubQueries;
+    web::json::value scheduledSubQuery1{};
+    scheduledSubQuery1["operator"] = web::json::value::string("SOURCE(OP-1)=>SINK(OP-2)");
+    scheduledSubQuery1["querySubPlanId"] = web::json::value::number(querySubPlanId1);
+    scheduledSubQueries.push_back(scheduledSubQuery1);
+//    web::json::value scheduledSubQuery2{};
+//    scheduledSubQuery2["operator"] = web::json::value::string("SOURCE(OP-3)=>SINK(OP-4)");
+//    scheduledSubQuery2["querySubPlanId"] = web::json::value::number(querySubPlanId2);
+//    scheduledSubQueries.push_back(scheduledSubQuery2);
+    scheduledQueries["querySubPlans"] = web::json::value::array(scheduledSubQueries);
+    expectedExecutionNode["ScheduledQueries"] = web::json::value::array({scheduledQueries});
+
+    expectedPlan["executionNodes"] = web::json::value::array({expectedExecutionNode});
+    ASSERT_EQ(expectedPlan, actualPlan);
+}
+
+/**
  * @brief This test is for validating behaviour for a global execution plan with single execution node with 4 plan
  */
 TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWithFourPlan) {
