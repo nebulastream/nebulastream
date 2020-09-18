@@ -37,10 +37,10 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                 auto winDef = windowOp->getWindowDefinition();
 
                 auto newWinDef = WindowDefinition::create(winDef->getOnKey(),
-                                                        winDef->getWindowAggregation(),
-                                                        winDef->getWindowType(),
-                                                        DistributionCharacteristic::createCombiningWindowType(),
-                                                        windowOp->getChildren().size());
+                                                          winDef->getWindowAggregation(),
+                                                          winDef->getWindowType(),
+                                                          DistributionCharacteristic::createCombiningWindowType(),
+                                                          windowOp->getChildren().size());
 
                 auto newWindowOp = LogicalOperatorFactory::createWindowComputationSpecializedOperator(newWinDef);
                 newWindowOp->setInputSchema(windowOp->getInputSchema());
@@ -59,9 +59,9 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                     NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());
                     NES_DEBUG("DistributeWindowRule::apply: plan before insert child " << queryPlan->toString());
                     auto newWinDef2 = WindowDefinition::create(winDef->getOnKey(),
-                                                             winDef->getWindowAggregation(),
-                                                             winDef->getWindowType(),
-                                                             DistributionCharacteristic::createSlicingWindowType(), 1);
+                                                               winDef->getWindowAggregation(),
+                                                               winDef->getWindowType(),
+                                                               DistributionCharacteristic::createSlicingWindowType(), 1);
                     auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(newWinDef2);
                     sliceOp->setId(UtilityFunctions::getNextOperatorId());
                     child->insertBetweenThisAndParentNodes(sliceOp);

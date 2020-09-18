@@ -7,7 +7,6 @@ namespace NES {
 
 class LogicalOperatorFactory {
   public:
-
     template<typename Operator, typename... Arguments>
     static std::shared_ptr<Operator> create(Arguments&&... args) {
         return std::shared_ptr<Operator>(std::forward<Arguments>(args)...);
