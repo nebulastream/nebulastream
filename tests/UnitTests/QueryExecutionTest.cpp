@@ -345,7 +345,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQuery) {
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Sliding window of size 10ms and with Slide 2ms and a sum aggregation on the value.
-    auto windowType = SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(4),Milliseconds(2));
+    auto windowType = SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
 
     auto aggregation = Sum::on(Attribute("value"));
     query = query.windowByKey(Attribute("key"), windowType, aggregation);
@@ -358,7 +358,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQuery) {
         ->addField(createField("key", INT64))
         ->addField("value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
