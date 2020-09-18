@@ -49,6 +49,7 @@ bool WindowLogicalOperatorNode::inferSchema() {
     if (windowDefinition->isKeyed()) {
         // check if key exist on input schema
         auto key = windowDefinition->getOnKey();
+        //if (!inputSchema->get(key->name)->toString().empty()) {
         if (!inputSchema->has(key->name)) {
             NES_ERROR("inferSchema() Window Operator: key  field " << key->name << " does not exist!");
             return false;
