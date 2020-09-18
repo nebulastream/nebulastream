@@ -1,15 +1,14 @@
 #ifndef NES_WORKERCONTEXT_HPP_
 #define NES_WORKERCONTEXT_HPP_
 
-#include <NodeEngine/NesThread.hpp>
-#include <cstdint>
-#include <unordered_map>
 #include <Network/NesPartition.hpp>
 #include <Network/OutputChannel.hpp>
+#include <NodeEngine/NesThread.hpp>
+#include <cstdint>
 #include <memory>
+#include <unordered_map>
 
 namespace NES {
-
 
 /**
  * @brief A WorkerContext represents the current state of a worker thread
@@ -18,7 +17,6 @@ namespace NES {
  */
 class WorkerContext {
   private:
-
     /// the id of this worker context (unique per thread).
     uint32_t workerId;
 

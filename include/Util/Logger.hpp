@@ -87,7 +87,6 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         }                                                                           \
     } while (0)
 
-
 #ifdef NES_DEBUG
 #define NES_VERIFY(CONDITION, TEXT)                                                 \
     do {                                                                            \
@@ -98,7 +97,7 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         }                                                                           \
     } while (0)
 #else
-#define NES_VERIFY(...) ((void)0)
+#define NES_VERIFY(...) ((void) 0)
 #endif
 
 static void setupLogging(std::string logFileName, DebugLevel level) {

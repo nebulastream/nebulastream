@@ -22,7 +22,7 @@ uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, void*, WindowManager
     NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint completed on thread " << workerContext.getId());
     return 0;
 }
-}
+}// namespace detail
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId)
     : taskQueue(), sourceIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId) {
@@ -197,8 +197,9 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationTask));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
-    new (buffer.getBuffer()) ReconfigurationTask(descriptor, threadPool->getNumberOfThreads()); // memcpy using copy ctor
-    auto pipelineContext = std::make_shared<PipelineExecutionContext>(queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&){});
+    new (buffer.getBuffer()) ReconfigurationTask(descriptor, threadPool->getNumberOfThreads());// memcpy using copy ctor
+    auto pipelineContext = std::make_shared<PipelineExecutionContext>(queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&) {
+    });
     auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
         taskQueue.emplace_back(pipeline, buffer);
@@ -248,7 +249,7 @@ QueryManager::ExecutionResult QueryManager::terminateLoop(WorkerContext& workerC
         auto task = taskQueue.front();
         taskQueue.pop_front();
         lock.unlock();
-        if (!hitReconfiguration) { // execute all pending tasks until first reconfiguration
+        if (!hitReconfiguration) {// execute all pending tasks until first reconfiguration
             task(workerContext);
             if (task.getPipelineStage()->isReconfiguration()) {
                 hitReconfiguration = true;
@@ -256,7 +257,7 @@ QueryManager::ExecutionResult QueryManager::terminateLoop(WorkerContext& workerC
             lock.lock();
             continue;
         } else {
-            if (task.getPipelineStage()->isReconfiguration()) { // execute only pending reconfigurations
+            if (task.getPipelineStage()->isReconfiguration()) {// execute only pending reconfigurations
                 task(workerContext);
             }
             lock.lock();
@@ -352,7 +353,7 @@ void QueryManager::destroyCallback(ReconfigurationTask& task) {
     switch (task.getType()) {
         case Destroy: {
             std::unique_lock lock(queryMutex);
-            runningQEPs.erase(task.getParentPlanId()); // note that this will release all shared pointers stored in a QEP object
+            runningQEPs.erase(task.getParentPlanId());// note that this will release all shared pointers stored in a QEP object
             NES_DEBUG("QueryManager: removed running QEP " << task.getParentPlanId());
             break;
         }

@@ -24,4 +24,4 @@ Network::OutputChannel* WorkerContext::getChannel(Network::OperatorId ownerId) {
     return channels[ownerId].get();
 }
 
-}
+}// namespace NES

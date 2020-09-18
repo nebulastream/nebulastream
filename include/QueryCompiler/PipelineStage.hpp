@@ -1,11 +1,11 @@
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
 #include "CodeGenerator.hpp"
+#include <NodeEngine/WorkerContext.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <memory>
 #include <vector>
-#include <NodeEngine/WorkerContext.hpp>
 
 namespace NES {
 class TupleBuffer;

@@ -1,12 +1,12 @@
 #ifndef NES_INCLUDE_NODEENGINE_NESTHREAD_HPP_
 #define NES_INCLUDE_NODEENGINE_NESTHREAD_HPP_
 
+#include <Util/Logger.hpp>
 #include <atomic>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
-#include <Util/Logger.hpp>
 
 /// Turn this on to have Thread::current_num_threads_ keep a count of currently-active threads.
 #undef COUNT_ACTIVE_THREADS
@@ -86,5 +86,5 @@ inline NesThread::ThreadId::~ThreadId() {
     NesThread::releaseEntry(id);
 }
 
-}
+}// namespace NES
 #endif//NES_INCLUDE_NODEENGINE_NESTHREAD_HPP_

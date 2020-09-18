@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <functional>
 #include <memory>
-#include <Plans/Query/QuerySubPlanId.hpp>
 
 namespace NES {
 class WorkerContext;
@@ -69,7 +69,6 @@ class PipelineExecutionContext {
     void setInputSchema(SchemaPtr inputSchema);
 
   private:
-
     /**
      * @brief Id of the local qep that owns the pipeline
      */
@@ -84,11 +83,9 @@ class PipelineExecutionContext {
      */
     std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
 
-
     // TODO remove this stuff from here
     WindowDefinitionPtr windowDef;
     SchemaPtr inputSchema;
-
 };
 
 }// namespace NES
