@@ -15,7 +15,7 @@ WindowComputationOperator::WindowComputationOperator(const WindowDefinitionPtr w
 
 const std::string WindowComputationOperator::toString() const {
     std::stringstream ss;
-    ss << "WindowComputationOperator(" << outputSchema->toString() << ")";
+    ss << "WindowComputationOperator(" << id << ")";
     return ss.str();
 }
 

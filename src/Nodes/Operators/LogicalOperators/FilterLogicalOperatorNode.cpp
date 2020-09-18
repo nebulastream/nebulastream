@@ -28,7 +28,7 @@ bool FilterLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 const std::string FilterLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "FILTER(" << outputSchema->toString() << ")";
+    ss << "FILTER(" << id << ")";
     return ss.str();
 }
 

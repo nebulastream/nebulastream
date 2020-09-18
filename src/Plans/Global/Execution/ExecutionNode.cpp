@@ -126,7 +126,7 @@ bool ExecutionNode::updateQuerySubPlans(QueryId queryId, std::vector<QueryPlanPt
 }
 
 const std::string ExecutionNode::toString() const {
-    return "ExecutionNode(" + std::to_string(id) + ")";
+    return "ExecutionNode(" + std::to_string(id) + ", " + topologyNode->getIpAddress() + ")";
 }
 
 ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) {

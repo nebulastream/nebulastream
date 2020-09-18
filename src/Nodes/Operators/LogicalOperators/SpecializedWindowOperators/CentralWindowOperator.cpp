@@ -15,7 +15,7 @@ CentralWindowOperator::CentralWindowOperator(const WindowDefinitionPtr windowDef
 
 const std::string CentralWindowOperator::toString() const {
     std::stringstream ss;
-    ss << "CENTRALWINDOW(" << outputSchema->toString() << ")";
+    ss << "CENTRALWINDOW(" << id << ")";
     return ss.str();
 }
 

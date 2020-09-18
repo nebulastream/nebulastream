@@ -44,12 +44,12 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     std::string outputFilePath = "testGetExecutionPlanFromWithSingleWorker.txt";
     remove(outputFilePath.c_str());
 
-    string path = "../nesCoordinator --coordinatorPort=12267";
+    string path = "./nesCoordinator --coordinatorPort=12267";
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
 
-    string path2 = "../nesWorker --coordinatorPort=12267";
+    string path2 = "./nesWorker --coordinatorPort=12267";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     size_t coordinatorPid = coordinatorProc.id();

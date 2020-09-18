@@ -44,7 +44,7 @@ bool MapLogicalOperatorNode::inferSchema() {
 
 const std::string MapLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "MAP(" << outputSchema->toString() << ")";
+    ss << "MAP(" << id << ")";
     return ss.str();
 }
 

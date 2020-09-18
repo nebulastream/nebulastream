@@ -14,7 +14,7 @@ SliceCreationOperator::SliceCreationOperator(const WindowDefinitionPtr windowDef
 
 const std::string SliceCreationOperator::toString() const {
     std::stringstream ss;
-    ss << "SliceCreationOperator(" << outputSchema->toString() << ")";
+    ss << "SliceCreationOperator(" << id << ")";
     return ss.str();
 }
 

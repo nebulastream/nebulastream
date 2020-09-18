@@ -14,7 +14,7 @@ bool MergeLogicalOperatorNode::isIdentical(NodePtr rhs) const {
 
 const std::string MergeLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "Merge(" << outputSchema->toString() << ")";
+    ss << "Merge(" << id << ")";
     return ss.str();
 }
 

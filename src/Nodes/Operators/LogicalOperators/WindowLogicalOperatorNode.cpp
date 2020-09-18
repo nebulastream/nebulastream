@@ -13,7 +13,7 @@ WindowLogicalOperatorNode::WindowLogicalOperatorNode(const WindowDefinitionPtr w
 
 const std::string WindowLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "WINDOW(" << outputSchema->toString() << ")";
+    ss << "WINDOW(" << id << ")";
     return ss.str();
 }
 
