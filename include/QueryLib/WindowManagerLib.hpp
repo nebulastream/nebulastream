@@ -76,7 +76,7 @@ class WindowSliceStore {
      */
     inline void appendSlice(SliceMetaData slice) {
         NES_DEBUG("appendSlice "
-                  << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
+                      << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
         sliceMetaData.push_back(slice);
         partialAggregates.push_back(defaultValue);
     }
@@ -126,7 +126,7 @@ class WindowSliceStore {
             return 0;//TODO: we have to figure out how many downstream positions are there
         }
         std::map<uint64_t, uint64_t>::iterator min = std::min_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(), [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-            return a.second < b.second;
+          return a.second < b.second;
         });
         NES_DEBUG("getMinWatermark() return min =" << min->second);
         return min->second;
