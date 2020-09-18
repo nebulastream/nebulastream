@@ -137,9 +137,17 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     // the window type adds result windows to the windows vectors
     if (store->getLastWatermark() == 0) {
         TumblingWindow* tumb = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
-        auto initWatermark = watermark < tumb->getSize().getTime() ? 0 : watermark - tumb->getSize().getTime();
-        NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << initWatermark);
-        store->setLastWatermark(initWatermark);
+        if (tumb != NULL) {
+            auto initWatermark = watermark < tumb->getSize().getTime() ? 0 : watermark - tumb->getSize().getTime();
+            NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << initWatermark);
+            store->setLastWatermark(initWatermark);
+        }else{
+            SlidingWindow* tumb = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
+            auto initWatermark = watermark < tumb->getSize().getTime() ? 0 : watermark - tumb->getSize().getTime();
+
+            NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << initWatermark);
+            store->setLastWatermark(initWatermark);
+        }
     } else {
         NES_DEBUG("WindowHandler::aggregateWindows: last watermark is=" << store->getLastWatermark());
     }

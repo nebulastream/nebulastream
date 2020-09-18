@@ -1,5 +1,6 @@
 #include <API/AbstractWindowDefinition.hpp>
 #include <API/Window/TimeCharacteristic.hpp>
+#include <API/Window/WindowType.hpp>
 #include <State/StateVariable.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
@@ -162,16 +163,20 @@ class WindowManager {
 
         NES_DEBUG("sliceStream for ts=" << ts);
         // updates the maximal record ts
-        //        store->updateMaxTs(ts);//TODO I am not use if we still need this
+        // store->updateMaxTs(ts);
 
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
-            store->setLastWatermark(ts - allowedLateness);//TODO: I am not sure if we still need this
-
-            store->nextEdge = windowDefinition->getWindowType()->calculateNextWindowEnd(ts - allowedLateness);
-            store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->getWindowType()->getTime(), store->nextEdge));
-            NES_DEBUG("sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - windowDefinition->getWindowType()->getTime() << " nextWindowEnd=" << store->nextEdge);
+            auto windowType = windowDefinition->getWindowType();
+            store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
+            TumblingWindow* tumb = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
+            if (tumb != NULL) {
+                store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->getWindowType()->getTime(), store->nextEdge));
+                NES_DEBUG("sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - windowDefinition->getWindowType()->getTime() << " nextWindowEnd=" << store->nextEdge);
+            } else {
+                store->appendSlice(SliceMetaData(store->nextEdge - dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get())->getSlideTime(), store->nextEdge));
+            }
         }
 
         NES_DEBUG("sliceStream check store-nextEdge=" << store->nextEdge << " <="
@@ -182,9 +187,9 @@ class WindowManager {
             NES_DEBUG("sliceStream currentSlice=" << currentSlice);
             auto& sliceMetaData = store->getSliceMetadata();
             auto newStart = sliceMetaData[currentSlice].getEndTs();
-            NES_DEBUG("sliceStream newStart=" << sliceMetaData[currentSlice].getEndTs());
-            auto nextEdge = windowDefinition->getWindowType()->calculateNextWindowEnd(ts);
-            NES_DEBUG("sliceStream nextEdge=" << windowDefinition->getWindowType()->calculateNextWindowEnd(ts));
+            NES_DEBUG("sliceStream newStart=" << newStart);
+            auto nextEdge = windowDefinition->getWindowType()->calculateNextWindowEnd(store->nextEdge);
+            NES_DEBUG("sliceStream nextEdge=" << nextEdge);
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }

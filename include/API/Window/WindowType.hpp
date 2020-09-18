@@ -71,7 +71,7 @@ class SlidingWindow : public WindowType {
   * @return the next window end
   */
     uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
-        return currentTs + size.getTime() - (currentTs % size.getTime());
+        return currentTs + slide.getTime() - (currentTs % slide.getTime());
     }
      /**
      *  TODO not use, check if needed
