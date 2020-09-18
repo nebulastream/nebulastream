@@ -94,6 +94,12 @@ class GlobalExecutionPlan {
     std::vector<ExecutionNodePtr> getExecutionNodesByQueryId(QueryId queryId);
 
     /**
+     * @brief Get all execution nodes in the execution plan
+     * @return list of execution nodes
+     */
+    std::vector<ExecutionNodePtr> getAllExecutionNodes();
+
+    /**
      * Get the execution plan as string representation
      * @return returns string representation of the plan
      */

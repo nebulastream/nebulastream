@@ -142,7 +142,7 @@ class UtilityFunctions {
      * @brief Returns the next free query execution Id
      * @return query execution id
      */
-    static uint64_t getNextQueryExecutionId();
+    static uint64_t getNextQuerySubPlanId();
 
     /**
      * @brief Returns the next free operator id
@@ -168,7 +168,7 @@ class UtilityFunctions {
      * @param id of the query
      * @return
      */
-    static web::json::value getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId);
+    static web::json::value getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId=INVALID_QUERY_ID);
   private:
     /**
      * @brief function to traverse to queryPlanChildren
