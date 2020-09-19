@@ -65,7 +65,7 @@ uint64_t SlidingWindow::getSlideTime() const {
 }
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
-    : size(size), slide(slide), WindowType(timeCharacteristic) { }
+    : size(size), slide(slide), WindowType(timeCharacteristic) {}
 
 WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
     return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));
@@ -82,7 +82,7 @@ void SlidingWindow::triggerWindows(WindowListPtr windows,
     long lastStart = currentWatermark - ((currentWatermark + slide.getTime()) % slide.getTime());
     NES_DEBUG("SlidingWindow::triggerWindows= lastStart=" << lastStart << " size.getTime()=" << size.getTime() << " lastWatermark=" << lastWatermark);
     for (long windowStart = lastStart; windowStart + size.getTime() > lastWatermark; windowStart -= slide.getTime()) {
-        if (windowStart>=0 && ((windowStart + size.getTime()) <= currentWatermark)) {
+        if (windowStart >= 0 && ((windowStart + size.getTime()) <= currentWatermark)) {
             NES_DEBUG("SlidingWindow::triggerWindows add window to be triggered = windowStart=" << windowStart);
             windows->emplace_back(windowStart, windowStart + size.getTime());
         }
@@ -100,7 +100,6 @@ TimeMeasure SlidingWindow::getSize() {
 TimeMeasure SlidingWindow::getSlide() {
     return slide;
 }
-
 
 SessionWindow::SessionWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure gap)
     : gap(gap), WindowType(timeCharacteristic) {

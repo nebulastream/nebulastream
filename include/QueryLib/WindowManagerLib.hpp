@@ -76,7 +76,7 @@ class WindowSliceStore {
      */
     inline void appendSlice(SliceMetaData slice) {
         NES_DEBUG("appendSlice "
-                      << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
+                  << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
         sliceMetaData.push_back(slice);
         partialAggregates.push_back(defaultValue);
     }
@@ -126,7 +126,7 @@ class WindowSliceStore {
             return 0;//TODO: we have to figure out how many downstream positions are there
         }
         std::map<uint64_t, uint64_t>::iterator min = std::min_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(), [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-          return a.second < b.second;
+            return a.second < b.second;
         });
         NES_DEBUG("getMinWatermark() return min =" << min->second);
         return min->second;
@@ -164,21 +164,22 @@ class WindowManager {
         NES_DEBUG("sliceStream for ts=" << ts);
         // updates the maximal record ts
         // store->updateMaxTs(ts);
-
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
             auto windowType = windowDefinition->getWindowType();
             store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
-            TumblingWindow* tumb = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
-            if (tumb != NULL) {
+            if (windowType->isTumblingWindow()) {
                 store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->getWindowType()->getTime(), store->nextEdge));
-                NES_DEBUG("sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - windowDefinition->getWindowType()->getTime() << " nextWindowEnd=" << store->nextEdge);
-            } else {
+                NES_DEBUG("WindowManagerLib: for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - windowDefinition->getWindowType()->getTime() << " nextWindowEnd=" << store->nextEdge);
+            }
+            if (windowType->isSlidingWindow()) {
                 store->appendSlice(SliceMetaData(store->nextEdge - dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get())->getSlideTime(), store->nextEdge));
+                NES_DEBUG("WindowManagerLib: for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get())->getSlideTime() << " nextWindowEnd=" << store->nextEdge);
+            } else {
+                NES_ERROR("WindowManagerLib: Undefined Window Type");
             }
         }
-
         NES_DEBUG("sliceStream check store-nextEdge=" << store->nextEdge << " <="
                                                       << " ts=" << ts);
         // append new slices if needed
