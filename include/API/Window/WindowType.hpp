@@ -43,13 +43,13 @@ class TumblingWindow : public WindowType {
 
     /**
     * @brief return size of the window
-    * @return
+    * @return size of the window
     */
     TimeMeasure getSize();
 
     /**
-    * @brief return the time value
-    * @return
+    * @brief return the window size as time value
+    * @return window size as time value
     */
     uint64_t getTime() const override;
 
@@ -60,7 +60,6 @@ class TumblingWindow : public WindowType {
 
 /**
  * A SlidingWindow assigns records to multiple overlapping windows.
- * TODO This is currently not implemented!
  */
 class SlidingWindow : public WindowType {
   public:
@@ -75,8 +74,8 @@ class SlidingWindow : public WindowType {
     }
      /**
      *  TODO not use, check if needed
-    * @brief return the time value
-    * @return
+    * @brief returns the window size as time value
+    * @return window size as time value
     */
     uint64_t getTime() const override;
 
@@ -91,12 +90,12 @@ class SlidingWindow : public WindowType {
     bool isSlidingWindow() override;
     /**
     * @brief return size of the window
-    * @return
+    * @return size of the window
     */
     TimeMeasure getSize();
     /**
     * @brief return size of the slide
-    * @return
+    * @return size of the slide
     */
     TimeMeasure getSlide();
     /**
