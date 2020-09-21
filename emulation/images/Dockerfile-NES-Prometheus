@@ -1,0 +1,8 @@
+FROM nebulastream/nes-executable-image:latest
+
+RUN apt-get install iputils-ping -y
+RUN apt-get install prometheus-node-exporter -y
+
+EXPOSE 9100 3000 3001
+
+COPY entrypoint-prom.sh ./entrypoint-prom.sh
