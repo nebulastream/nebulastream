@@ -237,40 +237,38 @@ class TestUtils {
     }
 
     static TopologyNodePtr registerTestNode(size_t id, std::string address, int cpu, NodeStats nodeProperties,
-                                            PhysicalStreamConfig streamConf, NodeType type, StreamCatalogPtr streamCatalog, TopologyPtr topology) {
+                                            PhysicalStreamConfigPtr streamConf, NodeType type, StreamCatalogPtr streamCatalog, TopologyPtr topology) {
         TopologyNodePtr nodePtr;
         if (type == NodeType::Sensor) {
             NES_DEBUG("CoordinatorService::registerNode: register sensor node");
             nodePtr = TopologyNode::create(id, address, 4000, 4002, cpu);
 
-            NES_DEBUG("try to register sensor phyName=" << streamConf.physicalStreamName << " logName="
-                                                        << streamConf.logicalStreamName << " nodeID=" << nodePtr->getId());
+            NES_DEBUG("try to register sensor phyName=" << streamConf->getPhysicalStreamName() << " logName="
+                                                        << streamConf->getLogicalStreamName() << " nodeID=" << nodePtr->getId());
 
             //check if logical stream exists
-            if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf.logicalStreamName)) {
-                NES_ERROR("Coordinator: error logical stream" << streamConf.logicalStreamName
+            if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf->getLogicalStreamName())) {
+                NES_ERROR("Coordinator: error logical stream" << streamConf->getLogicalStreamName()
                                                               << " does not exist when adding physical stream "
-                                                              << streamConf.physicalStreamName);
-                throw Exception("logical stream does not exist " + streamConf.logicalStreamName);
+                                                              << streamConf->getPhysicalStreamName());
+                throw Exception("logical stream does not exist " + streamConf->getLogicalStreamName());
             }
 
-            SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamConf.logicalStreamName);
+            SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamConf->getLogicalStreamName());
 
             DataSourcePtr source;
-            if (streamConf.sourceType != "CSVSource" && streamConf.sourceType != "DefaultSource") {
-                NES_ERROR("Coordinator: error source type " << streamConf.sourceType << " is not supported");
-                throw Exception("Coordinator: error source type " + streamConf.sourceType
-                                + " is not supported");
+            string sourceType = streamConf->getSourceType();
+            if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
+                NES_ERROR("Coordinator: error source type " << sourceType << " is not supported");
+                throw Exception("Coordinator: error source type " + sourceType + " is not supported");
             }
 
             StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, nodePtr);
 
-            bool success = streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce);
+            bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
             if (!success) {
-                NES_ERROR("Coordinator: physical stream " << streamConf.physicalStreamName
-                                                          << " could not be added to catalog");
-                throw Exception("Coordinator: physical stream " + streamConf.physicalStreamName
-                                + " could not be added to catalog");
+                NES_ERROR("Coordinator: physical stream " << streamConf->getPhysicalStreamName() << " could not be added to catalog");
+                throw Exception("Coordinator: physical stream " + streamConf->getPhysicalStreamName() + " could not be added to catalog");
             }
 
         } else if (type == NodeType::Worker) {
