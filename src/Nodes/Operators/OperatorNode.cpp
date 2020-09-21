@@ -26,7 +26,6 @@ bool OperatorNode::inferSchema() {
     for (const auto& child : children) {
         if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
             NES_THROW_RUNTIME_ERROR("OperatorNode: infer schema failed. The schema has to be the same across all child operators.");
-            return false;
         }
     }
     inputSchema = childSchema->copy();

@@ -19,4 +19,8 @@ bool SourceDescriptor::hasStreamName() {
     return !streamName.empty();
 }
 
+void SourceDescriptor::setSchema(SchemaPtr schema) {
+    this->schema = schema;
+}
+
 }// namespace NES
