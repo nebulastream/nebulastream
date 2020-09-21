@@ -90,7 +90,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     NES_DEBUG("NesWorker::start: start NodeEngine");
     try {
-        nodeEngine = NodeEngine::create(localWorkerIp, localWorkerZmqPort);
+        nodeEngine = NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf);
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");

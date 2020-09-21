@@ -35,6 +35,12 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     SchemaPtr getSchema();
 
     /**
+     * @brief Set a new schema for the descriptor
+     * @param schema : the pointer to the new schema
+     */
+    void setSchema(SchemaPtr schema);
+
+    /**
     * @brief Checks if the source descriptor is of type SourceType
     * @tparam SourceType
     * @return bool true if source descriptor is of SourceType

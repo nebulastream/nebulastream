@@ -1,6 +1,7 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
@@ -45,13 +46,13 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param numBuffers the number of buffers for the buffer manager
      * @return
      */
-    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, size_t bufferSize = DEFAULT_BUFFER_SIZE, size_t numBuffers = DEFAULT_NUM_BUFFERS);
+    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, PhysicalStreamConfig config, size_t bufferSize = DEFAULT_BUFFER_SIZE, size_t numBuffers = DEFAULT_NUM_BUFFERS);
 
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(BufferManagerPtr&&, QueryManagerPtr&&, std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
+    explicit NodeEngine(PhysicalStreamConfig config, BufferManagerPtr&&, QueryManagerPtr&&, std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
                         Network::PartitionManagerPtr&&, QueryCompilerPtr&&, uint64_t nodeEngineId);
 
     ~NodeEngine();
@@ -185,6 +186,9 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     void onChannelError(Network::Messages::ErrorMessage) override;
 
   private:
+    SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
+
+    PhysicalStreamConfig config;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, QueryExecutionPlanPtr> deployedQEPs;
@@ -193,7 +197,6 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     Network::NetworkManagerPtr networkManager;
     Network::PartitionManagerPtr partitionManager;
     QueryCompilerPtr queryCompiler;
-
     bool isReleased;
     std::recursive_mutex engineMutex;
     uint64_t nodeEngineId;
