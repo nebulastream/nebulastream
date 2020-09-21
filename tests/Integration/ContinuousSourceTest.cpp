@@ -46,10 +46,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress,
                                                     port + 10, port + 11, NodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
     //register physical stream
     PhysicalStreamConfig conf;
     conf.logicalStreamName = "exdra";
@@ -59,6 +55,10 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     conf.numberOfBuffersToProduce = 1;
     conf.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf);
+
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     std::string filePath = "contTestOut.csv";
     remove(filePath.c_str());

@@ -3,6 +3,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
@@ -143,8 +144,11 @@ bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId query
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : queryOperators->getNodesByType<SourceLogicalOperatorNode>()) {
             auto sourceDescriptor = sources->getSourceDescriptor();
-            auto updatedLogicalSourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
-            auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(updatedLogicalSourceDescriptor, shared_from_this());
+            //perform the operation only for Logical stream source descriptor
+            if(sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()){
+                sourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
+            }
+            auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, shared_from_this());
             qepBuilder.addSource(legacySource);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
         }

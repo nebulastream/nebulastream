@@ -7,8 +7,7 @@
 #include <future>
 
 namespace NES {
-class WorkerActor;
-typedef std::shared_ptr<WorkerActor> WorkerActorPtr;
+
 class NesWorker {
   public:
     /**
