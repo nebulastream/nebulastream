@@ -50,31 +50,30 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
         }
 
         //add default logical
-        PhysicalStreamConfig streamConf;
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
         //check if logical stream exists
-        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf.logicalStreamName)) {
-            NES_ERROR("CoordinatorEngine::registerNode: error logical stream" << streamConf.logicalStreamName
+        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf->getLogicalStreamName())) {
+            NES_ERROR("CoordinatorEngine::registerNode: error logical stream" << streamConf->getLogicalStreamName()
                                                                               << " does not exist when adding physical stream "
-                                                                              << streamConf.physicalStreamName);
-            throw Exception("CoordinatorEngine::registerNode logical stream does not exist " + streamConf.logicalStreamName);
+                                                                              << streamConf->getPhysicalStreamName());
+            throw Exception("CoordinatorEngine::registerNode logical stream does not exist " + streamConf->getLogicalStreamName());
         }
 
-        SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamConf.logicalStreamName);
+        SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamConf->getLogicalStreamName());
 
-        if (streamConf.sourceType != "CSVSource" && streamConf.sourceType != "DefaultSource") {
-            NES_ERROR("CoordinatorEngine::registerNode: error source type " << streamConf.sourceType
-                                                                            << " is not supported");
-            throw Exception("CoordinatorEngine::registerNode: error source type " + streamConf.sourceType
-                            + " is not supported");
+        std::string sourceType = streamConf->getSourceType();
+        if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
+            NES_ERROR("CoordinatorEngine::registerNode: error source type " << sourceType << " is not supported");
+            throw Exception("CoordinatorEngine::registerNode: error source type " + sourceType + " is not supported");
         }
 
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
-        bool success = streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce);
+        bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
         if (!success) {
-            NES_ERROR("CoordinatorEngine::registerNode: physical stream " << streamConf.physicalStreamName
+            NES_ERROR("CoordinatorEngine::registerNode: physical stream " << streamConf->getPhysicalStreamName()
                                                                           << " could not be added to catalog");
-            throw Exception("CoordinatorEngine::registerNode: physical stream " + streamConf.physicalStreamName
+            throw Exception("CoordinatorEngine::registerNode: physical stream " + streamConf->getPhysicalStreamName()
                             + " could not be added to catalog");
         }
 
@@ -137,9 +136,9 @@ bool CoordinatorEngine::registerPhysicalStream(size_t nodeId, std::string source
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id " << nodeId << " physical stream=" << physicalStreamname
                                                                                              << " logical stream=" << logicalStreamname);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
-    PhysicalStreamConfig streamConf(sourceType, sourceConf, sourceFrequency, numberOfTuplesToProducePerBuffer, numberOfBuffersToProduce, physicalStreamname,
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceType, sourceConf, sourceFrequency, numberOfTuplesToProducePerBuffer, numberOfBuffersToProduce, physicalStreamname,
                                     logicalStreamname);
-    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream with conf= " << streamConf.toString()
+    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream with conf= " << streamConf->toString()
                                                                                                        << " for workerId=" << nodeId);
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
     if (!physicalNode) {
@@ -147,7 +146,7 @@ bool CoordinatorEngine::registerPhysicalStream(size_t nodeId, std::string source
         return false;
     }
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    bool success = streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce);
+    bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
     return success;
 }
 

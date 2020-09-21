@@ -1,7 +1,6 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
@@ -19,6 +18,9 @@
 #include <zmq.hpp>
 
 namespace NES {
+
+class PhysicalStreamConfig;
+typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 
 /**
  * @brief this class represents the interface and entrance point into the
@@ -46,13 +48,13 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param numBuffers the number of buffers for the buffer manager
      * @return
      */
-    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, PhysicalStreamConfig config, size_t bufferSize = DEFAULT_BUFFER_SIZE, size_t numBuffers = DEFAULT_NUM_BUFFERS);
+    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, size_t bufferSize = DEFAULT_BUFFER_SIZE, size_t numBuffers = DEFAULT_NUM_BUFFERS);
 
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(PhysicalStreamConfig config, BufferManagerPtr&&, QueryManagerPtr&&, std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
+    explicit NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&&, QueryManagerPtr&&, std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
                         Network::PartitionManagerPtr&&, QueryCompilerPtr&&, uint64_t nodeEngineId);
 
     ~NodeEngine();
@@ -188,7 +190,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
   private:
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
-    PhysicalStreamConfig config;
+    PhysicalStreamConfigPtr config;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, QueryExecutionPlanPtr> deployedQEPs;

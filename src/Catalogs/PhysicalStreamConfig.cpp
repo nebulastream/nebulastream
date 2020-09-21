@@ -33,4 +33,32 @@ std::string PhysicalStreamConfig::toString() {
        << " logicalStreamName=" << logicalStreamName;
     return ss.str();
 }
+
+const std::string& PhysicalStreamConfig::getSourceType() const {
+    return sourceType;
+}
+
+const std::string& PhysicalStreamConfig::getSourceConfig() const {
+    return sourceConfig;
+}
+
+uint32_t PhysicalStreamConfig::getSourceFrequency() const {
+    return sourceFrequency;
+}
+
+uint32_t PhysicalStreamConfig::getNumberOfTuplesToProducePerBuffer() const {
+    return numberOfTuplesToProducePerBuffer;
+}
+
+uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const {
+    return numberOfBuffersToProduce;
+}
+
+const std::string PhysicalStreamConfig::getPhysicalStreamName() const {
+    return physicalStreamName;
+}
+
+const std::string PhysicalStreamConfig::getLogicalStreamName() const {
+    return logicalStreamName;
+}
 }// namespace NES
