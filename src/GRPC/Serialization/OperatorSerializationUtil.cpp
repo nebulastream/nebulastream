@@ -250,7 +250,22 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
         }
-    } else {
+    } if (serializedWindowType.Is<SerializableOperator_WindowDetails_SlidingWindow>()) {
+        auto serializedSlidingWindow = SerializableOperator_WindowDetails_SlidingWindow();
+        serializedWindowType.UnpackTo(&serializedSlidingWindow);
+        auto serializedTimeCharacterisitc = serializedSlidingWindow.timecharacteristic();
+        if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime) {
+            auto eventTimeField = AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
+            auto field = Attribute(serializedTimeCharacterisitc.field());
+            window = SlidingWindow::of(TimeCharacteristic::createEventTime(field), Milliseconds(serializedSlidingWindow.size()), Milliseconds(serializedSlidingWindow.slide()));
+        } else if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime) {
+            window = SlidingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(serializedSlidingWindow.size()), Milliseconds(serializedSlidingWindow.slide()));
+        } else {
+            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
+        }
+    }
+
+    else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: " << serializedWindowType.DebugString());
     }
 
