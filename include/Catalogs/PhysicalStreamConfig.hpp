@@ -1,9 +1,13 @@
 #ifndef INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_
 #define INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_
 
+#include <memory>
 #include <string>
 
 namespace NES {
+
+class PhysicalStreamConfig;
+typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 
 /**
  * @brief this struct covers the information about the attached sensor
@@ -17,12 +21,16 @@ namespace NES {
  */
 struct PhysicalStreamConfig {
 
-    PhysicalStreamConfig();
+  public:
+    static PhysicalStreamConfigPtr create(std::string sourceType  = "DefaultSource", std::string sourceConfig = "1", uint32_t sourceFrequency = 0,
+                                          uint32_t numberOfTuplesToProducePerBuffer = 1, uint32_t numberOfBuffersToProduce = 0,
+                                          std::string physicalStreamName = "default_physical", std::string logicalStreamName = "default_logical");
 
-    PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
-                         size_t sourceFrequency, size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
-                         std::string physicalStreamName,
-                         std::string logicalStreamName);
+  private:
+    explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
+                                  size_t sourceFrequency, size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
+                                  std::string physicalStreamName,
+                                  std::string logicalStreamName);
 
     std::string toString();
 
