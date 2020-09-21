@@ -167,8 +167,8 @@ class WindowManager {
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
-            NES_DEBUG("before lastWatermark" << store->getLastWatermark() << "vs" << ts-allowedLateness);
-            store->setLastWatermark(ts - allowedLateness);
+            //NES_DEBUG("before lastWatermark" << store->getLastWatermark() << "vs" << ts-allowedLateness);
+            //store->setLastWatermark(ts - allowedLateness);
             auto windowType = windowDefinition->getWindowType();
             store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
             if (windowType->isTumblingWindow()) {
@@ -185,7 +185,6 @@ class WindowManager {
                 NES_ERROR("WindowManagerLib: Undefined Window Type");
             }
         }
-        NES_DEBUG("before lastWatermark" << store->getLastWatermark() << "vs" << ts-allowedLateness);
         NES_DEBUG("sliceStream check store-nextEdge=" << store->nextEdge << " <="
                                                       << " ts=" << ts);
         // append new slices if needed
