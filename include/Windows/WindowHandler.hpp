@@ -128,7 +128,8 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     // For event time we use the maximal records ts as watermark.
     // For processing time we use the current wall clock as watermark.
     // TODO we should add a allowed lateness to support out of order events
-    auto windowTimeType = windowDefinition->getWindowType()->getTimeCharacteristic();
+    auto windowType = windowDefinition->getWindowType();
+    auto windowTimeType = windowType->getTimeCharacteristic();
     auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMinWatermark();
     NES_DEBUG("WindowHandler::aggregateWindows: current watermark is=" << watermark << " minWatermark=" << store->getMinWatermark());
 
@@ -136,16 +137,20 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     auto windows = std::make_shared<std::vector<WindowState>>();
     // the window type adds result windows to the windows vectors
     if (store->getLastWatermark() == 0) {
-        TumblingWindow* tumb = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
-        if (tumb != NULL) {
-            auto initWatermark = watermark < tumb->getSize().getTime() ? 0 : watermark - tumb->getSize().getTime();
-            NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << initWatermark);
+        if (windowType->isTumblingWindow()){
+            TumblingWindow* tumbWindow = dynamic_cast<TumblingWindow*>(windowType.get());
+            NES_DEBUG("WindowHandler::aggregateWindows: successful cast to TumblingWindow");
+            auto initWatermark = watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
+            NES_DEBUG("WindowHandler::aggregateWindows(TumblingWindow): getLastWatermark was 0 set to=" << initWatermark);
+            store->setLastWatermark(initWatermark);
+        }if (windowType->isSlidingWindow()){
+            SlidingWindow* slidWindow = dynamic_cast<SlidingWindow*>(windowType.get());
+            NES_DEBUG("WindowHandler::aggregateWindows: successful cast to SlidingWindow");
+            auto initWatermark = watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
+            NES_DEBUG("WindowHandler::aggregateWindows(SlidingWindow): getLastWatermark was 0 set to=" << initWatermark);
             store->setLastWatermark(initWatermark);
         }else{
-            SlidingWindow* tumb = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
-            auto initWatermark = watermark < tumb->getSize().getTime() ? 0 : watermark - tumb->getSize().getTime();
-            NES_DEBUG("WindowHandler::aggregateWindows: getLastWatermark was 0 set to=" << initWatermark);
-            store->setLastWatermark(initWatermark);
+            NES_DEBUG("WindowHandler::aggregateWindows: Unkown WindowType; LastWatermark was 0 and remains 0");
         }
     } else {
         NES_DEBUG("WindowHandler::aggregateWindows: last watermark is=" << store->getLastWatermark());

@@ -496,7 +496,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryEventTime) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTime) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
