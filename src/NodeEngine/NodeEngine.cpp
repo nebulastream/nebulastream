@@ -1,3 +1,4 @@
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -21,7 +22,7 @@ NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() {
     return nodeStatsProvider;
 }
 
-std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfig config, size_t bufferSize, size_t numBuffers) {
+std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, size_t bufferSize, size_t numBuffers) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
@@ -67,7 +68,7 @@ std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint
     }
 }
 
-NodeEngine::NodeEngine(PhysicalStreamConfig config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
+NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId)
     : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>(), config(config), nodeEngineId(nodeEngineId) {
@@ -145,7 +146,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId query
         for (const auto& sources : queryOperators->getNodesByType<SourceLogicalOperatorNode>()) {
             auto sourceDescriptor = sources->getSourceDescriptor();
             //perform the operation only for Logical stream source descriptor
-            if(sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()){
+            if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
                 sourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
             }
             auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, shared_from_this());
@@ -447,15 +448,15 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
     auto schema = sourceDescriptor->getSchema();
-    auto streamName = config.logicalStreamName;
+    auto streamName = config->getLogicalStreamName();
 
     // Pick the first element from the catalog entry and identify the type to create appropriate source type
     // todo add handling for support of multiple physical streams.
-    std::string type = config.sourceType;
-    std::string conf = config.sourceConfig;
-    size_t frequency = config.sourceFrequency;
-    size_t numBuffers = config.numberOfBuffersToProduce;
-    size_t numberOfTuplesToProducePerBuffer = config.numberOfTuplesToProducePerBuffer;
+    std::string type = config->getSourceType();
+    std::string conf = config->getSourceConfig();
+    size_t frequency = config->getSourceFrequency();
+    size_t numBuffers = config->getNumberOfBuffersToProduce();
+    size_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
 
     if (type == "DefaultSource") {
         NES_DEBUG("TypeInferencePhase: create default source for one buffer");

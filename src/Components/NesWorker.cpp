@@ -51,12 +51,14 @@ NesWorker::NesWorker(
                                localWorkerZmqPort,
                                std::thread::hardware_concurrency(),
                                type) {}
+
 NesWorker::~NesWorker() {
     NES_DEBUG("NesWorker::~NesWorker()");
     NES_DEBUG("NesWorker::~NesWorker() use count of node engine: " << nodeEngine.use_count());
     stop(true);
 }
-bool NesWorker::setWitRegister(PhysicalStreamConfig pConf) {
+
+bool NesWorker::setWitRegister(PhysicalStreamConfigPtr pConf) {
     withRegisterStream = true;
     conf = pConf;
     return true;
@@ -90,7 +92,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     NES_DEBUG("NesWorker::start: start NodeEngine");
     try {
-        nodeEngine = NodeEngine::create(localWorkerIp, localWorkerZmqPort);
+        nodeEngine = NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf);
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
@@ -239,7 +241,7 @@ bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string ph
     return success;
 }
 
-bool NesWorker::registerPhysicalStream(PhysicalStreamConfig conf) {
+bool NesWorker::registerPhysicalStream(PhysicalStreamConfigPtr conf) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     assert(con);

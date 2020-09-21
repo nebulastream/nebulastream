@@ -23,7 +23,7 @@ typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 class StreamCatalogEntry {
 
   public:
-    StreamCatalogEntry(PhysicalStreamConfig streamConf, TopologyNodePtr node);
+    StreamCatalogEntry(PhysicalStreamConfigPtr streamConf, TopologyNodePtr node);
 
     /**
      * @brief get source type
@@ -76,7 +76,7 @@ class StreamCatalogEntry {
     std::string toString();
 
   private:
-    PhysicalStreamConfig streamConf;
+    PhysicalStreamConfigPtr streamConf;
     TopologyNodePtr node;
 };
 typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;

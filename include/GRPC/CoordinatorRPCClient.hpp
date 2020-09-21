@@ -26,7 +26,7 @@ class CoordinatorRPCClient {
      * @param configuration of the stream
      * @return bool indicating success
      */
-    bool registerPhysicalStream(PhysicalStreamConfig conf);
+    bool registerPhysicalStream(PhysicalStreamConfigPtr conf);
 
     /**
      * @brief this method registers logical streams via the coordinator

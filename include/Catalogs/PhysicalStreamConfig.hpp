@@ -22,23 +22,66 @@ typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 struct PhysicalStreamConfig {
 
   public:
-    static PhysicalStreamConfigPtr create(std::string sourceType  = "DefaultSource", std::string sourceConfig = "1", uint32_t sourceFrequency = 0,
+    static PhysicalStreamConfigPtr create(std::string sourceType = "DefaultSource", std::string sourceConfig = "1", uint32_t sourceFrequency = 0,
                                           uint32_t numberOfTuplesToProducePerBuffer = 1, uint32_t numberOfBuffersToProduce = 0,
                                           std::string physicalStreamName = "default_physical", std::string logicalStreamName = "default_logical");
 
+    /**
+     * @brief Get the source type
+     * @return string representing source type
+     */
+    const std::string& getSourceType() const;
+
+    /**
+     * @brief get source config
+     * @return string representing source config
+     */
+    const std::string& getSourceConfig() const;
+
+    /**
+     * @brief get source frequency
+     * @return returns the source frequency
+     */
+    uint32_t getSourceFrequency() const;
+
+    /**
+     * @brief get the number of tuples to produce in a buffer
+     * @return returns the number of tuples to produce in a buffer
+     */
+    uint32_t getNumberOfTuplesToProducePerBuffer() const;
+
+    /**
+     * @brief get the number of buffers to produce
+     * @return returns the number of buffers to produce
+     */
+    uint32_t getNumberOfBuffersToProduce() const;
+
+    /**
+     * @brief get physical stream name
+     * @return physical stream name
+     */
+    const std::string getPhysicalStreamName() const;
+
+    /**
+     * @brief get logical stream name
+     * @return logical stream name
+     */
+    const std::string getLogicalStreamName() const;
+
+    std::string toString();
+
   private:
+
     explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
                                   size_t sourceFrequency, size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
                                   std::string physicalStreamName,
                                   std::string logicalStreamName);
 
-    std::string toString();
-
     std::string sourceType;
     std::string sourceConfig;
-    size_t sourceFrequency;
-    size_t numberOfTuplesToProducePerBuffer;
-    size_t numberOfBuffersToProduce;
+    uint32_t sourceFrequency;
+    uint32_t numberOfTuplesToProducePerBuffer;
+    uint32_t numberOfBuffersToProduce;
     std::string physicalStreamName;
     std::string logicalStreamName;
 };
