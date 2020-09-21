@@ -617,7 +617,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTi
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerCentralSlidingWindowQueryEventTime) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTime) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -634,21 +634,20 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerCentralSlidingWindowQuer
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //register logical stream qnv
-    //TODO: update CHAR (sensor id is in result set )
-    std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    std::string testSchemaFileName = "QnV.hpp";
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "window.hpp";
     std::ofstream out(testSchemaFileName);
-    out << qnv;
+    out << window;
     out.close();
-    wrk1->registerLogicalStream("QnV", testSchemaFileName);
+    wrk1->registerLogicalStream("window", testSchemaFileName);
 
     //register physical stream R2000070
     PhysicalStreamConfig conf70;
-    conf70.logicalStreamName = "QnV";
-    conf70.physicalStreamName = "test_stream_R2000070";
+    conf70.logicalStreamName = "window";
+    conf70.physicalStreamName = "test_stream";
     conf70.sourceType = "CSVSource";
-    conf70.sourceConfig = "../tests/test_data/QnV_short_R2000070.csv";
+    conf70.sourceConfig = "../tests/test_data/window.csv";
     conf70.numberOfBuffersToProduce = 1;
     conf70.sourceFrequency = 1;
     wrk1->registerPhysicalStream(conf70);
@@ -658,8 +657,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerCentralSlidingWindowQuer
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"QnV\").windowByKey(Attribute(\"sensor_id\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"ts\")), "
-                   "Seconds(10),Seconds(5)), Sum::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"+outputFilePath+\"));";
+    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), Sum::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""+outputFilePath+"\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -677,9 +675,21 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerCentralSlidingWindowQuer
         "+----------------------------------------------------+\n"
         "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
-        "|1000|2000|1|34|\n"
-        "|2000|3000|1|0|\n"
-        "|2000|3000|2|56|\n"
+        "|10000|20000|1|870|\n"
+        "|5000|15000|1|570|\n"
+        "|0|10000|1|307|\n"
+        "|10000|20000|4|0|\n"
+        "|5000|15000|4|0|\n"
+        "|0|10000|4|6|\n"
+        "|10000|20000|11|0|\n"
+        "|5000|15000|11|0|\n"
+        "|0|10000|11|30|\n"
+        "|10000|20000|12|0|\n"
+        "|5000|15000|12|0|\n"
+        "|0|10000|12|7|\n"
+        "|10000|20000|16|0|\n"
+        "|5000|15000|16|0|\n"
+        "|0|10000|16|12|\n"
         "+----------------------------------------------------+";
 
     NES_INFO("QueryDeploymentTest: content=" << content);

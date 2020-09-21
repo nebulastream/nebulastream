@@ -167,10 +167,9 @@ class WindowManager {
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
-            //NES_DEBUG("before lastWatermark" << store->getLastWatermark() << "vs" << ts-allowedLateness);
-            //store->setLastWatermark(ts - allowedLateness);
+            store->setLastWatermark(ts - allowedLateness);
             auto windowType = windowDefinition->getWindowType();
-            store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
+            store->nextEdge = windowDefinition->getWindowType()->calculateNextWindowEnd(ts - allowedLateness);
             if (windowType->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
