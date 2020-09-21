@@ -167,19 +167,25 @@ class WindowManager {
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
+            NES_DEBUG("before lastWatermark" << store->getLastWatermark() << "vs" << ts-allowedLateness);
+            store->setLastWatermark(ts - allowedLateness);
             auto windowType = windowDefinition->getWindowType();
             store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
             if (windowType->isTumblingWindow()) {
-                store->appendSlice(SliceMetaData(store->nextEdge - windowDefinition->getWindowType()->getTime(), store->nextEdge));
+                TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
+                store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
                 NES_DEBUG("WindowManagerLib: for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - windowDefinition->getWindowType()->getTime() << " nextWindowEnd=" << store->nextEdge);
             }
             if (windowType->isSlidingWindow()) {
-                store->appendSlice(SliceMetaData(store->nextEdge - dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get())->getSlideTime(), store->nextEdge));
+                SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
+                NES_DEBUG("WindowManagerLib: successful cast to Sliding Window fir sliceStream empty store");
+                store->appendSlice(SliceMetaData(store->nextEdge - window->getSlideTime(), store->nextEdge));
                 NES_DEBUG("WindowManagerLib: for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get())->getSlideTime() << " nextWindowEnd=" << store->nextEdge);
             } else {
                 NES_ERROR("WindowManagerLib: Undefined Window Type");
             }
         }
+        NES_DEBUG("before lastWatermark" << store->getLastWatermark() << "vs" << ts-allowedLateness);
         NES_DEBUG("sliceStream check store-nextEdge=" << store->nextEdge << " <="
                                                       << " ts=" << ts);
         // append new slices if needed
