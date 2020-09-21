@@ -198,6 +198,13 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
         tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
         tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
         windowDetails.mutable_windowtype()->PackFrom(tumblingWindowDetails);
+    } if (windowType->isSlidingWindow()) {
+        auto slidingWindow = std::dynamic_pointer_cast<SlidingWindow>(windowType);
+        auto slidingWindowDetails = SerializableOperator_WindowDetails_SlidingWindow();
+        slidingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
+        slidingWindowDetails.set_size(slidingWindow->getSize().getTime());
+        slidingWindowDetails.set_slide(slidingWindow->getSlide().getTime());
+        windowDetails.mutable_windowtype()->PackFrom(slidingWindowDetails);
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
     }
