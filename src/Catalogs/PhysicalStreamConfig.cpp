@@ -3,15 +3,11 @@
 #include <sstream>
 namespace NES {
 
-PhysicalStreamConfig::PhysicalStreamConfig() {
-    sourceType = "DefaultSource";
-    sourceConfig = "1";
-    sourceFrequency = 0;
-    numberOfBuffersToProduce = 1;
-    numberOfTuplesToProducePerBuffer = 0;
-    physicalStreamName = "default_physical";
-    logicalStreamName = "default_logical";
-};
+PhysicalStreamConfigPtr PhysicalStreamConfig::create(std::string sourceType, std::string sourceConfig, uint32_t sourceFrequency, uint32_t numberOfTuplesToProducePerBuffer,
+                                                     uint32_t numberOfBuffersToProduce, std::string physicalStreamName, std::string logicalStreamName) {
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
+                                                                       numberOfBuffersToProduce, physicalStreamName, logicalStreamName));
+}
 
 PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
                                            std::string sourceConfig,
