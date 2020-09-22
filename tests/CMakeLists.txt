@@ -113,6 +113,9 @@ if(NES_USE_OPC)
     add_executable(opc-source-tests "UnitTests/OPCSourceTest.cpp" UnitTests/OPCSourceTest.cpp)
     target_link_libraries(opc-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-source-tests COMMAND opc-source-tests)
+    add_executable(opc-sink-tests "UnitTests/OPCSinkTest.cpp" UnitTests/OPCSinkTest.cpp)
+    target_link_libraries(opc-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+    add_test(NAME opc-sink-tests COMMAND opc-sink-tests)
 endif(NES_USE_OPC)
 
 ### Memory Layout Tests ###

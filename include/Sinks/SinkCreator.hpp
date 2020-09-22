@@ -3,10 +3,16 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
+#ifdef ENABLE_OPC_BUILD
+#include <open62541/client_config_default.h>
+#include <open62541/client_highlevel.h>
+#include <open62541/plugin/log_stdout.h>
+#endif
 
 namespace NES {
 /**
@@ -70,7 +76,19 @@ const DataSinkPtr createJSONFileSink(SchemaPtr schema, QuerySubPlanId parentPlan
  */
 const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& host,
                                     const uint16_t port);
-
+#ifdef ENABLE_OPC_BUILD
+/**
+ * @brief create a OPC test sink with a schema
+ * @param schema of sink
+ * @param bufferManager
+ * @param url to OPC server as string
+ * @param nodeId to save data in
+ * @param user name as string to log in to the OPC server
+ * @param password as string to log in to the OPC server
+ * @return a data sink pointer
+ */
+const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string url, UA_NodeId* nodeId, const std::string user, const std::string password);
+#endif
 /**
  * @brief create a ZMQ test sink with a schema and CSV format output
  * @param schema of sink

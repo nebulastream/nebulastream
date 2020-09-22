@@ -5,4 +5,5 @@ add_source_nes(
         ZmqSinkDescriptor.cpp
         PrintSinkDescriptor.cpp
         NetworkSinkDescriptor.cpp
+        OPCSinkDescriptor.cpp
 )
