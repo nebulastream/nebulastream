@@ -475,4 +475,8 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     }
 }
 
+void NodeEngine::setConfig(PhysicalStreamConfigPtr config) {
+    this->config = config;
+}
+
 }// namespace NES

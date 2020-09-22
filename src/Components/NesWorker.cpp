@@ -246,9 +246,9 @@ bool NesWorker::registerPhysicalStream(PhysicalStreamConfigPtr conf) {
     NES_DEBUG("connected= " << con);
     assert(con);
     bool success = coordinatorRpcClient->registerPhysicalStream(conf);
-//    if(success){
-//        nodeEngine->
-//    }
+    if (success) {
+        nodeEngine->setConfig(conf);
+    }
     NES_DEBUG("NesWorker::registerPhysicalStream success=" << success);
     return success;
 }

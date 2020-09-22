@@ -187,6 +187,12 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      */
     void onChannelError(Network::Messages::ErrorMessage) override;
 
+    /**
+     * @brief Set the physical stream config
+     * @param config : configuration to be set
+     */
+    void setConfig(PhysicalStreamConfigPtr config);
+
   private:
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
