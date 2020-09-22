@@ -390,6 +390,8 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
         auto logicalStreamSourceDescriptor = sourceDescriptor->as<LogicalStreamSourceDescriptor>();
         auto logicalStreamSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
+        // serialize source schema
+        SchemaSerializationUtil::serializeSchema(logicalStreamSourceDescriptor->getSchema(), logicalStreamSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(logicalStreamSerializedSourceDescriptor);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
@@ -459,7 +461,11 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as LogicalStreamSourceDescriptor");
         auto logicalStreamSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&logicalStreamSerializedSourceDescriptor);
-        return LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname());
+        // de-serialize source schema
+        auto schema = SchemaSerializationUtil::deserializeSchema(logicalStreamSerializedSourceDescriptor.release_sourceschema());
+        SourceDescriptorPtr logicalStreamSourceDescriptor = LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname());
+        logicalStreamSourceDescriptor->setSchema(schema);
+        return logicalStreamSourceDescriptor;
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << serializedSourceDescriptor.type_url());
         throw std::invalid_argument("Unknown Source Descriptor Type");
