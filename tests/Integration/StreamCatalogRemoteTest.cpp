@@ -200,11 +200,9 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    PhysicalStreamConfig conf;
-    conf.logicalStreamName = "default_logical";
-    conf.physicalStreamName = "physical_test";
-    conf.sourceType = "DefaultSource";
-    conf.numberOfBuffersToProduce = 2;
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("DefaultSource","",1,
+                                                                0,2,
+                                                                "physical_test","default_logical");
 
     bool success = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success);
@@ -250,11 +248,9 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     bool success = wrk->registerLogicalStream("testStream", testSchemaFileName);
     EXPECT_TRUE(success);
 
-    PhysicalStreamConfig conf;
-    conf.logicalStreamName = "testStream";
-    conf.physicalStreamName = "physical_test";
-    conf.sourceType = "DefaultSource";
-    conf.numberOfBuffersToProduce = 2;
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("DefaultSource","",1,
+                                                                0,2,
+                                                                "physical_test","testStream");
 
     bool success2 = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success2);

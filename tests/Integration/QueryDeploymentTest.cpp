@@ -67,22 +67,16 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergePrintUsingBottomUp) {
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfig confCar;
-    confCar.logicalStreamName = "car";
-    confCar.physicalStreamName = "physical_car";
-    confCar.sourceType = "DefaultSource";
-    confCar.numberOfBuffersToProduce = 3;
-    confCar.sourceFrequency = 1;
+    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
+                                                                   1, 0, 3,
+                                                                   "physical_car", "car");
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
     //register physical stream
-    PhysicalStreamConfig confTruck;
-    confTruck.logicalStreamName = "truck";
-    confTruck.physicalStreamName = "physical_truck";
-    confTruck.sourceType = "DefaultSource";
-    confTruck.numberOfBuffersToProduce = 3;
-    confTruck.sourceFrequency = 1;
+    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
+                                                                     1, 0, 3,
+                                                                     "physical_truck", "truck");
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -144,22 +138,16 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergePrintUsingTopDown) {
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfig confCar;
-    confCar.logicalStreamName = "car";
-    confCar.physicalStreamName = "physical_car";
-    confCar.sourceType = "DefaultSource";
-    confCar.numberOfBuffersToProduce = 3;
-    confCar.sourceFrequency = 1;
+    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
+                                                                1, 0, 3,
+                                                                "physical_car", "car");
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
     //register physical stream
-    PhysicalStreamConfig confTruck;
-    confTruck.logicalStreamName = "truck";
-    confTruck.physicalStreamName = "physical_truck";
-    confTruck.sourceType = "DefaultSource";
-    confTruck.numberOfBuffersToProduce = 3;
-    confTruck.sourceFrequency = 1;
+    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
+                                                                   1, 0, 3,
+                                                                   "physical_truck", "truck");
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -282,13 +270,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryEventTime) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //register physical stream
-    PhysicalStreamConfig conf;
-    conf.logicalStreamName = "exdra";
-    conf.physicalStreamName = "test_stream";
-    conf.sourceType = "CSVSource";
-    conf.sourceConfig = "../tests/test_data/exdra.csv";
-    conf.numberOfBuffersToProduce = 1;
-    conf.sourceFrequency = 1;
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/exdra.csv",
+                                                                1, 0, 1,
+                                                                "test_stream", "exdra");
+
     wrk1->registerPhysicalStream(conf);
 
     std::string filePath = "contTestOut.csv";
@@ -338,13 +323,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
     NES_INFO("QueryDeploymentTest: Submit query");
 
     //register physical stream
-    PhysicalStreamConfig conf;
-    conf.logicalStreamName = "exdra";
-    conf.physicalStreamName = "test_stream";
-    conf.sourceType = "CSVSource";
-    conf.sourceConfig = "../tests/test_data/exdra.csv";
-    conf.numberOfBuffersToProduce = 2;
-    conf.sourceFrequency = 1;
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/exdra.csv",
+                                                                1, 0, 2,
+                                                                "test_stream", "exdra");
     wrk1->registerPhysicalStream(conf);
 
     std::string filePath = "contTestOut.csv";
@@ -386,12 +367,12 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker 1 started successfully");
-//
-//    NES_INFO("QueryDeploymentTest: Start worker 2");
-//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
-//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart2);
-//    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
+    //
+    //    NES_INFO("QueryDeploymentTest: Start worker 2");
+    //    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    //    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    //    EXPECT_TRUE(retStart2);
+    //    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -406,8 +387,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     cout << "wait start" << endl;
     sleep(10);
     cout << "wakeup" << endl;
-//    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
-//    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+    //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
+    //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -417,9 +398,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-//    NES_INFO("QueryDeploymentTest: Stop worker 2");
-//    bool retStopWrk2 = wrk2->stop(true);
-//    EXPECT_TRUE(retStopWrk2);
+    //    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    //    bool retStopWrk2 = wrk2->stop(true);
+    //    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -461,14 +442,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfig conf;
-    conf.logicalStreamName = "window";
-    conf.physicalStreamName = "test_stream";
-    conf.sourceType = "CSVSource";
-    conf.sourceConfig = "../tests/test_data/window.csv";
-    conf.numberOfBuffersToProduce = 3;
-    conf.numberOfTuplesToProducePerBuffer = 3;
-    conf.sourceFrequency = 1;
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
+                                                                1, 3, 3,
+                                                                "test_stream", "window");
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
 

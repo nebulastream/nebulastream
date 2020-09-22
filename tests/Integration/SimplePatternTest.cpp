@@ -104,13 +104,9 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfig conf;
-    conf.logicalStreamName = "QnV";
-    conf.physicalStreamName = "test_stream";
-    conf.sourceType = "CSVSource";
-    conf.sourceConfig = "../tests/test_data/QnV_short.csv";
-    conf.numberOfBuffersToProduce = 1;
-    conf.sourceFrequency = 1;
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short.csv",
+                                                                   1, 0, 1,
+                                                                   "test_stream", "QnV");
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath =

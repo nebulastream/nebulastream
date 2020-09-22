@@ -23,13 +23,13 @@ NesWorker::NesWorker(
     uint16_t localWorkerZmqPort,
     uint16_t numberOfSlots,
     NodeType type)
-    : coordinatorIp(std::move(coordinatorIp)),
-      coordinatorPort(coordinatorPort),
+    : coordinatorIp(std::move(coordinatorIp)), coordinatorPort(coordinatorPort),
       localWorkerIp(std::move(localIp)),
       localWorkerRpcPort(localWorkerRpcPort),
       localWorkerZmqPort(localWorkerZmqPort),
       numberOfSlots(numberOfSlots),
-      type(type) {
+      type(type),
+      conf(PhysicalStreamConfig::create()) {
     connected = false;
     withRegisterStream = false;
     withParent = false;
