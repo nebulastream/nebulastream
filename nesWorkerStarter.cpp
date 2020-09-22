@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
     //register phy stream if nessesary
     if (sourceType != "") {
         cout << "start with dedicated source=" << sourceType << endl;
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceType, sourceConfig, sourceFrequency, 1,
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceType, sourceConfig, sourceFrequency, 0,
                                                                     numberOfBuffersToProduce, physicalStreamName, logicalStreamName);
 
         wrk->setWitRegister(conf);
