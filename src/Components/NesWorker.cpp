@@ -44,7 +44,7 @@ NesWorker::NesWorker(
     std::string localWorkerIp,
     uint16_t localWorkerRpcPort,
     uint16_t localWorkerZmqPort,
-    NodeType type) :NesWorker(coordinatorIp,
+    NodeType type) : NesWorker(coordinatorIp,
                                coordinatorPort,
                                localWorkerIp,
                                localWorkerRpcPort,
