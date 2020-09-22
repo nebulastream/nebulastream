@@ -46,11 +46,12 @@ TEST_F(QueryTest, testQueryFilter) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    streamConf.logicalStreamName = "test_stream";
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
+        /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+        /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+        /**Logical Stream Name**/ "test_stream");
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addPhysicalStream("default_logical", sce);
@@ -77,11 +78,12 @@ TEST_F(QueryTest, testQueryFilter) {
 TEST_F(QueryTest, testQueryWindow) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    streamConf.logicalStreamName = "test_stream";
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
+        /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+        /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+        /**Logical Stream Name**/ "test_stream");
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addPhysicalStream("default_logical", sce);
@@ -114,10 +116,11 @@ TEST_F(QueryTest, testQueryWindow) {
  */
 TEST_F(QueryTest, testQueryMerge) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    streamConf.logicalStreamName = "test_stream";
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
+        /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+        /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+        /**Logical Stream Name**/ "test_stream");
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addPhysicalStream("default_logical", sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);

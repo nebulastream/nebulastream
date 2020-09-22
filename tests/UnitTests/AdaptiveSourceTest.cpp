@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <boost/algorithm/string.hpp>
 
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <sstream>
 #include <string>
 
@@ -103,7 +104,8 @@ const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema,
  * @result true, if source starts, changes interval, and stops
  */
 TEST_F(AdaptiveSourceTest, testSamplingChange) {
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 3133);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 3133, streamConf);
 
     std::string path_to_file =
         "../tests/test_data/adaptive-test-mock.csv";

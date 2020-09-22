@@ -53,7 +53,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
     size_t nodeId = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats, NodeType::Sensor);
     EXPECT_NE(nodeId, 0);
 
-    size_t nodeId1 = coordinatorEngine->registerNode(ip, publish_port+2, 5000, 6, nodeStats, NodeType::Sensor);
+    size_t nodeId1 = coordinatorEngine->registerNode(ip, publish_port + 2, 5000, 6, nodeStats, NodeType::Sensor);
     EXPECT_NE(nodeId1, 0);
 
     //test register existing node
@@ -100,13 +100,11 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     TopologyPtr topology = Topology::create();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     std::string physicalStreamName = "testStream";
-    PhysicalStreamConfig conf;
-    conf.logicalStreamName = "testStream";
-    conf.physicalStreamName = "physical_test";
-    conf.sourceType = "CSVSource";
-    conf.sourceConfig = "testCSV.csv";
-    conf.numberOfBuffersToProduce = 3;
-    conf.sourceFrequency = 1;
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "testCSV.csv",
+                                                                /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                                                                /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
+                                                                /**Logical Stream Name**/ "testStream");
+
     auto nodeStats = NodeStats();
     size_t nodeId = coordinatorEngine->registerNode(address, 4000, 5000, 6, nodeStats, NodeType::Sensor);
     EXPECT_NE(nodeId, 0);
@@ -114,44 +112,36 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     //setup test
     std::string testSchema =
         "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    bool successRegisterLogicalStream = coordinatorEngine->registerLogicalStream(conf.logicalStreamName, testSchema);
+    bool successRegisterLogicalStream = coordinatorEngine->registerLogicalStream(conf->getLogicalStreamName(), testSchema);
     EXPECT_TRUE(successRegisterLogicalStream);
 
     // common case
-    bool successRegisterPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId,
-                                                                                   conf.sourceType,
-                                                                                   conf.sourceConfig,
-                                                                                   conf.sourceFrequency,
-                                                                                   conf.numberOfTuplesToProducePerBuffer,
-                                                                                   conf.numberOfBuffersToProduce,
-                                                                                   conf.physicalStreamName,
-                                                                                   conf.logicalStreamName);
+    bool successRegisterPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId, conf->getSourceType(), conf->getSourceConfig(),
+                                                                                   conf->getSourceFrequency(), conf->getNumberOfTuplesToProducePerBuffer(),
+                                                                                   conf->getNumberOfBuffersToProduce(), conf->getPhysicalStreamName(),
+                                                                                   conf->getLogicalStreamName());
     EXPECT_TRUE(successRegisterPhysicalStream);
 
     //test register existing stream
-    bool successRegisterExistingPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId,
-                                                                                           conf.sourceType,
-                                                                                           conf.sourceConfig,
-                                                                                           conf.sourceFrequency,
-                                                                                           conf.numberOfTuplesToProducePerBuffer,
-                                                                                           conf.numberOfBuffersToProduce,
-                                                                                           conf.physicalStreamName,
-                                                                                           conf.logicalStreamName);
+    bool successRegisterExistingPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId, conf->getSourceType(), conf->getSourceConfig(),
+                                                                                           conf->getSourceFrequency(), conf->getNumberOfTuplesToProducePerBuffer(),
+                                                                                           conf->getNumberOfBuffersToProduce(), conf->getPhysicalStreamName(),
+                                                                                           conf->getLogicalStreamName());
     EXPECT_TRUE(!successRegisterExistingPhysicalStream);
 
     //test unregister not existing physical stream
     bool successUnregisterNotExistingPhysicalStream =
-        coordinatorEngine->unregisterPhysicalStream(nodeId, "asd", conf.logicalStreamName);
+        coordinatorEngine->unregisterPhysicalStream(nodeId, "asd", conf->getLogicalStreamName());
     EXPECT_TRUE(!successUnregisterNotExistingPhysicalStream);
 
     //test unregister not existing local stream
     bool successUnregisterNotExistingLocicalStream =
-        coordinatorEngine->unregisterPhysicalStream(nodeId, conf.physicalStreamName, "asd");
+        coordinatorEngine->unregisterPhysicalStream(nodeId, conf->getPhysicalStreamName(), "asd");
     EXPECT_TRUE(!successUnregisterNotExistingLocicalStream);
 
     //test unregister existing node
     bool successUnregisterExistingPhysicalStream =
-        coordinatorEngine->unregisterPhysicalStream(nodeId, conf.physicalStreamName,
-                                                    conf.logicalStreamName);
+        coordinatorEngine->unregisterPhysicalStream(nodeId, conf->getPhysicalStreamName(),
+                                                    conf->getLogicalStreamName());
     EXPECT_TRUE(successUnregisterExistingPhysicalStream);
 }

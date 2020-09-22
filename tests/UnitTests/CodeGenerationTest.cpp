@@ -1,5 +1,6 @@
 #include <API/Schema.hpp>
 #include <API/UserAPIExpression.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
@@ -35,6 +36,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <utility>
+
 using std::cout;
 using std::endl;
 namespace NES {
@@ -66,7 +68,9 @@ class CodeGenerationTest : public testing::Test {
 class TestPipelineExecutionContext : public PipelineExecutionContext {
   public:
     TestPipelineExecutionContext(BufferManagerPtr bufferManager)
-        : PipelineExecutionContext(0, std::move(bufferManager), [this](TupleBuffer& buffer, WorkerContextRef) { this->buffers.emplace_back(std::move(buffer));}) {
+        : PipelineExecutionContext(0, std::move(bufferManager), [this](TupleBuffer& buffer, WorkerContextRef) {
+              this->buffers.emplace_back(std::move(buffer));
+          }){
             // nop
         };
 
@@ -593,7 +597,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  * @brief Simple test that generates code to process a input buffer and calculate a running sum.
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6262);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6262, streamConf);
     auto tf = CompilerTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NES::TupleBuffer");
     auto pipelineExecutionContextType = tf.createAnonymusDataType("NES::PipelineExecutionContext");
@@ -757,7 +762,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
  */
 TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -794,7 +800,8 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
  */
 TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -842,7 +849,8 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
 
 TEST_F(CodeGenerationTest, codeGenerationScanOperator) {
     /* prepare objects for test */
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -861,7 +869,8 @@ TEST_F(CodeGenerationTest, codeGenerationScanOperator) {
  */
 TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     /* prepare objects for test */
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     WorkerContext wctx(NesThread::getId());
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -891,7 +900,9 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
         new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
     //auto context = PipelineContext::create();
-    auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) { buff.isValid(); });                                                                                          //valid check due to compiler error for unused var
+    auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
+        buff.isValid();
+    });                                                                                          //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nextPipeline, 0);
 
@@ -916,7 +927,8 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
  */
 TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     /* prepare objects for test */
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -974,7 +986,8 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
 TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
     WorkerContext wctx(NesThread::getId());
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     SchemaPtr schema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
 
     auto codeGenerator = CCodeGenerator::create();
@@ -1011,32 +1024,32 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     layout->getValueField<uint64_t>(0, 0)->write(buffer, 100);//start 100
     layout->getValueField<uint64_t>(0, 1)->write(buffer, 110);//stop 200
-    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);//key 1
-    layout->getValueField<uint64_t>(0, 3)->write(buffer, 10);//value 10
+    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //key 1
+    layout->getValueField<uint64_t>(0, 3)->write(buffer, 10); //value 10
     buffer.setNumberOfTuples(1);
 
     layout->getValueField<uint64_t>(1, 0)->write(buffer, 100);//start 100
     layout->getValueField<uint64_t>(1, 1)->write(buffer, 110);//stop 200
-    layout->getValueField<uint64_t>(1, 2)->write(buffer, 1);//key 1
-    layout->getValueField<uint64_t>(1, 3)->write(buffer, 8);//value 10
+    layout->getValueField<uint64_t>(1, 2)->write(buffer, 1);  //key 1
+    layout->getValueField<uint64_t>(1, 3)->write(buffer, 8);  //value 10
     buffer.setNumberOfTuples(2);
 
     layout->getValueField<uint64_t>(2, 0)->write(buffer, 100);//start 100
     layout->getValueField<uint64_t>(2, 1)->write(buffer, 110);//stop 200
-    layout->getValueField<uint64_t>(2, 2)->write(buffer, 1);//key 1
-    layout->getValueField<uint64_t>(2, 3)->write(buffer, 2);//value 10
+    layout->getValueField<uint64_t>(2, 2)->write(buffer, 1);  //key 1
+    layout->getValueField<uint64_t>(2, 3)->write(buffer, 2);  //value 10
     buffer.setNumberOfTuples(3);
 
     layout->getValueField<uint64_t>(3, 0)->write(buffer, 200);//start 100
     layout->getValueField<uint64_t>(3, 1)->write(buffer, 210);//stop 200
-    layout->getValueField<uint64_t>(3, 2)->write(buffer, 3);//key 1
-    layout->getValueField<uint64_t>(3, 3)->write(buffer, 2);//value 10
+    layout->getValueField<uint64_t>(3, 2)->write(buffer, 3);  //key 1
+    layout->getValueField<uint64_t>(3, 3)->write(buffer, 2);  //value 10
     buffer.setNumberOfTuples(4);
 
     layout->getValueField<uint64_t>(4, 0)->write(buffer, 200);//start 100
     layout->getValueField<uint64_t>(4, 1)->write(buffer, 210);//stop 200
-    layout->getValueField<uint64_t>(4, 2)->write(buffer, 5);//key 1
-    layout->getValueField<uint64_t>(4, 3)->write(buffer, 12);//value 10
+    layout->getValueField<uint64_t>(4, 2)->write(buffer, 5);  //key 1
+    layout->getValueField<uint64_t>(4, 3)->write(buffer, 12); //value 10
     buffer.setNumberOfTuples(5);
 
     std::cout << "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema) << std::endl;
@@ -1087,7 +1100,8 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
  */
 TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     // auto str = strcmp("HHHHHHHHHHH", {'H', 'V'});
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -1134,7 +1148,8 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());

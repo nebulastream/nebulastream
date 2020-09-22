@@ -67,10 +67,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    streamConf.logicalStreamName = "test_stream";
-
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
 
@@ -104,10 +101,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    streamConf.logicalStreamName = "test_stream";
-
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
 
@@ -142,9 +136,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    streamConf.logicalStreamName = "test_stream";
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
@@ -159,10 +151,7 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    streamConf.logicalStreamName = "test_stream";
-
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);

@@ -1,19 +1,19 @@
-#include <gtest/gtest.h> //
-#include <cassert>
-#include <iostream>
-#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
+#include <gtest/gtest.h>
+
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/ExecutablePipeline.hpp>
+#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
+#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <cassert>
 #include <future>
-#include <NodeEngine/WorkerContext.hpp>
-
+#include <iostream>
 
 using namespace std;
 
@@ -91,7 +91,6 @@ class HandCodedExecutablePipeline : public ExecutablePipeline {
     std::atomic<uint64_t> sum = 0;
     std::promise<bool> completedPromise;
 
-
     uint32_t execute(TupleBuffer& inBuf, void*, WindowManagerPtr, QueryExecutionContextPtr context, WorkerContext&) override {
         auto tuples = inBuf.getBufferAs<uint64_t>();
 
@@ -129,8 +128,6 @@ class HandCodedExecutablePipeline : public ExecutablePipeline {
         NES_DEBUG("TEST: return");
         return 0;
     }
-
-
 };
 typedef std::shared_ptr<HandCodedExecutablePipeline> CompiledTestQueryExecutionPlanPtr;
 
@@ -203,7 +200,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
     DataSourcePtr source =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager());
     SchemaPtr sch = Schema::create()
-        ->addField("sum", BasicType::UINT32);
+                        ->addField("sum", BasicType::UINT32);
     DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
     builder.addSource(source);
     builder.addSink(sink);
@@ -229,12 +226,14 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
  *     cout << "Stats=" << ptr->getStatistics() << endl;
  */
 TEST_F(EngineTest, testStartStopEngineEmpty) {
-    auto engine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     ASSERT_TRUE(engine->stop());
 }
 
 TEST_F(EngineTest, teststartDeployStop) {
-    auto engine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
@@ -246,7 +245,8 @@ TEST_F(EngineTest, teststartDeployStop) {
 }
 
 TEST_F(EngineTest, testStartDeployUndeployStop) {
-    auto ptr = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto ptr = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
@@ -259,7 +259,8 @@ TEST_F(EngineTest, testStartDeployUndeployStop) {
 }
 
 TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
-    auto ptr = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto ptr = NodeEngine::create("127.0.0.1", 31337,streamConf);
 
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep));
@@ -277,7 +278,8 @@ TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
 }
 //
 TEST_F(EngineTest, testParallelDifferentSource) {
-    auto engine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
@@ -292,7 +294,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
     auto context1 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
-      sink1->writeData(buffer, w);
+        sink1->writeData(buffer, w);
     });
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
@@ -311,7 +313,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
     auto context2 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink2](TupleBuffer& buffer, WorkerContext& w) {
-      sink2->writeData(buffer, w);
+        sink2->writeData(buffer, w);
     });
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
@@ -345,7 +347,8 @@ TEST_F(EngineTest, testParallelDifferentSource) {
 }
 //
 TEST_F(EngineTest, testParallelSameSource) {
-    auto engine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
@@ -360,7 +363,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
     auto context1 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
-      sink1->writeData(buffer, w);
+        sink1->writeData(buffer, w);
     });
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
@@ -379,7 +382,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
     auto context2 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink2](TupleBuffer& buffer, WorkerContext& w) {
-      sink2->writeData(buffer, w);
+        sink2->writeData(buffer, w);
     });
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
@@ -406,7 +409,8 @@ TEST_F(EngineTest, testParallelSameSource) {
 }
 //
 TEST_F(EngineTest, testParallelSameSink) {
-    auto engine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
@@ -421,7 +425,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
     auto context1 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
-      sink1->writeData(buffer, w);
+        sink1->writeData(buffer, w);
     });
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
@@ -439,7 +443,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
     auto context2 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
-      sink1->writeData(buffer, w);
+        sink1->writeData(buffer, w);
     });
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
@@ -464,7 +468,8 @@ TEST_F(EngineTest, testParallelSameSink) {
 }
 //
 TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
-    auto engine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
@@ -479,7 +484,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
     auto context1 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
-      sink1->writeData(buffer, w);
+        sink1->writeData(buffer, w);
     });
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
@@ -496,7 +501,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
     auto context2 = std::make_shared<PipelineExecutionContext>(0, engine->getBufferManager(), [sink1](TupleBuffer& buffer, WorkerContext& w) {
-      sink1->writeData(buffer, w);
+        sink1->writeData(buffer, w);
     });
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
@@ -522,7 +527,8 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
 }
 //
 TEST_F(EngineTest, testStartStopStartStop) {
-    auto engine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
@@ -537,5 +543,4 @@ TEST_F(EngineTest, testStartStopStartStop) {
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Invalid);
     testOutput();
 }
-}
-
+}// namespace NES

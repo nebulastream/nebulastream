@@ -6,6 +6,7 @@
 #include <limits>
 #include <string>
 
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -93,7 +94,9 @@ class SourceTest : public testing::Test {
 };
 
 TEST_F(SourceTest, testBinarySource) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.bin";
@@ -137,7 +140,8 @@ TEST_F(SourceTest, testBinarySource) {
 }
 
 TEST_F(SourceTest, testCSVSource) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
@@ -184,7 +188,8 @@ TEST_F(SourceTest, testCSVSource) {
 }
 
 TEST_F(SourceTest, testCSVSourceWatermark) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
@@ -220,8 +225,8 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
             EXPECT_STREQ(record.ad_type, "banner78");
             EXPECT_TRUE(
                 (!strcmp(record.event_type, "view")
-                    || !strcmp(record.event_type, "click")
-                    || !strcmp(record.event_type, "purchase")));
+                 || !strcmp(record.event_type, "click")
+                 || !strcmp(record.event_type, "purchase")));
             i++;
         }
     }
@@ -231,7 +236,8 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
 }
 
 TEST_F(SourceTest, testCSVSourceIntTypes) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     std::string path_to_file =
         "../tests/test_data/every-int.csv";
@@ -319,7 +325,8 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 }
 
 TEST_F(SourceTest, testCSVSourceFloatTypes) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     std::string path_to_file =
         "../tests/test_data/every-float.csv";
@@ -368,7 +375,8 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 }
 
 TEST_F(SourceTest, testCSVSourceBooleanTypes) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     std::string path_to_file =
         "../tests/test_data/every-boolean.csv";
 
@@ -416,7 +424,8 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 }
 
 TEST_F(SourceTest, testSenseSource) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     std::string testUDFS("...");
     createSenseSourceFuncPtr funcPtr = &createSenseSource;

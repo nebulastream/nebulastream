@@ -43,9 +43,7 @@ void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     NES_INFO("Setup FilterPushDownTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    streamConf.logicalStreamName = "test_stream";
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
