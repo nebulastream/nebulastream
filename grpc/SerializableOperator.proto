@@ -84,6 +84,28 @@ message SerializableOperator{
       SerializableSchema sourceSchema = 3;
     }
 
+    message SerializableOPCSourceDescriptor {
+      string url = 1;
+      message nodeId {
+        uint32 namespaceIndex = 1;
+        enum UA_NodeIdType {
+          UA_NODEIDTYPE_NUMERIC = 0;
+          UA_NODEIDTYPE_STRING = 1;
+          UA_NODEIDTYPE_GUID = 2;
+          UA_NODEIDTYPE_BYTESTRING = 3;
+        }
+        oneof union {
+          uint32 numeric = 2;
+          string str = 3;
+          uint32 UA_Guid = 4;
+          bytes byteString = 5;
+        }
+      }
+      string user = 3;
+      string password = 4;
+      SerializableSchema sourceSchema = 5;
+    }
+
     message SerializableNetworkSourceDescriptor {
       SerializableSchema sourceSchema = 1;
       NesPartition nesPartition = 2;
@@ -115,6 +137,27 @@ message SerializableOperator{
       string host = 1;
       uint32 port = 2;
       bool isInternal = 3;
+    }
+
+    message SerializableOPCSourceDescriptor {
+      string url = 1;
+      message nodeId {
+        uint32 namespaceIndex = 1;
+        enum UA_NodeIdType {
+          UA_NODEIDTYPE_NUMERIC = 0;
+          UA_NODEIDTYPE_STRING = 1;
+          UA_NODEIDTYPE_GUID = 2;
+          UA_NODEIDTYPE_BYTESTRING = 3;
+        }
+        oneof union {
+          uint32 numeric = 2;
+          string str = 3;
+          uint32 UA_Guid = 4;
+          bytes byteString = 5;
+        }
+      }
+      string user = 3;
+      string password = 4;
     }
 
     message SerializableNetworkSinkDescriptor {

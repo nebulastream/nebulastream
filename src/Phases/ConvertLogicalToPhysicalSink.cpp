@@ -7,6 +7,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
@@ -23,15 +24,27 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
         return createBinaryZmqSink(schema, querySubPlanId, nodeEngine, zmqSinkDescriptor->getHost(), zmqSinkDescriptor->getPort(), zmqSinkDescriptor->isInternal());
+    }
 #ifdef ENABLE_KAFKA_BUILD
-    } else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
+     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
         const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
         return createKafkaSinkWithSchema(schema, querySubPlanId, kafkaSinkDescriptor->getBrokers(),
                                          kafkaSinkDescriptor->getTopic(),
                                          kafkaSinkDescriptor->getTimeout());
+    }
 #endif
-    } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
+#ifdef ENABLE_OPC_BUILD
+    else if (sinkDescriptor->instanceOf<OPCSinkDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
+        const OPCSinkDescriptorPtr opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
+        return createOPCSinkWithSchema(schema, querySubPlanId, opcSinkDescriptor->getUrl(),
+                                       opcSinkDescriptor->getNodeId(),
+                                       opcSinkDescriptor->getUser(),
+                                       opcSinkDescriptor->getPassword());
+    }
+#endif
+    else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink for format=" << fileSinkDescriptor->getSinkFormatAsString());
         if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {

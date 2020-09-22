@@ -44,8 +44,11 @@ class OPCSourceTest : public testing::Test {
         test_schema =
                 Schema::create()
                         ->addField("var", UINT32);
+        
+        auto nodeEngine = NodeEngine::create("127.0.0.1", 3000);
+
         bufferManager = std::make_shared<BufferManager>();
-        queryManager = std::make_shared<QueryManager>();
+        queryManager = nodeEngine->getQueryManager();
 
         bufferManager->configure(sizeof(uint32_t),1);
 

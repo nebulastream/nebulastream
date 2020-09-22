@@ -4,11 +4,13 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
+#include <Sinks/Mediums/OPCSink.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -34,7 +36,14 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
                                            kafkaSink->getKafkaProducerTimeout());
     }
 #endif
-        else if (sinkType == "ZMQ_SINK") {
+#ifdef ENABLE_OPC_BUILD
+    else if (sinkType == "OPC_SINK") {
+        NES_INFO("ConvertPhysicalToLogicalSink: Creating OPC sink");
+        OPCSinkPtr opcSink = std::dynamic_pointer_cast<OPCSink>(dataSink);
+        return OPCSinkDescriptor::create(opcSink->getUrl(), opcSink->getNodeId(), opcSink->getUser(), opcSink->getPassword());
+    }
+#endif
+        else if (sinkType == "FILE_SINK") {
             FileSinkPtr fileSink = std::dynamic_pointer_cast<FileSink>(dataSink);
             NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode " << fileSink->getAppendAsBool()
                                                                                          << " format " << fileSink->getSinkFormat());
