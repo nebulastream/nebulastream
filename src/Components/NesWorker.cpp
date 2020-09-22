@@ -15,21 +15,11 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(
-    std::string coordinatorIp,
-    std::string coordinatorPort,
-    std::string localIp,
-    uint16_t localWorkerRpcPort,
-    uint16_t localWorkerZmqPort,
-    uint16_t numberOfSlots,
-    NodeType type)
-    : coordinatorIp(std::move(coordinatorIp)), coordinatorPort(coordinatorPort),
-      localWorkerIp(std::move(localIp)),
-      localWorkerRpcPort(localWorkerRpcPort),
-      localWorkerZmqPort(localWorkerZmqPort),
-      numberOfSlots(numberOfSlots),
-      type(type),
-      conf(PhysicalStreamConfig::create()) {
+NesWorker::NesWorker(std::string coordinatorIp, std::string coordinatorPort, std::string localIp, uint16_t localWorkerRpcPort,
+                     uint16_t localWorkerZmqPort, uint16_t numberOfSlots, NodeType type)
+    : coordinatorIp(std::move(coordinatorIp)), coordinatorPort(coordinatorPort), localWorkerIp(std::move(localIp)),
+      localWorkerRpcPort(localWorkerRpcPort), localWorkerZmqPort(localWorkerZmqPort), numberOfSlots(numberOfSlots),
+      type(type), conf(PhysicalStreamConfig::create()) {
     connected = false;
     withRegisterStream = false;
     withParent = false;
@@ -38,19 +28,10 @@ NesWorker::NesWorker(
 }
 
 // constructor with default numberOfSlots set to the number of processors
-NesWorker::NesWorker(
-    std::string coordinatorIp,
-    std::string coordinatorPort,
-    std::string localWorkerIp,
-    uint16_t localWorkerRpcPort,
-    uint16_t localWorkerZmqPort,
-    NodeType type) : NesWorker(coordinatorIp,
-                               coordinatorPort,
-                               localWorkerIp,
-                               localWorkerRpcPort,
-                               localWorkerZmqPort,
-                               std::thread::hardware_concurrency(),
-                               type) {}
+NesWorker::NesWorker(std::string coordinatorIp, std::string coordinatorPort, std::string localWorkerIp,
+                     uint16_t localWorkerRpcPort, uint16_t localWorkerZmqPort, NodeType type)
+    : NesWorker(coordinatorIp, coordinatorPort, localWorkerIp, localWorkerRpcPort, localWorkerZmqPort,
+                std::thread::hardware_concurrency(), type) {}
 
 NesWorker::~NesWorker() {
     NES_DEBUG("NesWorker::~NesWorker()");
