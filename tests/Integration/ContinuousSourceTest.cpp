@@ -469,7 +469,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "testCSV.csv",
-                                                                /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 1,
+                                                                /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
                                                                 /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
                                                                 /**Logical Stream Name**/ "testStream");
     wrk1->registerPhysicalStream(conf);
@@ -530,7 +530,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
 
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "testCSV.csv",
-                                                                /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 1,
+                                                                /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
                                                                 /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
                                                                 /**Logical Stream Name**/ "testStream");
     wrk1->registerPhysicalStream(conf);
@@ -1112,8 +1112,8 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "exdra", /**Source Config**/ "../tests/test_data/exdra.csv",
-        /**Source Frequency**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 1,
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "../tests/test_data/exdra.csv",
+        /**Source Frequency**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
         /**Number of Buffers To Produce**/ 5, /**Physical Stream Name**/ "test_stream",
         /**Logical Stream Name**/ "exdra");
     wrk1->registerPhysicalStream(conf);
