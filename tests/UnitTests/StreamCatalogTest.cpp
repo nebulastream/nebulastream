@@ -100,13 +100,14 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    streamConf.logicalStreamName = "test_stream";
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "1",
+        /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
+        /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
+        /**Logical Stream Name**/ "test_stream");
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
-    EXPECT_TRUE(streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce));
+    EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
 
     std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=test_stream sourceType=DefaultSource sourceConfig=1 sourceFrequency=0 numberOfBuffersToProduce=1 on node=1\n";
     cout << " string=" << streamCatalog->getPhysicalStreamAndSchemaAsString() << endl;
@@ -124,12 +125,15 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
+        /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+        /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+        /**Logical Stream Name**/ "test_stream");
 
-    EXPECT_TRUE(streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce));
-    EXPECT_TRUE(streamCatalog->removePhysicalStream(streamConf.logicalStreamName, streamConf.physicalStreamName, physicalNode->getId()));
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
+
+    EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
+    EXPECT_TRUE(streamCatalog->removePhysicalStream(conf->getLogicalStreamName(), conf->getPhysicalStreamName(), physicalNode->getId()));
     NES_INFO(streamCatalog->getPhysicalStreamAndSchemaAsString());
 }
 
@@ -139,14 +143,15 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
     EXPECT_TRUE(
-        streamCatalog->addPhysicalStream(streamConf.logicalStreamName, sce));
+        streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce));
 
     std::string expected =
-        "stream name=default_logical with 1 elements:physicalName=default_physical logicalStreamName=default_logical sourceType=DefaultSource sourceConfig=1 sourceFrequency=0 numberOfBuffersToProduce=1 on node=1\n";
+        "stream name=default_logical with 1 elements:physicalName=default_physical logicalStreamName=default_logical sourceType=DefaultSource sourceConfig=1 sourceFrequency=1 numberOfBuffersToProduce=1 on node=1\n";
     EXPECT_EQ(expected,
               streamCatalog->getPhysicalStreamAndSchemaAsString());
 }
@@ -184,8 +189,11 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig conf;
-    conf.sourceType = "sensor";
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "sensor", /**Source Config**/ "",
+        /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+        /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+        /**Logical Stream Name**/ "test_stream");
+
     StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     streamCatalog->addPhysicalStream(newLogicalStreamName, catalogEntryPtr);
     const vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(newLogicalStreamName);

@@ -1,4 +1,3 @@
-#include <gtest/gtest.h>//
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -9,14 +8,15 @@
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Util/Logger.hpp>
+#include <gtest/gtest.h>//
 
-#include <iostream>
-#include <NodeEngine/NodeEngine.hpp>
 #include <API/UserAPIExpression.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/LogicalStream.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <Sources/DefaultSource.hpp>
+#include <iostream>
 #include <memory>
 
 #include <API/Expressions/Expressions.hpp>
@@ -25,6 +25,7 @@
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -34,14 +35,12 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 
 using namespace std;
 namespace NES {
 
 class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
   public:
-
     static void SetUpTestCase() {
         NES::setupLogging("QueryDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup QueryDeploymentTest test class.");
@@ -138,7 +137,8 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
     sinkOperator->addChild(filter);
     filter->addChild(sourceOp);
 
-    auto engine = NodeEngine::create("127.0.0.1", 30000);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto engine = NodeEngine::create("127.0.0.1", 30000, streamConf);
     ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
@@ -168,7 +168,8 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);
 
-    auto engine = NodeEngine::create("127.0.0.1", 30000);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto engine = NodeEngine::create("127.0.0.1", 30000, streamConf);
     ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
 

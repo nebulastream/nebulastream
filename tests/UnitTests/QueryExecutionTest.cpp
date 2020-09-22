@@ -188,7 +188,8 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 }
 
 TEST_F(QueryExecutionTest, filterQuery) {
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
@@ -251,8 +252,8 @@ TEST_F(QueryExecutionTest, filterQuery) {
  * The source generates 2. buffers.
  */
 TEST_F(QueryExecutionTest, windowQuery) {
-
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -336,8 +337,8 @@ TEST_F(QueryExecutionTest, windowQuery) {
 // P3 = [P1|P2] -> merge -> SINK
 // So, merge is a blocking window_scan with two children.
 TEST_F(QueryExecutionTest, mergeQuery) {
-
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager());

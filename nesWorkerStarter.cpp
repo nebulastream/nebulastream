@@ -11,16 +11,15 @@
 #include "boost/program_options.hpp"
 #include <Components/NesWorker.hpp>
 #include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <thread>
 
 namespace po = boost::program_options;
 
 using namespace NES;
-using std::string;
 using std::cout;
 using std::endl;
+using std::string;
 
 const string logo = "/********************************************************\n"
                     " *     _   _   ______    _____\n"
@@ -120,7 +119,7 @@ int main(int argc, char** argv) {
 
     size_t localPort = std::stol(rpcPort);
     size_t zmqDataPort = std::stol(dataPort);
-    cout << "port=" << localPort <<  "localport=" << std::to_string(localPort)  << " pid=" << getpid() << endl;
+    cout << "port=" << localPort << "localport=" << std::to_string(localPort) << " pid=" << getpid() << endl;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(
         coordinatorIp,
         coordinatorPort,
@@ -133,15 +132,9 @@ int main(int argc, char** argv) {
 
     //register phy stream if nessesary
     if (sourceType != "") {
-        cout << "start with dedicated source=" << sourceType <<
-             endl;
-        PhysicalStreamConfig conf;
-        conf.sourceType = sourceType;
-        conf.sourceConfig = sourceConfig;
-        conf.sourceFrequency = sourceFrequency;
-        conf.numberOfBuffersToProduce = numberOfBuffersToProduce;
-        conf.physicalStreamName = physicalStreamName;
-        conf.logicalStreamName = logicalStreamName;
+        cout << "start with dedicated source=" << sourceType << endl;
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceType, sourceConfig, sourceFrequency, 1,
+                                                                    numberOfBuffersToProduce, physicalStreamName, logicalStreamName);
 
         wrk->setWitRegister(conf);
     } else if (parentId != "-1") {

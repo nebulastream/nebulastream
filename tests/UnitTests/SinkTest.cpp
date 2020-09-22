@@ -8,7 +8,9 @@
 #include <Util/UtilityFunctions.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <ostream>
+
 using namespace std;
 
 /**
@@ -60,7 +62,8 @@ class SinkTest : public testing::Test {
 };
 
 TEST_F(SinkTest, testCSVFileSink) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     WorkerContext wctx(NesThread::getId());
@@ -105,7 +108,8 @@ TEST_F(SinkTest, testCSVFileSink) {
 }
 
 TEST_F(SinkTest, testTextFileSink) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     WorkerContext wctx(NesThread::getId());
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
 
@@ -133,7 +137,8 @@ TEST_F(SinkTest, testTextFileSink) {
 }
 
 TEST_F(SinkTest, testNESBinaryFileSink) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     WorkerContext wctx(NesThread::getId());
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr binSink = createBinaryNESFileSink(test_schema, 0, nodeEngine, path_to_bin_file, true);
@@ -184,7 +189,8 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
 }
 
 TEST_F(SinkTest, testCSVPrintSink) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     std::filebuf fb;
     fb.open(path_to_osfile_file, std::ios::out);
@@ -233,7 +239,8 @@ TEST_F(SinkTest, testCSVPrintSink) {
 }
 
 TEST_F(SinkTest, testTextPrintSink) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     std::filebuf fb;
     fb.open(path_to_osfile_file, std::ios::out);
@@ -268,7 +275,8 @@ TEST_F(SinkTest, testTextPrintSink) {
 }
 
 TEST_F(SinkTest, testCSVZMQSink) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     WorkerContext wctx(NesThread::getId());
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -316,7 +324,8 @@ TEST_F(SinkTest, testCSVZMQSink) {
 
 TEST_F(SinkTest, testTextZMQSink) {
     WorkerContext wctx(NesThread::getId());
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr zmq_sink = createTextZmqSink(test_schema, 0, nodeEngine, "localhost", 666555);
@@ -351,7 +360,8 @@ TEST_F(SinkTest, testTextZMQSink) {
 }
 
 TEST_F(SinkTest, testBinaryZMQSink) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     WorkerContext wctx(NesThread::getId());
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, nodeEngine, "localhost", 666555, false);
@@ -391,7 +401,8 @@ TEST_F(SinkTest, testBinaryZMQSink) {
 
 TEST_F(SinkTest, testWatermarkForZMQ) {
     WorkerContext wctx(NesThread::getId());
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     buffer.setWatermark(1234567);
@@ -424,7 +435,8 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
 
 
 TEST_F(SinkTest, testWatermarkCsvSource) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     WorkerContext wctx(NesThread::getId());
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     buffer.setWatermark(1234567);

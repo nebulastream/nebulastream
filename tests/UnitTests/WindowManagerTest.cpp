@@ -1,29 +1,27 @@
+#include <gtest/gtest.h>
+
 #include <map>
 #include <vector>
 
 #include <API/Window/WindowAggregation.hpp>
 #include <API/Window/WindowDefinition.hpp>
-#include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 
 #include <QueryLib/WindowManagerLib.hpp>
 #include <Util/Logger.hpp>
-#include <cassert>
 #include <cstdlib>
-#include <gtest/gtest.h>
 #include <iostream>
-#include <log4cxx/appender.h>
-#include <random>
-#include <thread>
 
 #include <API/Schema.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Windows/WindowHandler.hpp>
+
 namespace NES {
 class WindowManagerTest : public testing::Test {
   public:
@@ -83,7 +81,8 @@ TEST_F(WindowManagerTest, testCheckSlice) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum::on(Attribute("id"));
 
@@ -102,7 +101,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {}) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {
+                                           }) {
             // nop
         }
     };
@@ -152,7 +152,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum::on(Attribute("id"));
 
@@ -170,7 +171,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContext&) {}) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContext&) {
+                                           }) {
             // nop
         }
     };
@@ -215,11 +217,11 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     ASSERT_EQ(tuples[1], 10);
     ASSERT_EQ(tuples[2], 10);
     ASSERT_EQ(tuples[3], 1);
-
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum::on(Attribute("id"));
 
@@ -237,7 +239,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {}) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {
+                                           }) {
             // nop
         }
     };
@@ -287,4 +290,3 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 }
 
 }// namespace NES
-

@@ -137,7 +137,7 @@ bool CoordinatorEngine::registerPhysicalStream(size_t nodeId, std::string source
                                                                                              << " logical stream=" << logicalStreamname);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceType, sourceConf, sourceFrequency, numberOfTuplesToProducePerBuffer, numberOfBuffersToProduce, physicalStreamname,
-                                    logicalStreamname);
+                                                                      logicalStreamname);
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream with conf= " << streamConf->toString()
                                                                                                        << " for workerId=" << nodeId);
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);

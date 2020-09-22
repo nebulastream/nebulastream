@@ -4,13 +4,13 @@
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
-#include <Network/NetworkSource.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
+
 namespace NES {
 class ConvertLogicalToPhysicalSourceTest : public testing::Test {
   public:
@@ -27,7 +27,8 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
 
     void SetUp() {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
-        engine = NodeEngine::create("127.0.0.1", 9090);
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+        engine = NodeEngine::create("127.0.0.1", 9090, streamConf);
     }
 
     void TearDown() {

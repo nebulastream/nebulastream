@@ -6,10 +6,11 @@
 #include <zmq.hpp>
 
 #include <API/Schema.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
-
-#include <NodeEngine/NodeEngine.hpp>
+#include <gtest/gtest.h>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 
 using namespace NES;
 
@@ -22,8 +23,7 @@ using namespace NES;
 #endif
 
 class ZMQTest : public testing::Test {
-public:
-
+  public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES_DEBUG("Setup ZMQTest test class.");
@@ -35,15 +35,13 @@ public:
         NES::setupLogging("ZMQTest.log", NES::LOG_DEBUG);
 
         address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":")
-                  + std::to_string(LOCAL_PORT);
+            + std::to_string(LOCAL_PORT);
 
         test_data = {{0, 100, 1, 99, 2, 98, 3, 97}};
         test_data_size = test_data.size() * sizeof(uint32_t);
         tupleCnt = 8;
         //    test_data_size = 4096;
-        test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
-                                                                          UINT32);
-
+        test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     }
 
     /* Will be called before a test is executed. */
@@ -53,7 +51,7 @@ public:
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        NES_DEBUG("Tear down ZMQTest test class." );
+        NES_DEBUG("Tear down ZMQTest test class.");
     }
 
     size_t tupleCnt;
@@ -66,11 +64,11 @@ public:
 
 /* - ZeroMQ Data Source ---------------------------------------------------- */
 TEST_F(ZMQTest, testZmqSourceReceiveData) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 3000);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 3000, conf);
 
     // Create ZeroMQ Data Source.
-    auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
-                                                                           UINT32);
+    auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto zmq_source = createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), LOCAL_HOST, LOCAL_PORT);
     std::cout << zmq_source->toString() << std::endl;
     // bufferManager->resizeFixedBufferSize(test_data_size);
@@ -83,7 +81,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
 
         // Test received data.
         size_t sum = 0;
-        uint32_t *tuple = (uint32_t *) tuple_buffer->getBuffer();
+        uint32_t* tuple = (uint32_t*) tuple_buffer->getBuffer();
         for (size_t i = 0; i != 8; ++i) {
             sum += *(tuple++);
         }
@@ -118,7 +116,7 @@ TEST_F(ZMQTest, testZmqSinkSendData) {
 
     return;
     //FIXME: this test makes no sense, redo it
-/**
+    /**
   // Create ZeroMQ Data Sink.
   auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                        UINT32);
@@ -176,7 +174,7 @@ TEST_F(ZMQTest, testZmqSinkSendData) {
 /* - ZeroMQ Data Sink to ZeroMQ Data Source  ------------------------------- */
 TEST_F(ZMQTest, testZmqSinkToSource) {
 
-/**
+    /**
   //FIXME: this test makes no sense, redo it
   // Put test data into a TupleBuffer vector.
   void *buffer = new char[test_data_size];
@@ -221,5 +219,4 @@ TEST_F(ZMQTest, testZmqSinkToSource) {
   // Release buffer memory.
   delete[] (char*) buffer;
   */
-
 }
