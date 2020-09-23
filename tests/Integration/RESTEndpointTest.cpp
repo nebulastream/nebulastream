@@ -1,31 +1,19 @@
-#include <Plans/Query/QueryId.hpp>
-#include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include <string>
-#include <unistd.h>
 
-#define GetCurrentDir getcwd
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <Plans/Query/QueryId.hpp>
+#include <Services/QueryService.hpp>
+#include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <boost/process.hpp>
-#include <cpprest/details/basic_types.h>
-#include <cpprest/filestream.h>
-#include <cpprest/http_client.h>
-#include <cstdio>
-#include <sstream>
-using namespace std;
-using namespace utility;
-// Common utilities like string conversions
-using namespace web;
-// Common features like URIs.
-using namespace web::http;
-// Common HTTP functionality
-using namespace web::http::client;
-// HTTP client features
-using namespace concurrency::streams;
-// Asynchronous streams
-namespace bp = boost::process;
-//#define _XPLATSTR(x) _XPLATSTR(x)
+#include <iostream>
+
 namespace NES {
+
+//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
+// by assigning a different RPC port for each test case
+static uint64_t restPort = 8081;
+static uint64_t rpcPort = 4000;
 
 class RESTEndpointTest : public testing::Test {
   public:
@@ -34,62 +22,41 @@ class RESTEndpointTest : public testing::Test {
         NES_INFO("Setup RESTEndpointTest test class.");
     }
 
+    void SetUp() {
+        rpcPort = rpcPort + 30;
+        restPort = restPort + 2;
+    }
+
     static void TearDownTestCase() {
         NES_INFO("Tear down RESTEndpointTest test class.");
     }
+
+    std::string ipAddress = "127.0.0.1";
 };
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
-    NES_INFO(" start coordinator");
-    std::string outputFilePath = "testGetExecutionPlanFromWithSingleWorker.txt";
-    remove(outputFilePath.c_str());
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
-    string path = "./nesCoordinator --coordinatorPort=12267";
-    bp::child coordinatorProc(path.c_str());
-    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
-    sleep(1);
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
 
-    string path2 = "./nesWorker --coordinatorPort=12267";
-    bp::child workerProc(path2.c_str());
-    NES_INFO("started worker with pid = " << workerProc.id());
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid = workerProc.id();
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::stringstream ss;
-    ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"default_logical\\\").filter(Attribute(\\\"id\\\") >= 1).sink(FileSinkDescriptor::create(\\\"";
-    ss << outputFilePath;
-    ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
-    ss << endl;
+    NES_INFO("RESTEndpointTest: Submit query");
+    string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
-    NES_INFO("query string submit=" << ss.str());
-    string querySubmissionRequestBody = ss.str();
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
-    web::json::value querySubmissionJsonReturn;
-
-    web::http::client::http_client querySubmissionClient(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    querySubmissionClient.request(web::http::methods::POST, _XPLATSTR("/"), querySubmissionRequestBody).then([](const web::http::http_response& response) {
-                                                                      NES_INFO("get first then");
-                                                                      return response.extract_json();
-                                                                  })
-        .then([&querySubmissionJsonReturn](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("submit query: set return");
-                querySubmissionJsonReturn = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("submit query: error while setting return");
-                NES_ERROR("submit query: error " << e.what());
-            }
-        })
-        .wait();
-
-    NES_INFO("get execution-plan: try to acc return");
-    QueryId queryId = querySubmissionJsonReturn.at("queryId").as_integer();
-    NES_INFO("Query ID: " << queryId);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
-
-    sleep(5);
     // get the execution plan
     std::stringstream getExecutionPlanStringStream;
     getExecutionPlanStringStream << "{\"queryId\" : ";
@@ -102,7 +69,7 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     web::json::value getExecutionPlanJsonReturn;
 
     web::http::client::http_client getExecutionPlanClient(
-        "http://127.0.0.1:8081/v1/nes/query/execution-plan");
+        "http://127.0.0.1:8083/v1/nes/query/execution-plan");
     getExecutionPlanClient.request(web::http::methods::GET, _XPLATSTR("/"), getExecutionPlanRequestBody).then([](const web::http::http_response& response) {
           NES_INFO("get first then");
           return response.extract_json();
@@ -121,14 +88,19 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("get execution-plan: try to acc return");
     NES_DEBUG("getExecutionPlan response: " << getExecutionPlanJsonReturn.serialize());
 
-    ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), "{\"executionNodes\":[{\"executionNodeId\":2,\"querySubPlan\":[{\"operator\":\"SOURCE(OP-1)=>FILTER(OP-2)=>SINK_SYS(OP-5)\",\"querySubPlanId\":1}]},{\"executionNodeId\":1,\"querySubPlan\":[{\"operator\":\"SOURCE_SYS(OP-4)=>SINK(OP-3)\",\"querySubPlanId\":2}]}]}");
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+    ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), "{\"executionNodes\":[{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(4)\\n  SOURCE(1)\\n\",\"querySubPlanId\":1}]}],\"executionNodeId\":2,\"topologyNodeId\":2,\"topologyNodeIpAddress\":\"127.0.0.1\"},{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(2)\\n  SOURCE(3)\\n\",\"querySubPlanId\":2}]}],\"executionNodeId\":1,\"topologyNodeId\":1,\"topologyNodeIpAddress\":\"127.0.0.1\"}]}");
 
-    NES_INFO("Killing worker process->PID: " << workerPid);
-    workerProc.terminate();
-    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
-    coordinatorProc.terminate();
+    NES_INFO("RESTEndpointTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
 }
-
-
 }// namespace NES
