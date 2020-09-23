@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceType, sourceConfig, sourceFrequency, 0,
                                                                     numberOfBuffersToProduce, physicalStreamName, logicalStreamName);
 
-        wrk->setWitRegister(conf);
+        wrk->setWithRegister(conf);
     } else if (parentId != "-1") {
         NES_INFO("start with dedicated parent=" << parentId);
         wrk->setWithParent(parentId);
