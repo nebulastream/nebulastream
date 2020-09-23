@@ -52,7 +52,7 @@ class NesWorker {
      * @param new stream of this system
      * @return bool indicating success
      */
-    bool setWitRegister(PhysicalStreamConfigPtr conf);
+    bool setWithRegister(PhysicalStreamConfigPtr conf);
 
     /**
      * @brief configure setup with set of parent id

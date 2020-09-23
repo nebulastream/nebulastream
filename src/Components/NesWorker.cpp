@@ -39,9 +39,9 @@ NesWorker::~NesWorker() {
     stop(true);
 }
 
-bool NesWorker::setWitRegister(PhysicalStreamConfigPtr pConf) {
+bool NesWorker::setWithRegister(PhysicalStreamConfigPtr conf) {
     withRegisterStream = true;
-    conf = pConf;
+    this->conf = conf;
     return true;
 }
 
