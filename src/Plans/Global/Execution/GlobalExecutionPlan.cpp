@@ -140,7 +140,8 @@ std::string GlobalExecutionPlan::getAsString() {
     std::stringstream ss;
     auto dumpHandler = ConsoleDumpHandler::create();
     for (auto rootNode : rootNodes) {
-        dumpHandler->dump(rootNode, ss);
+        dumpHandler->multilineDump(rootNode, ss);
+
     }
     return ss.str();
 }

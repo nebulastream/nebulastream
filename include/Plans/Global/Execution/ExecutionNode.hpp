@@ -98,6 +98,8 @@ class ExecutionNode : public Node {
 
     const std::string toString() const override;
 
+    const std::vector<std::string> toMultilineString();
+
   private:
     explicit ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode);
 
@@ -118,6 +120,7 @@ class ExecutionNode : public Node {
      * map of queryPlans
      */
     std::map<QueryId, std::vector<QueryPlanPtr>> mapOfQuerySubPlans;
+    const std::vector<std::string> toMultilineString() const;
 };
 }// namespace NES
 
