@@ -5,6 +5,7 @@ add_source_nes(
         WindowLogicalOperatorNode.cpp
         MergeLogicalOperatorNode.cpp
         LogicalOperatorFactory.cpp
+        BroadcastLogicalOperatorNode.cpp
 )
 
 add_subdirectory(Sinks)
