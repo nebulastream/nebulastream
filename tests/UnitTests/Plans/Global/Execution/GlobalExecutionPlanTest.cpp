@@ -412,3 +412,84 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     expectedPlan["executionNodes"] = web::json::value::array({expectedExecutionNode1, expectedExecutionNode2});
     ASSERT_EQ(expectedPlan, actualPlan);
 }
+
+TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEachWithOnePlanToString) {
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+
+    //create execution node 1
+    TopologyNodePtr topologyNode1 = TopologyNode::create(UtilityFunctions::getNextNodeId(), "localhost", 3200, 3300, 10);
+    const ExecutionNodePtr executionNode1 = ExecutionNode::createExecutionNode(topologyNode1);
+
+    //Add sub plan
+    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
+    auto query1 = Query::from("default_logical").sink(printSinkDescriptor);
+    auto plan1 = query1.getQueryPlan();
+    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QuerySubPlanId querySubPlanId1 = UtilityFunctions::getNextQuerySubPlanId();
+    plan1->setQueryId(queryId1);
+    plan1->setQuerySubPlanId(querySubPlanId1);
+    executionNode1->addNewQuerySubPlan(queryId1, plan1);
+
+    //create execution node 2
+    TopologyNodePtr topologyNode2 = TopologyNode::create(UtilityFunctions::getNextNodeId(), "localhost", 3200, 3300, 10);
+    const ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topologyNode2);
+
+    //Add sub plan
+    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    auto query2 = Query::from("default_logical").sink(printSinkDescriptor);
+    auto plan2 = query2.getQueryPlan();
+    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QuerySubPlanId querySubPlanId2 = UtilityFunctions::getNextQuerySubPlanId();
+    plan2->setQueryId(queryId2);
+    plan2->setQuerySubPlanId(querySubPlanId2);
+    executionNode2->addNewQuerySubPlan(queryId2, plan2);
+
+    //create execution node 3
+    TopologyNodePtr topologyNode3 = TopologyNode::create(UtilityFunctions::getNextNodeId(), "localhost", 3200, 3300, 10);
+    const ExecutionNodePtr executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
+
+    //Add sub plan
+    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    auto query3 = Query::from("default_logical").sink(printSinkDescriptor);
+    auto plan3 = query3.getQueryPlan();
+    QueryId queryId3 = UtilityFunctions::getNextQueryId();
+    QuerySubPlanId querySubPlanId3 = UtilityFunctions::getNextQuerySubPlanId();
+    plan3->setQueryId(queryId3);
+    plan3->setQuerySubPlanId(querySubPlanId3);
+    executionNode3->addNewQuerySubPlan(queryId3, plan3);
+
+    globalExecutionPlan->addExecutionNode(executionNode1);
+    globalExecutionPlan->addExecutionNode(executionNode2);
+    globalExecutionPlan->addExecutionNode(executionNode3);
+
+    //create execution node 4
+    TopologyNodePtr topologyNode4 = TopologyNode::create(UtilityFunctions::getNextNodeId(), "localhost", 3200, 3300, 10);
+    const ExecutionNodePtr executionNode4 = ExecutionNode::createExecutionNode(topologyNode4);
+
+    //Add sub plan
+    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    auto query4 = Query::from("default_logical").sink(printSinkDescriptor);
+    auto plan4 = query4.getQueryPlan();
+    QueryId queryId4 = UtilityFunctions::getNextQueryId();
+    QuerySubPlanId querySubPlanId4 = UtilityFunctions::getNextQuerySubPlanId();
+    plan4->setQueryId(queryId4);
+    plan4->setQuerySubPlanId(querySubPlanId4);
+    executionNode4->addNewQuerySubPlan(queryId4, plan4);
+
+    globalExecutionPlan->addExecutionNode(executionNode1);
+    globalExecutionPlan->addExecutionNode(executionNode2);
+    globalExecutionPlan->addExecutionNode(executionNode3);
+    globalExecutionPlan->addExecutionNode(executionNode4);
+
+    globalExecutionPlan->addExecutionNodeAsParentTo(executionNode3->getId(), executionNode4);
+    globalExecutionPlan->addExecutionNodeAsParentTo(executionNode2->getId(), executionNode3);
+    globalExecutionPlan->addExecutionNodeAsParentTo(executionNode1->getId(), executionNode4);
+
+    globalExecutionPlan->addExecutionNodeAsRoot(executionNode4);
+
+    const std::string actualPlan = globalExecutionPlan->getAsString();
+
+    NES_INFO("Actual query plan \n" << actualPlan);
+}

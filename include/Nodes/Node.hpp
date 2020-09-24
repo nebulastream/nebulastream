@@ -265,6 +265,12 @@ class Node : public std::enable_shared_from_this<Node> {
     virtual const std::string toString() const = 0;
 
     /**
+     * @brief To multiline string method for the current node.
+     * @return string
+     */
+    virtual const std::vector<std::string> toMultilineString();
+
+    /**
      * @brief check if an nodeToFind is in given graph
      * @param root
      * @param nodeToFind

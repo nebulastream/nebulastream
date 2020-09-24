@@ -21,6 +21,8 @@ class DumpHandler {
     * Dump the specific node and its children.
     */
     virtual void dump(const NodePtr node, std::ostream& out) = 0;
+    virtual void multilineDump(const NodePtr node, std::ostream& out) = 0;
+
 };
 
 typedef std::shared_ptr<DumpHandler> DebugDumpHandlerPtr;

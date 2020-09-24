@@ -21,8 +21,14 @@ class ConsoleDumpHandler : public DumpHandler {
     */
     void dump(const NodePtr node, std::ostream& out) override;
 
+    /**
+    * Dump the specific node and its children with details in multiple lines.
+    */
+    void multilineDump(const NodePtr node, std::ostream& out);
+
   private:
     void dumpHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out) const;
+    void multilineDumpHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out, bool isLastChild) const;
 };
 
 }// namespace NES

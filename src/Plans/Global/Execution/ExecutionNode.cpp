@@ -126,7 +126,8 @@ bool ExecutionNode::updateQuerySubPlans(QueryId queryId, std::vector<QueryPlanPt
 }
 
 const std::string ExecutionNode::toString() const {
-    return "ExecutionNode(" + std::to_string(id) + ", " + topologyNode->getIpAddress() + ")";
+    return "ExecutionNode(id:" + std::to_string(id) + ", ip:" + topologyNode->getIpAddress() + ", topologyNodeId:"
+           + std::to_string(topologyNode->getId()) + ")";
 }
 
 ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) {
@@ -151,6 +152,30 @@ std::map<QueryId, std::vector<QueryPlanPtr>> ExecutionNode::getAllQuerySubPlans(
 
 bool ExecutionNode::equal(NodePtr rhs) const {
     return rhs->as<ExecutionNode>()->getId() == id;
+}
+const std::vector<std::string> ExecutionNode::toMultilineString() {
+    std::vector<std::string> lines;
+    lines.push_back(toString());
+
+    for (auto mapOfQuerySubPlan : mapOfQuerySubPlans) {
+        for (auto queryPlan: mapOfQuerySubPlan.second) {
+            lines.push_back("QuerySubPlan(qid:"+std::to_string(mapOfQuerySubPlan.first)+ ", querySubPlanId:" + std::to_string(queryPlan->getQuerySubPlanId()) + ")");
+
+            // split
+            std::string s = queryPlan->toString();
+            std::string delimiter = "\n";
+            size_t pos = 0;
+            std::string token;
+            while ((pos = s.find(delimiter)) != std::string::npos) {
+                token = s.substr(0, pos);
+                lines.push_back(' '+token);
+                s.erase(0, pos + delimiter.length());
+            }
+            lines.push_back(' '+token);
+        }
+    }
+
+    return lines;
 }
 
 }// namespace NES

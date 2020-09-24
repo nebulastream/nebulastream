@@ -560,5 +560,10 @@ bool Node::isCyclicHelper(Node& node) {
     node.recStack = false;
     return false;
 }
+const std::vector<std::string> Node::toMultilineString() {
+    std::vector<std::string> lines;
+    lines.push_back(toString());
+    return lines;
+}
 
 }// namespace NES
