@@ -27,6 +27,9 @@ typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 class SinkLogicalOperatorNode;
 typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 
+class GlobalQueryMetaData;
+typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
+
 /**
  * @brief This class is responsible for storing all currently running and to be deployed QueryPlans in the NES system.
  * The QueryPlans included in the GlobalQueryPlan can be fused together and therefore each operator in GQP contains
@@ -122,7 +125,11 @@ class GlobalQueryPlan {
     QueryPlanPtr queryPlan;
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;
-    std::map<uint64_t, std::vector<GlobalQueryNodePtr>> queryToGlobalQueryNodeMap;
+    std::map<QueryId, std::vector<GlobalQueryNodePtr>> queryIdToGlobalQueryNodeMap;
+    std::map<QueryId, GlobalQueryMetaDataPtr> globalQueryIdToMetaDataMap;
+    std::map<QueryId, QueryId> queryIdToGlobalQueryIdMap;
+    bool updateGlobalQueryMetaDataMap();
+    std::vector<QueryPlanPtr> getGlobalQueryPlansToDeploy();
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP

@@ -136,8 +136,26 @@ std::map<QueryId, OperatorNodePtr> GlobalQueryNode::getMapOfQueryIdToOperator() 
     return queryToOperatorMap;
 }
 
+bool GlobalQueryNode::hasQuery(QueryId queryId) {
+    NES_INFO("GlobalQueryNode: Checking is the global query node has a query with id " << queryId);
+    auto found = std::find(queryIds.begin(), queryIds.end(), queryId);
+    if (found != queryIds.end()) {
+        NES_DEBUG("GlobalQueryNode: Global query node has a query with id " << queryId);
+        return true;
+    }
+    NES_DEBUG("GlobalQueryNode: Global query node does not have a query with id " << queryId);
+    return false;
+}
+
 const std::vector<QueryId> GlobalQueryNode::getQueryIds() {
     return queryIds;
+}
+
+bool GlobalQueryNode::equal(const NodePtr rhs) const {
+    if (rhs->instanceOf<GlobalQueryNode>()) {
+        return id == rhs->as<GlobalQueryNode>()->getId();
+    }
+    return false;
 }
 
 }// namespace NES

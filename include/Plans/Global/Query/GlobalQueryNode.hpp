@@ -116,6 +116,15 @@ class GlobalQueryNode : public Node {
      */
     const std::vector<QueryId> getQueryIds();
 
+    /**
+     * @brief Check if the Global query node contains the query id
+     * @param queryId : the query id to search
+     * @return true if query id exists in the global query node else false
+     */
+    bool hasQuery(QueryId queryId);
+
+    bool equal(const NodePtr rhs) const override;
+
     const std::string toString() const override;
 
   private:
