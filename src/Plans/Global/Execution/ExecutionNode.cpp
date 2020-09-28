@@ -159,9 +159,9 @@ const std::vector<std::string> ExecutionNode::toMultilineString() {
 
     for (auto mapOfQuerySubPlan : mapOfQuerySubPlans) {
         for (auto queryPlan: mapOfQuerySubPlan.second) {
-            lines.push_back("QuerySubPlan(qid:"+std::to_string(mapOfQuerySubPlan.first)+ ", querySubPlanId:" + std::to_string(queryPlan->getQuerySubPlanId()) + ")");
+            lines.push_back("QuerySubPlan(queryId:"+std::to_string(mapOfQuerySubPlan.first)+ ", querySubPlanId:" + std::to_string(queryPlan->getQuerySubPlanId()) + ")");
 
-            // split
+            // Split the string representation of the queryPlan into multiple lines
             std::string s = queryPlan->toString();
             std::string delimiter = "\n";
             size_t pos = 0;
@@ -171,7 +171,6 @@ const std::vector<std::string> ExecutionNode::toMultilineString() {
                 lines.push_back(' '+token);
                 s.erase(0, pos + delimiter.length());
             }
-            lines.push_back(' '+token);
         }
     }
 

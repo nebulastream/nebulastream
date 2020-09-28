@@ -55,7 +55,8 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     operatorToExecutionNodeMap.clear();
     pinnedOperatorLocationMap.clear();
     NES_DEBUG("BottomUpStrategy: Run type inference phase for query plans in global execution plan for query with id : " << queryId);
-    NES_DEBUG("BottomUpStrategy: Execution Plan for query id : " << UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan));
+
+    NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
     return runTypeInferencePhase(queryId);
 }
 
