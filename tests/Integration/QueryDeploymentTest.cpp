@@ -39,7 +39,7 @@ class QueryDeploymentTest : public testing::Test {
 /**
  * Test deploying merge query with source on two different worker node using bottom up strategy.
  */
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergePrintUsingBottomUp) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -57,6 +57,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergePrintUsingBottomUp) {
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+
+    std::string outputFilePath =
+        "testDeployTwoWorkerMergeUsingBottomUp.out";
+    remove(outputFilePath.c_str());
 
     //register logical stream
     std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
@@ -83,11 +87,100 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergePrintUsingBottomUp) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 6));
+
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------+";
+
+    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): content=" << content);
+    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -110,7 +203,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergePrintUsingBottomUp) {
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergePrintUsingTopDown) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -129,6 +222,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergePrintUsingTopDown) {
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
+    std::string outputFilePath =
+        "testDeployTwoWorkerMergeUsingTopDown.out";
+    remove(outputFilePath.c_str());
+
     //register logical stream
     std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
     std::string testSchemaFileName = "testSchema.hpp";
@@ -139,26 +236,115 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergePrintUsingTopDown) {
 
     //register physical stream
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                1, 0, 3,
-                                                                "physical_car", "car");
+                                                                   1, 0, 3,
+                                                                   "physical_car", "car");
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
     //register physical stream
     PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                   1, 0, 3,
-                                                                   "physical_truck", "truck");
+                                                                     1, 0, 3,
+                                                                     "physical_truck", "truck");
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 6));
+
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------+";
+
+    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): content=" << content);
+    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -178,7 +364,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergePrintUsingTopDown) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerPrint) {
+TEST_F(QueryDeploymentTest, testDeployOneWorker) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -194,11 +380,39 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerPrint) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
+    std::string outputFilePath =
+        "testDeployOneWorker.out";
+    remove(outputFilePath.c_str());
+
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------+";
+
+    NES_INFO("QueryDeploymentTest(testDeployOneWorker): content=" << content);
+    NES_INFO("QueryDeploymentTest(testDeployOneWorker): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -217,7 +431,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerPrint) {
 /**
  * @brief Test deploy query with print sink with one worker using top down strategy
  */
-TEST_F(QueryDeploymentTest, testDeployOneWorkerPrintUsingTopDownStrategy) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -233,11 +447,39 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerPrintUsingTopDownStrategy) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
+    std::string outputFilePath =
+        "testDeployOneWorkerUsingTopDownStrategy.out";
+    remove(outputFilePath.c_str());
+
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------+";
+
+    NES_INFO("QueryDeploymentTest(testDeployOneWorkerUsingTopDownStrategy): content=" << content);
+    NES_INFO("QueryDeploymentTest(testDeployOneWorkerUsingTopDownStrategy): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -276,12 +518,14 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryEventTime) {
 
     wrk1->registerPhysicalStream(conf);
 
-    std::string filePath = "contTestOut.csv";
-    remove(filePath.c_str());
+    std::string outputFilePath =
+        "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"metadata_generated\")), "
-                   "Seconds(10)), Sum::on(Attribute(\"features_properties_capacity\"))).sink(PrintSinkDescriptor::create());";
+                   "Seconds(10)), Sum::on(Attribute(\"features_properties_capacity\"))).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -289,6 +533,74 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryEventTime) {
     //TODO: check result
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 2));
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));
+
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|start:UINT64|end:UINT64|key:INT64|features_properties_capacity:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1262343610000|1262343620000|1|736|\n"
+        "|1262343620000|1262343630000|1|0|\n"
+        "|1262343630000|1262343640000|1|0|\n"
+        "|1262343640000|1262343650000|1|0|\n"
+        "|1262343650000|1262343660000|1|0|\n"
+        "|1262343660000|1262343670000|1|0|\n"
+        "|1262343670000|1262343680000|1|0|\n"
+        "|1262343680000|1262343690000|1|0|\n"
+        "|1262343620000|1262343630000|2|1348|\n"
+        "|1262343630000|1262343640000|2|0|\n"
+        "|1262343640000|1262343650000|2|0|\n"
+        "|1262343650000|1262343660000|2|0|\n"
+        "|1262343660000|1262343670000|2|0|\n"
+        "|1262343670000|1262343680000|2|0|\n"
+        "|1262343680000|1262343690000|2|0|\n"
+        "|1262343630000|1262343640000|3|4575|\n"
+        "|1262343640000|1262343650000|3|0|\n"
+        "|1262343650000|1262343660000|3|0|\n"
+        "|1262343660000|1262343670000|3|0|\n"
+        "|1262343670000|1262343680000|3|0|\n"
+        "|1262343680000|1262343690000|3|0|\n"
+        "|1262343640000|1262343650000|4|1358|\n"
+        "|1262343650000|1262343660000|4|0|\n"
+        "|1262343660000|1262343670000|4|0|\n"
+        "|1262343670000|1262343680000|4|0|\n"
+        "|1262343680000|1262343690000|4|0|\n"
+        "|1262343650000|1262343660000|5|1288|\n"
+        "|1262343660000|1262343670000|5|0|\n"
+        "|1262343670000|1262343680000|5|0|\n"
+        "|1262343680000|1262343690000|5|0|\n"
+        "|1262343660000|1262343670000|6|3458|\n"
+        "|1262343670000|1262343680000|6|0|\n"
+        "|1262343680000|1262343690000|6|0|\n"
+        "|1262343670000|1262343680000|7|1128|\n"
+        "|1262343680000|1262343690000|7|0|\n"
+        "|1262343680000|1262343690000|8|1079|\n"
+        "|1262343600000|1262343610000|10|2632|\n"
+        "|1262343610000|1262343620000|10|0|\n"
+        "|1262343620000|1262343630000|10|0|\n"
+        "|1262343630000|1262343640000|10|0|\n"
+        "|1262343640000|1262343650000|10|0|\n"
+        "|1262343650000|1262343660000|10|0|\n"
+        "|1262343660000|1262343670000|10|0|\n"
+        "|1262343670000|1262343680000|10|0|\n"
+        "|1262343680000|1262343690000|10|0|\n"
+        "|1262343600000|1262343610000|11|4653|\n"
+        "|1262343610000|1262343620000|11|0|\n"
+        "|1262343620000|1262343630000|11|0|\n"
+        "|1262343630000|1262343640000|11|0|\n"
+        "|1262343640000|1262343650000|11|0|\n"
+        "|1262343650000|1262343660000|11|0|\n"
+        "|1262343660000|1262343670000|11|0|\n"
+        "|1262343670000|1262343680000|11|0|\n"
+        "|1262343680000|1262343690000|11|0|\n"
+        "+----------------------------------------------------+";
+
+    NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): content=" << content);
+    NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -320,6 +632,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
+    std::string outputFilePath =
+        "testDeployOneWorkerCentralWindowQueryProcessingTime.out";
+    remove(outputFilePath.c_str());
+
     NES_INFO("QueryDeploymentTest: Submit query");
 
     //register physical stream
@@ -328,18 +644,23 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
                                                                 "test_stream", "exdra");
     wrk1->registerPhysicalStream(conf);
 
-    std::string filePath = "contTestOut.csv";
-    remove(filePath.c_str());
-
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
-                   "Seconds(1)), Sum::on(Attribute(\"metadata_generated\"))).sink(PrintSinkDescriptor::create());";
+                   "Seconds(1)), Sum::on(Attribute(\"metadata_generated\"))).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     sleep(7);
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+
+    std::ifstream ifs(outputFilePath);
+
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    //TODO check content of processing time
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -367,17 +688,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker 1 started successfully");
-    //
-    //    NES_INFO("QueryDeploymentTest: Start worker 2");
-    //    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
-    //    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    //    EXPECT_TRUE(retStart2);
-    //    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    NES_INFO("QueryDeploymentTest: Submit query");
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"value\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
@@ -389,6 +702,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     cout << "wakeup" << endl;
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+
+    //TODO check content of processing time
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -428,6 +743,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
 
+    std::string outputFilePath =
+        "testDeployOneWorkerDistributedWindowQueryEventTime.out";
+    remove(outputFilePath.c_str());
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -451,7 +770,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     NES_INFO("QueryDeploymentTest: Submit query");
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"ts\")), "
-                   "Seconds(1)), Sum::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"testDeployOneWorkerDistributedWindowQueryEventTime.out\"));";
+                   "Seconds(1)), Sum::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     cout << "wait start" << endl;
@@ -461,7 +781,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     ifstream my_file("testDeployOneWorkerDistributedWindowQueryEventTime.out");
     EXPECT_TRUE(my_file.good());
 
-    std::ifstream ifs("testDeployOneWorkerDistributedWindowQueryEventTime.out");
+    std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
 
@@ -496,7 +816,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerPrint) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -518,12 +838,53 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerPrint) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
+    std::string outputFilePath =
+        "testDeployTwoWorker.out";
+    remove(outputFilePath.c_str());
+
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));
+
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------+";
+
+    NES_INFO("QueryDeploymentTest(testDeployTwoWorker): content=" << content);
+    NES_INFO("QueryDeploymentTest(testDeployTwoWorker): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -543,7 +904,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerPrint) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerPrintUsingTopDownStrategy) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -565,12 +926,54 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerPrintUsingTopDownStrategy) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
+    std::string outputFilePath =
+        "testDeployTwoWorkerUsingTopDownStrategy.out";
+    remove(outputFilePath.c_str());
+
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));
+
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------+";
+
+    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerUsingTopDownStrategy): content=" << content);
+    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerUsingTopDownStrategy): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -636,8 +1039,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------+";
-    NES_INFO("QueryDeploymentTest: content=" << content);
-    NES_INFO("QueryDeploymentTest: expContent=" << expectedContent);
+    NES_INFO("QueryDeploymentTest (testDeployOneWorkerFileOutput): content=" << content);
+    NES_INFO("QueryDeploymentTest (testDeployOneWorkerFileOutput): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
@@ -679,6 +1082,32 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+
+    ifstream my_file("test.out");
+    EXPECT_TRUE(my_file.good());
+
+    std::ifstream ifs("test.out");
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------+";
+    NES_INFO("QueryDeploymentTest (testDeployUndeployOneWorkerFileOutput): content=" << content);
+    NES_INFO("QueryDeploymentTest (testDeployUndeployOneWorkerFileOutput): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -727,6 +1156,46 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));
+
+    ifstream my_file("test.out");
+    EXPECT_TRUE(my_file.good());
+
+    std::ifstream ifs("test.out");
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|id:UINT32|value:UINT64|\n"
+        "+----------------------------------------------------+\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "|1|1|\n"
+        "+----------------------------------------------------+";
+
+    NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): content=" << content);
+    NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
