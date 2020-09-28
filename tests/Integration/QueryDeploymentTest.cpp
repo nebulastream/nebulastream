@@ -34,6 +34,18 @@ class QueryDeploymentTest : public testing::Test {
     }
 
     std::string ipAddress = "127.0.0.1";
+
+    //from: https://stackoverflow.com/questions/20755140/split-string-by-a-character
+    std::vector<string> split(const std::string &s, char delim) {
+        std::vector<string> elems;
+        std::stringstream ss(s);
+        std::string number;
+        std::getline(ss, number, delim);
+        while(std::getline(ss, number, delim)) {
+            elems.push_back(number);
+        }
+        return elems;
+    }
 };
 
 /**
@@ -656,11 +668,35 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
     std::ifstream ifs(outputFilePath);
+    std::string line;
+    int rowNumber = 0;
 
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    while (std::getline(ifs, line)) {
+        NES_INFO("print line from content" << line);
+        rowNumber++;
+        if (rowNumber == 4) {
+            std::vector<string> content = split(line, '|');
+            NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): content=" << content.at(3));
+            NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): expContent=2524687220000");
+            EXPECT_EQ(content.at(3), "2524687220000");
+        }
+        if (rowNumber == 5) {
+            std::vector<string> content = split(line, '|');
+            NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): content=" << content.at(3));
+            NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): expContent=1262343620010");
+            EXPECT_EQ(content.at(3), "1262343620010");
+        }
+        if (rowNumber > 17 && rowNumber < 28) {
+            std::vector<string> content = split(line, '|');
+            NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): content=" << content.at(3));
+            NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): expContent=0");
+            EXPECT_EQ(content.at(3), "0");
+        }
 
-    //TODO check content of processing time
+    }
+    NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): content=" << rowNumber);
+    NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): expContent=57");
+    EXPECT_EQ(rowNumber, 57);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -703,7 +739,17 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
-    //TODO check content of processing time
+    std::ifstream ifs("query.out");
+    std::string line;
+    int rowNumber = 0;
+    //TODO that query result is empty?
+    while (std::getline(ifs, line)) {
+        NES_INFO("print line from content" << line);
+        rowNumber++;
+    }
+    NES_INFO("QueryDeploymentTest(testDeployOneWorkerDistributedWindowQueryProcessingTime): content=" << rowNumber);
+    NES_INFO("QueryDeploymentTest(testDeployOneWorkerDistributedWindowQueryProcessingTime): expContent=0");
+    EXPECT_EQ(rowNumber, 0);
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
