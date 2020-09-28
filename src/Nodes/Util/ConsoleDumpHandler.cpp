@@ -19,16 +19,13 @@ void ConsoleDumpHandler::dumpHelper(const NodePtr op, size_t depth, size_t inden
     }
 }
 
-void ConsoleDumpHandler::multilineDumpHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out, bool isLastChild) const {
+void ConsoleDumpHandler::multilineDumpHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out) const {
 
     std::vector<std::string> multiLineNodeString = op->toMultilineString();
     for (const std::string line: multiLineNodeString) {
         for (int i=0; i<indent * depth; i++) {
             if (i%indent==0) {
                 out << '|';
-                if (isLastChild) {
-//                    out << 'L';
-                }
             } else {
                 if (line == multiLineNodeString.front() && i >= indent * depth-1) {
                     out << std::string(indent, '-');
@@ -45,7 +42,7 @@ void ConsoleDumpHandler::multilineDumpHelper(const NodePtr op, size_t depth, siz
     ++depth;
     auto children = op->getChildren();
     for (auto&& child : children) {
-        multilineDumpHelper(child, depth, indent, out, child == children.back());
+        multilineDumpHelper(child, depth, indent, out);
     }
 }
 
@@ -54,5 +51,5 @@ void ConsoleDumpHandler::dump(const NodePtr node, std::ostream& out) {
 }
 
 void ConsoleDumpHandler::multilineDump(const NodePtr node, std::ostream& out) {
-    multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out, false);
+    multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
 }}// namespace NES

@@ -57,7 +57,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     pinnedOperatorLocationMap.clear();
     NES_DEBUG("TopDownStrategy: Run type inference phase for query plans in global execution plan for query with id : " << queryId);
 
-    NES_DEBUG("TopDownStrategy: Update Global Execution Plan : " << UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan));
+    NES_DEBUG("TopDownStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
     return runTypeInferencePhase(queryId);
 }
 

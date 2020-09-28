@@ -36,11 +36,10 @@ class GlobalExecutionPlanTest : public testing::Test {
 TEST_F(GlobalExecutionPlanTest, testCreateEmptyGlobalExecutionPlan) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    const json::value& actualPlan = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan);
-    NES_INFO("Actual query plan " << actualPlan);
+    std::string actualPlan = globalExecutionPlan->getAsString();
+    NES_INFO("Actual query plan \n" << actualPlan);
 
-    web::json::value expectedPlan{};
-    expectedPlan["executionNodes"] = web::json::value::array();
+    std::string expectedPlan = "";
 
     ASSERT_EQ(expectedPlan, actualPlan);
 }
@@ -57,20 +56,13 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
 
     globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
-    const json::value& actualPlan = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan);
-    NES_INFO("Actual query plan " << actualPlan);
+    std::string actualPlan = globalExecutionPlan->getAsString();
+    NES_INFO("Actual query plan \n" << actualPlan);
 
-    web::json::value expectedPlan{};
-    expectedPlan["executionNodes"] = web::json::value::array();
+    std::string expectedPlan = "ExecutionNode(id:"+std::to_string(executionNode->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode->getTopologyNode()->getId())+")\n";
 
-    web::json::value expectedExecutionNode{};
-    expectedExecutionNode["executionNodeId"] = web::json::value::number(executionNode->getId());
-    expectedExecutionNode["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
-    expectedExecutionNode["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
-    expectedExecutionNode["ScheduledQueries"] = web::json::value::array();
-
-    expectedPlan["executionNodes"] = web::json::value::array({expectedExecutionNode});
     ASSERT_EQ(expectedPlan, actualPlan);
 }
 
@@ -98,28 +90,19 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
-    NES_INFO(globalExecutionPlan->getAsString());
+    const std::string actualPlan =globalExecutionPlan->getAsString();
 
-    const json::value& actualPlan = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan);
-    NES_INFO("Actual query plan " << actualPlan);
+    NES_INFO("GlobalExecutionPlanTest: Actual plan: \n" + actualPlan);
 
-    web::json::value expectedPlan{};
-    expectedPlan["executionNodes"] = web::json::value::array();
+    NES_INFO("GlobalExecutionPlanTest: queryPlan.toString(): \n" + plan->toString());
 
-    web::json::value expectedExecutionNode{};
-    expectedExecutionNode["executionNodeId"] = web::json::value::number(executionNode->getId());
-    expectedExecutionNode["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
-    expectedExecutionNode["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
+    std::string expectedPlan = "ExecutionNode(id:"+std::to_string(executionNode->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode->getTopologyNode()->getId())+")\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(queryId)+", querySubPlanId:"+std::to_string(querySubPlanId)+")\n"
+                               "|  "+plan->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan->getRootOperators()[0]->getChildren()[0]->toString()+"\n"
+                               "|      "+plan->getRootOperators()[0]->getChildren()[0]->getChildren()[0]->toString()+"\n"
+                               "|      "+plan->getRootOperators()[0]->getChildren()[0]->getChildren()[1]->toString()+"\n";
 
-    web::json::value scheduledQueries{};
-    scheduledQueries["queryId"] = web::json::value::number(queryId);
-    web::json::value scheduledSubQuery{};
-    scheduledSubQuery["operator"] = web::json::value::string(query.getQueryPlan()->toString());
-    scheduledSubQuery["querySubPlanId"] = web::json::value::number(querySubPlanId);
-    scheduledQueries["querySubPlans"] = web::json::value::array({scheduledSubQuery});
-    expectedExecutionNode["ScheduledQueries"] = web::json::value::array({scheduledQueries});
-
-    expectedPlan["executionNodes"] = web::json::value::array({expectedExecutionNode});
     ASSERT_EQ(expectedPlan, actualPlan);
 }
 
@@ -154,33 +137,19 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     executionNode->addNewQuerySubPlan(queryId, plan2);
 
     globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
-    const json::value& actualPlan = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan);
-    NES_INFO("Actual query plan " << actualPlan);
+    const std::string& actualPlan = globalExecutionPlan->getAsString();
+    NES_INFO("Actual query plan \n" << actualPlan);
 
-    web::json::value expectedPlan{};
-    expectedPlan["executionNodes"] = web::json::value::array();
+    std::string expectedPlan = "ExecutionNode(id:"+std::to_string(executionNode->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode->getTopologyNode()->getId())+")\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(query1.getQueryPlan()->getQueryId())+", querySubPlanId:"+std::to_string(querySubPlanId1)+")\n"
+                               "|  "+plan1->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan1->getRootOperators()[0]->getChildren()[0]->toString()+"\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(query2.getQueryPlan()->getQueryId())+", querySubPlanId:"+std::to_string(querySubPlanId2)+")\n"
+                               "|  "+plan2->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan2->getRootOperators()[0]->getChildren()[0]->toString()+"\n";
 
-    web::json::value expectedExecutionNode{};
-    expectedExecutionNode["executionNodeId"] = web::json::value::number(executionNode->getId());
-    expectedExecutionNode["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
-    expectedExecutionNode["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
-
-    web::json::value scheduledQueries{};
-    scheduledQueries["queryId"] = web::json::value::number(queryId);
-    std::vector<web::json::value> scheduledSubQueries;
-    web::json::value scheduledSubQuery1{};
-    scheduledSubQuery1["operator"] = web::json::value::string(query1.getQueryPlan()->toString());
-    scheduledSubQuery1["querySubPlanId"] = web::json::value::number(querySubPlanId1);
-    scheduledSubQueries.push_back(scheduledSubQuery1);
-    web::json::value scheduledSubQuery2{};
-    scheduledSubQuery2["operator"] = web::json::value::string(query2.getQueryPlan()->toString());
-    scheduledSubQuery2["querySubPlanId"] = web::json::value::number(querySubPlanId2);
-    scheduledSubQueries.push_back(scheduledSubQuery2);
-    scheduledQueries["querySubPlans"] = web::json::value::array(scheduledSubQueries);
-    expectedExecutionNode["ScheduledQueries"] = web::json::value::array({scheduledQueries});
-
-    expectedPlan["executionNodes"] = web::json::value::array({expectedExecutionNode});
     ASSERT_EQ(expectedPlan, actualPlan);
 }
 
@@ -216,29 +185,19 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     executionNode->addNewQuerySubPlan(queryId2, plan2);
 
     globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
-    const json::value& actualPlan = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan, queryId1);
-    NES_INFO("Actual query plan " << actualPlan);
+    const std::string& actualPlan = globalExecutionPlan->getAsString();
+    NES_INFO("Actual query plan \n" << actualPlan);
 
-    web::json::value expectedPlan{};
-    expectedPlan["executionNodes"] = web::json::value::array();
+    std::string expectedPlan = "ExecutionNode(id:"+std::to_string(executionNode->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode->getTopologyNode()->getId())+")\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(queryId1)+", querySubPlanId:"+std::to_string(querySubPlanId1)+")\n"
+                               "|  "+plan1->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan1->getRootOperators()[0]->getChildren()[0]->toString()+"\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(queryId2)+", querySubPlanId:"+std::to_string(querySubPlanId2)+")\n"
+                               "|  "+plan2->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan2->getRootOperators()[0]->getChildren()[0]->toString()+"\n";
 
-    web::json::value expectedExecutionNode{};
-    expectedExecutionNode["executionNodeId"] = web::json::value::number(executionNode->getId());
-    expectedExecutionNode["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
-    expectedExecutionNode["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
-
-    web::json::value scheduledQueries{};
-    scheduledQueries["queryId"] = web::json::value::number(queryId1);
-    std::vector<web::json::value> scheduledSubQueries;
-    web::json::value scheduledSubQuery1{};
-    scheduledSubQuery1["operator"] = web::json::value::string(query1.getQueryPlan()->toString());
-    scheduledSubQuery1["querySubPlanId"] = web::json::value::number(querySubPlanId1);
-    scheduledSubQueries.push_back(scheduledSubQuery1);
-    scheduledQueries["querySubPlans"] = web::json::value::array(scheduledSubQueries);
-    expectedExecutionNode["ScheduledQueries"] = web::json::value::array({scheduledQueries});
-
-    expectedPlan["executionNodes"] = web::json::value::array({expectedExecutionNode});
     ASSERT_EQ(expectedPlan, actualPlan);
 }
 
@@ -295,46 +254,25 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     globalExecutionPlan->addExecutionNode(executionNode);
 
-    const json::value& actualPlan = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan);
-    NES_INFO("Actual query plan " << actualPlan);
+    globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
-    web::json::value expectedPlan{};
-    expectedPlan["executionNodes"] = web::json::value::array();
+    const std::string& actualPlan = globalExecutionPlan->getAsString();
 
-    web::json::value expectedExecutionNode{};
-    expectedExecutionNode["executionNodeId"] = web::json::value::number(executionNode->getId());
-    expectedExecutionNode["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
-    expectedExecutionNode["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
+    std::string expectedPlan = "ExecutionNode(id:"+std::to_string(executionNode->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode->getTopologyNode()->getId())+")\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(queryId1)+", querySubPlanId:"+std::to_string(querySubPlanId11)+")\n"
+                               "|  "+plan11->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan11->getRootOperators()[0]->getChildren()[0]->toString()+"\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(queryId1)+", querySubPlanId:"+std::to_string(querySubPlanId12)+")\n"
+                               "|  "+plan12->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan12->getRootOperators()[0]->getChildren()[0]->toString()+"\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(queryId2)+", querySubPlanId:"+std::to_string(querySubPlanId21)+")\n"
+                               "|  "+plan21->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan21->getRootOperators()[0]->getChildren()[0]->toString()+"\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(queryId2)+", querySubPlanId:"+std::to_string(querySubPlanId22)+")\n"
+                               "|  "+plan22->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan22->getRootOperators()[0]->getChildren()[0]->toString()+"\n";
+    NES_INFO("Actual query plan \n" << actualPlan);
 
-    web::json::value scheduledSubQueries1{};
-    scheduledSubQueries1["queryId"] = web::json::value::number(queryId1);
-    std::vector<web::json::value> scheduledSubQueriesFor1;
-    web::json::value scheduledSubQuery11{};
-    scheduledSubQuery11["operator"] = web::json::value::string(query11.getQueryPlan()->toString());
-    scheduledSubQuery11["querySubPlanId"] = web::json::value::number(querySubPlanId11);
-    scheduledSubQueriesFor1.push_back(scheduledSubQuery11);
-    web::json::value scheduledSubQuery12{};
-    scheduledSubQuery12["operator"] = web::json::value::string(query12.getQueryPlan()->toString());
-    scheduledSubQuery12["querySubPlanId"] = web::json::value::number(querySubPlanId12);
-    scheduledSubQueriesFor1.push_back(scheduledSubQuery12);
-    scheduledSubQueries1["querySubPlans"] = web::json::value::array(scheduledSubQueriesFor1);
-
-    web::json::value scheduledSubQueries2{};
-    scheduledSubQueries2["queryId"] = web::json::value::number(queryId2);
-    std::vector<web::json::value> scheduledSubQueriesFor2;
-    web::json::value scheduledSubQuery21{};
-    scheduledSubQuery21["operator"]= web::json::value::string(query21.getQueryPlan()->toString());
-    scheduledSubQuery21["querySubPlanId"] = web::json::value::number(querySubPlanId21);
-    scheduledSubQueriesFor2.push_back(scheduledSubQuery21);
-    web::json::value scheduledSubQuery22{};
-    scheduledSubQuery22["operator"] = web::json::value::string(query22.getQueryPlan()->toString());
-    scheduledSubQuery22["querySubPlanId"] = web::json::value::number(querySubPlanId22);
-    scheduledSubQueriesFor2.push_back(scheduledSubQuery22);
-    scheduledSubQueries2["querySubPlans"] = web::json::value::array(scheduledSubQueriesFor2);
-
-    expectedExecutionNode["ScheduledQueries"] = web::json::value::array({scheduledSubQueries1, scheduledSubQueries2});
-
-    expectedPlan["executionNodes"] = web::json::value::array({expectedExecutionNode});
     ASSERT_EQ(expectedPlan, actualPlan);
 }
 
@@ -377,42 +315,28 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     globalExecutionPlan->addExecutionNode(executionNode1);
     globalExecutionPlan->addExecutionNode(executionNode2);
 
-    const json::value& actualPlan = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan);
+    globalExecutionPlan->addExecutionNodeAsParentTo(executionNode1->getId(), executionNode2);
+    globalExecutionPlan->addExecutionNodeAsRoot(executionNode2);
 
-    NES_INFO("Actual query plan " << actualPlan);
+    const std::string& actualPlan = globalExecutionPlan->getAsString();
 
-    web::json::value expectedPlan{};
+    NES_INFO("Actual query plan \n" << actualPlan);
 
-    web::json::value expectedExecutionNode1{};
-    expectedExecutionNode1["executionNodeId"] = web::json::value::number(executionNode1->getId());
-    expectedExecutionNode1["topologyNodeId"] = web::json::value::number(executionNode1->getTopologyNode()->getId());
-    expectedExecutionNode1["topologyNodeIpAddress"] = web::json::value::string(executionNode1->getTopologyNode()->getIpAddress());
+    std::string expectedPlan = "ExecutionNode(id:"+std::to_string(executionNode2->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode2->getTopologyNode()->getId())+")\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(queryId2)+", querySubPlanId:"+std::to_string(querySubPlanId2)+")\n"
+                               "|  "+plan2->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan2->getRootOperators()[0]->getChildren()[0]->toString()+"\n"
+                               "|--ExecutionNode(id:"+std::to_string(executionNode1->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode1->getTopologyNode()->getId())+")\n"
+                               "|  | QuerySubPlan(queryId:"+std::to_string(queryId1)+", querySubPlanId:"+std::to_string(querySubPlanId1)+")\n"
+                               "|  |  "+plan1->getRootOperators()[0]->toString()+"\n"
+                               "|  |    "+plan1->getRootOperators()[0]->getChildren()[0]->toString()+"\n";
 
-    web::json::value scheduledQueries1{};
-    scheduledQueries1["queryId"] = web::json::value::number(queryId1);
-    web::json::value scheduledSubQuery1{};
-    scheduledSubQuery1["operator"] = web::json::value::string(query1.getQueryPlan()->toString());
-    scheduledSubQuery1["querySubPlanId"] = web::json::value::number(querySubPlanId1);
-    scheduledQueries1["querySubPlans"] = web::json::value::array({scheduledSubQuery1});
-    expectedExecutionNode1["ScheduledQueries"] = web::json::value::array({scheduledQueries1});
 
-    web::json::value expectedExecutionNode2{};
-    expectedExecutionNode2["executionNodeId"] = web::json::value::number(executionNode2->getId());
-    expectedExecutionNode2["topologyNodeId"] = web::json::value::number(executionNode2->getTopologyNode()->getId());
-    expectedExecutionNode2["topologyNodeIpAddress"] = web::json::value::string(executionNode2->getTopologyNode()->getIpAddress());
-
-    web::json::value scheduledQueries2{};
-    scheduledQueries2["queryId"] = web::json::value::number(queryId2);
-    web::json::value scheduledSubQuery2{};
-    scheduledSubQuery2["operator"] = web::json::value::string(query2.getQueryPlan()->toString());
-    scheduledSubQuery2["querySubPlanId"] = web::json::value::number(querySubPlanId2);
-    scheduledQueries2["querySubPlans"] = web::json::value::array({scheduledSubQuery2});
-    expectedExecutionNode2["ScheduledQueries"] = web::json::value::array({scheduledQueries2});
-
-    expectedPlan["executionNodes"] = web::json::value::array({expectedExecutionNode1, expectedExecutionNode2});
     ASSERT_EQ(expectedPlan, actualPlan);
 }
-
+/**
+ * @brief This test is for validating behaviour for a global execution plan with nested execution node with one plan for different queries
+ */
 TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEachWithOnePlanToString) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
@@ -489,7 +413,25 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
 
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode4);
 
-    const std::string actualPlan = globalExecutionPlan->getAsString();
-
+    const std::string& actualPlan = globalExecutionPlan->getAsString();
     NES_INFO("Actual query plan \n" << actualPlan);
+
+    std::string expectedPlan = "ExecutionNode(id:"+std::to_string(executionNode4->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode4->getTopologyNode()->getId())+")\n"
+                               "| QuerySubPlan(queryId:"+std::to_string(queryId4)+", querySubPlanId:"+std::to_string(querySubPlanId4)+")\n"
+                               "|  "+plan4->getRootOperators()[0]->toString()+"\n"
+                               "|    "+plan4->getRootOperators()[0]->getChildren()[0]->toString()+"\n"
+                               "|--ExecutionNode(id:"+std::to_string(executionNode3->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode3->getTopologyNode()->getId())+")\n"
+                               "|  | QuerySubPlan(queryId:"+std::to_string(queryId3)+", querySubPlanId:"+std::to_string(querySubPlanId3)+")\n"
+                               "|  |  "+plan3->getRootOperators()[0]->toString()+"\n"
+                               "|  |    "+plan3->getRootOperators()[0]->getChildren()[0]->toString()+"\n"
+                               "|  |--ExecutionNode(id:"+std::to_string(executionNode2->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode2->getTopologyNode()->getId())+")\n"
+                               "|  |  | QuerySubPlan(queryId:"+std::to_string(queryId2)+", querySubPlanId:"+std::to_string(querySubPlanId2)+")\n"
+                               "|  |  |  "+plan2->getRootOperators()[0]->toString()+"\n"
+                               "|  |  |    "+plan2->getRootOperators()[0]->getChildren()[0]->toString()+"\n"
+                               "|--ExecutionNode(id:"+std::to_string(executionNode1->getId())+", ip:localhost, topologyNodeId:"+std::to_string(executionNode1->getTopologyNode()->getId())+")\n"
+                               "|  | QuerySubPlan(queryId:"+std::to_string(queryId1)+", querySubPlanId:"+std::to_string(querySubPlanId1)+")\n"
+                               "|  |  "+plan1->getRootOperators()[0]->toString()+"\n"
+                               "|  |    "+plan1->getRootOperators()[0]->getChildren()[0]->toString()+"\n";
+
+    ASSERT_EQ(expectedPlan, actualPlan);
 }
