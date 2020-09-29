@@ -1,20 +1,23 @@
 #include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 
 namespace NES {
 
-GlobalQueryMetaData::GlobalQueryMetaData(uint64_t globalQueryId, std::vector<QueryId> queryIds, std::vector<GlobalQueryNodePtr> sinkGlobalQueryNodes)
-    : globalQueryId(globalQueryId), queryIds(queryIds), sinkGlobalQueryNodes(sinkGlobalQueryNodes), deployed(false) {}
+GlobalQueryMetaData::GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes)
+    : globalQueryId(UtilityFunctions::getNextGlobalQueryId()), queryIds(queryIds), sinkGlobalQueryNodes(sinkGlobalQueryNodes), deployed(false), newMetaData(true) {}
 
-GlobalQueryMetaDataPtr GlobalQueryMetaData::create(uint64_t globalQueryId, std::vector<QueryId> queryIds, std::vector<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
-    return std::make_shared<GlobalQueryMetaData>(GlobalQueryMetaData(globalQueryId, queryIds, sinkGlobalQueryNodes));
+GlobalQueryMetaDataPtr GlobalQueryMetaData::create(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
+    return std::make_shared<GlobalQueryMetaData>(GlobalQueryMetaData(queryIds, sinkGlobalQueryNodes));
 }
 
-void GlobalQueryMetaData::addNewQueryIdAndSinkOperators(QueryId queryId, std::vector<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
-    queryIds.push_back(queryId);
-    this->sinkGlobalQueryNodes.insert(this->sinkGlobalQueryNodes.end(), sinkGlobalQueryNodes.begin(), sinkGlobalQueryNodes.end());
+void GlobalQueryMetaData::addNewSinkGlobalQueryNodes(std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
+    for (auto sinkGQN : sinkGlobalQueryNodes) {
+        queryIds.insert(sinkGQN->getQueryIds()[0]);
+        sinkGlobalQueryNodes.insert(sinkGQN);
+    }
     markAsNotDeployed();
 }
 
@@ -65,6 +68,7 @@ void GlobalQueryMetaData::markAsNotDeployed() {
 
 void GlobalQueryMetaData::markAsDeployed() {
     this->deployed = true;
+    this->newMetaData = false;
 }
 
 bool GlobalQueryMetaData::empty() {
@@ -73,6 +77,28 @@ bool GlobalQueryMetaData::empty() {
 
 bool GlobalQueryMetaData::isDeployed() {
     return deployed;
+}
+
+bool GlobalQueryMetaData::isNewMetaData() {
+    return newMetaData;
+}
+
+std::set<GlobalQueryNodePtr> GlobalQueryMetaData::getSinkGlobalQueryNodes() {
+    return sinkGlobalQueryNodes;
+}
+
+std::set<QueryId> GlobalQueryMetaData::getQueryIds() {
+    return queryIds;
+}
+
+QueryId GlobalQueryMetaData::getGlobalQueryId() {
+    return globalQueryId;
+}
+
+void GlobalQueryMetaData::clear() {
+    queryIds.clear();
+    sinkGlobalQueryNodes.clear();
+    markAsNotDeployed();
 }
 
 }// namespace NES
