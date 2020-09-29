@@ -206,12 +206,12 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
 
-std::vector<std::string> UtilityFunctions::split(const std::string &s, char delim) {
+std::vector<std::string> UtilityFunctions::split(const std::string& s, char delim) {
     std::vector<std::string> elems;
     std::stringstream ss(s);
     std::string number;
     std::getline(ss, number, delim);
-    while(std::getline(ss, number, delim)) {
+    while (std::getline(ss, number, delim)) {
         elems.push_back(number);
     }
     return elems;
