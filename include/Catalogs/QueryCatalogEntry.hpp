@@ -66,7 +66,7 @@ class QueryCatalogEntry {
      * @brief method to get the id of the query
      * @return query id
      */
-    uint64_t getQueryId();
+    QueryId getQueryId();
 
     /**
      * @brief method to get the string of the query

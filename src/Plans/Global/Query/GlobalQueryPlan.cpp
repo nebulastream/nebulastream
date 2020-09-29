@@ -41,12 +41,18 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
     NES_INFO("GlobalQueryPlan: Remove the query plan for query " << queryId);
     const std::vector<GlobalQueryNodePtr>& globalQueryNodes = getGQNListForQueryId(queryId);
     for (GlobalQueryNodePtr globalQueryNode : globalQueryNodes) {
-        globalQueryNode->removeQuery(queryId);
-        if (globalQueryNode->isEmpty()) {
-            //TODO: remove the node
-            //root->remove(globalQueryNode);
+        //Remove the GQN with sink operator from the Global Query Plan
+        if (globalQueryNode->getOperators()[0]->instanceOf<SinkLogicalOperatorNode>()) {
+            root->remove(globalQueryNode);
         }
+        globalQueryNode->removeQuery(queryId);
     }
+
+    NES_DEBUG("Removing query information from the meta data");
+    QueryId globalQueryId = queryIdToGlobalQueryIdMap[queryId];
+    GlobalQueryMetaDataPtr globalQueryMetaData = globalQueryIdToMetaDataMap[globalQueryId];
+    globalQueryMetaData->removeQueryId(queryId);
+    queryIdToGlobalQueryIdMap.erase(queryId);
     queryIdToGlobalQueryNodeMap.erase(queryId);
 }
 
