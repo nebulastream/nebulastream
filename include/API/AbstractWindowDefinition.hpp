@@ -68,12 +68,6 @@ class WindowType {
     */
     virtual bool isSessionWindow();
 
-    /**
-     * @brief return the time value
-     * @return
-     */
-    virtual uint64_t getTime() const = 0;
-
   private:
     TimeCharacteristicPtr timeCharacteristic;
 };

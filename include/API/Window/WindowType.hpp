@@ -47,12 +47,6 @@ class TumblingWindow : public WindowType {
     */
     TimeMeasure getSize();
 
-    /**
-    * @brief return the window size as time value
-    * @return window size as time value
-    */
-    uint64_t getTime() const override;
-
   private:
     TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
     const TimeMeasure size;
@@ -72,13 +66,6 @@ class SlidingWindow : public WindowType {
     uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
         return currentTs + slide.getTime() - (currentTs % slide.getTime());
     }
-     /**
-     *  TODO not use, check if needed
-    * @brief returns the window size as time value
-    * @return window size as time value
-    */
-    uint64_t getTime() const override;
-
     /**
    * @brief Generates and adds all windows between which ended size the last watermark till the current watermark.
    * @param windows vector of windows
@@ -98,16 +85,6 @@ class SlidingWindow : public WindowType {
     * @return size of the slide
     */
     TimeMeasure getSlide();
-    /**
-    * @brief return the time value of the window size
-    * @return window size in time
-    */
-    uint64_t getSizeTime() const;
-    /**
-    * @brief return the time value of the window slide
-    * @return slide size in time
-    */
-    uint64_t getSlideTime() const;
 
   private:
     SlidingWindow(TimeCharacteristicPtr timeType, TimeMeasure size, TimeMeasure slide);
@@ -138,8 +115,6 @@ class SessionWindow : public WindowType {
     }
 
     void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
-
-    uint64_t getTime() const override;
 
   private:
     SessionWindow(TimeCharacteristicPtr timeType, TimeMeasure gap);
