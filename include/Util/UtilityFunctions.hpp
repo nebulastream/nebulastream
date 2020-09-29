@@ -161,7 +161,13 @@ class UtilityFunctions {
      * @brief Returns the next free query Id
      * @return query id
      */
-    static uint64_t getNextQueryId();
+    static QueryId getNextQueryId();
+
+    /**
+     * @brief Returns the next free global query Id
+     * @return query id
+     */
+    static QueryId getNextGlobalQueryId();
 
     /**
      * @brief Returns the next free query execution Id

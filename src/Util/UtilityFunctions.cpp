@@ -344,7 +344,12 @@ bool UtilityFunctions::startsWith(const std::string& fullString, const std::stri
     return (fullString.rfind(ending, 0) == 0);
 }
 
-uint64_t UtilityFunctions::getNextQueryId() {
+QueryId UtilityFunctions::getNextQueryId() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+}
+
+QueryId UtilityFunctions::getNextGlobalQueryId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }

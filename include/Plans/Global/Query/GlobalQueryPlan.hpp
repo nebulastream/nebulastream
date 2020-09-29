@@ -97,6 +97,18 @@ class GlobalQueryPlan {
         return vector;
     }
 
+    /**
+     * @brief
+     * @return
+     */
+    bool updateGlobalQueryMetaDataMap();
+
+    /**
+     * @brief
+     * @return
+     */
+    std::vector<GlobalQueryMetaDataPtr> getGlobalQueryMetaDataToDeploy();
+
   private:
     GlobalQueryPlan();
 
@@ -128,8 +140,8 @@ class GlobalQueryPlan {
     std::map<QueryId, std::vector<GlobalQueryNodePtr>> queryIdToGlobalQueryNodeMap;
     std::map<QueryId, GlobalQueryMetaDataPtr> globalQueryIdToMetaDataMap;
     std::map<QueryId, QueryId> queryIdToGlobalQueryIdMap;
-    bool updateGlobalQueryMetaDataMap();
-    std::vector<QueryPlanPtr> getGlobalQueryPlansToDeploy();
+
+    void checkMetaDataValidity();
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP

@@ -2,10 +2,11 @@
 #define NES_GLOBALQUERYMETADATA_HPP
 
 #include <Plans/Query/QueryId.hpp>
-#include <vector>
 #include <memory>
+#include <set>
+#include <vector>
 
-namespace NES{
+namespace NES {
 
 class Node;
 typedef std::shared_ptr<Node> NodePtr;
@@ -48,17 +49,16 @@ typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
  *  - Sink Global Query Nodes : The vector of Global Query Nodes that contains sink operators of all the Query Ids that share a common Global QueryId.
  *  - Deployed : A boolean flag indicating if the query plan is deployed or not.
  */
-class GlobalQueryMetaData{
+class GlobalQueryMetaData {
 
   public:
-    static GlobalQueryMetaDataPtr create(uint64_t globalQueryId, std::vector<QueryId> queryIds, std::vector<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    static GlobalQueryMetaDataPtr create(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
     /**
-     * @brief Add a new Query Id and associated Global Query Node with sink operators
-     * @param queryId : the original query Id
+     * @brief Add a new Set of Global Query Node with sink operators
      * @param sinkGlobalQueryNodes :  the Global Query Node with sink operators
      */
-    void addNewQueryIdAndSinkOperators(QueryId queryId, std::vector<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    void addNewSinkGlobalQueryNodes(std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
     /**
      * @brief Remove a Query Id and associated Global Query Node with sink operators
@@ -66,6 +66,11 @@ class GlobalQueryMetaData{
      * @return true if successful
      */
     bool removeQueryId(QueryId queryId);
+
+    /**
+     * @brief Clear MetaData
+     */
+    void clear();
 
     /**
      * @brief Get the Query plan for deployment
@@ -95,9 +100,32 @@ class GlobalQueryMetaData{
      */
     bool empty();
 
-  private:
+    /**
+     * @brief Check if the metadata is newly created
+     * @return true if newly created else false
+     */
+    bool isNewMetaData();
 
-    explicit GlobalQueryMetaData(uint64_t globalQueryId, std::vector<QueryId> queryIds, std::vector<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    /**
+     * @brief Get the set of Global Query Nodes with sink operators grouped together
+     * @return the set of Global Query Nodes with Sink Operators
+     */
+    std::set<GlobalQueryNodePtr> getSinkGlobalQueryNodes();
+
+    /**
+     * @brief Get the collection of registered query ids
+     * @return set of registered query ids
+     */
+    std::set<QueryId> getQueryIds();
+
+    /**
+     * @brief Get the global query id
+     * @return global query id
+     */
+    QueryId getGlobalQueryId();
+
+  private:
+    explicit GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
     /**
      * @brief method to add operators in input Global Query Nodes as child to the input parent operator
@@ -106,11 +134,12 @@ class GlobalQueryMetaData{
      */
     void appendOperator(OperatorNodePtr parentOperator, std::vector<NodePtr> childrenGQN);
 
-    uint64_t globalQueryId;
-    std::vector<QueryId> queryIds;
-    std::vector<GlobalQueryNodePtr> sinkGlobalQueryNodes;
+    QueryId globalQueryId;
+    std::set<QueryId> queryIds;
+    std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes;
     bool deployed;
+    bool newMetaData;
 };
-}
+}// namespace NES
 
 #endif//NES_GLOBALQUERYMETADATA_HPP
