@@ -5,7 +5,7 @@ namespace NES {
 QueryCatalogEntry::QueryCatalogEntry(QueryId queryId, std::string queryString, std::string queryPlacementStrategy, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus)
     : queryId(queryId), queryString(queryString), queryPlacementStrategy(queryPlacementStrategy), queryPlanPtr(queryPlanPtr), queryStatus(queryStatus) {}
 
-uint64_t QueryCatalogEntry::getQueryId() {
+QueryId QueryCatalogEntry::getQueryId() {
     return queryId;
 }
 

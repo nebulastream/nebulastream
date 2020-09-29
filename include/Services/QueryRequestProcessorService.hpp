@@ -5,6 +5,9 @@
 
 namespace NES {
 
+class GlobalQueryPlan;
+typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
@@ -30,7 +33,6 @@ class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 class GlobalExecutionPlan;
-
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class Topology;
@@ -78,6 +80,8 @@ class QueryRequestProcessorService {
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     QueryRequestQueuePtr queryRequestQueue;
+    GlobalQueryPlanPtr globalQueryPlan;
+
 };
 }// namespace NES
 #endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP
