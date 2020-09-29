@@ -3,8 +3,12 @@
 
 #include <memory>
 #include <vector>
+#include <map>
 
 namespace NES {
+
+class Node;
+typedef std::shared_ptr<Node> NodePtr;
 
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;

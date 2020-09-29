@@ -7,6 +7,7 @@
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
+#include <Phases/QueryMergerPhase.hpp>
 #include <Phases/QueryPlacementPhase.hpp>
 #include <Phases/QueryPlacementRefinementPhase.hpp>
 #include <Phases/QueryRewritePhase.hpp>
@@ -37,10 +38,13 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     queryPlacementRefinementPhase = QueryPlacementRefinementPhase::create(globalExecutionPlan);
     globalQueryPlan = GlobalQueryPlan::create();
+    queryMergerPhase = QueryMergerPhase::create();
 }
+
 QueryRequestProcessorService::~QueryRequestProcessorService() {
     NES_DEBUG("~QueryRequestProcessorService()");
 }
+
 void QueryRequestProcessorService::start() {
 
     try {
@@ -77,6 +81,11 @@ void QueryRequestProcessorService::start() {
                     } else {
                         NES_ERROR("QueryProcessingService: Request received for query with status " << queryCatalogEntry.getQueryStatus() << " ");
                         throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling}, queryCatalogEntry.getQueryStatus());
+                    }
+
+                    if(enableQueryMerging){
+                        NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
+                        queryMergerPhase->execute(globalQueryPlan);
                     }
 
                     globalQueryPlan->updateGlobalQueryMetaDataMap();
