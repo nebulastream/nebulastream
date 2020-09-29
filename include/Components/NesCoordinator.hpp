@@ -49,7 +49,7 @@ typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
-    explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots);
+    explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots, bool enableQueryMerging);
 
     /**
      * @brief constructor with default numberOfSlots

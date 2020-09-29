@@ -173,7 +173,7 @@ bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
         QueryId globalQueryId = hostGlobalQueryMetaData->getGlobalQueryId();
         globalQueryIdToMetaDataMap[globalQueryId] = hostGlobalQueryMetaData;
 
-        for(auto queryId : queryIds){
+        for (auto queryId : queryIds) {
             queryIdToGlobalQueryIdMap[queryId] = globalQueryId;
         }
     }
@@ -227,10 +227,9 @@ std::vector<GlobalQueryMetaDataPtr> GlobalQueryPlan::getGlobalQueryMetaDataToDep
             continue;
         }
 
-        //TODO: remove empty Meta Data entries
-        //        if (globalQueryMetaData->empty()) {
-        //            globalQueryIdToMetaDataMap.erase(globalQueryMetaData->getGlobalQueryId());
-        //        }
+        if (globalQueryMetaData->empty()) {
+            globalQueryIdToMetaDataMap.erase(globalQueryMetaData->getGlobalQueryId());
+        }
         globalQueryMetaDataToDeploy.push_back(globalQueryMetaData);
     }
     return globalQueryMetaDataToDeploy;
