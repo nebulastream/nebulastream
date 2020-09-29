@@ -9,6 +9,7 @@ add_source_nes(
         QueryRewritePhase.cpp
         QueryDeploymentPhase.cpp
         QueryUndeploymentPhase.cpp
+        QueryMergerPhase.cpp
         QueryPlacementRefinementPhase.cpp
         GlobalQueryPlanUpdatePhase.cpp
 )

@@ -30,7 +30,7 @@ using grpc::Status;
 
 namespace NES {
 
-NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots)
+NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots, bool enableQueryMerging)
     : serverIp(serverIp), restPort(restPort), rpcPort(rpcPort), numberOfSlots(numberOfSlots) {
     NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
@@ -43,13 +43,13 @@ NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<QueryRequestQueue>();
-    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topology, queryCatalog,
-                                                                                  streamCatalog, workerRpcClient, queryRequestQueue);
+    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topology, queryCatalog, streamCatalog,
+                                                                                  workerRpcClient, queryRequestQueue, enableQueryMerging);
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
 
 // constructor with default numberOfSlots set to the number of processors
-NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort) : NesCoordinator(serverIp, restPort, rpcPort, std::thread::hardware_concurrency()) {}
+NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort) : NesCoordinator(serverIp, restPort, rpcPort, std::thread::hardware_concurrency(), false) {}
 
 NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator()");

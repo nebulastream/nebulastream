@@ -24,10 +24,10 @@
 
 namespace NES {
 
-QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                                           QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                                           QueryRequestQueuePtr queryRequestQueue)
-    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue) {
+QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryCatalogPtr queryCatalog,
+                                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue,
+                                                           bool enableQueryMerging)
+    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), enableQueryMerging(enableQueryMerging) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -82,9 +82,9 @@ void QueryRequestProcessorService::start() {
                     globalQueryPlan->updateGlobalQueryMetaDataMap();
                     std::vector<GlobalQueryMetaDataPtr> listOfGlobalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
 
-                    for(auto globalQueryMetaData: listOfGlobalQueryMetaData){
+                    for (auto globalQueryMetaData : listOfGlobalQueryMetaData) {
 
-                        if(!globalQueryMetaData->isNewMetaData()){
+                        if (!globalQueryMetaData->isNewMetaData()) {
                             QueryId globalQueryId = globalQueryMetaData->getGlobalQueryId();
                             bool successful = queryUndeploymentPhase->execute(queryId);
                             if (!successful) {
@@ -92,7 +92,7 @@ void QueryRequestProcessorService::start() {
                             }
                         }
 
-                        if(!globalQueryMetaData->empty()){
+                        if (!globalQueryMetaData->empty()) {
 
                             auto queryPlan = globalQueryMetaData->getQueryPlan();
 
@@ -116,7 +116,7 @@ void QueryRequestProcessorService::start() {
                         }
                     }
 
-                    if(queryCatalogEntry.getQueryStatus() == QueryStatus::Registered){
+                    if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                     } else {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
