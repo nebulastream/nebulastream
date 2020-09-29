@@ -98,6 +98,15 @@ class UtilityFunctions {
     static std::string getFirstStringBetweenTwoDelimiters(const std::string& input, std::string s1, std::string s2);
 
     /**
+  * @brief transforms a string into an string vector
+  * from: https://stackoverflow.com/questions/20755140/split-string-by-a-character
+  * @param s is the string to split
+  * @param delim is the delimiter to split the string
+  * @return vector of strings
+  */
+    static std::vector<std::string> split(const std::string &s, char delim);
+
+    /**
    * @brief Outputs a tuple buffer accordingly to a specific schema
    * @param buffer the tuple buffer
    * @param schema  the schema

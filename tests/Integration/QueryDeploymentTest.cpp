@@ -7,6 +7,7 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
+#include <Util/UtilityFunctions.hpp>
 
 using namespace std;
 
@@ -34,18 +35,6 @@ class QueryDeploymentTest : public testing::Test {
     }
 
     std::string ipAddress = "127.0.0.1";
-
-    //from: https://stackoverflow.com/questions/20755140/split-string-by-a-character
-    std::vector<string> split(const std::string &s, char delim) {
-        std::vector<string> elems;
-        std::stringstream ss(s);
-        std::string number;
-        std::getline(ss, number, delim);
-        while(std::getline(ss, number, delim)) {
-            elems.push_back(number);
-        }
-        return elems;
-    }
 };
 
 /**
@@ -675,19 +664,19 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
         NES_INFO("print line from content" << line);
         rowNumber++;
         if (rowNumber == 4) {
-            std::vector<string> content = split(line, '|');
+            std::vector<string> content = UtilityFunctions::split(line, '|');
             NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): content=" << content.at(3));
             NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): expContent=2524687220000");
             EXPECT_EQ(content.at(3), "2524687220000");
         }
         if (rowNumber == 5) {
-            std::vector<string> content = split(line, '|');
+            std::vector<string> content = UtilityFunctions::split(line, '|');
             NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): content=" << content.at(3));
             NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): expContent=1262343620010");
             EXPECT_EQ(content.at(3), "1262343620010");
         }
         if (rowNumber > 17 && rowNumber < 28) {
-            std::vector<string> content = split(line, '|');
+            std::vector<string> content = UtilityFunctions::split(line, '|');
             NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): content=" << content.at(3));
             NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): expContent=0");
             EXPECT_EQ(content.at(3), "0");
