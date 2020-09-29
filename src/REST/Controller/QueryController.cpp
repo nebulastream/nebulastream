@@ -26,7 +26,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
         NES_INFO("QueryController:: execution-plan");
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
-                try{
+                try {
                     // get the queryId from user input
                     string userRequest(body.begin(), body.end());
                     json::value req = json::value::parse(userRequest);
@@ -39,8 +39,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     //Prepare the response
                     successMessageImpl(message, executionPlanJson);
                     return;
-                }
-                catch (...) {
+                } catch (...) {
                     RuntimeUtils::printStackTrace();
                     internalServerErrorImpl(message);
                 }

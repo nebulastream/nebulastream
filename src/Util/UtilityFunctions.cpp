@@ -1,4 +1,5 @@
 #include <API/Query.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -20,15 +21,13 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
 #include <random>
-#include <Topology/TopologyNode.hpp>
-#include <Topology/Topology.hpp>
-#include <Catalogs/QueryCatalog.hpp>
-
 
 namespace NES {
 

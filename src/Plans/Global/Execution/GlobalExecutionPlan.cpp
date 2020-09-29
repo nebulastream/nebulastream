@@ -119,7 +119,7 @@ std::vector<ExecutionNodePtr> GlobalExecutionPlan::getExecutionNodesByQueryId(Qu
 std::vector<ExecutionNodePtr> GlobalExecutionPlan::getAllExecutionNodes() {
     NES_INFO("GlobalExecutionPlan: get all execution nodes");
     std::vector<ExecutionNodePtr> executionNodes;
-    for(auto&[nodeId, executionNode] : nodeIdIndex){
+    for (auto& [nodeId, executionNode] : nodeIdIndex) {
         executionNodes.push_back(executionNode);
     }
     return executionNodes;
@@ -141,7 +141,6 @@ std::string GlobalExecutionPlan::getAsString() {
     auto dumpHandler = ConsoleDumpHandler::create();
     for (auto rootNode : rootNodes) {
         dumpHandler->multilineDump(rootNode, ss);
-
     }
     return ss.str();
 }
