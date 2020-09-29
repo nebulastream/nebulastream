@@ -17,6 +17,9 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 class QueryRewritePhase;
 typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 
+class QueryMergerPhase;
+typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
+
 class QueryPlacementPhase;
 typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
 
@@ -82,6 +85,7 @@ class QueryRequestProcessorService {
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     QueryRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
+    QueryMergerPhasePtr queryMergerPhase;
     bool enableQueryMerging;
 };
 }// namespace NES
