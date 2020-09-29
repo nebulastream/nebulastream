@@ -104,7 +104,7 @@ class UtilityFunctions {
   * @param delim is the delimiter to split the string
   * @return vector of strings
   */
-    static std::vector<std::string> split(const std::string &s, char delim);
+    static std::vector<std::string> split(const std::string& s, char delim);
 
     /**
    * @brief Outputs a tuple buffer accordingly to a specific schema
