@@ -127,7 +127,7 @@ bool ExecutionNode::updateQuerySubPlans(QueryId queryId, std::vector<QueryPlanPt
 
 const std::string ExecutionNode::toString() const {
     return "ExecutionNode(id:" + std::to_string(id) + ", ip:" + topologyNode->getIpAddress() + ", topologyNodeId:"
-           + std::to_string(topologyNode->getId()) + ")";
+        + std::to_string(topologyNode->getId()) + ")";
 }
 
 ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) {
@@ -158,8 +158,8 @@ const std::vector<std::string> ExecutionNode::toMultilineString() {
     lines.push_back(toString());
 
     for (auto mapOfQuerySubPlan : mapOfQuerySubPlans) {
-        for (auto queryPlan: mapOfQuerySubPlan.second) {
-            lines.push_back("QuerySubPlan(queryId:"+std::to_string(mapOfQuerySubPlan.first)+ ", querySubPlanId:" + std::to_string(queryPlan->getQuerySubPlanId()) + ")");
+        for (auto queryPlan : mapOfQuerySubPlan.second) {
+            lines.push_back("QuerySubPlan(queryId:" + std::to_string(mapOfQuerySubPlan.first) + ", querySubPlanId:" + std::to_string(queryPlan->getQuerySubPlanId()) + ")");
 
             // Split the string representation of the queryPlan into multiple lines
             std::string s = queryPlan->toString();
@@ -168,7 +168,7 @@ const std::vector<std::string> ExecutionNode::toMultilineString() {
             std::string token;
             while ((pos = s.find(delimiter)) != std::string::npos) {
                 token = s.substr(0, pos);
-                lines.push_back(' '+token);
+                lines.push_back(' ' + token);
                 s.erase(0, pos + delimiter.length());
             }
         }
