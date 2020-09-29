@@ -114,11 +114,12 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
 TEST_F(QueryTest, testQuerySlidingWindow) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfig streamConf;
-    streamConf.physicalStreamName = "test2";
-    streamConf.logicalStreamName = "test_stream";
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
+        /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+        /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+        /**Logical Stream Name**/ "test_stream");
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addPhysicalStream("default_logical", sce);

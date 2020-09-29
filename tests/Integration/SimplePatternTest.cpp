@@ -1,13 +1,12 @@
-#include <iostream>
-#include <Util/Logger.hpp>
-#include <gtest/gtest.h>
-#include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <Services/QueryService.hpp>
+#include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <Services/QueryService.hpp>
 
 //used tests: QueryCatalogTest, QueryTest
 namespace fs = std::filesystem;
@@ -156,7 +155,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 /* 3.Test
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
-TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkers) {
+TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -189,23 +188,15 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkers) {
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
 
    //register physical stream R2000070
-    PhysicalStreamConfig conf70;
-    conf70.logicalStreamName = "QnV";
-    conf70.physicalStreamName = "test_stream_R2000070";
-    conf70.sourceType = "CSVSource";
-    conf70.sourceConfig = "../tests/test_data/QnV_short_R2000070.csv";
-    conf70.numberOfBuffersToProduce = 1;
-    conf70.sourceFrequency = 1;
+    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_R2000070.csv",
+                                                                  1, 0, 1,
+                                                                  "test_stream_R2000070", "QnV");
     wrk1->registerPhysicalStream(conf70);
 
     //register physical stream R2000073
-    PhysicalStreamConfig conf73;
-    conf73.logicalStreamName = "QnV";
-    conf73.physicalStreamName = "test_stream_R2000073";
-    conf73.sourceType = "CSVSource";
-    conf73.sourceConfig = "../tests/test_data/QnV_short_R2000073.csv";
-    conf73.numberOfBuffersToProduce = 1;
-    conf73.sourceFrequency = 1;
+    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_R2000073.csv",
+                                                                  1, 0, 1,
+                                                                  "test_stream_R2000073", "QnV");
     wrk2->registerPhysicalStream(conf73);
 
     std::string outputFilePath =
@@ -221,29 +212,39 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkers) {
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
     ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    //TODO Patternname waiting for String support in map operator
-
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|R2000073|1543624020000|102.629631|8|1|\n"
-        "|R2000070|1543625280000|108.166664|5|1|\n"
-        "+----------------------------------------------------+";
-
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
 
-    NES_DEBUG("content=" << content);
-    NES_DEBUG("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    std::string line;
+    int rowNumber = 0;
+    bool resultWrk1 = false;
+    bool resultWrk2 = false;
+
+    while (std::getline(ifs, line)) {
+        NES_INFO("print line from content" << line);
+        rowNumber++;
+        if ((rowNumber > 3 && rowNumber < 6) || (rowNumber > 8 && rowNumber < 11) ) {
+            std::vector<string> content = UtilityFunctions::split(line, '|');
+            if (content.at(0) == "R2000073") {
+                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): content=" << content.at(2));
+                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): expContent= 102.629631");
+                EXPECT_EQ(content.at(2), "102.629631");
+                resultWrk1 = true;
+            }
+            else {
+                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): content=" << content.at(2));
+                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): expContent= 108.166664");
+                EXPECT_EQ(content.at(2), "108.166664");
+                resultWrk2 = true;
+            }
+        }
+    }
+
+    EXPECT_TRUE((resultWrk1 && resultWrk2));
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);

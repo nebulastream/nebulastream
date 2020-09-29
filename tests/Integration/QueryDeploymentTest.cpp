@@ -643,13 +643,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTim
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     //register physical stream R2000070
-    PhysicalStreamConfig conf70;
-    conf70.logicalStreamName = "window";
-    conf70.physicalStreamName = "test_stream";
-    conf70.sourceType = "CSVSource";
-    conf70.sourceConfig = "../tests/test_data/window.csv";
-    conf70.numberOfBuffersToProduce = 1;
-    conf70.sourceFrequency = 1;
+    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
+                                                                1, 0, 1,
+                                                                "test_stream", "window");
+
     wrk1->registerPhysicalStream(conf70);
 
     std::string outputFilePath =
@@ -852,7 +849,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerDistributedWindowQueryEventTime) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) {
     ::testing::GTEST_FLAG(throw_on_failure) = true;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);

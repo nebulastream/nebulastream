@@ -40,7 +40,7 @@ class E2ECoordinatorMultiQueryTest : public testing::Test {
 /**
  * @brief This test starts two workers and a coordinator and submit the same query but will output the results in different files
  */
-TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFileOutputTwoQueries) {
+TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTwoQueries) {
     NES_INFO(" start coordinator");
     std::string pathQuery1 = "query1.out";
     std::string pathQuery2 = "query2.out";
