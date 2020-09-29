@@ -137,19 +137,20 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
     auto windows = std::make_shared<std::vector<WindowState>>();
     // the window type adds result windows to the windows vectors
     if (store->getLastWatermark() == 0) {
-        if (windowType->isTumblingWindow()){
+        if (windowType->isTumblingWindow()) {
             TumblingWindow* tumbWindow = dynamic_cast<TumblingWindow*>(windowType.get());
             NES_DEBUG("WindowHandler::aggregateWindows: successful cast to TumblingWindow");
             auto initWatermark = watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
             NES_DEBUG("WindowHandler::aggregateWindows(TumblingWindow): getLastWatermark was 0 set to=" << initWatermark);
             store->setLastWatermark(initWatermark);
-        }if (windowType->isSlidingWindow()){
+        }
+        if (windowType->isSlidingWindow()) {
             SlidingWindow* slidWindow = dynamic_cast<SlidingWindow*>(windowType.get());
             NES_DEBUG("WindowHandler::aggregateWindows: successful cast to SlidingWindow");
             auto initWatermark = watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
             NES_DEBUG("WindowHandler::aggregateWindows(SlidingWindow): getLastWatermark was 0 set to=" << initWatermark);
             store->setLastWatermark(initWatermark);
-        }else{
+        } else {
             NES_DEBUG("WindowHandler::aggregateWindows: Unkown WindowType; LastWatermark was 0 and remains 0");
         }
     } else {
