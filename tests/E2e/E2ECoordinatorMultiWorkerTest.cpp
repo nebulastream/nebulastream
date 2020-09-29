@@ -4,6 +4,7 @@
 #include <unistd.h>
 #define GetCurrentDir getcwd
 #include <Util/TestUtils.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <boost/process.hpp>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
@@ -268,7 +269,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
+TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
@@ -360,25 +361,33 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingValidSimplePatternWithFil
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|R2000073|1543624020000|102.629631|8|1|\n"
-        "|R2000070|1543625280000|108.166664|5|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|R2000073|1543624020000|102.629631|8|1|\n"
-        "|R2000070|1543625280000|108.166664|5|1|\n"
-        "+----------------------------------------------------+";
+    std::string line;
+    int rowNumber = 0;
+    bool resultWrk1 = false;
+    bool resultWrk2 = false;
 
-    NES_INFO("content=" << content);
-    NES_INFO("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    while (std::getline(ifs, line)) {
+        NES_INFO("print line from content" << line);
+        rowNumber++;
+        if ((rowNumber > 3 && rowNumber < 6) || (rowNumber > 8 && rowNumber < 11) ) {
+            std::vector<string> content = UtilityFunctions::split(line, '|');
+            if (content.at(0) == "R2000073") {
+                NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): content=" << content.at(2));
+                NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): expContent= 102.629631");
+                EXPECT_EQ(content.at(2), "102.629631");
+                resultWrk1 = true;
+            }
+            else {
+                NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): content=" << content.at(2));
+                NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): expContent= 108.166664");
+                EXPECT_EQ(content.at(2), "108.166664");
+                resultWrk2 = true;
+            }
+        }
+    }
+
+    EXPECT_TRUE((resultWrk1 && resultWrk2));
 
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
@@ -392,7 +401,7 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingValidSimplePatternWithFil
 }
 
 TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingValidUserQueryWithTumblingWindowFileOutput) {
-    //TODO same Error as DistributedWindow Test in QueryDeploymentTest, add later
+    //TODO result content does not end up in file?
     NES_INFO(" start coordinator");
     std::string outputFilePath =
         "testExecutingValidUserQueryWithTumblingWindowFileOutput.txt";
