@@ -2,7 +2,6 @@
 
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Monitoring/Protocols/SamplingProtocol.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/DiscMetrics.hpp>
@@ -17,11 +16,14 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Util/Logger.hpp>
 
-#include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <Services/MonitoringService.hpp>
 #include <memory>
+
+#define private public
+#include <Components/NesCoordinator.hpp>
 
 namespace NES {
 
@@ -294,17 +296,44 @@ TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
     ASSERT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
 }
 
-TEST_F(MonitoringStackTest, testSamplingProtocol) {
-    auto cpuStats = MetricUtils::CPUStats();
-    int systemMetrics = 22;
+TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
+    NES_INFO("MonitoringStackTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(false);
+    EXPECT_NE(port, 0);
+    NES_INFO("MonitoringStackTest: Coordinator started successfully");
 
-    //static sampling func
-    auto samplingProtocolPtr = std::make_shared<SamplingProtocol>([systemMetrics]() {
-      sleep(1);
-      return MetricGroup::create();
-    });
+    NES_INFO("MonitoringStackTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
+                                                    port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(false,false);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MonitoringStackTest: Worker1 started successfully");
 
-    auto output = samplingProtocolPtr->getSample();
+    bool retConWrk1 = wrk1->connect();
+    EXPECT_TRUE(retConWrk1);
+    NES_INFO("MonitoringStackTest: Worker 1 connected ");
+
+    // requesting the monitoring data
+    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto plan = MonitoringPlan::create(metrics);
+
+    std::string destAddress = "127.0.0.1:" + std::to_string(port + 10);
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto schema = crd->workerRpcClient->requestMonitoringData(destAddress, plan, tupleBuffer);
+
+    NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port+10));
+    ASSERT_TRUE(schema->getSize()>1);
+    ASSERT_TRUE(tupleBuffer.getNumberOfTuples()==1);
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+
+    NES_INFO("MonitoringStackTest: Stopping worker");
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("MonitoringStackTest: stopping coordinator");
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
 }
 
 TEST_F(MonitoringStackTest, requestMonitoringData) {
@@ -326,15 +355,15 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
     NES_INFO("MonitoringStackTest: Worker 1 connected ");
 
     // requesting the monitoring data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
 
-    auto schema = crd->requestMonitoringData("127.0.0.1", port + 10, plan, tupleBuffer);
+    //TODO: extend this method to collect data also from prometheus
+    auto [schema, tupleBuffer] = crd->getMonitoringService()->requestMonitoringData("127.0.0.1", port + 10, plan);
     NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port+10));
     ASSERT_TRUE(schema->getSize()>1);
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples()==1);
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    //NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 
     NES_INFO("MonitoringStackTest: Stopping worker");
     bool retStopWrk1 = wrk1->stop(false);
@@ -344,5 +373,7 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
+
+
 
 }

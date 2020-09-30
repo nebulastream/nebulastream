@@ -1,10 +1,11 @@
 add_source_nes(
         RestEngine.cpp
         Controller/BaseController.cpp
+        Controller/ConnectivityController.cpp
+        Controller/MonitoringController.cpp
+        Controller/QueryCatalogController.cpp
         Controller/QueryController.cpp
         Controller/StreamCatalogController.cpp
-        Controller/QueryCatalogController.cpp
-        Controller/ConnectivityController.cpp
         Controller/TopologyController.cpp
         NetworkUtils.cpp
         RestServer.cpp

@@ -180,7 +180,7 @@ bool WorkerRPCClient::stopQuery(std::string address, QueryId queryId) {
     }
 }
 
-SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, TupleBuffer buf) {
+SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, TupleBuffer& buf) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
 
     MonitoringRequest request;
@@ -197,6 +197,7 @@ SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, Mon
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
         auto parsedSchema = SchemaSerializationUtil::deserializeSchema(reply.mutable_schema());
+        memcpy(buf.getBufferAs<char>(), reply.buffer().data(), parsedSchema->getSchemaSizeInBytes());
         buf.setNumberOfTuples(1);
         reply.release_buffer();
 

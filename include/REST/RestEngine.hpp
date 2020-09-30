@@ -8,7 +8,8 @@
 #include "REST/Controller/StreamCatalogController.hpp"
 #include <REST/Controller/ConnectivityController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
-#include <REST/Controller/TopologyController.hpp>
+#include <REST/Controller/MonitoringController.hpp>
+
 #include <cpprest/details/http_server.h>
 #include <cpprest/http_listener.h>
 #include <pplx/pplxtasks.h>
@@ -19,8 +20,8 @@ using namespace http;
 using namespace http::experimental::listener;
 
 namespace NES {
-class NesCoordinator;
-typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
+class MonitoringService;
+typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
 
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
@@ -41,11 +42,11 @@ class RestEngine : public BaseController {
     StreamCatalogPtr streamCatalog;
     StreamCatalogControllerPtr streamCatalogController;
     ConnectivityControllerPtr connectivityController;
-    TopologyControllerPtr topologyController;
+    MonitoringControllerPtr monitoringController;
 
   public:
     RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
-               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService);
+               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService, MonitoringServicePtr monitoringService);
 
     ~RestEngine();
 

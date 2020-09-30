@@ -1,9 +1,33 @@
 #ifndef IMPL_REST_RESTSERVER_H_
 #define IMPL_REST_RESTSERVER_H_
 
-#include <REST/RestEngine.hpp>
+#include <memory>
 
 namespace NES {
+
+class RestEngine;
+typedef std::shared_ptr<RestEngine> RestEnginePtr;
+
+class NesCoordinator;
+typedef std::weak_ptr<NesCoordinator> NesCoordinatorWeakPtr;
+
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
+
+class GlobalExecutionPlan;
+typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+
+class QueryService;
+typedef std::shared_ptr<QueryService> QueryServicePtr;
+
+class MonitoringService;
+typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
 
 /**
  * @brief : This class is responsible for starting the REST server.
@@ -19,7 +43,7 @@ class RestServer {
      *
    * */
     RestServer(std::string host, u_int16_t port, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService);
+               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService, MonitoringServicePtr monitoringService);
 
     ~RestServer();
     /**

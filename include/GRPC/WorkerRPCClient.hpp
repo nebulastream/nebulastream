@@ -87,7 +87,7 @@ class WorkerRPCClient {
      * @param the buffer where the data will be written into
      * @return true if successful, else false
      */
-    SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, TupleBuffer buf);
+    SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, TupleBuffer& buf);
 
   private:
 };

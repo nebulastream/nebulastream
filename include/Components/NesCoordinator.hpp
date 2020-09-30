@@ -44,8 +44,8 @@ typedef std::shared_ptr<QueryRequestProcessorService> QueryRequestProcessorServi
 class QueryService;
 typedef std::shared_ptr<QueryService> QueryServicePtr;
 
-class MonitoringPlan;
-typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
+class MonitoringService;
+typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
@@ -112,14 +112,10 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     QueryCatalogPtr getQueryCatalog();
 
     /**
-     * @brief Requests from a remote worker node its monitoring data.
-     * @param ipAddress
-     * @param grpcPort
-     * @param the mutable schema to be extended
-     * @param the buffer where the data will be written into
-     * @return true if successful, else false
+     * @brief Get instance of monitoring service
+     * @return monitoring service pointer
      */
-    SchemaPtr requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan, TupleBuffer buf);
+    MonitoringServicePtr getMonitoringService();
 
   private:
     /**
@@ -146,6 +142,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     std::atomic<bool> stopped;
     QueryRequestProcessorServicePtr queryRequestProcessorService;
     QueryServicePtr queryService;
+    MonitoringServicePtr monitoringService;
     WorkerRPCClientPtr workerRpcClient;
     QueryRequestQueuePtr queryRequestQueue;
 };
