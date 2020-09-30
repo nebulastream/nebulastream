@@ -5,6 +5,7 @@ RUN dpkg -i *.deb && \
     apt install iproute2 ifupdown net-tools -y -qq && \
     apt autoclean -y -qq
 ADD ./resources/exdra.csv /opt/local/nebula-stream/exdra.csv
+ADD ./entrypoint-containernet.sh /entrypoint-containernet.sh
 ADD ./entrypoint-nes-executable.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
