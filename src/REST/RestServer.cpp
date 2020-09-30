@@ -1,16 +1,21 @@
-#include <Catalogs/StreamCatalog.hpp>
 #include <REST/RestServer.hpp>
+
+#include <REST/RestEngine.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 
+#include <Components/NesCoordinator.hpp>
+
 namespace NES {
 
 RestServer::RestServer(std::string host, u_int16_t port, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                       TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService)
-    : host(host), port(port) {
-    restEngine = std::make_shared<RestEngine>(streamCatalog, coordinator, queryCatalog, topology, globalExecutionPlan, queryService);
+                       TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService, MonitoringServicePtr monitoringService)
+    : host(host), port(port), restEngine(std::make_shared<RestEngine>(streamCatalog, coordinator, queryCatalog, topology, globalExecutionPlan, queryService, monitoringService))
+{
+    NES_DEBUG("RestServer: Initializing");
 }
 
 RestServer::~RestServer() {

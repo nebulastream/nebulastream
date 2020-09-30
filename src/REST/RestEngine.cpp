@@ -6,13 +6,13 @@
 namespace NES {
 
 RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
-                       TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService) : streamCatalog(streamCatalog) {
+                       TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService, MonitoringServicePtr monitoringService) : streamCatalog(streamCatalog) {
     NES_DEBUG("RestEngine");
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator);
     queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
     connectivityController = std::make_shared<ConnectivityController>();
-    topologyController = std::make_shared<TopologyController>(topology);
+    monitoringController = std::make_shared<MonitoringController>(monitoringService);
 }
 
 RestEngine::~RestEngine() {
@@ -58,10 +58,11 @@ void RestEngine::handleGet(http_request message) {
         } else if (paths[0] == "queryCatalog") {
             queryCatalogController->handleGet(paths, message);
             return;
+        } else if (paths[0] == "monitoring") {
+            monitoringController->handleGet(paths, message);
+            return;
         } else if (paths[0] == "connectivity" && paths.size() == 1) {
             connectivityController->handleGet(paths, message);
-        } else if (paths[0] == "topology") {
-            topologyController->handleGet(paths, message);
         }
     }
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));

@@ -18,11 +18,10 @@
 
 //GRPC Includes
 #include <GRPC/CoordinatorRPCServer.hpp>
-#include <Monitoring/Metrics/MetricGroup.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
+#include <Services/MonitoringService.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -69,6 +68,7 @@ NesCoordinator::~NesCoordinator() {
     queryRequestQueue.reset();
     queryRequestProcessorService.reset();
     queryService.reset();
+    monitoringService.reset();
     queryRequestProcessorThread.reset();
     worker.reset();
     coordinatorEngine.reset();
@@ -126,10 +126,14 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
                                          rpcPort + 1, rpcPort + 2, numberOfSlots, NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
+    //create the monitoring service, it can only be used if a NesWorker has started
+    NES_DEBUG("NesCoordinator: Initializing monitoring service");
+    monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology, worker->getNodeEngine()->getBufferManager());
+
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     restServer = std::make_shared<RestServer>(serverIp, restPort, this->weak_from_this(), queryCatalog,
-                                              streamCatalog, topology, globalExecutionPlan, queryService);
+                                              streamCatalog, topology, globalExecutionPlan, queryService, monitoringService);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking
@@ -238,11 +242,8 @@ QueryCatalogPtr NesCoordinator::getQueryCatalog() {
     return queryCatalog;
 }
 
-SchemaPtr NesCoordinator::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan, TupleBuffer buf) {
-    std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
-    NES_DEBUG("NesCoordinator: Requesting monitoring data from worker address= " + destAddress);
-
-    return workerRpcClient->requestMonitoringData(destAddress, plan, buf);
+MonitoringServicePtr NesCoordinator::getMonitoringService() {
+    return monitoringService;
 }
 
 }// namespace NES
