@@ -87,7 +87,7 @@ const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanI
  * @param password as string to log in to the OPC server
  * @return a data sink pointer
  */
-const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string url, UA_NodeId* nodeId, const std::string user, const std::string password);
+const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& url, UA_NodeId* nodeId, const std::string& user, const std::string& password);
 #endif
 /**
  * @brief create a ZMQ test sink with a schema and CSV format output

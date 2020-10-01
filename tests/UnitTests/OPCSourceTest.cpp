@@ -24,7 +24,7 @@
  */
 
 
-const std::string url = "opc.tcp://localhost:4840";
+const std::string& url = "opc.tcp://localhost:4840";
 
 namespace NES {
 
@@ -45,12 +45,12 @@ class OPCSourceTest : public testing::Test {
                 Schema::create()
                         ->addField("var", UINT32);
         
-        auto nodeEngine = NodeEngine::create("127.0.0.1", 3000);
+        auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, sizeof(uint32_t), 1);
 
-        bufferManager = std::make_shared<BufferManager>();
+        bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();
 
-        bufferManager->configure(sizeof(uint32_t),1);
+        buffer_size = bufferManager->getBufferSize();
 
         ASSERT_GT(buffer_size, 0);
 
@@ -95,7 +95,7 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
 
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, &nodeId, user, password);
 
-    std::string expected = "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1. ";
+    std::string expected = "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
 
     EXPECT_EQ(opcSource->toString(), expected);
 

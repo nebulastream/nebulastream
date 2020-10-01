@@ -2,19 +2,15 @@
 #ifdef ENABLE_OPC_BUILD
 #include <string>
 #include <cstring>
-#include <thread>
-#include <memory>
 #include <NodeEngine/QueryManager.hpp>
-#include <NodeEngine/BufferManager.hpp>
 
 #include <open62541/client_config_default.h>
-#include <open62541/client_highlevel.h>
-#include <open62541/client_subscriptions.h>
-#include <open62541/plugin/log_stdout.h>
 
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <Sinks/SinkCreator.hpp>
+#include <Sources/SourceCreator.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 #include <NodeEngine/NodeEngine.hpp>
 
@@ -23,7 +19,7 @@
  */
 
 
-const std::string url = "opc.tcp://localhost:4840";
+const std::string& url = "opc.tcp://localhost:4840";
 
 namespace NES {
 
@@ -40,14 +36,14 @@ class OPCSinkTest : public testing::Test {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         NES::setupLogging("OPCSinkTest.log", NES::LOG_DEBUG);
 
+        nodeEngine = NodeEngine::create("127.0.0.1", 31337, sizeof(uint32_t), 1);
         test_schema =
                 Schema::create()
                         ->addField("var", UINT32);
-        bufferManager = std::make_shared<BufferManager>();
+        bufferManager = nodeEngine->getBufferManager();
+        queryManager = nodeEngine->getQueryManager();
 
-        bufferManager->configure(sizeof(uint32_t),1);
-
-        ASSERT_GT(buffer_size, 0);
+        ASSERT_GT(bufferManager->getBufferSize(), 0);
 
     }
 
@@ -64,6 +60,8 @@ class OPCSinkTest : public testing::Test {
     BufferManagerPtr bufferManager;
     SchemaPtr test_schema;
     size_t buffer_size;
+    NodeEnginePtr nodeEngine;
+    QueryManagerPtr queryManager;
 
   protected:
     UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
@@ -76,7 +74,6 @@ class OPCSinkTest : public testing::Test {
  * Tests basic set up of OPC sink
  */
 TEST_F(OPCSinkTest, OPCSourceInit) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, &nodeId, user, password);
 
     SUCCEED();
@@ -86,10 +83,9 @@ TEST_F(OPCSinkTest, OPCSourceInit) {
  * Test if schema, OPC server url, and node index are the same
  */
 TEST_F(OPCSinkTest, OPCSourcePrint) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, &nodeId, user, password);
 
-    std::string expected = "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
+    std::string expected = "OPC_SINK";
 
     EXPECT_EQ(opcSink->toString(), expected);
 
@@ -107,10 +103,35 @@ TEST_F(OPCSinkTest, OPCSourcePrint) {
 
 TEST_F(OPCSinkTest, OPCSourceValue) {
 
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);
+    auto test_schema = Schema::create()->addField("var", UINT32);
+    WorkerContext wctx(NesThread::getId());
+    TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    write_buffer.getBuffer<uint32_t>()[0] = 45;
+    write_buffer.setNumberOfTuples(1);
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, &nodeId, user, password);
 
-    EXPECT_EQ(opcSink, true);
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: " << UtilityFunctions::prettyPrintTupleBuffer(write_buffer, test_schema));
+
+    opcSink->writeData(write_buffer, wctx);
+
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
+
+    write_buffer.release();
+
+    nodeEngine->stop();
+    NodeEnginePtr nodeEngine2 = NodeEngine::create("127.0.0.1", 31338, sizeof(uint32_t), 1);
+
+    auto opcSource = createOPCSource(test_schema, nodeEngine2->getBufferManager(), queryManager, url, &nodeId, user, password);
+    auto tuple_buffer = opcSource->receiveData();
+    size_t value = 0;
+    auto *tuple = (uint32_t *) tuple_buffer->getBuffer();
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) Received value is: " << *(uint32_t *) tuple_buffer->getBuffer());
+    value = *tuple;
+    size_t expected = 45;
+
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) expected value is: " << expected << ". Received value is: " << value);
+
+    EXPECT_EQ(value, expected);
 
 }
 

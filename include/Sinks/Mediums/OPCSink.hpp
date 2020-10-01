@@ -23,8 +23,7 @@ class OPCSink : public SinkMedium {
      * @param user name to access the server
      * @param password to access the server
      */
-    OPCSink(SinkFormatPtr format, const std::string url, UA_NodeId* nodeId, const std::string user, const std::string password);
-    OPCSink(const SinkFormatPtr& sinkFormat, QuerySubPlanId parentPlanId, const std::string& url);
+    OPCSink(SinkFormatPtr format, const std::string& url, UA_NodeId* nodeId, std::string  user, std::string  password);
 
     /**
      * @brief dtor
@@ -58,7 +57,7 @@ class OPCSink : public SinkMedium {
      *
      * @brief get url
      */
-    const std::string getUrl() const;
+    const std::string& getUrl() const;
 
     /**
     * @brief get desired OPC node id

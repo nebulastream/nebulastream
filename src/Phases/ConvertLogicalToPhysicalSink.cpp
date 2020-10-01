@@ -38,7 +38,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
     else if (sinkDescriptor->instanceOf<OPCSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
         const OPCSinkDescriptorPtr opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
-        return createOPCSinkWithSchema(schema, querySubPlanId, opcSinkDescriptor->getUrl(),
+        return createOPCSink(schema, querySubPlanId, nodeEngine, opcSinkDescriptor->getUrl(),
                                        opcSinkDescriptor->getNodeId(),
                                        opcSinkDescriptor->getUser(),
                                        opcSinkDescriptor->getPassword());

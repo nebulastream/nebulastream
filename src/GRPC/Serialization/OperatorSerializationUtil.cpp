@@ -46,6 +46,7 @@
 //#endif
 
 //#ifdef ENABLE_OPC_BUILD
+#include "../../../build/SerializableOperator.pb.h"
 #include <Nodes/Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 //#endif
@@ -407,8 +408,12 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor");
         auto opcSourceDescriptor = sourceDescriptor->as<OPCSourceDescriptor>();
         auto opcSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor();
+        char* ident = (char*)UA_malloc(sizeof(char)*opcSourceDescriptor->getNodeId()->identifier.string.length+1);
+        memcpy(ident, opcSourceDescriptor->getNodeId()->identifier.string.data, opcSourceDescriptor->getNodeId()->identifier.string.length);
+        ident[opcSourceDescriptor->getNodeId()->identifier.string.length] = '\0';
         opcSerializedSourceDescriptor.set_url(opcSourceDescriptor->getUrl());
-        opcSerializedSourceDescriptor.set_nodeId(opcSourceDescriptor->getNodeId());
+        opcSerializedSourceDescriptor.set_namespaceindex(opcSourceDescriptor->getNodeId()->namespaceIndex);
+        opcSerializedSourceDescriptor.set_identifier(ident);
         opcSerializedSourceDescriptor.set_user(opcSourceDescriptor->getUser());
         opcSerializedSourceDescriptor.set_password(opcSourceDescriptor->getPassword());
         // serialize source schema
@@ -497,16 +502,16 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(zmqSerializedSourceDescriptor.release_sourceschema());
         return ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port());
-    }else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor>()) {
+    } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor>()) {
         // de-serialize opc source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as ZmqSourceDescriptor");
         auto opcSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&opcSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(opcSerializedSourceDescriptor.release_sourceschema());
-        return OPCSourceDescriptor::create(schema, opcSerializedSourceDescriptor.url(), opcSerializedSourceDescriptor.nodeId(), opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password());
-    }
-    else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {
+        UA_NodeId nodeId = UA_NODEID_STRING_ALLOC(opcSerializedSourceDescriptor.namespaceindex(), opcSerializedSourceDescriptor.identifier().c_str());
+        return OPCSourceDescriptor::create(schema, opcSerializedSourceDescriptor.url(), &nodeId, opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password());
+    } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {
         // de-serialize zmq source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as NetworkSourceDescriptor");
         auto networkSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor();
@@ -588,12 +593,16 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
         // serialize opc sink descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor");
         auto opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
-        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor();
-        serializedSinkDescriptor.set_url(opcSinkDescriptor->getUrl());
-        serializedSinkDescriptor.set_nodeId(opcSinkDescriptor->getNodeId());
-        serializedSinkDescriptor.set_user(opcSinkDescriptor->getUser());
-        serializedSinkDescriptor.set_password(opcSinkDescriptor->getPassword());
-        sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
+        auto opcSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor();
+        char* ident = (char*)UA_malloc(sizeof(char)*opcSinkDescriptor->getNodeId()->identifier.string.length+1);
+        memcpy(ident, opcSinkDescriptor->getNodeId()->identifier.string.data, opcSinkDescriptor->getNodeId()->identifier.string.length);
+        ident[opcSinkDescriptor->getNodeId()->identifier.string.length] = '\0';
+        opcSerializedSinkDescriptor.set_url(opcSinkDescriptor->getUrl());
+        opcSerializedSinkDescriptor.set_namespaceindex(opcSinkDescriptor->getNodeId()->namespaceIndex);
+        opcSerializedSinkDescriptor.set_identifier(ident);
+        opcSerializedSinkDescriptor.set_user(opcSinkDescriptor->getUser());
+        opcSerializedSinkDescriptor.set_password(opcSinkDescriptor->getPassword());
+        sinkDetails->mutable_sinkdescriptor()->PackFrom(opcSerializedSinkDescriptor);
     }
 #endif
     else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
@@ -666,9 +675,10 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor>()) {
         // de-serialize opc sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as OPCSinkDescriptor");
-        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor();
-        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        return OPCSinkDescriptor::create(serializedSinkDescriptor.url(), serializedSinkDescriptor.nodeId(), serializedSinkDescriptor.user(), serializedSinkDescriptor.password());
+        auto opcSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor();
+        deserializedSinkDescriptor.UnpackTo(&opcSerializedSinkDescriptor);
+        UA_NodeId nodeId = UA_NODEID_STRING_ALLOC(opcSerializedSinkDescriptor.namespaceindex(), opcSerializedSinkDescriptor.identifier().c_str());
+        return OPCSinkDescriptor::create(opcSerializedSinkDescriptor.url(), &nodeId, opcSerializedSinkDescriptor.user(), opcSerializedSinkDescriptor.password());
     }
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {
         // de-serialize zmq sink descriptor
