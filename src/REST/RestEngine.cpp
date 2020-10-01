@@ -3,6 +3,14 @@
 #include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
 
+#include "REST/Controller/BaseController.hpp"
+#include "REST/Controller/QueryController.hpp"
+#include "REST/Controller/StreamCatalogController.hpp"
+#include <REST/Controller/ConnectivityController.hpp>
+#include <REST/Controller/MonitoringController.hpp>
+#include <REST/Controller/QueryCatalogController.hpp>
+#include <REST/Controller/TopologyController.hpp>
+
 namespace NES {
 
 RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
@@ -13,6 +21,7 @@ RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coo
     queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
     connectivityController = std::make_shared<ConnectivityController>();
     monitoringController = std::make_shared<MonitoringController>(monitoringService);
+    topologyController = std::make_shared<TopologyController>(topology);
 }
 
 RestEngine::~RestEngine() {
@@ -41,7 +50,7 @@ void RestEngine::setEndpoint(const std::string& value) {
     endpointBuilder.set_port(endpointURI.port());
     endpointBuilder.set_path(endpointURI.path());
 
-    _listener = http_listener(endpointBuilder.to_uri());
+    _listener = web::http::experimental::listener::http_listener(endpointBuilder.to_uri());
 }
 
 void RestEngine::handleGet(http_request message) {
@@ -63,6 +72,8 @@ void RestEngine::handleGet(http_request message) {
             return;
         } else if (paths[0] == "connectivity" && paths.size() == 1) {
             connectivityController->handleGet(paths, message);
+        } else if (paths[0] == "topology") {
+            topologyController->handleGet(paths, message);
         }
     }
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));

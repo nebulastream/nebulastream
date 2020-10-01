@@ -8,6 +8,7 @@
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Topology/TopologyNode.hpp>
 
 namespace NES {
 
@@ -49,7 +50,7 @@ web::json::value MonitoringService::requestMonitoringData(int64_t nodeId, Monito
         plan = MonitoringPlan::create(metrics);
     }
     NES_DEBUG("NesCoordinator: Requesting monitoring data from worker id= " + std::to_string(nodeId));
-    auto node = topology->findNodeWithId(nodeId);
+    TopologyNodePtr node = topology->findNodeWithId(nodeId);
 
     if (node) {
         auto nodeIp = node->getIpAddress();
@@ -67,7 +68,7 @@ web::json::value MonitoringService::requestMonitoringDataForAllNodes(MonitoringP
     metricsJson[std::to_string(root->getId())] = requestMonitoringData(root->getId(), plan);
 
     for (const auto& node: root->getAndFlattenAllChildren()) {
-        std::shared_ptr<TopologyNode> tNode = std::dynamic_pointer_cast<TopologyNode>(node);
+        std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         metricsJson[std::to_string(tNode->getId())] = requestMonitoringData(tNode->getId(), plan);
     }
     return metricsJson;

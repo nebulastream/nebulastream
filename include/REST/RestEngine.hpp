@@ -4,20 +4,11 @@
 #include <xlocale.h>
 #endif
 #include "REST/Controller/BaseController.hpp"
-#include "REST/Controller/QueryController.hpp"
-#include "REST/Controller/StreamCatalogController.hpp"
-#include <REST/Controller/ConnectivityController.hpp>
-#include <REST/Controller/QueryCatalogController.hpp>
-#include <REST/Controller/MonitoringController.hpp>
 
 #include <cpprest/details/http_server.h>
 #include <cpprest/http_listener.h>
 #include <pplx/pplxtasks.h>
 #include <string>
-
-using namespace web;
-using namespace http;
-using namespace http::experimental::listener;
 
 namespace NES {
 class MonitoringService;
@@ -32,18 +23,34 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class QueryService;
 typedef std::shared_ptr<QueryService> QueryServicePtr;
 
+class QueryController;
+typedef std::shared_ptr<QueryController> QueryControllerPtr;
+
+class QueryCatalogController;
+typedef std::shared_ptr<QueryCatalogController> QueryCatalogControllerPtr;
+
+class StreamCatalogController;
+typedef std::shared_ptr<StreamCatalogController> StreamCatalogControllerPtr;
+
+class ConnectivityController;
+typedef std::shared_ptr<ConnectivityController> ConnectivityControllerPtr;
+
+class MonitoringController;
+typedef std::shared_ptr<MonitoringController> MonitoringControllerPtr;
+
+class TopologyController;
+typedef std::shared_ptr<TopologyController> TopologyControllerPtr;
+
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+
+class NesCoordinator;
+typedef std::weak_ptr<NesCoordinator> NesCoordinatorWeakPtr;
+
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
+
 class RestEngine : public BaseController {
-  protected:
-    http_listener _listener;// main micro service network endpoint
-
-  private:
-    QueryControllerPtr queryController;
-    QueryCatalogControllerPtr queryCatalogController;
-    StreamCatalogPtr streamCatalog;
-    StreamCatalogControllerPtr streamCatalogController;
-    ConnectivityControllerPtr connectivityController;
-    MonitoringControllerPtr monitoringController;
-
   public:
     RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
                TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService, MonitoringServicePtr monitoringService);
@@ -64,6 +71,18 @@ class RestEngine : public BaseController {
     pplx::task<void> accept();
     pplx::task<void> shutdown();
     std::vector<utility::string_t> splitPath(utility::string_t path);
+
+  protected:
+    web::http::experimental::listener::http_listener _listener;// main micro service network endpoint
+
+  private:
+    QueryControllerPtr queryController;
+    QueryCatalogControllerPtr queryCatalogController;
+    StreamCatalogPtr streamCatalog;
+    StreamCatalogControllerPtr streamCatalogController;
+    ConnectivityControllerPtr connectivityController;
+    MonitoringControllerPtr monitoringController;
+    TopologyControllerPtr topologyController;
 };
 
 typedef std::shared_ptr<RestEngine> RestEnginePtr;

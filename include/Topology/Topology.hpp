@@ -130,21 +130,21 @@ class Topology {
      * @param startNodes : start nodes of the sub-graphs to be merged
      * @return start nodes of the merged sub-graph
      */
-    static std::vector<TopologyNodePtr> mergeSubGraphs(std::vector<TopologyNodePtr> startNodes);
+    std::vector<TopologyNodePtr> mergeSubGraphs(std::vector<TopologyNodePtr> startNodes);
 
     /**
      * @brief Find the immediate common ancestor for the set of Topology nodes
      * @param topologyNodes: the set of topology nodes
      * @return the immediate common ancestor.
      */
-    static TopologyNodePtr findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes);
+    TopologyNodePtr findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes);
 
     /**
      * @brief Find the immediate common child for the set of Topology nodes
      * @param topologyNodes: the set of topology nodes
      * @return the immediate common child.
      */
-    static TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
+    TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
 
     /**
      * @brief Find a node location that can be reachable from both the
@@ -152,7 +152,7 @@ class Topology {
      * @param parenNodes: list of parent nodes to be reachable
      * @return common node else nullptr
      */
-    static TopologyNodePtr findCommonNodeBetween(std::vector<TopologyNodePtr> childNodes, std::vector<TopologyNodePtr> parenNodes);
+    TopologyNodePtr findCommonNodeBetween(std::vector<TopologyNodePtr> childNodes, std::vector<TopologyNodePtr> parenNodes);
 
     /**
      * @brief Find the set of nodes (inclusive of) between a source and destination topology node
@@ -160,7 +160,7 @@ class Topology {
      * @param destinationNode : the destination topology node
      * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
      */
-    static std::vector<TopologyNodePtr> findTopologyNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode);
+    std::vector<TopologyNodePtr> findTopologyNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode);
 
     ~Topology();
 
