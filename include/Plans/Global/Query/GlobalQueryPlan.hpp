@@ -98,16 +98,20 @@ class GlobalQueryPlan {
     }
 
     /**
-     * @brief
-     * @return
+     * @brief Update the existing Global query meta data by re-grouping the queries
      */
-    bool updateGlobalQueryMetaDataMap();
+    void updateGlobalQueryMetaDataMap();
 
     /**
-     * @brief
-     * @return
+     * @brief Get the all the Query Meta Data to be deployed
+     * @return vector of global query meta data to be deployed
      */
     std::vector<GlobalQueryMetaDataPtr> getGlobalQueryMetaDataToDeploy();
+
+    /**
+     * @brief Check if constructed metadata is still valid or not.
+     */
+    void checkMetaDataValidity();
 
   private:
     GlobalQueryPlan();
@@ -134,14 +138,11 @@ class GlobalQueryPlan {
      */
     bool addGlobalQueryNodeToQuery(QueryId queryId, GlobalQueryNodePtr globalQueryNode);
 
-    QueryPlanPtr queryPlan;
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;
     std::map<QueryId, std::vector<GlobalQueryNodePtr>> queryIdToGlobalQueryNodeMap;
     std::map<QueryId, GlobalQueryMetaDataPtr> globalQueryIdToMetaDataMap;
     std::map<QueryId, QueryId> queryIdToGlobalQueryIdMap;
-
-    void checkMetaDataValidity();
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP

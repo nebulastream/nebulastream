@@ -38,6 +38,13 @@ void GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
 }
 
 void GlobalQueryPlan::removeQuery(QueryId queryId) {
+    NES_DEBUG("Removing query information from the meta data");
+    QueryId globalQueryId = queryIdToGlobalQueryIdMap[queryId];
+    GlobalQueryMetaDataPtr globalQueryMetaData = globalQueryIdToMetaDataMap[globalQueryId];
+    globalQueryMetaData->removeQueryId(queryId);
+    queryIdToGlobalQueryIdMap.erase(queryId);
+    queryIdToGlobalQueryNodeMap.erase(queryId);
+
     NES_INFO("GlobalQueryPlan: Remove the query plan for query " << queryId);
     const std::vector<GlobalQueryNodePtr>& globalQueryNodes = getGQNListForQueryId(queryId);
     for (GlobalQueryNodePtr globalQueryNode : globalQueryNodes) {
@@ -47,13 +54,6 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
         }
         globalQueryNode->removeQuery(queryId);
     }
-
-    NES_DEBUG("Removing query information from the meta data");
-    QueryId globalQueryId = queryIdToGlobalQueryIdMap[queryId];
-    GlobalQueryMetaDataPtr globalQueryMetaData = globalQueryIdToMetaDataMap[globalQueryId];
-    globalQueryMetaData->removeQueryId(queryId);
-    queryIdToGlobalQueryIdMap.erase(queryId);
-    queryIdToGlobalQueryNodeMap.erase(queryId);
 }
 
 void GlobalQueryPlan::addNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const QueryId queryId, const OperatorNodePtr& operatorNode) {
@@ -108,7 +108,7 @@ bool GlobalQueryPlan::updateGQNListForQueryId(QueryId queryId, std::vector<Globa
     return true;
 }
 
-bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
+void GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
 
     std::vector<GlobalQueryNodePtr> sourceGQNs = getAllGlobalQueryNodesWithOperatorType<SourceLogicalOperatorNode>();
     std::vector<GlobalQueryNodePtr> sinkGQNs = getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
@@ -122,17 +122,17 @@ bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
         if (queryIdToGlobalQueryIdMap.find(sinkGQN->getQueryIds()[0]) != queryIdToGlobalQueryIdMap.end()) {
             continue;
         }
-        std::vector<NodePtr> targetSinkLeafNodes = sinkGQN->getAllLeafNodes();
+        std::vector<NodePtr> targetLeafNodes = sinkGQN->getAllLeafNodes();
         std::set<NodePtr> groupedSinkGQNSet{sinkGQN};
         for (auto itr = vectorOfGroupedSinkGQNSets.begin(); itr != vectorOfGroupedSinkGQNSets.end(); itr++) {
-            std::set<NodePtr> hostSinkLeafNodes;
+            std::set<NodePtr> hostLeafNodes;
             for (auto hostSinkNode : *itr) {
-                const std::vector<NodePtr>& hostLeafNodes = hostSinkNode->getAllLeafNodes();
-                hostSinkLeafNodes.insert(hostLeafNodes.begin(), hostLeafNodes.end());
+                const std::vector<NodePtr>& leafNodes = hostSinkNode->getAllLeafNodes();
+                hostLeafNodes.insert(leafNodes.begin(), leafNodes.end());
             }
 
             std::set<NodePtr> intersectionSet;
-            std::set_intersection(hostSinkLeafNodes.begin(), hostSinkLeafNodes.end(), targetSinkLeafNodes.begin(), targetSinkLeafNodes.end(), std::inserter(intersectionSet, intersectionSet.begin()), cmp);
+            std::set_intersection(hostLeafNodes.begin(), hostLeafNodes.end(), targetLeafNodes.begin(), targetLeafNodes.end(), std::inserter(intersectionSet, intersectionSet.begin()), cmp);
 
             if (!intersectionSet.empty()) {
                 for (auto hostSinkNode : *itr) {
@@ -147,16 +147,25 @@ bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
     for (auto groupedSinkGQNs : vectorOfGroupedSinkGQNSets) {
         std::set<QueryId> queryIds;
         std::set<GlobalQueryNodePtr> targetSinkGQNs;
+        std::set<NodePtr> targetLeafNodes;
         for (auto sinkGQN : groupedSinkGQNs) {
             targetSinkGQNs.insert(sinkGQN->as<GlobalQueryNode>());
             queryIds.insert(sinkGQN->as<GlobalQueryNode>()->getQueryIds()[0]);
+
+            std::vector<NodePtr> leafNodes = sinkGQN->getAllLeafNodes();
+            targetLeafNodes.insert(leafNodes.begin(), leafNodes.end());
         }
 
         GlobalQueryMetaDataPtr hostGlobalQueryMetaData;
         for (auto [globalQueryId, globalQueryMetaData] : globalQueryIdToMetaDataMap) {
             std::set<GlobalQueryNodePtr> hostSinkNodes = globalQueryMetaData->getSinkGlobalQueryNodes();
+            std::set<NodePtr> hostLeafNodes;
+            for (auto hostSinkNode : hostSinkNodes) {
+                const std::vector<NodePtr>& leafNodes = hostSinkNode->getAllLeafNodes();
+                hostLeafNodes.insert(leafNodes.begin(), leafNodes.end());
+            }
             std::set<NodePtr> intersectionSet;
-            std::set_intersection(groupedSinkGQNs.begin(), groupedSinkGQNs.end(), hostSinkNodes.begin(), hostSinkNodes.end(), std::inserter(intersectionSet, intersectionSet.begin()), cmp);
+            std::set_intersection(targetLeafNodes.begin(), targetLeafNodes.end(), hostLeafNodes.begin(), hostLeafNodes.end(), std::inserter(intersectionSet, intersectionSet.begin()), cmp);
 
             if (!intersectionSet.empty()) {
                 hostGlobalQueryMetaData = globalQueryMetaData;
@@ -177,7 +186,6 @@ bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
             queryIdToGlobalQueryIdMap[queryId] = globalQueryId;
         }
     }
-    return true;
 }
 
 void GlobalQueryPlan::checkMetaDataValidity() {
@@ -198,7 +206,7 @@ void GlobalQueryPlan::checkMetaDataValidity() {
                 std::set<NodePtr> intersectionSet;
                 std::set_intersection(outerLeafNodes.begin(), outerLeafNodes.end(), innerLeafNodes.begin(), innerLeafNodes.end(), std::inserter(intersectionSet, intersectionSet.begin()), cmp);
                 if (!intersectionSet.empty()) {
-                    sinkGQNsWithMatchedSourceGQNs.insert(*itrOuter);
+                    sinkGQNsWithMatchedSourceGQNs.insert(*itrInner);
                 }
             }
 
