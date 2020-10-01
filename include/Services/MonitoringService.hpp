@@ -29,8 +29,6 @@ class MonitoringService {
 
     ~MonitoringService();
 
-    web::json::value getTopologyAsJson() const;
-
     /**
      * @brief Requests from a remote worker node its monitoring data.
      * @param ipAddress
@@ -39,7 +37,17 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    web::json::value requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan);
+    std::tuple<SchemaPtr, TupleBuffer> requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan);
+
+    /**
+     * @brief Requests from a remote worker node its monitoring data.
+     * @param ipAddress
+     * @param grpcPort
+     * @param the monitoring plan
+     * @param the buffer where the data will be written into
+     * @return a tuple with the schema and tuplebuffer as json
+     */
+    web::json::value requestMonitoringDataAsJson(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
@@ -48,7 +56,7 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    web::json::value requestMonitoringData(int64_t nodeId, MonitoringPlanPtr plan);
+    web::json::value requestMonitoringDataAsJson(int64_t nodeId, MonitoringPlanPtr plan);
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
@@ -57,7 +65,7 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    web::json::value requestMonitoringDataForAllNodes(MonitoringPlanPtr plan);
+    web::json::value requestMonitoringDataForAllNodesAsJson(MonitoringPlanPtr plan);
 
   private:
     WorkerRPCClientPtr workerClient;

@@ -22,7 +22,7 @@ void MonitoringController::handleGet(std::vector<utility::string_t> path, http_r
         if (path.size() == 2) {
             NES_DEBUG("MonitoringController: GET metrics for all nodes");
             //TODO: Add support for monitoring plan in the future
-            auto metricsJson = monitoringService->requestMonitoringDataForAllNodes(nullptr);
+            auto metricsJson = monitoringService->requestMonitoringDataForAllNodesAsJson(nullptr);
             successMessageImpl(message, metricsJson);
             return;
         } else if (path.size() == 3) {
@@ -33,7 +33,7 @@ void MonitoringController::handleGet(std::vector<utility::string_t> path, http_r
                 uint64_t nodeId = std::stoi(path[2]);
                 try {
                     //TODO: Add support of monitoring plan in the future
-                    auto metricJson = monitoringService->requestMonitoringData(nodeId, nullptr);
+                    auto metricJson = monitoringService->requestMonitoringDataAsJson(nodeId, nullptr);
                     successMessageImpl(message, metricJson);
                 } catch (std::runtime_error& ex) {
                     NES_ERROR("MonitoringController: GET metrics error: " << ex.what());
