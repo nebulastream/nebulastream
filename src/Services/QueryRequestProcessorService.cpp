@@ -14,7 +14,6 @@
 #include <Phases/QueryUndeploymentPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -88,14 +87,18 @@ void QueryRequestProcessorService::start() {
                         queryMergerPhase->execute(globalQueryPlan);
                     }
 
+//                    globalQueryPlan->checkMetaDataValidity();
                     globalQueryPlan->updateGlobalQueryMetaDataMap();
                     std::vector<GlobalQueryMetaDataPtr> listOfGlobalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
 
                     for (auto globalQueryMetaData : listOfGlobalQueryMetaData) {
 
-                        if (!globalQueryMetaData->isNewMetaData()) {
-                            QueryId globalQueryId = globalQueryMetaData->getGlobalQueryId();
-                            bool successful = queryUndeploymentPhase->execute(queryId);
+                        QueryId globalQueryId = globalQueryMetaData->getGlobalQueryId();
+                        NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << globalQueryId);
+
+                        if (!globalQueryMetaData->isNew()) {
+                            NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << globalQueryId);
+                            bool successful = queryUndeploymentPhase->execute(globalQueryId);
                             if (!successful) {
                                 throw QueryUndeploymentException("Unable to stop Global QueryId " + globalQueryId);
                             }
@@ -105,24 +108,20 @@ void QueryRequestProcessorService::start() {
 
                             auto queryPlan = globalQueryMetaData->getQueryPlan();
 
-                            NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query: " << queryId);
+                            NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query with global query id : " << globalQueryId);
                             std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
                             bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
                             if (!placementSuccessful) {
-                                throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for query: " + queryId);
+                                throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for query plan with global query id: " + globalQueryId);
                             }
 
-                            NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query: " << queryId);
-                            bool refinementSuccessful = queryPlacementRefinementPhase->execute(queryPlan->getQueryId());
-                            if (!refinementSuccessful) {
-                                throw QueryPlacementException("QueryProcessingService: Failed to perform query refinement for query: " + queryId);
-                            }
-
-                            bool successful = queryDeploymentPhase->execute(queryId);
+                            bool successful = queryDeploymentPhase->execute(globalQueryId);
                             if (!successful) {
-                                throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with Id " + queryId);
+                                throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with global query Id " + globalQueryId);
                             }
                         }
+                        globalQueryMetaData->markAsDeployed();
+                        globalQueryMetaData->setAsOld();
                     }
 
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {

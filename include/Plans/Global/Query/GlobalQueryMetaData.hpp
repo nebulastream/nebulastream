@@ -104,7 +104,7 @@ class GlobalQueryMetaData {
      * @brief Check if the metadata is newly created
      * @return true if newly created else false
      */
-    bool isNewMetaData();
+    bool isNew();
 
     /**
      * @brief Get the set of Global Query Nodes with sink operators grouped together
@@ -124,7 +124,13 @@ class GlobalQueryMetaData {
      */
     QueryId getGlobalQueryId();
 
+    /**
+     * @brief Set the meta data as old
+     */
+    void setAsOld();
+
   private:
+
     explicit GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
     /**
@@ -133,7 +139,6 @@ class GlobalQueryMetaData {
      * @param childrenGQN : the Global Query Nodes whose operators need to be added as child to the parent operator
      */
     void appendOperator(OperatorNodePtr parentOperator, std::vector<NodePtr> childrenGQN);
-
     QueryId globalQueryId;
     std::set<QueryId> queryIds;
     std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes;

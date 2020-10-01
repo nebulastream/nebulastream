@@ -16,7 +16,7 @@ GlobalQueryMetaDataPtr GlobalQueryMetaData::create(std::set<QueryId> queryIds, s
 void GlobalQueryMetaData::addNewSinkGlobalQueryNodes(std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
     for (auto sinkGQN : sinkGlobalQueryNodes) {
         queryIds.insert(sinkGQN->getQueryIds()[0]);
-        sinkGlobalQueryNodes.insert(sinkGQN);
+        this->sinkGlobalQueryNodes.insert(sinkGQN);
     }
     markAsNotDeployed();
 }
@@ -42,6 +42,7 @@ QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
     queryPlan->setQueryId(globalQueryId);
     for (auto sinkGQN : sinkGlobalQueryNodes) {
         OperatorNodePtr rootOperator = sinkGQN->getOperators()[0];
+        rootOperator->removeChildren();
         if (!sinkGQN->getChildren().empty()) {
             appendOperator(rootOperator, sinkGQN->getChildren());
         }
@@ -54,6 +55,7 @@ void GlobalQueryMetaData::appendOperator(OperatorNodePtr parentOperator, std::ve
 
     for (auto childGQN : childrenGQN) {
         OperatorNodePtr childOperator = childGQN->as<GlobalQueryNode>()->getOperators()[0];
+        childOperator->removeChildren();
         parentOperator->addChild(childOperator);
         std::vector<NodePtr> childrenGQNOfChildGQN = childGQN->getChildren();
         if (!childrenGQNOfChildGQN.empty()) {
@@ -79,8 +81,12 @@ bool GlobalQueryMetaData::isDeployed() {
     return deployed;
 }
 
-bool GlobalQueryMetaData::isNewMetaData() {
+bool GlobalQueryMetaData::isNew() {
     return newMetaData;
+}
+
+void GlobalQueryMetaData::setAsOld() {
+    this->newMetaData = false;
 }
 
 std::set<GlobalQueryNodePtr> GlobalQueryMetaData::getSinkGlobalQueryNodes() {

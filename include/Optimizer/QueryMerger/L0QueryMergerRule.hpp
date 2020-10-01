@@ -96,6 +96,8 @@ class L0QueryMergerRule {
      * @return false if not equal else true
      */
     bool areGQNodesEqual(std::vector<NodePtr> targetGQNs, std::vector<NodePtr> hostGQNs);
+
+    std::vector<GlobalQueryNodePtr> processedNodes;
 };
 }// namespace NES
 #endif//NES_L0QUERYMERGERRULE_HPP
