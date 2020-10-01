@@ -86,24 +86,11 @@ message SerializableOperator{
 
     message SerializableOPCSourceDescriptor {
       string url = 1;
-      message nodeId {
-        uint32 namespaceIndex = 1;
-        enum UA_NodeIdType {
-          UA_NODEIDTYPE_NUMERIC = 0;
-          UA_NODEIDTYPE_STRING = 1;
-          UA_NODEIDTYPE_GUID = 2;
-          UA_NODEIDTYPE_BYTESTRING = 3;
-        }
-        oneof union {
-          uint32 numeric = 2;
-          string str = 3;
-          uint32 UA_Guid = 4;
-          bytes byteString = 5;
-        }
-      }
-      string user = 3;
-      string password = 4;
-      SerializableSchema sourceSchema = 5;
+      uint32 namespaceIndex = 2;
+      string identifier = 3;
+      string user = 4;
+      string password = 5;
+      SerializableSchema sourceSchema = 6;
     }
 
     message SerializableNetworkSourceDescriptor {
@@ -139,25 +126,12 @@ message SerializableOperator{
       bool isInternal = 3;
     }
 
-    message SerializableOPCSourceDescriptor {
+    message SerializableOPCSinkDescriptor {
       string url = 1;
-      message nodeId {
-        uint32 namespaceIndex = 1;
-        enum UA_NodeIdType {
-          UA_NODEIDTYPE_NUMERIC = 0;
-          UA_NODEIDTYPE_STRING = 1;
-          UA_NODEIDTYPE_GUID = 2;
-          UA_NODEIDTYPE_BYTESTRING = 3;
-        }
-        oneof union {
-          uint32 numeric = 2;
-          string str = 3;
-          uint32 UA_Guid = 4;
-          bytes byteString = 5;
-        }
-      }
-      string user = 3;
-      string password = 4;
+      uint32 namespaceIndex = 2;
+      string identifier = 3;
+      string user = 4;
+      string password = 5;
     }
 
     message SerializableNetworkSinkDescriptor {

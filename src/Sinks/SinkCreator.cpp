@@ -82,7 +82,7 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
 #endif
 
 #ifdef ENABLE_OPC_BUILD
-const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string url, UA_NodeId* nodeId, const std::string user, const std::string password) {
+const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& url, UA_NodeId* nodeId, const std::string& user, const std::string& password) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<OPCSink>(format, url, nodeId, user, password);
 }
