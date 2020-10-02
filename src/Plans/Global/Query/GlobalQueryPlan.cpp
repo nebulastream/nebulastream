@@ -110,7 +110,8 @@ bool GlobalQueryPlan::updateGQNListForQueryId(QueryId queryId, std::vector<Globa
 
 void GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
 
-    std::vector<GlobalQueryNodePtr> sourceGQNs = getAllGlobalQueryNodesWithOperatorType<SourceLogicalOperatorNode>();
+    checkMetaDataValidity();
+
     std::vector<GlobalQueryNodePtr> sinkGQNs = getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto cmp = [](NodePtr a, NodePtr b) {
@@ -195,6 +196,12 @@ void GlobalQueryPlan::checkMetaDataValidity() {
     };
 
     for (auto [globalQueryId, globalQueryMetaData] : globalQueryIdToMetaDataMap) {
+
+        if(globalQueryMetaData->empty() && globalQueryMetaData->isDeployed()){
+            globalQueryIdToMetaDataMap.erase(globalQueryId);
+            continue;
+        }
+
         std::set<GlobalQueryNodePtr> sinkGQNs = globalQueryMetaData->getSinkGlobalQueryNodes();
         for (auto itrOuter = sinkGQNs.begin(); itrOuter != sinkGQNs.end(); itrOuter++) {
 
