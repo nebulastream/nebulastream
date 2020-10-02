@@ -70,4 +70,29 @@ void Max::compileLiftCombine(CompoundStatementPtr currentCode,
         assign(partialRef, inputRef.accessRef(VarRefStatement(var_decl_input))));
     currentCode->addStatement(ifStatement.createCopy());
 }
+
+//MIN aggregation
+Min::Min(NES::AttributeFieldPtr field) : WindowAggregation(field) {}
+Min::Min(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(field, asField) {}
+
+WindowAggregationPtr Min::on(ExpressionItem onField) {
+    auto keyExpression = onField.getExpressionNode();
+    if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+    }
+    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+    auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
+    return std::make_shared<Min>(Min(keyField));
+}
+
+void Min::compileLiftCombine(CompoundStatementPtr currentCode,
+                             BinaryOperatorStatement partialRef,
+                             StructDeclaration inputStruct,
+                             BinaryOperatorStatement inputRef) {
+    auto var_decl_input = inputStruct.getVariableDeclaration(this->onField->name);
+    auto ifStatement = IF(
+        partialRef > inputRef.accessRef(VarRefStatement(var_decl_input)),
+        assign(partialRef, inputRef.accessRef(VarRefStatement(var_decl_input))));
+    currentCode->addStatement(ifStatement.createCopy());
+}
 }// namespace NES

@@ -181,6 +181,7 @@ message SerializableOperator{
       enum Type{
         SUM = 0;
         MAX = 1;
+        MIN = 2;
       }
       Type type = 1;
       string onField = 2;
