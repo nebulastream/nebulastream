@@ -185,7 +185,6 @@ add_executable(window-distr-rule-test "UnitTests/Optimizer/QueryRewrite/Distribu
 target_link_libraries(window-distr-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME window-distr-rule-test COMMAND window-distr-rule-test)
 
-
 # SerializationUtilTest
 add_executable(serialize-operator-test "UnitTests/Nodes/SerializationUtilTest.cpp")
 target_link_libraries(serialize-operator-test nes ${GTEST_LIBRARIES})
@@ -240,6 +239,11 @@ add_test(NAME logical-source-expansion-rule-test COMMAND logical-source-expansio
 add_executable(l0-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/L0QueryMergerRuleTest.cpp")
 target_link_libraries(l0-query-merger-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME l0-query-merger-rule-test COMMAND l0-query-merger-rule-test)
+
+### Query Placement Tests ###
+add_executable(query-placement-test "UnitTests/Optimizer/QueryPlacement/QueryPlacementTest.cpp")
+target_link_libraries(query-placement-test nes ${GTEST_LIBRARIES})
+add_test(NAME query-placement-test COMMAND query-placement-test)
 
 ### Thread Naming Test ###
 add_executable(thread-naming-tests "UnitTests/ThreadNamingTest.cpp")

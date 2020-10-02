@@ -56,7 +56,7 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param executionNode : the execution node where operator is to be placed
      * @return the query plan to which the input operator is to be appended
      */
-    QueryPlanPtr getCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode);
+    QueryPlanPtr addOperatorToCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode);
 };
 
 }// namespace NES

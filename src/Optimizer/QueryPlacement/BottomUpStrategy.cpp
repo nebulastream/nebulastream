@@ -172,7 +172,7 @@ QueryPlanPtr BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNo
     //NOTE: we do not check for parent operators as we are performing bottom up placement.
     for (auto& child : children) {
         auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](QueryPlanPtr querySubPlan) {
-            return querySubPlan->hasOperator(child->as<OperatorNode>());
+            return querySubPlan->hasOperatorWithId(child->as<OperatorNode>()->getId());
         });
 
         if (found != querySubPlans.end()) {

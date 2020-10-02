@@ -137,9 +137,8 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr candidateOp
     NES_TRACE("TopDownStrategy: Get the candidate execution node for the candidate topology node.");
     ExecutionNodePtr candidateExecutionNode = getExecutionNode(candidateTopologyNode);
 
-    NES_TRACE("TopDownStrategy: Get the candidate query plan where operator is to be pre-pended.");
-    QueryPlanPtr candidateQueryPlan = getCandidateQueryPlan(queryId, candidateOperator, candidateExecutionNode);
-    candidateQueryPlan->prependOperatorAsLeafNode(candidateOperator->copy());
+    NES_TRACE("TopDownStrategy: Find and prepend operator to the candidate query plan.");
+    QueryPlanPtr candidateQueryPlan = addOperatorToCandidateQueryPlan(queryId, candidateOperator, candidateExecutionNode);
 
     NES_TRACE("TopDownStrategy: Add the query plan to the candidate execution node.");
     if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
@@ -163,8 +162,9 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr candidateOp
     }
 }
 
-QueryPlanPtr TopDownStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode) {
+QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode) {
 
+    OperatorNodePtr candidateOperatorCopy = candidateOperator->copy();
     NES_DEBUG("TopDownStrategy: Get candidate query plan for the operator " << candidateOperator << " on execution node with id " << executionNode->getId());
     NES_TRACE("TopDownStrategy: Get all query sub plans for the query id on the execution node.");
     std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
@@ -174,6 +174,7 @@ QueryPlanPtr TopDownStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNod
         candidateQueryPlan = QueryPlan::create();
         candidateQueryPlan->setQueryId(queryId);
         candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQuerySubPlanId());
+        candidateQueryPlan->addRootOperator(candidateOperatorCopy);
         return candidateQueryPlan;
     }
 
@@ -183,7 +184,7 @@ QueryPlanPtr TopDownStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNod
     //NOTE: we do not check for child operators as we are performing Top down placement.
     for (auto& parent : parents) {
         auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](QueryPlanPtr querySubPlan) {
-            return querySubPlan->hasOperator(parent->as<OperatorNode>());
+            return querySubPlan->hasOperatorWithId(parent->as<OperatorNode>()->getId());
         });
 
         if (found != querySubPlans.end()) {
@@ -206,17 +207,27 @@ QueryPlanPtr TopDownStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNod
                     candidateQueryPlan->addRootOperator(root);
                 }
             }
-            NES_TRACE("TopDownStrategy: return the updated query plan.");
-            return candidateQueryPlan;
         } else if (queryPlansWithParent.size() == 1) {
-            NES_TRACE("TopDownStrategy: Found only 1 query plan with the parent operator of the input logical operator. Returning the query plan.");
-            return queryPlansWithParent[0];
+            NES_TRACE("TopDownStrategy: Found only 1 query plan with the parent operator of the input logical operator.");
+            candidateQueryPlan = queryPlansWithParent[0];
+        }
+
+        if(candidateQueryPlan){
+            NES_TRACE("TopDownStrategy: Prepend candidate operator and update the plan.");
+            for(auto candidateParent: parents){
+                auto parentOperator =  candidateQueryPlan->getOperatorWithId(candidateParent->as<OperatorNode>()->getId());
+                if(parentOperator){
+                    parentOperator->addChild(candidateOperatorCopy);
+                }
+            }
+            return candidateQueryPlan;
         }
     }
     NES_TRACE("TopDownStrategy: no query plan exists with the parent operator of the input logical operator. Returning an empty query plan.");
     candidateQueryPlan = QueryPlan::create();
     candidateQueryPlan->setQueryId(queryId);
     candidateQueryPlan->setQuerySubPlanId(UtilityFunctions::getNextQuerySubPlanId());
+    candidateQueryPlan->addRootOperator(candidateOperatorCopy);
     return candidateQueryPlan;
 }
 
