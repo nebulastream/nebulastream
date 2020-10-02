@@ -180,6 +180,7 @@ message SerializableOperator{
     message Aggregation {
       enum Type{
         SUM = 0;
+        MAX = 1;
       }
       Type type = 1;
       string onField = 2;
