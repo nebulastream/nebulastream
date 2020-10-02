@@ -58,14 +58,26 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, st
     NES_DEBUG("BasePlacementStrategy: Merge all the topology sub-graphs found using their source nodes");
     std::vector<TopologyNodePtr> mergedGraphSourceNodes = topology->mergeSubGraphs(allSourceNodes);
 
-    NES_DEBUG("BasePlacementStrategy: Adding location for sink operator.");
-    //TODO: Change this when we assume more than one sink nodes
-    OperatorNodePtr sourceOperator = sourceOperators[0];
-    const std::vector<NodePtr>& rootOperatorNodes = sourceOperator->getAllRootNodes();
-    OperatorNodePtr sinkOperator = rootOperatorNodes[0]->as<SinkLogicalOperatorNode>();
+    NES_TRACE("BasePlacementStrategy: Collecting all sink operators.");
+    std::set<OperatorNodePtr> sinkOperators;
+    for(auto sourceOperator: sourceOperators) {
+        const std::vector<NodePtr>& rootOperatorNodes = sourceOperator->getAllRootNodes();
+        for(auto rootOperator: rootOperatorNodes){
+            OperatorNodePtr sinkOperator = rootOperator->as<SinkLogicalOperatorNode>();
+            sinkOperators.insert(sinkOperator);
+        }
+    }
+
+    NES_TRACE("BasePlacementStrategy: Locating sink node.");
+    //TODO: change here if the topology can have more than one root node
     TopologyNodePtr sourceTopologyNode = mergedGraphSourceNodes[0];
     std::vector<NodePtr> rootNodes = sourceTopologyNode->getAllRootNodes();
-    pinnedOperatorLocationMap[sinkOperator->getId()] = rootNodes[0]->as<TopologyNode>();
+    TopologyNodePtr rootNode = rootNodes[0]->as<TopologyNode>();
+
+    NES_TRACE("BasePlacementStrategy: Adding location for sink operator.");
+    for(auto sinkOperator: sinkOperators){
+        pinnedOperatorLocationMap[sinkOperator->getId()] = rootNode;
+    }
 
     NES_DEBUG("BasePlacementStrategy: Update the source to topology node map using the source nodes from the merged topology graph");
     for (auto& entry : mapOfSourceToTopologyNodes) {

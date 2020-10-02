@@ -2,6 +2,7 @@
 #define NES_LOGICALSOURCEEXPANSIONRULE_HPP
 
 #include <memory>
+#include <set>
 
 namespace NES {
 
@@ -85,7 +86,7 @@ class LogicalSourceExpansionRule {
      * @param operatorNode : start operator
      * @return a tuple of duplicated operator with its duplicated downstream operator chains and a vector of original head operators
      */
-    std::tuple<OperatorNodePtr, std::vector<OperatorNodePtr>> getLogicalGraphToDuplicate(OperatorNodePtr operatorNode);
+    std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>> getLogicalGraphToDuplicate(OperatorNodePtr operatorNode);
 };
 }// namespace NES
 #endif//NES_LOGICALSOURCEEXPANSIONRULE_HPP

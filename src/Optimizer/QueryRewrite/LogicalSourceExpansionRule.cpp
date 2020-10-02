@@ -2,6 +2,7 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -27,7 +28,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         if (sourceLocations.size() > 1) {
             NES_DEBUG("LogicalSourceExpansionRule: Found " << sourceLocations.size() << " physical source locations in the topology.");
             OperatorNodePtr operatorNode;
-            std::vector<OperatorNodePtr> originalRootOperators;
+            std::set<OperatorNodePtr> originalRootOperators;
 
             NES_TRACE("LogicalSourceExpansionRule: Find the logical sub-graph to be duplicated for the source operator.");
 
@@ -57,8 +58,8 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                             NES_TRACE("LogicalSourceExpansionRule: Assign the duplicate operator a new operator id.");
                             (*found)->as<OperatorNode>()->setId(UtilityFunctions::getNextOperatorId());
                             parent->addChild(*found);
-                            family.erase(found);
                         }
+                        family.erase(found);
                     }
                 }
 
@@ -74,21 +75,21 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-std::tuple<OperatorNodePtr, std::vector<OperatorNodePtr>> LogicalSourceExpansionRule::getLogicalGraphToDuplicate(OperatorNodePtr operatorNode) {
+std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>> LogicalSourceExpansionRule::getLogicalGraphToDuplicate(OperatorNodePtr operatorNode) {
     NES_DEBUG("LogicalSourceExpansionRule: Get the logical graph to duplicate.");
-    if (operatorNode->isNAryOperator() || operatorNode->instanceOf<SinkLogicalOperatorNode>() || operatorNode->isNAryOperator() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+    if (operatorNode->instanceOf<SinkLogicalOperatorNode>() || operatorNode->instanceOf<WindowLogicalOperatorNode>() || operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
         NES_TRACE("LogicalSourceExpansionRule: Found the first binary or sink operator.");
-        return std::tuple<OperatorNodePtr, std::vector<OperatorNodePtr>>();
+        return std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>>();
     }
 
     NES_TRACE("LogicalSourceExpansionRule: Create duplicate of the input operator.");
     OperatorNodePtr copyOfOperator = operatorNode->copy();
-    std::vector<OperatorNodePtr> originalRootOperator;
+    std::set<OperatorNodePtr> originalRootOperator;
 
     NES_TRACE("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
     for (auto& parent : operatorNode->getParents()) {
         OperatorNodePtr duplicatedParentOperator;
-        std::vector<OperatorNodePtr> rootOperators;
+        std::set<OperatorNodePtr> rootOperators;
 
         NES_TRACE("LogicalSourceExpansionRule: Get the duplicated parent operator and its ancestors.");
         std::tie(duplicatedParentOperator, rootOperators) = getLogicalGraphToDuplicate(parent->as<OperatorNode>());
@@ -98,12 +99,12 @@ std::tuple<OperatorNodePtr, std::vector<OperatorNodePtr>> LogicalSourceExpansion
             NES_TRACE("LogicalSourceExpansionRule: Got a duplicated parent operator. Add the duplicate as parent to the copy of input operator.");
             copyOfOperator->addParent(duplicatedParentOperator);
             NES_TRACE("LogicalSourceExpansionRule: Add the original head operators to the list of head operators for the input operator");
-            originalRootOperator.insert(originalRootOperator.end(), rootOperators.begin(), rootOperators.end());
+            originalRootOperator.insert(rootOperators.begin(), rootOperators.end());
         } else {
 
             NES_TRACE("LogicalSourceExpansionRule: Parent operator was either n-ary or was of type sink.");
             NES_TRACE("LogicalSourceExpansionRule: Add the input operator as original head operator of the duplicated sub-graph");
-            originalRootOperator.push_back(operatorNode);
+            originalRootOperator.insert(operatorNode);
         }
     }
     return std::make_tuple(copyOfOperator, originalRootOperator);
