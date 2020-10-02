@@ -97,6 +97,45 @@ class Sum : public WindowAggregation {
     Sum(NES::AttributeFieldPtr onField);
     Sum(AttributeFieldPtr onField, AttributeFieldPtr asField);
 };
+
+/**
+ * The Max aggregation calculates the maximum over the window.
+ */
+
+class Max : public WindowAggregation {
+  public:
+    /**
+   * Factory method to creates a Max aggregation on a particular field.
+   */
+    static WindowAggregationPtr on(ExpressionItem onField);
+
+    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
+        return std::make_shared<Max>(Max(onField, asField));
+    }
+
+    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expression_statment, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+
+    template<class InputType, class PartialAggregateType>
+    PartialAggregateType lift(InputType input) {
+        return input;
+    }
+
+    template<class InputType, class PartialAggregateType>
+    PartialAggregateType combine(PartialAggregateType partialType, PartialAggregateType input) {
+        if (input > partialType) {
+            partialType = input;
+        }
+        return partialType;
+    }
+
+    template<class InputType, class FinalAggregateType>
+    FinalAggregateType lower(InputType partialType) {
+        return partialType;
+    }
+  private:
+    Max(NES::AttributeFieldPtr onField);
+    Max(AttributeFieldPtr onField, AttributeFieldPtr asField);
+};
 }// namespace NES
 
 #endif//INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_

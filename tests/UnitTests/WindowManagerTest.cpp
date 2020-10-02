@@ -57,6 +57,18 @@ TEST_F(WindowManagerTest, testSumAggregation) {
     }
 }
 
+TEST_F(WindowManagerTest, testMaxAggregation) {
+    auto field = AttributeField::create("test", DataTypeFactory::createInt64());
+    const WindowAggregationPtr aggregation = Max::on(Attribute("test"));
+    if (Max* store = dynamic_cast<Max*>(aggregation.get())) {
+        auto partial = store->lift<int64_t, int64_t>(1L);
+        auto partial2 = store->lift<int64_t, int64_t>(4L);
+        auto combined = store->combine<int64_t>(partial, partial2);
+        auto final = store->lower<int64_t, int64_t>(combined);
+        ASSERT_EQ(final, 4);
+    }
+}
+
 TEST_F(WindowManagerTest, testCheckSlice) {
     auto store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = std::make_shared<TestAggregation>(TestAggregation());
