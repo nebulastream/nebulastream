@@ -120,16 +120,16 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
     return leafOperators;
 }
 
-bool QueryPlan::hasOperator(OperatorNodePtr operatorNode) {
+bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
 
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
     for (auto rootOperator : rootOperators) {
-        if (rootOperator->getId() == operatorNode->getId()) {
-            NES_DEBUG("QueryPlan: Found operator " << operatorNode->toString() << " in the query plan");
+        if (rootOperator->getId() == operatorId) {
+            NES_DEBUG("QueryPlan: Found operator " << operatorId << " in the query plan");
             return true;
         } else {
             for (auto& child : rootOperator->getChildren()) {
-                if (child->as<OperatorNode>()->getChildWithOperatorId(operatorNode->getId())) {
+                if (child->as<OperatorNode>()->getChildWithOperatorId(operatorId)) {
                     return true;
                 }
             }

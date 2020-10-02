@@ -13,6 +13,7 @@
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
 #include <iostream>
 #include <Util/UtilityFunctions.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 
 using namespace NES;
 
@@ -97,6 +98,93 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueries) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_EQ(sink1GQNChild, sink2GQNChild);
         }
+    }
+}
+
+/**
+ * @brief Test applying L0 merge on Global query plan with same queries with multiple same source
+ */
+TEST_F(L0QueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    auto sourceOperator11 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    sourceOperator11->setId(UtilityFunctions::getNextOperatorId());
+
+    auto sourceOperator21 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    sourceOperator21->setId(UtilityFunctions::getNextOperatorId());
+
+    auto sinkOperator11 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+    sinkOperator11->setId(UtilityFunctions::getNextOperatorId());
+
+    sinkOperator11->addChild(sourceOperator11);
+    sinkOperator11->addChild(sourceOperator21);
+
+    QueryPlanPtr queryPlan1 =  QueryPlan::create();
+    queryPlan1->addRootOperator(sinkOperator11);
+    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    auto sourceOperator12 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    sourceOperator12->setId(UtilityFunctions::getNextOperatorId());
+
+    auto sourceOperator22 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    sourceOperator22->setId(UtilityFunctions::getNextOperatorId());
+
+    auto sinkOperator12 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+    sinkOperator12->setId(UtilityFunctions::getNextOperatorId());
+
+    sinkOperator12->addChild(sourceOperator12);
+    sinkOperator12->addChild(sourceOperator22);
+
+    QueryPlanPtr queryPlan2 =  QueryPlan::create();
+    queryPlan2->addRootOperator(sinkOperator12);
+    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+
+    ASSERT_EQ(sinkGQNs.size(), 2);
+
+    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+      return sinkGQN->getOperators()[0]->getId() == sinkOperator11->getId();
+    });
+    GlobalQueryNodePtr sinkOperator1GQN = *found;
+
+    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+      return sinkGQN->getOperators()[0]->getId() == sinkOperator12->getId();
+    });
+    GlobalQueryNodePtr sinkOperator2GQN = *found;
+
+    ASSERT_FALSE(sinkOperator1GQN->getChildren().empty());
+    ASSERT_FALSE(sinkOperator2GQN->getChildren().empty());
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+        }
+    }
+
+    sinkOperator2GQN->getChildren();
+
+    //execute
+    auto l0QueryMergerRule = L0QueryMergerRule::create();
+    l0QueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        bool found = false;
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            if(sink1GQNChild->equal(sink2GQNChild)){
+                found = true;
+            }
+        }
+        ASSERT_TRUE(found);
     }
 }
 

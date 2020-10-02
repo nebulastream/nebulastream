@@ -128,13 +128,13 @@ class QueryPlan {
     std::vector<OperatorNodePtr> getLeafOperators();
 
     /**
-     * Find if the operator with same Id exists in the plan.
+     * Find if the operator with the input Id exists in the plan.
      * Note: This method only check if there exists another operator with same Id or not.
      * Note: The system generated operators are ignored from this check.
-     * @param operatorNode
+     * @param operatorId: Id of the operator
      * @return true if the operator exists else false
      */
-    bool hasOperator(OperatorNodePtr operatorNode);
+    bool hasOperatorWithId(uint64_t operatorId);
 
     /**
      * @brief Get operator node with input id if present
