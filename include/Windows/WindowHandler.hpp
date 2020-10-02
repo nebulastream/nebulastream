@@ -212,8 +212,10 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
             FinalAggregateType value;
             if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->getWindowAggregation().get())) {
                 value = sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
-            } else if (Max* maxAggregation = dynamic_cast<Max*>(windowDefinition->getWindowAggregation().get())){
+            } else if (Max* maxAggregation = dynamic_cast<Max*>(windowDefinition->getWindowAggregation().get())) {
                 value = maxAggregation->lower<FinalAggregateType, PartialAggregateType>(partialAggregates[i]);
+            } else if (Min* minAggregation = dynamic_cast<Min*>(windowDefinition->getWindowAggregation().get())) {
+                value = minAggregation->lower<FinalAggregateType, PartialAggregateType>(partialAggregates[i]);
             } else {
                 NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
             }
