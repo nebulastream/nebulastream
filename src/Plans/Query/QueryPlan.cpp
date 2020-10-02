@@ -30,13 +30,14 @@ QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), 
 
 std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
-    std::vector<SourceLogicalOperatorNodePtr> sourceOperators;
+    std::set<SourceLogicalOperatorNodePtr> sourceOperatorsSet;
     for (const auto& rootOperator : rootOperators) {
         auto sourceOptrs = rootOperator->getNodesByType<SourceLogicalOperatorNode>();
         NES_DEBUG("QueryPlan: insert all source operators to the collection");
-        sourceOperators.insert(sourceOperators.end(), sourceOptrs.begin(), sourceOptrs.end());
+        sourceOperatorsSet.insert(sourceOptrs.begin(), sourceOptrs.end());
     }
-    NES_DEBUG("QueryPlan: Found " << sourceOperators.size() << " source operators.");
+    NES_DEBUG("QueryPlan: Found " << sourceOperatorsSet.size() << " source operators.");
+    std::vector<SourceLogicalOperatorNodePtr> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
     return sourceOperators;
 }
 

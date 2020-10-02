@@ -1,10 +1,11 @@
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Phases/QueryRewritePhase.hpp>
@@ -188,6 +189,76 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
             ASSERT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
             for (auto children : actualRootOperator->getChildren()) {
                 ASSERT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+            }
+        }
+    }
+}
+
+/* Test query placement of query with multiple sink with bottom up strategy  */
+TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkWithBottomUpStrategy) {
+
+    setupTopologyAndStreamCatalog();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    sourceOperator->setId(UtilityFunctions::getNextOperatorId());
+
+//    auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
+//    filterOperator->setId(UtilityFunctions::getNextOperatorId());
+//    filterOperator->addChild(sourceOperator);
+
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+    sinkOperator1->setId(UtilityFunctions::getNextOperatorId());
+
+    auto sinkOperator2 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+    sinkOperator2->setId(UtilityFunctions::getNextOperatorId());
+
+    sinkOperator1->addChild(sourceOperator);
+    sinkOperator2->addChild(sourceOperator);
+
+    QueryPlanPtr queryPlan =  QueryPlan::create();
+    queryPlan->addRootOperator(sinkOperator1);
+    queryPlan->addRootOperator(sinkOperator2);
+    QueryId queryId = UtilityFunctions::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    placementStrategy->updateGlobalExecutionPlan(queryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3);
+    for (auto executionNode : executionNodes) {
+        if (executionNode->getId() == 1) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
+            for (auto children : actualRootOperator->getChildren()) {
+                ASSERT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+            }
+        } else {
+            ASSERT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            for (auto children : actualRootOperator->getChildren()) {
+                ASSERT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
             }
         }
     }
