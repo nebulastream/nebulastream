@@ -87,7 +87,6 @@ void QueryRequestProcessorService::start() {
                         queryMergerPhase->execute(globalQueryPlan);
                     }
 
-//                    globalQueryPlan->checkMetaDataValidity();
                     globalQueryPlan->updateGlobalQueryMetaDataMap();
                     std::vector<GlobalQueryMetaDataPtr> listOfGlobalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
 

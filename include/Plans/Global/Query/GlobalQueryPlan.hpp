@@ -108,11 +108,6 @@ class GlobalQueryPlan {
      */
     std::vector<GlobalQueryMetaDataPtr> getGlobalQueryMetaDataToDeploy();
 
-    /**
-     * @brief Check if constructed metadata is still valid or not.
-     */
-    void checkMetaDataValidity();
-
   private:
     GlobalQueryPlan();
 
@@ -137,6 +132,11 @@ class GlobalQueryPlan {
      * @return true if successful
      */
     bool addGlobalQueryNodeToQuery(QueryId queryId, GlobalQueryNodePtr globalQueryNode);
+
+    /**
+     * @brief Check if constructed metadata is still valid or not.
+     */
+    void checkMetaDataValidity();
 
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;

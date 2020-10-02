@@ -120,7 +120,8 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
 
 void Node::removeAllParent() {
     NES_INFO("Node: Removing all parents for current node");
-    for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr) {
+    auto nodeItr = parents.begin();
+    while (nodeItr != parents.end()) {
         this->removeParent(*nodeItr);
         NES_INFO("Node: Removed node as parent of this node");
     }
@@ -128,7 +129,8 @@ void Node::removeAllParent() {
 
 void Node::removeChildren() {
     NES_INFO("Node: Removing all children for current node");
-    for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
+    auto nodeItr = children.begin();
+    while (nodeItr != children.end()) {
         this->removeChild(*nodeItr);
         NES_INFO("Node: Removed node as child of this node");
     }
