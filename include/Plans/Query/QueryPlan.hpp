@@ -87,7 +87,13 @@ class QueryPlan {
      * Note: improves this when we have to due with multi-root use case.
      * @param root
      */
-    void addRootOperator(std::shared_ptr<OperatorNode> root);
+    void addRootOperator(OperatorNodePtr root);
+
+    /**
+     * remove the an operator from the root operator list.
+     * @param root
+     */
+    void removeAsRootOperator(OperatorNodePtr root);
 
     /**
      * @brief Get all the operators of a specific type

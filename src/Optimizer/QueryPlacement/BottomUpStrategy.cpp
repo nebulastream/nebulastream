@@ -1,9 +1,11 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -81,7 +83,7 @@ void BottomUpStrategy::placeQueryPlanOnTopology(QueryPlanPtr queryPlan) {
 void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("BottomUpStrategy: Place " << operatorNode);
-    if (operatorNode->isNAryOperator()) {
+    if (operatorNode->instanceOf<MergeLogicalOperatorNode>() || operatorNode->instanceOf<WindowLogicalOperatorNode>() || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE("BottomUpStrategy: Received an NAry operator for placement.");
         //Check if all children operators already placed
         NES_TRACE("BottomUpStrategy: Get the topology nodes where child operators are placed.");
@@ -90,18 +92,29 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
             NES_WARNING("BottomUpStrategy: No topology node found where child operators are placed.");
             return;
         }
+
         NES_TRACE("BottomUpStrategy: Find a node reachable from all topology nodes where child operators are placed.");
         candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
         if (!candidateTopologyNode) {
             NES_ERROR("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
             throw QueryPlacementException("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
         }
-    } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        NES_TRACE("BottomUpStrategy: Received Sink operator for placement.");
-        candidateTopologyNode = getTopologyNodeForPinnedOperator(operatorNode->getId());
-        if (candidateTopologyNode->getAvailableResources() == 0) {
-            NES_ERROR("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
-            throw QueryPlacementException("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
+
+        if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+            NES_TRACE("BottomUpStrategy: Received Sink operator for placement.");
+            auto pinnedSinkOperatorLocation = getTopologyNodeForPinnedOperator(operatorNode->getId());
+
+            if (pinnedSinkOperatorLocation->getId() == candidateTopologyNode->getId() || pinnedSinkOperatorLocation->containAsChild(candidateTopologyNode)) {
+                candidateTopologyNode = pinnedSinkOperatorLocation;
+            } else {
+                NES_ERROR("BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be placed.");
+                throw QueryPlacementException("BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be placed.");
+            }
+
+            if (candidateTopologyNode->getAvailableResources() == 0) {
+                NES_ERROR("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
+                throw QueryPlacementException("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
+            }
         }
     }
 
