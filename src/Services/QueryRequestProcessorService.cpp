@@ -50,7 +50,7 @@ void QueryRequestProcessorService::start() {
         while (isQueryProcessorRunning()) {
             NES_INFO("QueryRequestProcessorService: Waiting for new query request trigger");
             const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryRequestQueue->getNextBatch();
-            NES_INFO("QueryProcessingService: Found " << queryCatalogEntryBatch.size() << " query requests to schedule");
+            NES_INFO("QueryProcessingService: Found " << queryCatalogEntryBatch.size() << " query requests to process");
             //process the queries using query-at-a-time model
             for (auto queryCatalogEntry : queryCatalogEntryBatch) {
                 QueryId queryId = queryCatalogEntry.getQueryId();
