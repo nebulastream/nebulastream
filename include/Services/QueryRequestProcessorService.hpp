@@ -52,9 +52,8 @@ typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
  */
 class QueryRequestProcessorService {
   public:
-    explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryCatalogPtr queryCatalog,
-                                          StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue,
-                                          bool enableQueryMerging);
+    explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
+                                          StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging);
 
     ~QueryRequestProcessorService();
     /**

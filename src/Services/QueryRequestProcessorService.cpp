@@ -24,10 +24,9 @@
 
 namespace NES {
 
-QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryCatalogPtr queryCatalog,
-                                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue,
-                                                           bool enableQueryMerging)
-    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), enableQueryMerging(enableQueryMerging) {
+QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
+                                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging)
+    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), enableQueryMerging(enableQueryMerging), globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -36,7 +35,6 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     queryPlacementRefinementPhase = QueryPlacementRefinementPhase::create(globalExecutionPlan);
-    globalQueryPlan = GlobalQueryPlan::create();
     queryMergerPhase = QueryMergerPhase::create();
 }
 
@@ -82,7 +80,7 @@ void QueryRequestProcessorService::start() {
                         throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling}, queryCatalogEntry.getQueryStatus());
                     }
 
-                    if(enableQueryMerging){
+                    if (enableQueryMerging) {
                         NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
                         queryMergerPhase->execute(globalQueryPlan);
                     }
