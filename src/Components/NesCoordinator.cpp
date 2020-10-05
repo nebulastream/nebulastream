@@ -135,7 +135,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     restServer = std::make_shared<RestServer>(serverIp, restPort, this->weak_from_this(), queryCatalog,
-                                              streamCatalog, topology, globalExecutionPlan, queryService, monitoringService);
+                                              streamCatalog, topology, globalExecutionPlan, queryService, monitoringService, globalQueryPlan);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking

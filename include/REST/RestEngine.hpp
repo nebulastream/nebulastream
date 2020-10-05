@@ -23,6 +23,9 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class QueryService;
 typedef std::shared_ptr<QueryService> QueryServicePtr;
 
+class GlobalQueryPlan;
+typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+
 class QueryController;
 typedef std::shared_ptr<QueryController> QueryControllerPtr;
 
@@ -51,9 +54,11 @@ class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
 
 class RestEngine : public BaseController {
+
   public:
     RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
-               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService, MonitoringServicePtr monitoringService);
+               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService,
+               MonitoringServicePtr monitoringService, GlobalQueryPlanPtr globalQueryPlan);
 
     ~RestEngine();
 
@@ -78,7 +83,6 @@ class RestEngine : public BaseController {
   private:
     QueryControllerPtr queryController;
     QueryCatalogControllerPtr queryCatalogController;
-    StreamCatalogPtr streamCatalog;
     StreamCatalogControllerPtr streamCatalogController;
     ConnectivityControllerPtr connectivityController;
     MonitoringControllerPtr monitoringController;

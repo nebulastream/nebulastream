@@ -48,12 +48,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
 
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12346";
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12346 --numberOfSlots=8";
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
 
-    string cmdWrk = "./nesWorker --coordinatorPort=12346";
+    string cmdWrk = "./nesWorker --coordinatorPort=12346 --numberOfSlots=8";
     bp::child workerProc(cmdWrk.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
 
