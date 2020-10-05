@@ -208,13 +208,12 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
         // calculate the final aggregate
         for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
             auto window = (*windows)[i];
-            // TODO Because of this condition we currently only support SUM aggregations
             FinalAggregateType value;
-            if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->getWindowAggregation().get())) {
+            if (auto sumAggregation = std::dynamic_pointer_cast<Sum>(windowDefinition->getWindowAggregation())) {
                 value = sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
-            } else if (Max* maxAggregation = dynamic_cast<Max*>(windowDefinition->getWindowAggregation().get())) {
+            } else if (auto maxAggregation = std::dynamic_pointer_cast<Max>(windowDefinition->getWindowAggregation())) {
                 value = maxAggregation->lower<FinalAggregateType, PartialAggregateType>(partialAggregates[i]);
-            } else if (Min* minAggregation = dynamic_cast<Min*>(windowDefinition->getWindowAggregation().get())) {
+            } else if (auto minAggregation = std::dynamic_pointer_cast<Min>(windowDefinition->getWindowAggregation())) {
                 value = minAggregation->lower<FinalAggregateType, PartialAggregateType>(partialAggregates[i]);
             } else {
                 NES_FATAL_ERROR("Window Handler: could not cast aggregation type");

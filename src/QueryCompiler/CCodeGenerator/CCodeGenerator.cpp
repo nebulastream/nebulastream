@@ -431,13 +431,15 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
         tf->createAnonymusDataType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
 
-    // set the window state default value to INT64_MAX for MIN aggregate and to INT64_MIN for MAX aggregate
-    if (Min* minAggregation = dynamic_cast<Min*>(window->getWindowAggregation().get())){
+    // set the default value for window state
+    if (auto minAggregation = std::dynamic_pointer_cast<Min>(window->getWindowAggregation())){
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MAX"))));
-    } else if (Max* maxAggregation = dynamic_cast<Max*>(window->getWindowAggregation().get())){
+    } else if (auto maxAggregation = std::dynamic_pointer_cast<Max>(window->getWindowAggregation())){
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MIN"))));
-    } else {
+    } else if (auto sumAggregation = std::dynamic_pointer_cast<Sum>(window->getWindowAggregation())) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
+    } else {
+        NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
     }
 
     NES_DEBUG("CCodeGenerator: " << getValueFromKeyHandle.getCode()->code_);
