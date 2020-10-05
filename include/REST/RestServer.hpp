@@ -29,6 +29,9 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
 class MonitoringService;
 typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
 
+class GlobalQueryPlan;
+typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+
 /**
  * @brief : This class is responsible for starting the REST server.
  */
@@ -43,7 +46,8 @@ class RestServer {
      *
    * */
     RestServer(std::string host, u_int16_t port, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService, MonitoringServicePtr monitoringService, GlobalQueryPlanPtr globalQueryPlan);
+               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService, MonitoringServicePtr monitoringService,
+               GlobalQueryPlanPtr globalQueryPlan);
 
     ~RestServer();
     /**
