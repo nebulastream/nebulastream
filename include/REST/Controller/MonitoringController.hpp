@@ -27,7 +27,6 @@ class MonitoringController : public BaseController {
 
 typedef std::shared_ptr<MonitoringController> MonitoringControllerPtr;
 
-
 }// namespace NES
 
 #endif//NES_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_

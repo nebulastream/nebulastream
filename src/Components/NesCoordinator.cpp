@@ -18,10 +18,10 @@
 
 //GRPC Includes
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Services/MonitoringService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
-#include <Services/MonitoringService.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
