@@ -78,6 +78,8 @@ class BaseController {
     json::value responseNotImpl(const http::method& method, utility::string_t path);
     void internalServerErrorImpl(web::http::http_request message) const;
     void successMessageImpl(const web::http::http_request& message, const web::json::value& result) const;
+    void successMessageImpl(const web::http::http_request& message, const utf8string& result) const;
+
     void resourceNotFoundImpl(const web::http::http_request& message) const;
     void noContentImpl(const web::http::http_request& message) const;
     void badRequestImpl(const web::http::http_request& message, const web::json::value& detail) const;

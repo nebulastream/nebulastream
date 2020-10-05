@@ -67,6 +67,23 @@ class MonitoringService {
      */
     web::json::value requestMonitoringDataForAllNodesAsJson(MonitoringPlanPtr plan);
 
+    /**
+     * @brief Requests from a remote worker node its monitoring data via prometheus node exporter.
+     * @param nodeId the NES ID of the node
+     * @param port of the prometheus node exporter port from the node
+     * @param the monitoring plan
+     * @return the metrics as plain string
+     */
+    utf8string requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port, MonitoringPlanPtr plan);
+
+    /**
+     * @brief Requests from a remote worker node its monitoring data via prometheus node exporter. Warning: It assumes the default port 9100, otherwise
+     * use requestMonitoringDataViaPrometheusAsString(..)
+     * @param the monitoring plan
+     * @return the metrics as json
+     */
+    web::json::value requestMonitoringDataFromAllNodesViaPrometheusAsJson(MonitoringPlanPtr plan);
+
   private:
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
