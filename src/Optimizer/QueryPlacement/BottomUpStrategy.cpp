@@ -94,7 +94,11 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
         }
 
         NES_TRACE("BottomUpStrategy: Find a node reachable from all topology nodes where child operators are placed.");
-        candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
+        if(childTopologyNodes.size() ==1){
+            candidateTopologyNode= childTopologyNodes[0];
+        } else{
+            candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
+        }
         if (!candidateTopologyNode) {
             NES_ERROR("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
             throw QueryPlacementException("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
