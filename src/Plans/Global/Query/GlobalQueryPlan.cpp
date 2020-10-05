@@ -197,7 +197,7 @@ void GlobalQueryPlan::checkMetaDataValidity() {
 
     for (auto [globalQueryId, globalQueryMetaData] : globalQueryIdToMetaDataMap) {
 
-        if(globalQueryMetaData->empty() && globalQueryMetaData->isDeployed()){
+        if (globalQueryMetaData->empty() && globalQueryMetaData->isDeployed()) {
             globalQueryIdToMetaDataMap.erase(globalQueryId);
             continue;
         }
@@ -251,7 +251,7 @@ std::vector<GlobalQueryMetaDataPtr> GlobalQueryPlan::getGlobalQueryMetaDataToDep
 }
 
 QueryId GlobalQueryPlan::getGlobalQueryIdForQuery(QueryId queryId) {
-    if(queryIdToGlobalQueryIdMap.find(queryId) != queryIdToGlobalQueryIdMap.end()){
+    if (queryIdToGlobalQueryIdMap.find(queryId) != queryIdToGlobalQueryIdMap.end()) {
         return queryIdToGlobalQueryIdMap[queryId];
     }
     return INVALID_QUERY_ID;
