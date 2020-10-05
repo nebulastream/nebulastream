@@ -130,7 +130,6 @@ class GlobalQueryMetaData {
     void setAsOld();
 
   private:
-
     explicit GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
     /**

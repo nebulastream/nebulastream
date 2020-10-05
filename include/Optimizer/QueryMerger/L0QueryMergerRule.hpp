@@ -1,9 +1,9 @@
 #ifndef NES_L0QUERYMERGERRULE_HPP
 #define NES_L0QUERYMERGERRULE_HPP
 
+#include <map>
 #include <memory>
 #include <vector>
-#include <map>
 
 namespace NES {
 

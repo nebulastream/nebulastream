@@ -30,7 +30,6 @@ class QueryMergerPhase {
     explicit QueryMergerPhase();
 
     L0QueryMergerRulePtr l0QueryMergerRule;
-
 };
 }// namespace NES
 #endif//NES_QUERYMERGERPHASE_HPP

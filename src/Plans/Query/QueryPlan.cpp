@@ -181,14 +181,14 @@ void QueryPlan::setQuerySubPlanId(uint64_t querySubPlanId) {
 
 void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
 
-    NES_DEBUG("QueryPlan: removing operator "<< root->toString() << " as root operator.");
+    NES_DEBUG("QueryPlan: removing operator " << root->toString() << " as root operator.");
 
-    auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](OperatorNodePtr rootOperator){
+    auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](OperatorNodePtr rootOperator) {
         return rootOperator->getId() == root->getId();
     });
 
-    if(found != rootOperators.end()){
-        NES_TRACE("QueryPlan: Found root operator "<< root->toString() << " in the root operator list. Removing the operator as the root of the query plan.");
+    if (found != rootOperators.end()) {
+        NES_TRACE("QueryPlan: Found root operator " << root->toString() << " in the root operator list. Removing the operator as the root of the query plan.");
         rootOperators.erase(found);
     }
 }

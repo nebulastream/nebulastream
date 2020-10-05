@@ -65,7 +65,7 @@ const std::string TopologyNode::toString() const {
 
 bool TopologyNode::containAsParent(NodePtr node) {
     std::vector<NodePtr> family = this->getAndFlattenAllAncestors();
-    auto found = std::find_if(family.begin(), family.end(), [node](NodePtr familyMember){
+    auto found = std::find_if(family.begin(), family.end(), [node](NodePtr familyMember) {
         return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
     });
     return found != family.end();
@@ -73,8 +73,8 @@ bool TopologyNode::containAsParent(NodePtr node) {
 
 bool TopologyNode::containAsChild(NodePtr node) {
     std::vector<NodePtr> family = this->getAndFlattenAllChildren();
-    auto found = std::find_if(family.begin(), family.end(), [node](NodePtr familyMember){
-      return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
+    auto found = std::find_if(family.begin(), family.end(), [node](NodePtr familyMember) {
+        return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
     });
     return found != family.end();
 }
