@@ -53,9 +53,10 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("RESTEndpointTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     // get the execution plan
     std::stringstream getExecutionPlanStringStream;

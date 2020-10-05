@@ -81,6 +81,10 @@ class TopologyNode : public Node {
 
     explicit TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
 
+    bool containAsParent(NodePtr node) override;
+
+    bool containAsChild(NodePtr ptr) override;
+
   private:
     uint64_t id;
     std::string ipAddress;
