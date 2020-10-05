@@ -108,6 +108,13 @@ class GlobalQueryPlan {
      */
     std::vector<GlobalQueryMetaDataPtr> getGlobalQueryMetaDataToDeploy();
 
+    /**
+     * @brief Get the global query id for the query
+     * @param queryId: the original query id
+     * @return the corresponding global query id
+     */
+    QueryId getGlobalQueryIdForQuery(QueryId queryId);
+
   private:
     GlobalQueryPlan();
 

@@ -250,4 +250,10 @@ std::vector<GlobalQueryMetaDataPtr> GlobalQueryPlan::getGlobalQueryMetaDataToDep
     return globalQueryMetaDataToDeploy;
 }
 
+QueryId GlobalQueryPlan::getGlobalQueryIdForQuery(QueryId queryId) {
+    if(queryIdToGlobalQueryIdMap.find(queryId) != queryIdToGlobalQueryIdMap.end()){
+        return queryIdToGlobalQueryIdMap[queryId];
+    }
+    return INVALID_QUERY_ID;
+}
 }// namespace NES

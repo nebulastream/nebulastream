@@ -8,6 +8,7 @@
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <REST/RestServer.hpp>
 #include <Services/QueryRequestProcessorService.hpp>
@@ -43,7 +44,8 @@ NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<QueryRequestQueue>();
-    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topology, queryCatalog, streamCatalog,
+    globalQueryPlan = GlobalQueryPlan::create();
+    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog,
                                                                                   workerRpcClient, queryRequestQueue, enableQueryMerging);
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
@@ -244,6 +246,10 @@ QueryCatalogPtr NesCoordinator::getQueryCatalog() {
 
 MonitoringServicePtr NesCoordinator::getMonitoringService() {
     return monitoringService;
+}
+
+GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() {
+    return globalQueryPlan;
 }
 
 }// namespace NES

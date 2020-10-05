@@ -3,6 +3,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -90,9 +91,13 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 6));
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+    ASSERT_NE(globalQueryId, INVALID_QUERY_ID);
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, globalQueryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, globalQueryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, globalQueryId, queryCatalog, 6));
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
@@ -204,7 +209,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -254,9 +259,13 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 6));
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+    ASSERT_NE(globalQueryId, INVALID_QUERY_ID);
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, globalQueryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, globalQueryId, queryCatalog, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, globalQueryId, queryCatalog, 6));
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
@@ -388,6 +397,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+    ASSERT_NE(globalQueryId, INVALID_QUERY_ID);
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
@@ -432,7 +444,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
 /**
  * @brief Test deploy query with print sink with one worker using top down strategy
  */
-TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -455,6 +467,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+    ASSERT_NE(globalQueryId, INVALID_QUERY_ID);
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
@@ -496,7 +511,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTime) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerCentralTumblingWindowQueryEventTime) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -674,7 +689,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTi
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTime) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerCentralSlidingWindowQueryEventTime) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -764,7 +779,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTim
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerCentralWindowQueryProcessingTime) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -847,7 +862,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingTime) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerDistributedWindowQueryProcessingTime) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -904,7 +919,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerDistributedWindowQueryEventTime) {
     ::testing::GTEST_FLAG(throw_on_failure) = true;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
@@ -1005,7 +1020,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorker) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1034,6 +1049,9 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+    ASSERT_NE(globalQueryId, INVALID_QUERY_ID);
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));
@@ -1093,7 +1111,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1123,6 +1141,9 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+    ASSERT_NE(globalQueryId, INVALID_QUERY_ID);
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));
@@ -1203,6 +1224,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+    ASSERT_NE(globalQueryId, INVALID_QUERY_ID);
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
@@ -1248,7 +1272,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployOneWorkerFileOutput) {
     remove("test.out");
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -1269,6 +1293,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+    ASSERT_NE(globalQueryId, INVALID_QUERY_ID);
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
 
@@ -1315,7 +1342,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployTwoWorkerFileOutput) {
     remove("test.out");
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -1342,6 +1369,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test.out\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+    ASSERT_NE(globalQueryId, INVALID_QUERY_ID);
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 2));
@@ -1407,7 +1437,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployMultipleQueriesTwoWorkerFileOutput) {
     remove("test1.out");
     remove("test2.out");
 
@@ -1554,6 +1584,11 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
     string query2 = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test2.out\"));";
     QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    QueryId globalQueryId1 = globalQueryPlan->getGlobalQueryIdForQuery(queryId1);
+    ASSERT_NE(globalQueryId1, INVALID_QUERY_ID);
+    QueryId globalQueryId2 = globalQueryPlan->getGlobalQueryIdForQuery(queryId2);
+    ASSERT_NE(globalQueryId2, INVALID_QUERY_ID);
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId1, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId1, queryCatalog, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId1, queryCatalog, 2));

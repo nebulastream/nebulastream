@@ -47,6 +47,9 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
 class MonitoringService;
 typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
 
+class GlobalQueryPlan;
+typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
     explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots, bool enableQueryMerging);
@@ -117,6 +120,8 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      */
     MonitoringServicePtr getMonitoringService();
 
+    GlobalQueryPlanPtr getGlobalQueryPlan();
+
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient
@@ -145,6 +150,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     MonitoringServicePtr monitoringService;
     WorkerRPCClientPtr workerRpcClient;
     QueryRequestQueuePtr queryRequestQueue;
+    GlobalQueryPlanPtr globalQueryPlan;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 
