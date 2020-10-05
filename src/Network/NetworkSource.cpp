@@ -30,11 +30,13 @@ const std::string NetworkSource::toString() const {
 }
 
 bool NetworkSource::start() {
+    NES_DEBUG("NetworkSource: start called on " << nesPartition);
     return networkManager->registerSubpartitionConsumer(nesPartition) == 0;
 }
 
 bool NetworkSource::stop() {
     // TODO ensure proper termination: what should happen here when we call stop but refCnt has not reached zero?
+    NES_DEBUG("NetworkSource: stop called on " << nesPartition);
     networkManager->unregisterSubpartitionConsumer(nesPartition);
     return true;
 }

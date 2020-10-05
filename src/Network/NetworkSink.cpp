@@ -22,6 +22,7 @@ NetworkSink::NetworkSink(
       nesPartition(nesPartition), queryManager(queryManager),
       waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
+    NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << nodeLocation.createZmqURI());
 }
 
 std::string NetworkSink::toString() {
@@ -33,7 +34,7 @@ SinkMediumTypes NetworkSink::getSinkMediumType() {
 }
 
 NetworkSink::~NetworkSink() {
-    NES_INFO("NetworkSink: Destructor called");
+    NES_INFO("NetworkSink: Destructor called " << nesPartition);
 }
 
 bool NetworkSink::writeData(TupleBuffer& inputBuffer, WorkerContext& workerContext) {
@@ -59,6 +60,7 @@ const std::string NetworkSink::toString() const {
 void NetworkSink::reconfigure(ReconfigurationTask& task, WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString());
     Reconfigurable::reconfigure(task, workerContext);
+    NES_ASSERT(queryManager->getQepStatus(parentPlanId) == QueryExecutionPlan::Running, "parent plan not running on net sink " << nesPartition);
     switch (task.getType()) {
         case Initialize: {
             auto channel = networkManager->registerSubpartitionProducer(
