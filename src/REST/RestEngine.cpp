@@ -91,6 +91,10 @@ void RestEngine::handlePost(http_request message) {
             streamCatalogController->handlePost(paths, message);
             return;
         }
+        else if (paths[0] == "monitoring") {
+            monitoringController->handlePost(paths, message);
+            return;
+        }
     }
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));
 }

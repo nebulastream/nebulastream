@@ -9,6 +9,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cpprest/http_client.h>
 
 namespace NES {
 
@@ -70,6 +71,49 @@ web::json::value MonitoringService::requestMonitoringDataForAllNodesAsJson(Monit
     for (const auto& node : root->getAndFlattenAllChildren()) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId(), plan);
+    }
+    return metricsJson;
+}
+
+utf8string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port, MonitoringPlanPtr plan) {
+    if (!plan) {
+        auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+        plan = MonitoringPlan::create(metrics);
+    }
+    NES_DEBUG("NesCoordinator: Requesting monitoring data from worker id= " + std::to_string(nodeId));
+    TopologyNodePtr node = topology->findNodeWithId(nodeId);
+
+    if (node) {
+        auto nodeIp = node->getIpAddress();
+        auto address = "http://" + nodeIp + ":" + std::to_string(port) + "/metrics";
+
+        utf8string metricsReturn;
+        web::http::client::http_client clientQ1(address);
+        NES_INFO("MonitoringController: Executing metric request to prometheus node exporter on " + address);
+        clientQ1.request(web::http::methods::GET)
+            .then([](const web::http::http_response& response) {
+                NES_INFO("MonitoringController: Extract metrics from prometheus node exporter response.");
+                return response.extract_utf8string();
+            })
+            .then([&metricsReturn](const pplx::task<utf8string>& task) {
+                NES_INFO("MonitoringController: Set metrics return from node exporter responses.");
+                metricsReturn = task.get();
+            })
+            .wait();
+        return metricsReturn;
+    } else {
+        throw std::runtime_error("MonitoringService: Node with ID " + std::to_string(nodeId) + " does not exit.");
+    }
+}
+
+web::json::value MonitoringService::requestMonitoringDataFromAllNodesViaPrometheusAsJson(MonitoringPlanPtr plan) {
+    web::json::value metricsJson{};
+    auto root = topology->getRoot();
+    metricsJson[std::to_string(root->getId())] = web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));
+
+    for (const auto& node : root->getAndFlattenAllChildren()) {
+        std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
+        metricsJson[std::to_string(tNode->getId())] = web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));
     }
     return metricsJson;
 }
