@@ -304,6 +304,15 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
     statistics->incProcessedTuple(task.getNumberOfTuples());
 }
 
+QueryExecutionPlan::QueryExecutionPlanStatus QueryManager::getQepStatus(QuerySubPlanId id) {
+    std::unique_lock lock(queryMutex);
+    auto it = runningQEPs.find(id);
+    if (it != runningQEPs.end()) {
+        return it->second->getStatus();
+    }
+    return QueryExecutionPlan::QueryExecutionPlanStatus::Invalid;
+}
+
 std::string QueryManager::getQueryManagerStatistics() {
     std::unique_lock lock(statisticsMutex);
     std::stringstream ss;

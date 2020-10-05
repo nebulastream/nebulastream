@@ -119,6 +119,13 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     void completedWork(Task& task, WorkerContext& workerContext);
 
   public:
+
+    /**
+     * @brief retrieve the execution status of a given local execution plan.
+     */
+    QueryExecutionPlan::QueryExecutionPlanStatus getQepStatus(QuerySubPlanId id);
+
+
     /**
      * @brief get general statistics of QueryManager and Buffer Manager
      */
