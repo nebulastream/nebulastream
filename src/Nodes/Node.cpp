@@ -48,7 +48,7 @@ bool Node::removeChild(const NodePtr node) {
     // check all children.
     for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
         NES_DEBUG("Node: remove " << (*nodeItr)->toString() << " from " << node->toString() << " this=" << this << " other=" << node.get());
-        if ((*nodeItr)->equal(node)) {
+        if ((*nodeItr).get() == node.get()) {
             // remove this from nodeItr's parents
             for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++) {
                 if ((*it).get() == this) {
@@ -139,7 +139,7 @@ void Node::removeChildren() {
 bool Node::removeParent(const NodePtr node) {
     // check all parents.
     for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr) {
-        if ((*nodeItr)->equal(node)) {
+        if ((*nodeItr).get() == node.get()) {
             for (auto it = (*nodeItr)->children.begin(); it != (*nodeItr)->children.end(); it++) {
                 if ((*it).get() == this) {
                     (*nodeItr)->children.erase(it);
