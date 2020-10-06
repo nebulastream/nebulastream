@@ -199,9 +199,7 @@ class Count : public WindowAggregation {
 
     template<class InputType, class PartialAggregateType>
     PartialAggregateType combine(PartialAggregateType partialType, PartialAggregateType input) {
-        if (input < partialType) {
-            partialType = input;
-        }
+        ++partialType;
         return partialType;
     }
 
