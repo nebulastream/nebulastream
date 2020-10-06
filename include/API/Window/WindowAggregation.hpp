@@ -175,6 +175,41 @@ class Min : public WindowAggregation {
     Min(NES::AttributeFieldPtr onField);
     Min(AttributeFieldPtr onField, AttributeFieldPtr asField);
 };
+
+class Count : public WindowAggregation {
+  public:
+    /**
+   * Factory method to creates a Min aggregation on a particular field.
+   */
+    static WindowAggregationPtr on(ExpressionItem onField);
+
+    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
+        return std::make_shared<Count>(Count(onField, asField));
+    }
+
+    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expression_statment, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+
+    template<class InputType, class PartialAggregateType>
+    PartialAggregateType lift(InputType input) {
+        return input;
+    }
+
+    template<class InputType, class PartialAggregateType>
+    PartialAggregateType combine(PartialAggregateType partialType, PartialAggregateType input) {
+        if (input < partialType) {
+            partialType = input;
+        }
+        return partialType;
+    }
+
+    template<class InputType, class FinalAggregateType>
+    FinalAggregateType lower(InputType partialType) {
+        return partialType;
+    }
+  private:
+    Count(NES::AttributeFieldPtr onField);
+    Count(AttributeFieldPtr onField, AttributeFieldPtr asField);
+};
 }// namespace NES
 
 #endif//INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_

@@ -182,6 +182,7 @@ message SerializableOperator{
         SUM = 0;
         MAX = 1;
         MIN = 2;
+        COUNT = 3;
       }
       Type type = 1;
       string onField = 2;
