@@ -182,7 +182,6 @@ bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionP
             queryIdToQuerySubPlanIds[queryId] = {querySubPlanId};
         } else {
             (*found).second.push_back(querySubPlanId);
-            queryIdToQuerySubPlanIds[queryId] = (*found).second;
         }
         if (queryManager->registerQuery(queryExecutionPlan)) {
             deployedQEPs[querySubPlanId] = queryExecutionPlan;

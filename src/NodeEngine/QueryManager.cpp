@@ -94,6 +94,8 @@ bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("QueryManager::startQuery: query" << qep);
     std::unique_lock lock(queryMutex);
 
+    NES_ASSERT(qep->getStatus() == QueryExecutionPlan::QueryExecutionPlanStatus::Created, "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
+
     for (const auto& sink : qep->getSinks()) {
         NES_DEBUG("QueryManager: start sink " << sink);
         sink->setup();
@@ -357,6 +359,7 @@ void QueryManager::reconfigure(ReconfigurationTask& task, WorkerContext& context
         }
     }
 }
+
 void QueryManager::destroyCallback(ReconfigurationTask& task) {
     Reconfigurable::destroyCallback(task);
     switch (task.getType()) {
