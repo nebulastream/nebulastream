@@ -26,20 +26,24 @@ void GlobalQueryMetaData::addNewSinkGlobalQueryNodes(std::set<GlobalQueryNodePtr
 }
 
 bool GlobalQueryMetaData::removeQueryId(QueryId queryId) {
+    NES_DEBUG("GlobalQueryMetaData: Remove the Query Id " << queryId << " and associated Global Query Nodes with sink operators.");
     auto found = std::find(queryIds.begin(), queryIds.end(), queryId);
     if (found == queryIds.end()) {
+        NES_WARNING("GlobalQueryMetaData: Unable to find query Id " << queryId << " in Global Query Metadata " << globalQueryId);
         return false;
     }
 
+    NES_TRACE("GlobalQueryMetaData: Remove the Global Query Nodes with sink operators for query " << queryId);
     auto itr = sinkGlobalQueryNodes.begin();
     while (itr != sinkGlobalQueryNodes.end()) {
         if ((*itr)->hasQuery(queryId)) {
-           itr = sinkGlobalQueryNodes.erase(itr);
-           continue;
+            itr = sinkGlobalQueryNodes.erase(itr);
+            continue;
         }
         ++itr;
     }
     queryIds.erase(found);
+    //Mark the meta data as updated but not deployed
     markAsNotDeployed();
     return true;
 }
@@ -49,24 +53,32 @@ QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
     QueryPlanPtr queryPlan = QueryPlan::create();
     queryPlan->setQueryId(globalQueryId);
     for (auto sinkGQN : sinkGlobalQueryNodes) {
+        //Take the first operator as GQN with sink operators only have 1 operator
         OperatorNodePtr rootOperator = sinkGQN->getOperators()[0];
+        //clear the previous children assignments
         rootOperator->removeChildren();
         if (!sinkGQN->getChildren().empty()) {
             appendOperator(rootOperator, sinkGQN->getChildren());
         }
+        //Add the logical operator as root to the query plan
         queryPlan->addRootOperator(rootOperator);
     }
     return queryPlan;
 }
 
 void GlobalQueryMetaData::appendOperator(OperatorNodePtr parentOperator, std::vector<NodePtr> childrenGQN) {
-
+    NES_TRACE("GlobalQueryMetaData: append the operators form the children GQN to the parent logical operator");
     for (auto childGQN : childrenGQN) {
+        // We pick the first available operator from the Global Query Node as rest of the operators are same.
+        //TODO: this need to be fixed when we use more advanced merging rules for instance merging two filter operators
+        // on same input stream but with different predicates.
         OperatorNodePtr childOperator = childGQN->as<GlobalQueryNode>()->getOperators()[0];
+        //clear the previous children assignments
         childOperator->removeChildren();
         parentOperator->addChild(childOperator);
         std::vector<NodePtr> childrenGQNOfChildGQN = childGQN->getChildren();
         if (!childrenGQNOfChildGQN.empty()) {
+            //recursively call to append children's children
             appendOperator(childOperator, childrenGQNOfChildGQN);
         }
     }
