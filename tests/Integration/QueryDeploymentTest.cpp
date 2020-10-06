@@ -6,8 +6,8 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <iostream>
 #include <Util/UtilityFunctions.hpp>
+#include <iostream>
 
 using namespace std;
 
@@ -526,7 +526,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTi
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"metadata_generated\")), "
                    "Seconds(10)), Sum::on(Attribute(\"features_properties_capacity\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"DONT_APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -539,6 +539,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTi
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
 
+#if 0
     string expectedContent =
         "+----------------------------------------------------+\n"
         "|start:UINT64|end:UINT64|key:INT64|features_properties_capacity:UINT64|\n"
@@ -598,7 +599,63 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTi
         "|1262343670000|1262343680000|11|0|\n"
         "|1262343680000|1262343690000|11|0|\n"
         "+----------------------------------------------------+";
-
+#else
+    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,features_properties_capacity:INTEGER\n"
+                             "1262343610000,1262343620000,1,736\n"
+                             "1262343620000,1262343630000,1,0\n"
+                             "1262343630000,1262343640000,1,0\n"
+                             "1262343640000,1262343650000,1,0\n"
+                             "1262343650000,1262343660000,1,0\n"
+                             "1262343660000,1262343670000,1,0\n"
+                             "1262343670000,1262343680000,1,0\n"
+                             "1262343680000,1262343690000,1,0\n"
+                             "1262343620000,1262343630000,2,1348\n"
+                             "1262343630000,1262343640000,2,0\n"
+                             "1262343640000,1262343650000,2,0\n"
+                             "1262343650000,1262343660000,2,0\n"
+                             "1262343660000,1262343670000,2,0\n"
+                             "1262343670000,1262343680000,2,0\n"
+                             "1262343680000,1262343690000,2,0\n"
+                             "1262343630000,1262343640000,3,4575\n"
+                             "1262343640000,1262343650000,3,0\n"
+                             "1262343650000,1262343660000,3,0\n"
+                             "1262343660000,1262343670000,3,0\n"
+                             "1262343670000,1262343680000,3,0\n"
+                             "1262343680000,1262343690000,3,0\n"
+                             "1262343640000,1262343650000,4,1358\n"
+                             "1262343650000,1262343660000,4,0\n"
+                             "1262343660000,1262343670000,4,0\n"
+                             "1262343670000,1262343680000,4,0\n"
+                             "1262343680000,1262343690000,4,0\n"
+                             "1262343650000,1262343660000,5,1288\n"
+                             "1262343660000,1262343670000,5,0\n"
+                             "1262343670000,1262343680000,5,0\n"
+                             "1262343680000,1262343690000,5,0\n"
+                             "1262343660000,1262343670000,6,3458\n"
+                             "1262343670000,1262343680000,6,0\n"
+                             "1262343680000,1262343690000,6,0\n"
+                             "1262343670000,1262343680000,7,1128\n"
+                             "1262343680000,1262343690000,7,0\n"
+                             "1262343680000,1262343690000,8,1079\n"
+                             "1262343600000,1262343610000,10,2632\n"
+                             "1262343610000,1262343620000,10,0\n"
+                             "1262343620000,1262343630000,10,0\n"
+                             "1262343630000,1262343640000,10,0\n"
+                             "1262343640000,1262343650000,10,0\n"
+                             "1262343650000,1262343660000,10,0\n"
+                             "1262343660000,1262343670000,10,0\n"
+                             "1262343670000,1262343680000,10,0\n"
+                             "1262343680000,1262343690000,10,0\n"
+                             "1262343600000,1262343610000,11,4653\n"
+                             "1262343610000,1262343620000,11,0\n"
+                             "1262343620000,1262343630000,11,0\n"
+                             "1262343630000,1262343640000,11,0\n"
+                             "1262343640000,1262343650000,11,0\n"
+                             "1262343650000,1262343660000,11,0\n"
+                             "1262343660000,1262343670000,11,0\n"
+                             "1262343670000,1262343680000,11,0\n"
+                             "1262343680000,1262343690000,11,0\n";
+#endif
     NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): content=" << content);
     NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
@@ -644,8 +701,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTim
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
-                                                                1, 0, 1,
-                                                                "test_stream", "window");
+                                                                  1, 0, 1,
+                                                                  "test_stream", "window");
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -654,7 +711,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTim
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), Sum::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""+outputFilePath+"\"));";
+    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), Sum::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -705,7 +762,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTim
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
-
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime) {
@@ -772,7 +828,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
             NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): expContent=0");
             EXPECT_EQ(content.at(3), "0");
         }
-
     }
     NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): content=" << rowNumber);
     NES_INFO("QueryDeploymentTest(testDeployOneWorkerCentralWindowQueryProcessingTime): expContent=57");
@@ -897,7 +952,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"ts\")), "
                    "Seconds(1)), Sum::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"DONT_APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     cout << "wait start" << endl;
@@ -911,6 +966,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
 
+#if 0
     string expectedContent =
         "+----------------------------------------------------+\n"
         "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
@@ -919,6 +975,13 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
         "|2000|3000|1|0|\n"
         "|2000|3000|2|56|\n"
         "+----------------------------------------------------+";
+#else
+    string expectedContent =
+        "start:INTEGER,end:INTEGER,key:INTEGER,value:INTEGER\n"
+        "1000,2000,1,34\n"
+        "2000,3000,1,0\n"
+        "2000,3000,2,56\n";
+#endif
 
     NES_INFO("QueryDeploymentTest: content=" << content);
     NES_INFO("QueryDeploymentTest: expContent=" << expectedContent);
