@@ -117,6 +117,7 @@ void QueryRequestProcessorService::start() {
                                 throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with global query Id " + globalQueryId);
                             }
                         }
+                        //Mark the meta data as deployed
                         globalQueryMetaData->markAsDeployed();
                         globalQueryMetaData->setAsOld();
                     }
