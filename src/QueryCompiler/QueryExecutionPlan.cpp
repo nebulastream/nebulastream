@@ -35,17 +35,20 @@ QueryExecutionPlan::~QueryExecutionPlan() {
 
 bool QueryExecutionPlan::stop() {
     bool ret = true;
-    NES_ASSERT(qepStatus == Running, "QueryPlan is created but not executing " << queryId << " " << querySubPlanId);
-    NES_DEBUG("QueryExecutionPlan: stop " << queryId << " " << querySubPlanId);
-    for (auto& stage : stages) {
-        if (!stage->stop()) {
-            NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
-            ret = false;
+    //    NES_ASSERT(qepStatus == Running, "QueryPlan is created but not executing " << queryId << " " << querySubPlanId);
+
+    auto expected = Running;
+    if (qepStatus.compare_exchange_strong(expected, Stopped)) {
+        NES_DEBUG("QueryExecutionPlan: stop " << queryId << " " << querySubPlanId);
+        for (auto& stage : stages) {
+            if (!stage->stop()) {
+                NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
+                ret = false;
+            }
         }
     }
-    if (ret) {
-        qepStatus.store(Stopped);
-    } else {
+
+    if (!ret) {
         qepStatus.store(ErrorState);
     }
     return ret;

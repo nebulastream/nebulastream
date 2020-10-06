@@ -45,6 +45,7 @@ bool NetworkSink::writeData(TupleBuffer& inputBuffer, WorkerContext& workerConte
 
 void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString());
+//    NES_ASSERT(queryManager->getQepStatus(parentPlanId) == QueryExecutionPlan::Created, "Setup : parent plan not running on net sink " << nesPartition);
     queryManager->addReconfigurationTask(parentPlanId, ReconfigurationTask(parentPlanId, Initialize, this));
 }
 
@@ -60,12 +61,13 @@ const std::string NetworkSink::toString() const {
 void NetworkSink::reconfigure(ReconfigurationTask& task, WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString());
     Reconfigurable::reconfigure(task, workerContext);
-    NES_ASSERT(queryManager->getQepStatus(parentPlanId) == QueryExecutionPlan::Running, "parent plan not running on net sink " << nesPartition);
     switch (task.getType()) {
         case Initialize: {
+            NES_ASSERT(queryManager->getQepStatus(parentPlanId) == QueryExecutionPlan::Running, "parent plan not running on net sink " << nesPartition);
             auto channel = networkManager->registerSubpartitionProducer(
                 nodeLocation, nesPartition,
                 waitTime, retryTimes);
+            NES_ASSERT(channel, "Channel not valid partition "<< nesPartition);
             workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
             NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread " << NesThread::getId);
             break;
