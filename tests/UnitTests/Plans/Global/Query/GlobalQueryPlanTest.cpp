@@ -3,7 +3,6 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -144,6 +143,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
     auto plan = query.getQueryPlan();
     plan->setQueryId(1);
     globalQueryPlan->addQueryPlan(plan);
+    globalQueryPlan->updateGlobalQueryMetaDataMap();
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: should 1 global query node with logical sink");
@@ -152,6 +152,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
 
     NES_DEBUG("GlobalQueryPlanTest: Removing the query plan for the query with id Q1");
     globalQueryPlan->removeQuery(1);
+    globalQueryPlan->updateGlobalQueryMetaDataMap();
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: Should return empty global query nodes");

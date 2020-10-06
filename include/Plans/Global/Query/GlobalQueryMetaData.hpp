@@ -73,7 +73,7 @@ class GlobalQueryMetaData {
     void clear();
 
     /**
-     * @brief Get the Query plan for deployment
+     * @brief Get the Query plan for deployment build from the information within this metadata
      * @return the query plan with all the interconnected logical operators
      */
     QueryPlanPtr getQueryPlan();

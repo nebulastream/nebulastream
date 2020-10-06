@@ -43,7 +43,6 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
     GlobalQueryMetaDataPtr globalQueryMetaData = globalQueryIdToMetaDataMap[globalQueryId];
     globalQueryMetaData->removeQueryId(queryId);
     queryIdToGlobalQueryIdMap.erase(queryId);
-    queryIdToGlobalQueryNodeMap.erase(queryId);
 
     NES_INFO("GlobalQueryPlan: Remove the query plan for query " << queryId);
     const std::vector<GlobalQueryNodePtr>& globalQueryNodes = getGQNListForQueryId(queryId);
@@ -54,6 +53,7 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
         }
         globalQueryNode->removeQuery(queryId);
     }
+    queryIdToGlobalQueryNodeMap.erase(queryId);
 }
 
 void GlobalQueryPlan::addNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const QueryId queryId, const OperatorNodePtr& operatorNode) {
