@@ -176,10 +176,13 @@ class Min : public WindowAggregation {
     Min(AttributeFieldPtr onField, AttributeFieldPtr asField);
 };
 
+/**
+ * The Count aggregation calculates the Count over the window.
+ */
 class Count : public WindowAggregation {
   public:
     /**
-   * Factory method to creates a Min aggregation on a particular field.
+   * Factory method to creates a Count aggregation on a particular field.
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
