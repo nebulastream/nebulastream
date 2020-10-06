@@ -29,6 +29,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
                 NES_ERROR("GlobalQueryPlanUpdatePhase: Received query request with unhandled status: " << queryRequest.getQueryStatusAsString());
                 throw Exception("GlobalQueryPlanUpdatePhase: Received query request with unhandled status" + queryRequest.getQueryStatusAsString());
             }
+            globalQueryPlan->updateGlobalQueryMetaDataMap();
         }
         NES_DEBUG("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;
