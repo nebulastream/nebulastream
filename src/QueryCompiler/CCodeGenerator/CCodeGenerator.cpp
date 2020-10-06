@@ -444,7 +444,6 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
         NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
     }
 
-    NES_DEBUG("CCodeGenerator: " << getValueFromKeyHandle.getCode()->code_);
     auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
                                             .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(

@@ -232,6 +232,8 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                             partialFinalAggregates[windowId] = countAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }
+                    } else {
+                        NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
                     }
                 } else {
                     NES_DEBUG("WindowHandler CC: condition not true");
@@ -250,7 +252,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                 value = minAggregation->lower<FinalAggregateType, PartialAggregateType>(partialAggregates[i]);
             } else if (auto countAggregation = std::dynamic_pointer_cast<Count>(windowDefinition->getWindowAggregation())) {
                 value = countAggregation->lower<FinalAggregateType, PartialAggregateType>(partialAggregates[i]);
-            }else {
+            } else {
                 NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
             }
             NES_DEBUG("Window Handler: write key=" << key << " value=" << value << " window.start()="
