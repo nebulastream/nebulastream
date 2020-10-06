@@ -438,7 +438,9 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MIN"))));
     } else if (auto sumAggregation = std::dynamic_pointer_cast<Sum>(window->getWindowAggregation())) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
-    } else {
+    } else if (auto countAggregation = std::dynamic_pointer_cast<Count>(window->getWindowAggregation())) {
+        getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
+    }else {
         NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
     }
 

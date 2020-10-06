@@ -95,4 +95,28 @@ void Min::compileLiftCombine(CompoundStatementPtr currentCode,
         assign(partialRef, inputRef.accessRef(VarRefStatement(var_decl_input))));
     currentCode->addStatement(ifStatement.createCopy());
 }
+
+//COUNT aggregation
+Count::Count(NES::AttributeFieldPtr field) : WindowAggregation(field) {}
+Count::Count(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(field, asField) {}
+
+WindowAggregationPtr Count::on(ExpressionItem onField) {
+    auto keyExpression = onField.getExpressionNode();
+    if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+    }
+    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+    auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
+    return std::make_shared<Count>(Count(keyField));
+}
+
+void Count::compileLiftCombine(CompoundStatementPtr currentCode,
+                             BinaryOperatorStatement partialRef,
+                             StructDeclaration inputStruct,
+                             BinaryOperatorStatement inputRef) {
+    auto var_decl_input = inputStruct.getVariableDeclaration(this->onField->name);
+    auto increment = ++partialRef;
+    auto updatedPartial = partialRef.assign(increment);
+    currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
+}
 }// namespace NES
