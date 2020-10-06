@@ -28,7 +28,6 @@ class MonitoringController : public BaseController {
      */
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
 
-
   private:
     MonitoringServicePtr monitoringService;
 };

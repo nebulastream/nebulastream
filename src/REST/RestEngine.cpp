@@ -90,8 +90,7 @@ void RestEngine::handlePost(http_request message) {
         } else if (paths[0] == "streamCatalog") {
             streamCatalogController->handlePost(paths, message);
             return;
-        }
-        else if (paths[0] == "monitoring") {
+        } else if (paths[0] == "monitoring") {
             monitoringController->handlePost(paths, message);
             return;
         }

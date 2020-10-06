@@ -84,8 +84,7 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
 
                                 if (req.has_field("prom-port")) {
                                     promPort = req.at("prom-port").as_integer();
-                                }
-                                else {
+                                } else {
                                     promPort = 9100;
                                 }
 
@@ -102,8 +101,7 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
                                 message.reply(status_codes::BadRequest, "The provided node ID " + strNodeId + " is not valid.");
                             }
                             return;
-                        }
-                        else {
+                        } else {
                             //otherwise get metrics from all nodes via prometheus
                             //TODO: Add support of monitoring plan in the future
                             NES_DEBUG("MonitoringController: handlePost -metrics: Querying all nodes via prometheus node exporter");
