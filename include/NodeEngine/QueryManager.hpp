@@ -171,8 +171,9 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * was scheduled to be executed!
      * @param queryExecutionPlanId: the local QEP to reconfigure
      * @param reconfigurationDescriptor: what to do
+     * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor);
+    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor, bool blocking = false);
 
   private:
     friend class ThreadPool;
