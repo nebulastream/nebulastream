@@ -114,7 +114,7 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPla
 
 bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId queryExecutionId, OperatorNodePtr queryOperators) {
     std::unique_lock lock(engineMutex);
-    NES_INFO("Creating QueryExecutionPlan for " << queryId);
+    NES_INFO("Creating QueryExecutionPlan for " << queryId << " " << queryExecutionId);
     try {
         // Translate the query operators in their legacy representation
         // todo this is not required if later the query compiler can handle it by it self.
@@ -180,19 +180,21 @@ bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionP
         auto found = queryIdToQuerySubPlanIds.find(queryId);
         if (found == queryIdToQuerySubPlanIds.end()) {
             queryIdToQuerySubPlanIds[queryId] = {querySubPlanId};
+            NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " as a singleton");
         } else {
             (*found).second.push_back(querySubPlanId);
+            NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " added");
         }
         if (queryManager->registerQuery(queryExecutionPlan)) {
             deployedQEPs[querySubPlanId] = queryExecutionPlan;
-            NES_DEBUG("NodeEngine: register of QEP " << queryExecutionPlan << " succeeded");
+            NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " succeeded");
             return true;
         } else {
-            NES_DEBUG("NodeEngine: register of QEP " << queryExecutionPlan << " failed");
+            NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " failed");
             return false;
         }
     } else {
-        NES_DEBUG("NodeEngine: qep already exists. register failed" << queryExecutionPlan);
+        NES_DEBUG("NodeEngine: qep already exists. register failed" << querySubPlanId);
         return false;
     }
 }
