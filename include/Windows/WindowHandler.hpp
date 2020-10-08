@@ -2,6 +2,10 @@
 #define INCLUDE_WINDOWS_WINDOW_HPP_
 
 #include <API/Window/WindowDefinition.hpp>
+#include <API/Window/AggregationTypes/Sum.hpp>
+#include <API/Window/AggregationTypes/Max.hpp>
+#include <API/Window/AggregationTypes/Min.hpp>
+#include <API/Window/AggregationTypes/Count.hpp>
 #include <QueryLib/WindowManagerLib.hpp>
 #include <Util/Logger.hpp>
 #include <atomic>
@@ -187,48 +191,47 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                                                                    << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
                     NES_DEBUG("WindowHandler CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
-                    // TODO Because of this condition we currently only support SUM aggregations
                     if (auto sumAggregation = std::dynamic_pointer_cast<Sum>(windowDefinition->getWindowAggregation())) {
                         if (partialFinalAggregates.size() <= windowId) {
-                            // initial the partial aggregate
+                            // initiate the partial aggregate of Sum aggregation
                             NES_DEBUG("WindowHandler CC: assign partialAggregates[sliceId]=" << partialAggregates[sliceId] << " old value was " << partialFinalAggregates[windowId]);
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
                         } else {
                             NES_DEBUG("WindowHandler CC: update partialFinalAggregates[windowId]=" << partialFinalAggregates[windowId] << " with " << sumAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId], partialAggregates[sliceId]));
-                            // update the partial aggregate
+                            // update the partial aggregate of Sum aggregation
                             partialFinalAggregates[windowId] = sumAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }
                     } else if (auto maxAggregation = std::dynamic_pointer_cast<Max>(windowDefinition->getWindowAggregation())) {
                         if (partialFinalAggregates.size() <= windowId) {
-                            // initial the partial aggregate
+                            // initiate the partial aggregate of Max aggregation
                             NES_DEBUG("WindowHandler CC: assign partialAggregates[sliceId]=" << partialAggregates[sliceId] << " old value was " << partialFinalAggregates[windowId]);
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
                         } else {
                             NES_DEBUG("WindowHandler CC: update partialFinalAggregates[windowId]=" << partialFinalAggregates[windowId] << " with " << maxAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId], partialAggregates[sliceId]));
-                            // update the partial aggregate
+                            // update the partial aggregate of Max aggregation
                             partialFinalAggregates[windowId] = maxAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }
                     } else if (auto minAggregation = std::dynamic_pointer_cast<Min>(windowDefinition->getWindowAggregation())) {
                         if (partialFinalAggregates.size() <= windowId) {
-                            // initial the partial aggregate
+                            // initiate the partial aggregate of Min aggregation
                             NES_DEBUG("WindowHandler CC: assign partialAggregates[sliceId]=" << partialAggregates[sliceId] << " old value was " << partialFinalAggregates[windowId]);
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
                         } else {
                             NES_DEBUG("WindowHandler CC: update partialFinalAggregates[windowId]=" << partialFinalAggregates[windowId] << " with " << minAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId], partialAggregates[sliceId]));
-                            // update the partial aggregate
+                            // update the partial aggregate of Min aggregation
                             partialFinalAggregates[windowId] = minAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }
                     } else if (auto countAggregation = std::dynamic_pointer_cast<Count>(windowDefinition->getWindowAggregation())) {
                         if (partialFinalAggregates.size() <= windowId) {
-                            // initial the partial aggregate
+                            // initiate the partial aggregate of Count aggregation
                             NES_DEBUG("WindowHandler CC: assign partialAggregates[sliceId]=" << partialAggregates[sliceId] << " old value was " << partialFinalAggregates[windowId]);
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
                         } else {
                             NES_DEBUG("WindowHandler CC: update partialFinalAggregates[windowId]=" << partialFinalAggregates[windowId] << " with " << countAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId], partialAggregates[sliceId]));
-                            // update the partial aggregate
+                            // update the partial aggregate of Count Aggregation
                             partialFinalAggregates[windowId] = countAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }

@@ -52,8 +52,8 @@ TEST_F(WindowManagerTest, testSumAggregation) {
         auto partial = store->lift<int64_t, int64_t>(1L);
         auto partial2 = store->lift<int64_t, int64_t>(2L);
         auto combined = store->combine<int64_t>(partial, partial2);
-        auto final = store->lower<int64_t, int64_t>(combined);
-        ASSERT_EQ(final, 3);
+        auto result = store->lower<int64_t, int64_t>(combined);
+        ASSERT_EQ(result, 3);
     }
 }
 
@@ -64,8 +64,8 @@ TEST_F(WindowManagerTest, testMaxAggregation) {
         auto partial = store->lift<int64_t, int64_t>(1L);
         auto partial2 = store->lift<int64_t, int64_t>(4L);
         auto combined = store->combine<int64_t>(partial, partial2);
-        auto final = store->lower<int64_t, int64_t>(combined);
-        ASSERT_EQ(final, 4);
+        auto result = store->lower<int64_t, int64_t>(combined);
+        ASSERT_EQ(result, 4);
     }
 }
 
@@ -76,8 +76,8 @@ TEST_F(WindowManagerTest, testMinAggregation) {
         auto partial = store->lift<int64_t, int64_t>(1L);
         auto partial2 = store->lift<int64_t, int64_t>(4L);
         auto combined = store->combine<int64_t>(partial, partial2);
-        auto final = store->lower<int64_t, int64_t>(combined);
-        ASSERT_EQ(final, 1);
+        auto result = store->lower<int64_t, int64_t>(combined);
+        ASSERT_EQ(result, 1);
     }
 }
 
@@ -88,8 +88,8 @@ TEST_F(WindowManagerTest, testCountAggregation) {
         auto partial = store->lift<int64_t, int64_t>(1L);
         auto partial2 = store->lift<int64_t, int64_t>(4L);
         auto combined = store->combine<int64_t>(partial, partial2);
-        auto final = store->lower<int64_t, int64_t>(combined);
-        ASSERT_EQ(final, 2);
+        auto result = store->lower<int64_t, int64_t>(combined);
+        ASSERT_EQ(result, 2);
     }
 }
 

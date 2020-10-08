@@ -1,3 +1,7 @@
+#include <API/Window/AggregationTypes/Sum.hpp>
+#include <API/Window/AggregationTypes/Max.hpp>
+#include <API/Window/AggregationTypes/Min.hpp>
+#include <API/Window/AggregationTypes/Count.hpp>
 #include <API/Window/TimeCharacteristic.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -432,13 +436,13 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
 
     // set the default value for window state
-    if (auto minAggregation = std::dynamic_pointer_cast<Min>(window->getWindowAggregation())){
+    if (std::dynamic_pointer_cast<Min>(window->getWindowAggregation()) != nullptr){
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MAX"))));
-    } else if (auto maxAggregation = std::dynamic_pointer_cast<Max>(window->getWindowAggregation())){
+    } else if (std::dynamic_pointer_cast<Max>(window->getWindowAggregation()) != nullptr){
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MIN"))));
-    } else if (auto sumAggregation = std::dynamic_pointer_cast<Sum>(window->getWindowAggregation())) {
+    } else if (std::dynamic_pointer_cast<Sum>(window->getWindowAggregation()) != nullptr) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
-    } else if (auto countAggregation = std::dynamic_pointer_cast<Count>(window->getWindowAggregation())) {
+    } else if (std::dynamic_pointer_cast<Count>(window->getWindowAggregation()) != nullptr) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
     }else {
         NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
