@@ -13,6 +13,7 @@
 #include <API/Window/TimeCharacteristic.hpp>
 #include <API/Window/WindowAggregation.hpp>
 #include <API/Window/WindowType.hpp>
+#include <API/Window/AggregationTypes/Sum.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>

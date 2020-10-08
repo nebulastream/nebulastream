@@ -4,6 +4,7 @@
 #include <API/Window/TimeCharacteristic.hpp>
 #include <API/Window/WindowAggregation.hpp>
 #include <API/Window/WindowType.hpp>
+#include <API/Window/AggregationTypes/Sum.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
