@@ -372,4 +372,83 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
+
+/* 4.Test
+ * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
+ */
+TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
+    NES_DEBUG("start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    size_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_DEBUG("coordinator started successfully");
+
+    NES_DEBUG("start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_DEBUG("worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    //register logical stream qnv
+    std::string qnv =
+        R"(Schema::create()->addField("sensor_id", UINT64)->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+    std::string testSchemaFileName = "QnV.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << qnv;
+    out.close();
+    wrk1->registerLogicalStream("QnV", testSchemaFileName);
+
+    //register physical stream
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_intID.csv",
+                                                                1, 0, 1,
+                                                                "test_stream", "QnV");
+    wrk1->registerPhysicalStream(conf);
+
+    std::string outputFilePath =
+        "testPatternWithWindowandAggregation.out";
+    remove(outputFilePath.c_str());
+
+    //register query
+    std::string query = R"(Pattern::from("QnV").windowByKey(Attribute("sensor_id"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("timestamp")), Minutes(15), Minutes(10)), Sum::on(Attribute("quantity"))).filter(Attribute("quantity") > 70).sink(FileSinkDescriptor::create(")"
+                        + outputFilePath + "\")); ";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    //TODO Patternname waiting for String support in map operator
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|start:UINT64|end:UINT64|key:INT64|quantity:UINT64|PatternId:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543625400000|1543626300000|2000073|71|1|\n"
+        "|1543624200000|1543625100000|2000073|72|1|\n"
+        "|1543622400000|1543623300000|2000073|77|1|\n"
+        "+----------------------------------------------------+";
+
+    std::ifstream ifs(outputFilePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    NES_DEBUG("content=" << content);
+    NES_DEBUG("expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
+
+    bool retStopWrk = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
 }// namespace NES
