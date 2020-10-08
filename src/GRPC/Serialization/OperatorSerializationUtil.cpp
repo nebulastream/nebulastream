@@ -1,4 +1,8 @@
 #include <API/Schema.hpp>
+#include <API/Window/AggregationTypes/Sum.hpp>
+#include <API/Window/AggregationTypes/Max.hpp>
+#include <API/Window/AggregationTypes/Min.hpp>
+#include <API/Window/AggregationTypes/Count.hpp>
 #include <API/Window/TimeCharacteristic.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
@@ -26,7 +30,6 @@
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
-
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>

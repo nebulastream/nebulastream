@@ -68,6 +68,10 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <API/Window/WindowType.hpp>" << std::endl;
         code << "#include <API/Window/TimeCharacteristic.hpp>" << std::endl;
         code << "#include <API/Window/WindowAggregation.hpp>" << std::endl;
+        code << "#include <API/Window/AggregationTypes/Sum.hpp>" << std::endl;
+        code << "#include <API/Window/AggregationTypes/Max.hpp>" << std::endl;
+        code << "#include <API/Window/AggregationTypes/Min.hpp>" << std::endl;
+        code << "#include <API/Window/AggregationTypes/Count.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
         code << "Query createQuery(){" << std::endl;
 

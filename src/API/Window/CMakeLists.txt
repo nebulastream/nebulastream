@@ -6,3 +6,5 @@ add_source_nes(
         TimeCharacteristic.cpp
         DistributionCharacteristic.cpp
 )
+
+add_subdirectory(AggregationTypes)
