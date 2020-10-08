@@ -40,8 +40,8 @@ void Sum::compileLiftCombine(CompoundStatementPtr currentCode,
                              BinaryOperatorStatement partialRef,
                              StructDeclaration inputStruct,
                              BinaryOperatorStatement inputRef) {
-    auto var_decl_input = inputStruct.getVariableDeclaration(this->onField->name);
-    auto sum = partialRef + inputRef.accessRef(VarRefStatement(var_decl_input));
+    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->name);
+    auto sum = partialRef + inputRef.accessRef(VarRefStatement(varDeclInput));
     auto updatedPartial = partialRef.assign(sum);
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
 }
@@ -64,10 +64,10 @@ void Max::compileLiftCombine(CompoundStatementPtr currentCode,
                              BinaryOperatorStatement partialRef,
                              StructDeclaration inputStruct,
                              BinaryOperatorStatement inputRef) {
-    auto var_decl_input = inputStruct.getVariableDeclaration(this->onField->name);
+    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->name);
     auto ifStatement = IF(
-        partialRef < inputRef.accessRef(VarRefStatement(var_decl_input)),
-        assign(partialRef, inputRef.accessRef(VarRefStatement(var_decl_input))));
+        partialRef < inputRef.accessRef(VarRefStatement(varDeclInput)),
+        assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
     currentCode->addStatement(ifStatement.createCopy());
 }
 
@@ -89,10 +89,10 @@ void Min::compileLiftCombine(CompoundStatementPtr currentCode,
                              BinaryOperatorStatement partialRef,
                              StructDeclaration inputStruct,
                              BinaryOperatorStatement inputRef) {
-    auto var_decl_input = inputStruct.getVariableDeclaration(this->onField->name);
+    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->name);
     auto ifStatement = IF(
-        partialRef > inputRef.accessRef(VarRefStatement(var_decl_input)),
-        assign(partialRef, inputRef.accessRef(VarRefStatement(var_decl_input))));
+        partialRef > inputRef.accessRef(VarRefStatement(varDeclInput)),
+        assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
     currentCode->addStatement(ifStatement.createCopy());
 }
 
@@ -114,7 +114,7 @@ void Count::compileLiftCombine(CompoundStatementPtr currentCode,
                              BinaryOperatorStatement partialRef,
                              StructDeclaration inputStruct,
                              BinaryOperatorStatement inputRef) {
-    auto var_decl_input = inputStruct.getVariableDeclaration(this->onField->name);
+    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->name);
     auto increment = ++partialRef;
     auto updatedPartial = partialRef.assign(increment);
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
