@@ -30,7 +30,9 @@
 #include <Sources/GeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windows/WindowHandler.hpp>
+#include <Windowing/Runtime/WindowHandler.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <State/StateVariable.hpp>
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>

@@ -3,8 +3,8 @@
 #include <map>
 #include <vector>
 
-#include <API/Window/WindowAggregation.hpp>
-#include <API/Window/WindowDefinition.hpp>
+#include <Windowing/AggregationTypes/WindowAggregation.hpp>
+#include <Windowing/WindowDefinition.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
@@ -20,7 +20,9 @@
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
-#include <Windows/WindowHandler.hpp>
+#include <Windowing/Runtime/WindowHandler.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/Runtime/WindowManager.hpp>
 
 namespace NES {
 class WindowManagerTest : public testing::Test {

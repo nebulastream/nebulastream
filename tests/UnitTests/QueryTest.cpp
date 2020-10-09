@@ -1,10 +1,12 @@
 #include "gtest/gtest.h"
 
 #include <API/Query.hpp>
-#include <API/Window/TimeCharacteristic.hpp>
-#include <API/Window/WindowAggregation.hpp>
-#include <API/Window/WindowType.hpp>
-#include <API/Window/AggregationTypes/Sum.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/AggregationTypes/WindowAggregation.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/AggregationTypes/Sum.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>

@@ -1,5 +1,6 @@
 #include <API/Schema.hpp>
-#include <API/Window/WindowDefinition.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/WindowDefinition.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 namespace NES {
 

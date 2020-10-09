@@ -1,9 +1,11 @@
-#include <API/Window/AggregationTypes/Sum.hpp>
-#include <API/Window/AggregationTypes/Max.hpp>
-#include <API/Window/AggregationTypes/Min.hpp>
-#include <API/Window/AggregationTypes/Count.hpp>
-#include <API/Window/TimeCharacteristic.hpp>
-#include <API/Window/WindowDefinition.hpp>
+#include <Windowing/AggregationTypes/Sum.hpp>
+#include <Windowing/AggregationTypes/Max.hpp>
+#include <Windowing/AggregationTypes/Min.hpp>
+#include <Windowing/AggregationTypes/Count.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <API/UserAPIExpression.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>

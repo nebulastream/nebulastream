@@ -1,4 +1,5 @@
-#include <API/Window/WindowDefinition.hpp>
+#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>

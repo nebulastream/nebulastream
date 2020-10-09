@@ -5,7 +5,6 @@
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
-#include <Windows/WindowHandler.hpp>
 #include <utility>
 
 namespace NES {

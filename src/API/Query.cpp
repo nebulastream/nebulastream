@@ -1,4 +1,5 @@
-#include <API/AbstractWindowDefinition.hpp>
+#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>

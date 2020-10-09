@@ -10,10 +10,11 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
-#include <API/Window/TimeCharacteristic.hpp>
-#include <API/Window/WindowAggregation.hpp>
-#include <API/Window/WindowType.hpp>
-#include <API/Window/AggregationTypes/Sum.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/AggregationTypes/WindowAggregation.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/AggregationTypes/Sum.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
