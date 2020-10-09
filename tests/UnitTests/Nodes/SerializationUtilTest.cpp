@@ -5,6 +5,7 @@
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
@@ -19,23 +20,26 @@
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <google/protobuf/util/json_util.h>
 #include <gtest/gtest.h>
 #include <iostream>
+
 using namespace NES;
 
 class SerializationUtilTest : public testing::Test {
@@ -264,7 +268,6 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
-
 }
 
 TEST_F(SerializationUtilTest, expressionSerialization) {
@@ -356,16 +359,137 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
 TEST_F(SerializationUtilTest, operatorSerialization) {
 
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+    source->setId(UtilityFunctions::getNextOperatorId());
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
+    filter->setId(UtilityFunctions::getNextOperatorId());
     filter->addChild(source);
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
+    map->setId(UtilityFunctions::getNextOperatorId());
     map->addChild(filter);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    sink->setId(UtilityFunctions::getNextOperatorId());
     sink->addChild(map);
 
     auto serializedOperator = OperatorSerializationUtil::serializeOperator(sink, new SerializableOperator());
     auto rootOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
 
     ASSERT_TRUE(sink->equal(rootOperator));
-    ASSERT_TRUE(sink->equalWithAllChildren(rootOperator));
+}
+
+TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
+
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+    source->setId(UtilityFunctions::getNextOperatorId());
+    auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
+    filter->setId(UtilityFunctions::getNextOperatorId());
+    filter->addChild(source);
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
+    map->setId(UtilityFunctions::getNextOperatorId());
+    map->addChild(filter);
+    auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    sink->setId(UtilityFunctions::getNextOperatorId());
+    sink->addChild(map);
+
+    auto queryPlan = QueryPlan::create(1, 1, {sink});
+
+    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
+
+    ASSERT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
+    ASSERT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
+    ASSERT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
+}
+
+TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
+
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+    source->setId(UtilityFunctions::getNextOperatorId());
+    auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
+    filter->setId(UtilityFunctions::getNextOperatorId());
+    filter->addChild(source);
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
+    map->setId(UtilityFunctions::getNextOperatorId());
+    map->addChild(filter);
+    auto sink1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    sink1->setId(UtilityFunctions::getNextOperatorId());
+    auto sink2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    sink2->setId(UtilityFunctions::getNextOperatorId());
+    sink1->addChild(map);
+    sink2->addChild(map);
+
+    auto queryPlan = QueryPlan::create(1, 1, {sink1, sink2});
+
+    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
+
+    ASSERT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
+    ASSERT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
+
+    std::vector<OperatorNodePtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
+    for (auto actualRootOperator : actualRootOperators) {
+        bool found = false;
+        for (auto queryRoot : queryPlan->getRootOperators()) {
+            if (actualRootOperator->equal(queryRoot)) {
+                ASSERT_TRUE(actualRootOperator->equalWithAllChildren(queryRoot));
+                found = true;
+            }
+        }
+        ASSERT_TRUE(found);
+    }
+}
+
+TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
+
+    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+    source1->setId(UtilityFunctions::getNextOperatorId());
+    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+    source2->setId(UtilityFunctions::getNextOperatorId());
+    auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
+    filter->setId(UtilityFunctions::getNextOperatorId());
+    filter->addChild(source1);
+    filter->addChild(source2);
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
+    map->setId(UtilityFunctions::getNextOperatorId());
+    map->addChild(filter);
+    auto sink1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    sink1->setId(UtilityFunctions::getNextOperatorId());
+    auto sink2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    sink2->setId(UtilityFunctions::getNextOperatorId());
+    sink1->addChild(map);
+    sink2->addChild(map);
+
+    auto queryPlan = QueryPlan::create(1, 1, {sink1, sink2});
+
+    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
+
+    ASSERT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
+    ASSERT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
+
+    std::vector<OperatorNodePtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
+    for (auto actualRootOperator : actualRootOperators) {
+        bool found = false;
+        for (auto queryRoot : queryPlan->getRootOperators()) {
+            if (actualRootOperator->equal(queryRoot)) {
+                ASSERT_TRUE(actualRootOperator->equalWithAllChildren(queryRoot));
+                found = true;
+            }
+        }
+        ASSERT_TRUE(found);
+    }
+    ASSERT_TRUE(actualRootOperators[0]->getChildren()[0]->as<OperatorNode>()->getId() == actualRootOperators[1]->getChildren()[0]->as<OperatorNode>()->getId());
+    ASSERT_TRUE(actualRootOperators[0]->getChildren()[0].get() == actualRootOperators[1]->getChildren()[0].get());
+    std::vector<NodePtr> sourceOperatorsForRoot1 = actualRootOperators[0]->getAllLeafNodes();
+    std::vector<NodePtr> sourceOperatorsForRoot2 = actualRootOperators[1]->getAllLeafNodes();
+    ASSERT_TRUE(sourceOperatorsForRoot1.size() == 2);
+    ASSERT_TRUE(sourceOperatorsForRoot2.size() == 2);
+    for (auto sourceOperatorForRoot1 : sourceOperatorsForRoot1) {
+        bool found = false;
+        for (auto sourceOperatorForRoot2 : sourceOperatorsForRoot2) {
+            if (sourceOperatorForRoot1->equal(sourceOperatorForRoot2)) {
+                found = true;
+            }
+        }
+        ASSERT_TRUE(found);
+    }
 }

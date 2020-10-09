@@ -37,6 +37,7 @@ class SerializableOperator_WindowDetails;
  */
 class OperatorSerializationUtil {
   public:
+
     /**
      * @brief Serializes an operator node and all its children to a SerializableOperator object.
      * @param operatorNode The operator node. Usually the root of the operator graph.
@@ -46,7 +47,8 @@ class OperatorSerializationUtil {
     static SerializableOperator* serializeOperator(OperatorNodePtr operatorNode, SerializableOperator* serializableOperator);
 
     /**
-     * @brief De-serializes the SerializableOperator and all its children back to a OperatorNodePtr
+     * @brief De-serializes the input SerializableOperator only
+     * Note: This method will not deserialize its children
      * @param serializedOperator the serialized operator.
      * @return OperatorNodePtr
      */

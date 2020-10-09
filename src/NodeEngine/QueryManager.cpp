@@ -200,7 +200,8 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
     auto task = new (buffer.getBuffer()) ReconfigurationTask(descriptor, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
-    auto pipelineContext = std::make_shared<PipelineExecutionContext>(queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&) {});
+    auto pipelineContext = std::make_shared<PipelineExecutionContext>(queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&) {
+    });
     auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     {
         std::unique_lock lock(workMutex);
@@ -308,7 +309,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
     statistics->incProcessedTasks();
     if (task.isWatermarkOnly()) {
         statistics->incProcessedWatermarks();
-    } else {
+    } else if (!task.getPipelineStage()->isReconfiguration()) {
         statistics->incProcessedBuffers();
     }
     statistics->incProcessedTuple(task.getNumberOfTuples());

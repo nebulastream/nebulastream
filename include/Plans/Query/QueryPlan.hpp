@@ -30,6 +30,16 @@ typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
  */
 class QueryPlan {
   public:
+
+    /**
+     * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
+     * @param queryId :  the query id
+     * @param querySubPlanId : the query sub-plan id
+     * @param rootOperators : vector of root Operators
+     * @return a pointer to the query plan.
+     */
+    static QueryPlanPtr create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators);
+
     /**
      * @brief Creates a new query plan with a root operator.
      * @param rootOperator The root operator usually a source operator.
@@ -174,8 +184,17 @@ class QueryPlan {
     void setQuerySubPlanId(uint64_t querySubPlanId);
 
   private:
+
     /**
-     * @brief initialize query plan and set currentOperatorId to 1
+     * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
+     * @param queryId :  the query id
+     * @param querySubPlanId : the query sub-plan id
+     * @param rootOperators : vector of root Operators
+     */
+    QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators);
+
+    /**
+     * @brief initialize query plan with a root operator
      * @param rootOperator
      */
     QueryPlan(OperatorNodePtr rootOperator);

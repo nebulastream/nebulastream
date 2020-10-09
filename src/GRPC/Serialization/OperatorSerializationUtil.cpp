@@ -170,11 +170,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     operatorNode->setInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
     // de-serialize operator id
     operatorNode->setId(serializedOperator->operatorid());
-    // de-serialize child operators if it has any
-    for (auto child : serializedOperator->children()) {
-        //de-serialize child
-        operatorNode->addChild(deserializeOperator(&child));
-    }
     NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator->DebugString() << " to " << operatorNode->toString());
     return operatorNode;
 }
