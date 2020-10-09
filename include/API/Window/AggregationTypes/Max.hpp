@@ -18,14 +18,31 @@ class Max : public WindowAggregation {
     static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
         return std::make_shared<Max>(Max(onField, asField));
     }
-
+    /*
+     * @brief generate the code for lift and combine of the Max aggregate
+     * @param currentCode
+     * @param expressionStatement
+     * @param inputStruct
+     * @param inputRef
+     */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expression_statment, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
 
+    /*
+     * @brief maps the input element to an element PartialAggregateType
+     * @param input value of the element
+     * @return the element that mapped to PartialAggregateType
+     */
     template<class InputType, class PartialAggregateType>
     PartialAggregateType lift(InputType inputValue) {
         return inputValue;
     }
 
+    /*
+     * @brief combines two partial aggregates to a new partial aggregate
+     * @param current partial value
+     * @param the new input element
+     * @return new partial aggregate as combination of partialValue and inputValue
+     */
     template<class InputType, class PartialAggregateType>
     PartialAggregateType combine(PartialAggregateType partialValue, PartialAggregateType inputValue) {
         if (inputValue > partialValue) {
@@ -34,10 +51,16 @@ class Max : public WindowAggregation {
         return partialValue;
     }
 
-    template<class InputType, class FinalAggregateType>
-    FinalAggregateType lower(InputType inputValue) {
-        return inputValue;
+    /*
+     * @brief maps partial aggregates to an element of FinalAggregationType
+     * @param partial aggregate element
+     * @return element mapped to FinalAggregationType
+     */
+    template<class PartialAggregateType, class FinalAggregateType>
+    FinalAggregateType lower(PartialAggregateType partialAggregateValue) {
+        return partialAggregateValue;
     }
+
   private:
     Max(NES::AttributeFieldPtr onField);
     Max(AttributeFieldPtr onField, AttributeFieldPtr asField);
