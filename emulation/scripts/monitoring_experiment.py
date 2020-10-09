@@ -1,96 +1,76 @@
-from lib.topology import Topology, LogLevel
-from lib.experiment import Experiment
-from lib.util import MonitoringType
+import requests
+import datetime
+import docker
+from influxdb import InfluxDBClient
 
-from mininet.log import info, setLogLevel
-from time import sleep
 
-setLogLevel('info')
+def readDockerStats(containerIters, influxTable, experimentDesc, runtime, iteration):
+    msrmnts = []
+    for cName, cIter in containerIters:
+        msrmt = next(cIter)
+        # print(msrmt) #all metrics that can be collected
+        measurementDict = {
+            "measurement": influxTable,
+            "tags": {
+                "cntName": str(cName),
+                "description": experimentDesc
+            },
+            "time": msrmt["read"],
+            "fields": {
+                "cpuTotalUsage": msrmt["cpu_stats"]["cpu_usage"]["total_usage"],
+                "memoryUsage": msrmt["memory_stats"]["usage"],
+                "rxBytes": msrmt["networks"]["eth0"]["rx_bytes"],
+                "rxPackets": msrmt["networks"]["eth0"]["rx_packets"],
+                "txBytes": msrmt["networks"]["eth0"]["tx_bytes"],
+                "txPackets": msrmt["networks"]["eth0"]["tx_packets"],
+                "runtime(ms)": runtime,
+                "iteration": iteration
+            }
+        }
+        print(measurementDict)
+        msrmnts.append(measurementDict)
+    return msrmnts
 
-# repeatable parameters for each experiment
-# ---------------------------------------------------------------------
-number_workers_producing = [5]
-number_workers_not_producing = [0]
-# MonitoringType.DISABLED, MonitoringType.NEMO_PULL, MonitoringType.PROMETHEUS
-monitoring_types = [MonitoringType.NEMO_PULL]
-store_measurements = False
-run_experiment = False
 
-# topology parameters
-# ---------------------------------------------------------------------
-num_tuples = 25
-num_buffers = 30
+print("Executing monitoring request experiment")
 
-# e.g. "/home/user/git/nebulastream/"
-nes_dir = ""
-# e.g. "/var/log/nes"
-log_dir = ""
-# e.g. "/home/user/experiments/influx/"
-influx_storage = ""
-nes_log_level = LogLevel.INFO
-timeout = 60
-
+# setup operations
+prom_url = 'http://localhost:8081/v1/nes/monitoring/metrics/'
+docker_client = docker.DockerClient(base_url='unix://var/run/docker.sock')
 # experiment parameters
-# ---------------------------------------------------------------------
-version = "2"
-iterations = 30
-iterations_before_execution = 0
-monitoring_frequency = 1
-no_coordinators = 1
-influx_db = "monitoring"
-influx_table = "monitoring_measurement_ysb"
-description = str(num_tuples) + "Tup-" + str(num_buffers) + "Buf"
+experiment_table = "monitoringEval"
+experiment_description = "1Crd2WrksNesMetricsV1"
+noIterations = 300
 
+# execute experiment
+msrmnt_batch = []
+containers = filter(lambda c: c.name in ["mn.crd"], docker_client.containers.list())
+containerIters = [(c.name, c.stats(decode=True)) for c in containers]
 
-# experiment method definitions
-# ---------------------------------------------------------------------
-def setup_topology(_nes_dir, _log_dir, _influx_storage, _nes_log_level, _number_workers_producing, _number_workers_not_producing,
-                   _number_coordinators, _num_tuples, _num_buffers, _monitoring_type, _timeout):
-    info('*** Starting topology\n')
-    topo = Topology(_nes_dir, _log_dir, _influx_storage, _nes_log_level, _number_workers_producing, _number_workers_not_producing,
-                    _number_coordinators, _num_tuples, _num_buffers, _monitoring_type)
-    topo.create_topology()
-    topo.start_emulation()
-    topo.wait_until_topology_is_complete(_timeout)
-    return topo
+for i in range(1, noIterations + 1):
+    print("Experiment run " + str(i))
+    start = datetime.datetime.now()
+    response = requests.get(prom_url)
+    end = datetime.datetime.now()
+    delta = (end-start)
+    runtimeInMs = int(delta.total_seconds() * 1000)  # milliseconds
 
+    if (response.status_code == 200):
+        # print(response.json())
+        msrmnt_batch.extend(readDockerStats(containerIters, experiment_table, experiment_description, runtimeInMs, i))
+        # sleep(0.5)
+    else:
+        raise RuntimeError("Response with status code " + str(response.status_code))
 
-def execute_experiment(_topology, _influx_db, _influx_table, _iterations, _iterations_before_execution,
-                       _monitoring_frequency, _description, _version, _run_cli, _sleep_time, _store_measurements):
-    info('*** Executing experiment with following parameters producers=' + str(worker_producing)
-         + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + monitoring.value + '\n')
+# influx operations
+print("Experiment finished! Writing to Influx..")
+influx_client = InfluxDBClient(host='localhost', port=8086)
+influx_client.switch_database('mydb')
 
-    experiment = Experiment(_topology, _influx_db, _influx_table, _iterations, _iterations_before_execution,
-                            _monitoring_frequency, _description, _version)
-    experiment.start(_store_measurements)
+print(msrmnt_batch)
+res = influx_client.write_points(msrmnt_batch)
+print(res)
 
+print("Finished!")
 
-# experiment the executable part
-# ---------------------------------------------------------------------
-i = 0
-run_cli = False
-sleep_time = 10
-for worker_producing in number_workers_producing:
-    for worker_not_producing in number_workers_not_producing:
-        for monitoring in monitoring_types:
-            info('*** Executing experiment with following parameters producers=' + str(worker_producing)
-                 + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + monitoring.value + '\n')
-
-            topology = setup_topology(nes_dir, log_dir, influx_storage, nes_log_level, worker_producing,
-                                      worker_not_producing, no_coordinators, num_tuples, num_buffers,
-                                      monitoring, timeout)
-
-            if run_experiment:
-                execute_experiment(topology, influx_db, influx_table, iterations, iterations_before_execution,
-                                   monitoring_frequency, description, version, run_cli, sleep_time, store_measurements)
-
-            if i == len(number_workers_producing) * len(number_workers_not_producing) * len(monitoring_types) - 1:
-                info('*** Experiment reached last iteration=' + str(i) + ". Activating CLI")
-                topology.start_cli()
-            else:
-                sleep(sleep_time)
-
-            info('*** Stopping network')
-            topology.stop_emulation()
-            sleep(sleep_time)
-            i = i + 1
+# TODO Test prometheus that is not working
