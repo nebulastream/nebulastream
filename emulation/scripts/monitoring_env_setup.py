@@ -5,7 +5,6 @@ from mininet.node import Controller
 from mininet.cli import CLI
 from mininet.link import TCLink
 from mininet.log import info, setLogLevel
-from time import sleep
 
 setLogLevel('info')
 
@@ -13,9 +12,18 @@ net = Containernet(controller=Controller)
 info('*** Adding controller\n')
 net.addController('c0')
 
+nesDir = "/home/xenofon/git/nebulastream/"
+
+influxdb = net.addDocker('influxdb', dimage="influxdb:1.8.3",
+                         ports=[8086],
+                         port_bindings={8086: 8086},
+                         volumes=[nesDir + "emulation/data/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf:ro",
+                                  nesDir + "emulation/data/influxdb:/var/lib/influxdb"],
+                         dcmd='influxd -config /etc/influxdb/influxdb.conf')
+
 info('*** Adding docker containers\n')
 crd = net.addDocker('crd', ip='10.15.16.3',
-                    dimage="nebulastream/nes-executable-image",
+                    dimage="nebulastream/nes-executable-image:latest",
                     ports=[8081, 12346, 4000, 4001, 4002],
                     port_bindings={8081: 8081, 12346: 12346, 4000: 4000, 4001: 4001, 4002: 4002},
                     dcmd='/opt/local/nebula-stream/nesCoordinator --serverIp=0.0.0.0')
@@ -24,17 +32,17 @@ crd = net.addDocker('crd', ip='10.15.16.3',
 w1 = net.addDocker('w1', ip='10.15.16.4',
                        dimage="nes_prometheus",
                        build_params={"dockerfile": "Dockerfile-NES-Prometheus",
-                                     "path": "/home/xenofon/git/nebulastream/emulation/images"},
+                                     "path": nesDir + "emulation/images"},
                        ports=[3000, 3001, 9100],
                        port_bindings={3007: 3000, 3008: 3001, 9101: 9100})
 
 #TODO: build params will be addressed by issue 1045
-w2Prom = net.addDocker('w2Prom', ip='10.15.16.5',
+w2Prom = net.addDocker('w2', ip='10.15.16.5',
                        dimage="nes_prometheus",
                        build_params={"dockerfile": "Dockerfile-NES-Prometheus",
-                                     "path": "/home/xenofon/git/nebulastream/emulation/images"},
+                                     "path": nesDir + "emulation/images"},
                        ports=[3000, 3001, 9100],
-                       port_bindings={3005: 3000, 3006: 3001, 9100: 9100})
+                       port_bindings={3005: 3000, 3006: 3001, 9102: 9100})
 
 info('*** Adding switches\n')
 sw1 = net.addSwitch('sw1')
