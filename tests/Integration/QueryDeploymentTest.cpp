@@ -1640,34 +1640,32 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 
     EXPECT_EQ(actualContent2, expectedContent);
 
-    sleep(60);
+    NES_INFO("QueryDeploymentTest: Remove query " << queryId1);
+    queryService->validateAndQueueStopRequest(queryId1);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
-//    NES_INFO("QueryDeploymentTest: Remove query " << queryId1);
-//    queryService->validateAndQueueStopRequest(queryId1);
-//    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
-//
-//    NES_INFO("QueryDeploymentTest: Remove query " << queryId2);
-//    queryService->validateAndQueueStopRequest(queryId2);
-//    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
-//
-//    NES_INFO("QueryDeploymentTest: Stop worker 1");
-//    bool retStopWrk1 = wrk1->stop(true);
-//    EXPECT_TRUE(retStopWrk1);
-//
-//    NES_INFO("QueryDeploymentTest: Stop worker 2");
-//    bool retStopWrk2 = wrk2->stop(true);
-//    EXPECT_TRUE(retStopWrk2);
-//
-//    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-//    bool retStopCord = crd->stopCoordinator(true);
-//    EXPECT_TRUE(retStopCord);
-//    NES_INFO("QueryDeploymentTest: Test finished");
-//
-//    int response1 = remove("test1.out");
-//    EXPECT_EQ(response1, 0);
-//
-//    int response2 = remove("test2.out");
-//    EXPECT_EQ(response2, 0);
+    NES_INFO("QueryDeploymentTest: Remove query " << queryId2);
+    queryService->validateAndQueueStopRequest(queryId2);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+
+    int response1 = remove("test1.out");
+    EXPECT_EQ(response1, 0);
+
+    int response2 = remove("test2.out");
+    EXPECT_EQ(response2, 0);
 }
 
 }// namespace NES

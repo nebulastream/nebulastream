@@ -123,6 +123,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         // todo this is not required if later the query compiler can handle it by it self.
         //auto translationPhase = TranslateToLegacyPlanPhase::create();
         auto translationPhase = TranslateToGeneratableOperatorPhase::create();
+        //ToDo: At present assume that the query plan has two different root operators with
+        // same upstream operator chain.
         auto queryOperators = queryPlan->getRootOperators()[0];
         auto generatableOperatorPlan = translationPhase->transform(queryOperators);
 
