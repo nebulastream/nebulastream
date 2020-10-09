@@ -1,0 +1,13 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+import "SerializableOperator.proto";
+package NES;
+
+/*
+The serializable wrapper definition for query plan
+ */
+message SerializableQueryPlan{
+  repeated SerializableOperator rootOperators = 1;
+  uint64 queryId = 2;
+  uint64 querySubPlanId = 3;
+}

@@ -11,6 +11,10 @@
 
 namespace NES {
 
+QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators) {
+    return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId, std::move(rootOperators)));
+}
+
 QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator) {
     return std::make_shared<QueryPlan>(QueryPlan(std::move(rootOperator)));
 }
@@ -27,6 +31,9 @@ QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), 
     }
     rootOperators.push_back(std::move(rootOperator));
 }
+
+QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators)
+    : queryId(queryId), querySubPlanId(querySubPlanId), rootOperators(std::move(rootOperators)) {}
 
 std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
