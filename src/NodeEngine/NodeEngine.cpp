@@ -10,6 +10,7 @@
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -112,14 +113,17 @@ bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPla
     return true;
 }
 
-bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId queryExecutionId, OperatorNodePtr queryOperators) {
+bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     std::unique_lock lock(engineMutex);
-    NES_INFO("Creating QueryExecutionPlan for " << queryId << " " << queryExecutionId);
+    QueryId queryId = queryPlan->getQueryId();
+    QueryId querySubPlanId = queryPlan->getQuerySubPlanId();
+    NES_INFO("Creating QueryExecutionPlan for " << queryId << " " << querySubPlanId);
     try {
         // Translate the query operators in their legacy representation
         // todo this is not required if later the query compiler can handle it by it self.
         //auto translationPhase = TranslateToLegacyPlanPhase::create();
         auto translationPhase = TranslateToGeneratableOperatorPhase::create();
+        auto queryOperators = queryPlan->getRootOperators()[0];
         auto generatableOperatorPlan = translationPhase->transform(queryOperators);
 
         // Compile legacy operators with qep builder.
@@ -128,22 +132,23 @@ bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId query
                               .setBufferManager(bufferManager)
                               .setCompiler(queryCompiler)
                               .setQueryId(queryId)
-                              .setQuerySubPlanId(queryExecutionId)
+                              .setQuerySubPlanId(querySubPlanId)
                               .addOperatorQueryPlan(generatableOperatorPlan);
 
-        std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps = generatableOperatorPlan->getNodesByType<WindowLogicalOperatorNode>();
-        std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps = queryOperators->getNodesByType<SourceLogicalOperatorNode>();
+        std::vector<WindowLogicalOperatorNodePtr> winOps = generatableOperatorPlan->getNodesByType<WindowLogicalOperatorNode>();
+        std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+        std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 
         if (winOps.size() == 1) {
             qepBuilder.setWinDef(winOps[0]->getWindowDefinition())
-                .setSchema(leafOps[0]->getInputSchema());
+                .setSchema(sourceOperators[0]->getInputSchema());
         } else if (winOps.size() > 1) {
             //currently we only support one window per query
             NES_NOT_IMPLEMENTED();
         }
 
         // Translate all operator source to the physical sources and add them to the query plan
-        for (const auto& sources : queryOperators->getNodesByType<SourceLogicalOperatorNode>()) {
+        for (const auto& sources : sourceOperators) {
             auto sourceDescriptor = sources->getSourceDescriptor();
             //perform the operation only for Logical stream source descriptor
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
@@ -155,11 +160,11 @@ bool NodeEngine::registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId query
         }
 
         // Translate all operator sink to the physical sink and add them to the query plan
-        for (const auto& sink : queryOperators->getNodesByType<SinkLogicalOperatorNode>()) {
+        for (const auto& sink : sinkOperators) {
             auto sinkDescriptor = sink->getSinkDescriptor();
             auto schema = sink->getOutputSchema();
             // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), queryExecutionId);
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), querySubPlanId);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySink->toString());
         }

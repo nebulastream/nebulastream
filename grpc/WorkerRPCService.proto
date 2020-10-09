@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "SerializableQueryPlan.proto";
 import "SerializableOperator.proto";
 import "SerializableDataType.proto";
 
@@ -16,9 +17,7 @@ service WorkerRPCService {
 }
 
 message DeployQueryRequest {
-  uint64 queryId = 1;
-  uint64 querySubPlanId = 2;
-  NES.SerializableOperator operatorTree = 3;
+  NES.SerializableQueryPlan queryPlan = 3;
 }
 
 message DeployQueryReply {
@@ -34,9 +33,7 @@ message UndeployQueryReply {
 }
 
 message RegisterQueryRequest {
-  uint64 queryId = 1;
-  uint64 querySubPlanId = 2;
-  NES.SerializableOperator operatorTree = 3;
+  NES.SerializableQueryPlan queryPlan = 3;
 
 }
 
