@@ -6,5 +6,4 @@ add_source_nes(
         Pattern.cpp
         AttributeField.cpp
 )
-add_subdirectory(Window)
 add_subdirectory(Expressions)

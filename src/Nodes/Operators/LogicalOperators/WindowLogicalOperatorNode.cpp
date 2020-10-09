@@ -1,5 +1,6 @@
 #include <API/Schema.hpp>
-#include <API/Window/WindowDefinition.hpp>
+#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/AggregationTypes/WindowAggregation.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>

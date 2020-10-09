@@ -3,7 +3,7 @@
 
 #include <API/Schema.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
-#include <Windows/Watermark/Watermark.hpp>
+#include <Windowing/Watermark/Watermark.hpp>
 #include <atomic>
 #include <mutex>
 #include <optional>

@@ -3,7 +3,7 @@
 #include <memory>
 
 #include <API/Schema.hpp>
-#include <API/Window/WindowDefinition.hpp>
+#include <Windowing/WindowDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
@@ -44,6 +44,9 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 
 class CompilerTypesFactory;
 typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
+
+class UserAPIExpression;
+typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 
 /**
  * @brief The code generator encapsulates the code generation for different operators.

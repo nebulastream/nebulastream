@@ -2,7 +2,7 @@
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Util/Logger.hpp>
-#include <Windows/WindowHandler.hpp>
+#include <Windowing/Runtime/WindowHandler.hpp>
 #include <iostream>
 #include <memory>
 #include <utility>
