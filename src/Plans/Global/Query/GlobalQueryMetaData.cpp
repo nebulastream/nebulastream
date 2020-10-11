@@ -49,39 +49,65 @@ bool GlobalQueryMetaData::removeQueryId(QueryId queryId) {
 }
 
 QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
-    NES_DEBUG("GlobalQueryMetaData: Prepare the Query Plan based on the Global Query Metadata information");
-    QueryPlanPtr queryPlan = QueryPlan::create();
-    queryPlan->setQueryId(globalQueryId);
-    for (auto sinkGQN : sinkGlobalQueryNodes) {
-        //Take the first operator as GQN with sink operators only have 1 operator
-        OperatorNodePtr rootOperator = sinkGQN->getOperators()[0];
-        //clear the previous children assignments
-        rootOperator->removeChildren();
-        if (!sinkGQN->getChildren().empty()) {
-            appendOperator(rootOperator, sinkGQN->getChildren());
-        }
-        //Add the logical operator as root to the query plan
-        queryPlan->addRootOperator(rootOperator);
-    }
-    return queryPlan;
-}
 
-void GlobalQueryMetaData::appendOperator(OperatorNodePtr parentOperator, std::vector<NodePtr> childrenGQN) {
-    NES_TRACE("GlobalQueryMetaData: append the operators form the children GQN to the parent logical operator");
-    for (auto childGQN : childrenGQN) {
-        // We pick the first available operator from the Global Query Node as rest of the operators are same.
-        //TODO: this need to be fixed when we use more advanced merging rules for instance merging two filter operators
-        // on same input stream but with different predicates.
-        OperatorNodePtr childOperator = childGQN->as<GlobalQueryNode>()->getOperators()[0];
-        //clear the previous children assignments
-        childOperator->removeChildren();
-        parentOperator->addChild(childOperator);
-        std::vector<NodePtr> childrenGQNOfChildGQN = childGQN->getChildren();
-        if (!childrenGQNOfChildGQN.empty()) {
-            //recursively call to append children's children
-            appendOperator(childOperator, childrenGQNOfChildGQN);
+    NES_DEBUG("GlobalQueryMetaData: Prepare the Query Plan based on the Global Query Metadata information");
+    std::vector<OperatorNodePtr> rootOperators;
+    std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
+
+    // We process a Global Query node by extracting its operator and preparing a map of operator id to operator.
+    // We push the children operators to the queue of operators to be processed.
+    // Every time we encounter an operator, we check in the map if the operator with same id already exists.
+    // We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
+    // We then check the parent operators of the current operator by looking into the parent Global Query Nodes of the current
+    // Global Query Node and add them as the parent of the current operator.
+
+    std::deque<NodePtr> globalQueryNodesToProcess{sinkGlobalQueryNodes.begin(), sinkGlobalQueryNodes.end()};
+    while (!globalQueryNodesToProcess.empty()) {
+        auto gqnToProcess = globalQueryNodesToProcess.front()->as<GlobalQueryNode>();
+        globalQueryNodesToProcess.pop_front();
+        NES_TRACE("GlobalQueryMetaData: Deserialize operator " << gqnToProcess->toString());
+        OperatorNodePtr operatorNode = gqnToProcess->getOperators()[0]->copy();
+        uint64_t operatorId = operatorNode->getId();
+        if (operatorIdToOperatorMap[operatorId]) {
+            NES_TRACE("GlobalQueryMetaData: Operator was already deserialized previously");
+            operatorNode = operatorIdToOperatorMap[operatorId];
+        } else {
+            NES_TRACE("GlobalQueryMetaData: Deserializing the operator and inserting into map");
+            operatorIdToOperatorMap[operatorId] = operatorNode;
+        }
+
+        for (auto parentNode : gqnToProcess->getParents()) {
+            auto parentGQN = parentNode->as<GlobalQueryNode>();
+            if (parentGQN->getId() == 0) {
+                continue;
+            }
+            OperatorNodePtr parentOperator = parentGQN->getOperators()[0];
+            uint64_t parentOperatorId = parentOperator->getId();
+            if (operatorIdToOperatorMap[parentOperatorId]) {
+                NES_TRACE("GlobalQueryMetaData: Found the parent operator. Adding as parent to the current operator.");
+                parentOperator = operatorIdToOperatorMap[parentOperatorId];
+                operatorNode->addParent(parentOperator);
+            } else {
+                NES_ERROR("GlobalQueryMetaData: unable to find the parent operator. This should not have occurred!");
+                return nullptr;
+            }
+        }
+
+        NES_TRACE("GlobalQueryMetaData: add the child global query nodes for further processing.");
+        for (auto childGQN : gqnToProcess->getChildren()) {
+            globalQueryNodesToProcess.push_back(childGQN);
         }
     }
+
+    for (auto sinkGlobalQueryNode : sinkGlobalQueryNodes) {
+        NES_TRACE("GlobalQueryMetaData: Finding the operator with same id in the map.");
+        auto rootOperator = sinkGlobalQueryNode->getOperators()[0]->copy();
+        rootOperator = operatorIdToOperatorMap[rootOperator->getId()];
+        NES_TRACE("GlobalQueryMetaData: Adding the root operator to the vector of roots for the query plan");
+        rootOperators.push_back(rootOperator);
+    }
+    operatorIdToOperatorMap.clear();
+    return QueryPlan::create(globalQueryId, INVALID_QUERY_ID, rootOperators);
 }
 
 void GlobalQueryMetaData::markAsNotDeployed() {

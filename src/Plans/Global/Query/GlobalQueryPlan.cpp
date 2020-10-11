@@ -47,11 +47,12 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
     NES_INFO("GlobalQueryPlan: Remove the query plan for query " << queryId);
     const std::vector<GlobalQueryNodePtr>& globalQueryNodes = getGQNListForQueryId(queryId);
     for (GlobalQueryNodePtr globalQueryNode : globalQueryNodes) {
-        //Remove the GQN with sink operator from the Global Query Plan
-        if (globalQueryNode->getOperators()[0]->instanceOf<SinkLogicalOperatorNode>()) {
-            root->remove(globalQueryNode);
-        }
         globalQueryNode->removeQuery(queryId);
+        //If global query node is empty then remove its parent child nodes as well
+        if (globalQueryNode->isEmpty()) {
+            globalQueryNode->removeChildren();
+            globalQueryNode->removeAllParent();
+        }
     }
     queryIdToGlobalQueryNodeMap.erase(queryId);
 }
