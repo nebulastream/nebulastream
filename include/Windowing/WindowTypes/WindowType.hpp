@@ -21,7 +21,7 @@ class WindowType {
      * @param lastWatermark
      * @param currentWatermark
      */
-    virtual void triggerWindows(std::vector<WindowState> windows, uint64_t lastWatermark, uint64_t currentWatermark) const = 0;
+    virtual void triggerWindows(std::vector<WindowState> &windows, uint64_t lastWatermark, uint64_t currentWatermark) const = 0;
 
     /**
      * @brief Get the time characteristic of the window.

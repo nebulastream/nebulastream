@@ -13,7 +13,7 @@ WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeM
     return std::make_shared<TumblingWindow>(TumblingWindow(timeCharacteristic, size));
 }
 
-void TumblingWindow::triggerWindows(std::vector<WindowState> windows,
+void TumblingWindow::triggerWindows(std::vector<WindowState> &windows,
                                     uint64_t lastWatermark,
                                     uint64_t currentWatermark) const {
     NES_DEBUG("TumblingWindow::triggerWindows windows before=" << windows.size());
