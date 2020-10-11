@@ -65,6 +65,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
         code << "#include <Sources/DataSource.hpp>" << std::endl;
         code << "#include <Windowing/WindowMeasures/WindowMeasure.hpp>" << std::endl;
+        code << "#include <Windowing/WindowMeasures/TimeMeasure.hpp>" << std::endl;
         code << "#include <Windowing/WindowTypes/WindowType.hpp>" << std::endl;
         code << "#include <Windowing/TimeCharacteristic.hpp>" << std::endl;
         code << "#include <Windowing/WindowAggregations/WindowAggregation.hpp>" << std::endl;
