@@ -7,13 +7,13 @@ namespace NES{
 
 class WindowType {
   public:
-    WindowType(TimeCharacteristicPtr timeCharacteristic);
+    explicit WindowType(TimeCharacteristicPtr timeCharacteristic);
     /**
       * Calculates the next window end based on a given timestamp
       * @param currentTs
       * @return the next window end
       */
-    virtual uint64_t calculateNextWindowEnd(uint64_t currentTs) const = 0;
+    [[nodiscard]] virtual uint64_t calculateNextWindowEnd(uint64_t currentTs) const = 0;
 
     /**
      * @brief Generates and adds all windows between which ended size the last watermark till the current watermark.
@@ -27,7 +27,7 @@ class WindowType {
      * @brief Get the time characteristic of the window.
      * @return
      */
-    TimeCharacteristicPtr getTimeCharacteristic() const;
+    [[nodiscard]] TimeCharacteristicPtr getTimeCharacteristic() const;
 
     /**
      * @return true if this is a tumbling window
@@ -38,10 +38,6 @@ class WindowType {
     * @return true if this is a sliding window
     */
     virtual bool isSlidingWindow();
-    /**
-    * @return true if this is a sliding window
-    */
-    virtual bool isSessionWindow();
 
   private:
     TimeCharacteristicPtr timeCharacteristic;

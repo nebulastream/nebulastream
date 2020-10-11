@@ -12,26 +12,26 @@ namespace NES{
  */
 class TumblingWindow : public WindowType {
   public:
+
     /**
-   * Creates a new TumblingWindow that assigns
-   * elements to time windows based on the element timestamp and offset.
-   * For example, if you want window a stream by hour,but window begins at the 15th minutes
-   * of each hour, you can use {@code of(Time.hours(1),Time.minutes(15))},then you will get
-   * time windows start at 0:15:00,1:15:00,2:15:00,etc.
-   * @param size
-   * @return WindowTypePtr
-   */
+    * Creates a new TumblingWindow that assigns
+    * elements to time windows based on the element timestamp and offset.
+    * For example, if you want window a stream by hour,but window begins at the 15th minutes
+    * of each hour, you can use {@code of(Time.hours(1),Time.minutes(15))},then you will get
+    * time windows start at 0:15:00,1:15:00,2:15:00,etc.
+    * @param size
+    * @return WindowTypePtr
+    */
     static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
 
     /**
-   * Calculates the next window end based on a given timestamp.
-   * The next window end is equal to the current timestamp plus the window size minus the fraction of the current window
-   * @param currentTs
-   * @return the next window end
-   */
-    uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
-        return currentTs + size.getTime() - (currentTs % size.getTime());
-    }
+    * Calculates the next window end based on a given timestamp.
+    * The next window end is equal to the current timestamp plus the window size minus the fraction of the current window
+    * @param currentTs
+    * @return the next window end
+    */
+    [[nodiscard]] uint64_t calculateNextWindowEnd(uint64_t currentTs) const override;
+
     bool isTumblingWindow() override;
 
     /**

@@ -9,12 +9,12 @@ namespace NES{
  */
 class TimeMeasure : public WindowMeasure {
   public:
-    uint64_t getTime() const;
+    [[nodiscard]] uint64_t getTime() const;
 
-    TimeMeasure(const uint64_t ms);
+    explicit TimeMeasure(uint64_t ms);
 
   private:
-    const uint64_t _ms;
+    const uint64_t ms;
 };
 
 

@@ -1,9 +1,10 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <utility>
 
 namespace NES {
 
-WindowType::WindowType(TimeCharacteristicPtr timeCharacteristic) : timeCharacteristic(timeCharacteristic) {
+WindowType::WindowType(TimeCharacteristicPtr timeCharacteristic) : timeCharacteristic(std::move(timeCharacteristic)) {
 }
 
 TimeCharacteristicPtr WindowType::getTimeCharacteristic() const {
@@ -15,10 +16,6 @@ bool WindowType::isSlidingWindow() {
 }
 
 bool WindowType::isTumblingWindow() {
-    return false;
-}
-
-bool WindowType::isSessionWindow() {
     return false;
 }
 
