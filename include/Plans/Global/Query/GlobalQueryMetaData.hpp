@@ -132,12 +132,6 @@ class GlobalQueryMetaData {
   private:
     explicit GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
-    /**
-     * @brief method to add operators in input Global Query Nodes as child to the input parent operator
-     * @param parentOperator : the parent operator
-     * @param childrenGQN : the Global Query Nodes whose operators need to be added as child to the parent operator
-     */
-    void appendOperator(OperatorNodePtr parentOperator, std::vector<NodePtr> childrenGQN);
     QueryId globalQueryId;
     std::set<QueryId> queryIds;
     std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes;
