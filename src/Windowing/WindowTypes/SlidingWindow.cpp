@@ -23,6 +23,10 @@ void SlidingWindow::triggerWindows(std::vector<WindowState> &windows,
     }
 }
 
+uint64_t SlidingWindow::calculateNextWindowEnd(uint64_t currentTs) const {
+    return currentTs + slide.getTime() - (currentTs % slide.getTime());
+}
+
 bool SlidingWindow::isSlidingWindow() {
     return true;
 }

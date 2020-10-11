@@ -13,6 +13,10 @@ WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeM
     return std::make_shared<TumblingWindow>(TumblingWindow(timeCharacteristic, size));
 }
 
+uint64_t TumblingWindow::calculateNextWindowEnd(uint64_t currentTs) const  {
+    return currentTs + size.getTime() - (currentTs % size.getTime());
+}
+
 void TumblingWindow::triggerWindows(std::vector<WindowState> &windows,
                                     uint64_t lastWatermark,
                                     uint64_t currentWatermark) const {

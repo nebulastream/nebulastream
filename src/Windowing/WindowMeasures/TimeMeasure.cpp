@@ -1,9 +1,9 @@
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 
 namespace NES{
-TimeMeasure::TimeMeasure(uint64_t ms) : _ms(ms) {}
+TimeMeasure::TimeMeasure(uint64_t ms) : ms(ms) {}
 
-uint64_t TimeMeasure::getTime() const { return _ms; }
+uint64_t TimeMeasure::getTime() const { return ms; }
 
 TimeMeasure Milliseconds(uint64_t milliseconds) {return TimeMeasure(milliseconds);}
 
