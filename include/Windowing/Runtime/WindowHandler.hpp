@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <thread>
+#include <mutex>
 
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
