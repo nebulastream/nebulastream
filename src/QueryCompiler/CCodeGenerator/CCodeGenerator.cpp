@@ -1,7 +1,7 @@
-#include <Windowing/AggregationTypes/Sum.hpp>
-#include <Windowing/AggregationTypes/Max.hpp>
-#include <Windowing/AggregationTypes/Min.hpp>
-#include <Windowing/AggregationTypes/Count.hpp>
+#include <Windowing/WindowAggregations/Sum.hpp>
+#include <Windowing/WindowAggregations/Max.hpp>
+#include <Windowing/WindowAggregations/Min.hpp>
+#include <Windowing/WindowAggregations/Count.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowDefinition.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>

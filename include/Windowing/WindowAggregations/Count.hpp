@@ -1,34 +1,32 @@
-#ifndef NES_SUM_HPP
-#define NES_SUM_HPP
+#ifndef NES_COUNT_HPP
+#define NES_COUNT_HPP
 
-#include <Windowing/AggregationTypes/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregation.hpp>
 namespace NES {
+
 /**
  * @brief
- * The Sum aggregation calculates the running sum over the window.
+ * The Count aggregation calculates the Count over the window.
  */
-class Sum : public WindowAggregation {
+class Count : public WindowAggregation {
   public:
     /**
-   * Factory method to creates a sum aggregation on a particular field.
+   * Factory method to creates a Count aggregation on a particular field.
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
     static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
-        return std::make_shared<Sum>(Sum(onField, asField));
+        return std::make_shared<Count>(Count(onField, asField));
     }
-
     /*
-     * @brief generate the code for lift and combine of the Sum aggregate
+     * @brief generate the code for lift and combine of the Count aggregate
      * @param currentCode
      * @param expressionStatement
      * @param inputStruct
      * @param inputRef
      */
-    void compileLiftCombine(CompoundStatementPtr currentCode,
-                            BinaryOperatorStatement partialRef,
-                            StructDeclaration inputStruct,
-                            BinaryOperatorStatement inputRef);
+    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+
     /*
      * @brief maps the input element to an element PartialAggregateType
      * @param input value of the element
@@ -46,10 +44,10 @@ class Sum : public WindowAggregation {
      * @return new partial aggregate as combination of partialValue and inputValue
      */
     template<class InputType, class PartialAggregateType>
-    PartialAggregateType combine(PartialAggregateType partialValue, InputType inputValue) {
-        return partialValue + inputValue;
+    PartialAggregateType combine(PartialAggregateType partialValue, PartialAggregateType) {
+        ++partialValue;
+        return partialValue;
     }
-
     /*
      * @brief maps partial aggregates to an element of FinalAggregationType
      * @param partial aggregate element
@@ -61,8 +59,8 @@ class Sum : public WindowAggregation {
     }
 
   private:
-    Sum(NES::AttributeFieldPtr onField);
-    Sum(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    Count(NES::AttributeFieldPtr onField);
+    Count(AttributeFieldPtr onField, AttributeFieldPtr asField);
 };
 }// namespace NES
-#endif//NES_SUM_HPP
+#endif//NES_COUNT_HPP

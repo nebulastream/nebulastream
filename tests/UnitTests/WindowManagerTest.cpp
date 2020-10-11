@@ -3,7 +3,7 @@
 #include <map>
 #include <vector>
 
-#include <Windowing/AggregationTypes/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregation.hpp>
 #include <Windowing/WindowDefinition.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>

@@ -253,8 +253,6 @@ endif ()
 # Documentation
 add_subdirectory(docs)
 
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
-
 add_executable(nesCoordinator nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC ${LIBRARIES} nes)
 target_include_directories(nesCoordinator PUBLIC "include")
@@ -277,9 +275,6 @@ add_subdirectory(tests)
 
 #Add benchmarks with command
 add_subdirectory(benchmark)
-
-configure_file(include/QueryLib/WindowManagerLib.hpp ${CMAKE_CURRENT_BINARY_DIR}/tests)
-configure_file(include/QueryLib/WindowManagerLib.hpp ${CMAKE_CURRENT_BINARY_DIR})
 
 install(TARGETS nesCoordinator nesWorker nes
         COMPONENT NebulaStream

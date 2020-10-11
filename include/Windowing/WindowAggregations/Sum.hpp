@@ -1,32 +1,34 @@
-#ifndef NES_MAX_HPP
-#define NES_MAX_HPP
+#ifndef NES_SUM_HPP
+#define NES_SUM_HPP
 
-#include <Windowing/AggregationTypes/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregation.hpp>
 namespace NES {
-
 /**
  * @brief
- * The Max aggregation calculates the maximum over the window.
+ * The Sum aggregation calculates the running sum over the window.
  */
-class Max : public WindowAggregation {
+class Sum : public WindowAggregation {
   public:
     /**
-   * Factory method to creates a Max aggregation on a particular field.
+   * Factory method to creates a sum aggregation on a particular field.
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
     static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
-        return std::make_shared<Max>(Max(onField, asField));
+        return std::make_shared<Sum>(Sum(onField, asField));
     }
+
     /*
-     * @brief generate the code for lift and combine of the Max aggregate
+     * @brief generate the code for lift and combine of the Sum aggregate
      * @param currentCode
      * @param expressionStatement
      * @param inputStruct
      * @param inputRef
      */
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expression_statment, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
-
+    void compileLiftCombine(CompoundStatementPtr currentCode,
+                            BinaryOperatorStatement partialRef,
+                            StructDeclaration inputStruct,
+                            BinaryOperatorStatement inputRef);
     /*
      * @brief maps the input element to an element PartialAggregateType
      * @param input value of the element
@@ -44,11 +46,8 @@ class Max : public WindowAggregation {
      * @return new partial aggregate as combination of partialValue and inputValue
      */
     template<class InputType, class PartialAggregateType>
-    PartialAggregateType combine(PartialAggregateType partialValue, PartialAggregateType inputValue) {
-        if (inputValue > partialValue) {
-            partialValue = inputValue;
-        }
-        return partialValue;
+    PartialAggregateType combine(PartialAggregateType partialValue, InputType inputValue) {
+        return partialValue + inputValue;
     }
 
     /*
@@ -62,8 +61,8 @@ class Max : public WindowAggregation {
     }
 
   private:
-    Max(NES::AttributeFieldPtr onField);
-    Max(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    Sum(NES::AttributeFieldPtr onField);
+    Sum(AttributeFieldPtr onField, AttributeFieldPtr asField);
 };
 }// namespace NES
-#endif//NES_MAX_HPP
+#endif//NES_SUM_HPP

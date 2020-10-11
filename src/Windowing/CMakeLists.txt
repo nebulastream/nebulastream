@@ -6,6 +6,6 @@ add_source_nes(
 )
 add_subdirectory(Watermark)
 add_subdirectory(Runtime)
-add_subdirectory(AggregationTypes)
+add_subdirectory(WindowAggregations)
 add_subdirectory(WindowMeasures)
 add_subdirectory(WindowTypes)

@@ -1,4 +1,4 @@
-#include <Windowing/AggregationTypes/Max.hpp>
+#include <Windowing/WindowAggregations/Max.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>

@@ -1,7 +1,7 @@
 #ifndef NES_MIN_HPP
 #define NES_MIN_HPP
 
-#include <Windowing/AggregationTypes/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregation.hpp>
 namespace NES {
 
 /**
