@@ -12,7 +12,6 @@ class SerializableQueryPlan;
 
 class QueryPlanSerializationUtil {
   public:
-
     /**
      * @brief Serializes a Query Plan and all its root operators to a SerializableQueryPlan object.
      * @param queryPlan: The query plan
