@@ -3,7 +3,7 @@
 namespace NES{
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
-    : size(size), slide(slide), WindowType(timeCharacteristic) {}
+    : WindowType(timeCharacteristic), size(size), slide(slide) {}
 
 WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
     return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));

@@ -1,8 +1,5 @@
-#include <Windowing/WindowMeasures/WindowMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Util/Logger.hpp>
-#include <memory>
 
 namespace NES {
 
