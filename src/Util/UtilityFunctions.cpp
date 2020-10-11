@@ -67,6 +67,8 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <Windowing/WindowMeasures/WindowMeasure.hpp>" << std::endl;
         code << "#include <Windowing/WindowMeasures/TimeMeasure.hpp>" << std::endl;
         code << "#include <Windowing/WindowTypes/WindowType.hpp>" << std::endl;
+        code << "#include <Windowing/WindowTypes/TumblingWindow.hpp>" << std::endl;
+        code << "#include <Windowing/WindowTypes/SlidingWindow.hpp>" << std::endl;
         code << "#include <Windowing/TimeCharacteristic.hpp>" << std::endl;
         code << "#include <Windowing/WindowAggregations/WindowAggregation.hpp>" << std::endl;
         code << "#include <Windowing/WindowAggregations/Sum.hpp>" << std::endl;
