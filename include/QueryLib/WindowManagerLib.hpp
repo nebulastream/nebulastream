@@ -174,8 +174,7 @@ class WindowManager {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
                 NES_DEBUG("WindowManagerLib: for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - window->getSize().getTime() << " nextWindowEnd=" << store->nextEdge);
-            }
-            if (windowType->isSlidingWindow()) {
+            } else if (windowType->isSlidingWindow()) {
                 SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
                 NES_DEBUG("WindowManagerLib: successful cast to Sliding Window fir sliceStream empty store");
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
