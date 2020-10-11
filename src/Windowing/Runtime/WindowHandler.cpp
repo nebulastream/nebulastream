@@ -130,4 +130,12 @@ WindowHandlerPtr WindowHandler::create(WindowDefinitionPtr windowDefinition, Que
     return std::make_shared<WindowHandler>(windowDefinition, queryManager, bufferManager);
 }
 
+uint64_t WindowHandler::getOriginId() const {
+    return originId;
+}
+
+void WindowHandler::setOriginId(uint64_t originId) {
+    this->originId = originId;
+}
+
 }// namespace NES
