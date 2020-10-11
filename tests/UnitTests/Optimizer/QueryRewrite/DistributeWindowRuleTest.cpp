@@ -11,10 +11,10 @@
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/AggregationTypes/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregation.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/AggregationTypes/Sum.hpp>
+#include <Windowing/WindowAggregations/Sum.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>

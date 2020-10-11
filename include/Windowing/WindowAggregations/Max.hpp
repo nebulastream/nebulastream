@@ -1,31 +1,31 @@
-#ifndef NES_COUNT_HPP
-#define NES_COUNT_HPP
+#ifndef NES_MAX_HPP
+#define NES_MAX_HPP
 
-#include <Windowing/AggregationTypes/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregation.hpp>
 namespace NES {
 
 /**
  * @brief
- * The Count aggregation calculates the Count over the window.
+ * The Max aggregation calculates the maximum over the window.
  */
-class Count : public WindowAggregation {
+class Max : public WindowAggregation {
   public:
     /**
-   * Factory method to creates a Count aggregation on a particular field.
+   * Factory method to creates a Max aggregation on a particular field.
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
     static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
-        return std::make_shared<Count>(Count(onField, asField));
+        return std::make_shared<Max>(Max(onField, asField));
     }
     /*
-     * @brief generate the code for lift and combine of the Count aggregate
+     * @brief generate the code for lift and combine of the Max aggregate
      * @param currentCode
      * @param expressionStatement
      * @param inputStruct
      * @param inputRef
      */
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expression_statment, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
 
     /*
      * @brief maps the input element to an element PartialAggregateType
@@ -44,10 +44,13 @@ class Count : public WindowAggregation {
      * @return new partial aggregate as combination of partialValue and inputValue
      */
     template<class InputType, class PartialAggregateType>
-    PartialAggregateType combine(PartialAggregateType partialValue, PartialAggregateType) {
-        ++partialValue;
+    PartialAggregateType combine(PartialAggregateType partialValue, PartialAggregateType inputValue) {
+        if (inputValue > partialValue) {
+            partialValue = inputValue;
+        }
         return partialValue;
     }
+
     /*
      * @brief maps partial aggregates to an element of FinalAggregationType
      * @param partial aggregate element
@@ -59,8 +62,8 @@ class Count : public WindowAggregation {
     }
 
   private:
-    Count(NES::AttributeFieldPtr onField);
-    Count(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    Max(NES::AttributeFieldPtr onField);
+    Max(AttributeFieldPtr onField, AttributeFieldPtr asField);
 };
 }// namespace NES
-#endif//NES_COUNT_HPP
+#endif//NES_MAX_HPP

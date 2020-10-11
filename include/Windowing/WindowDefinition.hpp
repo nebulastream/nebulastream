@@ -31,11 +31,11 @@ class WindowDefinition {
                      uint64_t numberOfInputEdges);
 
     /**
- * @brief Create a new window definition for a global window
- * @param windowAggregation
- * @param windowType
- * @return Window Definition
- */
+     * @brief Create a new window definition for a global window
+     * @param windowAggregation
+     * @param windowType
+     * @return Window Definition
+     */
     static WindowDefinitionPtr create(const WindowAggregationPtr windowAggregation,
                                       const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
 

@@ -1,4 +1,4 @@
-#include <Windowing/AggregationTypes/Count.hpp>
+#include <Windowing/WindowAggregations/Count.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
