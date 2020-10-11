@@ -95,12 +95,9 @@ class WindowHandler {
     void* getWindowState();
     WindowManagerPtr getWindowManager() { return windowManager; };
 
-    uint64_t getOriginId() const {
-        return originId;
-    }
-    void setOriginId(uint64_t originId) {
-        this->originId = originId;
-    }
+    [[nodiscard]] uint64_t getOriginId() const;
+
+    void setOriginId(uint64_t originId);
 
   private:
     std::atomic_bool running{false};
