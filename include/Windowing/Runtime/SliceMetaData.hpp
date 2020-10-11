@@ -8,25 +8,21 @@ namespace NES{
 */
 class SliceMetaData {
   public:
-    SliceMetaData(uint64_t start_ts, uint64_t end_ts) : start_ts(start_ts), end_ts(end_ts) {}
+    SliceMetaData(uint64_t startTs, uint64_t endTs);
 
     /**
     * The start timestamp of this slice
     */
-    uint64_t getStartTs() {
-        return start_ts;
-    }
+    uint64_t getStartTs();
 
     /**
      * The end timestamp of this slice
      */
-    uint64_t getEndTs() {
-        return end_ts;
-    }
+    uint64_t getEndTs();
 
   private:
-    uint64_t start_ts;
-    uint64_t end_ts;
+    uint64_t startTs;
+    uint64_t endTs;
 };
 
 
