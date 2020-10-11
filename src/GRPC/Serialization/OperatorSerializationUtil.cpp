@@ -198,8 +198,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
         tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
         tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
         windowDetails.mutable_windowtype()->PackFrom(tumblingWindowDetails);
-    }
-    if (windowType->isSlidingWindow()) {
+    } else if (windowType->isSlidingWindow()) {
         auto slidingWindow = std::dynamic_pointer_cast<SlidingWindow>(windowType);
         auto slidingWindowDetails = SerializableOperator_WindowDetails_SlidingWindow();
         slidingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
@@ -258,8 +257,7 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
         }
-    }
-    if (serializedWindowType.Is<SerializableOperator_WindowDetails_SlidingWindow>()) {
+    } else if (serializedWindowType.Is<SerializableOperator_WindowDetails_SlidingWindow>()) {
         auto serializedSlidingWindow = SerializableOperator_WindowDetails_SlidingWindow();
         serializedWindowType.UnpackTo(&serializedSlidingWindow);
         auto serializedTimeCharacterisitc = serializedSlidingWindow.timecharacteristic();
@@ -272,9 +270,7 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
         }
-    }
-
-    else {
+    } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: " << serializedWindowType.DebugString());
     }
 

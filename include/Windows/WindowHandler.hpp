@@ -143,8 +143,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
             auto initWatermark = watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
             NES_DEBUG("WindowHandler::aggregateWindows(TumblingWindow): getLastWatermark was 0 set to=" << initWatermark);
             store->setLastWatermark(initWatermark);
-        }
-        if (windowType->isSlidingWindow()) {
+        } else if (windowType->isSlidingWindow()) {
             SlidingWindow* slidWindow = dynamic_cast<SlidingWindow*>(windowType.get());
             NES_DEBUG("WindowHandler::aggregateWindows: successful cast to SlidingWindow");
             auto initWatermark = watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
