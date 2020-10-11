@@ -7,7 +7,7 @@ namespace NES{
 
 
 TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
-    : size(size), WindowType(timeCharacteristic) {}
+    :  WindowType(timeCharacteristic), size(size) {}
 
 WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size) {
     return std::make_shared<TumblingWindow>(TumblingWindow(timeCharacteristic, size));

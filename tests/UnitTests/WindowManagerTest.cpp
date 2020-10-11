@@ -5,11 +5,11 @@
 
 #include <Windowing/WindowAggregations/WindowAggregation.hpp>
 #include <Windowing/WindowDefinition.hpp>
+#include <State/StateManager.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 
-#include <QueryLib/WindowManagerLib.hpp>
 #include <Util/Logger.hpp>
 #include <cstdlib>
 #include <iostream>

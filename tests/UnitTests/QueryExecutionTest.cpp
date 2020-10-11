@@ -250,7 +250,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
  * WindowSource -> windowOperator -> windowScan -> TestSink
  * The source generates 2. buffers.
  */
-TEST_F(QueryExecutionTest, TumblingWindowQuery) {
+TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
