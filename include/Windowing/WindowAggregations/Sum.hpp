@@ -14,9 +14,7 @@ class Sum : public WindowAggregation {
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
-    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
-        return std::make_shared<Sum>(Sum(onField, asField));
-    }
+    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField);
 
     /*
      * @brief generate the code for lift and combine of the Sum aggregate

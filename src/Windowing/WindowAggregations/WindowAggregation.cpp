@@ -1,13 +1,6 @@
-#include <API/Expressions/Expressions.hpp>
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
-#include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
-#include <iostream>
+#include <Windowing/WindowAggregations/WindowAggregation.hpp>
 
-#include<QueryCompiler/CodeExpression.hpp>
 namespace NES {
 
 WindowAggregation::WindowAggregation(const NES::AttributeFieldPtr onField) : onField(onField),
@@ -20,5 +13,16 @@ WindowAggregation::WindowAggregation(const NES::AttributeFieldPtr onField, const
 WindowAggregation& WindowAggregation::as(const NES::AttributeFieldPtr asField) {
     this->asField = asField;
     return *this;
+}
+
+AttributeFieldPtr WindowAggregation::as() {
+    if (asField == nullptr){
+        return onField;  }
+    return asField;
+}
+
+
+AttributeFieldPtr WindowAggregation::on() {
+    return onField;
 }
 }// namespace NES

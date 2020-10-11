@@ -15,9 +15,7 @@ class Min : public WindowAggregation {
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
-    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
-        return std::make_shared<Min>(Min(onField, asField));
-    }
+    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField);
 
     /*
      * @brief generate the code for lift and combine of Min Sum aggregate

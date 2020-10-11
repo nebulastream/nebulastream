@@ -20,7 +20,7 @@ class WindowAggregation {
    * @param asField
    * @return WindowAggregation
    */
-    WindowAggregation& as(const AttributeFieldPtr asField);
+    WindowAggregation& as(AttributeFieldPtr asField);
 
     /**
    * Generates code for the particular window aggregate.
@@ -35,23 +35,17 @@ class WindowAggregation {
    * Returns the result field of the aggregation
    * @return
    */
-    AttributeFieldPtr as() {
-        if (asField == nullptr)
-            return onField;
-        return asField;
-    }
+    AttributeFieldPtr as();
 
     /**
-  * Returns the result field of the aggregation
-  * @return
-  */
-    AttributeFieldPtr on() {
-        return onField;
-    }
+   * Returns the result field of the aggregation
+   * @return
+   */
+    AttributeFieldPtr on();
 
   protected:
-    WindowAggregation(const AttributeFieldPtr onField);
-    WindowAggregation(const AttributeFieldPtr onField, const AttributeFieldPtr asField);
+    explicit WindowAggregation(AttributeFieldPtr onField);
+    WindowAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField);
     WindowAggregation() = default;
     const AttributeFieldPtr onField;
     AttributeFieldPtr asField;

@@ -4,14 +4,16 @@
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <utility>
 
 namespace NES {
 
-Max::Max(NES::AttributeFieldPtr field) : WindowAggregation(field) {
+Max::Max(NES::AttributeFieldPtr field) : WindowAggregation(std::move(field)) {}
 
-}
-Max::Max(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(field, asField) {
+Max::Max(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(std::move(field), std::move(asField)) {}
 
+WindowAggregationPtr Max::create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
+    return std::make_shared<Max>(Max(std::move(onField), std::move(asField)));
 }
 
 WindowAggregationPtr Max::on(ExpressionItem onField) {

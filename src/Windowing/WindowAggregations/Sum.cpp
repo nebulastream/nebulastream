@@ -3,14 +3,15 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <utility>
 
 namespace NES {
 
-Sum::Sum(NES::AttributeFieldPtr field) : WindowAggregation(field) {
+Sum::Sum(NES::AttributeFieldPtr field) : WindowAggregation(std::move(field)) {}
+Sum::Sum(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(std::move(field), std::move(asField)) {}
 
-}
-Sum::Sum(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(field, asField) {
-
+WindowAggregationPtr Sum::create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
+    return std::make_shared<Sum>(Sum(std::move(onField), std::move(asField)));
 }
 
 WindowAggregationPtr Sum::on(ExpressionItem onField) {
