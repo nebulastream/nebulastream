@@ -4,8 +4,8 @@
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 using namespace NES;
 
