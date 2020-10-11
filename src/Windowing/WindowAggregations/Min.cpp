@@ -4,11 +4,16 @@
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <utility>
 
 namespace NES {
 
-Min::Min(NES::AttributeFieldPtr field) : WindowAggregation(field) {}
-Min::Min(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(field, asField) {}
+Min::Min(NES::AttributeFieldPtr field) : WindowAggregation(std::move(field)) {}
+Min::Min(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(std::move(field), std::move(asField)) {}
+
+WindowAggregationPtr Min::create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
+    return std::make_shared<Min>(Min(std::move(onField), std::move(asField)));
+}
 
 WindowAggregationPtr Min::on(ExpressionItem onField) {
     auto keyExpression = onField.getExpressionNode();

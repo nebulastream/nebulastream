@@ -3,11 +3,16 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <utility>
 
 namespace NES {
 
-Count::Count(NES::AttributeFieldPtr field) : WindowAggregation(field) {}
-Count::Count(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(field, asField) {}
+Count::Count(NES::AttributeFieldPtr field) : WindowAggregation(std::move(field)) {}
+Count::Count(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(std::move(field), std::move(asField)) {}
+
+WindowAggregationPtr Count::create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
+        return std::make_shared<Count>(Count(std::move(onField), std::move(asField)));
+}
 
 WindowAggregationPtr Count::on(ExpressionItem onField) {
     auto keyExpression = onField.getExpressionNode();

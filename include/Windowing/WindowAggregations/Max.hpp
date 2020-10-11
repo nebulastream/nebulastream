@@ -15,9 +15,7 @@ class Max : public WindowAggregation {
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
-    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
-        return std::make_shared<Max>(Max(onField, asField));
-    }
+    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField);
     /*
      * @brief generate the code for lift and combine of the Max aggregate
      * @param currentCode
