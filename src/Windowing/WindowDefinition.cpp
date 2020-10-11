@@ -1,32 +1,33 @@
 #include <Windowing/WindowDefinition.hpp>
+#include <utility>
 namespace NES {
 
-WindowDefinition::WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar)
-    : windowAggregation(windowAggregation), windowType(windowType), onKey(nullptr), distributionType(distChar), numberOfInputEdges(1) {}
+WindowDefinition::WindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar)
+    : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(nullptr), distributionType(std::move(distChar)), numberOfInputEdges(1) {}
 
-WindowDefinition::WindowDefinition(const AttributeFieldPtr onKey,
-                                   const WindowAggregationPtr windowAggregation,
-                                   const WindowTypePtr windowType,
+WindowDefinition::WindowDefinition(AttributeFieldPtr onKey,
+                                   WindowAggregationPtr windowAggregation,
+                                   WindowTypePtr windowType,
                                    DistributionCharacteristicPtr distChar,
                                    uint64_t numberOfInputEdges)
-    : windowAggregation(windowAggregation), windowType(windowType), onKey(onKey), distributionType(distChar), numberOfInputEdges(numberOfInputEdges) {
+    : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(std::move(onKey)), distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges) {
 }
 
 bool WindowDefinition::isKeyed() {
     return onKey != nullptr;
 }
 
-WindowDefinitionPtr WindowDefinition::create(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar) {
+WindowDefinitionPtr WindowDefinition::create(WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar) {
     return std::make_shared<WindowDefinition>(windowAggregation, windowType, distChar);
 }
 
-WindowDefinitionPtr WindowDefinition::create(const AttributeFieldPtr onKey, const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges) {
+WindowDefinitionPtr WindowDefinition::create(AttributeFieldPtr onKey, WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges) {
 
     return std::make_shared<WindowDefinition>(onKey, windowAggregation, windowType, distChar, numberOfInputEdges);
 }
 
 void WindowDefinition::setDistributionCharacteristic(DistributionCharacteristicPtr characteristic) {
-    this->distributionType = characteristic;
+    this->distributionType = std::move(characteristic);
 }
 
 DistributionCharacteristicPtr WindowDefinition::getDistributionType() {
@@ -38,23 +39,23 @@ uint64_t WindowDefinition::getNumberOfInputEdges() const {
 void WindowDefinition::setNumberOfInputEdges(uint64_t numberOfInputEdges) {
     this->numberOfInputEdges = numberOfInputEdges;
 }
-WindowAggregationPtr& WindowDefinition::getWindowAggregation() {
+WindowAggregationPtr WindowDefinition::getWindowAggregation() {
     return windowAggregation;
 }
-WindowTypePtr& WindowDefinition::getWindowType() {
+WindowTypePtr WindowDefinition::getWindowType() {
     return windowType;
 }
-AttributeFieldPtr& WindowDefinition::getOnKey() {
+AttributeFieldPtr WindowDefinition::getOnKey() {
     return onKey;
 }
-void WindowDefinition::setWindowAggregation(WindowAggregationPtr& windowAggregation) {
-    WindowDefinition::windowAggregation = windowAggregation;
+void WindowDefinition::setWindowAggregation(WindowAggregationPtr windowAggregation) {
+    this->windowAggregation = std::move(windowAggregation);
 }
-void WindowDefinition::setWindowType(WindowTypePtr& windowType) {
-    WindowDefinition::windowType = windowType;
+void WindowDefinition::setWindowType(WindowTypePtr windowType) {
+    this->windowType = std::move(windowType);
 }
-void WindowDefinition::setOnKey(AttributeFieldPtr& onKey) {
-    WindowDefinition::onKey = onKey;
+void WindowDefinition::setOnKey(AttributeFieldPtr onKey) {
+    this->onKey = std::move(onKey);
 }
 
 }// namespace NES

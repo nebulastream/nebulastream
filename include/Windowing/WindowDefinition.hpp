@@ -14,7 +14,7 @@ class WindowDefinition {
      * @param windowType
      * @param distChar
      */
-    WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
+    WindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
 
     /**
      * @brief This constructor constructs a key-by window
@@ -24,9 +24,9 @@ class WindowDefinition {
      * @param distChar
      * @param numberOfInputEdges
      */
-    WindowDefinition(const AttributeFieldPtr onKey,
-                     const WindowAggregationPtr windowAggregation,
-                     const WindowTypePtr windowType,
+    WindowDefinition(AttributeFieldPtr onKey,
+                     WindowAggregationPtr windowAggregation,
+                     WindowTypePtr windowType,
                      DistributionCharacteristicPtr distChar,
                      uint64_t numberOfInputEdges);
 
@@ -36,8 +36,9 @@ class WindowDefinition {
      * @param windowType
      * @return Window Definition
      */
-    static WindowDefinitionPtr create(const WindowAggregationPtr windowAggregation,
-                                      const WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
+    static WindowDefinitionPtr create(WindowAggregationPtr windowAggregation,
+                                      WindowTypePtr windowType,
+                                      DistributionCharacteristicPtr distChar);
 
     /**
      * @brief Create a new window definition for a keyed window
@@ -45,9 +46,10 @@ class WindowDefinition {
      * @param windowType
      * @return Window Definition
      */
-    static WindowDefinitionPtr create(const AttributeFieldPtr onKey,
-                                      const WindowAggregationPtr windowAggregation,
-                                      const WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
+    static WindowDefinitionPtr create(AttributeFieldPtr onKey,
+                                      WindowAggregationPtr windowAggregation,
+                                      WindowTypePtr windowType,
+                                      DistributionCharacteristicPtr distChar,
                                       uint64_t numberOfInputEdges);
 
     /**
@@ -59,7 +61,7 @@ class WindowDefinition {
     /**
      * @brief getter and setter for the number of input edges, which is used for the low watermarks
      */
-    uint64_t getNumberOfInputEdges() const;
+    [[nodiscard]] uint64_t getNumberOfInputEdges() const;
     void setNumberOfInputEdges(uint64_t numberOfInputEdges);
 
     /**
@@ -71,20 +73,20 @@ class WindowDefinition {
     /**
      * @brief getter/setter for window aggregation
      */
-    WindowAggregationPtr& getWindowAggregation();
-    void setWindowAggregation(WindowAggregationPtr& windowAggregation);
+    WindowAggregationPtr getWindowAggregation();
+    void setWindowAggregation(WindowAggregationPtr windowAggregation);
 
     /**
      * @brief getter/setter for window type
      */
-    WindowTypePtr& getWindowType();
-    void setWindowType(WindowTypePtr& windowType);
+    WindowTypePtr getWindowType();
+    void setWindowType(WindowTypePtr windowType);
 
     /**
      * @brief getter/setter for on key
      */
-    AttributeFieldPtr& getOnKey();
-    void setOnKey(AttributeFieldPtr& onKey);
+    AttributeFieldPtr getOnKey();
+    void setOnKey(AttributeFieldPtr onKey);
 
   private:
     WindowAggregationPtr windowAggregation;
