@@ -14,7 +14,19 @@ namespace NES{
 class WindowManager {
 
   public:
-    WindowManager(WindowDefinitionPtr windowDefinition);
+    explicit WindowManager(WindowDefinitionPtr windowDefinition);
+
+    /**
+     * @brief Get the window definition for the window manager
+     * @return WindowDefinition
+     */
+    WindowDefinitionPtr getWindowDefinition();
+
+    /**
+     * @brief Get the allowed lateness
+     * @return Allowed lateness
+     */
+    [[nodiscard]] uint64_t getAllowedLateness() const;
 
     /**
      * Creates slices for in the window slice store if needed.
@@ -64,10 +76,6 @@ class WindowManager {
         }
     }
 
-  public:
-    WindowDefinitionPtr getWindowDefinition();
-
-    uint64_t getAllowedLateness() const;
 
   private:
     const uint64_t allowedLateness;
