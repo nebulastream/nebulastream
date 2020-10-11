@@ -64,14 +64,14 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
         code << "#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
         code << "#include <Sources/DataSource.hpp>" << std::endl;
-        code << "#include <API/Window/WindowMeasure.hpp>" << std::endl;
-        code << "#include <API/Window/WindowType.hpp>" << std::endl;
-        code << "#include <API/Window/TimeCharacteristic.hpp>" << std::endl;
-        code << "#include <API/Window/WindowAggregation.hpp>" << std::endl;
-        code << "#include <API/Window/AggregationTypes/Sum.hpp>" << std::endl;
-        code << "#include <API/Window/AggregationTypes/Max.hpp>" << std::endl;
-        code << "#include <API/Window/AggregationTypes/Min.hpp>" << std::endl;
-        code << "#include <API/Window/AggregationTypes/Count.hpp>" << std::endl;
+        code << "#include <Windowing/WindowMeasures/WindowMeasure.hpp>" << std::endl;
+        code << "#include <Windowing/WindowTypes/WindowType.hpp>" << std::endl;
+        code << "#include <Windowing/TimeCharacteristic.hpp>" << std::endl;
+        code << "#include <Windowing/WindowAggregations/WindowAggregation.hpp>" << std::endl;
+        code << "#include <Windowing/WindowAggregations/Sum.hpp>" << std::endl;
+        code << "#include <Windowing/WindowAggregations/Max.hpp>" << std::endl;
+        code << "#include <Windowing/WindowAggregations/Min.hpp>" << std::endl;
+        code << "#include <Windowing/WindowAggregations/Count.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
         code << "Query createQuery(){" << std::endl;
 
