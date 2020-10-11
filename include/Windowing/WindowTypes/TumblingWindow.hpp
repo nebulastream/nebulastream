@@ -40,7 +40,7 @@ class TumblingWindow : public WindowType {
     * @param lastWatermark
     * @param currentWatermark
     */
-    void triggerWindows(std::vector<WindowState> windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
+    void triggerWindows(std::vector<WindowState> &windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 
     /**
     * @brief return size of the window
