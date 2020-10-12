@@ -3,20 +3,21 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
+#include <utility>
 
 namespace NES {
 
 GlobalQueryMetaData::GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes)
-    : globalQueryId(UtilityFunctions::getNextGlobalQueryId()), queryIds(queryIds), sinkGlobalQueryNodes(sinkGlobalQueryNodes), deployed(false), newMetaData(true) {}
+    : globalQueryId(UtilityFunctions::getNextGlobalQueryId()), queryIds(std::move(queryIds)), sinkGlobalQueryNodes(std::move(sinkGlobalQueryNodes)), deployed(false), newMetaData(true) {}
 
 GlobalQueryMetaDataPtr GlobalQueryMetaData::create(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
-    return std::make_shared<GlobalQueryMetaData>(GlobalQueryMetaData(queryIds, sinkGlobalQueryNodes));
+    return std::make_shared<GlobalQueryMetaData>(GlobalQueryMetaData(std::move(queryIds), std::move(sinkGlobalQueryNodes)));
 }
 
-void GlobalQueryMetaData::addNewSinkGlobalQueryNodes(std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
+void GlobalQueryMetaData::addNewSinkGlobalQueryNodes(const std::set<GlobalQueryNodePtr>& globalQueryNodes) {
 
-    NES_DEBUG("GlobalQueryMetaData: Add" << sinkGlobalQueryNodes.size() << "new Global Query Nodes with sink operators");
-    for (auto sinkGQN : sinkGlobalQueryNodes) {
+    NES_DEBUG("GlobalQueryMetaData: Add" << globalQueryNodes.size() << "new Global Query Nodes with sink operators");
+    for (auto& sinkGQN : globalQueryNodes) {
         //As GQNs with sink operators do not contain more than 1 query get the query id at 0th index.
         queryIds.insert(sinkGQN->getQueryIds()[0]);
         this->sinkGlobalQueryNodes.insert(sinkGQN);
@@ -76,7 +77,7 @@ QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
             operatorIdToOperatorMap[operatorId] = operatorNode;
         }
 
-        for (auto parentNode : gqnToProcess->getParents()) {
+        for (const auto& parentNode : gqnToProcess->getParents()) {
             auto parentGQN = parentNode->as<GlobalQueryNode>();
             if (parentGQN->getId() == 0) {
                 continue;
@@ -94,12 +95,12 @@ QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
         }
 
         NES_TRACE("GlobalQueryMetaData: add the child global query nodes for further processing.");
-        for (auto childGQN : gqnToProcess->getChildren()) {
+        for (const auto& childGQN : gqnToProcess->getChildren()) {
             globalQueryNodesToProcess.push_back(childGQN);
         }
     }
 
-    for (auto sinkGlobalQueryNode : sinkGlobalQueryNodes) {
+    for (const auto& sinkGlobalQueryNode : sinkGlobalQueryNodes) {
         NES_TRACE("GlobalQueryMetaData: Finding the operator with same id in the map.");
         auto rootOperator = sinkGlobalQueryNode->getOperators()[0]->copy();
         rootOperator = operatorIdToOperatorMap[rootOperator->getId()];
@@ -116,23 +117,23 @@ void GlobalQueryMetaData::markAsNotDeployed() {
 }
 
 void GlobalQueryMetaData::markAsDeployed() {
-    NES_TRACE("GlobalQueryMetaData: Mark the Global Query Metadata as deployed");
+    NES_TRACE("GlobalQueryMetaData: Mark the Global Query Metadata as deployed.");
     this->deployed = true;
     this->newMetaData = false;
 }
 
-bool GlobalQueryMetaData::empty() {
-    NES_TRACE("GlobalQueryMetaData: Mark the Global Query Metadata as updated but not deployed");
+bool GlobalQueryMetaData::isEmpty() {
+    NES_TRACE("GlobalQueryMetaData: Check if Global Query Metadata is empty. Found : " << queryIds.empty());
     return queryIds.empty();
 }
 
-bool GlobalQueryMetaData::isDeployed() {
-    NES_TRACE("GlobalQueryMetaData: Checking if Global Query Metadata was already deployed.");
+bool GlobalQueryMetaData::isDeployed() const {
+    NES_TRACE("GlobalQueryMetaData: Checking if Global Query Metadata was already deployed. Found : " << deployed);
     return deployed;
 }
 
-bool GlobalQueryMetaData::isNew() {
-    NES_TRACE("GlobalQueryMetaData: Checking if Global Query Metadata was newly constructed.");
+bool GlobalQueryMetaData::isNew() const {
+    NES_TRACE("GlobalQueryMetaData: Checking if Global Query Metadata was newly constructed. Found : " << newMetaData);
     return newMetaData;
 }
 
@@ -150,7 +151,7 @@ std::set<QueryId> GlobalQueryMetaData::getQueryIds() {
     return queryIds;
 }
 
-GlobalQueryId GlobalQueryMetaData::getGlobalQueryId() {
+GlobalQueryId GlobalQueryMetaData::getGlobalQueryId() const {
     return globalQueryId;
 }
 

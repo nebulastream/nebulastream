@@ -63,9 +63,9 @@ class GlobalQueryMetaData {
 
     /**
      * @brief Add a new Set of Global Query Node with sink operators
-     * @param sinkGlobalQueryNodes :  the Global Query Node with sink operators
+     * @param globalQueryNodes :  the Global Query Node with sink operators
      */
-    void addNewSinkGlobalQueryNodes(std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    void addNewSinkGlobalQueryNodes(const std::set<GlobalQueryNodePtr>& globalQueryNodes);
 
     /**
      * @brief Remove a Query Id and associated Global Query Node with sink operators
@@ -99,20 +99,20 @@ class GlobalQueryMetaData {
      * @brief Is the query plan for the metadata deployed
      * @return true if deployed else false
      */
-    bool isDeployed();
+    bool isDeployed() const;
 
     /**
      * @brief Check if the metadata is empty
      * @return true if vector of queryIds is empty
      */
-    bool empty();
+    bool isEmpty();
 
     /**
      * @brief Check if the metadata is newly created
      * A New metadata is the one which was created by never got deployed before
      * @return true if newly created else false
      */
-    bool isNew();
+    bool isNew() const;
 
     /**
      * @brief Get the set of Global Query Nodes with sink operators grouped together
@@ -130,7 +130,7 @@ class GlobalQueryMetaData {
      * @brief Get the global query id
      * @return global query id
      */
-    GlobalQueryId getGlobalQueryId();
+    GlobalQueryId getGlobalQueryId() const;
 
     /**
      * @brief Set the meta data as old

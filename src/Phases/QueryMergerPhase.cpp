@@ -1,5 +1,6 @@
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
 #include <Phases/QueryMergerPhase.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -12,8 +13,8 @@ QueryMergerPhase::QueryMergerPhase() {
 }
 
 bool QueryMergerPhase::execute(GlobalQueryPlanPtr globalQueryPlan) {
-    l0QueryMergerRule->apply(globalQueryPlan);
-    return true;
+    NES_DEBUG("QueryMergerPhase: Executing query merger phase.");
+    return l0QueryMergerRule->apply(globalQueryPlan);
 }
 
 }// namespace NES

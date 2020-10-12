@@ -64,19 +64,19 @@ const std::string TopologyNode::toString() const {
 }
 
 bool TopologyNode::containAsParent(NodePtr node) {
-    std::vector<NodePtr> family = this->getAndFlattenAllAncestors();
-    auto found = std::find_if(family.begin(), family.end(), [node](NodePtr familyMember) {
+    std::vector<NodePtr> ancestors = this->getAndFlattenAllAncestors();
+    auto found = std::find_if(ancestors.begin(), ancestors.end(), [node](NodePtr familyMember) {
         return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
     });
-    return found != family.end();
+    return found != ancestors.end();
 }
 
 bool TopologyNode::containAsChild(NodePtr node) {
-    std::vector<NodePtr> family = this->getAndFlattenAllChildren();
-    auto found = std::find_if(family.begin(), family.end(), [node](NodePtr familyMember) {
+    std::vector<NodePtr> children = this->getAndFlattenAllChildren();
+    auto found = std::find_if(children.begin(), children.end(), [node](NodePtr familyMember) {
         return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
     });
-    return found != family.end();
+    return found != children.end();
 }
 
 }// namespace NES

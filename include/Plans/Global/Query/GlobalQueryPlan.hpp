@@ -100,8 +100,9 @@ class GlobalQueryPlan {
 
     /**
      * @brief Update the existing Global query meta data by re-grouping the queries
+     * @return true if successful
      */
-    void updateGlobalQueryMetaDataMap();
+    bool updateGlobalQueryMetaDataMap();
 
     /**
      * @brief Get the all the Query Meta Data to be deployed
@@ -143,8 +144,9 @@ class GlobalQueryPlan {
 
     /**
      * @brief Check if constructed metadata is still valid or not.
+     * @return true if successful
      */
-    void checkMetaDataValidity();
+    bool checkMetaDataValidity();
 
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;
