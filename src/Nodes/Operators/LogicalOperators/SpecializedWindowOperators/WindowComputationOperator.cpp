@@ -1,7 +1,7 @@
 #include <API/Schema.hpp>
+#include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowDefinition.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 namespace NES {
 
 LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition) {

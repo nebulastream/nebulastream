@@ -7,5 +7,4 @@
 class WindowMeasure {
 };
 
-
 #endif//NES_INCLUDE_WINDOWING_WINDOWMEASURES_WINDOWMEASURE_HPP_

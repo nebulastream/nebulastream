@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-namespace NES{
+namespace NES {
 
 class WindowState {
 
@@ -17,6 +17,6 @@ class WindowState {
     WindowState(uint64_t start, uint64_t end);
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWSTATE_HPP_

@@ -1,5 +1,3 @@
-#include <Windowing/WindowDefinition.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
@@ -8,6 +6,8 @@
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/WindowDefinition.hpp>
 #include <iostream>
 
 namespace NES {

@@ -3,7 +3,7 @@
 
 #include <Windowing/WindowingForwardRefs.hpp>
 
-namespace NES{
+namespace NES {
 /**
  * @brief The time stamp characteristic represents if an window is in event or processing time.
  */
@@ -46,6 +46,6 @@ class TimeCharacteristic {
     Type type;
     AttributeFieldPtr field;
 };
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_

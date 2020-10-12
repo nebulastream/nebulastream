@@ -5,25 +5,25 @@
 #include <atomic>
 #include <iostream>
 #include <memory>
-#include <thread>
 #include <mutex>
+#include <thread>
 
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>
 
-#include <Windowing/WindowDefinition.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowAggregations/Sum.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/Runtime/WindowState.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/Count.hpp>
 #include <Windowing/WindowAggregations/Max.hpp>
 #include <Windowing/WindowAggregations/Min.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/Runtime/WindowState.hpp>
+#include <Windowing/WindowAggregations/Sum.hpp>
+#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
 
 namespace NES {
 class QueryManager;

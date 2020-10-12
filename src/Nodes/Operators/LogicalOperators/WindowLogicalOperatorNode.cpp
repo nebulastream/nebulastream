@@ -1,9 +1,9 @@
 #include <API/Schema.hpp>
-#include <Windowing/WindowDefinition.hpp>
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Windowing/WindowAggregations/WindowAggregation.hpp>
+#include <Windowing/WindowDefinition.hpp>
 #include <sstream>
 
 namespace NES {

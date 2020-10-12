@@ -1,9 +1,9 @@
-#include <Windowing/WindowAggregations/Min.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <Windowing/WindowAggregations/Min.hpp>
 #include <utility>
 
 namespace NES {

@@ -1,15 +1,14 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWMANAGER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWMANAGER_HPP_
-#include <Windowing/WindowingForwardRefs.hpp>
-#include <Windowing/WindowDefinition.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 
-namespace NES{
-
+namespace NES {
 
 class WindowManager {
 
@@ -59,7 +58,7 @@ class WindowManager {
             }
         }
         NES_DEBUG("WindowManager: sliceStream check store-nextEdge=" << store->nextEdge << " <="
-                                                      << " ts=" << ts);
+                                                                     << " ts=" << ts);
         // append new slices if needed
         while (store->nextEdge <= ts) {
             auto currentSlice = store->getCurrentSliceIndex();
@@ -79,6 +78,6 @@ class WindowManager {
     WindowDefinitionPtr windowDefinition;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWMANAGER_HPP_

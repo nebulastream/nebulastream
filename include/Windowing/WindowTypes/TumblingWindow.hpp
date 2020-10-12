@@ -1,18 +1,16 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWTYPES_TUMBLINGWINDOW_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWTYPES_TUMBLINGWINDOW_HPP_
 
-#include <Windowing/WindowingForwardRefs.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 
-
-namespace NES{
+namespace NES {
 /**
  * A TumblingWindow assigns records to non-overlapping windows.
  */
 class TumblingWindow : public WindowType {
   public:
-
     /**
     * Creates a new TumblingWindow that assigns
     * elements to time windows based on the element timestamp and offset.
@@ -40,7 +38,7 @@ class TumblingWindow : public WindowType {
     * @param lastWatermark
     * @param currentWatermark
     */
-    void triggerWindows(std::vector<WindowState> &windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
+    void triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 
     /**
     * @brief return size of the window
@@ -53,6 +51,6 @@ class TumblingWindow : public WindowType {
     const TimeMeasure size;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_TUMBLINGWINDOW_HPP_

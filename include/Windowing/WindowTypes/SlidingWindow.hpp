@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWTYPES_SLIDINGWINDOW_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWTYPES_SLIDINGWINDOW_HPP_
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-namespace NES{
+#include <Windowing/WindowTypes/WindowType.hpp>
+namespace NES {
 /**
  * A SlidingWindow assigns records to multiple overlapping windows.
  */
@@ -23,7 +23,7 @@ class SlidingWindow : public WindowType {
      * @param lastWatermark
      * @param currentWatermark
      */
-    void triggerWindows(std::vector<WindowState> &windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
+    void triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 
     bool isSlidingWindow() override;
 
@@ -45,9 +45,6 @@ class SlidingWindow : public WindowType {
     const TimeMeasure slide;
 };
 
-
-
-
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_SLIDINGWINDOW_HPP_

@@ -3,7 +3,7 @@
 
 #include "memory"
 
-namespace NES{
+namespace NES {
 
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
@@ -41,14 +41,10 @@ typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
 class ExpressionItem;
 
-
 inline uint64_t getTsFromClock() {
     return time(NULL) * 1000;
 }
 
-
-
-}
-
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_

@@ -1,6 +1,6 @@
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Util/Logger.hpp>
-namespace NES{
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+namespace NES {
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
     : WindowType(timeCharacteristic), size(size), slide(slide) {}
@@ -9,7 +9,7 @@ WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMe
     return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));
 }
 
-void SlidingWindow::triggerWindows(std::vector<WindowState> &windows,
+void SlidingWindow::triggerWindows(std::vector<WindowState>& windows,
                                    uint64_t lastWatermark,
                                    uint64_t currentWatermark) const {
     NES_DEBUG("SlidingWindow::triggerWindows windows before=" << windows.size());
@@ -39,4 +39,4 @@ TimeMeasure SlidingWindow::getSlide() {
     return slide;
 }
 
-}
+}// namespace NES

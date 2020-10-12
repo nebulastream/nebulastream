@@ -1,7 +1,7 @@
 #include <API/Schema.hpp>
-#include <Windowing/WindowDefinition.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/WindowDefinition.hpp>
 namespace NES {
 
 LogicalOperatorNodePtr createSliceCreationSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition) {
