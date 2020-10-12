@@ -1,5 +1,5 @@
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/SpecializedWindowOperators/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowDefinition.hpp>
 namespace NES {

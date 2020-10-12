@@ -1,5 +1,5 @@
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowDefinition.hpp>
 

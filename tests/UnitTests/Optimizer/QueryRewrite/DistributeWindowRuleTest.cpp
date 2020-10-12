@@ -15,10 +15,10 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowAggregations/Sum.hpp>
-#include <Operators/LogicalOperators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Operators/LogicalOperators/SpecializedWindowOperators/SliceCreationOperator.hpp>
-#include <Operators/LogicalOperators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 
 using namespace NES;
 
