@@ -293,7 +293,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                                                                key,
                                                                partialAggregates[sliceId]);
                 tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
-                store->cleanupToPos(sliceId);
+                store->removeSlicesUntil(sliceId);
             } else {
                 NES_DEBUG("WindowHandler SL: Dont write result");
             }
