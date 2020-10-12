@@ -8,15 +8,20 @@ namespace NES{
 */
 class SliceMetaData {
   public:
+    /**
+     * @brief Construct a new slice meta data object.
+     * @param startTs
+     * @param endTs
+     */
     SliceMetaData(uint64_t startTs, uint64_t endTs);
 
     /**
-    * The start timestamp of this slice
+    * @brief The start timestamp of this slice
     */
     uint64_t getStartTs();
 
     /**
-     * The end timestamp of this slice
+     * @brief The end timestamp of this slice
      */
     uint64_t getEndTs();
 
