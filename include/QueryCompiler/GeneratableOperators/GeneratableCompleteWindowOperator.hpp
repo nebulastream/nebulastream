@@ -31,7 +31,7 @@ class GeneratableCompleteWindowOperator : public WindowLogicalOperatorNode, publ
     const std::string toString() const override;
 
   private:
-    explicit GeneratableCompleteWindowOperator(WindowDefinitionPtr windowDefinition);
+    explicit GeneratableCompleteWindowOperator(LogicalWindowDefinitionPtr windowDefinition);
 };
 
 }// namespace NES

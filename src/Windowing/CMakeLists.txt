@@ -1,7 +1,7 @@
 add_source_nes(
     DistributionCharacteristic.cpp
     TimeCharacteristic.cpp
-        WindowDefinition.cpp
+        LogicalWindowDefinition.cpp
 
 )
 add_subdirectory(Watermark)

@@ -14,13 +14,13 @@
 #include <cstring>
 
 #include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/Count.hpp>
 #include <Windowing/WindowAggregations/Max.hpp>
 #include <Windowing/WindowAggregations/Min.hpp>
 #include <Windowing/WindowAggregations/Sum.hpp>
-#include <Windowing/WindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
@@ -44,9 +44,9 @@ typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 class WindowHandler {
   public:
     WindowHandler() = default;
-    WindowHandler(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
+    WindowHandler(LogicalWindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
 
-    static WindowHandlerPtr create(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager,
+    static WindowHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager,
                                    BufferManagerPtr bufferManager);
 
     ~WindowHandler();
@@ -89,7 +89,7 @@ class WindowHandler {
      * @param tupleBuffer
      */
     template<class KeyType, class FinalAggregateType, class PartialAggregateType>
-    void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
+    void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
                           TupleBuffer& tupleBuffer);
 
     void* getWindowState();
@@ -101,7 +101,7 @@ class WindowHandler {
 
   private:
     std::atomic_bool running{false};
-    WindowDefinitionPtr windowDefinition;
+    LogicalWindowDefinitionPtr windowDefinition;
     WindowManagerPtr windowManager;
     PipelineStagePtr nextPipeline;
     void* windowState;
@@ -129,7 +129,7 @@ void WindowHandler::writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, 
 
 // TODO Maybe we could define template specialization of this method when generating compiled code so that we dont need casting
 template<class KeyType, class FinalAggregateType, class PartialAggregateType>
-void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
+void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
                                      TupleBuffer& tupleBuffer) {
 
     // For event time we use the maximal records ts as watermark.

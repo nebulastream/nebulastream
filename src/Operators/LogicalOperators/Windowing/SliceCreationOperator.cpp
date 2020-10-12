@@ -1,14 +1,14 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 namespace NES {
 
-LogicalOperatorNodePtr createSliceCreationSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr createSliceCreationSpecializedOperatorNode(const LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<SliceCreationOperator>(windowDefinition);
 }
 
-SliceCreationOperator::SliceCreationOperator(const WindowDefinitionPtr windowDefinition)
+SliceCreationOperator::SliceCreationOperator(const LogicalWindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
     windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createSlicingWindowType());
 }

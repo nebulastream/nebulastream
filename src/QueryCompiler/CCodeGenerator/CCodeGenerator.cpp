@@ -20,12 +20,12 @@
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/Count.hpp>
 #include <Windowing/WindowAggregations/Max.hpp>
 #include <Windowing/WindowAggregations/Min.hpp>
 #include <Windowing/WindowAggregations/Sum.hpp>
-#include <Windowing/WindowDefinition.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 
 namespace NES {
@@ -377,7 +377,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
  * @param out
  * @return
  */
-bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForCompleteWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
     context->setWindow(window);
     auto tf = getTypeFactory();
     auto constStatement = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0")));
@@ -514,14 +514,14 @@ bool CCodeGenerator::generateCodeForCompleteWindow(WindowDefinitionPtr window, P
     return true;
 }
 
-bool CCodeGenerator::generateCodeForSlicingWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForSlicingWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
     NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
     //NOTE: the distinction currently only happens in the trigger
     context->pipelineName = "SlicingWindowType";
     return generateCodeForCompleteWindow(window, context);
 }
 
-bool CCodeGenerator::generateCodeForCombiningWindow(WindowDefinitionPtr window, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForCombiningWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
     context->setWindow(window);
 
     auto tf = getTypeFactory();

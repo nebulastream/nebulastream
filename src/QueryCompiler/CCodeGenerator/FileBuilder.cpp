@@ -11,7 +11,7 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <cstdint>" << std::endl;
     builder.declations << "#include <string.h>" << std::endl;
     builder.declations << "#include <State/StateVariable.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowDefinition.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/LogicalWindowDefinition.hpp>" << std::endl;
     builder.declations << "#include <Windowing/Runtime/WindowHandler.hpp>" << std::endl;
     builder.declations << "#include <Windowing/Runtime/WindowManager.hpp>" << std::endl;
     builder.declations << "#include <Windowing/Runtime/WindowSliceStore.hpp>" << std::endl;

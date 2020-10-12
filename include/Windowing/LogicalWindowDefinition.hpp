@@ -1,11 +1,11 @@
-#ifndef NES_INCLUDE_WINDOWING_WINDOWDEFINITION_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOWDEFINITION_HPP_
+#ifndef NES_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
+#define NES_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
 
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES {
 
-class WindowDefinition {
+class LogicalWindowDefinition {
   public:
     /**
      * @brief This constructor construts a key-less window
@@ -13,7 +13,7 @@ class WindowDefinition {
      * @param windowType
      * @param distChar
      */
-    WindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
+    LogicalWindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
 
     /**
      * @brief This constructor constructs a key-by window
@@ -23,7 +23,7 @@ class WindowDefinition {
      * @param distChar
      * @param numberOfInputEdges
      */
-    WindowDefinition(AttributeFieldPtr onKey,
+    LogicalWindowDefinition(AttributeFieldPtr onKey,
                      WindowAggregationPtr windowAggregation,
                      WindowTypePtr windowType,
                      DistributionCharacteristicPtr distChar,
@@ -35,7 +35,7 @@ class WindowDefinition {
      * @param windowType
      * @return Window Definition
      */
-    static WindowDefinitionPtr create(WindowAggregationPtr windowAggregation,
+    static LogicalWindowDefinitionPtr create(WindowAggregationPtr windowAggregation,
                                       WindowTypePtr windowType,
                                       DistributionCharacteristicPtr distChar);
 
@@ -45,7 +45,7 @@ class WindowDefinition {
      * @param windowType
      * @return Window Definition
      */
-    static WindowDefinitionPtr create(AttributeFieldPtr onKey,
+    static LogicalWindowDefinitionPtr create(AttributeFieldPtr onKey,
                                       WindowAggregationPtr windowAggregation,
                                       WindowTypePtr windowType,
                                       DistributionCharacteristicPtr distChar,

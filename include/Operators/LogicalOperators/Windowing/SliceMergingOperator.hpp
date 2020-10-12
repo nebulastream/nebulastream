@@ -5,8 +5,8 @@
 
 namespace NES {
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 /**
  * @brief this class represents the intermediate merger for distributed windowing that is deployed on the worker
@@ -14,7 +14,7 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
  */
 class SliceMergingOperator : public WindowLogicalOperatorNode {
   public:
-    SliceMergingOperator(const WindowDefinitionPtr windowDefinition);
+    SliceMergingOperator(const LogicalWindowDefinitionPtr windowDefinition);
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;

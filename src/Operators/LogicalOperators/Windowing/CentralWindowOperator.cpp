@@ -1,15 +1,15 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 
 namespace NES {
 
-LogicalOperatorNodePtr createCentralWindowSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr createCentralWindowSpecializedOperatorNode(const LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<CentralWindowOperator>(windowDefinition);
 }
 
-CentralWindowOperator::CentralWindowOperator(const WindowDefinitionPtr windowDefinition)
+CentralWindowOperator::CentralWindowOperator(const LogicalWindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
     windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 }

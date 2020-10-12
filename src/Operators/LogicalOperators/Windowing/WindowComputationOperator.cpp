@@ -1,14 +1,14 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 namespace NES {
 
-LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<WindowComputationOperator>(windowDefinition);
 }
 
-WindowComputationOperator::WindowComputationOperator(const WindowDefinitionPtr windowDefinition)
+WindowComputationOperator::WindowComputationOperator(const LogicalWindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
     this->windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createCombiningWindowType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());

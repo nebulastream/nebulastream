@@ -5,24 +5,24 @@
 
 namespace NES {
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 class WindowLogicalOperatorNode;
 typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
 
 class WindowLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    WindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition);
+    WindowLogicalOperatorNode(const LogicalWindowDefinitionPtr windowDefinition);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
-    const WindowDefinitionPtr& getWindowDefinition() const;
+    const LogicalWindowDefinitionPtr& getWindowDefinition() const;
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
     bool inferSchema() override;
 
   protected:
-    WindowDefinitionPtr windowDefinition;
+    LogicalWindowDefinitionPtr windowDefinition;
 };
 
 }// namespace NES

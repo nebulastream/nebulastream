@@ -24,8 +24,8 @@ typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
 class FieldAssignmentExpressionNode;
 typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 class SinkDescriptor;
 typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;

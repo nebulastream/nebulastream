@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWMANAGER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWMANAGER_HPP_
 #include <Util/Logger.hpp>
-#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
@@ -13,13 +13,13 @@ namespace NES {
 class WindowManager {
 
   public:
-    explicit WindowManager(WindowDefinitionPtr windowDefinition);
+    explicit WindowManager(LogicalWindowDefinitionPtr windowDefinition);
 
     /**
      * @brief Get the window definition for the window manager
-     * @return WindowDefinition
+     * @return LogicalWindowDefinition
      */
-    WindowDefinitionPtr getWindowDefinition();
+    LogicalWindowDefinitionPtr getWindowDefinition();
 
     /**
      * @brief Get the allowed lateness
@@ -75,7 +75,7 @@ class WindowManager {
 
   private:
     const uint64_t allowedLateness;
-    WindowDefinitionPtr windowDefinition;
+    LogicalWindowDefinitionPtr windowDefinition;
 };
 
 }// namespace NES

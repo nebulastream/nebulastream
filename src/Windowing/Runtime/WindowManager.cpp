@@ -2,10 +2,10 @@
 
 namespace NES {
 
-WindowManager::WindowManager(WindowDefinitionPtr windowDefinition)
+WindowManager::WindowManager(LogicalWindowDefinitionPtr windowDefinition)
     : windowDefinition(std::move(windowDefinition)), allowedLateness(0) {}
 
-WindowDefinitionPtr WindowManager::getWindowDefinition() {
+LogicalWindowDefinitionPtr WindowManager::getWindowDefinition() {
     return windowDefinition;
 }
 

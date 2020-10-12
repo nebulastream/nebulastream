@@ -11,11 +11,11 @@ PipelineContext::PipelineContext() {
 }
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
-void PipelineContext::setWindow(WindowDefinitionPtr window) {
+void PipelineContext::setWindow(LogicalWindowDefinitionPtr window) {
     this->windowDefinition = std::move(window);
 }
 
-WindowDefinitionPtr PipelineContext::getWindow() {
+LogicalWindowDefinitionPtr PipelineContext::getWindow() {
     return this->windowDefinition;
 }
 
