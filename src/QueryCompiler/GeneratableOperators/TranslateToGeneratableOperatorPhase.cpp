@@ -4,11 +4,11 @@
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/SpecializedWindowOperators/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/SpecializedWindowOperators/SliceCreationOperator.hpp>
-#include <Operators/LogicalOperators/SpecializedWindowOperators/SliceMergingOperator.hpp>
-#include <Operators/LogicalOperators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableCombiningWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>

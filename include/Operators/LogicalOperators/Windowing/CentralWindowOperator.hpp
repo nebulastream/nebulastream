@@ -2,7 +2,7 @@
 #define WINDOW_REFINEMENT_OPERATOR_CENTRAL_WINDOW_NODE_HPP
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 
 namespace NES {
 
