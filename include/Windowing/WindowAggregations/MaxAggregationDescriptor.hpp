@@ -1,23 +1,23 @@
 #ifndef NES_MAX_HPP
 #define NES_MAX_HPP
 
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 namespace NES {
 
 /**
  * @brief
- * The Max aggregation calculates the maximum over the window.
+ * The MaxAggregationDescriptor aggregation calculates the maximum over the window.
  */
-class Max : public WindowAggregation {
+class MaxAggregationDescriptor : public WindowAggregationDescriptor {
   public:
     /**
-   * Factory method to creates a Max aggregation on a particular field.
+   * Factory method to creates a MaxAggregationDescriptor aggregation on a particular field.
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
     static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField);
     /*
-     * @brief generate the code for lift and combine of the Max aggregate
+     * @brief generate the code for lift and combine of the MaxAggregationDescriptor aggregate
      * @param currentCode
      * @param expressionStatement
      * @param inputStruct
@@ -60,8 +60,8 @@ class Max : public WindowAggregation {
     }
 
   private:
-    Max(NES::AttributeFieldPtr onField);
-    Max(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    MaxAggregationDescriptor(NES::AttributeFieldPtr onField);
+    MaxAggregationDescriptor(AttributeFieldPtr onField, AttributeFieldPtr asField);
 };
 }// namespace NES
 #endif//NES_MAX_HPP

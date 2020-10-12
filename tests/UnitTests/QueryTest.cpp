@@ -1,12 +1,6 @@
 #include "gtest/gtest.h"
 
 #include <API/Query.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowAggregations/Sum.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -26,6 +20,12 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <iostream>
 
 namespace NES {
@@ -98,7 +98,7 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
     Query query = Query::from("default_logical")
                       .window(
                           TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-                          Sum::on(Attribute("value")))
+                          SumAggregationDescriptor::on(Attribute("value")))
                       .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
@@ -134,7 +134,7 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
     Query query = Query::from("default_logical")
         .window(
             SlidingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10), Seconds(2)),
-            Sum::on(Attribute("value")))
+                          SumAggregationDescriptor::on(Attribute("value")))
         .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();

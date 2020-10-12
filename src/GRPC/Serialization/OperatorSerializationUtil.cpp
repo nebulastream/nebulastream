@@ -31,10 +31,10 @@
 #include <SerializableOperator.pb.h>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/Count.hpp>
-#include <Windowing/WindowAggregations/Max.hpp>
-#include <Windowing/WindowAggregations/Min.hpp>
-#include <Windowing/WindowAggregations/Sum.hpp>
+#include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
@@ -235,13 +235,13 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     windowAggregation->set_asfield(windowDefinition->getWindowAggregation()->as()->name);
     windowAggregation->set_onfield(windowDefinition->getWindowAggregation()->on()->name);
     // check if SUM aggregation
-    if (std::dynamic_pointer_cast<Sum>(windowDefinition->getWindowAggregation()) != nullptr) {
+    if (std::dynamic_pointer_cast<SumAggregationDescriptor>(windowDefinition->getWindowAggregation()) != nullptr) {
         windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
-    } else if (std::dynamic_pointer_cast<Max>(windowDefinition->getWindowAggregation()) != nullptr) {
+    } else if (std::dynamic_pointer_cast<MaxAggregationDescriptor>(windowDefinition->getWindowAggregation()) != nullptr) {
         windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MAX);
-    } else if (std::dynamic_pointer_cast<Min>(windowDefinition->getWindowAggregation()) != nullptr) {
+    } else if (std::dynamic_pointer_cast<MinAggregationDescriptor>(windowDefinition->getWindowAggregation()) != nullptr) {
         windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MIN);
-    } else if (std::dynamic_pointer_cast<Count>(windowDefinition->getWindowAggregation()) != nullptr) {
+    } else if (std::dynamic_pointer_cast<CountAggregationDescriptor>(windowDefinition->getWindowAggregation()) != nullptr) {
         windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_COUNT);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
@@ -266,16 +266,16 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
 
     WindowAggregationPtr aggregation;
     if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM) {
-        aggregation = Sum::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
+        aggregation = SumAggregationDescriptor::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
                                   AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MAX) {
-        aggregation = Max::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
+        aggregation = MaxAggregationDescriptor::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
                                   AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MIN) {
-        aggregation = Min::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
+        aggregation = MinAggregationDescriptor::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
                                   AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_COUNT) {
-        aggregation = Count::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
+        aggregation = CountAggregationDescriptor::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
                                     AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: " << serializedWindowAggregation.DebugString());

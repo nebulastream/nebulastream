@@ -533,7 +533,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), Sum::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), SumAggregationDescriptor::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
@@ -543,7 +543,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
-    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(20)), Sum::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(20)), SumAggregationDescriptor::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
     ss2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss2 << endl;
@@ -701,7 +701,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)), Sum::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)), SumAggregationDescriptor::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
@@ -711,7 +711,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
-    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)), Sum::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)), SumAggregationDescriptor::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
     ss2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss2 << endl;

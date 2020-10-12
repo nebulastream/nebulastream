@@ -22,10 +22,10 @@
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/Count.hpp>
-#include <Windowing/WindowAggregations/Max.hpp>
-#include <Windowing/WindowAggregations/Min.hpp>
-#include <Windowing/WindowAggregations/Sum.hpp>
+#include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 
 namespace NES {
@@ -438,13 +438,13 @@ bool CCodeGenerator::generateCodeForCompleteWindow(LogicalWindowDefinitionPtr wi
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
 
     // set the default value for window state
-    if (std::dynamic_pointer_cast<Min>(window->getWindowAggregation()) != nullptr) {
+    if (std::dynamic_pointer_cast<MinAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MAX"))));
-    } else if (std::dynamic_pointer_cast<Max>(window->getWindowAggregation()) != nullptr) {
+    } else if (std::dynamic_pointer_cast<MaxAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MIN"))));
-    } else if (std::dynamic_pointer_cast<Sum>(window->getWindowAggregation()) != nullptr) {
+    } else if (std::dynamic_pointer_cast<SumAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
-    } else if (std::dynamic_pointer_cast<Count>(window->getWindowAggregation()) != nullptr) {
+    } else if (std::dynamic_pointer_cast<CountAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
     } else {
         NES_FATAL_ERROR("Window Handler: could not cast aggregation type");

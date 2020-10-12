@@ -3,30 +3,30 @@
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
-#include <Windowing/WindowAggregations/Max.hpp>
+#include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <utility>
 
 namespace NES {
 
-Max::Max(NES::AttributeFieldPtr field) : WindowAggregation(std::move(field)) {}
+MaxAggregationDescriptor::MaxAggregationDescriptor(NES::AttributeFieldPtr field) : WindowAggregationDescriptor(std::move(field)) {}
 
-Max::Max(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(std::move(field), std::move(asField)) {}
+MaxAggregationDescriptor::MaxAggregationDescriptor(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
 
-WindowAggregationPtr Max::create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
-    return std::make_shared<Max>(Max(std::move(onField), std::move(asField)));
+WindowAggregationPtr MaxAggregationDescriptor::create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
+    return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr Max::on(ExpressionItem onField) {
+WindowAggregationPtr MaxAggregationDescriptor::on(ExpressionItem onField) {
     auto keyExpression = onField.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    return std::make_shared<Max>(Max(keyField));
+    return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(keyField));
 }
 
-void Max::compileLiftCombine(CompoundStatementPtr currentCode,
+void MaxAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCode,
                              BinaryOperatorStatement partialRef,
                              StructDeclaration inputStruct,
                              BinaryOperatorStatement inputRef) {

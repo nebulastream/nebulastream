@@ -17,10 +17,10 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/Count.hpp>
-#include <Windowing/WindowAggregations/Max.hpp>
-#include <Windowing/WindowAggregations/Min.hpp>
-#include <Windowing/WindowAggregations/Sum.hpp>
+#include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
@@ -194,47 +194,47 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                                                                    << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
                     NES_DEBUG("WindowHandler CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
-                    if (auto sumAggregation = std::dynamic_pointer_cast<Sum>(windowDefinition->getWindowAggregation())) {
+                    if (auto sumAggregation = std::dynamic_pointer_cast<SumAggregationDescriptor>(windowDefinition->getWindowAggregation())) {
                         if (partialFinalAggregates.size() <= windowId) {
-                            // initiate the partial aggregate of Sum aggregation
+                            // initiate the partial aggregate of SumAggregationDescriptor aggregation
                             NES_DEBUG("WindowHandler CC: assign partialAggregates[sliceId]=" << partialAggregates[sliceId] << " old value was " << partialFinalAggregates[windowId]);
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
                         } else {
                             NES_DEBUG("WindowHandler CC: update partialFinalAggregates[windowId]=" << partialFinalAggregates[windowId] << " with " << sumAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId], partialAggregates[sliceId]));
-                            // update the partial aggregate of Sum aggregation
+                            // update the partial aggregate of SumAggregationDescriptor aggregation
                             partialFinalAggregates[windowId] = sumAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }
-                    } else if (auto maxAggregation = std::dynamic_pointer_cast<Max>(windowDefinition->getWindowAggregation())) {
+                    } else if (auto maxAggregation = std::dynamic_pointer_cast<MaxAggregationDescriptor>(windowDefinition->getWindowAggregation())) {
                         if (partialFinalAggregates.size() <= windowId) {
-                            // initiate the partial aggregate of Max aggregation
+                            // initiate the partial aggregate of MaxAggregationDescriptor aggregation
                             NES_DEBUG("WindowHandler CC: assign partialAggregates[sliceId]=" << partialAggregates[sliceId] << " old value was " << partialFinalAggregates[windowId]);
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
                         } else {
                             NES_DEBUG("WindowHandler CC: update partialFinalAggregates[windowId]=" << partialFinalAggregates[windowId] << " with " << maxAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId], partialAggregates[sliceId]));
-                            // update the partial aggregate of Max aggregation
+                            // update the partial aggregate of MaxAggregationDescriptor aggregation
                             partialFinalAggregates[windowId] = maxAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }
-                    } else if (auto minAggregation = std::dynamic_pointer_cast<Min>(windowDefinition->getWindowAggregation())) {
+                    } else if (auto minAggregation = std::dynamic_pointer_cast<MinAggregationDescriptor>(windowDefinition->getWindowAggregation())) {
                         if (partialFinalAggregates.size() <= windowId) {
-                            // initiate the partial aggregate of Min aggregation
+                            // initiate the partial aggregate of MinAggregationDescriptor aggregation
                             NES_DEBUG("WindowHandler CC: assign partialAggregates[sliceId]=" << partialAggregates[sliceId] << " old value was " << partialFinalAggregates[windowId]);
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
                         } else {
                             NES_DEBUG("WindowHandler CC: update partialFinalAggregates[windowId]=" << partialFinalAggregates[windowId] << " with " << minAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId], partialAggregates[sliceId]));
-                            // update the partial aggregate of Min aggregation
+                            // update the partial aggregate of MinAggregationDescriptor aggregation
                             partialFinalAggregates[windowId] = minAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }
-                    } else if (auto countAggregation = std::dynamic_pointer_cast<Count>(windowDefinition->getWindowAggregation())) {
+                    } else if (auto countAggregation = std::dynamic_pointer_cast<CountAggregationDescriptor>(windowDefinition->getWindowAggregation())) {
                         if (partialFinalAggregates.size() <= windowId) {
-                            // initiate the partial aggregate of Count aggregation
+                            // initiate the partial aggregate of CountAggregationDescriptor aggregation
                             NES_DEBUG("WindowHandler CC: assign partialAggregates[sliceId]=" << partialAggregates[sliceId] << " old value was " << partialFinalAggregates[windowId]);
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
                         } else {
                             NES_DEBUG("WindowHandler CC: update partialFinalAggregates[windowId]=" << partialFinalAggregates[windowId] << " with " << countAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId], partialAggregates[sliceId]));
-                            // update the partial aggregate of Count Aggregation
+                            // update the partial aggregate of CountAggregationDescriptor Aggregation
                             partialFinalAggregates[windowId] = countAggregation->combine<PartialAggregateType>(
                                 partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }
@@ -250,13 +250,13 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
         for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
             auto window = windows[i];
             FinalAggregateType value;
-            if (auto sumAggregation = std::dynamic_pointer_cast<Sum>(windowDefinition->getWindowAggregation())) {
+            if (auto sumAggregation = std::dynamic_pointer_cast<SumAggregationDescriptor>(windowDefinition->getWindowAggregation())) {
                 value = sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
-            } else if (auto maxAggregation = std::dynamic_pointer_cast<Max>(windowDefinition->getWindowAggregation())) {
+            } else if (auto maxAggregation = std::dynamic_pointer_cast<MaxAggregationDescriptor>(windowDefinition->getWindowAggregation())) {
                 value = maxAggregation->lower<FinalAggregateType, PartialAggregateType>(partialAggregates[i]);
-            } else if (auto minAggregation = std::dynamic_pointer_cast<Min>(windowDefinition->getWindowAggregation())) {
+            } else if (auto minAggregation = std::dynamic_pointer_cast<MinAggregationDescriptor>(windowDefinition->getWindowAggregation())) {
                 value = minAggregation->lower<FinalAggregateType, PartialAggregateType>(partialAggregates[i]);
-            } else if (auto countAggregation = std::dynamic_pointer_cast<Count>(windowDefinition->getWindowAggregation())) {
+            } else if (auto countAggregation = std::dynamic_pointer_cast<CountAggregationDescriptor>(windowDefinition->getWindowAggregation())) {
                 value = countAggregation->lower<FinalAggregateType, PartialAggregateType>(partialAggregates[i]);
             } else {
                 NES_FATAL_ERROR("Window Handler: could not cast aggregation type");

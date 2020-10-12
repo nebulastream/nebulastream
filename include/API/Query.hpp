@@ -33,8 +33,8 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class WindowType;
 typedef std::shared_ptr<WindowType> WindowTypePtr;
 
-class WindowAggregation;
-typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;
+class WindowAggregationDescriptor;
+typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationPtr;
 
 /**
  * User interface to create stream processing queries.

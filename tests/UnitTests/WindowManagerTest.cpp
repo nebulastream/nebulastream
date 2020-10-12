@@ -8,7 +8,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 #include <Util/Logger.hpp>
 #include <cstdlib>
@@ -40,17 +40,17 @@ class WindowManagerTest : public testing::Test {
     const size_t buffer_size = 4 * 1024;
 };
 
-class TestAggregation : public WindowAggregation {
+class TestAggregation : public WindowAggregationDescriptor {
   public:
-    TestAggregation() : WindowAggregation(){};
+    TestAggregation() : WindowAggregationDescriptor(){};
     void compileLiftCombine(CompoundStatementPtr, BinaryOperatorStatement,
                             StructDeclaration, BinaryOperatorStatement){};
 };
 
 TEST_F(WindowManagerTest, testSumAggregation) {
     auto field = AttributeField::create("test", DataTypeFactory::createInt64());
-    const WindowAggregationPtr aggregation = Sum::on(Attribute("test"));
-    if (Sum* store = dynamic_cast<Sum*>(aggregation.get())) {
+    const WindowAggregationPtr aggregation = SumAggregationDescriptor::on(Attribute("test"));
+    if (SumAggregationDescriptor* store = dynamic_cast<SumAggregationDescriptor*>(aggregation.get())) {
         auto partial = store->lift<int64_t, int64_t>(1L);
         auto partial2 = store->lift<int64_t, int64_t>(2L);
         auto combined = store->combine<int64_t>(partial, partial2);
@@ -61,8 +61,8 @@ TEST_F(WindowManagerTest, testSumAggregation) {
 
 TEST_F(WindowManagerTest, testMaxAggregation) {
     auto field = AttributeField::create("test", DataTypeFactory::createInt64());
-    const WindowAggregationPtr aggregation = Max::on(Attribute("test"));
-    if (Max* store = dynamic_cast<Max*>(aggregation.get())) {
+    const WindowAggregationPtr aggregation = MaxAggregationDescriptor::on(Attribute("test"));
+    if (MaxAggregationDescriptor* store = dynamic_cast<MaxAggregationDescriptor*>(aggregation.get())) {
         auto partial = store->lift<int64_t, int64_t>(1L);
         auto partial2 = store->lift<int64_t, int64_t>(4L);
         auto combined = store->combine<int64_t>(partial, partial2);
@@ -73,8 +73,8 @@ TEST_F(WindowManagerTest, testMaxAggregation) {
 
 TEST_F(WindowManagerTest, testMinAggregation) {
     auto field = AttributeField::create("test", DataTypeFactory::createInt64());
-    const WindowAggregationPtr aggregation = Min::on(Attribute("test"));
-    if (Min* store = dynamic_cast<Min*>(aggregation.get())) {
+    const WindowAggregationPtr aggregation = MinAggregationDescriptor::on(Attribute("test"));
+    if (MinAggregationDescriptor* store = dynamic_cast<MinAggregationDescriptor*>(aggregation.get())) {
         auto partial = store->lift<int64_t, int64_t>(1L);
         auto partial2 = store->lift<int64_t, int64_t>(4L);
         auto combined = store->combine<int64_t>(partial, partial2);
@@ -85,8 +85,8 @@ TEST_F(WindowManagerTest, testMinAggregation) {
 
 TEST_F(WindowManagerTest, testCountAggregation) {
     auto field = AttributeField::create("test", DataTypeFactory::createInt64());
-    const WindowAggregationPtr aggregation = Count::on(Attribute("test"));
-    if (Min* store = dynamic_cast<Min*>(aggregation.get())) {
+    const WindowAggregationPtr aggregation = CountAggregationDescriptor::on(Attribute("test"));
+    if (MinAggregationDescriptor* store = dynamic_cast<MinAggregationDescriptor*>(aggregation.get())) {
         auto partial = store->lift<int64_t, int64_t>(1L);
         auto partial2 = store->lift<int64_t, int64_t>(4L);
         auto combined = store->combine<int64_t>(partial, partial2);
@@ -122,7 +122,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
-    auto aggregation = Sum::on(Attribute("id"));
+    auto aggregation = SumAggregationDescriptor::on(Attribute("id"));
 
     auto windowDef = std::make_shared<LogicalWindowDefinition>(
         LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType()));
@@ -193,7 +193,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
-    auto aggregation = Sum::on(Attribute("id"));
+    auto aggregation = SumAggregationDescriptor::on(Attribute("id"));
 
     auto windowDef = std::make_shared<LogicalWindowDefinition>(
         LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType()));
@@ -261,7 +261,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
-    auto aggregation = Sum::on(Attribute("id"));
+    auto aggregation = SumAggregationDescriptor::on(Attribute("id"));
 
     auto windowDef = std::make_shared<LogicalWindowDefinition>(
         LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType()));

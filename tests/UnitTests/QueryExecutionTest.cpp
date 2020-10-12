@@ -265,7 +265,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
     auto windowType = TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(10));
 
-    auto aggregation = Sum::on(Attribute("value"));
+    auto aggregation = SumAggregationDescriptor::on(Attribute("value"));
     query = query.windowByKey(Attribute("key"), windowType, aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
@@ -345,7 +345,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     // 2.1 add Sliding window of size 10ms and with Slide 2ms and a sum aggregation on the value.
     auto windowType = SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(10), Milliseconds(5));
 
-    auto aggregation = Sum::on(Attribute("value"));
+    auto aggregation = SumAggregationDescriptor::on(Attribute("value"));
     query = query.windowByKey(Attribute("key"), windowType, aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
@@ -423,7 +423,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     // 2.1 add Sliding window of size 10ms and with Slide 2ms and a sum aggregation on the value.
     auto windowType = SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(15), Milliseconds(5));
 
-    auto aggregation = Sum::on(Attribute("value"));
+    auto aggregation = SumAggregationDescriptor::on(Attribute("value"));
     query = query.windowByKey(Attribute("key"), windowType, aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer

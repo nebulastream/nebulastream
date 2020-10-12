@@ -1,7 +1,7 @@
 add_source_nes(
-        Sum.cpp
-        Max.cpp
-        Min.cpp
-        Count.cpp
-        WindowAggregation.cpp
+        SumAggregationDescriptor.cpp
+        MaxAggregationDescriptor.cpp
+        MinAggregationDescriptor.cpp
+        CountAggregationDescriptor.cpp
+        WindowAggregationDescriptor.cpp
 )
