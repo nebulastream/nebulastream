@@ -11,6 +11,10 @@ typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 class WindowAggregationDescriptor;
 typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationPtr;
 
+template<typename InputType, typename PartialAggregateType, typename FinalAggregateName>
+class ExecutableWindowAggregation;
+//typedef std::shared_ptr<ExecutableWindowAggregation> ExecutableWindowAggregationPtr;
+
 class WindowManager;
 typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 

@@ -9,6 +9,8 @@
 #include <State/StateManager.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
+#include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 
 #include <Util/Logger.hpp>
 #include <cstdlib>
@@ -96,6 +98,9 @@ TEST_F(WindowManagerTest, testCountAggregation) {
 }
 
 TEST_F(WindowManagerTest, testCheckSlice) {
+    auto maxAggregation = ExecutableAVGAggregation<int64_t>::create(nullptr, nullptr);
+
+
     auto store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = std::make_shared<TestAggregation>(TestAggregation());
 

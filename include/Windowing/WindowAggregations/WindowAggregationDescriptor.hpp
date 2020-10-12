@@ -16,10 +16,10 @@ typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
 class WindowAggregationDescriptor {
   public:
     /**
-   * Defines the field to which a aggregate output is assigned.
+    * Defines the field to which a aggregate output is assigned.
    * @param asField
-   * @return WindowAggregationDescriptor
-   */
+    * @return WindowAggregationDescriptor
+    */
     WindowAggregationDescriptor& as(AttributeFieldPtr asField);
 
     /**
@@ -32,15 +32,15 @@ class WindowAggregationDescriptor {
                                     BinaryOperatorStatement inputRef) = 0;
 
     /**
-   * Returns the result field of the aggregation
-   * @return
-   */
+    * Returns the result field of the aggregation
+    * @return
+    */
     AttributeFieldPtr as();
 
     /**
-   * Returns the result field of the aggregation
-   * @return
-   */
+    * Returns the result field of the aggregation
+    * @return
+    */
     AttributeFieldPtr on();
 
   protected:
