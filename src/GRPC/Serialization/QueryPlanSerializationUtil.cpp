@@ -37,8 +37,8 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
         operatorsToDeserialize.push_back(serializedRootOperator);
         while (!operatorsToDeserialize.empty()) {
             auto operatorToDeserialize = operatorsToDeserialize.front();
-            NES_TRACE("QueryPlanSerializationUtil: Deserialize operator " << operatorToDeserialize.DebugString());
             operatorsToDeserialize.pop_front();
+            NES_TRACE("QueryPlanSerializationUtil: Deserialize operator " << operatorToDeserialize.DebugString());
             uint64_t operatorId = operatorToDeserialize.operatorid();
             OperatorNodePtr operatorNode;
             if (operatorIdToOperatorMap[operatorId]) {

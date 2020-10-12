@@ -133,13 +133,28 @@ class TestUtils {
         return false;
     }
 
+    /**
+     * @brief This method is used for waiting till the query gets into running status or a timeout occurs
+     * @param queryId : the query id to check for
+     * @param queryCatalog: the catalog to look into for status change
+     * @return true if query gets into running status else false
+     */
     static bool waitForQueryToStart(QueryId queryId, QueryCatalogPtr queryCatalog) {
+        NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+
+        NES_DEBUG("TestUtils: Keep checking the status of query " << queryId << " untill a fixed time out");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+            if (!queryCatalogEntry) {
+                NES_ERROR("TestUtils: unable to find the entry for query " << queryId << " in the query catalog.");
+                return false;
+            }
+            NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
             bool isQueryRunning = queryCatalogEntry->getQueryStatus() == QueryStatus::Running;
             if (isQueryRunning) {
+                NES_TRACE("TestUtils: Query " << queryId << " is now in running status.");
                 return isQueryRunning;
             }
             sleep(1);

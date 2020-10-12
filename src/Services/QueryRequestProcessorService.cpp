@@ -85,9 +85,12 @@ void QueryRequestProcessorService::start() {
                         queryMergerPhase->execute(globalQueryPlan);
                     }
 
-                    globalQueryPlan->updateGlobalQueryMetaDataMap();
-                    std::vector<GlobalQueryMetaDataPtr> listOfGlobalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+                    if (!globalQueryPlan->updateGlobalQueryMetaDataMap()) {
+                        NES_ERROR("QueryProcessingService: Failed to update Global Query Metadata.");
+                        throw Exception("QueryProcessingService: Failed to update Global Query Metadata.");
+                    }
 
+                    std::vector<GlobalQueryMetaDataPtr> listOfGlobalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
                     for (auto globalQueryMetaData : listOfGlobalQueryMetaData) {
                         GlobalQueryId globalQueryId = globalQueryMetaData->getGlobalQueryId();
                         NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << globalQueryId);
@@ -100,7 +103,7 @@ void QueryRequestProcessorService::start() {
                             }
                         }
 
-                        if (!globalQueryMetaData->empty()) {
+                        if (!globalQueryMetaData->isEmpty()) {
 
                             auto queryPlan = globalQueryMetaData->getQueryPlan();
 

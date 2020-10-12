@@ -109,12 +109,14 @@ bool GlobalQueryPlan::updateGQNListForQueryId(QueryId queryId, std::vector<Globa
     return true;
 }
 
-void GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
+bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
 
-    checkMetaDataValidity();
+    if (!checkMetaDataValidity()) {
+        NES_WARNING("GlobalQueryPlan: Failed to validate meta data.");
+        return false;
+    }
 
     NES_DEBUG("GlobalQueryPlan: Update and create new Global Query MetaData by grouping together GQNs with sink operators having overlapping leaf GQNs");
-
     //Comparator to compare two Global Query Nodes based on their id and used in the set as comparator
     auto cmp = [](NodePtr a, NodePtr b) {
         return a->as<GlobalQueryNode>()->getId() != b->as<GlobalQueryNode>()->getId();
@@ -206,9 +208,10 @@ void GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
             queryIdToGlobalQueryIdMap[queryId] = globalQueryId;
         }
     }
+    return true;
 }
 
-void GlobalQueryPlan::checkMetaDataValidity() {
+bool GlobalQueryPlan::checkMetaDataValidity() {
     NES_DEBUG("GlobalQueryPlan: check if all Global Query MetaData are still valid");
     //Comparator to compare two Global Query Nodes based on their id and used in the set as comparator
     auto cmp = [](NodePtr a, NodePtr b) {
@@ -218,7 +221,7 @@ void GlobalQueryPlan::checkMetaDataValidity() {
     NES_TRACE("GlobalQueryPlan: Iterate over the map of Global Query Metadata to inspect the validity.");
     for (auto [globalQueryId, globalQueryMetaData] : globalQueryIdToMetaDataMap) {
 
-        if (globalQueryMetaData->empty()) {
+        if (globalQueryMetaData->isEmpty()) {
             NES_TRACE("GlobalQueryPlan: Found an empty Global Query Metadata.");
             if (globalQueryMetaData->isDeployed()) {
                 NES_TRACE("GlobalQueryPlan: Removing the Global Query Metadata that has been deployed and is empty.");
@@ -249,7 +252,8 @@ void GlobalQueryPlan::checkMetaDataValidity() {
             }
 
             if (sinkGQNsWithMatchedSourceGQNs.size() == sinkGQNs.size()) {
-                NES_TRACE("GlobalQueryPlan: Found no changes to the MetaData information");
+                NES_TRACE("GlobalQueryPlan: Found no changes to the MetaData information.");
+                NES_TRACE("GlobalQueryPlan: Found " << sinkGQNsWithMatchedSourceGQNs.size() << " of expected " << sinkGQNs.size() << " sink nodes.");
                 break;
             } else {
                 NES_DEBUG("GlobalQueryPlan: Found MetaData information with non-merged query plans. Clearing MetaData for re-computation.");
@@ -262,28 +266,35 @@ void GlobalQueryPlan::checkMetaDataValidity() {
             }
         }
     }
+    return true;
 }
 
 std::vector<GlobalQueryMetaDataPtr> GlobalQueryPlan::getGlobalQueryMetaDataToDeploy() {
+    NES_DEBUG("GlobalQueryPlan: Get the Global MetaData to be deployed.");
     std::vector<GlobalQueryMetaDataPtr> globalQueryMetaDataToDeploy;
-
+    NES_TRACE("GlobalQueryPlan: Iterate over the Map with global query metadata.");
     for (auto [globalQueryId, globalQueryMetaData] : globalQueryIdToMetaDataMap) {
         if (globalQueryMetaData->isDeployed()) {
+            NES_TRACE("GlobalQueryPlan: Skipping! found already deployed query meta data.");
             continue;
         }
 
-        if (globalQueryMetaData->empty()) {
+        if (globalQueryMetaData->isEmpty()) {
+            NES_DEBUG("GlobalQueryPlan: Removing! found an empty query meta data.");
             globalQueryIdToMetaDataMap.erase(globalQueryMetaData->getGlobalQueryId());
         }
         globalQueryMetaDataToDeploy.push_back(globalQueryMetaData);
     }
+    NES_DEBUG("GlobalQueryPlan: Found " << globalQueryMetaDataToDeploy.size() << "  Global MetaData to be deployed.");
     return globalQueryMetaDataToDeploy;
 }
 
 GlobalQueryId GlobalQueryPlan::getGlobalQueryIdForQuery(QueryId queryId) {
+    NES_DEBUG("GlobalQueryPlan: Get the Global Query Id for the query " << queryId);
     if (queryIdToGlobalQueryIdMap.find(queryId) != queryIdToGlobalQueryIdMap.end()) {
         return queryIdToGlobalQueryIdMap[queryId];
     }
+    NES_WARNING("GlobalQueryPlan: Unable to find Global Query Id for the query " << queryId);
     return INVALID_GLOBAL_QUERY_ID;
 }
 }// namespace NES

@@ -13,13 +13,13 @@ L0QueryMergerRulePtr L0QueryMergerRule::create() {
     return std::make_shared<L0QueryMergerRule>(L0QueryMergerRule());
 }
 
-void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool L0QueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
     NES_INFO("L0QueryMergerRule: Applying L0 Merging rule to the Global Query Plan");
     std::vector<GlobalQueryNodePtr> globalQueryNodesWithSinkOperators = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
     if (globalQueryNodesWithSinkOperators.size() == 1) {
         NES_DEBUG("L0QueryMergerRule: Found only a single query in the global query plan. Skipping the L0 Query Merging.");
-        return;
+        return true;
     }
 
     NES_DEBUG("L0QueryMergerRule: Iterating over all sink GQNs in the Global Query Plan");
@@ -77,7 +77,7 @@ void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             NES_TRACE("L0QueryMergerRule: Iterate over the pair of matched target and host GQN and perform GQN merge.");
             for (auto& [targetGQN, hostGQN] : targetGQNToHostGQNMap) {
                 uint64_t targetGQNId = targetGQN->getId();
-                auto found = std::find_if(gqnListForTargetQuery.begin(), gqnListForTargetQuery.end(), [&](GlobalQueryNodePtr currentGQN) {
+                auto found = std::find_if(gqnListForTargetQuery.begin(), gqnListForTargetQuery.end(), [&](const GlobalQueryNodePtr& currentGQN) {
                     return targetGQNId == currentGQN->getId();
                 });
 
@@ -100,11 +100,12 @@ void L0QueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             globalQueryPlan->updateGQNListForQueryId(targetQueryId, gqnListForTargetQuery);
         }
     }
+    return true;
 }
 
-bool L0QueryMergerRule::checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, GlobalQueryNodePtr hostGQNode, std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap) {
+bool L0QueryMergerRule::checkIfGQNCanMerge(const GlobalQueryNodePtr& targetGQNode, const GlobalQueryNodePtr& hostGQNode, std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap) {
 
-    NES_DEBUG("L0QueryMergerRule: Checking if the target and host GQNs can be merged");
+    NES_DEBUG("L0QueryMergerRule: Checking if the target GQN: " << targetGQNode->toString() << " and host GQN: " << hostGQNode->toString() << " can be merged");
     processedNodes.push_back(targetGQNode);
     processedNodes.push_back(hostGQNode);
     if (targetGQNode->getId() == 0 && hostGQNode->getId() == 0) {
@@ -115,7 +116,7 @@ bool L0QueryMergerRule::checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, Glob
     std::vector<OperatorNodePtr> targetOperators = targetGQNode->getOperators();
     std::vector<OperatorNodePtr> hostOperators = hostGQNode->getOperators();
     if (targetOperators.empty() && hostOperators.empty()) {
-        NES_WARNING("L0QueryMergerRule: Both target and host operator lists empty");
+        NES_WARNING("L0QueryMergerRule: Both target and host operator lists are empty");
         return false;
     }
     if (targetOperators.size() != hostOperators.size()) {
@@ -151,16 +152,16 @@ bool L0QueryMergerRule::checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, Glob
         //Check if the node was processed previously
         auto foundExistingMatchForTargetGQN = std::find(processedNodes.begin(), processedNodes.end(), targetParentGQN->as<GlobalQueryNode>());
         if (foundExistingMatchForTargetGQN != processedNodes.end()) {
-            NES_TRACE("L0QueryMergerRule: The target GQN was processed already. Skipping.");
+            NES_TRACE("L0QueryMergerRule: The target GQN " << targetParentGQN->toString() << " was processed already. Skipping.");
             continue;
         }
         bool found = false;
         for (auto& hostParentGQN : hostGQNode->getParents()) {
 
             //Check if the node was processed previously
-            auto foundExistingMatchForTargetGQN = std::find(processedNodes.begin(), processedNodes.end(), hostParentGQN->as<GlobalQueryNode>());
-            if (foundExistingMatchForTargetGQN != processedNodes.end()) {
-                NES_TRACE("L0QueryMergerRule: The target GQN was processed already. Skipping.");
+            auto foundExistingMatchForHostParentGQN = std::find(processedNodes.begin(), processedNodes.end(), hostParentGQN->as<GlobalQueryNode>());
+            if (foundExistingMatchForHostParentGQN != processedNodes.end()) {
+                NES_TRACE("L0QueryMergerRule: The target GQN " << hostParentGQN->toString() << " was processed already. Skipping.");
                 continue;
             }
 
@@ -170,7 +171,7 @@ bool L0QueryMergerRule::checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, Glob
             }
         }
         if (!found) {
-            NES_WARNING("L0QueryMergerRule: unable to find any match for the target parent GQN");
+            NES_WARNING("L0QueryMergerRule: unable to find any match for the target parent GQN: " << targetParentGQN->toString());
             return false;
         }
     }
@@ -179,15 +180,15 @@ bool L0QueryMergerRule::checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, Glob
         //Check if the node was processed previously
         auto foundExistingMatchForTargetGQN = std::find(processedNodes.begin(), processedNodes.end(), targetChildGQN->as<GlobalQueryNode>());
         if (foundExistingMatchForTargetGQN != processedNodes.end()) {
-            NES_TRACE("L0QueryMergerRule: The target GQN was processed already. Skipping.");
+            NES_TRACE("L0QueryMergerRule: The target GQN " << targetChildGQN->toString() << " was processed already. Skipping.");
             continue;
         }
         bool found = false;
         for (auto& hostChildGQN : hostGQNode->getChildren()) {
             //Check if the node was processed previously
-            auto foundExistingMatchForTargetGQN = std::find(processedNodes.begin(), processedNodes.end(), hostChildGQN->as<GlobalQueryNode>());
-            if (foundExistingMatchForTargetGQN != processedNodes.end()) {
-                NES_TRACE("L0QueryMergerRule: The target GQN was processed already. Skipping.");
+            auto foundExistingMatchForHostChildGQN = std::find(processedNodes.begin(), processedNodes.end(), hostChildGQN->as<GlobalQueryNode>());
+            if (foundExistingMatchForHostChildGQN != processedNodes.end()) {
+                NES_TRACE("L0QueryMergerRule: The target GQN " << hostChildGQN->toString() << " was processed already. Skipping.");
                 continue;
             }
             if (checkIfGQNCanMerge(targetChildGQN->as<GlobalQueryNode>(), hostChildGQN->as<GlobalQueryNode>(), targetGQNToHostGQNMap)) {
@@ -196,7 +197,7 @@ bool L0QueryMergerRule::checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, Glob
             }
         }
         if (!found) {
-            NES_WARNING("L0QueryMergerRule: unable to find any match for the target child GQN");
+            NES_WARNING("L0QueryMergerRule: unable to find any match for the target child GQN: " << targetChildGQN->toString());
             return false;
         }
     }
@@ -204,7 +205,7 @@ bool L0QueryMergerRule::checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, Glob
     return true;
 }
 
-bool L0QueryMergerRule::areGQNodesEqual(std::vector<NodePtr> targetGQNs, std::vector<NodePtr> hostGQNs) {
+bool L0QueryMergerRule::areGQNodesEqual(const std::vector<NodePtr>& targetGQNs, const std::vector<NodePtr>& hostGQNs) {
 
     NES_DEBUG("L0QueryMergerRule: Checking if the two set of GQNs are equal or not");
     for (auto& targetGQN : targetGQNs) {
