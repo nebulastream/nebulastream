@@ -1,6 +1,7 @@
 #ifndef NES_GLOBALQUERYPLAN_HPP
 #define NES_GLOBALQUERYPLAN_HPP
 
+#include <Plans/Global/Query/GlobalQueryId.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
@@ -113,7 +114,7 @@ class GlobalQueryPlan {
      * @param queryId: the original query id
      * @return the corresponding global query id
      */
-    QueryId getGlobalQueryIdForQuery(QueryId queryId);
+    GlobalQueryId getGlobalQueryIdForQuery(QueryId queryId);
 
   private:
     GlobalQueryPlan();
@@ -148,8 +149,8 @@ class GlobalQueryPlan {
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;
     std::map<QueryId, std::vector<GlobalQueryNodePtr>> queryIdToGlobalQueryNodeMap;
-    std::map<QueryId, GlobalQueryMetaDataPtr> globalQueryIdToMetaDataMap;
-    std::map<QueryId, QueryId> queryIdToGlobalQueryIdMap;
+    std::map<GlobalQueryId, GlobalQueryMetaDataPtr> globalQueryIdToMetaDataMap;
+    std::map<QueryId, GlobalQueryId> queryIdToGlobalQueryIdMap;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP

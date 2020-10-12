@@ -116,7 +116,7 @@ void GlobalQueryMetaData::markAsNotDeployed() {
 }
 
 void GlobalQueryMetaData::markAsDeployed() {
-    NES_TRACE("GlobalQueryMetaData: Mark the Global Query Metadata as updated but not deployed");
+    NES_TRACE("GlobalQueryMetaData: Mark the Global Query Metadata as deployed");
     this->deployed = true;
     this->newMetaData = false;
 }
@@ -150,11 +150,12 @@ std::set<QueryId> GlobalQueryMetaData::getQueryIds() {
     return queryIds;
 }
 
-QueryId GlobalQueryMetaData::getGlobalQueryId() {
+GlobalQueryId GlobalQueryMetaData::getGlobalQueryId() {
     return globalQueryId;
 }
 
 void GlobalQueryMetaData::clear() {
+    NES_DEBUG("GlobalQueryMetaData: clearing all metadata information.");
     queryIds.clear();
     sinkGlobalQueryNodes.clear();
     markAsNotDeployed();

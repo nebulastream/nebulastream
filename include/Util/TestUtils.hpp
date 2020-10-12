@@ -159,8 +159,8 @@ class TestUtils {
     template<typename Predicate = std::equal_to<size_t>>
     static bool checkCompleteOrTimeout(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan, size_t expectedResult) {
 
-        QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
-        if (globalQueryId == INVALID_QUERY_ID) {
+        GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+        if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
             NES_ERROR("Unable to find global query Id for user query id " << queryId);
             return false;
         }
@@ -203,8 +203,8 @@ class TestUtils {
      */
     template<typename Predicate = std::equal_to<size_t>>
     static bool checkCompleteOrTimeout(NesCoordinatorPtr nesCoordinator, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan, size_t expectedResult) {
-        QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
-        if (globalQueryId == INVALID_QUERY_ID) {
+        GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+        if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
             NES_ERROR("Unable to find global query Id for user query id " << queryId);
             return false;
         }

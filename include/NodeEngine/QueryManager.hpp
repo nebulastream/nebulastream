@@ -120,7 +120,9 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
 
   public:
     /**
-     * @brief retrieve the execution status of a given local execution plan.
+     * @brief retrieve the execution status of a given local query sub plan id.
+     * @param id : the query sub plan id
+     * @return status of the query sub plan
      */
     QueryExecutionPlan::QueryExecutionPlanStatus getQepStatus(QuerySubPlanId id);
 

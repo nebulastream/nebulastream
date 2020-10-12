@@ -1,6 +1,7 @@
 #ifndef UTILITY_FUNCTIONS_HPP
 #define UTILITY_FUNCTIONS_HPP
 
+#include <Plans/Global/Query/GlobalQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <cpprest/json.h>
 #include <string>
@@ -167,7 +168,7 @@ class UtilityFunctions {
      * @brief Returns the next free global query Id
      * @return query id
      */
-    static QueryId getNextGlobalQueryId();
+    static GlobalQueryId getNextGlobalQueryId();
 
     /**
      * @brief Returns the next free query execution Id

@@ -2,6 +2,7 @@
 #define NES_GLOBALQUERYMETADATA_HPP
 
 #include <Plans/Query/QueryId.hpp>
+#include <Plans/Global/Query/GlobalQueryId.hpp>
 #include <memory>
 #include <set>
 #include <vector>
@@ -49,7 +50,7 @@ typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
  *  - Query Ids : A vector of original Query Ids that shares a common Global Query Id.
  *  - Sink Global Query Nodes : The vector of Global Query Nodes that contains sink operators of all the Query Ids that share a common Global QueryId.
  *  - Deployed : A boolean flag indicating if the query plan is deployed or not.
- *  - NewMetaData : A boolean flag indicating if the meta data is a newly created one.
+ *  - NewMetaData : A boolean flag indicating if the meta data is a newly created one (i.e. it was never deployed before).
  *
  *  For the above GQP, following will be the Global Query Metadata:
  *  GQM = {1, {Q1, Q2}, {Sink1, Sink2}, False, True}
@@ -74,7 +75,7 @@ class GlobalQueryMetaData {
     bool removeQueryId(QueryId queryId);
 
     /**
-     * @brief Clear MetaData
+     * @brief Clear all MetaData information
      */
     void clear();
 
@@ -108,6 +109,7 @@ class GlobalQueryMetaData {
 
     /**
      * @brief Check if the metadata is newly created
+     * A New metadata is the one which was created by never got deployed before
      * @return true if newly created else false
      */
     bool isNew();
@@ -128,17 +130,18 @@ class GlobalQueryMetaData {
      * @brief Get the global query id
      * @return global query id
      */
-    QueryId getGlobalQueryId();
+    GlobalQueryId getGlobalQueryId();
 
     /**
      * @brief Set the meta data as old
+     * An Old metadata is deployed at least once in his life time.
      */
     void setAsOld();
 
   private:
     explicit GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
-    QueryId globalQueryId;
+    GlobalQueryId globalQueryId;
     std::set<QueryId> queryIds;
     std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes;
     bool deployed;

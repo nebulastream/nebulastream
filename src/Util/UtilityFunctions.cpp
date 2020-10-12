@@ -349,7 +349,7 @@ QueryId UtilityFunctions::getNextQueryId() {
     return ++id;
 }
 
-QueryId UtilityFunctions::getNextGlobalQueryId() {
+GlobalQueryId UtilityFunctions::getNextGlobalQueryId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
