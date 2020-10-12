@@ -1,8 +1,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 
 namespace NES {
 

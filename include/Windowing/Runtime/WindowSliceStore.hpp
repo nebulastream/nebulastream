@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWSLICESTORE_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWSLICESTORE_HPP_
-#include <vector>
-#include <Windowing/Runtime/SliceMetaData.hpp>
 #include <Util/Logger.hpp>
-namespace NES{
+#include <Windowing/Runtime/SliceMetaData.hpp>
+#include <vector>
+namespace NES {
 
 /**
  * @brief The WindowSliceStore stores slices consisting of metadata and a partial aggregate.
@@ -40,7 +40,7 @@ class WindowSliceStore {
      */
     inline void appendSlice(SliceMetaData slice) {
         NES_DEBUG("appendSlice "
-                      << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
+                  << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
         sliceMetaData.push_back(slice);
         partialAggregates.push_back(defaultValue);
     }
@@ -129,7 +129,7 @@ class WindowSliceStore {
             return 0;//TODO: we have to figure out how many downstream positions are there
         }
         std::map<uint64_t, uint64_t>::iterator min = std::min_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(), [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-          return a.second < b.second;
+            return a.second < b.second;
         });
         NES_DEBUG("getMinWatermark() return min =" << min->second);
         return min->second;
@@ -154,6 +154,6 @@ class WindowSliceStore {
     std::map<uint64_t, uint64_t> originIdToMaxTsMap;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWSLICESTORE_HPP_

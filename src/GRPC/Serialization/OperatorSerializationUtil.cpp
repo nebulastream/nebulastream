@@ -1,13 +1,4 @@
 #include <API/Schema.hpp>
-#include <Windowing/WindowAggregations/Sum.hpp>
-#include <Windowing/WindowAggregations/Max.hpp>
-#include <Windowing/WindowAggregations/Min.hpp>
-#include <Windowing/WindowAggregations/Count.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
@@ -31,12 +22,21 @@
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
 #include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/Count.hpp>
+#include <Windowing/WindowAggregations/Max.hpp>
+#include <Windowing/WindowAggregations/Min.hpp>
+#include <Windowing/WindowAggregations/Sum.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 
 namespace NES {
 
@@ -256,13 +256,13 @@ WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperato
                                   AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MAX) {
         aggregation = Max::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
-                                      AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
+                                  AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MIN) {
         aggregation = Min::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
                                   AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_COUNT) {
         aggregation = Count::create(AttributeField::create(serializedWindowAggregation.asfield(), DataTypeFactory::createUndefined()),
-                                  AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
+                                    AttributeField::create(serializedWindowAggregation.onfield(), DataTypeFactory::createUndefined()));
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: " << serializedWindowAggregation.DebugString());
     }

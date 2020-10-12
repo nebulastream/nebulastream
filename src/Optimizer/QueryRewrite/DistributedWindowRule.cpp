@@ -1,9 +1,9 @@
-#include <Windowing/WindowDefinition.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
 #include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/WindowDefinition.hpp>
 #include <algorithm>
 
 namespace NES {

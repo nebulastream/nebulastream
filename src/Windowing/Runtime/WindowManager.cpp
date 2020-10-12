@@ -1,6 +1,6 @@
 #include <Windowing/Runtime/WindowManager.hpp>
 
-namespace NES{
+namespace NES {
 
 WindowManager::WindowManager(WindowDefinitionPtr windowDefinition)
     : windowDefinition(std::move(windowDefinition)), allowedLateness(0) {}
@@ -13,4 +13,4 @@ uint64_t WindowManager::getAllowedLateness() const {
     return allowedLateness;
 }
 
-}
+}// namespace NES

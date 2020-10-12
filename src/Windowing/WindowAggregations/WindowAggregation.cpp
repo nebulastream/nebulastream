@@ -16,11 +16,11 @@ WindowAggregation& WindowAggregation::as(const NES::AttributeFieldPtr asField) {
 }
 
 AttributeFieldPtr WindowAggregation::as() {
-    if (asField == nullptr){
-        return onField;  }
+    if (asField == nullptr) {
+        return onField;
+    }
     return asField;
 }
-
 
 AttributeFieldPtr WindowAggregation::on() {
     return onField;

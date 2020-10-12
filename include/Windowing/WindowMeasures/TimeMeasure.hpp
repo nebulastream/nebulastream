@@ -2,7 +2,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOWMEASURES_TIMEMEASURE_HPP_
 #include <Windowing/WindowMeasures/WindowMeasure.hpp>
 #include <cstdint>
-namespace NES{
+namespace NES {
 
 /**
  * A time based window measure.
@@ -17,11 +17,10 @@ class TimeMeasure : public WindowMeasure {
     const uint64_t ms;
 };
 
-
 TimeMeasure Milliseconds(uint64_t);
 TimeMeasure Seconds(uint64_t);
 TimeMeasure ndMinutes(uint64_t);
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWMEASURES_TIMEMEASURE_HPP_

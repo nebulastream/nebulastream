@@ -1,8 +1,8 @@
-#include <Windowing/WindowAggregations/Sum.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <Windowing/WindowAggregations/Sum.hpp>
 #include <utility>
 
 namespace NES {

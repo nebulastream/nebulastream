@@ -3,8 +3,7 @@
 
 #include <Windowing/WindowingForwardRefs.hpp>
 
-namespace NES{
-
+namespace NES {
 
 class WindowDefinition {
   public:
@@ -96,7 +95,6 @@ class WindowDefinition {
     uint64_t numberOfInputEdges;
 };
 
-
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWDEFINITION_HPP_

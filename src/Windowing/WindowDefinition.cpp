@@ -1,6 +1,6 @@
+#include <Util/Logger.hpp>
 #include <Windowing/WindowDefinition.hpp>
 #include <utility>
-#include <Util/Logger.hpp>
 namespace NES {
 
 WindowDefinition::WindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar)

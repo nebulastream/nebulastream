@@ -1,9 +1,9 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWTYPE_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWTYPE_HPP_
+#include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <vector>
-#include <Windowing/Runtime/WindowState.hpp>
-namespace NES{
+namespace NES {
 
 class WindowType {
   public:
@@ -21,7 +21,7 @@ class WindowType {
      * @param lastWatermark
      * @param currentWatermark
      */
-    virtual void triggerWindows(std::vector<WindowState> &windows, uint64_t lastWatermark, uint64_t currentWatermark) const = 0;
+    virtual void triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const = 0;
 
     /**
      * @brief Get the time characteristic of the window.
@@ -43,7 +43,6 @@ class WindowType {
     TimeCharacteristicPtr timeCharacteristic;
 };
 
-
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWTYPE_HPP_

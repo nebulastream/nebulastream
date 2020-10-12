@@ -2,6 +2,4 @@
 
 namespace NES {
 
-
-
 }// namespace NES

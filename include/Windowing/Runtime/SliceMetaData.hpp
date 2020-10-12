@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_WINDOWING_SLICEMETADATA_HPP_
 #define NES_INCLUDE_WINDOWING_SLICEMETADATA_HPP_
 #include <cstdint>
-namespace NES{
+namespace NES {
 
 /**
 * SliceMetaData stores the meta data of a slice to identify if a record can be assigned to a particular slice.
@@ -30,6 +30,5 @@ class SliceMetaData {
     uint64_t endTs;
 };
 
-
-}
+}// namespace NES
 #endif//NES_INCLUDE_WINDOWING_SLICEMETADATA_HPP_

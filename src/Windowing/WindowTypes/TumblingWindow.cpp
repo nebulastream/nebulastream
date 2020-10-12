@@ -1,23 +1,22 @@
 
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/Runtime/WindowState.hpp>
-#include <vector>
 #include <Util/Logger.hpp>
-namespace NES{
-
+#include <Windowing/Runtime/WindowState.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <vector>
+namespace NES {
 
 TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
-    :  WindowType(timeCharacteristic), size(size) {}
+    : WindowType(timeCharacteristic), size(size) {}
 
 WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size) {
     return std::make_shared<TumblingWindow>(TumblingWindow(timeCharacteristic, size));
 }
 
-uint64_t TumblingWindow::calculateNextWindowEnd(uint64_t currentTs) const  {
+uint64_t TumblingWindow::calculateNextWindowEnd(uint64_t currentTs) const {
     return currentTs + size.getTime() - (currentTs % size.getTime());
 }
 
-void TumblingWindow::triggerWindows(std::vector<WindowState> &windows,
+void TumblingWindow::triggerWindows(std::vector<WindowState>& windows,
                                     uint64_t lastWatermark,
                                     uint64_t currentWatermark) const {
     NES_DEBUG("TumblingWindow::triggerWindows windows before=" << windows.size());
@@ -38,4 +37,4 @@ TimeMeasure TumblingWindow::getSize() {
     return size;
 }
 
-}
+}// namespace NES
