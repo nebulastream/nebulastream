@@ -1,4 +1,3 @@
-#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>

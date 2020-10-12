@@ -209,9 +209,7 @@ void GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
 }
 
 void GlobalQueryPlan::checkMetaDataValidity() {
-
     NES_DEBUG("GlobalQueryPlan: check if all Global Query MetaData are still valid");
-
     //Comparator to compare two Global Query Nodes based on their id and used in the set as comparator
     auto cmp = [](NodePtr a, NodePtr b) {
         return a->as<GlobalQueryNode>()->getId() != b->as<GlobalQueryNode>()->getId();

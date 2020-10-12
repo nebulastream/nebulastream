@@ -24,9 +24,10 @@ class GlobalQueryMetaData;
 typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
 
 /**
- * @brief This class holds the meta-data about a sub-QueryPlan.
- * A sub-QueryPlan is inter-connected, i.e. from its source nodes we can reach all sink nodes.
- * A Global Query Plan can consists of multiple sub-QueryPlan.
+ * @brief This class holds the meta-data about a collection of QueryPlans.
+ * The QueryPlans in the metadata are inter-connected, i.e. from its source nodes we can reach all sink nodes.
+ * A Global Query Plan can consists of multiple Global Query Meta Data. However, a query plan con only occur in
+ * one of the Global Query Meta Data from the collection within a Global Query Plan.
  *
  * Example:
  *                                                         GQPRoot
@@ -41,13 +42,18 @@ typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
  *                                                |                 |
  *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
- * In the above GQP, we have two sub-QueryPlans with GQN1 and GQN5 as respective sink nodes.
+ * In the above GQP, we have two QueryPlans with GQN1 and GQN5 as respective sink nodes.
  * A GlobalQueryMetaData consists of a unique:
  *  - Global Query Id : this id is equivalent to the Query Id assigned to the user queryId. Since, there can be more than one query that can be merged
  *                      together we generate a unique Global Query Id that can be associated to more than one Query Ids.
  *  - Query Ids : A vector of original Query Ids that shares a common Global Query Id.
  *  - Sink Global Query Nodes : The vector of Global Query Nodes that contains sink operators of all the Query Ids that share a common Global QueryId.
  *  - Deployed : A boolean flag indicating if the query plan is deployed or not.
+ *  - NewMetaData : A boolean flag indicating if the meta data is a newly created one.
+ *
+ *  For the above GQP, following will be the Global Query Metadata:
+ *  GQM = {1, {Q1, Q2}, {Sink1, Sink2}, False, True}
+ *
  */
 class GlobalQueryMetaData {
 
