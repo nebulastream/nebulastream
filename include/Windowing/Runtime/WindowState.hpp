@@ -14,7 +14,7 @@ class WindowState {
   public:
     uint64_t getStartTs() const;
     uint64_t getEndTs() const;
-    WindowState(uint64_t start, uint64_t an_end);
+    WindowState(uint64_t start, uint64_t end);
 };
 
 }

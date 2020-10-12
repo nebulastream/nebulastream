@@ -3,7 +3,7 @@
 
 namespace NES{
 
-WindowState::WindowState(uint64_t start, uint64_t an_end) : start(start), end(an_end) {}
+WindowState::WindowState(uint64_t start, uint64_t end) : start(start), end(end) {}
 
 uint64_t WindowState::getStartTs() const {
     return start;

@@ -6,7 +6,7 @@
 namespace NES{
 
 /**
- * The WindowSliceStore stores slices consisting of metadata and a partial aggregate.
+ * @brief The WindowSliceStore stores slices consisting of metadata and a partial aggregate.
  * @tparam PartialAggregateType type of the partial aggregate
  */
 template<class PartialAggregateType>
@@ -18,10 +18,10 @@ class WindowSliceStore {
     }
 
     /**
-    * Get the corresponding slide index for a particular timestamp ts.
+    * @brief Get the corresponding slide index for a particular timestamp ts.
     * If no corresponding slice exist we throw a exception.
     * @param ts timestamp of the record.
-    * @return the index of a slice.
+    * @return the index of a slice. If not found it returns -1.
     */
     inline uint64_t getSliceIndexByTs(const uint64_t ts) {
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
@@ -35,7 +35,7 @@ class WindowSliceStore {
     }
 
     /**
-     * Appends a new slice to the meta data vector and intitalises a new partial aggregate with the default value.
+     * @brief Appends a new slice to the meta data vector and intitalises a new partial aggregate with the default value.
      * @param slice
      */
     inline void appendSlice(SliceMetaData slice) {
@@ -52,38 +52,77 @@ class WindowSliceStore {
         return sliceMetaData.size() - 1;
     }
 
-    inline void cleanupToPos(uint64_t pos) {
+    /**
+     * @brief Remove slices between index 0 and pos.
+     * @param pos the position till we want to remove slices.
+     */
+    inline void removeSlicesUntil(uint64_t pos) {
         sliceMetaData.erase(sliceMetaData.begin(), sliceMetaData.size() > pos ? sliceMetaData.begin() + pos + 1 : sliceMetaData.end());
         partialAggregates.erase(partialAggregates.begin(), partialAggregates.size() > pos ? partialAggregates.begin() + pos + 1 : partialAggregates.end());
-        NES_DEBUG("cleanupToPos size after cleanup slice=" << sliceMetaData.size() << " aggs=" << partialAggregates.size());
+        NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size() << " aggs=" << partialAggregates.size());
     }
 
+    /**
+     * @brief Checks if the slice store is empty.
+     * @return true if empty.
+     */
     inline uint64_t empty() {
         return sliceMetaData.empty();
     }
 
+    /**
+     * @brief Gets the slice meta data.
+     * @return vector of slice meta data.
+     */
     inline std::vector<SliceMetaData>& getSliceMetadata() {
         return sliceMetaData;
     }
 
+    /**
+     * @brief Gets partial aggregates.
+     * @return vector of partial aggregates.
+     */
     inline std::vector<PartialAggregateType>& getPartialAggregates() {
         return partialAggregates;
     }
-    uint64_t getLastWatermark() const {
+
+    /**
+     * @brief Gets the last processed watermark
+     * @return watermark
+     */
+    [[nodiscard]] uint64_t getLastWatermark() const {
         return lastWatermark;
     }
-    void setLastWatermark(uint64_t last_watermark) {
-        lastWatermark = last_watermark;
+
+    /**
+     * @brief Sets the last watermark
+     * @param lastWatermark
+     */
+    void setLastWatermark(uint64_t lastWatermark) {
+        this->lastWatermark = lastWatermark;
     }
 
+    /**
+     * @brief Gets the maximal processed ts per origin id.
+     * @param originId
+     * @return max ts.
+     */
     uint32_t getMaxTs(uint32_t originId) {
         return originIdToMaxTsMap[originId];
     };
 
+    /**
+     * @brief Gets number of mappings.
+     * @return size of origin map.
+     */
     uint64_t getNumberOfMappings() {
         return originIdToMaxTsMap.size();
     };
 
+    /**
+     * @brief Calculate the min watermark
+     * @return Min watermark
+     */
     uint64_t getMinWatermark() {
         if (originIdToMaxTsMap.empty()) {
             NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet");
@@ -96,6 +135,11 @@ class WindowSliceStore {
         return min->second;
     };
 
+    /**
+     * @brief Update the max processed ts, per origin.
+     * @param ts
+     * @param originId
+     */
     void updateMaxTs(uint64_t ts, uint64_t originId) {
         originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
     };
