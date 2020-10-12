@@ -89,7 +89,7 @@ void QueryRequestProcessorService::start() {
                     std::vector<GlobalQueryMetaDataPtr> listOfGlobalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
 
                     for (auto globalQueryMetaData : listOfGlobalQueryMetaData) {
-                        QueryId globalQueryId = globalQueryMetaData->getGlobalQueryId();
+                        GlobalQueryId globalQueryId = globalQueryMetaData->getGlobalQueryId();
                         NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << globalQueryId);
 
                         if (!globalQueryMetaData->isNew()) {

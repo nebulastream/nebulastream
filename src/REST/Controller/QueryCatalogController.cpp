@@ -93,7 +93,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     std::string queryId(body.begin(), body.end());
                     NES_DEBUG("getNumberOfProducedBuffers payload=" << queryId);
 
-                    QueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(std::stoi(queryId));
+                    GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(std::stoi(queryId));
 
                     //Prepare the response
                     json::value result{};

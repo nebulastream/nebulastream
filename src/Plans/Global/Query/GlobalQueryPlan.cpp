@@ -39,7 +39,7 @@ void GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
 
 void GlobalQueryPlan::removeQuery(QueryId queryId) {
     NES_DEBUG("Removing query information from the meta data");
-    QueryId globalQueryId = queryIdToGlobalQueryIdMap[queryId];
+    GlobalQueryId globalQueryId = queryIdToGlobalQueryIdMap[queryId];
     GlobalQueryMetaDataPtr globalQueryMetaData = globalQueryIdToMetaDataMap[globalQueryId];
     globalQueryMetaData->removeQueryId(queryId);
     queryIdToGlobalQueryIdMap.erase(queryId);
@@ -197,7 +197,7 @@ void GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
             hostGlobalQueryMetaData = GlobalQueryMetaData::create(queryIds, targetSinkGQNs);
         }
 
-        QueryId globalQueryId = hostGlobalQueryMetaData->getGlobalQueryId();
+        GlobalQueryId globalQueryId = hostGlobalQueryMetaData->getGlobalQueryId();
         NES_TRACE("GlobalQueryPlan: Updating the Global Query Id to Metadata map");
         globalQueryIdToMetaDataMap[globalQueryId] = hostGlobalQueryMetaData;
 
@@ -280,10 +280,10 @@ std::vector<GlobalQueryMetaDataPtr> GlobalQueryPlan::getGlobalQueryMetaDataToDep
     return globalQueryMetaDataToDeploy;
 }
 
-QueryId GlobalQueryPlan::getGlobalQueryIdForQuery(QueryId queryId) {
+GlobalQueryId GlobalQueryPlan::getGlobalQueryIdForQuery(QueryId queryId) {
     if (queryIdToGlobalQueryIdMap.find(queryId) != queryIdToGlobalQueryIdMap.end()) {
         return queryIdToGlobalQueryIdMap[queryId];
     }
-    return INVALID_QUERY_ID;
+    return INVALID_GLOBAL_QUERY_ID;
 }
 }// namespace NES
