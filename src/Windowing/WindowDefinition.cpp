@@ -1,9 +1,12 @@
 #include <Windowing/WindowDefinition.hpp>
 #include <utility>
+#include <Util/Logger.hpp>
 namespace NES {
 
 WindowDefinition::WindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar)
-    : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(nullptr), distributionType(std::move(distChar)), numberOfInputEdges(1) {}
+    : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(nullptr), distributionType(std::move(distChar)), numberOfInputEdges(1) {
+    NES_TRACE("WindowDefinition: create new window definition");
+}
 
 WindowDefinition::WindowDefinition(AttributeFieldPtr onKey,
                                    WindowAggregationPtr windowAggregation,
@@ -11,6 +14,7 @@ WindowDefinition::WindowDefinition(AttributeFieldPtr onKey,
                                    DistributionCharacteristicPtr distChar,
                                    uint64_t numberOfInputEdges)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(std::move(onKey)), distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges) {
+    NES_TRACE("WindowDefinition: create new window definition");
 }
 
 bool WindowDefinition::isKeyed() {
@@ -22,7 +26,6 @@ WindowDefinitionPtr WindowDefinition::create(WindowAggregationPtr windowAggregat
 }
 
 WindowDefinitionPtr WindowDefinition::create(AttributeFieldPtr onKey, WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges) {
-
     return std::make_shared<WindowDefinition>(onKey, windowAggregation, windowType, distChar, numberOfInputEdges);
 }
 
