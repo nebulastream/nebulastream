@@ -6,12 +6,12 @@
 
 namespace NES {
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 class CentralWindowOperator : public WindowLogicalOperatorNode {
   public:
-    CentralWindowOperator(const WindowDefinitionPtr windowDefinition);
+    CentralWindowOperator(const LogicalWindowDefinitionPtr windowDefinition);
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;

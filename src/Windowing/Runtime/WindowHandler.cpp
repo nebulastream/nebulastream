@@ -14,7 +14,7 @@
 
 namespace NES {
 
-WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)
+WindowHandler::WindowHandler(NES::LogicalWindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)
     : windowDefinition(std::move(windowDefinitionPtr)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)), originId(0) {
     this->thread.reset();
     windowTupleSchema = Schema::create()
@@ -126,7 +126,7 @@ WindowHandler::~WindowHandler() {
     stop();
 }
 
-WindowHandlerPtr WindowHandler::create(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
+WindowHandlerPtr WindowHandler::create(LogicalWindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
     return std::make_shared<WindowHandler>(windowDefinition, queryManager, bufferManager);
 }
 

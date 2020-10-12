@@ -12,7 +12,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 namespace NES {
 
 class AttributeReference;
@@ -33,8 +33,8 @@ typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
@@ -94,7 +94,7 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForCompleteWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForCompleteWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) = 0;
 
     /**
    * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -102,7 +102,7 @@ class CodeGenerator {
    * @param context The context of the current pipeline.
    * @return flag if the generation was successful.
    */
-    virtual bool generateCodeForSlicingWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForSlicingWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -110,7 +110,7 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForCombiningWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForCombiningWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) = 0;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

@@ -1,13 +1,13 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
-#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 namespace NES {
 
-LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const WindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<SliceMergingOperator>(windowDefinition);
 }
 
-SliceMergingOperator::SliceMergingOperator(const WindowDefinitionPtr windowDefinition)
+SliceMergingOperator::SliceMergingOperator(const LogicalWindowDefinitionPtr windowDefinition)
     : WindowLogicalOperatorNode(windowDefinition) {
 }
 

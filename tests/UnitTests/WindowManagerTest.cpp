@@ -3,12 +3,12 @@
 #include <map>
 #include <vector>
 
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
-#include <Windowing/WindowDefinition.hpp>
-#include <State/StateManager.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <State/StateManager.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowAggregations/WindowAggregation.hpp>
 
 #include <Util/Logger.hpp>
 #include <cstdlib>
@@ -99,8 +99,8 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     auto store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = std::make_shared<TestAggregation>(TestAggregation());
 
-    auto windowDef = std::make_shared<WindowDefinition>(
-        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType()));
+    auto windowDef = std::make_shared<LogicalWindowDefinition>(
+        LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType()));
 
     auto windowManager = new WindowManager(windowDef);
     uint64_t ts = 10;
@@ -124,8 +124,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     auto aggregation = Sum::on(Attribute("id"));
 
-    auto windowDef = std::make_shared<WindowDefinition>(
-        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType()));
+    auto windowDef = std::make_shared<LogicalWindowDefinition>(
+        LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType()));
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
     auto w = WindowHandler(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
@@ -195,8 +195,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     auto aggregation = Sum::on(Attribute("id"));
 
-    auto windowDef = std::make_shared<WindowDefinition>(
-        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType()));
+    auto windowDef = std::make_shared<LogicalWindowDefinition>(
+        LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType()));
 
     auto w = WindowHandler(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 
@@ -263,8 +263,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     auto aggregation = Sum::on(Attribute("id"));
 
-    auto windowDef = std::make_shared<WindowDefinition>(
-        WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType()));
+    auto windowDef = std::make_shared<LogicalWindowDefinition>(
+        LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType()));
 
     auto w = WindowHandler(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 

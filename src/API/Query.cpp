@@ -7,7 +7,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <iostream>
 
 namespace NES {
@@ -36,7 +36,7 @@ Query& Query::merge(Query* subQuery) {
 
 Query& Query::window(const WindowTypePtr windowType, const WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add window operator");
-    auto windowDefinition = WindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType());
+    auto windowDefinition = LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType());
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(windowOperator);
@@ -51,7 +51,7 @@ Query& Query::windowByKey(ExpressionItem onKey, const WindowTypePtr windowType, 
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    auto windowDefinition = WindowDefinition::create(keyField, aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1);
+    auto windowDefinition = LogicalWindowDefinition::create(keyField, aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(windowOperator);

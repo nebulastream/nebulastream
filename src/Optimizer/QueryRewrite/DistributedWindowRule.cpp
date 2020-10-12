@@ -3,7 +3,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/WindowDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <algorithm>
 
 namespace NES {
@@ -37,7 +37,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                 NES_DEBUG("DistributeWindowRule::apply: introduce distributed window operator for window " << windowOp << " << windowOp->toString()");
                 auto winDef = windowOp->getWindowDefinition();
 
-                auto newWinDef = WindowDefinition::create(winDef->getOnKey(),
+                auto newWinDef = LogicalWindowDefinition::create(winDef->getOnKey(),
                                                           winDef->getWindowAggregation(),
                                                           winDef->getWindowType(),
                                                           DistributionCharacteristic::createCombiningWindowType(),
@@ -59,7 +59,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
                 for (auto& child : copyOfChilds) {
                     NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());
                     NES_DEBUG("DistributeWindowRule::apply: plan before insert child " << queryPlan->toString());
-                    auto newWinDef2 = WindowDefinition::create(winDef->getOnKey(),
+                    auto newWinDef2 = LogicalWindowDefinition::create(winDef->getOnKey(),
                                                                winDef->getWindowAggregation(),
                                                                winDef->getWindowType(),
                                                                DistributionCharacteristic::createSlicingWindowType(), 1);

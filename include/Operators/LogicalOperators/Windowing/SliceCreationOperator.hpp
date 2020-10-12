@@ -5,15 +5,15 @@
 
 namespace NES {
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 /**
  * @brief this class represents the slicing operator for distributed windowing that is deployed on the source nodes and send all sliches to the combiner
  */
 class SliceCreationOperator : public WindowLogicalOperatorNode {
   public:
-    SliceCreationOperator(const WindowDefinitionPtr windowDefinition);
+    SliceCreationOperator(const LogicalWindowDefinitionPtr windowDefinition);
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;

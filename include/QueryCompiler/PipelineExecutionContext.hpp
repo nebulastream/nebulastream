@@ -9,8 +9,8 @@ class WorkerContext;
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
@@ -58,8 +58,8 @@ class PipelineExecutionContext {
      * @brief getter/setter window definition
      * @return
      */
-    WindowDefinitionPtr getWindowDef();
-    void setWindowDef(WindowDefinitionPtr windowDef);
+    LogicalWindowDefinitionPtr getWindowDef();
+    void setWindowDef(LogicalWindowDefinitionPtr windowDef);
 
     /**
      * @brief getter/setter input schema
@@ -84,7 +84,7 @@ class PipelineExecutionContext {
     std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
 
     // TODO remove this stuff from here
-    WindowDefinitionPtr windowDef;
+    LogicalWindowDefinitionPtr windowDef;
     SchemaPtr inputSchema;
 };
 

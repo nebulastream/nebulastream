@@ -42,43 +42,44 @@ class LogicalOperatorFactory {
 
     /**
      * @brief Create a new window operator with window definition.
-     * @param windowDefinition the WindowDefinitionPtr.
+     * @param windowDefinition the LogicalWindowDefinitionPtr.
      * @return LogicalOperatorNodePtr
      */
-    static LogicalOperatorNodePtr createWindowOperator(const WindowDefinitionPtr windowDefinition);
+    static LogicalOperatorNodePtr createWindowOperator(const LogicalWindowDefinitionPtr windowDefinition);
 
     /**
      * @brief Create a specialized central window operator with window definition.
-     * @param windowDefinition the WindowDefinitionPtr.
+     * @param windowDefinition the LogicalWindowDefinitionPtr.
      * @return LogicalOperatorNodePtr
      */
-    static LogicalOperatorNodePtr createCentralWindowSpecializedOperator(const WindowDefinitionPtr windowDefinition);
+    static LogicalOperatorNodePtr createCentralWindowSpecializedOperator(const LogicalWindowDefinitionPtr windowDefinition);
 
     /**
      * @brief Create a specialized slice creation window operator with window definition.
-     * @param windowDefinition the WindowDefinitionPtr.
+     * @param windowDefinition the LogicalWindowDefinitionPtr.
      * @return LogicalOperatorNodePtr
      */
-    static LogicalOperatorNodePtr createSliceCreationSpecializedOperator(const WindowDefinitionPtr windowDefinition);
+    static LogicalOperatorNodePtr createSliceCreationSpecializedOperator(const LogicalWindowDefinitionPtr windowDefinition);
 
     /**
      * @brief Create a specialized slice merging window operator with window definition.
-     * @param windowDefinition the WindowDefinitionPtr.
+     * @param windowDefinition the LogicalWindowDefinitionPtr.
      * @return LogicalOperatorNodePtr
      */
-    static LogicalOperatorNodePtr createSliceMergingSpecializedOperator(const WindowDefinitionPtr windowDefinition);
+    static LogicalOperatorNodePtr createSliceMergingSpecializedOperator(const LogicalWindowDefinitionPtr windowDefinition);
 
     /**
      * @brief Create a specialized window computation window operator with window definition.
-     * @param windowDefinition the WindowDefinitionPtr.
+     * @param windowDefinition the LogicalWindowDefinitionPtr.
      * @return LogicalOperatorNodePtr
      */
-    static LogicalOperatorNodePtr createWindowComputationSpecializedOperator(const WindowDefinitionPtr windowDefinition);
+    static LogicalOperatorNodePtr createWindowComputationSpecializedOperator(const LogicalWindowDefinitionPtr windowDefinition);
 
     /**
-     * @brief Create a merge operator.
-     * @return LogicalOperatorNodePtr
-     */
+    * @brief Create a specialized merge operator with window definition.
+    * @param windowDefinition the LogicalWindowDefinitionPtr.
+    * @return LogicalOperatorNodePtr
+    */
     static LogicalOperatorNodePtr createMergeOperator();
 
     /**

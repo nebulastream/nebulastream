@@ -18,7 +18,7 @@ GeneratableDistributedlWindowSliceCreationOperatorPtr GeneratableSlicingWindowOp
     return std::make_shared<GeneratableSlicingWindowOperator>(GeneratableSlicingWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
 }
 
-GeneratableSlicingWindowOperator::GeneratableSlicingWindowOperator(WindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(windowDefinition) {
+GeneratableSlicingWindowOperator::GeneratableSlicingWindowOperator(LogicalWindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(windowDefinition) {
 }
 
 const std::string GeneratableSlicingWindowOperator::toString() const {

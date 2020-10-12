@@ -2,13 +2,13 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregation.hpp>
-#include <Windowing/WindowDefinition.hpp>
 #include <sstream>
 
 namespace NES {
 
-WindowLogicalOperatorNode::WindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition)
+WindowLogicalOperatorNode::WindowLogicalOperatorNode(const LogicalWindowDefinitionPtr windowDefinition)
     : windowDefinition(windowDefinition) {
 }
 
@@ -18,7 +18,7 @@ const std::string WindowLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() const {
+const LogicalWindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() const {
     return windowDefinition;
 }
 

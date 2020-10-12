@@ -5,8 +5,8 @@
 
 namespace NES {
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 class WindowAggregation;
 typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;

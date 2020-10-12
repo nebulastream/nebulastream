@@ -18,7 +18,7 @@ GeneratableWindowOperatorPtr GeneratableCompleteWindowOperator::create(WindowLog
     return std::make_shared<GeneratableCompleteWindowOperator>(GeneratableCompleteWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
 }
 
-GeneratableCompleteWindowOperator::GeneratableCompleteWindowOperator(WindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(windowDefinition) {
+GeneratableCompleteWindowOperator::GeneratableCompleteWindowOperator(LogicalWindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(windowDefinition) {
 }
 
 const std::string GeneratableCompleteWindowOperator::toString() const {
