@@ -1,9 +1,4 @@
 #include <API/Query.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowAggregations/Sum.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -17,6 +12,11 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
@@ -97,7 +97,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
     auto query = Query::from("default_logical")
                      .window(
                          TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-                         Sum::on(Attribute("value")))
+                         SumAggregationDescriptor::on(Attribute("value")))
                      .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();

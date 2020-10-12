@@ -2,29 +2,29 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
-#include <Windowing/WindowAggregations/Sum.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <utility>
 
 namespace NES {
 
-Sum::Sum(NES::AttributeFieldPtr field) : WindowAggregation(std::move(field)) {}
-Sum::Sum(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregation(std::move(field), std::move(asField)) {}
+SumAggregationDescriptor::SumAggregationDescriptor(NES::AttributeFieldPtr field) : WindowAggregationDescriptor(std::move(field)) {}
+SumAggregationDescriptor::SumAggregationDescriptor(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
 
-WindowAggregationPtr Sum::create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
-    return std::make_shared<Sum>(Sum(std::move(onField), std::move(asField)));
+WindowAggregationPtr SumAggregationDescriptor::create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
+    return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr Sum::on(ExpressionItem onField) {
+WindowAggregationPtr SumAggregationDescriptor::on(ExpressionItem onField) {
     auto keyExpression = onField.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    return std::make_shared<Sum>(Sum(keyField));
+    return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(keyField));
 }
 
-void Sum::compileLiftCombine(CompoundStatementPtr currentCode,
+void SumAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCode,
                              BinaryOperatorStatement partialRef,
                              StructDeclaration inputStruct,
                              BinaryOperatorStatement inputRef) {

@@ -1,24 +1,24 @@
-#ifndef NES_COUNT_HPP
-#define NES_COUNT_HPP
+#ifndef NES_MIN_HPP
+#define NES_MIN_HPP
 
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 namespace NES {
 
 /**
  * @brief
- * The Count aggregation calculates the Count over the window.
+ * The MinAggregationDescriptor aggregation calculates the minimum over the window.
  */
-class Count : public WindowAggregation {
+class MinAggregationDescriptor : public WindowAggregationDescriptor {
   public:
     /**
-   * Factory method to creates a Count aggregation on a particular field.
+   * Factory method to creates a MinAggregationDescriptor aggregation on a particular field.
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
     static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField);
 
     /*
-     * @brief generate the code for lift and combine of the Count aggregate
+     * @brief generate the code for lift and combine of MinAggregationDescriptor SumAggregationDescriptor aggregate
      * @param currentCode
      * @param expressionStatement
      * @param inputStruct
@@ -43,10 +43,13 @@ class Count : public WindowAggregation {
      * @return new partial aggregate as combination of partialValue and inputValue
      */
     template<class InputType, class PartialAggregateType>
-    PartialAggregateType combine(PartialAggregateType partialValue, PartialAggregateType) {
-        ++partialValue;
+    PartialAggregateType combine(PartialAggregateType partialValue, PartialAggregateType inputValue) {
+        if (inputValue < partialValue) {
+            partialValue = inputValue;
+        }
         return partialValue;
     }
+
     /*
      * @brief maps partial aggregates to an element of FinalAggregationType
      * @param partial aggregate element
@@ -58,8 +61,8 @@ class Count : public WindowAggregation {
     }
 
   private:
-    Count(NES::AttributeFieldPtr onField);
-    Count(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    MinAggregationDescriptor(NES::AttributeFieldPtr onField);
+    MinAggregationDescriptor(AttributeFieldPtr onField, AttributeFieldPtr asField);
 };
 }// namespace NES
-#endif//NES_COUNT_HPP
+#endif//NES_MIN_HPP

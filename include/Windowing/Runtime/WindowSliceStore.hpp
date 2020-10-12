@@ -121,7 +121,7 @@ class WindowSliceStore {
 
     /**
      * @brief Calculate the min watermark
-     * @return Min watermark
+     * @return MinAggregationDescriptor watermark
      */
     uint64_t getMinWatermark() {
         if (originIdToMaxTsMap.empty()) {

@@ -457,7 +457,7 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingValidUserQueryWithTumblin
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), Sum::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), SumAggregationDescriptor::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;

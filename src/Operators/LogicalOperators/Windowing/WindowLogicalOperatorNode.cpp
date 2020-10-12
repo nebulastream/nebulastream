@@ -3,7 +3,7 @@
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <sstream>
 
 namespace NES {

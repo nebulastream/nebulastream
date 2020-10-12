@@ -11,10 +11,10 @@
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowAggregations/Sum.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -80,7 +80,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     Query query = Query::from("default_logical")
         .window(
             TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-            Sum::on(Attribute("value")))
+                          SumAggregationDescriptor::on(Attribute("value")))
         .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -104,7 +104,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
         .filter(Attribute("id") < 45)
         .window(
             TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-            Sum::on(Attribute("value")))
+                          SumAggregationDescriptor::on(Attribute("value")))
         .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
 

@@ -13,14 +13,14 @@ typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
 /**
  * Abstract class for window aggregations. All window aggregations operate on a field and output another field.
  */
-class WindowAggregation {
+class WindowAggregationDescriptor {
   public:
     /**
    * Defines the field to which a aggregate output is assigned.
    * @param asField
-   * @return WindowAggregation
+   * @return WindowAggregationDescriptor
    */
-    WindowAggregation& as(AttributeFieldPtr asField);
+    WindowAggregationDescriptor& as(AttributeFieldPtr asField);
 
     /**
    * Generates code for the particular window aggregate.
@@ -44,9 +44,9 @@ class WindowAggregation {
     AttributeFieldPtr on();
 
   protected:
-    explicit WindowAggregation(AttributeFieldPtr onField);
-    WindowAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField);
-    WindowAggregation() = default;
+    explicit WindowAggregationDescriptor(AttributeFieldPtr onField);
+    WindowAggregationDescriptor(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    WindowAggregationDescriptor() = default;
     const AttributeFieldPtr onField;
     AttributeFieldPtr asField;
 };

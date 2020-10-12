@@ -70,11 +70,11 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <Windowing/WindowTypes/TumblingWindow.hpp>" << std::endl;
         code << "#include <Windowing/WindowTypes/SlidingWindow.hpp>" << std::endl;
         code << "#include <Windowing/TimeCharacteristic.hpp>" << std::endl;
-        code << "#include <Windowing/WindowAggregations/WindowAggregation.hpp>" << std::endl;
-        code << "#include <Windowing/WindowAggregations/Sum.hpp>" << std::endl;
-        code << "#include <Windowing/WindowAggregations/Max.hpp>" << std::endl;
-        code << "#include <Windowing/WindowAggregations/Min.hpp>" << std::endl;
-        code << "#include <Windowing/WindowAggregations/Count.hpp>" << std::endl;
+        code << "#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>" << std::endl;
+        code << "#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>" << std::endl;
+        code << "#include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>" << std::endl;
+        code << "#include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>" << std::endl;
+        code << "#include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>" << std::endl;
         code << "namespace NES{" << std::endl;
         code << "Query createQuery(){" << std::endl;
 
@@ -254,7 +254,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, Schema
         uint32_t val = offsets[i];
         offsets[i] = prefix_sum;
         prefix_sum += val;
-        NES_DEBUG("CodeGenerator: " + std::string("Prefix Sum: ") + schema->get(i)->toString() + std::string(": ") + std::to_string(offsets[i]));
+        NES_DEBUG("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schema->get(i)->toString() + std::string(": ") + std::to_string(offsets[i]));
     }
 
     str << "+----------------------------------------------------+" << std::endl;

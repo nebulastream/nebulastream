@@ -1,13 +1,13 @@
 #ifndef NES_SUM_HPP
 #define NES_SUM_HPP
 
-#include <Windowing/WindowAggregations/WindowAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 namespace NES {
 /**
  * @brief
- * The Sum aggregation calculates the running sum over the window.
+ * The SumAggregationDescriptor aggregation calculates the running sum over the window.
  */
-class Sum : public WindowAggregation {
+class SumAggregationDescriptor : public WindowAggregationDescriptor {
   public:
     /**
    * Factory method to creates a sum aggregation on a particular field.
@@ -17,7 +17,7 @@ class Sum : public WindowAggregation {
     static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField);
 
     /*
-     * @brief generate the code for lift and combine of the Sum aggregate
+     * @brief generate the code for lift and combine of the SumAggregationDescriptor aggregate
      * @param currentCode
      * @param expressionStatement
      * @param inputStruct
@@ -59,8 +59,8 @@ class Sum : public WindowAggregation {
     }
 
   private:
-    Sum(NES::AttributeFieldPtr onField);
-    Sum(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    SumAggregationDescriptor(NES::AttributeFieldPtr onField);
+    SumAggregationDescriptor(AttributeFieldPtr onField, AttributeFieldPtr asField);
 };
 }// namespace NES
 #endif//NES_SUM_HPP
