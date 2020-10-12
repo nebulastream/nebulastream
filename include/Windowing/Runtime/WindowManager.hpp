@@ -36,7 +36,6 @@ class WindowManager {
      */
     template<class PartialAggregateType>
     inline void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store) {
-
         NES_DEBUG("sliceStream for ts=" << ts);
         // updates the maximal record ts
         // store->updateMaxTs(ts);
@@ -49,32 +48,31 @@ class WindowManager {
             if (windowType->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
-                NES_DEBUG("WindowManagerLib: for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - window->getSize().getTime() << " nextWindowEnd=" << store->nextEdge);
+                NES_TRACE("WindowManager: for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - window->getSize().getTime() << " nextWindowEnd=" << store->nextEdge);
             } else if (windowType->isSlidingWindow()) {
                 SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
-                NES_DEBUG("WindowManagerLib: successful cast to Sliding Window fir sliceStream empty store");
+                NES_TRACE("WindowManager: successful cast to Sliding Window fir sliceStream empty store");
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
-                NES_DEBUG("WindowManagerLib: for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - store->nextEdge - window->getSlide().getTime() << " nextWindowEnd=" << store->nextEdge);
+                NES_TRACE("WindowManager: for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - store->nextEdge - window->getSlide().getTime() << " nextWindowEnd=" << store->nextEdge);
             } else {
-                NES_ERROR("WindowManagerLib: Undefined Window Type");
+                NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
             }
         }
-        NES_DEBUG("sliceStream check store-nextEdge=" << store->nextEdge << " <="
+        NES_DEBUG("WindowManager: sliceStream check store-nextEdge=" << store->nextEdge << " <="
                                                       << " ts=" << ts);
         // append new slices if needed
         while (store->nextEdge <= ts) {
             auto currentSlice = store->getCurrentSliceIndex();
-            NES_DEBUG("sliceStream currentSlice=" << currentSlice);
+            NES_TRACE("WindowManager: sliceStream currentSlice=" << currentSlice);
             auto& sliceMetaData = store->getSliceMetadata();
             auto newStart = sliceMetaData[currentSlice].getEndTs();
-            NES_DEBUG("sliceStream newStart=" << newStart);
+            NES_TRACE("WindowManager: sliceStream newStart=" << newStart);
             auto nextEdge = windowDefinition->getWindowType()->calculateNextWindowEnd(store->nextEdge);
-            NES_DEBUG("sliceStream nextEdge=" << nextEdge);
+            NES_TRACE("WindowManager: sliceStream nextEdge=" << nextEdge);
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }
     }
-
 
   private:
     const uint64_t allowedLateness;
