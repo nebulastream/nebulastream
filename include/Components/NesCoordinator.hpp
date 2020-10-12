@@ -120,6 +120,10 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      */
     MonitoringServicePtr getMonitoringService();
 
+    /**
+     * @brief Get the instance of Global Query Plan
+     * @return Global query plan
+     */
     GlobalQueryPlanPtr getGlobalQueryPlan();
 
   private:

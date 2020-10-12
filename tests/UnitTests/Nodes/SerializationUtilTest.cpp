@@ -439,7 +439,6 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
 }
 
 TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
-
     auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
     source1->setId(UtilityFunctions::getNextOperatorId());
     auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));

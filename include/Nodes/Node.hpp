@@ -225,13 +225,13 @@ class Node : public std::enable_shared_from_this<Node> {
      * Check if input node is present as parent to this
      * @return true if input node is in parent list
      */
-    virtual bool containAsParent(NodePtr);
+    virtual bool containAsParent(NodePtr node);
 
     /**
      * Check if input node is present as children to this
      * @return true if input node is in children list
      */
-    virtual bool containAsChild(NodePtr);
+    virtual bool containAsChild(NodePtr node);
 
     /**
      * @brief get direct parents.

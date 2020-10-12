@@ -20,15 +20,14 @@ class QueryMergerPhase {
     static QueryMergerPhasePtr create();
 
     /**
-     * @brief
-     * @param globalQueryPlan:
+     * @brief execute method to apply different query merger rules on the global query plan.
+     * @param globalQueryPlan: the global query plan
      * @return true if successful
      */
     bool execute(GlobalQueryPlanPtr globalQueryPlan);
 
   private:
     explicit QueryMergerPhase();
-
     L0QueryMergerRulePtr l0QueryMergerRule;
 };
 }// namespace NES
