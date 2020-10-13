@@ -30,7 +30,7 @@
 #include <Sources/GeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windowing/Runtime/WindowHandler.hpp>
+#include <Windowing/Runtime/WindowHandlerFactory.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <State/StateVariable.hpp>
 #include <cassert>
@@ -898,15 +898,14 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler =
-        new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
+    auto windowHandler = WindowHandlerFactory::create<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create(nullptr, nullptr));
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
         buff.isValid();
     });                                                                                          //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
-    windowHandler->setup(nextPipeline, 0);
+    windowHandler->setup( nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
@@ -955,15 +954,15 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler =
-        new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
+    auto windowHandler = WindowHandlerFactory::create<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create(nullptr, nullptr));
+
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
         buff.isValid();
     });                                                                                          //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
-    windowHandler->setup(nextPipeline, 0);
+    windowHandler->setup( nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
@@ -1012,15 +1011,14 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler =
-        new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
+    auto windowHandler = WindowHandlerFactory::create<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create(nullptr, nullptr));
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
         buff.isValid();
     });                                                                                          //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
-    windowHandler->setup(nextPipeline, 0);
+    windowHandler->setup( nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0);
 
     auto layout = createRowLayout(schema);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
