@@ -8,9 +8,10 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
+#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
+#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 #include <Util/Logger.hpp>
 #include <cstdlib>
@@ -23,8 +24,8 @@
 #include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Windowing/Runtime/WindowHandler.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
 
 namespace NES {
 class WindowManagerTest : public testing::Test {
@@ -99,7 +100,6 @@ TEST_F(WindowManagerTest, testCountAggregation) {
 
 TEST_F(WindowManagerTest, testCheckSlice) {
     auto maxAggregation = ExecutableAVGAggregation<int64_t>::create(nullptr, nullptr);
-
 
     auto store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = std::make_shared<TestAggregation>(TestAggregation());
@@ -178,8 +178,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    w.aggregateWindows<int64_t, int64_t>(10, store, windowDef, buf);
-    w.aggregateWindows<int64_t, int64_t>(10, store, windowDef, buf);
+    w.aggregateWindows<int64_t, int64_t, int64_t>(10, ExecutableSumAggregation<int64_t>::create(nullptr, nullptr), store, windowDef, buf);
+    w.aggregateWindows<int64_t, int64_t, int64_t>(10, ExecutableSumAggregation<int64_t>::create(nullptr, nullptr), store, windowDef, buf);
 
     size_t tupleCnt = buf.getNumberOfTuples();
 
@@ -248,8 +248,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    w.aggregateWindows<int64_t, int64_t>(10, store, windowDef, buf);
-    w.aggregateWindows<int64_t, int64_t>(11, store, windowDef, buf);//this call should not change anything
+    w.aggregateWindows<int64_t, int64_t, int64_t>(10, ExecutableSumAggregation<int64_t>::create(nullptr, nullptr), store, windowDef, buf);
+    w.aggregateWindows<int64_t, int64_t, int64_t>(11, ExecutableSumAggregation<int64_t>::create(nullptr, nullptr), store, windowDef, buf);//this call should not change anything
 
     ASSERT_NE(buf.getBuffer(), nullptr);
 
@@ -316,8 +316,12 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    w.aggregateWindows<int64_t, int64_t>(10, store, windowDef, buf);
-    w.aggregateWindows<int64_t, int64_t>(11, store, windowDef, buf);
+
+    auto sumAgg = ExecutableSumAggregation<int64_t>::create(nullptr, nullptr);
+
+
+    w.aggregateWindows<int64_t, int64_t, int64_t>(10, sumAgg, store, windowDef, buf);
+    w.aggregateWindows<int64_t, int64_t, int64_t>(11, sumAgg, store, windowDef, buf);
 
     size_t tupleCnt = buf.getNumberOfTuples();
 

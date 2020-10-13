@@ -6,6 +6,7 @@
 #include <Windowing/Runtime/WindowHandler.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <atomic>
 #include <iostream>
 #include <memory>
@@ -69,7 +70,7 @@ void WindowHandler::trigger() {
             NES_DEBUG("WindowHandler: " << triggerType << " check key=" << it.first << " store=" << it.second << " nextEdge=" << it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
-            this->aggregateWindows<int64_t, int64_t, int64_t>(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
+            this->aggregateWindows<int64_t, int64_t, int64_t, int64_t>(it.first, ExecutableSumAggregation<int64_t>::create(nullptr, nullptr), it.second, this->windowDefinition, tupleBuffer);//put key into this
             // TODO we currently have no handling in the case the tuple buffer is full
         }
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
