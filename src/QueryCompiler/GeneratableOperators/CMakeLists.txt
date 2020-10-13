@@ -5,8 +5,7 @@ add_source_nes(
         GeneratableMergeOperator.cpp
         GeneratableSinkOperator.cpp
         GeneratableScanOperator.cpp
-        GeneratableCompleteWindowOperator.cpp
         TranslateToGeneratableOperatorPhase
-        GeneratableDistributedWindowCombinerOperator.cpp
-        GeneratableDistributedWindowSliceCreationOperator.cpp
 )
+
+add_subdirectory(Windowing)

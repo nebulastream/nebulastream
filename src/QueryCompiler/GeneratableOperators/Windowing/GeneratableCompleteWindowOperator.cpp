@@ -1,5 +1,5 @@
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES {

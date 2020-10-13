@@ -29,11 +29,11 @@
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 using namespace std;
