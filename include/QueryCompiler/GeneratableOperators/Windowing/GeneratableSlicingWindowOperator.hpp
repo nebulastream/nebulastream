@@ -2,11 +2,11 @@
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEDISTRIBUTEDLWINDOWSLICECREATIONOPERATOR_HPP_
 
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
 
 namespace NES {
 
-class GeneratableSlicingWindowOperator : public WindowLogicalOperatorNode, public GeneratableOperator {
+class GeneratableSlicingWindowOperator : public WindowLogicalOperatorNode, public GeneratableWindowOperator {
   public:
     static GeneratableDistributedlWindowSliceCreationOperatorPtr create(WindowLogicalOperatorNodePtr);
 

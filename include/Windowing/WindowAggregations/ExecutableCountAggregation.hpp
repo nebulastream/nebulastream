@@ -43,7 +43,7 @@ class ExecutableCountAggregation : public  ExecutableWindowAggregation<CountType
      * @param input value of the element
      * @return the element that mapped to PartialAggregateType
      */
-    CountType lift(CountType inputValue) override {
+    CountType lift(CountType) override {
         return 1;
     }
 
