@@ -12,8 +12,8 @@ typedef std::shared_ptr<Declaration> DeclarationPtr;
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
-class LogicalWindowDefinition;
-typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
+class WindowHandler;
+typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
 
 /**
  * @brief The Pipeline Context represents the context of one pipeline during code generation.
@@ -28,8 +28,8 @@ class PipelineContext {
 
     SchemaPtr getInputSchema() const;
     SchemaPtr getResultSchema() const;
-    LogicalWindowDefinitionPtr getWindow();
-    void setWindow(LogicalWindowDefinitionPtr window);
+    WindowHandlerPtr getWindow();
+    void setWindow(WindowHandlerPtr window);
     bool hasWindow() const;
 
     SchemaPtr inputSchema;
@@ -44,7 +44,7 @@ class PipelineContext {
 
   private:
     std::vector<PipelineContextPtr> nextPipelines;
-    LogicalWindowDefinitionPtr windowDefinition;
+    WindowHandlerPtr windowHandler;
 };
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_

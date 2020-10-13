@@ -36,4 +36,7 @@ void MaxAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCo
         assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
     currentCode->addStatement(ifStatement.createCopy());
 }
+WindowAggregationDescriptor::Type MaxAggregationDescriptor::getType() {
+    return Max;
+}
 }// namespace NES

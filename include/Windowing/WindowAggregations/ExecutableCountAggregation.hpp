@@ -13,14 +13,14 @@ namespace NES{
 
 typedef uint64_t CountType;
 
-
-class ExecutableCountAggregation : public  ExecutableWindowAggregation<CountType, CountType, CountType>{
+template<typename InputType>
+class ExecutableCountAggregation : public  ExecutableWindowAggregation<InputType, CountType, CountType>{
   public:
-    ExecutableCountAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField): ExecutableWindowAggregation<CountType, CountType, CountType>(onField, asField){
+    ExecutableCountAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField): ExecutableWindowAggregation<InputType, CountType, CountType>(onField, asField){
     };
 
-    static std::shared_ptr<ExecutableWindowAggregation<CountType, CountType, CountType>> create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField){
-        return std::make_shared<ExecutableCountAggregation>(std::move(onField), std::move(asField));
+    static std::shared_ptr<ExecutableWindowAggregation<InputType, CountType, CountType>> create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField){
+        return std::make_shared<ExecutableCountAggregation<InputType>>(std::move(onField), std::move(asField));
     };
 
     /*
@@ -43,7 +43,7 @@ class ExecutableCountAggregation : public  ExecutableWindowAggregation<CountType
      * @param input value of the element
      * @return the element that mapped to PartialAggregateType
      */
-    CountType lift(CountType) override {
+    CountType lift(InputType) override {
         return 1;
     }
 

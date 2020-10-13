@@ -1,12 +1,15 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_GENERATABLEWINDOWOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_GENERATABLEWINDOWOPERATOR_HPP_
 
+
+#include <Nodes/Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
+#include <Windowing/Runtime/WindowHandlerFactory.hpp>
 
 namespace NES {
 
-class GeneratableWindowOperator : public GeneratableOperator {
-
+class GeneratableWindowOperator : public WindowLogicalOperatorNode, public GeneratableOperator {
+  public:
     /**
    * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
    * @param codegen a pointer to the code generator.
@@ -26,6 +29,15 @@ class GeneratableWindowOperator : public GeneratableOperator {
     * @return string
     */
     [[nodiscard]] virtual const std::string toString() const = 0;
+
+    WindowHandlerPtr createWindowHandler();
+
+  protected:
+    explicit GeneratableWindowOperator(LogicalWindowDefinitionPtr windowDefinition);
+
+  private:
+
+
 };
 
 }// namespace NES

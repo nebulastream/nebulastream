@@ -6,7 +6,7 @@
 
 namespace NES {
 
-class GeneratableSlicingWindowOperator : public WindowLogicalOperatorNode, public GeneratableWindowOperator {
+class GeneratableSlicingWindowOperator :  public GeneratableWindowOperator {
   public:
     static GeneratableDistributedlWindowSliceCreationOperatorPtr create(WindowLogicalOperatorNodePtr);
 

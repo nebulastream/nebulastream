@@ -25,6 +25,9 @@ typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
+
 class WindowManager;
 
 class PipelineExecutionContext;
@@ -54,7 +57,7 @@ class PipelineStage {
    * @brief Initialises a pipeline stage
    * @return boolean if successful
    */
-    bool setup();
+    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
 
     /**
      * @brief Starts a pipeline stage

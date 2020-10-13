@@ -378,7 +378,6 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
  * @return
  */
 bool CCodeGenerator::generateCodeForCompleteWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
-    context->setWindow(window);
     auto tf = getTypeFactory();
     auto constStatement = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0")));
 
@@ -522,8 +521,6 @@ bool CCodeGenerator::generateCodeForSlicingWindow(LogicalWindowDefinitionPtr win
 }
 
 bool CCodeGenerator::generateCodeForCombiningWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
-    context->setWindow(window);
-
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
 

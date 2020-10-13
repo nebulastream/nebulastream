@@ -25,7 +25,7 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
      * @param inputRef
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
-
+    Type getType() override;
 
   private:
     CountAggregationDescriptor(NES::AttributeFieldPtr onField);

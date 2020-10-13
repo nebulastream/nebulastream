@@ -35,4 +35,7 @@ void MinAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCo
         assign(expressionStatement, inputRef.accessRef(VarRefStatement(varDeclInput))));
     currentCode->addStatement(ifStatement.createCopy());
 }
+WindowAggregationDescriptor::Type MinAggregationDescriptor::getType() {
+    return Min;
+}
 }// namespace NES

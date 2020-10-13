@@ -12,13 +12,15 @@ void GeneratableCombiningWindowOperator::produce(CodeGeneratorPtr codegen, Pipel
 }
 
 void GeneratableCombiningWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    auto windowHandler = createWindowHandler();
+    context->setWindow(windowHandler);
     codegen->generateCodeForCombiningWindow(getWindowDefinition(), context);
 }
 GeneratableDistributedlWindowCombinerOperatorPtr GeneratableCombiningWindowOperator::create(WindowLogicalOperatorNodePtr windowLogicalOperatorNode) {
     return std::make_shared<GeneratableCombiningWindowOperator>(GeneratableCombiningWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
 }
 
-GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(LogicalWindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(windowDefinition) {
+GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(LogicalWindowDefinitionPtr windowDefinition) : GeneratableWindowOperator(windowDefinition) {
 }
 
 const std::string GeneratableCombiningWindowOperator::toString() const {

@@ -15,6 +15,14 @@ typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
  */
 class WindowAggregationDescriptor {
   public:
+    enum Type{
+        AVG,
+        Count,
+        Max,
+        Min,
+        Sum
+    };
+
     /**
     * Defines the field to which a aggregate output is assigned.
    * @param asField
@@ -42,6 +50,8 @@ class WindowAggregationDescriptor {
     * @return
     */
     AttributeFieldPtr on();
+
+    virtual Type getType() = 0;
 
   protected:
     explicit WindowAggregationDescriptor(AttributeFieldPtr onField);

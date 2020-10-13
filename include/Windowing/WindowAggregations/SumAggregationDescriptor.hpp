@@ -28,6 +28,8 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
                             StructDeclaration inputStruct,
                             BinaryOperatorStatement inputRef);
 
+    Type getType() override;
+
   private:
     SumAggregationDescriptor(NES::AttributeFieldPtr onField);
     SumAggregationDescriptor(AttributeFieldPtr onField, AttributeFieldPtr asField);

@@ -15,8 +15,8 @@
 
 namespace NES {
 
-WindowHandler::WindowHandler(NES::LogicalWindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)
-    : windowDefinition(std::move(windowDefinitionPtr)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)), originId(0) {
+WindowHandler::WindowHandler(NES::LogicalWindowDefinitionPtr windowDefinitionPtr)
+    : windowDefinition(std::move(windowDefinitionPtr)), originId(0) {
     this->thread.reset();
     windowTupleSchema = Schema::create()
                             ->addField(createField("start", UINT64))
