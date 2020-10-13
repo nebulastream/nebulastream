@@ -4,9 +4,7 @@
 #include <string>
 #include <cstring>
 #include <NodeEngine/QueryManager.hpp>
-
 #include <open62541/client_config_default.h>
-
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -37,15 +35,9 @@ class OPCSinkTest : public testing::Test {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         NES::setupLogging("OPCSinkTest.log", NES::LOG_DEBUG);
 
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
-        auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
         test_schema =
                 Schema::create()
                         ->addField("var", UINT32);
-        bufferManager = nodeEngine->getBufferManager();
-        queryManager = nodeEngine->getQueryManager();
-
-        ASSERT_GT(bufferManager->getBufferSize(), 0);
 
     }
 
@@ -59,11 +51,8 @@ class OPCSinkTest : public testing::Test {
         NES_DEBUG("OPCSINKTEST::TearDownTestCases() Tear down OPCSourceTest test class." );
     }
 
-    BufferManagerPtr bufferManager;
     SchemaPtr test_schema;
     size_t buffer_size;
-    NodeEnginePtr nodeEngine;
-    QueryManagerPtr queryManager;
 
   protected:
     UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
@@ -76,6 +65,10 @@ class OPCSinkTest : public testing::Test {
  * Tests basic set up of OPC sink
  */
 TEST_F(OPCSinkTest, OPCSourceInit) {
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
+
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, &nodeId, user, password);
 
     SUCCEED();
@@ -85,6 +78,10 @@ TEST_F(OPCSinkTest, OPCSourceInit) {
  * Test if schema, OPC server url, and node index are the same
  */
 TEST_F(OPCSinkTest, OPCSourcePrint) {
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
+
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, &nodeId, user, password);
 
     std::string expected = "OPC_SINK";
