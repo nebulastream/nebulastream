@@ -10,8 +10,3 @@ if(NES_USE_KAFKA)
             Mediums/KafkaSink.cpp
     )
 endif()
-if(NES_USE_OPC)
-    add_source_nes(
-            Mediums/OPCSink.cpp
-    )
-endif()
