@@ -41,6 +41,7 @@ class WindowHandlerFactoryDetails {
             case WindowAggregationDescriptor::Sum:
                 return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableSumAggregation<InputType>::create(onField, asField));;
         }
+        NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: AVG aggregation currently not supported");
     };
 
     template<typename KeyType>
