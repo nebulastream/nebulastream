@@ -264,7 +264,18 @@ std::string Topology::toString() {
     while (!parentToPrint.empty()) {
         std::pair<TopologyNodePtr, size_t> nodeToPrint = parentToPrint.front();
         parentToPrint.pop_front();
-        topologyInfo << std::string(indent * nodeToPrint.second, ' ') << nodeToPrint.first->toString() << std::endl;
+        for (int i = 0; i < indent * nodeToPrint.second; i++) {
+            if (i % indent == 0) {
+                topologyInfo << '|';
+            } else {
+                if (i >= indent * nodeToPrint.second - 1) {
+                    topologyInfo << std::string(indent, '-');
+                } else {
+                    topologyInfo << std::string(indent, ' ');
+                }
+            }
+        }
+        topologyInfo << nodeToPrint.first->toString() << std::endl;
 
         for (auto& child : nodeToPrint.first->getChildren()) {
             parentToPrint.emplace_front(child->as<TopologyNode>(), nodeToPrint.second+1);
