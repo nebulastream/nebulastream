@@ -15,8 +15,9 @@ TopologyController::TopologyController(TopologyPtr topology)
 
 void TopologyController::handleGet(std::vector<utility::string_t> paths, http_request message) {
     NES_DEBUG("TopologyController: GET Topology");
-    NES_INFO(" current plan from topo=");
+
     topology->print();
+
     if (paths.size() == 1) {
         web::json::value topologyJson = UtilityFunctions::getTopologyAsJson(topology->getRoot());
         successMessageImpl(message, topologyJson);
