@@ -1,0 +1,62 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(dplyr)
+library(curl)
+library(influxdbr)
+library(xts)
+library(ggplot2)
+```
+
+
+```{r}
+con <- influx_connection(host = "localhost", port = 8086)
+```
+
+
+```{r}
+show_databases(con = con)
+```
+
+```{r}
+# fetch time series data by using the helper function `influx_select`
+dfResult <- influx_select(con = con, 
+                        db = "mydb", 
+                        field_keys = "*", 
+                        measurement = "monitoringEval",
+                        where = "topology = '1Crd2Wrks' AND version = '1'",
+                        limit = 0, 
+                        order_desc = TRUE, 
+                        return_xts = FALSE)
+
+dfResult = dfResult[[1]]
+dfResult
+```
+
+```{r}
+ggplot(dfResult, aes(x=iteration, y=cpuTotalUsage, color=system)) + geom_point(size=1)
+```
+
+```{r}
+ggplot(dfResult, aes(x=iteration, y=rxBytes, color=system)) + geom_point(size=1)
+```
+```{r}
+ggplot(dfResult, aes(x=iteration, y=txBytes, color=system)) + geom_point(size=1)
+```
+```{r}
+ggplot(dfResult, aes(x=iteration, y=rxPackets, color=system)) + geom_point(size=1)
+```
+```{r}
+ggplot(dfResult, aes(x=iteration, y=memoryUsage, color=system)) + geom_point(size=1)
+```
+```{r}
+ggplot(dfResult, aes(x=iteration, y=`runtime_ms`, color=system)) + geom_point(size=1)
+```
+
