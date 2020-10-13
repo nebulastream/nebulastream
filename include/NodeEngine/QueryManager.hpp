@@ -34,6 +34,12 @@ typedef std::shared_ptr<CompiledExecutablePipeline> CompiledExecutablePipelinePt
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
+
+class QueryExecutionPlan;
+typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
+
 /**
  * @brief the query manager is the central class to process queries.
  * It is source-driven. Each incoming buffer will add a task to the queue.

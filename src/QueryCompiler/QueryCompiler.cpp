@@ -5,6 +5,8 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <Windowing/Runtime/WindowHandlerFactory.hpp>
+#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <set>
 #include <utility>
 namespace NES {
@@ -74,10 +76,12 @@ void generateExecutablePipelines(
                 NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");
             }
             if (currContext->hasWindow()) {
-                auto windowHandler = WindowHandler::create(
+                auto windowHandler = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(
                     currContext->getWindow(),
                     queryManagerPtr,
-                    bufferManager);
+                    bufferManager,
+                    ExecutableSumAggregation<int64_t>::create(nullptr, nullptr)
+                    );
                 accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, windowHandler);
             } else {
                 accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, nullptr);

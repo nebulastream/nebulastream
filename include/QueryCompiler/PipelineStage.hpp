@@ -15,6 +15,7 @@ typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 template<class PartialAggregateType>
 class WindowSliceStore;
 
+
 class WindowHandler;
 typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
 
