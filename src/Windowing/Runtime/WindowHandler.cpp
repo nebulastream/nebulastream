@@ -13,6 +13,8 @@
 #include <utility>
 #include <zconf.h>
 
+#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+
 namespace NES {
 
 WindowHandler::WindowHandler(NES::LogicalWindowDefinitionPtr windowDefinitionPtr)

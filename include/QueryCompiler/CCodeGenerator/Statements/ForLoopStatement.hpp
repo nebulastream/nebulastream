@@ -10,9 +10,9 @@ class ForLoopStatement : public Statement {
                      ExpressionStatmentPtr advance,
                      const std::vector<StatementPtr>& loop_body = std::vector<StatementPtr>());
 
-    virtual StatementType getStamentType() const;
+    virtual StatementType getStamentType() const override;
 
-    virtual const CodeExpressionPtr getCode() const;
+    virtual const CodeExpressionPtr getCode() const override;
 
     const StatementPtr createCopy() const override;
 

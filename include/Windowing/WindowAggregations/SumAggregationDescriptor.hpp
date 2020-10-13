@@ -26,7 +26,7 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
     void compileLiftCombine(CompoundStatementPtr currentCode,
                             BinaryOperatorStatement partialRef,
                             StructDeclaration inputStruct,
-                            BinaryOperatorStatement inputRef);
+                            BinaryOperatorStatement inputRef) override;
 
     Type getType() override;
 

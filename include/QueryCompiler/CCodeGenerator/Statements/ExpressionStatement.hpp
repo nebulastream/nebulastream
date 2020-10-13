@@ -10,8 +10,8 @@ class BinaryOperatorStatement;
 
 class ExpressionStatment : public Statement {
   public:
-    virtual StatementType getStamentType() const = 0;
-    virtual const CodeExpressionPtr getCode() const = 0;
+    virtual StatementType getStamentType() const override = 0;
+    virtual const CodeExpressionPtr getCode() const override = 0;
     /** \brief virtual copy constructor */
     virtual const ExpressionStatmentPtr copy() const = 0;
     /** \brief virtual copy constructor of base class
