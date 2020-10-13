@@ -5,7 +5,6 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
-#include <Windowing/Runtime/WindowHandlerFactory.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <set>
 #include <utility>

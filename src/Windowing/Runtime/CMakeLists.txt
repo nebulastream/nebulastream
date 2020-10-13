@@ -4,4 +4,5 @@ add_source_nes(
         WindowState.cpp
         SliceMetaData.cpp
         WindowHandlerImpl.cpp
+        WindowHandlerFactory.cpp
 )
