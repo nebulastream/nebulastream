@@ -11,7 +11,7 @@
 #include <memory>
 namespace NES{
 
-template<typename InputType, std::enable_if_t<std::is_integral<InputType>::value> = 0>
+template<typename InputType>
 class ExecutableMinAggregation : public  ExecutableWindowAggregation<InputType, InputType, InputType>{
   public:
     ExecutableMinAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField): ExecutableWindowAggregation<InputType, InputType, InputType>(onField, asField){
