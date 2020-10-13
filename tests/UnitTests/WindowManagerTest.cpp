@@ -10,6 +10,7 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
+#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
@@ -27,6 +28,7 @@
 #include <Windowing/Runtime/WindowHandlerFactory.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 
 namespace NES {
 class WindowManagerTest : public testing::Test {
@@ -52,51 +54,42 @@ class TestAggregation : public WindowAggregationDescriptor {
 };
 
 TEST_F(WindowManagerTest, testSumAggregation) {
-    auto field = AttributeField::create("test", DataTypeFactory::createInt64());
-    const WindowAggregationPtr aggregation = SumAggregationDescriptor::on(Attribute("test"));
-    if (SumAggregationDescriptor* store = dynamic_cast<SumAggregationDescriptor*>(aggregation.get())) {
-        auto partial = store->lift<int64_t, int64_t>(1L);
-        auto partial2 = store->lift<int64_t, int64_t>(2L);
-        auto combined = store->combine<int64_t>(partial, partial2);
-        auto result = store->lower<int64_t, int64_t>(combined);
-        ASSERT_EQ(result, 3);
-    }
+    auto aggregation = ExecutableSumAggregation<int64_t>::create(nullptr, nullptr);
+    auto partial = aggregation->lift(1L);
+    auto partial2 = aggregation->lift(2L);
+    auto combined = aggregation->combine(partial, partial2);
+    auto result = aggregation->lower(combined);
+    ASSERT_EQ(result, 3);
 }
 
 TEST_F(WindowManagerTest, testMaxAggregation) {
-    auto field = AttributeField::create("test", DataTypeFactory::createInt64());
-    const WindowAggregationPtr aggregation = MaxAggregationDescriptor::on(Attribute("test"));
-    if (MaxAggregationDescriptor* store = dynamic_cast<MaxAggregationDescriptor*>(aggregation.get())) {
-        auto partial = store->lift<int64_t, int64_t>(1L);
-        auto partial2 = store->lift<int64_t, int64_t>(4L);
-        auto combined = store->combine<int64_t>(partial, partial2);
-        auto result = store->lower<int64_t, int64_t>(combined);
+    auto aggregation = ExecutableMaxAggregation<int64_t>::create(nullptr, nullptr);
+        auto partial = aggregation->lift(1L);
+        auto partial2 = aggregation->lift(4L);
+        auto combined = aggregation->combine(partial, partial2);
+        auto result = aggregation->lower(combined);
         ASSERT_EQ(result, 4);
-    }
 }
 
 TEST_F(WindowManagerTest, testMinAggregation) {
-    auto field = AttributeField::create("test", DataTypeFactory::createInt64());
-    const WindowAggregationPtr aggregation = MinAggregationDescriptor::on(Attribute("test"));
-    if (MinAggregationDescriptor* store = dynamic_cast<MinAggregationDescriptor*>(aggregation.get())) {
-        auto partial = store->lift<int64_t, int64_t>(1L);
-        auto partial2 = store->lift<int64_t, int64_t>(4L);
-        auto combined = store->combine<int64_t>(partial, partial2);
-        auto result = store->lower<int64_t, int64_t>(combined);
+    auto aggregation = ExecutableMinAggregation<int64_t>::create(nullptr, nullptr);
+
+        auto partial = aggregation->lift(1L);
+        auto partial2 = aggregation->lift(4L);
+        auto combined = aggregation->combine(partial, partial2);
+        auto result = aggregation->lower(combined);
         ASSERT_EQ(result, 1);
-    }
+
 }
 
 TEST_F(WindowManagerTest, testCountAggregation) {
-    auto field = AttributeField::create("test", DataTypeFactory::createInt64());
-    const WindowAggregationPtr aggregation = CountAggregationDescriptor::on(Attribute("test"));
-    if (MinAggregationDescriptor* store = dynamic_cast<MinAggregationDescriptor*>(aggregation.get())) {
-        auto partial = store->lift<int64_t, int64_t>(1L);
-        auto partial2 = store->lift<int64_t, int64_t>(4L);
-        auto combined = store->combine<int64_t>(partial, partial2);
-        auto result = store->lower<int64_t, int64_t>(combined);
+    auto aggregation = ExecutableCountAggregation::create(nullptr, nullptr);
+        auto partial = aggregation->lift(1L);
+        auto partial2 = aggregation->lift(4L);
+        auto combined = aggregation->combine(partial, partial2);
+        auto result = aggregation->lower(combined);
         ASSERT_EQ(result, 2);
-    }
+
 }
 
 TEST_F(WindowManagerTest, testCheckSlice) {
@@ -133,7 +126,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto windowDef = std::make_shared<LogicalWindowDefinition>(
         LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType()));
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
-
 
     auto w = WindowHandlerFactory::create<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), ExecutableSumAggregation<uint64_t>::create(nullptr, nullptr));
 
@@ -206,7 +198,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto windowDef = std::make_shared<LogicalWindowDefinition>(
         LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType()));
 
-    auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager(),ExecutableSumAggregation<int64_t>::create(nullptr, nullptr));
+    auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), ExecutableSumAggregation<int64_t>::create(nullptr, nullptr));
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
@@ -275,7 +267,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto windowDef = std::make_shared<LogicalWindowDefinition>(
         LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType()));
 
-    auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager(),ExecutableSumAggregation<int64_t>::create(nullptr, nullptr));
+    auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), ExecutableSumAggregation<int64_t>::create(nullptr, nullptr));
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
