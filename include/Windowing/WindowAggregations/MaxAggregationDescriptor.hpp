@@ -25,6 +25,7 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expression_statment, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
 
+    Type getType() override;
 
   private:
     MaxAggregationDescriptor(NES::AttributeFieldPtr onField);

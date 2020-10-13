@@ -63,8 +63,8 @@ bool QueryExecutionPlan::setup() {
     auto expected = Created;
     if (qepStatus.compare_exchange_strong(expected, Deployed)) {
         for (auto& stage : stages) {
-            if (!stage->setup()) {
-                NES_ERROR("QueryExecutionPlan: setup failed! " << queryId << " " << querySubPlanId);
+            if (!stage->setup(queryManager, bufferManager)) {
+                NES_ERROR("QueryExecutionPlan: setup failed!" << queryId << " " << querySubPlanId);
                 this->stop();
                 return false;
             }

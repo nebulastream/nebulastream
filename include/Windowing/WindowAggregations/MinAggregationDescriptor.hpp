@@ -26,6 +26,7 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
 
+    Type getType() override;
 
   private:
     MinAggregationDescriptor(NES::AttributeFieldPtr onField);

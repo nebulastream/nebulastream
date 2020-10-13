@@ -1,12 +1,12 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECOMBININGWINDOWOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLECOMBININGWINDOWOPERATOR_HPP_
 
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
 
 namespace NES {
 
-class GeneratableCombiningWindowOperator : public WindowLogicalOperatorNode, public GeneratableWindowOperator {
+class GeneratableCombiningWindowOperator : public GeneratableWindowOperator {
   public:
     static GeneratableDistributedlWindowCombinerOperatorPtr create(WindowLogicalOperatorNodePtr);
 

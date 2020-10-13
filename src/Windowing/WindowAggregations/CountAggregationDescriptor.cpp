@@ -33,4 +33,7 @@ void CountAggregationDescriptor::compileLiftCombine(CompoundStatementPtr current
     auto updatedPartial = partialRef.assign(increment);
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
 }
+WindowAggregationDescriptor::Type CountAggregationDescriptor::getType() {
+    return Count;
+}
 }// namespace NES

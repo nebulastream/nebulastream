@@ -33,4 +33,7 @@ void SumAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCo
     auto updatedPartial = partialRef.assign(sum);
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
 }
+WindowAggregationDescriptor::Type SumAggregationDescriptor::getType() {
+    return Sum;
+}
 }// namespace NES

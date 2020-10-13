@@ -65,7 +65,7 @@ class WindowHandler : std::enable_shared_from_this<WindowHandler>{
 
   public:
 
-    WindowHandler(LogicalWindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
+    WindowHandler(LogicalWindowDefinitionPtr windowDefinition);
 
     template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
     auto as(){
@@ -100,7 +100,7 @@ class WindowHandler : std::enable_shared_from_this<WindowHandler>{
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(PipelineStagePtr nextPipeline, uint32_t pipelineStageId) = 0;
+    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId) = 0;
 
     virtual void* getWindowState() = 0;
     WindowManagerPtr getWindowManager() { return windowManager; };

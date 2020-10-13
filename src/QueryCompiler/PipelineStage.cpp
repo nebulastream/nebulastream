@@ -110,9 +110,9 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
     return ret;
 }
 
-bool PipelineStage::setup() {
+bool PipelineStage::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
     if (hasWindowHandler()) {
-        return windowHandler->setup(nextStage, pipelineStageId);
+        return windowHandler->setup(queryManager, bufferManager, nextStage, pipelineStageId);
     }
     return true;
 }

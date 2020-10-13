@@ -13,11 +13,11 @@ class WindowHandlerImpl : public WindowHandler {
   public:
     WindowHandlerImpl() = default;
     WindowHandlerImpl(LogicalWindowDefinitionPtr windowDefinition,
-                      QueryManagerPtr queryManager,
-                      BufferManagerPtr bufferManager,
-                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) : WindowHandler(windowDefinition, queryManager, bufferManager), windowAggregation(windowAggregation){};
+                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) : WindowHandler(windowDefinition), windowAggregation(windowAggregation){};
 
-    bool setup(PipelineStagePtr nextPipeline, uint32_t pipelineStageId) override {
+    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId) override {
+        this->queryManager = queryManager;
+        this->bufferManager = bufferManager;
         this->pipelineStageId = pipelineStageId;
         this->thread.reset();
         // Initialize WindowHandler Manager

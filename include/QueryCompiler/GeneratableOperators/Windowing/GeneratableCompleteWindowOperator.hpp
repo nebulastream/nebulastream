@@ -6,7 +6,7 @@
 
 namespace NES {
 
-class GeneratableCompleteWindowOperator : public WindowLogicalOperatorNode, public GeneratableWindowOperator {
+class GeneratableCompleteWindowOperator : public GeneratableWindowOperator {
   public:
     static GeneratableWindowOperatorPtr create(WindowLogicalOperatorNodePtr);
 

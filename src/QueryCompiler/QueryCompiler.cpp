@@ -58,8 +58,8 @@ void generateExecutablePipelines(
     QueryId queryId,
     QuerySubPlanId querySubPlanId,
     CodeGeneratorPtr codeGenerator,
-    BufferManagerPtr bufferManager,
-    QueryManagerPtr queryManagerPtr,
+    BufferManagerPtr,
+    QueryManagerPtr,
     PipelineContextPtr context,
     std::map<uint32_t, PipelineStageHolder, std::greater<>>& accumulator) {
     // BFS visit to figure out producer-consumer relations among pipelines
@@ -76,13 +76,7 @@ void generateExecutablePipelines(
                 NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");
             }
             if (currContext->hasWindow()) {
-                auto windowHandler = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(
-                    currContext->getWindow(),
-                    queryManagerPtr,
-                    bufferManager,
-                    ExecutableSumAggregation<int64_t>::create(nullptr, nullptr)
-                    );
-                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, windowHandler);
+                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, currContext->getWindow());
             } else {
                 accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, nullptr);
             }
