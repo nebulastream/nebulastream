@@ -21,7 +21,7 @@ class AVGPartialType {
 
 typedef double AVGResultType;
 
-template<typename InputType, std::enable_if_t<std::is_integral<InputType>::value> = 0>
+template<typename InputType>
 class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType> {
   public:
     ExecutableAVGAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField) : ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>(onField, asField){};
