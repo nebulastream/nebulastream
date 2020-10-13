@@ -60,8 +60,8 @@ class WindowHandlerFactory {
                 case BasicPhysicalType::INT_64: return createWindowHandler<KeyType, int64_t>(windowDefinition);
                 case BasicPhysicalType::FLOAT: return createWindowHandler<KeyType, float>(windowDefinition);
                 case BasicPhysicalType::DOUBLE: return createWindowHandler<KeyType, double>(windowDefinition);
-                case BasicPhysicalType::CHAR: return createWindowHandler<KeyType, char>(windowDefinition);
-                case BasicPhysicalType::BOOLEAN: return createWindowHandler<KeyType, bool>(windowDefinition);
+                case BasicPhysicalType::CHAR:
+                case BasicPhysicalType::BOOLEAN: NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: we dont support aggregation of Chars or Booleans");
             };
         } else {
             NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: currently we dont support non basic input types");
