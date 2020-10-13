@@ -10,9 +10,9 @@
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 
-#include <QueryCompiler/GeneratableOperators/GeneratableCombiningWindowOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableSlicingWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/GeneratableSlicingWindowOperator.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
@@ -54,8 +54,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
-    }
-    else if (operatorNode->instanceOf<CentralWindowOperator>()) {
+    } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
         auto windowOperator = GeneratableCompleteWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
