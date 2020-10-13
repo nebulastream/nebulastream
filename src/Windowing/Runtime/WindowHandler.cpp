@@ -1,17 +1,11 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <State/StateManager.hpp>
-#include <Util/Logger.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/Runtime/WindowHandler.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <atomic>
-#include <iostream>
-#include <memory>
 #include <utility>
-#include <zconf.h>
 
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 
