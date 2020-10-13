@@ -6,15 +6,15 @@
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
-#include <utility>
 #include <Windowing/WindowAggregations/ExecutableWindowAggregation.hpp>
 #include <memory>
-namespace NES{
+#include <utility>
+namespace NES {
 
 template<typename SumType>
 class AVGPartialType {
   public:
-    explicit AVGPartialType(SumType sum):sum(sum), count(1){}
+    explicit AVGPartialType(SumType sum) : sum(sum), count(1) {}
     SumType sum;
     int64_t count;
 };
@@ -22,12 +22,11 @@ class AVGPartialType {
 typedef double AVGResultType;
 
 template<typename InputType>
-class ExecutableAVGAggregation : public  ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>{
+class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType> {
   public:
-    ExecutableAVGAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField): ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>(onField, asField){
-    };
+    ExecutableAVGAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField) : ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>(onField, asField){};
 
-    static std::shared_ptr<ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>> create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField){
+    static std::shared_ptr<ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>> create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
         return std::make_shared<ExecutableAVGAggregation<InputType>>(std::move(onField), std::move(asField));
     };
 
@@ -38,12 +37,8 @@ class ExecutableAVGAggregation : public  ExecutableWindowAggregation<InputType, 
     * @param inputStruct
     * @param inputRef
     */
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override{
-            auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->name);
-            auto ifStatement = IF(
-                partialRef < inputRef.accessRef(VarRefStatement(varDeclInput)),
-                assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
-            currentCode->addStatement(ifStatement.createCopy());
+    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override {
+       NES_NOT_IMPLEMENTED();
     };
 
     /*
@@ -62,9 +57,9 @@ class ExecutableAVGAggregation : public  ExecutableWindowAggregation<InputType, 
      * @return new partial aggregate as combination of partialValue and inputValue
      */
     AVGPartialType<InputType> combine(AVGPartialType<InputType> partialValue, AVGPartialType<InputType> inputValue) override {
-       partialValue.count =+ inputValue.count;
-       partialValue.sum =+ inputValue.sum;
-       return partialValue;
+        partialValue.count = +inputValue.count;
+        partialValue.sum = +inputValue.sum;
+        return partialValue;
     }
 
     /*
@@ -77,9 +72,8 @@ class ExecutableAVGAggregation : public  ExecutableWindowAggregation<InputType, 
     }
 
   protected:
-
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLEAVGAGGREGATION_HPP_

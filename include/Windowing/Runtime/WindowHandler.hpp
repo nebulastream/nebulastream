@@ -88,8 +88,8 @@ class WindowHandler {
      * @param windowDefinition
      * @param tupleBuffer
      */
-    template<class KeyType, class FinalAggregateType, class PartialAggregateType>
-    void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
+    template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
+    void aggregateWindows(KeyType key, std::shared_ptr<ExecutableWindowAggregation<InputType, FinalAggregateType, PartialAggregateType>> aggregation,  WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
                           TupleBuffer& tupleBuffer);
 
     void* getWindowState();
@@ -128,8 +128,8 @@ void WindowHandler::writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, 
 }
 
 // TODO Maybe we could define template specialization of this method when generating compiled code so that we dont need casting
-template<class KeyType, class FinalAggregateType, class PartialAggregateType>
-void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
+template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
+void WindowHandler::aggregateWindows(KeyType key, std::shared_ptr<ExecutableWindowAggregation<InputType, FinalAggregateType, PartialAggregateType>> aggregation, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
                                      TupleBuffer& tupleBuffer) {
 
     // For event time we use the maximal records ts as watermark.
@@ -194,6 +194,10 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                                                                    << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
                     NES_DEBUG("WindowHandler CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
+
+                    partialFinalAggregates[windowId] = aggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
+
+                    /*
                     if (auto sumAggregation = std::dynamic_pointer_cast<SumAggregationDescriptor>(windowDefinition->getWindowAggregation())) {
                         if (partialFinalAggregates.size() <= windowId) {
                             // initiate the partial aggregate of SumAggregationDescriptor aggregation
@@ -241,6 +245,7 @@ void WindowHandler::aggregateWindows(KeyType key, WindowSliceStore<PartialAggreg
                     } else {
                         NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
                     }
+                     */
                 } else {
                     NES_DEBUG("WindowHandler CC: condition not true");
                 }
