@@ -11,7 +11,7 @@
 #include <memory>
 namespace NES{
 
-template<typename InputType>
+template<typename InputType, std::enable_if_t<std::is_integral<InputType>::value> = 0>
 class ExecutableSumAggregation : public  ExecutableWindowAggregation<InputType, InputType, InputType>{
   public:
     ExecutableSumAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField): ExecutableWindowAggregation<InputType, InputType, InputType>(onField, asField){

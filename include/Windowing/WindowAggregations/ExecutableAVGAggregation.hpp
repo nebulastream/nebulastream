@@ -21,7 +21,7 @@ class AVGPartialType {
 
 typedef double AVGResultType;
 
-template<typename InputType>
+template<typename InputType, std::enable_if_t<std::is_integral<InputType>::value> = 0>
 class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType> {
   public:
     ExecutableAVGAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField) : ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>(onField, asField){};
@@ -37,7 +37,7 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
     * @param inputStruct
     * @param inputRef
     */
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override {
+    void compileLiftCombine(CompoundStatementPtr, BinaryOperatorStatement, StructDeclaration, BinaryOperatorStatement) override {
        NES_NOT_IMPLEMENTED();
     };
 
