@@ -1,8 +1,19 @@
 #ifndef NES_INCLUDE_WINDOWING_RUNTIME_WINDOWHANDLERIMPL_HPP_
 #define NES_INCLUDE_WINDOWING_RUNTIME_WINDOWHANDLERIMPL_HPP_
 
+#include <State/StateManager.hpp>
+#include <Windowing/Runtime/WindowManager.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowHandler.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/QueryManager.hpp>
+
+#include <QueryCompiler/PipelineStage.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <Util/ThreadNaming.hpp>
 namespace NES {
 
 /**

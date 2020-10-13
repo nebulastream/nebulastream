@@ -6,6 +6,11 @@
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <NodeEngine/MemoryLayout/RowLayout.hpp>
 
 namespace NES {
 

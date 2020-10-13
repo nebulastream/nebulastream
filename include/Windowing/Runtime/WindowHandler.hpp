@@ -7,38 +7,6 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
-#include <cstring>
-
-#include <State/StateManager.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/Runtime/WindowState.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
-#include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <atomic>
-#include <NodeEngine/QueryManager.hpp>
-#include <State/StateManager.hpp>
-#include <Util/Logger.hpp>
-#include <Util/ThreadNaming.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <Windowing/Runtime/WindowHandler.hpp>
-#include <Windowing/Runtime/WindowManager.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
-#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
-#include <atomic>
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -57,6 +25,12 @@ typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
 
 class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
+
+class MemoryLayout;
+typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
 
 template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
 class WindowHandlerImpl;

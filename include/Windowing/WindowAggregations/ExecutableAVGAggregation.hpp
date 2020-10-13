@@ -15,6 +15,7 @@ template<typename SumType>
 class AVGPartialType {
   public:
     explicit AVGPartialType(SumType sum) : sum(sum), count(1) {}
+    explicit AVGPartialType() : sum(0), count(1) {}
     SumType sum;
     int64_t count;
 };

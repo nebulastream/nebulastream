@@ -30,8 +30,7 @@ class WindowHandlerFactoryDetails {
         auto asField = windowDefinition->getWindowAggregation()->as();
         switch (windowDefinition->getWindowAggregation()->getType()) {
             case WindowAggregationDescriptor::AVG:
-                NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: AVG aggregation currently not supported");
-           //     return create<KeyType, InputType, AVGPartialType<InputType>, AVGResultType>(windowDefinition, ExecutableAVGAggregation<InputType>::create(onField, asField));
+                return create<KeyType, InputType, AVGPartialType<InputType>, AVGResultType>(windowDefinition, ExecutableAVGAggregation<InputType>::create(onField, asField));
             case WindowAggregationDescriptor::Count:
                 return create<KeyType, InputType, CountType, CountType>(windowDefinition, ExecutableCountAggregation<InputType>::create(onField, asField));
             case WindowAggregationDescriptor::Max:
