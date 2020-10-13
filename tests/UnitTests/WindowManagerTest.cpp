@@ -13,6 +13,7 @@
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 
 #include <Util/Logger.hpp>
 #include <cstdlib>
