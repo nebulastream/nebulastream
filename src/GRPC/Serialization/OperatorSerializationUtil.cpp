@@ -39,17 +39,11 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 
-//#ifdef ENABLE_OPC_BUILD
+#ifdef ENABLE_OPC_BUILD
 #include "../../../build/SerializableOperator.pb.h"
 #include <Nodes/Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
-//#endif
-
-//#ifdef ENABLE_OPC_BUILD
-#include "../../../build/SerializableOperator.pb.h"
-#include <Nodes/Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
-//#endif
+#endif
 
 namespace NES {
 
@@ -502,7 +496,9 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(zmqSerializedSourceDescriptor.release_sourceschema());
         return ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port());
-    } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor>()) {
+    }
+#ifdef ENABLE_OPC_BUILD
+    else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor>()) {
         // de-serialize opc source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as ZmqSourceDescriptor");
         auto opcSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor();
@@ -511,7 +507,9 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         auto schema = SchemaSerializationUtil::deserializeSchema(opcSerializedSourceDescriptor.release_sourceschema());
         UA_NodeId nodeId = UA_NODEID_STRING_ALLOC(opcSerializedSourceDescriptor.namespaceindex(), opcSerializedSourceDescriptor.identifier().c_str());
         return OPCSourceDescriptor::create(schema, opcSerializedSourceDescriptor.url(), &nodeId, opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password());
-    } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {
+    }
+#endif
+    else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {
         // de-serialize zmq source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as NetworkSourceDescriptor");
         auto networkSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor();
@@ -672,7 +670,9 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         return ZmqSinkDescriptor::create(serializedSinkDescriptor.host(), serializedSinkDescriptor.port(), serializedSinkDescriptor.isinternal());
-    } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor>()) {
+    }
+#ifdef ENABLE_OPC_BUILD
+    else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor>()) {
         // de-serialize opc sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as OPCSinkDescriptor");
         auto opcSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor();
@@ -680,6 +680,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         UA_NodeId nodeId = UA_NODEID_STRING_ALLOC(opcSerializedSinkDescriptor.namespaceindex(), opcSerializedSinkDescriptor.identifier().c_str());
         return OPCSinkDescriptor::create(opcSerializedSinkDescriptor.url(), &nodeId, opcSerializedSinkDescriptor.user(), opcSerializedSinkDescriptor.password());
     }
+#endif
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {
         // de-serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as NetworkSinkDescriptor");
