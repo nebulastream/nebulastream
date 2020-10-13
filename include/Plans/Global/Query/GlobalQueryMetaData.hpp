@@ -1,8 +1,8 @@
 #ifndef NES_GLOBALQUERYMETADATA_HPP
 #define NES_GLOBALQUERYMETADATA_HPP
 
-#include <Plans/Query/QueryId.hpp>
 #include <Plans/Global/Query/GlobalQueryId.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <memory>
 #include <set>
 #include <vector>
