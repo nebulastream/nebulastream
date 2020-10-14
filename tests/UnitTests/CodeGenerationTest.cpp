@@ -942,7 +942,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
 
     auto sum = SumAggregationDescriptor::on(Attribute("value"));
     auto windowDefinition = LogicalWindowDefinition::create(
-        input_schema->get("key"), sum,
+        Attribute("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, context1);
@@ -999,7 +999,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
 
     auto sum = SumAggregationDescriptor::on(Attribute("value"));
     auto windowDefinition = LogicalWindowDefinition::create(
-        schema->get("key"), sum,
+        Attribute("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, context1);
