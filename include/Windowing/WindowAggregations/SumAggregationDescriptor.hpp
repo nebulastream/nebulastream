@@ -14,7 +14,7 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
-    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField);
+    static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
     /*
      * @brief generate the code for lift and combine of the SumAggregationDescriptor aggregate
@@ -30,9 +30,11 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
 
     Type getType() override;
 
+    void inferStamp(SchemaPtr schema) override;
+
   private:
-    SumAggregationDescriptor(NES::AttributeFieldPtr onField);
-    SumAggregationDescriptor(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    SumAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    SumAggregationDescriptor(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 };
 }// namespace NES
 #endif//NES_SUM_HPP

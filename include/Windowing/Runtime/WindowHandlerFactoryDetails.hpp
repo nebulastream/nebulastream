@@ -30,15 +30,15 @@ class WindowHandlerFactoryDetails {
         auto asField = windowDefinition->getWindowAggregation()->as();
         switch (windowDefinition->getWindowAggregation()->getType()) {
             case WindowAggregationDescriptor::AVG:
-                return create<KeyType, InputType, AVGPartialType<InputType>, AVGResultType>(windowDefinition, ExecutableAVGAggregation<InputType>::create(onField, asField));
+                return create<KeyType, InputType, AVGPartialType<InputType>, AVGResultType>(windowDefinition, ExecutableAVGAggregation<InputType>::create());
             case WindowAggregationDescriptor::Count:
-                return create<KeyType, InputType, CountType, CountType>(windowDefinition, ExecutableCountAggregation<InputType>::create(onField, asField));
+                return create<KeyType, InputType, CountType, CountType>(windowDefinition, ExecutableCountAggregation<InputType>::create());
             case WindowAggregationDescriptor::Max:
-                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMaxAggregation<InputType>::create(onField, asField));
+                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMaxAggregation<InputType>::create());
             case WindowAggregationDescriptor::Min:
-                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMinAggregation<InputType>::create(onField, asField));
+                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMinAggregation<InputType>::create());
             case WindowAggregationDescriptor::Sum:
-                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableSumAggregation<InputType>::create(onField, asField));;
+                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableSumAggregation<InputType>::create());;
         }
         NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: AVG aggregation currently not supported");
     };
@@ -46,7 +46,7 @@ class WindowHandlerFactoryDetails {
     template<typename KeyType>
     static WindowHandlerPtr createWindowHandler(LogicalWindowDefinitionPtr windowDefinition) {
         auto logicalAggregationInput = windowDefinition->getWindowAggregation()->on();
-        auto physicalInputType = DefaultPhysicalTypeFactory().getPhysicalType(logicalAggregationInput->getDataType());
+        auto physicalInputType = DefaultPhysicalTypeFactory().getPhysicalType(logicalAggregationInput->getStamp());
         if (physicalInputType->isBasicType()) {
             auto basicInputType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalInputType);
             switch (basicInputType->getNativeType()) {

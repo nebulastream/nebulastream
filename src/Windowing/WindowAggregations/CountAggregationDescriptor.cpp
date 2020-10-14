@@ -7,33 +7,33 @@
 
 namespace NES {
 
-CountAggregationDescriptor::CountAggregationDescriptor(NES::AttributeFieldPtr field) : WindowAggregationDescriptor(std::move(field)) {}
-CountAggregationDescriptor::CountAggregationDescriptor(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
+CountAggregationDescriptor::CountAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(std::move(field)) {}
+CountAggregationDescriptor::CountAggregationDescriptor(FieldAccessExpressionNodePtr field, FieldAccessExpressionNodePtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
 
-WindowAggregationPtr CountAggregationDescriptor::create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
+WindowAggregationPtr CountAggregationDescriptor::create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField) {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr CountAggregationDescriptor::on(ExpressionItem onField) {
-    auto keyExpression = onField.getExpressionNode();
-    if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
-    }
-    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-    auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(keyField));
+WindowAggregationPtr CountAggregationDescriptor::on() {
+    auto countField =  FieldAccessExpressionNode::create(DataTypeFactory::createInt64(),"count");
+    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
 }
 
 void CountAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCode,
                                BinaryOperatorStatement partialRef,
                                StructDeclaration inputStruct,
                                BinaryOperatorStatement) {
-    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->name);
+    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->getFieldName());
     auto increment = ++partialRef;
     auto updatedPartial = partialRef.assign(increment);
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
 }
 WindowAggregationDescriptor::Type CountAggregationDescriptor::getType() {
     return Count;
+}
+
+void CountAggregationDescriptor::inferStamp(SchemaPtr) {
+    // a count aggregation is always on an int 64
+    asField->setStamp(DataTypeFactory::createInt64());
 }
 }// namespace NES

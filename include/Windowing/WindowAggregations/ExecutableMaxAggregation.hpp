@@ -14,29 +14,14 @@ namespace NES{
 template<typename InputType>
 class ExecutableMaxAggregation : public  ExecutableWindowAggregation<InputType, InputType, InputType>{
   public:
-    ExecutableMaxAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField): ExecutableWindowAggregation<InputType, InputType, InputType>(onField, asField){
+    ExecutableMaxAggregation(): ExecutableWindowAggregation<InputType, InputType, InputType>(){
     };
 
-    static std::shared_ptr<ExecutableWindowAggregation<InputType, InputType, InputType>> create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField){
-        return std::make_shared<ExecutableMaxAggregation<InputType>>(std::move(onField), std::move(asField));
+    static std::shared_ptr<ExecutableWindowAggregation<InputType, InputType, InputType>> create(){
+        return std::make_shared<ExecutableMaxAggregation<InputType>>();
     };
 
-    /*
-    * @brief generate the code for lift and combine of the MaxAggregationDescriptor aggregate
-    * @param currentCode
-    * @param expressionStatement
-    * @param inputStruct
-    * @param inputRef
-    */
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override{
-            auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->name);
-            auto ifStatement = IF(
-                partialRef < inputRef.accessRef(VarRefStatement(varDeclInput)),
-                assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
-            currentCode->addStatement(ifStatement.createCopy());
-    };
-
-    /*
+     /*
      * @brief maps the input element to an element PartialAggregateType
      * @param input value of the element
      * @return the element that mapped to PartialAggregateType

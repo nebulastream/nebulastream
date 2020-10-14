@@ -55,7 +55,7 @@ class TestAggregation : public WindowAggregationDescriptor {
 };
 
 TEST_F(WindowManagerTest, testSumAggregation) {
-    auto aggregation = ExecutableSumAggregation<int64_t>::create(nullptr, nullptr);
+    auto aggregation = ExecutableSumAggregation<int64_t>::create();
     auto partial = aggregation->lift(1L);
     auto partial2 = aggregation->lift(2L);
     auto combined = aggregation->combine(partial, partial2);
@@ -64,7 +64,7 @@ TEST_F(WindowManagerTest, testSumAggregation) {
 }
 
 TEST_F(WindowManagerTest, testMaxAggregation) {
-    auto aggregation = ExecutableMaxAggregation<int64_t>::create(nullptr, nullptr);
+    auto aggregation = ExecutableMaxAggregation<int64_t>::create();
         auto partial = aggregation->lift(1L);
         auto partial2 = aggregation->lift(4L);
         auto combined = aggregation->combine(partial, partial2);
@@ -73,7 +73,7 @@ TEST_F(WindowManagerTest, testMaxAggregation) {
 }
 
 TEST_F(WindowManagerTest, testMinAggregation) {
-    auto aggregation = ExecutableMinAggregation<int64_t>::create(nullptr, nullptr);
+    auto aggregation = ExecutableMinAggregation<int64_t>::create();
 
         auto partial = aggregation->lift(1L);
         auto partial2 = aggregation->lift(4L);
@@ -84,7 +84,7 @@ TEST_F(WindowManagerTest, testMinAggregation) {
 }
 
 TEST_F(WindowManagerTest, testCountAggregation) {
-    auto aggregation = ExecutableCountAggregation<int64_t>::create(nullptr, nullptr);
+    auto aggregation = ExecutableCountAggregation<int64_t>::create();
         auto partial = aggregation->lift(1L);
         auto partial2 = aggregation->lift(4L);
         auto combined = aggregation->combine(partial, partial2);
@@ -94,7 +94,7 @@ TEST_F(WindowManagerTest, testCountAggregation) {
 }
 
 TEST_F(WindowManagerTest, testCheckSlice) {
-    auto maxAggregation = ExecutableAVGAggregation<int64_t>::create(nullptr, nullptr);
+    auto maxAggregation = ExecutableAVGAggregation<int64_t>::create();
 
     auto store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = SumAggregationDescriptor::on(nullptr);
@@ -128,7 +128,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
         LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType()));
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
-    auto w = WindowHandlerFactory::create<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, ExecutableSumAggregation<uint64_t>::create(nullptr, nullptr));
+    auto w = WindowHandlerFactory::create<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, ExecutableSumAggregation<uint64_t>::create());
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
@@ -199,7 +199,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto windowDef = std::make_shared<LogicalWindowDefinition>(
         LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType()));
 
-    auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create(nullptr, nullptr));
+    auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
@@ -268,7 +268,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto windowDef = std::make_shared<LogicalWindowDefinition>(
         LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType()));
 
-    auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create(nullptr, nullptr));
+    auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:

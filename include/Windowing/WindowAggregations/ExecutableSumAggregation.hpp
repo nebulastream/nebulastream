@@ -14,26 +14,11 @@ namespace NES{
 template<typename InputType>
 class ExecutableSumAggregation : public  ExecutableWindowAggregation<InputType, InputType, InputType>{
   public:
-    ExecutableSumAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField): ExecutableWindowAggregation<InputType, InputType, InputType>(onField, asField){
+    ExecutableSumAggregation(): ExecutableWindowAggregation<InputType, InputType, InputType>(){
     };
 
-    static std::shared_ptr<ExecutableWindowAggregation<InputType, InputType, InputType>> create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField){
-        return std::make_shared<ExecutableSumAggregation<InputType>>(std::move(onField), std::move(asField));
-    };
-
-    /*
-    * @brief generate the code for lift and combine of the MaxAggregationDescriptor aggregate
-    * @param currentCode
-    * @param expressionStatement
-    * @param inputStruct
-    * @param inputRef
-    */
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override{
-        auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->name);
-        auto ifStatement = IF(
-            expressionStatement > inputRef.accessRef(VarRefStatement(varDeclInput)),
-            assign(expressionStatement, inputRef.accessRef(VarRefStatement(varDeclInput))));
-        currentCode->addStatement(ifStatement.createCopy());
+    static std::shared_ptr<ExecutableWindowAggregation<InputType, InputType, InputType>> create(){
+        return std::make_shared<ExecutableSumAggregation<InputType>>();
     };
 
     /*
