@@ -50,8 +50,7 @@ Query& Query::windowByKey(ExpressionItem onKey, const WindowTypePtr windowType, 
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-    auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    auto windowDefinition = LogicalWindowDefinition::create(keyField, aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1);
+    auto windowDefinition = LogicalWindowDefinition::create(fieldAccess, aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(windowOperator);

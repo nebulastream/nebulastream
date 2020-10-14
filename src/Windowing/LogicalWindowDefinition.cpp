@@ -8,7 +8,7 @@ LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggr
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 
-LogicalWindowDefinition::LogicalWindowDefinition(AttributeFieldPtr onKey,
+LogicalWindowDefinition::LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
                                    WindowAggregationPtr windowAggregation,
                                    WindowTypePtr windowType,
                                    DistributionCharacteristicPtr distChar,
@@ -25,7 +25,7 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(WindowAggregationPtr 
     return std::make_shared<LogicalWindowDefinition>(windowAggregation, windowType, distChar);
 }
 
-LogicalWindowDefinitionPtr LogicalWindowDefinition::create(AttributeFieldPtr onKey, WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges) {
+LogicalWindowDefinitionPtr LogicalWindowDefinition::create(FieldAccessExpressionNodePtr onKey, WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges) {
     return std::make_shared<LogicalWindowDefinition>(onKey, windowAggregation, windowType, distChar, numberOfInputEdges);
 }
 
@@ -48,7 +48,7 @@ WindowAggregationPtr LogicalWindowDefinition::getWindowAggregation() {
 WindowTypePtr LogicalWindowDefinition::getWindowType() {
     return windowType;
 }
-AttributeFieldPtr LogicalWindowDefinition::getOnKey() {
+FieldAccessExpressionNodePtr LogicalWindowDefinition::getOnKey() {
     return onKey;
 }
 void LogicalWindowDefinition::setWindowAggregation(WindowAggregationPtr windowAggregation) {
@@ -57,7 +57,7 @@ void LogicalWindowDefinition::setWindowAggregation(WindowAggregationPtr windowAg
 void LogicalWindowDefinition::setWindowType(WindowTypePtr windowType) {
     this->windowType = std::move(windowType);
 }
-void LogicalWindowDefinition::setOnKey(AttributeFieldPtr onKey) {
+void LogicalWindowDefinition::setOnKey(FieldAccessExpressionNodePtr onKey) {
     this->onKey = std::move(onKey);
 }
 

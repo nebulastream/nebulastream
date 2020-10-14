@@ -27,6 +27,7 @@
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES {
 
@@ -408,7 +409,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(LogicalWindowDefinitionPtr wi
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration =
-            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->getOnKey()->name);
+            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->getOnKey()->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
                                                  .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                      VarRef(

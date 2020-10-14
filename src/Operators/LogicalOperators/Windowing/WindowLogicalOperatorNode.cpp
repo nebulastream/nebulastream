@@ -49,31 +49,19 @@ bool WindowLogicalOperatorNode::inferSchema() {
 
     auto windowType = windowDefinition->getWindowType();
     if (windowDefinition->isKeyed()) {
-        // check if key exist on input schema
-        auto key = windowDefinition->getOnKey();
-        //if (!inputSchema->get(key->name)->toString().empty()) {
-        if (!inputSchema->has(key->name)) {
-            NES_ERROR("inferSchema() Window Operator: key  field " << key->name << " does not exist!");
-            return false;
-        }
+        // infer the data type of the key field.
+        windowDefinition->getOnKey()->inferStamp(inputSchema);
     }
-    // check if aggregation field exist
+    // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    if (!inputSchema->has(windowAggregation->on()->getFieldName())) {
-        NES_ERROR("Window Operator: aggregation field dose not exist!");
-        return false;
-    }
-
-    // create result schema
     windowAggregation->inferStamp(inputSchema);
-    //    outputSchema->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
+
     outputSchema = Schema::create()
                        ->addField(createField("start", UINT64))
                        ->addField(createField("end", UINT64))
-                       ->addField(createField("key", INT64))
+                       ->addField(AttributeField::create("key", windowAggregation->on()->getStamp()))
                        ->addField(AttributeField::create(windowAggregation->as()->getFieldName(), windowAggregation->on()->getStamp()));
-    //    outputSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField("value", INT64);
-    //    outputSchema->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
+
     return true;
 }
 

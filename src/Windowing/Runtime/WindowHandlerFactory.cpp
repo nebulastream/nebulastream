@@ -7,7 +7,7 @@ namespace NES{
 WindowHandlerPtr WindowHandlerFactory::createWindowHandler(LogicalWindowDefinitionPtr windowDefinition) {
 
         if (windowDefinition->isKeyed()) {
-            auto logicalKeyType = windowDefinition->getOnKey()->getDataType();
+            auto logicalKeyType = windowDefinition->getOnKey()->getStamp();
             auto physicalKeyType = DefaultPhysicalTypeFactory().getPhysicalType(logicalKeyType);
             if (physicalKeyType->isBasicType()) {
                 auto basicKeyType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalKeyType);
