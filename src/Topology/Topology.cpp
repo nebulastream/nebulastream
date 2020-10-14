@@ -278,7 +278,7 @@ std::string Topology::toString() {
         topologyInfo << nodeToPrint.first->toString() << std::endl;
 
         for (auto& child : nodeToPrint.first->getChildren()) {
-            parentToPrint.emplace_front(child->as<TopologyNode>(), nodeToPrint.second+1);
+            parentToPrint.emplace_front(child->as<TopologyNode>(), nodeToPrint.second + 1);
         }
     }
     return topologyInfo.str();
