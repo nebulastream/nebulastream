@@ -2,7 +2,6 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
