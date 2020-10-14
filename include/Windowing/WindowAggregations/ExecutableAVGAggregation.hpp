@@ -25,21 +25,10 @@ typedef double AVGResultType;
 template<typename InputType>
 class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType> {
   public:
-    ExecutableAVGAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField) : ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>(onField, asField){};
+    ExecutableAVGAggregation() : ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>(){};
 
-    static std::shared_ptr<ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>> create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
-        return std::make_shared<ExecutableAVGAggregation<InputType>>(std::move(onField), std::move(asField));
-    };
-
-    /*
-    * @brief generate the code for lift and combine of the MaxAggregationDescriptor aggregate
-    * @param currentCode
-    * @param expressionStatement
-    * @param inputStruct
-    * @param inputRef
-    */
-    void compileLiftCombine(CompoundStatementPtr, BinaryOperatorStatement, StructDeclaration, BinaryOperatorStatement) override {
-       NES_NOT_IMPLEMENTED();
+    static std::shared_ptr<ExecutableWindowAggregation<InputType, AVGPartialType<InputType>, AVGResultType>> create() {
+        return std::make_shared<ExecutableAVGAggregation<InputType>>();
     };
 
     /*

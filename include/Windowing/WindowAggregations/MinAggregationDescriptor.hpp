@@ -15,7 +15,7 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
-    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField);
+    static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
     /*
      * @brief generate the code for lift and combine of MinAggregationDescriptor SumAggregationDescriptor aggregate
@@ -27,10 +27,11 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
 
     Type getType() override;
+    void inferStamp(SchemaPtr schema) override;
 
   private:
-    MinAggregationDescriptor(NES::AttributeFieldPtr onField);
-    MinAggregationDescriptor(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    MinAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    MinAggregationDescriptor(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 };
 }// namespace NES
 #endif//NES_MIN_HPP

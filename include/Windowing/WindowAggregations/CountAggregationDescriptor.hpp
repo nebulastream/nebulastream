@@ -13,9 +13,9 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
     /**
    * Factory method to creates a CountAggregationDescriptor aggregation on a particular field.
    */
-    static WindowAggregationPtr on(ExpressionItem onField);
+    static WindowAggregationPtr on();
 
-    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField);
+    static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
     /*
      * @brief generate the code for lift and combine of the CountAggregationDescriptor aggregate
@@ -27,9 +27,11 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
     Type getType() override;
 
+    void inferStamp(SchemaPtr schema) override;
+
   private:
-    CountAggregationDescriptor(NES::AttributeFieldPtr onField);
-    CountAggregationDescriptor(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    CountAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    CountAggregationDescriptor(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 };
 }// namespace NES
 #endif//NES_COUNT_HPP

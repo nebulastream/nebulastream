@@ -3,26 +3,26 @@
 
 namespace NES {
 
-WindowAggregationDescriptor::WindowAggregationDescriptor(const NES::AttributeFieldPtr onField) : onField(onField),
-                                                                             asField(const_cast<AttributeFieldPtr&>(onField)) {
+WindowAggregationDescriptor::WindowAggregationDescriptor(const FieldAccessExpressionNodePtr onField) : onField(onField),
+                                                                             asField(onField) {
 }
 
-WindowAggregationDescriptor::WindowAggregationDescriptor(const NES::AttributeFieldPtr onField, const NES::AttributeFieldPtr asField) : onField(onField), asField(asField) {
+WindowAggregationDescriptor::WindowAggregationDescriptor(const FieldAccessExpressionNodePtr onField, const FieldAccessExpressionNodePtr asField) : onField(onField), asField(asField) {
 }
 
-WindowAggregationDescriptor& WindowAggregationDescriptor::as(const NES::AttributeFieldPtr asField) {
+WindowAggregationDescriptor& WindowAggregationDescriptor::as(const FieldAccessExpressionNodePtr asField) {
     this->asField = asField;
     return *this;
 }
 
-AttributeFieldPtr WindowAggregationDescriptor::as() {
+FieldAccessExpressionNodePtr WindowAggregationDescriptor::as() {
     if (asField == nullptr) {
         return onField;
     }
     return asField;
 }
 
-AttributeFieldPtr WindowAggregationDescriptor::on() {
+FieldAccessExpressionNodePtr WindowAggregationDescriptor::on() {
     return onField;
 }
 }// namespace NES

@@ -16,26 +16,11 @@ typedef uint64_t CountType;
 template<typename InputType>
 class ExecutableCountAggregation : public  ExecutableWindowAggregation<InputType, CountType, CountType>{
   public:
-    ExecutableCountAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField): ExecutableWindowAggregation<InputType, CountType, CountType>(onField, asField){
+    ExecutableCountAggregation(): ExecutableWindowAggregation<InputType, CountType, CountType>(){
     };
 
-    static std::shared_ptr<ExecutableWindowAggregation<InputType, CountType, CountType>> create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField){
-        return std::make_shared<ExecutableCountAggregation<InputType>>(std::move(onField), std::move(asField));
-    };
-
-    /*
-    * @brief generate the code for lift and combine of the MaxAggregationDescriptor aggregate
-    * @param currentCode
-    * @param expressionStatement
-    * @param inputStruct
-    * @param inputRef
-    */
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override{
-            auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->name);
-            auto ifStatement = IF(
-                partialRef < inputRef.accessRef(VarRefStatement(varDeclInput)),
-                assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
-            currentCode->addStatement(ifStatement.createCopy());
+    static std::shared_ptr<ExecutableWindowAggregation<InputType, CountType, CountType>> create(){
+        return std::make_shared<ExecutableCountAggregation<InputType>>();
     };
 
     /*

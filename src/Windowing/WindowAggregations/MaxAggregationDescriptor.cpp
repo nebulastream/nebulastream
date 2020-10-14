@@ -8,11 +8,11 @@
 
 namespace NES {
 
-MaxAggregationDescriptor::MaxAggregationDescriptor(NES::AttributeFieldPtr field) : WindowAggregationDescriptor(std::move(field)) {}
+MaxAggregationDescriptor::MaxAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(std::move(field)) {}
 
-MaxAggregationDescriptor::MaxAggregationDescriptor(AttributeFieldPtr field, AttributeFieldPtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
+MaxAggregationDescriptor::MaxAggregationDescriptor(FieldAccessExpressionNodePtr field, FieldAccessExpressionNodePtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
 
-WindowAggregationPtr MaxAggregationDescriptor::create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField) {
+WindowAggregationPtr MaxAggregationDescriptor::create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField) {
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
@@ -22,15 +22,14 @@ WindowAggregationPtr MaxAggregationDescriptor::on(ExpressionItem onField) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-    auto keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(keyField));
+    return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));
 }
 
 void MaxAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCode,
-                             BinaryOperatorStatement partialRef,
-                             StructDeclaration inputStruct,
-                             BinaryOperatorStatement inputRef) {
-    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->name);
+                                                  BinaryOperatorStatement partialRef,
+                                                  StructDeclaration inputStruct,
+                                                  BinaryOperatorStatement inputRef) {
+    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->getFieldName());
     auto ifStatement = IF(
         partialRef < inputRef.accessRef(VarRefStatement(varDeclInput)),
         assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
@@ -38,5 +37,13 @@ void MaxAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCo
 }
 WindowAggregationDescriptor::Type MaxAggregationDescriptor::getType() {
     return Max;
+}
+void MaxAggregationDescriptor::inferStamp(SchemaPtr schema) {
+    // We first infer the stamp of the input field and set the output stamp as the same.
+    onField->inferStamp(schema);
+    if (!onField->getStamp()->isNumeric()) {
+        NES_FATAL_ERROR("MaxAggregationDescriptor: aggregations on non numeric fields is not supported.");
+    }
+    asField->setStamp(onField->getStamp());
 }
 }// namespace NES

@@ -15,7 +15,7 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
-    static WindowAggregationPtr create(NES::AttributeFieldPtr onField, NES::AttributeFieldPtr asField);
+    static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
     /*
      * @brief generate the code for lift and combine of the MaxAggregationDescriptor aggregate
      * @param currentCode
@@ -27,9 +27,11 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
 
     Type getType() override;
 
+    void inferStamp(SchemaPtr schema) override;
+
   private:
-    MaxAggregationDescriptor(NES::AttributeFieldPtr onField);
-    MaxAggregationDescriptor(AttributeFieldPtr onField, AttributeFieldPtr asField);
+    MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 };
 }// namespace NES
 #endif//NES_MAX_HPP

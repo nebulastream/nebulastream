@@ -13,13 +13,6 @@ template<class InputType, class PartialAggregateType, class FinalAggregateType>
 class ExecutableWindowAggregation{
 
   public:
-    /**
-    * Generates code for the particular window aggregate.
-    */
-    virtual void compileLiftCombine(CompoundStatementPtr currentCode,
-                                    BinaryOperatorStatement expressionStatement,
-                                    StructDeclaration inputStruct,
-                                    BinaryOperatorStatement inputRef) = 0;
 
     virtual PartialAggregateType lift(InputType input)  = 0;
 
@@ -27,26 +20,6 @@ class ExecutableWindowAggregation{
 
     virtual FinalAggregateType lower(PartialAggregateType partialAggregate) = 0;
 
-    /**
-    * Returns the result field of the aggregation
-    * @return
-    */
-    AttributeFieldPtr as(){
-        return asField;
-    };
-
-    /**
-    * Returns the result field of the aggregation
-    * @return
-    */
-    AttributeFieldPtr on(){
-        return onField;
-    }
-
-  protected:
-    ExecutableWindowAggregation(AttributeFieldPtr onField, AttributeFieldPtr asField): onField(onField), asField(asField){};
-    const AttributeFieldPtr onField;
-    AttributeFieldPtr asField;
 };
 
 }

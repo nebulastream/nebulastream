@@ -209,8 +209,8 @@ message SerializableOperator{
         COUNT = 3;
       }
       Type type = 1;
-      string onField = 2;
-      string asField = 3;
+      SerializableExpression onField = 2;
+      SerializableExpression asField = 3;
     }
     google.protobuf.Any windowType = 1;
     Aggregation windowAggregation = 2;

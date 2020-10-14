@@ -1,5 +1,6 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -58,15 +59,19 @@ bool WindowLogicalOperatorNode::inferSchema() {
     }
     // check if aggregation field exist
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    if (!inputSchema->has(windowAggregation->on()->name)) {
+    if (!inputSchema->has(windowAggregation->on()->getFieldName())) {
         NES_ERROR("Window Operator: aggregation field dose not exist!");
         return false;
     }
 
     // create result schema
-    auto aggregationField = inputSchema->get(windowAggregation->on()->name);
+    windowAggregation->inferStamp(inputSchema);
     //    outputSchema->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
-    outputSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
+    outputSchema = Schema::create()
+                       ->addField(createField("start", UINT64))
+                       ->addField(createField("end", UINT64))
+                       ->addField(createField("key", INT64))
+                       ->addField(AttributeField::create(windowAggregation->as()->getFieldName(), windowAggregation->on()->getStamp()));
     //    outputSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", INT64))->addField("value", INT64);
     //    outputSchema->addField(AttributeField::create(windowAggregation->as()->name, aggregationField->dataType));
     return true;
