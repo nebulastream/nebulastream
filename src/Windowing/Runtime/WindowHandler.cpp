@@ -2,6 +2,7 @@
 #include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/Runtime/WindowHandler.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <atomic>
@@ -11,14 +12,14 @@
 
 namespace NES {
 
-WindowHandler::WindowHandler(NES::LogicalWindowDefinitionPtr windowDefinitionPtr)
-    : windowDefinition(std::move(windowDefinitionPtr)), originId(0) {
+WindowHandler::WindowHandler(NES::LogicalWindowDefinitionPtr windowDefinition)
+    : std::enable_shared_from_this<WindowHandler>(), windowDefinition(std::move(windowDefinition)), originId(0) {
     this->thread.reset();
     windowTupleSchema = Schema::create()
                             ->addField(createField("start", UINT64))
                             ->addField(createField("end", UINT64))
-                            ->addField(createField("key", INT64))
-                            ->addField("value", INT64);
+                            ->addField("key", this->windowDefinition->getOnKey()->getStamp())
+                            ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
     windowTupleLayout = createRowLayout(windowTupleSchema);
 }
 

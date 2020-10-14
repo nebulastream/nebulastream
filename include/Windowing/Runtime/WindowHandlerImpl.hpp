@@ -23,8 +23,9 @@ template<class KeyType, class InputType, class PartialAggregateType, class Final
 class WindowHandlerImpl : public WindowHandler {
   public:
     WindowHandlerImpl() = default;
-    WindowHandlerImpl(LogicalWindowDefinitionPtr windowDefinition,
-                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) : WindowHandler(windowDefinition), windowAggregation(windowAggregation){};
+    WindowHandlerImpl(LogicalWindowDefinitionPtr w,
+                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) : WindowHandler(w), windowAggregation(windowAggregation){
+                                                                                                                                                                              };
 
     bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId) override {
         this->queryManager = queryManager;
@@ -214,7 +215,7 @@ class WindowHandlerImpl : public WindowHandler {
             sleep(1);
 
             NES_DEBUG("WindowHandler: check widow trigger origin id=" << originId);
-            /*
+
             std::string triggerType;
             if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
                 triggerType = "Combining";
@@ -246,7 +247,7 @@ class WindowHandlerImpl : public WindowHandler {
                     tupleBuffer,
                     this->nextPipeline);
             }
-             */
+
         }
     }
 

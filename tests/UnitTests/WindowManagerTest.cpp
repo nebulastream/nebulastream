@@ -12,8 +12,8 @@
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 #include <Util/Logger.hpp>
 #include <cstdlib>
@@ -65,42 +65,37 @@ TEST_F(WindowManagerTest, testSumAggregation) {
 
 TEST_F(WindowManagerTest, testMaxAggregation) {
     auto aggregation = ExecutableMaxAggregation<int64_t>::create();
-        auto partial = aggregation->lift(1L);
-        auto partial2 = aggregation->lift(4L);
-        auto combined = aggregation->combine(partial, partial2);
-        auto result = aggregation->lower(combined);
-        ASSERT_EQ(result, 4);
+    auto partial = aggregation->lift(1L);
+    auto partial2 = aggregation->lift(4L);
+    auto combined = aggregation->combine(partial, partial2);
+    auto result = aggregation->lower(combined);
+    ASSERT_EQ(result, 4);
 }
 
 TEST_F(WindowManagerTest, testMinAggregation) {
     auto aggregation = ExecutableMinAggregation<int64_t>::create();
 
-        auto partial = aggregation->lift(1L);
-        auto partial2 = aggregation->lift(4L);
-        auto combined = aggregation->combine(partial, partial2);
-        auto result = aggregation->lower(combined);
-        ASSERT_EQ(result, 1);
-
+    auto partial = aggregation->lift(1L);
+    auto partial2 = aggregation->lift(4L);
+    auto combined = aggregation->combine(partial, partial2);
+    auto result = aggregation->lower(combined);
+    ASSERT_EQ(result, 1);
 }
 
 TEST_F(WindowManagerTest, testCountAggregation) {
     auto aggregation = ExecutableCountAggregation<int64_t>::create();
-        auto partial = aggregation->lift(1L);
-        auto partial2 = aggregation->lift(4L);
-        auto combined = aggregation->combine(partial, partial2);
-        auto result = aggregation->lower(combined);
-        ASSERT_EQ(result, 2);
-
+    auto partial = aggregation->lift(1L);
+    auto partial2 = aggregation->lift(4L);
+    auto combined = aggregation->combine(partial, partial2);
+    auto result = aggregation->lower(combined);
+    ASSERT_EQ(result, 2);
 }
 
 TEST_F(WindowManagerTest, testCheckSlice) {
-    auto maxAggregation = ExecutableAVGAggregation<int64_t>::create();
-
     auto store = new WindowSliceStore<int64_t>(0L);
-    auto aggregation = SumAggregationDescriptor::on(nullptr);
+    auto aggregation = SumAggregationDescriptor::on(Attribute("value"));
 
-    auto windowDef = std::make_shared<LogicalWindowDefinition>(
-        LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType()));
+    auto windowDef = LogicalWindowDefinition::create(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType());
 
     auto windowManager = new WindowManager(windowDef);
     uint64_t ts = 10;
@@ -122,10 +117,9 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
-    auto aggregation = SumAggregationDescriptor::on(Attribute("id"));
+    auto aggregation = SumAggregationDescriptor::on(Attribute("id", UINT64));
 
-    auto windowDef = std::make_shared<LogicalWindowDefinition>(
-        LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType()));
+    auto windowDef = LogicalWindowDefinition::create(Attribute("key", UINT64), aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
     auto w = WindowHandlerFactory::create<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, ExecutableSumAggregation<uint64_t>::create());
@@ -146,10 +140,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     };
     auto executable = std::make_shared<MockedExecutablePipeline>();
     auto context = std::make_shared<MockedPipelineExecutionContext>();
-    auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
+    auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr, w);
     w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0);
 
-    auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w->getWindowState();
+    auto windowState = (StateVariable<uint64_t, WindowSliceStore<uint64_t>*>*) w->getWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();
@@ -173,7 +167,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto typedWindowHandler = w->as<int64_t, int64_t, int64_t, int64_t>();
+    auto typedWindowHandler = w->as<uint64_t, uint64_t, uint64_t, uint64_t>();
     typedWindowHandler->aggregateWindows(10, store, windowDef, buf);
     typedWindowHandler->aggregateWindows(10, store, windowDef, buf);
 
@@ -194,10 +188,9 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
-    auto aggregation = SumAggregationDescriptor::on(Attribute("id"));
+    auto aggregation = SumAggregationDescriptor::on(Attribute("id", INT64));
 
-    auto windowDef = std::make_shared<LogicalWindowDefinition>(
-        LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType()));
+    auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType(),0);
 
     auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
 
@@ -221,52 +214,52 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0);
 
     auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w->getWindowState();
-    auto keyRef = windowState->get(10);
-    keyRef.valueOrDefault(0);
-    auto store = keyRef.value();
+      auto keyRef = windowState->get(10);
+      keyRef.valueOrDefault(0);
+      auto store = keyRef.value();
 
-    uint64_t ts = 7;
-    w->updateAllMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store);
-    auto sliceIndex = store->getSliceIndexByTs(ts);
-    auto& aggregates = store->getPartialAggregates();
-    aggregates[sliceIndex]++;
-    store->setLastWatermark(7);
+      uint64_t ts = 7;
+      w->updateAllMaxTs(ts, 0);
+      w->getWindowManager()->sliceStream(ts, store);
+      auto sliceIndex = store->getSliceIndexByTs(ts);
+      auto& aggregates = store->getPartialAggregates();
+      aggregates[sliceIndex]++;
+      store->setLastWatermark(7);
 
-    ts = 14;
-    w->updateAllMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store);
-    sliceIndex = store->getSliceIndexByTs(ts);
-    aggregates = store->getPartialAggregates();
-    aggregates[sliceIndex]++;
-    std::cout << aggregates[sliceIndex] << std::endl;
+      ts = 14;
+      w->updateAllMaxTs(ts, 0);
+      w->getWindowManager()->sliceStream(ts, store);
+      sliceIndex = store->getSliceIndexByTs(ts);
+      aggregates = store->getPartialAggregates();
+      aggregates[sliceIndex]++;
+      std::cout << aggregates[sliceIndex] << std::endl;
 
-    ASSERT_EQ(aggregates[sliceIndex], 1);
+      ASSERT_EQ(aggregates[sliceIndex], 1);
 
-    auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto typedWindowHandler = w->as<int64_t, int64_t, int64_t, int64_t>();
-    typedWindowHandler->aggregateWindows(10, store, windowDef, buf);
-    typedWindowHandler->aggregateWindows(11, store, windowDef, buf);//this call should not change anything
+     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
+     auto typedWindowHandler = w->as<int64_t, int64_t, int64_t, int64_t>();
+     typedWindowHandler->aggregateWindows(10, store, windowDef, buf);
+     typedWindowHandler->aggregateWindows(11, store, windowDef, buf);//this call should not change anything
 
-    ASSERT_NE(buf.getBuffer(), nullptr);
+     ASSERT_NE(buf.getBuffer(), nullptr);
 
-    uint64_t* tuples = (uint64_t*) buf.getBuffer();
-    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
+        uint64_t* tuples = (uint64_t*) buf.getBuffer();
+        std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
 
-    ASSERT_EQ(tuples[0], 0);
-    ASSERT_EQ(tuples[1], 10);
-    ASSERT_EQ(tuples[2], 10);
-    ASSERT_EQ(tuples[3], 1);
+        ASSERT_EQ(tuples[0], 0);
+        ASSERT_EQ(tuples[1], 10);
+        ASSERT_EQ(tuples[2], 10);
+        ASSERT_EQ(tuples[3], 1);
+
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
-    auto aggregation = SumAggregationDescriptor::on(Attribute("id"));
+    auto aggregation = SumAggregationDescriptor::on(Attribute("id", INT64));
 
-    auto windowDef = std::make_shared<LogicalWindowDefinition>(
-        LogicalWindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType()));
+    auto windowDef =        LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType(),0);
 
     auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
 

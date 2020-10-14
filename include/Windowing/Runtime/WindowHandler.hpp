@@ -35,7 +35,7 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
 class WindowHandlerImpl;
 
-class WindowHandler : std::enable_shared_from_this<WindowHandler>{
+class WindowHandler : public std::enable_shared_from_this<WindowHandler>{
 
   public:
 
