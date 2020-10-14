@@ -886,7 +886,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
 
     auto sum = SumAggregationDescriptor::on(Attribute("value"));
     auto windowDefinition = LogicalWindowDefinition::create(
-        input_schema->get("key"), sum,
+        Attribute("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, context1);
