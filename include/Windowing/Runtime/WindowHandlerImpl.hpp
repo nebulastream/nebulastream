@@ -213,6 +213,8 @@ class WindowHandlerImpl : public WindowHandler {
         while (running) {
             sleep(1);
 
+            NES_DEBUG("WindowHandler: check widow trigger origin id=" << originId);
+            /*
             std::string triggerType;
             if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
                 triggerType = "Combining";
@@ -244,6 +246,7 @@ class WindowHandlerImpl : public WindowHandler {
                     tupleBuffer,
                     this->nextPipeline);
             }
+             */
         }
     }
 

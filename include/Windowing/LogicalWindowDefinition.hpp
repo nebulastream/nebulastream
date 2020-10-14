@@ -52,6 +52,19 @@ class LogicalWindowDefinition {
                                       uint64_t numberOfInputEdges);
 
     /**
+    * @brief Create a new window definition for a keyed window
+    * @param windowAggregation
+    * @param windowType
+    * @return Window Definition
+    */
+    static LogicalWindowDefinitionPtr create(ExpressionItem onKey,
+                                             WindowAggregationPtr windowAggregation,
+                                             WindowTypePtr windowType,
+                                             DistributionCharacteristicPtr distChar,
+                                             uint64_t numberOfInputEdges);
+
+
+    /**
      * @brief getter and setter for the distribution type (centralized or distributed)
      */
     void setDistributionCharacteristic(DistributionCharacteristicPtr characteristic);
