@@ -57,8 +57,7 @@ const std::string TopologyNode::getIpAddress() const {
 
 const std::string TopologyNode::toString() const {
     std::stringstream ss;
-    ss << "PhysicalNode[id=" + std::to_string(id) + ", ip = " + ipAddress + ", grpcPort = ,"
-            + std::to_string(grpcPort) + ", dataPort= " + std::to_string(dataPort) + ", resources = " + std::to_string(resources)
+    ss << "PhysicalNode[id=" + std::to_string(id) + ", ip =" + ipAddress + ", resourcesCapacity=" + std::to_string(resources)
             + ", usedResource=" + std::to_string(usedResources) + "]";
     return ss.str();
 }
