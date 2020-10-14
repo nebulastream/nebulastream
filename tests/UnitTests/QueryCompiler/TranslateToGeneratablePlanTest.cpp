@@ -35,6 +35,7 @@
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 
 using namespace std;
 namespace NES {
