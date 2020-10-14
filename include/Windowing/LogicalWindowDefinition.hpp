@@ -23,7 +23,7 @@ class LogicalWindowDefinition {
      * @param distChar
      * @param numberOfInputEdges
      */
-    LogicalWindowDefinition(AttributeFieldPtr onKey,
+    LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
                      WindowAggregationPtr windowAggregation,
                      WindowTypePtr windowType,
                      DistributionCharacteristicPtr distChar,
@@ -45,7 +45,7 @@ class LogicalWindowDefinition {
      * @param windowType
      * @return Window Definition
      */
-    static LogicalWindowDefinitionPtr create(AttributeFieldPtr onKey,
+    static LogicalWindowDefinitionPtr create(FieldAccessExpressionNodePtr onKey,
                                       WindowAggregationPtr windowAggregation,
                                       WindowTypePtr windowType,
                                       DistributionCharacteristicPtr distChar,
@@ -84,13 +84,13 @@ class LogicalWindowDefinition {
     /**
      * @brief getter/setter for on key
      */
-    AttributeFieldPtr getOnKey();
-    void setOnKey(AttributeFieldPtr onKey);
+    FieldAccessExpressionNodePtr getOnKey();
+    void setOnKey(FieldAccessExpressionNodePtr onKey);
 
   private:
     WindowAggregationPtr windowAggregation;
     WindowTypePtr windowType;
-    AttributeFieldPtr onKey;
+    FieldAccessExpressionNodePtr onKey;
     DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdges;
 };

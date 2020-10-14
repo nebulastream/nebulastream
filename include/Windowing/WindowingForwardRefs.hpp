@@ -43,6 +43,9 @@ typedef std::shared_ptr<DistributionCharacteristic> DistributionCharacteristicPt
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
+class FieldAccessExpressionNode;
+typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
+
 class ExpressionItem;
 
 inline uint64_t getTsFromClock() {
