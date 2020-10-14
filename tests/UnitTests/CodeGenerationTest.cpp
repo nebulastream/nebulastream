@@ -28,11 +28,12 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <State/StateVariable.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/Runtime/WindowHandlerFactory.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
-#include <State/StateVariable.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>
@@ -898,7 +899,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler = WindowHandlerFactory::create<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create(nullptr, nullptr));
+    auto windowHandler = WindowHandlerFactory::create<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
@@ -954,7 +955,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler = WindowHandlerFactory::create<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create(nullptr, nullptr));
+    auto windowHandler = WindowHandlerFactory::create<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
 
     //auto context = PipelineContext::create();
@@ -1011,7 +1012,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler = WindowHandlerFactory::create<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create(nullptr, nullptr));
+    auto windowHandler = WindowHandlerFactory::create<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {

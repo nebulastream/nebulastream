@@ -28,6 +28,10 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 
 using namespace NES;
 
