@@ -45,24 +45,7 @@ OperatorNodePtr WindowLogicalOperatorNode::copy() {
 bool WindowLogicalOperatorNode::inferSchema() {
 
     // infer the default input and output schema
-    OperatorNode::inferSchema();
-
-    auto windowType = windowDefinition->getWindowType();
-    if (windowDefinition->isKeyed()) {
-        // infer the data type of the key field.
-        windowDefinition->getOnKey()->inferStamp(inputSchema);
-    }
-    // infer type of aggregation
-    auto windowAggregation = windowDefinition->getWindowAggregation();
-    windowAggregation->inferStamp(inputSchema);
-
-    outputSchema = Schema::create()
-                       ->addField(createField("start", UINT64))
-                       ->addField(createField("end", UINT64))
-                       ->addField(AttributeField::create("key", windowAggregation->on()->getStamp()))
-                       ->addField(AttributeField::create(windowAggregation->as()->getFieldName(), windowAggregation->on()->getStamp()));
-
-    return true;
+    return OperatorNode::inferSchema();
 }
 
 }// namespace NES
