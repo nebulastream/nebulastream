@@ -630,7 +630,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     NES_INFO("content=" << content);
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|0|10000|1|307|\n"
         "|10000|20000|1|870|\n"
@@ -745,7 +745,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     NES_INFO("content=" << content);
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|10000|20000|1|870|\n"
         "|5000|15000|1|570|\n"
