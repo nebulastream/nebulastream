@@ -32,5 +32,13 @@ OperatorNodePtr SliceMergingOperator::copy() {
     copy->setOutputSchema(outputSchema);
     return copy;
 }
+bool SliceMergingOperator::inferSchema() {
+    // infer the default input and output schema
+
+    WindowLogicalOperatorNode::inferSchema();
+
+    NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
+    return true;
+}
 
 }// namespace NES

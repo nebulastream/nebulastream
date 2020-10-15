@@ -33,7 +33,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
             auto streamName = sourceDescriptor->getStreamName();
             SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamName);
             sourceDescriptor->setSchema(schema);
-            NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName);
+            NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName << " with schema: " << schema->toString() );
         }
     }
     // now we have to infer the input and output schemas for the whole query.
