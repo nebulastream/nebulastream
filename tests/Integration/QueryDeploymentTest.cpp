@@ -535,8 +535,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTi
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"metadata_generated\")), "
-                   "Seconds(10)), SumAggregationDescriptor::on(Attribute(\"features_properties_capacity\"))).sink(FileSinkDescriptor::create(\""
+    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"key\"), TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
+                   "Seconds(10)), Sum(Attribute(\"features_properties_capacity\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"DONT_APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -553,7 +553,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTi
 #if 0
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:INT64|features_properties_capacity:UINT64|\n"
+        "|start:UINT64|end:UINT64|key:UINT64|features_properties_capacity:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1262343610000|1262343620000|1|736|\n"
         "|1262343620000|1262343630000|1|0|\n"
@@ -722,7 +722,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTim
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), SumAggregationDescriptor::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"window\").windowByKey(Attribute(\"key\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -805,7 +805,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
-                   "Seconds(1)), SumAggregationDescriptor::on(Attribute(\"metadata_generated\"))).sink(FileSinkDescriptor::create(\""
+                   "Seconds(1)), Sum(Attribute(\"metadata_generated\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -877,7 +877,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
-                   "Seconds(1)), SumAggregationDescriptor::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"query.out\"));";
+                   "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"query.out\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     cout << "wait start" << endl;
@@ -962,8 +962,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
 
     NES_INFO("QueryDeploymentTest: Submit query");
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"ts\")), "
-                   "Seconds(1)), SumAggregationDescriptor::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"ts\")), "
+                   "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"DONT_APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");

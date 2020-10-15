@@ -1,3 +1,4 @@
+#include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>

@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include <API/Schema.hpp>
+#include <API/Query.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/OperatorNode.hpp>
@@ -28,10 +29,6 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 
 using namespace NES;
 
@@ -267,10 +264,9 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
-    auto windowType = TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(10));
+    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
 
-    auto aggregation = SumAggregationDescriptor::on(Attribute("value"));
-    query = query.windowByKey(Attribute("key"), windowType, aggregation);
+    query = query.windowByKey(Attribute("key"), windowType, Sum(Attribute("value")));
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
@@ -347,9 +343,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Sliding window of size 10ms and with Slide 2ms and a sum aggregation on the value.
-    auto windowType = SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(10), Milliseconds(5));
+    auto windowType = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(10), Milliseconds(5));
 
-    auto aggregation = SumAggregationDescriptor::on(Attribute("value"));
+    auto aggregation = Sum(Attribute("value"));
     query = query.windowByKey(Attribute("key"), windowType, aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
@@ -425,9 +421,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Sliding window of size 10ms and with Slide 2ms and a sum aggregation on the value.
-    auto windowType = SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(15), Milliseconds(5));
+    auto windowType = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(15), Milliseconds(5));
 
-    auto aggregation = SumAggregationDescriptor::on(Attribute("value"));
+    auto aggregation = Sum(Attribute("value"));
     query = query.windowByKey(Attribute("key"), windowType, aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer

@@ -80,7 +80,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     Query query = Query::from("default_logical")
         .window(
             TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-                          SumAggregationDescriptor::on(Attribute("value")))
+                          Sum(Attribute("value")))
         .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -104,7 +104,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
         .filter(Attribute("id") < 45)
         .window(
             TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-                          SumAggregationDescriptor::on(Attribute("value")))
+                          Sum(Attribute("value")))
         .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
 

@@ -17,9 +17,7 @@ class TimeMeasure : public WindowMeasure {
     const uint64_t ms;
 };
 
-TimeMeasure Milliseconds(uint64_t);
-TimeMeasure Seconds(uint64_t);
-TimeMeasure ndMinutes(uint64_t);
+
 
 }// namespace NES
 

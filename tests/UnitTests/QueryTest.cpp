@@ -98,7 +98,7 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
     Query query = Query::from("default_logical")
                       .window(
                           TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-                          SumAggregationDescriptor::on(Attribute("value")))
+                          Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
@@ -134,7 +134,7 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
     Query query = Query::from("default_logical")
         .window(
             SlidingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10), Seconds(2)),
-                          SumAggregationDescriptor::on(Attribute("value")))
+                          Sum(Attribute("value")))
         .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();

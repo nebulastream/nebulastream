@@ -21,6 +21,8 @@
 #include <iostream>
 #include <memory>
 
+using namespace NES::API;
+
 namespace NES {
 
 class TypeInferencePhaseTest : public testing::Test {
@@ -97,7 +99,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
     auto query = Query::from("default_logical")
                      .window(
                          TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-                         SumAggregationDescriptor::on(Attribute("value")))
+                         Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
