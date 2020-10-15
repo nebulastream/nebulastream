@@ -722,7 +722,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTim
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"window\").windowByKey(Attribute(\"key\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), SumAggregationDescriptor::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), SumAggregationDescriptor::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -876,7 +876,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"value\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
+    string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
                    "Seconds(1)), SumAggregationDescriptor::on(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"query.out\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
