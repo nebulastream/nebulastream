@@ -18,10 +18,20 @@ namespace NES {
 class WindowHandlerFactoryDetails {
   public:
 
-    template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
+    /**
+    * @brief Factory to create a typed window handler.
+    * @tparam KeyType type of the key field
+    * @tparam InputType type of the input aggregation field
+    * @tparam PartialAggregateType type of the partial aggregation field
+    * @tparam FinalAggregateType type of the final aggregation field
+    * @param windowDefinition window definition
+    * @param windowAggregation executable window aggregation
+    * @return WindowHandlerPtr
+    */
+    template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
     static WindowHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition,
-                                   std::shared_ptr<ExecutableWindowAggregation<InputType, FinalAggregateType, PartialAggregateType>> windowAggregation) {
-        return std::make_shared<WindowHandlerImpl<KeyType, InputType, FinalAggregateType, PartialAggregateType>>(windowDefinition, windowAggregation);
+                                   std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) {
+        return std::make_shared<WindowHandlerImpl<KeyType, InputType,PartialAggregateType , FinalAggregateType>>(windowDefinition, windowAggregation);
     }
 
     template<class KeyType, class InputType>

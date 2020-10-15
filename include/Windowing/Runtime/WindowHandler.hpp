@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 namespace NES {
+
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
@@ -35,11 +36,14 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
 class WindowHandlerImpl;
 
+/**
+ * @brief The window handler checks every n seconds if a window should be triggered.
+ * It has knowledge about the window definition and performs final aggregation.
+ */
 class WindowHandler : public std::enable_shared_from_this<WindowHandler>{
 
   public:
-
-    WindowHandler(LogicalWindowDefinitionPtr windowDefinition);
+    explicit WindowHandler(LogicalWindowDefinitionPtr windowDefinition);
 
     template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
     auto as(){
@@ -76,11 +80,29 @@ class WindowHandler : public std::enable_shared_from_this<WindowHandler>{
     */
     virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId) = 0;
 
+    /**
+     * @brief Returns the window state, as a untyped pointer to the state variable.
+     * @deprecated todo remove this untyped call.
+     * @return void* to state variable.
+     */
     virtual void* getWindowState() = 0;
+
+    /**
+     * @brief Returns window manager.
+     * @return WindowManager.
+     */
     WindowManagerPtr getWindowManager() { return windowManager; };
 
+    /**
+     * @brief Gets the origin ID
+     * @return uint64_t
+     */
     [[nodiscard]] uint64_t getOriginId() const;
 
+    /**
+     * @brief Sets the originId
+     * @param originId
+     */
     void setOriginId(uint64_t originId);
 
   protected:

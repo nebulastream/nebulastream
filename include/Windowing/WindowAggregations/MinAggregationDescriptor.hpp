@@ -26,7 +26,17 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
 
+
+    /**
+     * @brief Returns the type of this aggregation.
+     * @return WindowAggregationDescriptor::Type
+     */
     Type getType() override;
+
+    /**
+ * @brief Infers the stamp of the expression given the current schema.
+ * @param SchemaPtr
+ */
     void inferStamp(SchemaPtr schema) override;
 
   private:

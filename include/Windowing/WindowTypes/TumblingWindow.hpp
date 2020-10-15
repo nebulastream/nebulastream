@@ -30,6 +30,10 @@ class TumblingWindow : public WindowType {
     */
     [[nodiscard]] uint64_t calculateNextWindowEnd(uint64_t currentTs) const override;
 
+    /**
+    * @brief Returns true, because this a tumbling window
+    * @return true
+    */
     bool isTumblingWindow() override;
 
     /**

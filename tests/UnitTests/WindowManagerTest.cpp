@@ -26,7 +26,7 @@
 #include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Windowing/Runtime/WindowHandler.hpp>
-#include <Windowing/Runtime/WindowHandlerFactory.hpp>
+#include <Windowing/Runtime/WindowHandlerFactoryDetails.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
@@ -123,7 +123,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto windowDef = LogicalWindowDefinition::create(Attribute("key", UINT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
-    auto w = WindowHandlerFactory::create<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, ExecutableSumAggregation<uint64_t>::create());
+    auto w = WindowHandlerFactoryDetails::create<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, ExecutableSumAggregation<uint64_t>::create());
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
@@ -193,7 +193,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType(),0);
 
-    auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
+    auto w = WindowHandlerFactoryDetails::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
@@ -262,7 +262,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     auto windowDef =        LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType(),0);
 
-    auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
+    auto w = WindowHandlerFactoryDetails::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:

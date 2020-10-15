@@ -9,9 +9,13 @@ namespace NES {
  */
 class TimeMeasure : public WindowMeasure {
   public:
-    [[nodiscard]] uint64_t getTime() const;
-
     explicit TimeMeasure(uint64_t ms);
+
+    /**
+     * @brief gets the time measure in milliseconds
+     * @return uint64_t
+     */
+    [[nodiscard]] uint64_t getTime() const;
 
   private:
     const uint64_t ms;
