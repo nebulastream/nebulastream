@@ -738,7 +738,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTim
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|10000|20000|1|870|\n"
         "|5000|15000|1|570|\n"
@@ -981,7 +981,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
 #if 0
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1000|2000|1|34|\n"
         "|2000|3000|1|0|\n"
