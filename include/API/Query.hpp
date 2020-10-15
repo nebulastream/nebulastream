@@ -1,6 +1,7 @@
 #ifndef API_QUERY_H
 #define API_QUERY_H
 
+#include <API/Windowing.hpp>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
@@ -35,6 +36,8 @@ typedef std::shared_ptr<WindowType> WindowTypePtr;
 
 class WindowAggregationDescriptor;
 typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationPtr;
+
+using namespace NES::API;
 
 /**
  * User interface to create stream processing queries.

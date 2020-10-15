@@ -30,6 +30,7 @@
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
+#include <API/Query.hpp>
 
 namespace NES {
 class WindowManagerTest : public testing::Test {
@@ -93,9 +94,9 @@ TEST_F(WindowManagerTest, testCountAggregation) {
 
 TEST_F(WindowManagerTest, testCheckSlice) {
     auto store = new WindowSliceStore<int64_t>(0L);
-    auto aggregation = SumAggregationDescriptor::on(Attribute("value"));
+    auto aggregation = Sum(Attribute("value"));
 
-    auto windowDef = LogicalWindowDefinition::create(aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType());
+    auto windowDef = LogicalWindowDefinition::create(aggregation, TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType());
 
     auto windowManager = new WindowManager(windowDef);
     uint64_t ts = 10;
@@ -117,9 +118,9 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
-    auto aggregation = SumAggregationDescriptor::on(Attribute("id", UINT64));
+    auto aggregation = Sum(Attribute("id", UINT64));
 
-    auto windowDef = LogicalWindowDefinition::create(Attribute("key", UINT64), aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 0);
+    auto windowDef = LogicalWindowDefinition::create(Attribute("key", UINT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
     auto w = WindowHandlerFactory::create<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, ExecutableSumAggregation<uint64_t>::create());
@@ -188,9 +189,9 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
-    auto aggregation = SumAggregationDescriptor::on(Attribute("id", INT64));
+    auto aggregation = Sum(Attribute("id", INT64));
 
-    auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType(),0);
+    auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType(),0);
 
     auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
 
@@ -257,9 +258,9 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
-    auto aggregation = SumAggregationDescriptor::on(Attribute("id", INT64));
+    auto aggregation = Sum(Attribute("id", INT64));
 
-    auto windowDef =        LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType(),0);
+    auto windowDef =        LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType(),0);
 
     auto w = WindowHandlerFactory::create<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
 

@@ -5,6 +5,9 @@
 
 namespace NES {
 
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 

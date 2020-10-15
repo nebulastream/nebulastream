@@ -1,3 +1,4 @@
+#include <API/Query.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -38,7 +39,10 @@
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 
 using namespace std;
+
 namespace NES {
+
+using namespace NES::API;
 
 class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
   public:
@@ -164,8 +168,8 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(
         LogicalWindowDefinition::create(
             Attribute("id"),
-            SumAggregationDescriptor::on(Attribute("value")),
-            TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(),0));
+            Sum(Attribute("value")),
+            TumblingWindow::of(ProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(),0));
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);
