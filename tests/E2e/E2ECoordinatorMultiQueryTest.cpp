@@ -526,9 +526,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     EXPECT_TRUE(success);
 
     string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
-    bp::child workerProc(path2.c_str());
-    NES_INFO("started worker with pid = " << workerProc.id());
-    size_t workerPid = workerProc.id();
+    //bp::child workerProc(path2.c_str());
+    //NES_INFO("started worker with pid = " << workerProc.id());
+    //size_t workerPid = workerProc.id();
     sleep(1);
 
     std::stringstream ss;
@@ -645,8 +645,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     NES_INFO("expContent=" << expectedContent2);
     EXPECT_EQ(contentQ2, expectedContent2);
 
-    NES_INFO("Killing worker process->PID: " << workerPid);
-    workerProc.terminate();
+    //NES_INFO("Killing worker process->PID: " << workerPid);
+    //workerProc.terminate();
     NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
     coordinatorProc.terminate();
 }

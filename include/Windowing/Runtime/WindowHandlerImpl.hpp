@@ -230,6 +230,8 @@ class WindowHandlerImpl : public WindowHandler {
 
             tupleBuffer.setOriginId(originId);
             // iterate over all keys in the window state
+
+
             for (auto& it : windowStateVariable->rangeAll()) {
                 NES_DEBUG("WindowHandler: " << triggerType << " check key=" << it.first << "nextEdge=" << it.second->nextEdge);
 
