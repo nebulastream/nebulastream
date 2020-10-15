@@ -54,6 +54,11 @@ class WindowAggregationDescriptor {
     */
     FieldAccessExpressionNodePtr on();
 
+
+    /**
+     * @brief Returns the type of this aggregation.
+     * @return WindowAggregationDescriptor::Type
+     */
     virtual Type getType() = 0;
 
     /**

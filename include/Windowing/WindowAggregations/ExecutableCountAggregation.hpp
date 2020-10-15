@@ -13,6 +13,12 @@ namespace NES{
 
 typedef uint64_t CountType;
 
+/**
+ * @brief A executable window aggregation, which is typed for the correct input, partial, and final data types.
+ * @tparam InputType input type of the aggregation
+ * @tparam PartialAggregateType partial aggregation type
+ * @tparam FinalAggregateType final aggregation type
+ */
 template<typename InputType>
 class ExecutableCountAggregation : public  ExecutableWindowAggregation<InputType, CountType, CountType>{
   public:

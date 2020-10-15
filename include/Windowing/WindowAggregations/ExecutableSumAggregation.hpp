@@ -11,6 +11,12 @@
 #include <memory>
 namespace NES{
 
+/**
+ * @brief A executable window aggregation, which is typed for the correct input, partial, and final data types.
+ * @tparam InputType input type of the aggregation
+ * @tparam PartialAggregateType partial aggregation type
+ * @tparam FinalAggregateType final aggregation type
+ */
 template<typename InputType>
 class ExecutableSumAggregation : public  ExecutableWindowAggregation<InputType, InputType, InputType>{
   public:

@@ -25,6 +25,10 @@ class SlidingWindow : public WindowType {
      */
     void triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 
+    /**
+     * @brief Returns true, because this a a sliding window
+     * @return true
+     */
     bool isSlidingWindow() override;
 
     /**

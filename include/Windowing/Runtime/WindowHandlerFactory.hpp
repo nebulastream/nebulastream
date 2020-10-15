@@ -17,12 +17,11 @@ namespace NES {
 
 class WindowHandlerFactory {
   public:
-    template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
-    static WindowHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition,
-                                   std::shared_ptr<ExecutableWindowAggregation<InputType, FinalAggregateType, PartialAggregateType>> windowAggregation) {
-        return std::make_shared<WindowHandlerImpl<KeyType, InputType, FinalAggregateType, PartialAggregateType>>(windowDefinition, windowAggregation);
-    }
-
+    /**
+     * @brief Creates a window handler only by using the window definition.
+     * @param windowDefinition window definition
+     * @return WindowHandlerPtr
+     */
     static WindowHandlerPtr createWindowHandler(LogicalWindowDefinitionPtr windowDefinition);
 };
 }// namespace NES

@@ -11,8 +11,8 @@ namespace NES {
 class CountAggregationDescriptor : public WindowAggregationDescriptor {
   public:
     /**
-   * Factory method to creates a CountAggregationDescriptor aggregation on a particular field.
-   */
+    * Factory method to creates a CountAggregationDescriptor aggregation on a particular field.
+    */
     static WindowAggregationPtr on();
 
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
@@ -25,8 +25,16 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
      * @param inputRef
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
-    Type getType() override;
 
+    /**
+     * @brief Returns the type of this aggregation.
+     * @return WindowAggregationDescriptor::Type
+     */
+    Type getType() override;
+    /**
+     * @brief Infers the stamp of the expression given the current schema.
+     * @param SchemaPtr
+     */
     void inferStamp(SchemaPtr schema) override;
 
   private:
