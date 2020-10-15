@@ -107,7 +107,7 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
         }
 
         if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-            NES_ERROR("TopDownStrategy: Received Source operator for placement.");
+            NES_DEBUG("TopDownStrategy: Received Source operator for placement.");
 
             auto pinnedSourceOperatorLocation = getTopologyNodeForPinnedOperator(operatorNode->getId());
             if (pinnedSourceOperatorLocation->getId() == candidateTopologyNode->getId() || pinnedSourceOperatorLocation->containAsParent(candidateTopologyNode)) {
