@@ -44,7 +44,7 @@ OperatorNodePtr SliceCreationOperator::copy() {
 }
 bool SliceCreationOperator::inferSchema() {
 
-    WindowLogicalOperatorNode::inferSchema();
+    LogicalOperatorNode::inferSchema();
 
     NES_DEBUG("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
 

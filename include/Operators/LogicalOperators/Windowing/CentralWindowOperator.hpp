@@ -17,7 +17,7 @@ class CentralWindowOperator : public WindowLogicalOperatorNode {
     const std::string toString() const override;
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
-    virtual bool inferSchema() override;
+    bool inferSchema() override;
 };
 
 }// namespace NES
