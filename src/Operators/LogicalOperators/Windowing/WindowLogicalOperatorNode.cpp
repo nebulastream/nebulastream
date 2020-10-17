@@ -44,8 +44,25 @@ OperatorNodePtr WindowLogicalOperatorNode::copy() {
 
 bool WindowLogicalOperatorNode::inferSchema() {
 
+    LogicalOperatorNode::inferSchema();
     // infer the default input and output schema
-    return OperatorNode::inferSchema();
+    NES_DEBUG("CentralWindowOperator: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
+
+    auto windowType = windowDefinition->getWindowType();
+    if (windowDefinition->isKeyed()) {
+        // infer the data type of the key field.
+        windowDefinition->getOnKey()->inferStamp(inputSchema);
+    }
+    // infer type of aggregation
+    auto windowAggregation = windowDefinition->getWindowAggregation();
+    windowAggregation->inferStamp(inputSchema);
+
+    outputSchema = Schema::create()
+        ->addField(createField("start", UINT64))
+        ->addField(createField("end", UINT64))
+        ->addField(AttributeField::create("key", windowAggregation->on()->getStamp()))
+        ->addField(AttributeField::create(windowAggregation->as()->getFieldName(), windowAggregation->on()->getStamp()));
+    return true;
 }
 
 }// namespace NES

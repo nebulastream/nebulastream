@@ -37,6 +37,6 @@ OperatorNodePtr WindowComputationOperator::copy() {
 }
 bool WindowComputationOperator::inferSchema() {
 
-    return WindowLogicalOperatorNode::inferSchema();
+    return LogicalOperatorNode::inferSchema();
 }
 }// namespace NES

@@ -44,7 +44,7 @@ OperatorNodePtr CentralWindowOperator::copy() {
 }
 bool CentralWindowOperator::inferSchema() {
 
-    WindowLogicalOperatorNode::inferSchema();
+    LogicalOperatorNode::inferSchema();
 
     NES_DEBUG("CentralWindowOperator: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
 
