@@ -493,6 +493,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
 }
+
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
@@ -571,6 +572,88 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
 }
+
+TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    // Create Operator Tree
+    // 1. add window source and create two buffers each second one.
+    auto windowSource = WindowSource::create(
+        nodeEngine->getBufferManager(),
+        nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+
+    auto query = TestQuery::from(windowSource->getSchema());
+    // 2. dd window operator:
+    // 2.1 add Sliding window of size 10ms and with Slide 2ms and a sum aggregation on the value.
+    auto windowType = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
+
+    auto aggregation = Sum(Attribute("value"));
+    query = query.windowByKey(Attribute("key"), windowType, aggregation);
+
+    // 3. add sink. We expect that this sink will receive one buffer
+    //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
+    auto windowResultSchema = Schema::create()
+        ->addField(createField("start", UINT64))
+        ->addField(createField("end", UINT64))
+        ->addField(createField("key", INT64))
+        ->addField("value", INT64);
+
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    query.sink(DummySink::create());
+
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    NES_DEBUG(" QueryExecutionTest: plan=" << queryPlan->toString());
+
+    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+
+    std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps = generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
+    std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps = queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
+
+    auto builder = GeneratedQueryExecutionPlanBuilder::create()
+        .setQueryManager(nodeEngine->getQueryManager())
+        .setBufferManager(nodeEngine->getBufferManager())
+        .setCompiler(nodeEngine->getCompiler())
+        .setQueryId(1)
+        .setQuerySubPlanId(1)
+        .addSource(windowSource)
+        .addSink(testSink)
+        .setWinDef(winOps[0]->getWindowDefinition())
+        .setSchema(leafOps[0]->getInputSchema())
+        .addOperatorQueryPlan(generatableOperators);
+
+    auto plan = builder.build();
+    nodeEngine->registerQueryInNodeEngine(plan);
+    nodeEngine->startQuery(1);
+
+    // wait till all buffers have been produced
+    testSink->completed.get_future().get();
+    NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
+    // get result buffer
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+
+    auto& resultBuffer = testSink->get(0);
+
+    NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);
+    NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    std::string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
+        "+----------------------------------------------------+\n"
+        "|10|14|1|0|\n"
+        "|8|12|1|0|\n"
+        "|6|10|1|0|\n"
+        "|4|8|1|10|\n"
+        "|2|6|1|10|\n"
+        "+----------------------------------------------------+";
+    EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    nodeEngine->stopQuery(1);
+}
+
 // P1 = Source1 -> filter1
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK
