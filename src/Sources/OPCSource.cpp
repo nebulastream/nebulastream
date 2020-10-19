@@ -48,16 +48,14 @@ std::optional<TupleBuffer> OPCSource::receiveData() {
         retval = UA_Client_readValueAttribute(client, *nodeId, val);
         auto buffer = bufferManager->getBufferBlocking();
         buffer.setNumberOfTuples(1);
-        //NES_DEBUG("OPCSOURCE::receiveData()  " << this << ": got buffer ");
+        NES_DEBUG("OPCSOURCE::receiveData()  " << this << ": got buffer ");
 
         if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
 
             NES_DEBUG("OPCSOURCE::receiveData() Value datatype is: " << val->type->typeName);
-            NES_DEBUG("OPCSOURCE::receiveData() Value datatype is: " << *(uint32_t *)val->data);
             std::memcpy(buffer.getBuffer(), val->data, buffer.getBufferSize());
             UA_delete(val, val->type);
             return buffer;
-
         } else {
 
             NES_ERROR("OPCSOURCE::receiveData() error: Could not retrieve data. Further inspection needed.");
@@ -73,7 +71,7 @@ std::optional<TupleBuffer> OPCSource::receiveData() {
 
 const std::string OPCSource::toString() const {
 
-    char* ident = (char*)UA_malloc(sizeof(char)*nodeId->identifier.string.length+1);
+    char* ident = (char*) UA_malloc(sizeof(char) * nodeId->identifier.string.length + 1);
     memcpy(ident, nodeId->identifier.string.data, nodeId->identifier.string.length);
     ident[nodeId->identifier.string.length] = '\0';
 

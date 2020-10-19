@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -32,6 +33,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>
@@ -161,6 +163,14 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
+        UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
+        auto source = OPCSourceDescriptor::create(schema, "localhost", &nodeId, "", "");
+        auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+    }
+
+    {
         auto source = BinarySourceDescriptor::create(schema, "localhost");
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
@@ -213,6 +223,14 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
 
     {
         auto sink = ZmqSinkDescriptor::create("localhost", 42);
+        auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+    }
+
+    {
+        UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
+        auto sink = OPCSinkDescriptor::create("localhost", &nodeId, "", "");
         auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));

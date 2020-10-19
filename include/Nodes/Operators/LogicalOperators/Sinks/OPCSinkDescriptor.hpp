@@ -53,8 +53,7 @@ class OPCSinkDescriptor : public SinkDescriptor {
     bool equal(SinkDescriptorPtr other) override;
 
   private:
-    explicit OPCSinkDescriptor(const std::string& url, UA_NodeId* nodeId,
-                               std::string user, std::string password);
+    explicit OPCSinkDescriptor(const std::string& url, UA_NodeId* nodeId, std::string user, std::string password);
 
     const std::string& url;
     UA_NodeId* nodeId;

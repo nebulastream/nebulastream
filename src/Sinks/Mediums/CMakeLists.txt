@@ -6,8 +6,8 @@ add_source_nes(
         KafkaSink.cpp
 )
 
-if(NES_USE_OPC)
+if (NES_USE_OPC)
     add_source_nes(
-            OPCSink.cpp
+        OPCSink.cpp
     )
-endif()
+endif ()

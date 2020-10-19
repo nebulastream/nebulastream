@@ -104,10 +104,15 @@ bool OPCSink::writeData(TupleBuffer& inputBuffer, WorkerContext&) {
     }
     return true;
 }
+
 void OPCSink::setup() {
+    NES_DEBUG("OPCSINK::setup");
 }
+
 void OPCSink::shutdown() {
+    NES_DEBUG("OPCSINK::shutdown");
 }
+
 const std::string OPCSink::toString() const {
     char* ident = (char*)UA_malloc(sizeof(char)*nodeId->identifier.string.length+1);
     memcpy(ident, nodeId->identifier.string.data, nodeId->identifier.string.length);
@@ -150,6 +155,7 @@ bool OPCSink::connect() {
     }
     return connected;
 }
+
 bool OPCSink::disconnect() {
     NES_DEBUG("OPCSink::disconnect() connected=" << connected);
     if (connected) {
@@ -171,18 +177,23 @@ bool OPCSink::disconnect() {
 const std::string& OPCSink::getUrl() const {
     return url;
 }
+
 UA_NodeId* OPCSink::getNodeId() const {
     return nodeId;
 }
+
 const std::string OPCSink::getUser() const {
     return user;
 }
+
 const std::string OPCSink::getPassword() const {
     return password;
 }
+
 SinkMediumTypes OPCSink::getSinkMediumType() {
     return OPC_SINK;
 }
+
 std::string OPCSink::toString() {
     return "OPC_SINK";
 }

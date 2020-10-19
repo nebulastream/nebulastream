@@ -112,8 +112,8 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
  * running at opc.tcp://localhost:4840
  * and a node with node id "ns=1;s="the.answer"
  */
-/*
-TEST_F(OPCSourceTest, OPCSourceValue) {
+
+TEST_F(OPCSourceTest, DISABLED_OPCSourceValue) {
 
     auto test_schema = Schema::create()
                 ->addField("var", UINT32);
@@ -132,7 +132,7 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
 
     EXPECT_EQ(value, expected);
 
-}*/
+}
 
 
 }

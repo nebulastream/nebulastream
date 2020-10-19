@@ -12,6 +12,9 @@
 
 namespace NES {
 
+/**
+ * @brief class that allows writing a node to an OPC Server
+ */
 class OPCSink : public SinkMedium {
 
   public:
@@ -82,7 +85,16 @@ class OPCSink : public SinkMedium {
     * @return type of medium
     */
     SinkMediumTypes getSinkMediumType();
+
+    /**
+     * @brief to string method
+     * @return string of OPC Sink
+     */
     std::string toString() override;
+    /**
+     * @brief saves the current status code
+     * @return status code of OPCServer
+     */
     UA_StatusCode getRetval() const;
 
   private:
