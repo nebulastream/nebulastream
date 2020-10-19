@@ -40,7 +40,6 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 
 #ifdef ENABLE_OPC_BUILD
-#include "../../../build/SerializableOperator.pb.h"
 #include <Nodes/Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #endif
@@ -592,7 +591,7 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
         NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor");
         auto opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
         auto opcSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor();
-        char* ident = (char*)UA_malloc(sizeof(char)*opcSinkDescriptor->getNodeId()->identifier.string.length+1);
+        char* ident = (char*) UA_malloc(sizeof(char) * opcSinkDescriptor->getNodeId()->identifier.string.length + 1);
         memcpy(ident, opcSinkDescriptor->getNodeId()->identifier.string.data, opcSinkDescriptor->getNodeId()->identifier.string.length);
         ident[opcSinkDescriptor->getNodeId()->identifier.string.length] = '\0';
         opcSerializedSinkDescriptor.set_url(opcSinkDescriptor->getUrl());
