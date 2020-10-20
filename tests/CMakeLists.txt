@@ -121,7 +121,7 @@ target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})
 add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
 
 ### Stream Catalog Tests ###
-add_executable(stream-catalog-test "UnitTests/StreamCatalogTest.cpp")
+add_executable(stream-catalog-test "UnitTests/Catalogs/StreamCatalogTest.cpp")
 target_link_libraries(stream-catalog-test nes ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
 

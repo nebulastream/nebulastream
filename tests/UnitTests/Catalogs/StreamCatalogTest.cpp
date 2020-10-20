@@ -101,9 +101,9 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "1",
-        /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
-        /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
-        /**Logical Stream Name**/ "test_stream");
+                                                                /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                                                                /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
+                                                                /**Logical Stream Name**/ "test_stream");
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
@@ -126,9 +126,9 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-        /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-        /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-        /**Logical Stream Name**/ "test_stream");
+                                                                /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                                                                /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+                                                                /**Logical Stream Name**/ "test_stream");
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
@@ -180,19 +180,17 @@ TEST_F(StreamCatalogTest, testAddLogicalStream) {
 TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyPtr topology = Topology::create();
-    ;
 
     std::string newLogicalStreamName = "test_stream";
 
-    streamCatalog->addLogicalStream(newLogicalStreamName,
-                                    testSchema);
+    streamCatalog->addLogicalStream(newLogicalStreamName, testSchema);
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "sensor", /**Source Config**/ "",
-        /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-        /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-        /**Logical Stream Name**/ "test_stream");
+                                                                /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                                                                /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+                                                                /**Logical Stream Name**/ "test_stream");
 
     StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     streamCatalog->addPhysicalStream(newLogicalStreamName, catalogEntryPtr);
@@ -204,5 +202,26 @@ TEST_F(StreamCatalogTest, testDeleteLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 
     bool success = streamCatalog->removeLogicalStream(defaultLogicalStreamName);
+    EXPECT_TRUE(success);
+}
+
+TEST_F(StreamCatalogTest, testUpdateLogicalStreamWithInvalidStreamName) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+
+    std::string logicalStreamName = "test";
+    std::string newSchema = "Schema::create()->addField(\"id\", BasicType::UINT32);";
+    bool success = streamCatalog->updatedLogicalStream(logicalStreamName, newSchema);
+    EXPECT_FALSE(success);
+}
+
+TEST_F(StreamCatalogTest, testUpdateLogicalStream) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+
+    std::string logicalStreamName = "test";
+    bool success = streamCatalog->addLogicalStream(logicalStreamName, testSchema);
+    EXPECT_TRUE(success);
+
+    std::string newSchema = "Schema::create()->addField(\"id\", BasicType::UINT32);";
+    success = streamCatalog->updatedLogicalStream(logicalStreamName, newSchema);
     EXPECT_TRUE(success);
 }
