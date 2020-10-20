@@ -1,9 +1,12 @@
 #include <Nodes/Expressions/UnaryExpressionNode.hpp>
+#include <utility>
 
 namespace NES {
-UnaryExpressionNode::UnaryExpressionNode(DataTypePtr stamp) : ExpressionNode(stamp) {}
+UnaryExpressionNode::UnaryExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)) {}
 
-void UnaryExpressionNode::setChild(NES::ExpressionNodePtr child) {
+UnaryExpressionNode::UnaryExpressionNode(UnaryExpressionNode* other): ExpressionNode(other) {}
+
+void UnaryExpressionNode::setChild(ExpressionNodePtr child) {
     addChildWithEqual(child);
 }
 ExpressionNodePtr UnaryExpressionNode::child() const {

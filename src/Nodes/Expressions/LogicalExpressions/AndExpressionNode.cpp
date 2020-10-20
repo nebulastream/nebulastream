@@ -2,7 +2,11 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 namespace NES {
+
 AndExpressionNode::AndExpressionNode() : LogicalBinaryExpressionNode(){};
+
+AndExpressionNode::AndExpressionNode(AndExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
+
 ExpressionNodePtr AndExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto andNode = std::make_shared<AndExpressionNode>();
     andNode->setChildren(left, right);
@@ -34,7 +38,7 @@ void AndExpressionNode::inferStamp(SchemaPtr schema) {
     }
 }
 ExpressionNodePtr AndExpressionNode::copy() {
-    return create(getLeft()->copy(), getRight()->copy());
+    return std::make_shared<AndExpressionNode>(AndExpressionNode(this));
 }
 
 }// namespace NES

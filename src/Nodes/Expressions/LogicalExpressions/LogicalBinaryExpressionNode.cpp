@@ -5,6 +5,8 @@
 namespace NES {
 LogicalBinaryExpressionNode::LogicalBinaryExpressionNode() : BinaryExpressionNode(DataTypeFactory::createBoolean()), LogicalExpressionNode() {}
 
+LogicalBinaryExpressionNode::LogicalBinaryExpressionNode(LogicalBinaryExpressionNode* other) : BinaryExpressionNode(other), LogicalExpressionNode() {}
+
 bool LogicalBinaryExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<LogicalBinaryExpressionNode>()) {
         auto other = rhs->as<LogicalBinaryExpressionNode>();

@@ -23,4 +23,8 @@ void ExpressionNode::inferStamp(SchemaPtr schema) {
         node->as<ExpressionNode>()->inferStamp(schema);
     }
 }
+
+ExpressionNode::ExpressionNode(ExpressionNode* other): stamp(other->stamp) {
+}
+
 }// namespace NES

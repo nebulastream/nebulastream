@@ -7,7 +7,6 @@ namespace NES {
  */
 class BinaryExpressionNode : public ExpressionNode {
   public:
-    BinaryExpressionNode(DataTypePtr stamp);
     ~BinaryExpressionNode() = default;
 
     /**
@@ -25,8 +24,15 @@ class BinaryExpressionNode : public ExpressionNode {
      */
     ExpressionNodePtr getRight() const;
 
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
     ExpressionNodePtr copy() override = 0;
 
+  protected:
+    explicit BinaryExpressionNode(DataTypePtr stamp);
+    explicit BinaryExpressionNode(BinaryExpressionNode* other);
 
 };
 

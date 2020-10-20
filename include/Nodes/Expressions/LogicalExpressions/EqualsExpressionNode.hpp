@@ -17,7 +17,14 @@ class EqualsExpressionNode : public LogicalBinaryExpressionNode {
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
 
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
     ExpressionNodePtr copy() override;
+
+  protected:
+    explicit EqualsExpressionNode(EqualsExpressionNode* other);
 };
 }// namespace NES
 

@@ -8,6 +8,8 @@ namespace NES {
 FieldAccessExpressionNode::FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName)
     : ExpressionNode(std::move(stamp)), fieldName(std::move(fieldName)){};
 
+FieldAccessExpressionNode::FieldAccessExpressionNode(FieldAccessExpressionNode* other): ExpressionNode(other), fieldName(other->getFieldName()){};
+
 ExpressionNodePtr FieldAccessExpressionNode::create(DataTypePtr stamp, std::string fieldName) {
     return std::make_shared<FieldAccessExpressionNode>(FieldAccessExpressionNode(stamp, fieldName));
 }
@@ -46,7 +48,7 @@ void FieldAccessExpressionNode::setFieldName(std::string name) {
     this->fieldName = name;
 }
 ExpressionNodePtr FieldAccessExpressionNode::copy() {
-    return create(getStamp(), fieldName);
+    return std::make_shared<FieldAccessExpressionNode>(FieldAccessExpressionNode(this));
 }
 
 }// namespace NES

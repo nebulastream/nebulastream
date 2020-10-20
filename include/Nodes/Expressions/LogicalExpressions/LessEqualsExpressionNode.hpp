@@ -16,7 +16,15 @@ class LessEqualsExpressionNode : public LogicalBinaryExpressionNode {
     static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
+
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
     ExpressionNodePtr copy() override;
+
+  protected:
+    explicit LessEqualsExpressionNode(LessEqualsExpressionNode* other);
 };
 }// namespace NES
 

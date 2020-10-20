@@ -2,6 +2,9 @@
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 namespace NES {
 OrExpressionNode::OrExpressionNode() : LogicalBinaryExpressionNode(){};
+
+OrExpressionNode::OrExpressionNode(OrExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
+
 ExpressionNodePtr OrExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto orNode = std::make_shared<OrExpressionNode>();
     orNode->setChildren(left, right);
@@ -31,7 +34,7 @@ void OrExpressionNode::inferStamp(SchemaPtr schema) {
     }
 }
 ExpressionNodePtr OrExpressionNode::copy() {
-    return create(getLeft()->copy(), getRight()->copy());
+    return std::make_shared<OrExpressionNode>(OrExpressionNode(this));
 }
 
 }// namespace NES
