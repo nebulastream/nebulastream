@@ -49,12 +49,12 @@ class CodeGenerationTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
+        NES::setupLogging("CodeGenerationTest.log", NES::LOG_DEBUG);
         std::cout << "Setup CodeGenerationTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
     void SetUp() {
-        NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
     }
 
@@ -998,9 +998,9 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
 
     codeGenerator->generateCodeForScan(schema, context1);
 
-    auto sum = SumAggregationDescriptor::on(Attribute("value"));
+    auto sum = SumAggregationDescriptor::on(Attribute("value", UINT64));
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key"), sum,
+        Attribute("key", UINT64), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, context1);
