@@ -8,7 +8,7 @@ namespace NES {
 
 class GeneratableCompleteWindowOperator : public GeneratableWindowOperator {
   public:
-    static GeneratableWindowOperatorPtr create(WindowLogicalOperatorNodePtr);
+    static GeneratableWindowOperatorPtr create(WindowOperatorNodePtr);
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.

@@ -64,7 +64,7 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
      * @return element mapped to FinalAggregationType
      */
     AVGResultType lower(AVGPartialType<InputType> partialAggregateValue) override {
-        return partialAggregateValue.sum / partialAggregateValue.count;
+        return (AVGResultType)partialAggregateValue.sum / (AVGResultType)partialAggregateValue.count;
     }
 
   protected:

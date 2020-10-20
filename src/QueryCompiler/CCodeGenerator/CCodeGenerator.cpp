@@ -555,11 +555,11 @@ bool CCodeGenerator::generateCodeForCombiningWindow(LogicalWindowDefinitionPtr w
 
     // Read key value from record
     //        int64_t key = windowTuples[recordIndex].key;
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(window->getOnKey()->getStamp()), window->getOnKey()->getFieldName());
 
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration =
-            context->code->structDeclaratonInputTuple.getVariableDeclaration("key");
+            context->code->structDeclaratonInputTuple.getVariableDeclaration(window->getOnKey()->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
                                                  .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                      VarRef(

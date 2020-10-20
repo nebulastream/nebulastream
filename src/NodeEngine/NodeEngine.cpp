@@ -137,7 +137,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
                               .setQuerySubPlanId(querySubPlanId)
                               .addOperatorQueryPlan(generatableOperatorPlan);
 
-        std::vector<WindowLogicalOperatorNodePtr> winOps = generatableOperatorPlan->getNodesByType<WindowLogicalOperatorNode>();
+        std::vector<WindowOperatorNodePtr> winOps = generatableOperatorPlan->getNodesByType<WindowOperatorNode>();
         std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 

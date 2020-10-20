@@ -2,6 +2,7 @@
 #define NES_DistributeWindowRule_HPP
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+
 #include <memory>
 
 namespace NES {
@@ -13,6 +14,9 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
 class DistributeWindowRule;
 typedef std::shared_ptr<DistributeWindowRule> DistributeWindowRulePtr;
+
+class WindowOperatorNode;
+typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
 
 /**
  * @brief This rule will replace the logical window operator with either a centralized or distributed implementation.
@@ -62,6 +66,8 @@ class DistributeWindowRule : public BaseRewriteRule {
 
   private:
     explicit DistributeWindowRule();
+    void createCentralWindowOperator(WindowOperatorNodePtr currentWindowOperator);
+    void createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperaotr);
 };
 }// namespace NES
 #endif//NES_DistributeWindowRule_HPP

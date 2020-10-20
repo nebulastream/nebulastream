@@ -18,5 +18,8 @@ bool SubExpressionNode::equal(const NodePtr rhs) const {
 const std::string SubExpressionNode::toString() const {
     return "SubNode(" + stamp->toString() + ")";
 }
+ExpressionNodePtr SubExpressionNode::copy() {
+    return create(getLeft()->copy(), getRight()->copy());
+}
 
 }// namespace NES

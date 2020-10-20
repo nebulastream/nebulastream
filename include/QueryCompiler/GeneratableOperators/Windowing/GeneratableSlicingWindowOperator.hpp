@@ -8,7 +8,7 @@ namespace NES {
 
 class GeneratableSlicingWindowOperator :  public GeneratableWindowOperator {
   public:
-    static GeneratableDistributedlWindowSliceCreationOperatorPtr create(WindowLogicalOperatorNodePtr);
+    static GeneratableDistributedlWindowSliceCreationOperatorPtr create(WindowOperatorNodePtr);
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.

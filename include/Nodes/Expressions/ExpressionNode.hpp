@@ -10,6 +10,9 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
+class ExpressionNode;
+typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+
 /**
  * @brief this indicates an expression, which is a parameter for a FilterOperator or a MapOperator.
  * Each expression declares a stamp, which expresses the data type of this expression.
@@ -45,6 +48,8 @@ class ExpressionNode : public Node {
      * @param stamp
      */
     void setStamp(DataTypePtr stamp);
+
+    virtual ExpressionNodePtr copy() = 0;
 
   protected:
     /**

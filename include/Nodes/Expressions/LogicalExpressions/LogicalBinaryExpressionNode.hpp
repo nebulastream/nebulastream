@@ -7,9 +7,15 @@ namespace NES {
  * @brief This node represents a logical unary expression.
  */
 class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalExpressionNode {
+  public:
+    ExpressionNodePtr copy() override = 0;
   protected:
     LogicalBinaryExpressionNode();
     ~LogicalBinaryExpressionNode() = default;
+
+
+
+
 
   public:
     bool equal(const NodePtr rhs) const override;

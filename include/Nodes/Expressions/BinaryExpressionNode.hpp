@@ -24,6 +24,10 @@ class BinaryExpressionNode : public ExpressionNode {
      * @brief gets the right children.
      */
     ExpressionNodePtr getRight() const;
+
+    ExpressionNodePtr copy() override = 0;
+
+
 };
 
 }// namespace NES

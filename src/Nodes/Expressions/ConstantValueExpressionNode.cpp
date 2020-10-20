@@ -29,5 +29,8 @@ void ConstantValueExpressionNode::inferStamp(SchemaPtr) {
     // the stamp of constant value expressions is defined by the constant value type.
     // thus ut is already assigned correctly when the expression node is created.
 }
+ExpressionNodePtr ConstantValueExpressionNode::copy() {
+    return create(constantValue);
+}
 
 }// namespace NES

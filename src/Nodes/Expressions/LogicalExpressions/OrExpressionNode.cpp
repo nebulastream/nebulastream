@@ -30,5 +30,8 @@ void OrExpressionNode::inferStamp(SchemaPtr schema) {
         NES_THROW_RUNTIME_ERROR("OR Expression Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
     }
 }
+ExpressionNodePtr OrExpressionNode::copy() {
+    return create(getLeft()->copy(), getRight()->copy());
+}
 
 }// namespace NES

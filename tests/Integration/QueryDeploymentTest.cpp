@@ -535,7 +535,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTi
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"key\"), TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
+    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
                    "Seconds(10)), Sum(Attribute(\"features_properties_capacity\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"DONT_APPEND\"));";
 
@@ -611,7 +611,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTi
         "|1262343680000|1262343690000|11|0|\n"
         "+----------------------------------------------------+";
 #else
-    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,features_properties_capacity:INTEGER\n"
+    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,features_properties_capacity:INTEGER\n"
                              "1262343610000,1262343620000,1,736\n"
                              "1262343620000,1262343630000,1,0\n"
                              "1262343630000,1262343640000,1,0\n"
@@ -722,7 +722,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTim
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"window\").windowByKey(Attribute(\"key\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -738,7 +738,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTim
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|10000|20000|1|870|\n"
         "|5000|15000|1|570|\n"
@@ -981,7 +981,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
 #if 0
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1000|2000|1|34|\n"
         "|2000|3000|1|0|\n"
@@ -989,7 +989,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryEventTime) 
         "+----------------------------------------------------+";
 #else
     string expectedContent =
-        "start:INTEGER,end:INTEGER,key:INTEGER,value:INTEGER\n"
+        "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
         "1000,2000,1,34\n"
         "2000,3000,1,0\n"
         "2000,3000,2,56\n";

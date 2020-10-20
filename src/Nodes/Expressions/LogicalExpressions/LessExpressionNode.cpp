@@ -21,5 +21,8 @@ bool LessExpressionNode::equal(const NodePtr rhs) const {
 const std::string LessExpressionNode::toString() const {
     return "LessNode(" + stamp->toString() + ")";
 }
+ExpressionNodePtr LessExpressionNode::copy() {
+    return create(getLeft()->copy(), getRight()->copy());
+}
 
 }// namespace NES

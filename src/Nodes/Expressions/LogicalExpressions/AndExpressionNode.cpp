@@ -33,5 +33,8 @@ void AndExpressionNode::inferStamp(SchemaPtr schema) {
                                 + getRight()->getStamp()->toString());
     }
 }
+ExpressionNodePtr AndExpressionNode::copy() {
+    return create(getLeft()->copy(), getRight()->copy());
+}
 
 }// namespace NES

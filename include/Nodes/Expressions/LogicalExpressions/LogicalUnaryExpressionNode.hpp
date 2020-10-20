@@ -12,6 +12,8 @@ class LogicalUnaryExpressionNode : public UnaryExpressionNode, public LogicalExp
 
   public:
     bool equal(const NodePtr rhs) const override;
+    ExpressionNodePtr copy() = 0;
+
 };
 }// namespace NES
 

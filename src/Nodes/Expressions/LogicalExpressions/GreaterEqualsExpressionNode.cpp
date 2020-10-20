@@ -21,5 +21,8 @@ bool GreaterEqualsExpressionNode::equal(const NodePtr rhs) const {
 const std::string GreaterEqualsExpressionNode::toString() const {
     return "GreaterThenNode(" + stamp->toString() + ")";
 }
+ExpressionNodePtr GreaterEqualsExpressionNode::copy() {
+    return create(getLeft()->copy(), getRight()->copy());
+}
 
 }// namespace NES

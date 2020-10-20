@@ -21,5 +21,8 @@ bool GreaterExpressionNode::equal(const NodePtr rhs) const {
 const std::string GreaterExpressionNode::toString() const {
     return "GreaterNode(" + stamp->toString() + ")";
 }
+ExpressionNodePtr GreaterExpressionNode::copy() {
+    return create(getLeft()->copy(), getRight()->copy());
+}
 
 }// namespace NES

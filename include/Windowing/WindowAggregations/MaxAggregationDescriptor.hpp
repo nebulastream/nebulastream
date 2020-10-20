@@ -38,9 +38,11 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
      */
     void inferStamp(SchemaPtr schema) override;
 
+    WindowAggregationPtr copy() override;
+    MaxAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
   private:
     MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+
 };
 }// namespace NES
 #endif//NES_MAX_HPP

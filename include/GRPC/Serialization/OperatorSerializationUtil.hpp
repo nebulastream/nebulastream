@@ -2,7 +2,7 @@
 #define NES_INCLUDE_UTIL_OPERATORSERIALIZATIONUTIL_HPP_
 
 #include <memory>
-
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 namespace NES {
 
 class SourceLogicalOperatorNode;
@@ -22,9 +22,6 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
-
-class WindowLogicalOperatorNode;
-typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
 
 class SerializableOperator;
 class SerializableOperator_SourceDetails;
@@ -79,7 +76,7 @@ class OperatorSerializationUtil {
      * @param WindowLogicalOperatorNode The window operator node.
      * @return the serialized SerializableOperator_SinkDetails.
      */
-    static SerializableOperator_WindowDetails serializeWindowOperator(WindowLogicalOperatorNodePtr windowOperator);
+    static SerializableOperator_WindowDetails serializeWindowOperator(WindowOperatorNodePtr windowOperator);
 
     /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
@@ -93,7 +90,7 @@ class OperatorSerializationUtil {
     * @param sinkDetails The serialized sink operator details.
     * @return SinkLogicalOperatorNodePtr
     */
-    static WindowLogicalOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails);
+    static WindowOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails);
 
     /**
      * @brief Serializes an source descriptor and all its properties to a SerializableOperator_SourceDetails object.

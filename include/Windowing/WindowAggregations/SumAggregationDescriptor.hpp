@@ -41,9 +41,11 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
    */
     void inferStamp(SchemaPtr schema) override;
 
+    WindowAggregationPtr copy() override;
+
   private:
     SumAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    SumAggregationDescriptor(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    SumAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES
 #endif//NES_SUM_HPP

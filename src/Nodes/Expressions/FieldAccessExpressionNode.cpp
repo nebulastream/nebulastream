@@ -42,5 +42,11 @@ void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
     auto field = schema->get(fieldName);
     stamp = field->getDataType();
 }
+void FieldAccessExpressionNode::setFieldName(std::string name) {
+    this->fieldName = name;
+}
+ExpressionNodePtr FieldAccessExpressionNode::copy() {
+    return create(getStamp(), fieldName);
+}
 
 }// namespace NES

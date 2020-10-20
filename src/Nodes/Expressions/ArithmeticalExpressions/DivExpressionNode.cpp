@@ -18,5 +18,8 @@ bool DivExpressionNode::equal(const NodePtr rhs) const {
 const std::string DivExpressionNode::toString() const {
     return "DivNode(" + stamp->toString() + ")";
 }
+ExpressionNodePtr DivExpressionNode::copy() {
+    return create(getLeft()->copy(), getRight()->copy());
+}
 
 }// namespace NES

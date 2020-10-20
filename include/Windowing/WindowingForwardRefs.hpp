@@ -46,6 +46,9 @@ typedef std::shared_ptr<DistributionCharacteristic> DistributionCharacteristicPt
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
+class ExpressionNode;
+typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+
 class FieldAccessExpressionNode;
 typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
 
