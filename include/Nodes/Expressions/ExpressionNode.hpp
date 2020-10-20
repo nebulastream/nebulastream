@@ -49,14 +49,22 @@ class ExpressionNode : public Node {
      */
     void setStamp(DataTypePtr stamp);
 
+    /**
+     * @brief Create a deep copy of this expression node.
+     * @return ExpressionNodePtr
+     */
     virtual ExpressionNodePtr copy() = 0;
 
   protected:
+    ExpressionNode(ExpressionNode* other);
+
     /**
      * @brief declares the type of this expression.
      * todo replace the direct usage of data types with a stamp abstraction.
      */
     DataTypePtr stamp;
+
+
 };
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 }// namespace NES

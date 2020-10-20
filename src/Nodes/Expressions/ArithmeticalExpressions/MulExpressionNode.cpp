@@ -1,7 +1,12 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <utility>
 namespace NES {
-MulExpressionNode::MulExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(stamp){};
+
+MulExpressionNode::MulExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(std::move(stamp)){};
+
+MulExpressionNode::MulExpressionNode(MulExpressionNode* other) : ArithmeticalExpressionNode(other) {}
+
 ExpressionNodePtr MulExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto mulNode = std::make_shared<MulExpressionNode>(left->getStamp());
     mulNode->setChildren(left, right);
@@ -19,7 +24,7 @@ const std::string MulExpressionNode::toString() const {
     return "MulNode(" + stamp->toString() + ")";
 }
 ExpressionNodePtr MulExpressionNode::copy() {
-    return create(getLeft()->copy(), getRight()->copy());
+    return std::make_shared<MulExpressionNode>(MulExpressionNode(this));
 }
 
 }// namespace NES

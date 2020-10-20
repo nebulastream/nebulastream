@@ -8,17 +8,18 @@ namespace NES {
  */
 class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalExpressionNode {
   public:
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
     ExpressionNodePtr copy() override = 0;
+
+    bool equal(const NodePtr rhs) const override;
+
   protected:
     LogicalBinaryExpressionNode();
     ~LogicalBinaryExpressionNode() = default;
-
-
-
-
-
-  public:
-    bool equal(const NodePtr rhs) const override;
+    explicit LogicalBinaryExpressionNode(LogicalBinaryExpressionNode* other);
 };
 }// namespace NES
 

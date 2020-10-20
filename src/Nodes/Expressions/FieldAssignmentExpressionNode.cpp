@@ -7,6 +7,8 @@ namespace NES {
 FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp)
     : BinaryExpressionNode(std::move(stamp)){};
 
+FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other) : BinaryExpressionNode(other){};
+
 FieldAssignmentExpressionNodePtr FieldAssignmentExpressionNode::create(FieldAccessExpressionNodePtr fieldAccess,
                                                                        ExpressionNodePtr expressionNodePtr) {
     auto fieldAssignment = std::make_shared<FieldAssignmentExpressionNode>(expressionNodePtr->getStamp());
@@ -50,7 +52,7 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
     }
 }
 ExpressionNodePtr FieldAssignmentExpressionNode::copy() {
-    return create(getField()->copy()->as<FieldAccessExpressionNode>(), getAssignment()->copy());
+    return std::make_shared<FieldAssignmentExpressionNode>(FieldAssignmentExpressionNode(this));
 }
 
 }// namespace NES

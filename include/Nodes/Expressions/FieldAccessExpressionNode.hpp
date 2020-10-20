@@ -30,7 +30,14 @@ class FieldAccessExpressionNode : public ExpressionNode {
     */
     void inferStamp(SchemaPtr schema) override;
 
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
     ExpressionNodePtr copy() override;
+
+  protected:
+    explicit FieldAccessExpressionNode(FieldAccessExpressionNode* other);
 
   private:
     FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName);

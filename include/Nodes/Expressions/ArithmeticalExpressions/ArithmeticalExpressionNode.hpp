@@ -19,7 +19,8 @@ class ArithmeticalExpressionNode : public BinaryExpressionNode {
 
 
   protected:
-    ArithmeticalExpressionNode(DataTypePtr stamp);
+    explicit ArithmeticalExpressionNode(DataTypePtr stamp);
+    explicit ArithmeticalExpressionNode(ArithmeticalExpressionNode* other);
     ~ArithmeticalExpressionNode() = default;
 };
 

@@ -25,7 +25,14 @@ class NegateExpressionNode : public LogicalUnaryExpressionNode {
      */
     void inferStamp(SchemaPtr schema) override;
 
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
     ExpressionNodePtr copy() override;
+
+  protected:
+    explicit NegateExpressionNode(NegateExpressionNode* other);
 };
 }// namespace NES
 

@@ -21,7 +21,14 @@ class UnaryExpressionNode : public ExpressionNode {
      */
     ExpressionNodePtr child() const;
 
-    virtual ExpressionNodePtr copy() = 0;
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
+    ExpressionNodePtr copy() override = 0;
+
+  protected:
+    explicit UnaryExpressionNode(UnaryExpressionNode* other);
 };
 }// namespace NES
 

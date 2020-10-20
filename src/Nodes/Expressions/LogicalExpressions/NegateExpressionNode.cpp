@@ -5,6 +5,8 @@ namespace NES {
 
 NegateExpressionNode::NegateExpressionNode() : LogicalUnaryExpressionNode() {}
 
+NegateExpressionNode::NegateExpressionNode(NegateExpressionNode* other) : LogicalUnaryExpressionNode(other) {}
+
 bool NegateExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<NegateExpressionNode>()) {
         auto other = rhs->as<NegateExpressionNode>();
@@ -33,7 +35,7 @@ void NegateExpressionNode::inferStamp(SchemaPtr schema) {
     }
 }
 ExpressionNodePtr NegateExpressionNode::copy() {
-    return create(child()->copy());
+    return std::make_shared<NegateExpressionNode>(NegateExpressionNode(this));
 }
 
 }// namespace NES
