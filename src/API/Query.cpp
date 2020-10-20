@@ -35,13 +35,15 @@ Query& Query::merge(Query* subQuery) {
     return *this;
 }
 
-Query& Query::window(const WindowTypePtr windowType, const WindowAggregationPtr aggregation) {
+Query& Query::window(const WindowTypePtr, const WindowAggregationPtr) {
+    NES_THROW_RUNTIME_ERROR("Query: Global windowing is currently not supported");
+    /*
     NES_DEBUG("Query: add window operator");
     auto windowDefinition = LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType());
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(windowOperator);
-    return *this;
+    return *this;*/
 }
 
 Query& Query::windowByKey(ExpressionItem onKey, const WindowTypePtr windowType, const WindowAggregationPtr aggregation) {
