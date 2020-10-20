@@ -2,14 +2,14 @@
 #define WINDOW_REFINEMENT_OPERATOR_CENTRAL_WINDOW_NODE_HPP
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 
 namespace NES {
 
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
-class CentralWindowOperator : public WindowLogicalOperatorNode {
+class CentralWindowOperator : public WindowOperatorNode {
   public:
     CentralWindowOperator(const LogicalWindowDefinitionPtr windowDefinition);
 

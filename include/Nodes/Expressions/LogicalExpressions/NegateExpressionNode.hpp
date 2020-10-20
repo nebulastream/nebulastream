@@ -24,6 +24,8 @@ class NegateExpressionNode : public LogicalUnaryExpressionNode {
      * @param schema the current schema.
      */
     void inferStamp(SchemaPtr schema) override;
+
+    ExpressionNodePtr copy() override;
 };
 }// namespace NES
 

@@ -9,7 +9,7 @@
 namespace NES {
 
 MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(std::move(field)) {}
-MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessExpressionNodePtr field, FieldAccessExpressionNodePtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
+MinAggregationDescriptor::MinAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
 
 WindowAggregationPtr MinAggregationDescriptor::create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField) {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(std::move(onField), std::move(asField)));
@@ -28,7 +28,7 @@ void MinAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCo
                                                   BinaryOperatorStatement expressionStatement,
                                                   StructDeclaration inputStruct,
                                                   BinaryOperatorStatement inputRef) {
-    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->getFieldName());
+    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->as<FieldAccessExpressionNode>()->getFieldName());
     auto ifStatement = IF(
         expressionStatement > inputRef.accessRef(VarRefStatement(varDeclInput)),
         assign(expressionStatement, inputRef.accessRef(VarRefStatement(varDeclInput))));
@@ -45,6 +45,9 @@ void MinAggregationDescriptor::inferStamp(SchemaPtr schema) {
         NES_FATAL_ERROR("SumAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
     asField->setStamp(onField->getStamp());
+}
+WindowAggregationPtr MinAggregationDescriptor::copy() {
+    return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
 
 }// namespace NES

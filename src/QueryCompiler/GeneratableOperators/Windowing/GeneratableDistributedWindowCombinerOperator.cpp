@@ -16,7 +16,7 @@ void GeneratableCombiningWindowOperator::consume(CodeGeneratorPtr codegen, Pipel
     context->setWindow(windowHandler);
     codegen->generateCodeForCombiningWindow(getWindowDefinition(), context);
 }
-GeneratableDistributedlWindowCombinerOperatorPtr GeneratableCombiningWindowOperator::create(WindowLogicalOperatorNodePtr windowLogicalOperatorNode) {
+GeneratableDistributedlWindowCombinerOperatorPtr GeneratableCombiningWindowOperator::create(WindowOperatorNodePtr windowLogicalOperatorNode) {
     return std::make_shared<GeneratableCombiningWindowOperator>(GeneratableCombiningWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
 }
 

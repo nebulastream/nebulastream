@@ -1,8 +1,10 @@
+#include <API/Expressions/Expressions.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <API/Expressions/Expressions.hpp>
 namespace NES {
 
 LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar)
@@ -11,10 +13,10 @@ LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggr
 }
 
 LogicalWindowDefinition::LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
-                                   WindowAggregationPtr windowAggregation,
-                                   WindowTypePtr windowType,
-                                   DistributionCharacteristicPtr distChar,
-                                   uint64_t numberOfInputEdges)
+                                                 WindowAggregationPtr windowAggregation,
+                                                 WindowTypePtr windowType,
+                                                 DistributionCharacteristicPtr distChar,
+                                                 uint64_t numberOfInputEdges)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(std::move(onKey)), distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
@@ -30,7 +32,6 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(WindowAggregationPtr 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey, WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges) {
     return std::make_shared<LogicalWindowDefinition>(onKey.getExpressionNode()->as<FieldAccessExpressionNode>(), windowAggregation, windowType, distChar, numberOfInputEdges);
 }
-
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(FieldAccessExpressionNodePtr onKey, WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges) {
     return std::make_shared<LogicalWindowDefinition>(onKey, windowAggregation, windowType, distChar, numberOfInputEdges);
@@ -66,6 +67,10 @@ void LogicalWindowDefinition::setWindowType(WindowTypePtr windowType) {
 }
 void LogicalWindowDefinition::setOnKey(FieldAccessExpressionNodePtr onKey) {
     this->onKey = std::move(onKey);
+}
+
+LogicalWindowDefinitionPtr LogicalWindowDefinition::copy() {
+    return create(onKey, windowAggregation->copy(), windowType, distributionType, numberOfInputEdges);
 }
 
 }// namespace NES

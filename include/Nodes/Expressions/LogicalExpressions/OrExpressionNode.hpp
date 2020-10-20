@@ -22,6 +22,7 @@ class OrExpressionNode : public LogicalBinaryExpressionNode {
      * @param schema the current schema.
      */
     void inferStamp(SchemaPtr schema) override;
+    ExpressionNodePtr copy() override;
 };
 }// namespace NES
 

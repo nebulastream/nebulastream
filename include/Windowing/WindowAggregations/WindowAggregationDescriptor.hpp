@@ -13,6 +13,9 @@ typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
 class FieldAccessExpressionNode;
 typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
 
+class WindowAggregationDescriptor;
+typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
+
 /**
  * Abstract class for window aggregations. All window aggregations operate on a field and output another field.
  */
@@ -46,13 +49,13 @@ class WindowAggregationDescriptor {
     * Returns the result field of the aggregation
     * @return
     */
-    FieldAccessExpressionNodePtr as();
+    ExpressionNodePtr as();
 
     /**
     * Returns the result field of the aggregation
     * @return
     */
-    FieldAccessExpressionNodePtr on();
+    ExpressionNodePtr on();
 
 
     /**
@@ -67,12 +70,14 @@ class WindowAggregationDescriptor {
      */
     virtual void inferStamp(SchemaPtr schema) = 0;
 
+    virtual WindowAggregationPtr copy() = 0;
+
   protected:
     explicit WindowAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    WindowAggregationDescriptor(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    WindowAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
     WindowAggregationDescriptor() = default;
-    FieldAccessExpressionNodePtr onField;
-    FieldAccessExpressionNodePtr asField;
+    ExpressionNodePtr onField;
+    ExpressionNodePtr asField;
 };
 }// namespace NES
 

@@ -10,7 +10,7 @@ namespace NES {
 
 MaxAggregationDescriptor::MaxAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(std::move(field)) {}
 
-MaxAggregationDescriptor::MaxAggregationDescriptor(FieldAccessExpressionNodePtr field, FieldAccessExpressionNodePtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
+MaxAggregationDescriptor::MaxAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
 
 WindowAggregationPtr MaxAggregationDescriptor::create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField) {
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(std::move(onField), std::move(asField)));
@@ -29,7 +29,7 @@ void MaxAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCo
                                                   BinaryOperatorStatement partialRef,
                                                   StructDeclaration inputStruct,
                                                   BinaryOperatorStatement inputRef) {
-    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->getFieldName());
+    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->as<FieldAccessExpressionNode>()->getFieldName());
     auto ifStatement = IF(
         partialRef < inputRef.accessRef(VarRefStatement(varDeclInput)),
         assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
@@ -45,5 +45,8 @@ void MaxAggregationDescriptor::inferStamp(SchemaPtr schema) {
         NES_FATAL_ERROR("MaxAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
     asField->setStamp(onField->getStamp());
+}
+WindowAggregationPtr MaxAggregationDescriptor::copy() {
+    return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
 }// namespace NES

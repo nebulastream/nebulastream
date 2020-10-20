@@ -2,16 +2,12 @@
 #define WINDOW_LOGICAL_OPERATOR_NODE_HPP
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 
 namespace NES {
 
-class LogicalWindowDefinition;
-typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
-class WindowLogicalOperatorNode;
-typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
-
-class WindowLogicalOperatorNode : public LogicalOperatorNode {
+class WindowLogicalOperatorNode : public WindowOperatorNode {
   public:
     WindowLogicalOperatorNode(const LogicalWindowDefinitionPtr windowDefinition);
     bool equal(const NodePtr rhs) const override;
@@ -20,9 +16,6 @@ class WindowLogicalOperatorNode : public LogicalOperatorNode {
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
     virtual bool inferSchema();
-
-  protected:
-    LogicalWindowDefinitionPtr windowDefinition;
 };
 
 }// namespace NES

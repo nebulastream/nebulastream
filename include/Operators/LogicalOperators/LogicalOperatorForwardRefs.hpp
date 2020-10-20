@@ -18,8 +18,8 @@ typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 class FilterLogicalOperatorNode;
 typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 
-class WindowLogicalOperatorNode;
-typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
+class WindowOperatorNode;
+typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
 
 class FieldAssignmentExpressionNode;
 typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;

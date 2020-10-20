@@ -16,6 +16,7 @@ class DivExpressionNode : public ArithmeticalExpressionNode {
     static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
+    ExpressionNodePtr copy() override;
 };
 
 }// namespace NES

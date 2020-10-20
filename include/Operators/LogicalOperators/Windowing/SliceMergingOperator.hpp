@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_SPECIALIZEDWINDOWOPERATORS_SLICEMERGINGOPERATOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_SPECIALIZEDWINDOWOPERATORS_SLICEMERGINGOPERATOR_HPP_
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 
 namespace NES {
 
@@ -12,7 +12,7 @@ typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
  * @brief this class represents the intermediate merger for distributed windowing that is deployed on the worker
  * nodes between the slicer and combiner to do intermediate merging
  */
-class SliceMergingOperator : public WindowLogicalOperatorNode {
+class SliceMergingOperator : public WindowOperatorNode {
   public:
     SliceMergingOperator(const LogicalWindowDefinitionPtr windowDefinition);
 

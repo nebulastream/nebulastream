@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_SPECIALIZEDWINDOWOPERATORS_WINDOWCOMPUTATIONOPERATOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_SPECIALIZEDWINDOWOPERATORS_WINDOWCOMPUTATIONOPERATOR_HPP_
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 
 namespace NES {
 
@@ -11,7 +11,7 @@ typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 /**
  * @brief this class represents the computation operator for distributed windowing that is deployed on the sink node and which merges all slices
  */
-class WindowComputationOperator : public WindowLogicalOperatorNode {
+class WindowComputationOperator : public WindowOperatorNode {
   public:
     WindowComputationOperator(const LogicalWindowDefinitionPtr windowDefinition);
 

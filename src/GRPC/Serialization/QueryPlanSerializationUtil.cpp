@@ -1,6 +1,6 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 #include <SerializableOperator.pb.h>

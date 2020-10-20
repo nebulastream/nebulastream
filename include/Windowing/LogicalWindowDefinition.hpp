@@ -100,6 +100,8 @@ class LogicalWindowDefinition {
     FieldAccessExpressionNodePtr getOnKey();
     void setOnKey(FieldAccessExpressionNodePtr onKey);
 
+    LogicalWindowDefinitionPtr copy();
+
   private:
     WindowAggregationPtr windowAggregation;
     WindowTypePtr windowType;

@@ -8,6 +8,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -102,12 +103,12 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
         .filter(Attribute("id") < 45)
-        .window(
+        .windowByKey(Attribute("id"),
             TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
                           Sum(Attribute("value")))
         .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
-
+    queryPlan = TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);

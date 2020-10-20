@@ -193,7 +193,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     return operatorNode;
 }
 
-SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOperator(WindowLogicalOperatorNodePtr windowOperator) {
+SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOperator(WindowOperatorNodePtr windowOperator) {
     auto windowDetails = SerializableOperator_WindowDetails();
     auto windowDefinition = windowOperator->getWindowDefinition();
 
@@ -265,7 +265,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     return windowDetails;
 }
 
-WindowLogicalOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails) {
+WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails) {
 
     auto serializedWindowAggregation = sinkDetails->windowaggregation();
     auto serializedWindowType = sinkDetails->windowtype();

@@ -42,6 +42,8 @@ class ConstantValueExpressionNode : public ExpressionNode {
      */
     bool equal(const NodePtr otherNode) const override;
 
+    ExpressionNodePtr copy() override;
+
   private:
     explicit ConstantValueExpressionNode(const ValueTypePtr constantValue);
     // Value of this expression

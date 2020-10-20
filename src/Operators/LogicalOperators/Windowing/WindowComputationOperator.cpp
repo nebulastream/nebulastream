@@ -1,6 +1,9 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 namespace NES {
 
@@ -9,7 +12,7 @@ LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const Logi
 }
 
 WindowComputationOperator::WindowComputationOperator(const LogicalWindowDefinitionPtr windowDefinition)
-    : WindowLogicalOperatorNode(windowDefinition) {
+    : WindowOperatorNode(windowDefinition) {
     this->windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createCombiningWindowType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
 }
@@ -36,7 +39,27 @@ OperatorNodePtr WindowComputationOperator::copy() {
     return copy;
 }
 bool WindowComputationOperator::inferSchema() {
+    WindowOperatorNode::inferSchema();
+    // infer the default input and output schema
+    NES_DEBUG("WindowComputationOperator: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
 
-    return LogicalOperatorNode::inferSchema();
+    // infer type of aggregation
+    auto windowAggregation = windowDefinition->getWindowAggregation();
+    windowAggregation->inferStamp(inputSchema);
+
+    auto windowType = windowDefinition->getWindowType();
+    if (windowDefinition->isKeyed()) {
+        // infer the data type of the key field.
+        windowDefinition->getOnKey()->inferStamp(inputSchema);
+        outputSchema = Schema::create()
+            ->addField(createField("start", UINT64))
+            ->addField(createField("end", UINT64))
+            ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()))
+            ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(), windowAggregation->on()->getStamp()));
+        return true;
+    }else{
+        NES_THROW_RUNTIME_ERROR("WindowComputationOperator: type inference for non keyed streams is not supported");
+        return false;
+    }
 }
 }// namespace NES

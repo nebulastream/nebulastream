@@ -2,6 +2,7 @@
 #define NES_INCLUDE_NODES_OPERATORS_SPECIALIZEDWINDOWOPERATORS_SLICECREATIONOPERATOR_HPP_
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 
 namespace NES {
 
@@ -11,7 +12,7 @@ typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 /**
  * @brief this class represents the slicing operator for distributed windowing that is deployed on the source nodes and send all sliches to the combiner
  */
-class SliceCreationOperator : public WindowLogicalOperatorNode {
+class SliceCreationOperator : public WindowOperatorNode {
   public:
     SliceCreationOperator(const LogicalWindowDefinitionPtr windowDefinition);
 

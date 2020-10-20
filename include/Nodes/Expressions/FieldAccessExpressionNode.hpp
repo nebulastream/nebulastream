@@ -22,12 +22,15 @@ class FieldAccessExpressionNode : public ExpressionNode {
     bool equal(const NodePtr rhs) const override;
 
     const std::string getFieldName();
+    void setFieldName(std::string name);
 
     /**
     * @brief Infers the stamp of the expression given the current schema.
     * @param SchemaPtr
     */
     void inferStamp(SchemaPtr schema) override;
+
+    ExpressionNodePtr copy() override;
 
   private:
     FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName);

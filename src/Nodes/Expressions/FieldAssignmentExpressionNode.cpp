@@ -49,5 +49,8 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
         field->getStamp()->isEquals(getAssignment()->getStamp());
     }
 }
+ExpressionNodePtr FieldAssignmentExpressionNode::copy() {
+    return create(getField()->copy()->as<FieldAccessExpressionNode>(), getAssignment()->copy());
+}
 
 }// namespace NES

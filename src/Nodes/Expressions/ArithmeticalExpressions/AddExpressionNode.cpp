@@ -18,5 +18,8 @@ bool AddExpressionNode::equal(const NodePtr rhs) const {
 const std::string AddExpressionNode::toString() const {
     return "AddNode(" + stamp->toString() + ")";
 }
+ExpressionNodePtr AddExpressionNode::copy() {
+    return create(getLeft()->copy(), getRight()->copy());
+}
 
 }// namespace NES

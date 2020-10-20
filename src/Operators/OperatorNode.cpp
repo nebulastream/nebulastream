@@ -22,6 +22,9 @@ bool OperatorNode::inferSchema() {
     for (const auto& child : children) {
         child->as<OperatorNode>()->inferSchema();
     }
+    if(children.empty()){
+        NES_THROW_RUNTIME_ERROR("OperatorNode: this node should have at least one child operator");
+    }
     auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
     for (const auto& child : children) {
         if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
@@ -128,7 +131,7 @@ bool OperatorNode::addChild(NodePtr newNode) {
         newNode->addParent(shared_from_this());
         return true;
     }
-    NES_DEBUG("OperatorNode: the node is already part of its children so skip add chld operation.");
+    NES_DEBUG("OperatorNode: the node is already part of its children so skip add child operation.");
     return false;
 }
 

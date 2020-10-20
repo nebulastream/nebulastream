@@ -22,4 +22,8 @@ const std::string EqualsExpressionNode::toString() const {
     return "EqualsNode(" + stamp->toString() + ")";
 }
 
+ExpressionNodePtr EqualsExpressionNode::copy() {
+    return create(getLeft()->copy(), getRight()->copy());
+}
+
 }// namespace NES

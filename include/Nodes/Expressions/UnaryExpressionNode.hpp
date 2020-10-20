@@ -20,6 +20,8 @@ class UnaryExpressionNode : public ExpressionNode {
      * @return
      */
     ExpressionNodePtr child() const;
+
+    virtual ExpressionNodePtr copy() = 0;
 };
 }// namespace NES
 

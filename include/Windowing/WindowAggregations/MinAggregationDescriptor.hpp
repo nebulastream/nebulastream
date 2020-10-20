@@ -38,10 +38,11 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
  * @param SchemaPtr
  */
     void inferStamp(SchemaPtr schema) override;
+    WindowAggregationPtr copy() override;
 
   private:
     MinAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    MinAggregationDescriptor(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    MinAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES
 #endif//NES_MIN_HPP

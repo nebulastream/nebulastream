@@ -32,5 +32,8 @@ void NegateExpressionNode::inferStamp(SchemaPtr schema) {
             "Negate Expression Node: the stamp of child must be boolean, but was: " + child()->getStamp()->toString());
     }
 }
+ExpressionNodePtr NegateExpressionNode::copy() {
+    return create(child()->copy());
+}
 
 }// namespace NES

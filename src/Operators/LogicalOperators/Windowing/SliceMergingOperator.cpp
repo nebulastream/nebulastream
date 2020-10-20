@@ -8,7 +8,7 @@ LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const LogicalWi
 }
 
 SliceMergingOperator::SliceMergingOperator(const LogicalWindowDefinitionPtr windowDefinition)
-    : WindowLogicalOperatorNode(windowDefinition) {
+    : WindowOperatorNode(windowDefinition) {
 }
 
 const std::string SliceMergingOperator::toString() const {
@@ -35,7 +35,7 @@ OperatorNodePtr SliceMergingOperator::copy() {
 bool SliceMergingOperator::inferSchema() {
     // infer the default input and output schema
 
-    WindowLogicalOperatorNode::inferSchema();
+    WindowOperatorNode::inferSchema();
 
     NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
     return true;

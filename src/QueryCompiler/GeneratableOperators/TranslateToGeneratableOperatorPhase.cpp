@@ -57,19 +57,19 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableCompleteWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        auto windowOperator = GeneratableCompleteWindowOperator::create(operatorNode->as<CentralWindowOperator>());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableSlicingWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        auto windowOperator = GeneratableSlicingWindowOperator::create(operatorNode->as<SliceCreationOperator>());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableCombiningWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        auto windowOperator = GeneratableCombiningWindowOperator::create(operatorNode->as<WindowComputationOperator>());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     }
