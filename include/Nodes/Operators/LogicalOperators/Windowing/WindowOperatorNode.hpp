@@ -14,9 +14,12 @@ typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
 class WindowOperatorNode : public LogicalOperatorNode {
   public:
     WindowOperatorNode(const LogicalWindowDefinitionPtr windowDefinition);
-    virtual const LogicalWindowDefinitionPtr& getWindowDefinition() const;
 
-
+    /**
+     * @brief Gets the window definition of the window operator.
+     * @return LogicalWindowDefinitionPtr
+     */
+    LogicalWindowDefinitionPtr getWindowDefinition() const;
 
   protected:
     LogicalWindowDefinitionPtr windowDefinition;

@@ -19,10 +19,6 @@ const std::string WindowLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-const LogicalWindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() const {
-    return windowDefinition;
-}
-
 bool WindowLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     bool eq = equal(rhs);
     bool idCmp = rhs->as<WindowLogicalOperatorNode>()->getId() == id;
