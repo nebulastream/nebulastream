@@ -926,7 +926,7 @@ TEST_F(LogicalOperatorNodeTest, asBadCast) {
     try {
         FilterLogicalOperatorNodePtr _filterOp1 = base2->as<FilterLogicalOperatorNode>();
         FAIL();
-    } catch (const std::bad_cast& e) {
+    } catch (const std::runtime_error& e) {
         SUCCEED();
     }
 }

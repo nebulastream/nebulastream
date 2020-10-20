@@ -804,7 +804,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerCentralWindowQueryProcessingTime)
     wrk1->registerPhysicalStream(conf);
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
+    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(ProcessingTime(), "
                    "Seconds(1)), Sum(Attribute(\"metadata_generated\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\"));";
 
@@ -876,7 +876,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerDistributedWindowQueryProcessingT
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"id\"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), "
+    string query = "Query::from(\"default_logical\").windowByKey(Attribute(\"id\"), TumblingWindow::of(ProcessingTime(), "
                    "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"query.out\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
