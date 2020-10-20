@@ -4,7 +4,7 @@ namespace NES{
 
 WindowOperatorNode::WindowOperatorNode(const LogicalWindowDefinitionPtr windowDefinition): windowDefinition(windowDefinition) {}
 
-const LogicalWindowDefinitionPtr & WindowOperatorNode::getWindowDefinition() const {
+LogicalWindowDefinitionPtr WindowOperatorNode::getWindowDefinition() const {
     return  windowDefinition;
 }
 
