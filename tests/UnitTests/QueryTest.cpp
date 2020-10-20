@@ -96,7 +96,8 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-                      .window(
+                      .windowByKey(
+                          Attribute("id"),
                           TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
                           Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
@@ -132,7 +133,8 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .window(
+        .windowByKey(
+                          Attribute("id"),
             SlidingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10), Seconds(2)),
                           Sum(Attribute("value")))
         .sink(printSinkDescriptor);

@@ -79,7 +79,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .window(
+        .windowByKey(Attribute("id"),
             TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
                           Sum(Attribute("value")))
         .sink(printSinkDescriptor);
