@@ -7,11 +7,11 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>

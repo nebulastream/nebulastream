@@ -1,8 +1,8 @@
 #include <Exceptions/QueryPlacementException.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Topology/TopologyNode.hpp>

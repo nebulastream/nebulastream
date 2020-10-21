@@ -1,4 +1,4 @@
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>

@@ -2,7 +2,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_
 
 #include <Common/ForwardDeclaration.hpp>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>

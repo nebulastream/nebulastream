@@ -1,5 +1,5 @@
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>

@@ -13,8 +13,8 @@
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Node.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>

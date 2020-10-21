@@ -1,9 +1,9 @@
-#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>

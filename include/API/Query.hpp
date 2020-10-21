@@ -6,7 +6,7 @@
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Schema.hpp>
 
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>

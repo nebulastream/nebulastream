@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLESINKOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLESINKOPERATOR_HPP_
 
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {

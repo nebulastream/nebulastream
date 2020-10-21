@@ -2,11 +2,11 @@
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Util/Logger.hpp>
 

@@ -1,13 +1,13 @@
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 

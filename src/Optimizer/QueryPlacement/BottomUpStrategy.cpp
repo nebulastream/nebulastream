@@ -1,11 +1,11 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>

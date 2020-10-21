@@ -1,8 +1,8 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -187,10 +187,10 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     NES_DEBUG("GlobalQueryPlanTest: should return 2 global query node with logical sink");
     auto logicalSinkNodes = globalQueryPlan->getAllNewGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
     EXPECT_TRUE(logicalSinkNodes.size() == 2);
-    
+
     //Update Global Query MetaData information
     globalQueryPlan->updateGlobalQueryMetaDataMap();
-    
+
     //Get MetaData information
     std::vector<GlobalQueryMetaDataPtr> globalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
 

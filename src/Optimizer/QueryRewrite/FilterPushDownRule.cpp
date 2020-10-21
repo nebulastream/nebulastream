@@ -1,11 +1,11 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Node.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>

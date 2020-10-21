@@ -1,6 +1,6 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>

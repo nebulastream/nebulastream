@@ -1,7 +1,7 @@
 #ifndef NES_GLOBALQUERYNODE_HPP
 #define NES_GLOBALQUERYNODE_HPP
 
-#include <Nodes/Operators/OperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <memory>
 #include <string>
