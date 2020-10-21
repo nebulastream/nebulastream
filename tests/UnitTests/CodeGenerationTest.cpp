@@ -633,7 +633,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto varDeclWindow = VariableDeclaration::create(
         tf.createPointer(tf.createAnonymusDataType("void")), "stateVar");
     VariableDeclaration varDeclWindowManager = VariableDeclaration::create(
-        tf.createPointer(tf.createAnonymusDataType("NES::WindowManager")),
+        tf.createPointer(tf.createAnonymusDataType("NES::Windowing::WindowManager")),
         "window_manager");
 
     /* Tuple *tuples; */
@@ -1062,7 +1062,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
 
     //check partial aggregates in window state
     auto stateVar =
-        (StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) windowHandler
+        (StateVariable<int64_t, NES::Windowing::WindowSliceStore<int64_t>*>*) windowHandler
             ->getWindowState();
 
     std::vector<uint64_t> results;
