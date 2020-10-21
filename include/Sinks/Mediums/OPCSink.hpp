@@ -2,13 +2,13 @@
 #define OPCSINK_HPP
 #ifdef ENABLE_OPC_BUILD
 
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <cstdint>
 #include <memory>
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/plugin/log_stdout.h>
 #include <string>
-#include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES {
 
@@ -26,7 +26,7 @@ class OPCSink : public SinkMedium {
      * @param user name to access the server
      * @param password to access the server
      */
-    OPCSink(SinkFormatPtr format, const std::string& url, UA_NodeId* nodeId, std::string  user, std::string  password);
+    OPCSink(SinkFormatPtr format, std::string url, UA_NodeId nodeId, std::string user, std::string password);
 
     /**
      * @brief dtor
@@ -60,13 +60,13 @@ class OPCSink : public SinkMedium {
      *
      * @brief get url
      */
-    const std::string& getUrl() const;
+    const std::string getUrl() const;
 
     /**
     * @brief get desired OPC node id
     * @return OPC node id
     */
-    UA_NodeId* getNodeId() const;
+    UA_NodeId getNodeId() const;
 
     /**
      *
@@ -98,7 +98,6 @@ class OPCSink : public SinkMedium {
     UA_StatusCode getRetval() const;
 
   private:
-
     /**
      * @brief default constructor required for boost serialization
      */
@@ -123,8 +122,8 @@ class OPCSink : public SinkMedium {
      * serialization/deserialization process
      */
 
-    const std::string& url;
-    UA_NodeId* nodeId;
+    const std::string url;
+    UA_NodeId nodeId;
     const std::string user;
     const std::string password;
     UA_StatusCode retval;

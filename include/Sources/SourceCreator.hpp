@@ -114,8 +114,8 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
  * @param password for authentication if needed
  * @return
  */
-const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& url,
-                                    UA_NodeId* nodeId, const std::string& user, const std::string& password);
+const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string url,
+                                    UA_NodeId nodeId, std::string user, std::string password);
 #endif
 
 }// namespace NES

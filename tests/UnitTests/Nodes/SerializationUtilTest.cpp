@@ -164,7 +164,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
 
     {
         UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
-        auto source = OPCSourceDescriptor::create(schema, "localhost", &nodeId, "", "");
+        auto source = OPCSourceDescriptor::create(schema, "localhost", nodeId, "", "");
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
@@ -230,7 +230,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
 
     {
         UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
-        auto sink = OPCSinkDescriptor::create("localhost", &nodeId, "", "");
+        auto sink = OPCSinkDescriptor::create("localhost", nodeId, "", "");
         auto serializedSinkDescriptor = OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));

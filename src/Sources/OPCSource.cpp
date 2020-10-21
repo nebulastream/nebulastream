@@ -20,8 +20,8 @@
 
 namespace NES {
 
-OPCSource::OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& url,
-                     UA_NodeId* nodeId, std::string password, std::string user)
+OPCSource::OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string url,
+                     UA_NodeId nodeId, std::string password, std::string user)
     : DataSource(schema, bufferManager, queryManager), url(url), nodeId(nodeId), retval(UA_STATUSCODE_GOOD),
       client(UA_Client_new()), connected(false), user(user), password(password) {
 
@@ -45,7 +45,7 @@ std::optional<TupleBuffer> OPCSource::receiveData() {
     if (connect()) {
 
         UA_Variant* val = new UA_Variant;
-        retval = UA_Client_readValueAttribute(client, *nodeId, val);
+        retval = UA_Client_readValueAttribute(client, nodeId, val);
         auto buffer = bufferManager->getBufferBlocking();
         buffer.setNumberOfTuples(1);
         NES_DEBUG("OPCSOURCE::receiveData()  " << this << ": got buffer ");
@@ -71,15 +71,15 @@ std::optional<TupleBuffer> OPCSource::receiveData() {
 
 const std::string OPCSource::toString() const {
 
-    char* ident = (char*) UA_malloc(sizeof(char) * nodeId->identifier.string.length + 1);
-    memcpy(ident, nodeId->identifier.string.data, nodeId->identifier.string.length);
-    ident[nodeId->identifier.string.length] = '\0';
+    char* ident = (char*) UA_malloc(sizeof(char) * nodeId.identifier.string.length + 1);
+    memcpy(ident, nodeId.identifier.string.data, nodeId.identifier.string.length);
+    ident[nodeId.identifier.string.length] = '\0';
 
     std::stringstream ss;
     ss << "OPC_SOURCE(";
     ss << "SCHEMA(" << schema->toString() << "), ";
     ss << "URL= " << url << ", ";
-    ss << "NODE_INDEX= " << nodeId->namespaceIndex << ", ";
+    ss << "NODE_INDEX= " << nodeId.namespaceIndex << ", ";
     ss << "NODE_IDENTIFIER= " << ident << ". ";
 
     return ss.str();
@@ -135,11 +135,11 @@ bool OPCSource::disconnect() {
 
 SourceType OPCSource::getType() const { return OPC_SOURCE; }
 
-const std::string& OPCSource::getUrl() const {
+const std::string OPCSource::getUrl() const {
     return url;
 }
 
-UA_NodeId* OPCSource::getNodeId() const {
+UA_NodeId OPCSource::getNodeId() const {
     return nodeId;
 }
 

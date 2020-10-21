@@ -14,23 +14,21 @@
 #include <open62541/client_subscriptions.h>
 #include <open62541/plugin/log_stdout.h>
 
-#include <stdlib.h>
 #include <iostream>
+#include <stdlib.h>
 
 namespace NES {
 
-OPCSink::OPCSink(SinkFormatPtr format, const std::string& url, UA_NodeId* nodeId, std::string user, std::string password)
+OPCSink::OPCSink(SinkFormatPtr format, std::string url, UA_NodeId nodeId, std::string user, std::string password)
     : SinkMedium(std::move(format), parentPlanId),
-    url(url),
-    nodeId(nodeId),
-    retval(UA_STATUSCODE_GOOD),
-    client(UA_Client_new()),
-    connected(false),
-    user(user),
-    password(password) {
-
+      url(url),
+      nodeId(nodeId),
+      retval(UA_STATUSCODE_GOOD),
+      client(UA_Client_new()),
+      connected(false),
+      user(user),
+      password(password) {
     NES_DEBUG("OPCSINK  " << this << ": Init OPC Sink to " << url << " .");
-
 }
 
 OPCSink::~OPCSink() {
@@ -49,18 +47,18 @@ OPCSink::~OPCSink() {
 bool OPCSink::writeData(TupleBuffer& inputBuffer, WorkerContext&) {
     std::unique_lock lock(writeMutex);
     NES_DEBUG("OPCSINK::writeData()  " << this);
-    NES_DEBUG("OPCSINK::writeData url: " << url <<".");
+    NES_DEBUG("OPCSINK::writeData url: " << url << ".");
     if (connect()) {
 
         /* Read current value of attribute, also necessary to get the type information of the node */
-        UA_Variant *val = new UA_Variant;
-        retval = UA_Client_readValueAttribute(client, *nodeId, val);
-        if(retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
-            NES_DEBUG("OPCSINK::writeData: Node exists, successfully obtained information about current node. " );
+        UA_Variant* val = new UA_Variant;
+        retval = UA_Client_readValueAttribute(client, nodeId, val);
+        if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
+            NES_DEBUG("OPCSINK::writeData: Node exists, successfully obtained information about current node. ");
             /* Write node attribute with scalar value*/
             retval = UA_Variant_setScalarCopy(val, inputBuffer.getBuffer(), val->type);
-        } else if(retval == UA_STATUSCODE_GOOD && UA_Variant_hasArrayType(val, val->type)) {
-            NES_DEBUG("OPCSINK::writeData: Node exists, successfully obtained information about current node. " );
+        } else if (retval == UA_STATUSCODE_GOOD && UA_Variant_hasArrayType(val, val->type)) {
+            NES_DEBUG("OPCSINK::writeData: Node exists, successfully obtained information about current node. ");
             /* Write node attribute with array value*/
             retval = UA_Variant_setArrayCopy(val, inputBuffer.getBuffer(), inputBuffer.getBufferSize(), val->type);
         } else {
@@ -68,16 +66,15 @@ bool OPCSink::writeData(TupleBuffer& inputBuffer, WorkerContext&) {
             return false;
         }
 
-
-        if (retval != UA_STATUSCODE_GOOD){
+        if (retval != UA_STATUSCODE_GOOD) {
             NES_ERROR("OPCSINK::writeData: Format of value in input buffer and format of nodeid do not match.");
             return false;
         }
 
-        retval = UA_Client_writeValueAttribute(client, *nodeId, val);
+        retval = UA_Client_writeValueAttribute(client, nodeId, val);
 
-        if(retval == UA_STATUSCODE_GOOD){
-            NES_DEBUG("OPCSINK::writeData: Value has been successfully updated " );
+        if (retval == UA_STATUSCODE_GOOD) {
+            NES_DEBUG("OPCSINK::writeData: Value has been successfully updated ");
         } else {
             NES_ERROR("OPCSINK::writeData: Updating value was not possible.");
             return false;
@@ -85,10 +82,10 @@ bool OPCSink::writeData(TupleBuffer& inputBuffer, WorkerContext&) {
 
         UA_delete(val, val->type);
 
-        UA_Variant *var = new UA_Variant;
-        UA_Client_readValueAttribute(client, *nodeId, var);
-        if(retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
-            NES_DEBUG("OPCSINK::writeData: New value is: " << *(UA_Int32*)var->data);
+        UA_Variant* var = new UA_Variant;
+        UA_Client_readValueAttribute(client, nodeId, var);
+        if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
+            NES_DEBUG("OPCSINK::writeData: New value is: " << *(UA_Int32*) var->data);
         } else {
             NES_ERROR("OPCSINK::writeData: Node does not exist or is not a scalar.");
             return false;
@@ -114,14 +111,14 @@ void OPCSink::shutdown() {
 }
 
 const std::string OPCSink::toString() const {
-    char* ident = (char*)UA_malloc(sizeof(char)*nodeId->identifier.string.length+1);
-    memcpy(ident, nodeId->identifier.string.data, nodeId->identifier.string.length);
-    ident[nodeId->identifier.string.length] = '\0';
+    char* ident = (char*) UA_malloc(sizeof(char) * nodeId.identifier.string.length + 1);
+    memcpy(ident, nodeId.identifier.string.data, nodeId.identifier.string.length);
+    ident[nodeId.identifier.string.length] = '\0';
     std::stringstream ss;
     ss << "OPC_SINK(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
     ss << "URL= " << this->getUrl() << ", ";
-    ss << "NODE_INDEX= " << nodeId->namespaceIndex << ", ";
+    ss << "NODE_INDEX= " << nodeId.namespaceIndex << ", ";
     ss << "NODE_IDENTIFIER= " << ident << ". ";
 
     return ss.str();
@@ -174,11 +171,11 @@ bool OPCSink::disconnect() {
     return !connected;
 }
 
-const std::string& OPCSink::getUrl() const {
+const std::string OPCSink::getUrl() const {
     return url;
 }
 
-UA_NodeId* OPCSink::getNodeId() const {
+UA_NodeId OPCSink::getNodeId() const {
     return nodeId;
 }
 
@@ -202,6 +199,5 @@ UA_StatusCode OPCSink::getRetval() const {
     return retval;
 }
 
-}
-// namespace NES
+}// namespace NES
 #endif

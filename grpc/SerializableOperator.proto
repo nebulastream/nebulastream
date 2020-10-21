@@ -88,9 +88,10 @@ message SerializableOperator{
       string url = 1;
       uint32 namespaceIndex = 2;
       string identifier = 3;
-      string user = 4;
-      string password = 5;
-      SerializableSchema sourceSchema = 6;
+      uint32 identifierType = 4;
+      string user = 5;
+      string password = 6;
+      SerializableSchema sourceSchema = 7;
     }
 
     message SerializableNetworkSourceDescriptor {
@@ -130,8 +131,9 @@ message SerializableOperator{
       string url = 1;
       uint32 namespaceIndex = 2;
       string identifier = 3;
-      string user = 4;
-      string password = 5;
+      uint32 identifierType = 4;
+      string user = 5;
+      string password = 6;
     }
 
     message SerializableNetworkSinkDescriptor {
