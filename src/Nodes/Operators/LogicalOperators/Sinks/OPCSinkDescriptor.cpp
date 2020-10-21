@@ -4,20 +4,20 @@
 
 namespace NES {
 
-    OPCSinkDescriptor::OPCSinkDescriptor(const std::string& url,
-                                     UA_NodeId* nodeId,
+    OPCSinkDescriptor::OPCSinkDescriptor(std::string url,
+                                     UA_NodeId nodeId,
                                      std::string user,
                                      std::string password)
-        : url(url), nodeId(nodeId), user(std::move(user)), password(std::move(password)) {
+        : url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)), password(std::move(password)) {
 
         NES_DEBUG("OPCSINKDESCRIPTOR  " << this << ": Init OPC Sink descriptor.");
     }
 
-    const std::string& OPCSinkDescriptor::getUrl() const {
+    const std::string OPCSinkDescriptor::getUrl() const {
         return url;
     }
 
-    UA_NodeId* OPCSinkDescriptor::getNodeId() const {
+    UA_NodeId OPCSinkDescriptor::getNodeId() const {
         return nodeId;
     }
 
@@ -29,9 +29,9 @@ namespace NES {
         return password;
     }
 
-    SinkDescriptorPtr OPCSinkDescriptor::create(const std::string& url, UA_NodeId* nodeId,
+    SinkDescriptorPtr OPCSinkDescriptor::create(std::string url, UA_NodeId nodeId,
                                                 std::string user, std::string password) {
-        return std::make_shared<OPCSinkDescriptor>(OPCSinkDescriptor(url, nodeId, std::move(user), std::move(password)));
+        return std::make_shared<OPCSinkDescriptor>(OPCSinkDescriptor(std::move(url), std::move(nodeId), std::move(user), std::move(password)));
     }
 
     std::string OPCSinkDescriptor::toString() {
@@ -39,10 +39,17 @@ namespace NES {
     }
 
     bool OPCSinkDescriptor::equal(SinkDescriptorPtr other) {
-        if (!other->instanceOf<OPCSinkDescriptor>())
-            return false;
+        if (!other->instanceOf<OPCSinkDescriptor>()){
+            NES_DEBUG("Instance of "<< other->instanceOf<OPCSinkDescriptor>());
+            return false;}
         auto otherSinkDescriptor = other->as<OPCSinkDescriptor>();
-        return url == otherSinkDescriptor->getUrl() && UA_NodeId_equal(nodeId, otherSinkDescriptor->getNodeId()) && user == otherSinkDescriptor->getUser() && password == otherSinkDescriptor->getPassword();
+        char* newIdent = (char*) UA_malloc(sizeof(char) * nodeId.identifier.string.length + 1);
+        memcpy(newIdent, nodeId.identifier.string.data, nodeId.identifier.string.length);
+        newIdent[nodeId.identifier.string.length] = '\0';
+        char* otherSinkIdent = (char*) UA_malloc(sizeof(char) * otherSinkDescriptor->getNodeId().identifier.string.length + 1);
+        memcpy(otherSinkIdent, otherSinkDescriptor->getNodeId().identifier.string.data, otherSinkDescriptor->getNodeId().identifier.string.length);
+        otherSinkIdent[otherSinkDescriptor->getNodeId().identifier.string.length] = '\0';
+        return url == otherSinkDescriptor->getUrl() && !strcmp(newIdent, otherSinkIdent) && nodeId.namespaceIndex == otherSinkDescriptor->getNodeId().namespaceIndex && nodeId.identifierType == otherSinkDescriptor->getNodeId().identifierType && user == otherSinkDescriptor->getUser() && password == otherSinkDescriptor->getPassword();
     }
 
 }// namespace NES

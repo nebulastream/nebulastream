@@ -17,27 +17,27 @@ class OPCSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema,
-                                      const std::string& url,
-                                      UA_NodeId* nodeId,
+                                      std::string url,
+                                      UA_NodeId nodeId,
                                       std::string user,
                                       std::string password);
 
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string streamName,
-                                      const std::string& url,
-                                      UA_NodeId* nodeId,
+                                      std::string url,
+                                      UA_NodeId nodeId,
                                       std::string user,
                                       std::string password);
 
     /**
      * @brief get OPC server url
      */
-    const std::string& getUrl() const;
+    const std::string getUrl() const;
 
     /**
      * @brief get desired node id
      */
-    UA_NodeId* getNodeId() const;
+    UA_NodeId getNodeId() const;
 
     /**
      * @brief get user name
@@ -54,14 +54,14 @@ class OPCSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit OPCSourceDescriptor(SchemaPtr schema, const std::string& url, UA_NodeId* nodeId,
+    explicit OPCSourceDescriptor(SchemaPtr schema, std::string url, UA_NodeId nodeId,
                                  std::string user, std::string password);
 
-    explicit OPCSourceDescriptor(SchemaPtr schema, std::string streamName, const std::string& url,
-                                 UA_NodeId* nodeId, std::string user, std::string password);
+    explicit OPCSourceDescriptor(SchemaPtr schema, std::string streamName, std::string url,
+                                 UA_NodeId nodeId, std::string user, std::string password);
 
-    const std::string& url;
-    UA_NodeId* nodeId;
+    const std::string url;
+    UA_NodeId nodeId;
     const std::string user;
     const std::string password;
 };

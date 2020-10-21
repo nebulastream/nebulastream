@@ -24,20 +24,20 @@ class OPCSinkDescriptor : public SinkDescriptor {
      * @param password: password for server
      * @return descriptor for OPC sink
      */
-    static SinkDescriptorPtr create(const std::string& url,
-                                    UA_NodeId* nodeId,
+    static SinkDescriptorPtr create(std::string url,
+                                    UA_NodeId nodeId,
                                     std::string user,
                                     std::string password);
 
     /**
      * @brief Get the OPC server url where the data is to be written to
      */
-    const std::string& getUrl() const;
+    const std::string getUrl() const;
 
     /**
      * @brief get node id of node to be written to
      */
-    UA_NodeId* getNodeId() const;
+    UA_NodeId getNodeId() const;
 
     /**
      * @brief get user name for opc server
@@ -53,10 +53,10 @@ class OPCSinkDescriptor : public SinkDescriptor {
     bool equal(SinkDescriptorPtr other) override;
 
   private:
-    explicit OPCSinkDescriptor(const std::string& url, UA_NodeId* nodeId, std::string user, std::string password);
+    explicit OPCSinkDescriptor(std::string url, UA_NodeId nodeId, std::string user, std::string password);
 
-    const std::string& url;
-    UA_NodeId* nodeId;
+    const std::string url;
+    UA_NodeId nodeId;
     const std::string user;
     const std::string password;
 };
