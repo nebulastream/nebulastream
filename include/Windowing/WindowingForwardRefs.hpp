@@ -3,10 +3,45 @@
 
 #include "memory"
 
-namespace NES {
+namespace NES{
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
+
+
+class AttributeField;
+typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
+
+class ExpressionNode;
+typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+
+class FieldAccessExpressionNode;
+typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
+
+class ExpressionItem;
+
+
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
+
+class BufferManager;
+typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+
+class PipelineStage;
+typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
+
+class MemoryLayout;
+typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
+}
+
+namespace NES::Windowing {
+
+class WindowHandler;
+typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
 
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
@@ -43,20 +78,13 @@ typedef std::shared_ptr<TimeCharacteristic> TimeCharacteristicPtr;
 class DistributionCharacteristic;
 typedef std::shared_ptr<DistributionCharacteristic> DistributionCharacteristicPtr;
 
-class AttributeField;
-typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
-
-class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
-
-class FieldAccessExpressionNode;
-typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
-
-class ExpressionItem;
-
 inline uint64_t getTsFromClock() {
     return time(NULL) * 1000;
 }
+
+class WindowAggregationDescriptor;
+typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
+
 
 }// namespace NES
 

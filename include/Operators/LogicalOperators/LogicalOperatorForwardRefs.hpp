@@ -4,6 +4,14 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <memory>
+
+namespace NES::Windowing{
+
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
+
+}
+
 namespace NES {
 
 class LogicalOperatorNode;
@@ -23,9 +31,6 @@ typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
 
 class FieldAssignmentExpressionNode;
 typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
-
-class LogicalWindowDefinition;
-typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 class SinkDescriptor;
 typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;

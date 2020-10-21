@@ -2,7 +2,7 @@
 #define NES_INCLUDE_API_WINDOW_DistributionCharacteristic_HPP_
 #include <memory>
 
-namespace NES {
+namespace NES::Windowing {
 
 class DistributionCharacteristic;
 typedef std::shared_ptr<DistributionCharacteristic> DistributionCharacteristicPtr;

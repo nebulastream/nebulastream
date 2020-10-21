@@ -3,7 +3,7 @@
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <vector>
-namespace NES {
+namespace NES::Windowing {
 
 class WindowType {
   public:

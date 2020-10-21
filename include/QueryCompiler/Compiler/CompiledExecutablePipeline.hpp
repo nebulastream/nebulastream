@@ -15,7 +15,7 @@ typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
 class CompiledExecutablePipeline : public ExecutablePipeline {
   public:
     typedef uint32_t PipelineFunctionReturnType;
-    typedef PipelineFunctionReturnType (*PipelineFunctionPtr)(TupleBuffer&, void*, WindowManager*, PipelineExecutionContext&, WorkerContextRef);
+    typedef PipelineFunctionReturnType (*PipelineFunctionPtr)(TupleBuffer&, void*, Windowing::WindowManager*, PipelineExecutionContext&, WorkerContextRef);
 
   public:
     CompiledExecutablePipeline() = delete;
@@ -28,7 +28,7 @@ class CompiledExecutablePipeline : public ExecutablePipeline {
 
     uint32_t execute(TupleBuffer& inBuffer,
                      void* state,
-                     WindowManagerPtr windowManager,
+                     Windowing::WindowManagerPtr windowManager,
                      QueryExecutionContextPtr context,
                      WorkerContextRef wctx) override;
 

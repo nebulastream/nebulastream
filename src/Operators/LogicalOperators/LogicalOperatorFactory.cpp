@@ -35,20 +35,20 @@ LogicalOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator() {
     return std::make_shared<BroadcastLogicalOperatorNode>();
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createWindowOperator(const LogicalWindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<WindowLogicalOperatorNode>(windowDefinition);
 }
-LogicalOperatorNodePtr LogicalOperatorFactory::createCentralWindowSpecializedOperator(const LogicalWindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr LogicalOperatorFactory::createCentralWindowSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<CentralWindowOperator>(windowDefinition);
 }
-LogicalOperatorNodePtr LogicalOperatorFactory::createSliceCreationSpecializedOperator(const LogicalWindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr LogicalOperatorFactory::createSliceCreationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<SliceCreationOperator>(windowDefinition);
 }
-LogicalOperatorNodePtr LogicalOperatorFactory::createWindowComputationSpecializedOperator(const LogicalWindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr LogicalOperatorFactory::createWindowComputationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<WindowComputationOperator>(windowDefinition);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createSliceMergingSpecializedOperator(const LogicalWindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr LogicalOperatorFactory::createSliceMergingSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<SliceMergingOperator>(windowDefinition);
 }
 

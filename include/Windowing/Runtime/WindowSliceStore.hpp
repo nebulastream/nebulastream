@@ -3,7 +3,7 @@
 #include <Util/Logger.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
 #include <vector>
-namespace NES {
+namespace NES::Windowing {
 
 /**
  * @brief The WindowSliceStore stores slices consisting of metadata and a partial aggregate.

@@ -16,6 +16,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace NES::Windowing;
 
 #define DEBUG_OUTPUT
 namespace NES {

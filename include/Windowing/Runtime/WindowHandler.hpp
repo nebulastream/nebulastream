@@ -11,27 +11,9 @@
 #include <memory>
 #include <utility>
 #include <unistd.h>
+#include <Windowing/WindowingForwardRefs.hpp>
 
-namespace NES {
-
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-
-class WindowHandler;
-typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
-
-class PipelineStage;
-typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
-
-class MemoryLayout;
-typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
-
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+namespace NES::Windowing {
 
 template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
 class WindowHandlerImpl;

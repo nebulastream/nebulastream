@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 #include <functional>
 #include <memory>
 
@@ -8,9 +9,6 @@ namespace NES {
 class WorkerContext;
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-class LogicalWindowDefinition;
-typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
@@ -58,8 +56,8 @@ class PipelineExecutionContext {
      * @brief getter/setter window definition
      * @return
      */
-    LogicalWindowDefinitionPtr getWindowDef();
-    void setWindowDef(LogicalWindowDefinitionPtr windowDef);
+    Windowing::LogicalWindowDefinitionPtr getWindowDef();
+    void setWindowDef(Windowing::LogicalWindowDefinitionPtr windowDef);
 
     /**
      * @brief getter/setter input schema
@@ -84,7 +82,7 @@ class PipelineExecutionContext {
     std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
 
     // TODO remove this stuff from here
-    LogicalWindowDefinitionPtr windowDef;
+    Windowing::LogicalWindowDefinitionPtr windowDef;
     SchemaPtr inputSchema;
 };
 

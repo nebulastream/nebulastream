@@ -2,7 +2,7 @@
 #define NES_COUNT_HPP
 
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-namespace NES {
+namespace NES::Windowing {
 
 /**
  * @brief

@@ -10,7 +10,7 @@
 namespace NES {
 using std::string;
 namespace detail {
-uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, void*, WindowManager*, PipelineExecutionContext&, WorkerContextRef workerContext) {
+uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, void*, Windowing::WindowManager*, PipelineExecutionContext&, WorkerContextRef workerContext) {
     NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint begin on thread " << workerContext.getId());
     auto* task = buffer.getBufferAs<ReconfigurationTask>();
     NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to wait on thread " << workerContext.getId());

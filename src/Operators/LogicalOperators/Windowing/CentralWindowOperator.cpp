@@ -12,13 +12,13 @@
 
 namespace NES {
 
-LogicalOperatorNodePtr createCentralWindowSpecializedOperatorNode(const LogicalWindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr createCentralWindowSpecializedOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<CentralWindowOperator>(windowDefinition);
 }
 
-CentralWindowOperator::CentralWindowOperator(const LogicalWindowDefinitionPtr windowDefinition)
+CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : WindowOperatorNode(windowDefinition) {
-    windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
+    windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCompleteWindowType());
 }
 
 const std::string CentralWindowOperator::toString() const {

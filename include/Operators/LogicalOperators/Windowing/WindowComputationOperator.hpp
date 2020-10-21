@@ -5,15 +5,12 @@
 
 namespace NES {
 
-class LogicalWindowDefinition;
-typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
-
 /**
  * @brief this class represents the computation operator for distributed windowing that is deployed on the sink node and which merges all slices
  */
 class WindowComputationOperator : public WindowOperatorNode {
   public:
-    WindowComputationOperator(const LogicalWindowDefinitionPtr windowDefinition);
+    WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;

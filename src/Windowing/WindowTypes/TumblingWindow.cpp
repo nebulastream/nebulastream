@@ -3,7 +3,7 @@
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <vector>
-namespace NES {
+namespace NES::Windowing {
 
 TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
     : WindowType(timeCharacteristic), size(size) {}

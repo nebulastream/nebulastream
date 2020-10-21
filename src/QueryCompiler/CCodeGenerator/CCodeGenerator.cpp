@@ -107,7 +107,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr schema, PipelineContextPtr co
     VariableDeclaration varDeclarationState =
         VariableDeclaration::create(tf->createPointer(tf->createAnonymusDataType("void")), "state_var");
     VariableDeclaration varDeclarationWindowManager =
-        VariableDeclaration::create(tf->createPointer(tf->createAnonymusDataType("NES::WindowManager")),
+        VariableDeclaration::create(tf->createPointer(tf->createAnonymusDataType("NES::Windowing::WindowManager")),
                                     "windowManager");
     auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
 
@@ -378,7 +378,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
  * @param out
  * @return
  */
-bool CCodeGenerator::generateCodeForCompleteWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
     auto tf = getTypeFactory();
     auto constStatement = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0")));
 
@@ -397,7 +397,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(LogicalWindowDefinitionPtr wi
 
     auto stateVariableDeclaration = VariableDeclaration::create(
         tf->createPointer(tf->createAnonymusDataType(
-            "NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>")),
+            "NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<int64_t>*>")),
         "state_variable");
 
     auto stateVarDeclarationStatement = VarDeclStatement(stateVariableDeclaration)
@@ -438,13 +438,13 @@ bool CCodeGenerator::generateCodeForCompleteWindow(LogicalWindowDefinitionPtr wi
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
 
     // set the default value for window state
-    if (std::dynamic_pointer_cast<MinAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
+    if (std::dynamic_pointer_cast<Windowing::MinAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MAX"))));
-    } else if (std::dynamic_pointer_cast<MaxAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
+    } else if (std::dynamic_pointer_cast<Windowing::MaxAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MIN"))));
-    } else if (std::dynamic_pointer_cast<SumAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
+    } else if (std::dynamic_pointer_cast<Windowing::SumAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
-    } else if (std::dynamic_pointer_cast<CountAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
+    } else if (std::dynamic_pointer_cast<Windowing::CountAggregationDescriptor>(window->getWindowAggregation()) != nullptr) {
         getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
     } else {
         NES_FATAL_ERROR("Window Handler: could not cast aggregation type");
@@ -458,8 +458,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(LogicalWindowDefinitionPtr wi
     // get current timestamp
     // TODO add support for event time
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
-    if (window->getWindowType()->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
-        auto getCurrentTs = FunctionCallStatement("NES::getTsFromClock");
+    if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
+        auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
     } else {
@@ -514,14 +514,14 @@ bool CCodeGenerator::generateCodeForCompleteWindow(LogicalWindowDefinitionPtr wi
     return true;
 }
 
-bool CCodeGenerator::generateCodeForSlicingWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
     NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
     //NOTE: the distinction currently only happens in the trigger
     context->pipelineName = "SlicingWindowType";
     return generateCodeForCompleteWindow(window, context);
 }
 
-bool CCodeGenerator::generateCodeForCombiningWindow(LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
 
@@ -545,7 +545,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(LogicalWindowDefinitionPtr w
     //        NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>* state_variable = (NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) state_var;
     auto stateVariableDeclaration = VariableDeclaration::create(
         tf->createPointer(tf->createAnonymusDataType(
-            "NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>")),
+            "NES::StateVariable<int64_t, NES::::Widowing:WindowSliceStore<int64_t>*>")),
         "state_variable");
 
     auto stateVarDeclarationStatement = VarDeclStatement(stateVariableDeclaration)
@@ -597,7 +597,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(LogicalWindowDefinitionPtr w
     // get current timestamp
     // TODO add support for event time
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "start");
-    if (window->getWindowType()->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+    if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(VarRef(currentTimeVariableDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
     } else {

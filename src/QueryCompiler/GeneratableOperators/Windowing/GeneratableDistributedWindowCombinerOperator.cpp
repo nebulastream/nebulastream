@@ -20,7 +20,7 @@ GeneratableDistributedlWindowCombinerOperatorPtr GeneratableCombiningWindowOpera
     return std::make_shared<GeneratableCombiningWindowOperator>(GeneratableCombiningWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
 }
 
-GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(LogicalWindowDefinitionPtr windowDefinition) : GeneratableWindowOperator(windowDefinition) {
+GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition) : GeneratableWindowOperator(windowDefinition) {
 }
 
 const std::string GeneratableCombiningWindowOperator::toString() const {

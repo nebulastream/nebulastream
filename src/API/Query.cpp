@@ -35,7 +35,7 @@ Query& Query::merge(Query* subQuery) {
     return *this;
 }
 
-Query& Query::window(const WindowTypePtr, const WindowAggregationPtr) {
+Query& Query::window(const Windowing::WindowTypePtr, const Windowing::WindowAggregationPtr) {
     NES_THROW_RUNTIME_ERROR("Query: Global windowing is currently not supported");
     /*
     NES_DEBUG("Query: add window operator");
@@ -46,14 +46,14 @@ Query& Query::window(const WindowTypePtr, const WindowAggregationPtr) {
     return *this;*/
 }
 
-Query& Query::windowByKey(ExpressionItem onKey, const WindowTypePtr windowType, const WindowAggregationPtr aggregation) {
+Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add keyed window operator");
     auto keyExpression = onKey.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-    auto windowDefinition = LogicalWindowDefinition::create(fieldAccess, aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1);
+    auto windowDefinition = Windowing::LogicalWindowDefinition::create(fieldAccess, aggregation, windowType, Windowing::DistributionCharacteristic::createCompleteWindowType(), 1);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
     windowOperator->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(windowOperator);

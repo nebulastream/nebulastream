@@ -3,7 +3,7 @@
 
 #include <Windowing/WindowingForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
 class LogicalWindowDefinition {
   public:

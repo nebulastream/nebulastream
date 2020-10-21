@@ -9,7 +9,7 @@
 #include <utility>
 #include <Windowing/WindowAggregations/ExecutableWindowAggregation.hpp>
 #include <memory>
-namespace NES{
+namespace NES::Windowing {
 
 typedef uint64_t CountType;
 

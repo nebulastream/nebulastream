@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace NES {
+namespace NES::Windowing {
 
 class EventTimeWatermarkGenerator : public Watermark {
   public:

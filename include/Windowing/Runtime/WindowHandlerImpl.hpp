@@ -14,7 +14,7 @@
 #include <QueryCompiler/PipelineStage.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/ThreadNaming.hpp>
-namespace NES {
+namespace NES::Windowing  {
 
 /**
  * @brief This represents a window during query execution.
@@ -24,8 +24,8 @@ class WindowHandlerImpl : public WindowHandler {
   public:
     WindowHandlerImpl() = default;
     WindowHandlerImpl(LogicalWindowDefinitionPtr w,
-                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) : WindowHandler(w), windowAggregation(windowAggregation){
-                                                                                                                                                                              };
+                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) : WindowHandler(w),
+                                                                                                                                             windowAggregation(windowAggregation){};
 
     bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId) override {
         this->queryManager = queryManager;

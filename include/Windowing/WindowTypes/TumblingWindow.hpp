@@ -5,7 +5,7 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 /**
  * A TumblingWindow assigns records to non-overlapping windows.
  */
