@@ -53,8 +53,8 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
      * @return new partial aggregate as combination of partialValue and inputValue
      */
     AVGPartialType<InputType> combine(AVGPartialType<InputType> partialValue, AVGPartialType<InputType> inputValue) override {
-        partialValue.count = +inputValue.count;
-        partialValue.sum = +inputValue.sum;
+        partialValue.count += inputValue.count;
+        partialValue.sum += inputValue.sum;
         return partialValue;
     }
 
