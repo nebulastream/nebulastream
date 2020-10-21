@@ -9,6 +9,7 @@
 #include <utility>
 #include <Windowing/WindowAggregations/ExecutableWindowAggregation.hpp>
 #include <memory>
+#include <type_traits>
 namespace NES::Windowing {
 
 /**
@@ -17,7 +18,7 @@ namespace NES::Windowing {
  * @tparam PartialAggregateType partial aggregation type
  * @tparam FinalAggregateType final aggregation type
  */
-template<typename InputType>
+template<typename InputType, std::enable_if_t<std::is_arithmetic<InputType>::value, int> = 0>
 class ExecutableMinAggregation : public  ExecutableWindowAggregation<InputType, InputType, InputType>{
   public:
     ExecutableMinAggregation(): ExecutableWindowAggregation<InputType, InputType, InputType>(){
