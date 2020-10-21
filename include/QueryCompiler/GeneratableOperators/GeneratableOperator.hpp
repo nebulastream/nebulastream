@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEOPERATOR_HPP_
 
-#include <Nodes/Operators/OperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperatorForwardRef.hpp>
 namespace NES {
 

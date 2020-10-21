@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_PLANS_QUERY_HPP_
 #define NES_INCLUDE_PLANS_QUERY_HPP_
-#include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>

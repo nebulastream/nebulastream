@@ -2,8 +2,8 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -15,10 +15,10 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowAggregations/Sum.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+#include <Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
+#include <Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 
 using namespace NES;
 

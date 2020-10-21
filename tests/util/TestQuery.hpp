@@ -2,7 +2,7 @@
 #define NES_TESTS_UTIL_TESTQUERY_HPP_
 
 #include <API/Query.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include "SchemaSourceDescriptor.hpp"
 namespace NES{

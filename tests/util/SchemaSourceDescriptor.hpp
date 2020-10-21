@@ -1,7 +1,7 @@
 #ifndef NES_TESTS_UTIL_SCHEMASOURCEDESCRIPTOR_HPP_
 #define NES_TESTS_UTIL_SCHEMASOURCEDESCRIPTOR_HPP_
 
-#include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <API/Schema.hpp>
 namespace NES{
 

@@ -1,4 +1,4 @@
-#include <Nodes/Operators/OperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <algorithm>
 

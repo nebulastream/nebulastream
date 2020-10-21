@@ -1,14 +1,14 @@
 
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/SliceMergingOperator.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
+#include <Operators/SpecializedWindowOperators/SliceMergingOperator.hpp>
+#include <Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableCombiningWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>
