@@ -31,7 +31,7 @@ class GeneratableSlicingWindowOperator :  public GeneratableWindowOperator {
     const std::string toString() const override;
 
   private:
-    explicit GeneratableSlicingWindowOperator(LogicalWindowDefinitionPtr windowDefinition);
+    explicit GeneratableSlicingWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition);
 };
 
 }// namespace NES

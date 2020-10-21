@@ -1,6 +1,6 @@
 #include <Util/Logger.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
-namespace NES {
+namespace NES::Windowing {
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
     : WindowType(timeCharacteristic), size(size), slide(slide) {}

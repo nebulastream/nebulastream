@@ -1,6 +1,6 @@
 #include <Util/Logger.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkGenerator.hpp>
-namespace NES {
+namespace NES::Windowing {
 
 EventTimeWatermarkGenerator::EventTimeWatermarkGenerator() {
 }

@@ -9,7 +9,7 @@
 
 namespace NES {
 
-WindowLogicalOperatorNode::WindowLogicalOperatorNode(const LogicalWindowDefinitionPtr windowDefinition)
+WindowLogicalOperatorNode::WindowLogicalOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition)
     :  WindowOperatorNode(windowDefinition) {
 }
 

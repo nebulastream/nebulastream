@@ -9,7 +9,7 @@
 #include <utility>
 #include <Windowing/WindowAggregations/ExecutableWindowAggregation.hpp>
 #include <memory>
-namespace NES{
+namespace NES::Windowing {
 
 /**
  * @brief A executable window aggregation, which is typed for the correct input, partial, and final data types.

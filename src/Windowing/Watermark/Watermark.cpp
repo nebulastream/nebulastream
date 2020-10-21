@@ -1,6 +1,6 @@
 #include <Windowing/Watermark/Watermark.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
 Watermark::Watermark() {
 }

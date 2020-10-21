@@ -12,7 +12,7 @@
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
 
 class WindowHandlerFactoryDetails {

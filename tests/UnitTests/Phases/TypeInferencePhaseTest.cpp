@@ -22,6 +22,7 @@
 #include <memory>
 
 using namespace NES::API;
+using namespace NES::Windowing;
 
 namespace NES {
 

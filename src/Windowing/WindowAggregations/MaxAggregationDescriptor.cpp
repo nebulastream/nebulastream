@@ -6,7 +6,7 @@
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::Windowing {
 
 MaxAggregationDescriptor::MaxAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(std::move(field)) {}
 

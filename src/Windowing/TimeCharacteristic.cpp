@@ -4,7 +4,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
 TimeCharacteristic::TimeCharacteristic(Type type) : type(type) {}
 TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field) : type(type), field(field) {}

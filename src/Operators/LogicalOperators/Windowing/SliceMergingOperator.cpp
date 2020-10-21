@@ -3,11 +3,11 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 namespace NES {
 
-LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const LogicalWindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr createSliceMergingSpecializedOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<SliceMergingOperator>(windowDefinition);
 }
 
-SliceMergingOperator::SliceMergingOperator(const LogicalWindowDefinitionPtr windowDefinition)
+SliceMergingOperator::SliceMergingOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : WindowOperatorNode(windowDefinition) {
 }
 

@@ -1,6 +1,6 @@
 #include <Windowing/Runtime/WindowManager.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
 WindowManager::WindowManager(LogicalWindowDefinitionPtr windowDefinition)
     : windowDefinition(std::move(windowDefinition)), allowedLateness(0) {}

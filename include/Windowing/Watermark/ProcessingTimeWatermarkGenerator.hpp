@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace NES {
+namespace NES::Windowing {
 
 class ProcessingTimeWatermarkGenerator : public Watermark {
   public:

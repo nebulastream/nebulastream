@@ -1,7 +1,7 @@
 #include <Util/Logger.hpp>
 #include <Windowing/Watermark/ProcessingTimeWatermarkGenerator.hpp>
 #include <chrono>
-namespace NES {
+namespace NES::Windowing {
 
 ProcessingTimeWatermarkGenerator::ProcessingTimeWatermarkGenerator() {
 }

@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <memory>
-namespace NES {
+namespace NES::Windowing {
 
 class Watermark {
   public:

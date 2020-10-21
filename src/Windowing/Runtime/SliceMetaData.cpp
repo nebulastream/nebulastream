@@ -1,6 +1,6 @@
 #include <Windowing/Runtime/SliceMetaData.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
 SliceMetaData::SliceMetaData(uint64_t startTs, uint64_t endTs) : startTs(startTs), endTs(endTs){};
 

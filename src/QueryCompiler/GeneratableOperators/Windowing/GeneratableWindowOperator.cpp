@@ -4,9 +4,9 @@
 #include <utility>
 namespace NES {
 
-GeneratableWindowOperator::GeneratableWindowOperator(LogicalWindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(std::move(windowDefinition)){}
+GeneratableWindowOperator::GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition) : WindowLogicalOperatorNode(std::move(windowDefinition)){}
 
-WindowHandlerPtr GeneratableWindowOperator::createWindowHandler() {
-    return WindowHandlerFactory::createWindowHandler(windowDefinition);
+Windowing::WindowHandlerPtr GeneratableWindowOperator::createWindowHandler() {
+    return Windowing::WindowHandlerFactory::createWindowHandler(windowDefinition);
 }
 }// namespace NES

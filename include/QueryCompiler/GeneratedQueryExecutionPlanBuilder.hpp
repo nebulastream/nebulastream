@@ -138,8 +138,8 @@ class GeneratedQueryExecutionPlanBuilder {
     /**
      * @brief Getter/setter the window definition
      */
-    GeneratedQueryExecutionPlanBuilder& setWinDef(const LogicalWindowDefinitionPtr& winDef);
-    LogicalWindowDefinitionPtr getWinDef();
+    GeneratedQueryExecutionPlanBuilder& setWinDef(const Windowing::LogicalWindowDefinitionPtr& winDef);
+    Windowing::LogicalWindowDefinitionPtr getWinDef();
 
     /**
      * @brief Getter/setter the input schema
@@ -159,7 +159,7 @@ class GeneratedQueryExecutionPlanBuilder {
     std::vector<DataSinkPtr> sinks;
     std::vector<PipelineStagePtr> stages;
     std::vector<OperatorNodePtr> leaves;
-    LogicalWindowDefinitionPtr winDef;
+    Windowing::LogicalWindowDefinitionPtr winDef;
 
   public:
   private:

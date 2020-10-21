@@ -2,7 +2,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOWTYPES_SLIDINGWINDOW_HPP_
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-namespace NES {
+namespace NES::Windowing {
 /**
  * A SlidingWindow assigns records to multiple overlapping windows.
  */

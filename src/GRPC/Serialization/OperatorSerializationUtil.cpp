@@ -205,22 +205,22 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     auto windowType = windowDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
     auto timeCharacteristicDetails = SerializableOperator_WindowDetails_TimeCharacteristic();
-    if (timeCharacteristic->getType() == TimeCharacteristic::EventTime) {
+    if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime);
         timeCharacteristicDetails.set_field(timeCharacteristic->getField()->name);
-    } else if (timeCharacteristic->getType() == TimeCharacteristic::ProcessingTime) {
+    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime);
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
     if (windowType->isTumblingWindow()) {
-        auto tumblingWindow = std::dynamic_pointer_cast<TumblingWindow>(windowType);
+        auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
         auto tumblingWindowDetails = SerializableOperator_WindowDetails_TumblingWindow();
         tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
         tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
         windowDetails.mutable_windowtype()->PackFrom(tumblingWindowDetails);
     } else if (windowType->isSlidingWindow()) {
-        auto slidingWindow = std::dynamic_pointer_cast<SlidingWindow>(windowType);
+        auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
         auto slidingWindowDetails = SerializableOperator_WindowDetails_SlidingWindow();
         slidingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
         slidingWindowDetails.set_size(slidingWindow->getSize().getTime());
@@ -236,16 +236,16 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->on(), windowAggregation->mutable_onfield());
 
     switch(windowDefinition->getWindowAggregation()->getType()){
-        case WindowAggregationDescriptor::Count:
+        case Windowing::WindowAggregationDescriptor::Count:
             windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_COUNT);
             break;
-        case WindowAggregationDescriptor::Max:
+        case Windowing::WindowAggregationDescriptor::Max:
             windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MAX);
             break;
-        case WindowAggregationDescriptor::Min:
+        case Windowing::WindowAggregationDescriptor::Min:
             windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MIN);
             break;
-        case WindowAggregationDescriptor::Sum:
+        case Windowing::WindowAggregationDescriptor::Sum:
             windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
             break;
         default:
@@ -253,11 +253,11 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     }
 
     auto distributionCharacteristics = SerializableOperator_WindowDetails_DistributionCharacteristic();
-    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete) {
+    if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Complete) {
         windowDetails.mutable_distrchar()->set_distr(SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete);
-    } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
+    } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Combining) {
         windowDetails.mutable_distrchar()->set_distr(SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining);
-    } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
+    } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Slicing) {
         windowDetails.mutable_distrchar()->set_distr(SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -275,22 +275,22 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     auto asField = ExpressionSerializationUtil::deserializeExpression(serializedWindowAggregation.mutable_asfield())
                        ->as<FieldAccessExpressionNode>();
 
-    WindowAggregationPtr aggregation;
+    Windowing::WindowAggregationPtr aggregation;
     if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM) {
-        aggregation = SumAggregationDescriptor::create(onField,asField);
+        aggregation = Windowing::SumAggregationDescriptor::create(onField,asField);
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MAX) {
-        aggregation = MaxAggregationDescriptor::create(onField,asField);
+        aggregation = Windowing::MaxAggregationDescriptor::create(onField,asField);
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MIN) {
-        aggregation = MinAggregationDescriptor::create(onField,asField);
+        aggregation = Windowing::MinAggregationDescriptor::create(onField,asField);
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_COUNT) {
-        aggregation = CountAggregationDescriptor::create(onField,asField);
+        aggregation = Windowing::CountAggregationDescriptor::create(onField,asField);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: " << serializedWindowAggregation.DebugString());
     }
 
 
 
-    WindowTypePtr window;
+    Windowing::WindowTypePtr window;
     if (serializedWindowType.Is<SerializableOperator_WindowDetails_TumblingWindow>()) {
         auto serializedTumblingWindow = SerializableOperator_WindowDetails_TumblingWindow();
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
@@ -298,9 +298,9 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime) {
             auto eventTimeField = AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
-            window = TumblingWindow::of(TimeCharacteristic::createEventTime(field), TimeMeasure(serializedTumblingWindow.size()));
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field), Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime) {
-            window = TumblingWindow::of(TimeCharacteristic::createProcessingTime(), TimeMeasure(serializedTumblingWindow.size()));
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(), Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
         }
@@ -311,9 +311,9 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime) {
             auto eventTimeField = AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
-            window = SlidingWindow::of(TimeCharacteristic::createEventTime(field), TimeMeasure(serializedSlidingWindow.size()), TimeMeasure(serializedSlidingWindow.slide()));
+            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field), Windowing::TimeMeasure(serializedSlidingWindow.size()), Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime) {
-            window = SlidingWindow::of(TimeCharacteristic::createProcessingTime(), TimeMeasure(serializedSlidingWindow.size()), TimeMeasure(serializedSlidingWindow.slide()));
+            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(), Windowing::TimeMeasure(serializedSlidingWindow.size()), Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
         }
@@ -322,23 +322,23 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     }
 
     auto distrChar = sinkDetails->distrchar();
-    DistributionCharacteristicPtr distChar;
+    Windowing::DistributionCharacteristicPtr distChar;
     if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete");
-        distChar = DistributionCharacteristic::createCompleteWindowType();
+        distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
-        distChar = std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Combining);
+        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Combining);
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
-        distChar = std::make_shared<DistributionCharacteristic>(DistributionCharacteristic::Slicing);
+        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Slicing);
     } else {
         NES_NOT_IMPLEMENTED();
     }
 
     LogicalOperatorNodePtr ptr;
     if (!sinkDetails->has_onkey()) {
-        auto windowDef = LogicalWindowDefinition::create(aggregation, window, distChar);
+        auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar);
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
             return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef)->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
@@ -351,11 +351,11 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     } else {
         auto keyAccessExpression = ExpressionSerializationUtil::deserializeExpression(sinkDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1))->as<CentralWindowOperator>();
+            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1))->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, sinkDetails->numberofinputedges()))->as<WindowComputationOperator>();
+            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, sinkDetails->numberofinputedges()))->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1))->as<SliceCreationOperator>();
+            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1))->as<SliceCreationOperator>();
         } else {
             NES_NOT_IMPLEMENTED();
         }

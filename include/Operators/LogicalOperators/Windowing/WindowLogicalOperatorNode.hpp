@@ -6,10 +6,9 @@
 
 namespace NES {
 
-
 class WindowLogicalOperatorNode : public WindowOperatorNode {
   public:
-    WindowLogicalOperatorNode(const LogicalWindowDefinitionPtr windowDefinition);
+    WindowLogicalOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;

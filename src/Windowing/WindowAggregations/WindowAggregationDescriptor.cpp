@@ -2,7 +2,7 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
 WindowAggregationDescriptor::WindowAggregationDescriptor(const FieldAccessExpressionNodePtr onField) : onField(onField),
                                                                              asField(onField) {

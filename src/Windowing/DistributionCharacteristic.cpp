@@ -1,7 +1,7 @@
 #include <API/AttributeField.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
 DistributionCharacteristic::DistributionCharacteristic(Type type) : type(type) {}
 

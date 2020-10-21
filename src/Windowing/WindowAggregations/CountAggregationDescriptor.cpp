@@ -5,7 +5,7 @@
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::Windowing {
 
 CountAggregationDescriptor::CountAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(std::move(field)) {}
 CountAggregationDescriptor::CountAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}

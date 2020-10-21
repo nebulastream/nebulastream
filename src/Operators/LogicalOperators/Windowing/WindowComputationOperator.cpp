@@ -7,13 +7,13 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 namespace NES {
 
-LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const LogicalWindowDefinitionPtr windowDefinition) {
+LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<WindowComputationOperator>(windowDefinition);
 }
 
-WindowComputationOperator::WindowComputationOperator(const LogicalWindowDefinitionPtr windowDefinition)
+WindowComputationOperator::WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : WindowOperatorNode(windowDefinition) {
-    this->windowDefinition->setDistributionCharacteristic(DistributionCharacteristic::createCombiningWindowType());
+    this->windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCombiningWindowType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
 }
 

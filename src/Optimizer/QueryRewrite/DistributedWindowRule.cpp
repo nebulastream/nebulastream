@@ -75,10 +75,10 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     auto windowComputationAggregation = windowAggregation->copy();
     windowComputationAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
 
-    auto windowComputationDefinition = LogicalWindowDefinition::create(keyField,
+    auto windowComputationDefinition = Windowing::LogicalWindowDefinition::create(keyField,
                                                                        windowComputationAggregation,
                                                                        windowType,
-                                                                       DistributionCharacteristic::createCombiningWindowType(),
+                                                                       Windowing::DistributionCharacteristic::createCombiningWindowType(),
                                                                        logicalWindowOperaotr->getChildren().size());
 
     auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowComputationDefinition);
@@ -97,10 +97,10 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         auto sliceCreationWindowAggregation = windowAggregation->copy();
         sliceCreationWindowAggregation->as()->as<FieldAccessExpressionNode>()->setFieldName("value");
 
-        auto sliceCreationWindowDefinition = LogicalWindowDefinition::create(keyField,
+        auto sliceCreationWindowDefinition = Windowing::LogicalWindowDefinition::create(keyField,
                                                                              sliceCreationWindowAggregation,
                                                                              windowType,
-                                                                             DistributionCharacteristic::createSlicingWindowType(), 1);
+                                                                             Windowing::DistributionCharacteristic::createSlicingWindowType(), 1);
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(sliceCreationWindowDefinition);
         sliceOp->setId(UtilityFunctions::getNextOperatorId());
         child->insertBetweenThisAndParentNodes(sliceOp);

@@ -6,7 +6,7 @@
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::Windowing {
 
 MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(std::move(field)) {}
 MinAggregationDescriptor::MinAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}

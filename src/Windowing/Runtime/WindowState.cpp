@@ -1,7 +1,7 @@
 
 #include <Windowing/Runtime/WindowState.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
 WindowState::WindowState(uint64_t start, uint64_t end) : start(start), end(end) {}
 

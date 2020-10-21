@@ -6,7 +6,7 @@
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::Windowing {
 
 
 

@@ -2,7 +2,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOWMEASURES_TIMEMEASURE_HPP_
 #include <Windowing/WindowMeasures/WindowMeasure.hpp>
 #include <cstdint>
-namespace NES {
+namespace NES::Windowing {
 
 /**
  * A time based window measure.

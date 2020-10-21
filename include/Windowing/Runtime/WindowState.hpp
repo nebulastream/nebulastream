@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-namespace NES {
+namespace NES::Windowing {
 
 /**
  * @brief Represents the start and end of a single window

@@ -2,7 +2,7 @@
 #define NES_SUM_HPP
 
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-namespace NES {
+namespace NES::Windowing {
 /**
  * @brief
  * The SumAggregationDescriptor aggregation calculates the running sum over the window.
@@ -10,8 +10,8 @@ namespace NES {
 class SumAggregationDescriptor : public WindowAggregationDescriptor {
   public:
     /**
-   * Factory method to creates a sum aggregation on a particular field.
-   */
+    * Factory method to creates a sum aggregation on a particular field.
+    */
     static WindowAggregationPtr on(ExpressionItem onField);
 
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
@@ -37,8 +37,8 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
 
     /**
     * @brief Infers the stamp of the expression given the current schema.
-    *  @param SchemaPtr
-   */
+    * @param SchemaPtr
+    */
     void inferStamp(SchemaPtr schema) override;
 
     WindowAggregationPtr copy() override;

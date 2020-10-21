@@ -10,9 +10,9 @@
 
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
-WindowHandler::WindowHandler(NES::LogicalWindowDefinitionPtr windowDefinition)
+WindowHandler::WindowHandler(LogicalWindowDefinitionPtr windowDefinition)
     : std::enable_shared_from_this<WindowHandler>(), windowDefinition(std::move(windowDefinition)), originId(0) {
     this->thread.reset();
     windowTupleSchema = Schema::create()

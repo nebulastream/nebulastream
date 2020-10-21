@@ -2,7 +2,7 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::Windowing {
 
 WindowType::WindowType(TimeCharacteristicPtr timeCharacteristic) : timeCharacteristic(std::move(timeCharacteristic)) {
 }

@@ -169,7 +169,7 @@ class DataSource : public Reconfigurable {
     SourceType type;
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;
-    WatermarkPtr watermark;
+    Windowing::WatermarkPtr watermark;
 
   private:
     //bool indicating if the source is currently running'

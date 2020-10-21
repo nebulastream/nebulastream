@@ -11,7 +11,6 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>//
 
-#include <API/UserAPIExpression.hpp>
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -21,11 +20,8 @@
 #include <memory>
 
 #include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
@@ -36,7 +32,6 @@
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 
 using namespace std;
 

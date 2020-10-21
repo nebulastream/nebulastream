@@ -9,7 +9,7 @@
 #include <Windowing/WindowAggregations/ExecutableWindowAggregation.hpp>
 #include <memory>
 #include <utility>
-namespace NES {
+namespace NES::Windowing {
 
 template<typename SumType>
 class AVGPartialType {

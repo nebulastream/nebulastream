@@ -8,7 +8,7 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
-namespace NES {
+namespace NES::Windowing {
 
 class WindowManager {
 

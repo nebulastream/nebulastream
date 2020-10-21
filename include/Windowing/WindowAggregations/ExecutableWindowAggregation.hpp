@@ -2,12 +2,17 @@
 #define NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLEWINDOWAGGREGATION_HPP_
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <threads.h>
-namespace NES{
+
+namespace NES {
 
 class BinaryOperatorStatement;
 class StructDeclaration;
 class CompoundStatement;
 typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
+
+}
+
+namespace NES::Windowing {
 
 /**
  * @brief A executable window aggregation, which is typed for the correct input, partial, and final data types.

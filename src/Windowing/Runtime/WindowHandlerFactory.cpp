@@ -1,7 +1,8 @@
 
 #include <Windowing/Runtime/WindowHandlerFactory.hpp>
 #include <Windowing/Runtime/WindowHandlerFactoryDetails.hpp>
-namespace NES{
+
+namespace NES::Windowing {
 
 
 WindowHandlerPtr WindowHandlerFactory::createWindowHandler(LogicalWindowDefinitionPtr windowDefinition) {
