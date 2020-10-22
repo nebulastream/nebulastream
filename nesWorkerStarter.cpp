@@ -31,7 +31,6 @@ const string logo = "/********************************************************\n
                     " *\n"
                     " ********************************************************/";
 
-
 // TODO handle proper configuration properly
 int main(int argc, char** argv) {
     NES::setupLogging("nesWorkerStarter.log", NES::LOG_DEBUG);
@@ -57,39 +56,21 @@ int main(int argc, char** argv) {
     std::string logicalStreamName;
     std::string parentId = "-1";
 
-    desc.add_options()
-        ("coordinatorPort", po::value<string>(&coordinatorPort)->default_value(coordinatorPort),
-                       "Set NES rpc server port (default: 0).")
-        ("rpcPort", po::value<string>(&rpcPort)->default_value(rpcPort),
-         "Set NES rpc server port (default: 0).")
-        ("dataPort", po::value<string>(&dataPort)->default_value(dataPort),
-         "Set NES data server port (default: 0).")
-        ("coordinatorIp", po::value<string>(&coordinatorIp)->default_value(coordinatorIp),
-                                                                "Set NES server ip (default: 127.0.0.1).")(
-        "sourceType", po::value<string>(&sourceType)->default_value(sourceType),
-        "Set the type of the Source either CSVSource or DefaultSource")(
-        "sourceConfig",
-        po::value<string>(&sourceConfig)->default_value(sourceConfig),
-        "Set the config for the source e.g. the file name")(
-        "sourceFrequency",
-        po::value<size_t>(&sourceFrequency)->default_value(sourceFrequency),
-        "Set the sampling frequency")(
-        "physicalStreamName",
-        po::value<string>(&physicalStreamName)->default_value(physicalStreamName),
-        "Set the physical name of the stream")(
-        "numberOfBuffersToProduce",
-        po::value<size_t>(&numberOfBuffersToProduce)->default_value(numberOfBuffersToProduce),
-        "Set the number of buffers to produce")(
-        "logicalStreamName",
-        po::value<string>(&logicalStreamName)->default_value(logicalStreamName),
-        "Set the logical stream name where this stream is added to")
-        ("parentId", po::value<string>(&parentId)->default_value(parentId),
-         "Set the parentId of this node")
-        ("localWorkerIp", po::value<string>(&localWorkerIp)->default_value(localWorkerIp),
-         "Set worker ip (default: 127.0.0.1)")
-        ("numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
-         "Set the computing capacity (default: number of processor.")
-        ("help", "Display help message");
+    desc.add_options()(
+        "coordinatorPort", po::value<string>(&coordinatorPort)->default_value(coordinatorPort), "Set NES rpc server port (default: 0).")(
+        "rpcPort", po::value<string>(&rpcPort)->default_value(rpcPort), "Set NES rpc server port (default: 0).")(
+        "dataPort", po::value<string>(&dataPort)->default_value(dataPort), "Set NES data server port (default: 0).")(
+        "coordinatorIp", po::value<string>(&coordinatorIp)->default_value(coordinatorIp), "Set NES server ip (default: 127.0.0.1).")(
+        "sourceType", po::value<string>(&sourceType)->default_value(sourceType), "Set the type of the Source either CSVSource or DefaultSource")(
+        "sourceConfig", po::value<string>(&sourceConfig)->default_value(sourceConfig), "Set the config for the source e.g. the file name")(
+        "sourceFrequency", po::value<size_t>(&sourceFrequency)->default_value(sourceFrequency), "Set the sampling frequency")(
+        "physicalStreamName", po::value<string>(&physicalStreamName)->default_value(physicalStreamName), "Set the physical name of the stream")(
+        "numberOfBuffersToProduce", po::value<size_t>(&numberOfBuffersToProduce)->default_value(numberOfBuffersToProduce), "Set the number of buffers to produce")(
+        "logicalStreamName", po::value<string>(&logicalStreamName)->default_value(logicalStreamName), "Set the logical stream name where this stream is added to")(
+        "parentId", po::value<string>(&parentId)->default_value(parentId), "Set the parentId of this node")(
+        "localWorkerIp", po::value<string>(&localWorkerIp)->default_value(localWorkerIp), "Set worker ip (default: 127.0.0.1)")(
+        "numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots), "Set the computing capacity (default: number of processor.")(
+        "help", "Display help message");
 
     po::variables_map vm;
 
@@ -127,7 +108,7 @@ int main(int argc, char** argv) {
         localPort,
         zmqDataPort,
         numberOfSlots,
-        NodeType::Sensor // TODO what is this?!
+        NodeType::Sensor// TODO what is this?!
     );
 
     //register phy stream if nessesary

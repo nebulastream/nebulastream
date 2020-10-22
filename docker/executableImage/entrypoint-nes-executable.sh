@@ -2,9 +2,12 @@
 
 if [ $# -eq 0 ]
 then
-    /opt/local/nebula-stream/nesCoordinator --serverIp=0.0.0.0 --restPort=8081 --coordinatorPort=12346 &
+    /opt/local/nebula-stream/nesCoordinator --serverIp=$serverIp --restPort=$restPort --coordinatorPort=$coordinatorPort \
+                                            --enableQueryMerging=$enableQueryMerging &
     sleep 5s
-    /opt/local/nebula-stream/nesWorker --coordinatorPort=12346 --sourceType=CSVSource --sourceConfig=/opt/local/nebula-stream/exdra.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra
+    /opt/local/nebula-stream/nesWorker --coordinatorPort=$coordinatorPort --sourceType=$sourceType --sourceConfig=$sourceConfig \
+                                        --numberOfBuffersToProduce=$numberOfBuffersToProduce --sourceFrequency=$sourceFrequency \
+                                        --physicalStreamName=$physicalStreamName --logicalStreamName=$logicalStreamName
 else
     exec $@
 fi
