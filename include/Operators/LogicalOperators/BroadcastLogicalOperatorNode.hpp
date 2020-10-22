@@ -14,9 +14,8 @@ typedef std::shared_ptr<BroadcastLogicalOperatorNode> BroadcastLogicalOperatorNo
  */
 class BroadcastLogicalOperatorNode : public LogicalOperatorNode {
   public:
-
-    static BroadcastLogicalOperatorNodePtr create();
-
+    explicit BroadcastLogicalOperatorNode();
+    ~BroadcastLogicalOperatorNode() = default;
     /**
      * @brief Infers the schema of the map operator. We support two cases:
      * 1. the assignment statement manipulates a already existing field. In this case the data type of the field can change.
@@ -35,8 +34,6 @@ class BroadcastLogicalOperatorNode : public LogicalOperatorNode {
     OperatorNodePtr copy() override;
 
   private:
-    explicit BroadcastLogicalOperatorNode();
-
 };
 }// namespace NES
 

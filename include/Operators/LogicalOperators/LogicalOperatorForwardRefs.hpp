@@ -30,6 +30,9 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 class SinkDescriptor;
 typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
+class BroadcastLogicalOperatorNode;
+typedef std::shared_ptr<BroadcastLogicalOperatorNode> BroadcastLogicalOperatorNodePtr;
+
 }// namespace NES
 
 #endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_
