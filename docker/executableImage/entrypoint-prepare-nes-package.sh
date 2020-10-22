@@ -16,7 +16,7 @@ then
     make -j4
     cpack
     cd ..
-    if test -f *.deb; then 
+    if test -f docker/executableImage/resources/*.deb; then
         rm docker/executableImage/resources/*.deb
     fi
     cp build/*.deb docker/executableImage/resources
