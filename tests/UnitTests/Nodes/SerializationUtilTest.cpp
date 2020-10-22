@@ -449,6 +449,33 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
     ASSERT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
 
+TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
+
+    auto schema = Schema::create();
+    schema->addField("f1", INT32);
+    UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
+    auto source = LogicalOperatorFactory::createSourceOperator(OPCSourceDescriptor::create(schema, "localhost", nodeId, "", ""));
+    source->setId(UtilityFunctions::getNextOperatorId());
+    auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
+    filter->setId(UtilityFunctions::getNextOperatorId());
+    filter->addChild(source);
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
+    map->setId(UtilityFunctions::getNextOperatorId());
+    map->addChild(filter);
+    auto sink = LogicalOperatorFactory::createSinkOperator(OPCSinkDescriptor::create("localhost", nodeId, "", ""));
+    sink->setId(UtilityFunctions::getNextOperatorId());
+    sink->addChild(map);
+
+    auto queryPlan = QueryPlan::create(1, 1, {sink});
+
+    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
+
+    ASSERT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
+    ASSERT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
+    ASSERT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
+}
+
 TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
 
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
