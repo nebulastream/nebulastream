@@ -1,7 +1,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Windowing/WindowAggregations/WindowAggregation.hpp>
 #include <Windowing/WindowDefinition.hpp>
 #include <sstream>

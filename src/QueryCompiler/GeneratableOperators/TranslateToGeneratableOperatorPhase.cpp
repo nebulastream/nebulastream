@@ -5,10 +5,10 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
-#include <Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
-#include <Operators/SpecializedWindowOperators/SliceMergingOperator.hpp>
-#include <Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableCombiningWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>

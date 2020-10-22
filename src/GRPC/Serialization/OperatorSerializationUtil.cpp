@@ -4,6 +4,7 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
@@ -21,11 +22,11 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
-#include <Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
-#include <Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -66,6 +67,12 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         auto mergeDetails = SerializableOperator_MergeDetails();
         auto mergeOperator = operatorNode->as<MergeLogicalOperatorNode>();
         serializedOperator->mutable_details()->PackFrom(mergeDetails);
+    } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
+        // serialize merge operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to BroadcastLogicalOperatorNode");
+        auto broadcastDetails = SerializableOperator_BroadcastDetails();
+        auto broadcastOperator = operatorNode->as<BroadcastLogicalOperatorNode>();
+        serializedOperator->mutable_details()->PackFrom(broadcastDetails);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         // serialize map operator
         NES_TRACE("OperatorSerializationUtil:: serialize to MapLogicalOperatorNode");
@@ -146,6 +153,13 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedMergeDescriptor);
         // de-serialize merge descriptor
         operatorNode = LogicalOperatorFactory::createMergeOperator();
+    } else if (details.Is<SerializableOperator_BroadcastDetails>()) {
+        // de-serialize broadcast operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to BroadcastLogicalOperator");
+        auto serializedBroadcastDescriptor = SerializableOperator_BroadcastDetails();
+        details.UnpackTo(&serializedBroadcastDescriptor);
+        // de-serialize broadcast descriptor
+        operatorNode = LogicalOperatorFactory::createBroadcastOperator();
     } else if (details.Is<SerializableOperator_MapDetails>()) {
         // de-serialize map operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to MapLogicalOperator");

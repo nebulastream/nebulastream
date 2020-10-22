@@ -128,20 +128,25 @@ message SerializableOperator{
   }
 
   /**
-  Map Details contains properties for the map operator, such as the field assignment expression
-  */
+   Map Details contains properties for the map operator, such as the field assignment expression
+   */
   message MapDetails {
     SerializableExpression expression = 1;
   }
-  /**
-  Merge Details contains properties for the merge operator, which is empty currently.
-  */
-  message MergeDetails {
 
-  }
+  /**
+   Merge Details contains properties for the merge operator, which is empty currently.
+   */
+  message MergeDetails {}
+
+  /**
+   Broadcast details contains properties for the broadcast operator
+   */
+  message BroadcastDetails{}
+
   /**
    Filter Details contains properties for the filter operator, such as the filter predicate expression
- */
+   */
   message FilterDetails {
     SerializableExpression predicate = 1;
   }
