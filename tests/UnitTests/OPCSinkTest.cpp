@@ -62,7 +62,7 @@ TEST_F(OPCSinkTest, OPCSourceInit) {
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
-    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, &nodeId, user, password);
+    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
     SUCCEED();
 }
 
@@ -73,7 +73,7 @@ TEST_F(OPCSinkTest, OPCSourcePrint) {
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
-    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, &nodeId, user, password);
+    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
     std::string expected = "OPC_SINK";
     EXPECT_EQ(opcSink->toString(), expected);
     std::cout << opcSink->toString() << std::endl;
@@ -96,14 +96,14 @@ TEST_F(OPCSinkTest, DISABLED_OPCSourceValue) {
     TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     write_buffer.getBuffer<uint32_t>()[0] = 45;
     write_buffer.setNumberOfTuples(1);
-    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, &nodeId, user, password);
+    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: " << UtilityFunctions::prettyPrintTupleBuffer(write_buffer, test_schema));
     opcSink->writeData(write_buffer, wctx);
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
     write_buffer.release();
     nodeEngine->stop();
     auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31337, conf);
-    auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, &nodeId, user, password);
+    auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId, user, password);
     auto tuple_buffer = opcSource->receiveData();
     size_t value = 0;
     auto *tuple = (uint32_t *) tuple_buffer->getBuffer();

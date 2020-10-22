@@ -85,7 +85,7 @@ class OPCSourceTest : public testing::Test {
  */
 TEST_F(OPCSourceTest, OPCSourceInit) {
 
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, &nodeId, user, password);
+    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password);
 
     SUCCEED();
 }
@@ -95,7 +95,7 @@ TEST_F(OPCSourceTest, OPCSourceInit) {
  */
 TEST_F(OPCSourceTest, OPCSourcePrint) {
 
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, &nodeId, user, password);
+    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password);
 
     std::string expected = "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
 
@@ -118,7 +118,7 @@ TEST_F(OPCSourceTest, DISABLED_OPCSourceValue) {
     auto test_schema = Schema::create()
                 ->addField("var", UINT32);
 
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, &nodeId, user, password);
+    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password);
 
     auto tuple_buffer = opcSource->receiveData();
 
