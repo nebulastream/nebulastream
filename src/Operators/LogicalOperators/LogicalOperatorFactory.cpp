@@ -2,14 +2,15 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
-#include <Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
-#include <Operators/SpecializedWindowOperators/SliceMergingOperator.hpp>
-#include <Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/SpecializedWindowOperators/WindowComputationOperator.hpp>
 
 namespace NES {
 
@@ -28,6 +29,10 @@ LogicalOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssi
 
 LogicalOperatorNodePtr LogicalOperatorFactory::createMergeOperator() {
     return std::make_shared<MergeLogicalOperatorNode>();
+}
+
+LogicalOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator() {
+    return std::make_shared<BroadcastLogicalOperatorNode>();
 }
 
 LogicalOperatorNodePtr LogicalOperatorFactory::createWindowOperator(const WindowDefinitionPtr windowDefinition) {
