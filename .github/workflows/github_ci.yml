@@ -111,7 +111,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: $GITHUB_WORKSPACE/build/docs/html
+          publish_dir: ./build/docs/html
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
