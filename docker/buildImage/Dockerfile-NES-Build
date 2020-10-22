@@ -26,6 +26,11 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   apt-get install libopen62541-1-dev -qq \
   && apt-get clean -qq
 
+RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -qq \
+  doxygen \
+  graphviz \
+  && apt-get clean -qq
+
 RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && \
   make -j2 && make install && cd ${HOME} && rm -rf grpc && \
