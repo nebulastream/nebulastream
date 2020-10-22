@@ -19,3 +19,4 @@ cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DI
 make version
 make format
 make release
+make nes-doc
