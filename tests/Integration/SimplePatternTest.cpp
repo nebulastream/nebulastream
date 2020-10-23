@@ -297,13 +297,13 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_R2000070.csv",
-                                                                  1, 0, 2,
+                                                                  1, 0, 1,
                                                                   "test_stream_R2000070", "QnV");
     wrk1->registerPhysicalStream(conf70);
 
     //register physical stream R2000073
     PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_R2000073.csv",
-                                                                  1, 0, 2,
+                                                                  1, 0, 1,
                                                                   "test_stream_R2000073", "QnV1");
     wrk2->registerPhysicalStream(conf73);
 
@@ -312,7 +312,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
     remove(outputFilePath.c_str());
 
     NES_INFO("SimplePatternTest: Submit merge pattern");
-    std::string query = R"(Pattern::from("QnV").merge(Pattern::from("QnV1")).filter(Attribute("velocity") > 100).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
+    std::string query = R"(Pattern::from("QnV").filter(Attribute("velocity") > 100).merge(Pattern::from("QnV1").filter(Attribute("velocity") > 100)).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -321,19 +321,9 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    //ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    //ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 4));
-
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
-
-
-   // ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    //ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    //ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-
-    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    //ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
