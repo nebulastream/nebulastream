@@ -358,11 +358,18 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
 
-    //TODO: extend this method to collect data also from prometheus
-    auto [schema, tupleBuffer] = crd->getMonitoringService()->requestMonitoringData("127.0.0.1", port + 10, plan);
-    NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port+10));
-    ASSERT_TRUE(schema->getSize()>1);
-    ASSERT_TRUE(tupleBuffer.getNumberOfTuples()==1);
+    auto iterations = 50;
+
+    for (int i=0; i<=iterations; i++) {
+        auto [schema, tupleBuffer] = crd->getMonitoringService()->requestMonitoringData("127.0.0.1", port + 10, plan);
+
+        NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port+10));
+        ASSERT_TRUE(schema->getSize()>1);
+        ASSERT_TRUE(tupleBuffer.getNumberOfTuples()==1);
+        tupleBuffer.release();
+        schema.reset();
+    }
+
     //NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 
     NES_INFO("MonitoringStackTest: Stopping worker");
