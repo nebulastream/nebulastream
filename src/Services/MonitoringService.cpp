@@ -43,6 +43,7 @@ web::json::value MonitoringService::requestMonitoringDataAsJson(const std::strin
     metricsJson["schema"] = web::json::value::string(schema->toString());
     metricsJson["tupleBuffer"] = web::json::value::string(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
     tupleBuffer.release();
+    schema.reset();
     return metricsJson;
 }
 
