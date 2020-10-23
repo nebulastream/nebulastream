@@ -162,6 +162,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
+#if ENABLE_OPC_BUILD
     {
         UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
         auto source = OPCSourceDescriptor::create(schema, "localhost", nodeId, "", "");
@@ -169,6 +170,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
+#endif
 
     {
         auto source = BinarySourceDescriptor::create(schema, "localhost");
@@ -228,6 +230,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
+#if ENABLE_OPC_BUILD
     {
         UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
         auto sink = OPCSinkDescriptor::create("localhost", nodeId, "", "");
@@ -235,6 +238,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
+#endif
 
     {
         auto sink = PrintSinkDescriptor::create();
@@ -449,6 +453,7 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
     ASSERT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
 
+#if ENABLE_OPC_BUILD
 TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
 
     auto schema = Schema::create();
@@ -475,6 +480,7 @@ TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
     ASSERT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
     ASSERT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
+#endif
 
 TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
 
