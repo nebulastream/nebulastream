@@ -9,3 +9,4 @@ debug*
 
 # Deb file
 docker/executableImage/resources/NebulaStream*.deb
+.Rproj.user
