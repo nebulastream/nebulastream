@@ -528,4 +528,55 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingValidUserQueryWithTumblin
     coordinatorProc.terminate();
 }
 
+TEST_F(E2ECoordinatorWorkerTest, testExecutingMonitoringTwoWorker) {
+    NES_INFO(" start coordinator");
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
+    bp::child coordinatorProc(cmdCoord.c_str());
+
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+    sleep(2);
+
+    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352";
+    bp::child workerProc1(cmdWrk1.c_str());
+    NES_INFO("started worker 1 with pid = " << workerProc1.id());
+
+    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354";
+    bp::child workerProc2(cmdWrk2.c_str());
+    NES_INFO("started worker 2 with pid = " << workerProc2.id());
+
+    size_t coordinatorPid = coordinatorProc.id();
+    size_t workerPid1 = workerProc1.id();
+    size_t workerPid2 = workerProc2.id();
+
+    web::json::value json_return;
+
+    web::http::client::http_client client("http://localhost:8081/v1/nes/monitoring/metrics/");
+
+    client.request(web::http::methods::GET).then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
+        .then([&json_return](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("set return");
+              json_return = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_INFO("error while setting return");
+              NES_INFO("error " << e.what());
+          }
+        })
+        .wait();
+
+    NES_INFO("RETURN: " << json_return.size());
+    NES_INFO("RETURN: " << json_return);
+    EXPECT_EQ(json_return.size(), 3);
+
+    NES_INFO("Killing worker 1 process->PID: " << workerPid1);
+    workerProc1.terminate();
+    NES_INFO("Killing worker 2 process->PID: " << workerPid2);
+    workerProc2.terminate();
+    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
+    coordinatorProc.terminate();
+}
+
 }// namespace NES
