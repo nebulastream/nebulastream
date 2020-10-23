@@ -1,16 +1,16 @@
+#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/SpecializedWindowOperators/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/SpecializedWindowOperators/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/SpecializedWindowOperators/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 
 namespace NES {
 
