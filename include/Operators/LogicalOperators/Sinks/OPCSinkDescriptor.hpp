@@ -3,7 +3,7 @@
 
 #ifdef ENABLE_OPC_BUILD
 
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/plugin/log_stdout.h>
