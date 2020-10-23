@@ -94,18 +94,16 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
             code << "auto subQuery = " << subquery << ";" << std::endl;
             newQuery.replace(pos1, pos2+1, "merge(&subQuery");
             NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
-            //    boost::replace_all(newQuery, "Query::from", "return Query::from");
         }
 
+        // add return statement in front of input query/pattern
         //if pattern
         if (pattern) {
             boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
         } else { // if Query
-            // add return statement in front of input query
             // NOTE: This will not work if you have created object of Input query and do further manipulation
             boost::replace_all(newQuery, "Query::from", "return Query::from");
         }
-
 
         NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
         code << newQuery << std::endl;
