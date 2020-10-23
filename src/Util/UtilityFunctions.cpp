@@ -81,14 +81,11 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         std::string streamName = queryCodeSnippet.substr(
             queryCodeSnippet.find("::from("));
         streamName = streamName.substr(7, streamName.find(")") - 7);
-        NES_DEBUG(" stream name = " << streamName);
+        NES_DEBUG(" UtilityFunctions: stream name = " << streamName);
 
         std::string newQuery = queryCodeSnippet;
 
-        //if pattern
-        if (pattern) {
-            boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
-        } else if (merge) {//if contains merge
+        if (merge) {//if contains merge
             auto pos1 = queryCodeSnippet.find("merge(");
             std::string tmp = queryCodeSnippet.substr(pos1);
             auto pos2 = tmp.find(").");//find the end bracket of merge query
@@ -97,12 +94,19 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
             code << "auto subQuery = " << subquery << ";" << std::endl;
             newQuery.replace(pos1, pos2, "merge(&subQuery");
             NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
-            boost::replace_all(newQuery, "Query::from", "return Query::from");
-        } else {
+            //    boost::replace_all(newQuery, "Query::from", "return Query::from");
+        }
+
+        //if pattern
+        if (pattern) {
+            boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
+        } else { // if Query
             // add return statement in front of input query
             // NOTE: This will not work if you have created object of Input query and do further manipulation
             boost::replace_all(newQuery, "Query::from", "return Query::from");
         }
+
+
         NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
         code << newQuery << std::endl;
         code << "}" << std::endl;
