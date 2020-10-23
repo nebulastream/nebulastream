@@ -1,5 +1,5 @@
 #ifdef ENABLE_OPC_BUILD
-#include <Nodes/Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <open62541/client_config_default.h>
 
 namespace NES {

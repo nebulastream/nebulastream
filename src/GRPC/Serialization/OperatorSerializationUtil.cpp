@@ -40,8 +40,8 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 
 #ifdef ENABLE_OPC_BUILD
-#include <Nodes/Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #endif
 
 namespace NES {
