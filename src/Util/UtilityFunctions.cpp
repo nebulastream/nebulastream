@@ -88,11 +88,11 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         if (merge) {//if contains merge
             auto pos1 = queryCodeSnippet.find("merge(");
             std::string tmp = queryCodeSnippet.substr(pos1);
-            auto pos2 = tmp.find(").");//find the end bracket of merge query
-            std::string subquery = tmp.substr(6, pos2 - 6);
+            auto pos2 = tmp.find(")).");//find the end bracket of merge query
+            std::string subquery = tmp.substr(6, pos2 - 5);
             NES_DEBUG("UtilityFunctions: subquery = " << subquery);
             code << "auto subQuery = " << subquery << ";" << std::endl;
-            newQuery.replace(pos1, pos2, "merge(&subQuery");
+            newQuery.replace(pos1, pos2+1, "merge(&subQuery");
             NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
             //    boost::replace_all(newQuery, "Query::from", "return Query::from");
         }
