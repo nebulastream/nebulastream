@@ -2,7 +2,7 @@
 #define NES_INCLUDE_UTIL_OPERATORSERIALIZATIONUTIL_HPP_
 
 #include <memory>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 namespace NES {
 
 class SourceLogicalOperatorNode;
