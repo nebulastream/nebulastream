@@ -111,7 +111,8 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          personal_token: ${{ secrets.CI_SECRET }}
+          deploy_key: ${{ secrets.CI_SECRET }}
+          personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
           publish_dir: ./build/docs/html
           destination_dir: private/doc/
           external_repository: nebulastream/nes-server
