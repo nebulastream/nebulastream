@@ -92,7 +92,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
             std::string subquery = tmp.substr(6, pos2 - 5);
             NES_DEBUG("UtilityFunctions: subquery = " << subquery);
             code << "auto subQuery = " << subquery << ";" << std::endl;
-            newQuery.replace(pos1, pos2+1, "merge(&subQuery");
+            newQuery.replace(pos1, pos2 + 1, "merge(&subQuery");
             NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
         }
 
@@ -100,7 +100,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         //if pattern
         if (pattern) {
             boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
-        } else { // if Query
+        } else {// if Query
             // NOTE: This will not work if you have created object of Input query and do further manipulation
             boost::replace_all(newQuery, "Query::from", "return Query::from");
         }
