@@ -2,7 +2,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_GENERATABLEWINDOWOPERATOR_HPP_
 
 
-#include <Nodes/Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 #include <Windowing/Runtime/WindowHandlerFactory.hpp>
 

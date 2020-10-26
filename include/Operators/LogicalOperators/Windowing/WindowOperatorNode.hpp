@@ -1,6 +1,6 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_WINDOWING_WINDOWOPERATORNODE_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_WINDOWING_WINDOWOPERATORNODE_HPP_
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
 namespace NES::Windowing{
 

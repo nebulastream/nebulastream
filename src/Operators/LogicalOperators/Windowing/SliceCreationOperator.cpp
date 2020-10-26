@@ -3,10 +3,10 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <API/Schema.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
-#include <Nodes/Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
