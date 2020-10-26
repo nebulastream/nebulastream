@@ -154,9 +154,7 @@ class WindowHandlerImpl : public WindowHandler {
                                                                        << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                     if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
                         NES_DEBUG("WindowHandler CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
-
                         partialFinalAggregates[windowId] = windowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
-
                     } else {
                         NES_DEBUG("WindowHandler CC: condition not true");
                     }
@@ -206,7 +204,6 @@ class WindowHandlerImpl : public WindowHandler {
             NES_ERROR("Window combiner not implemented yet");
             NES_NOT_IMPLEMENTED();
         }
-
         store->setLastWatermark(watermark);
     };
 
@@ -253,6 +250,17 @@ class WindowHandlerImpl : public WindowHandler {
         }
     }
 
+    /**
+     * @brief Writes a value to the output buffer with the following schema
+     * -- start_ts, end_ts, key, value --
+     * @tparam ValueType Type of the particular value
+     * @param tupleBuffer reference to the tuple buffer we want to write to
+     * @param index record index
+     * @param startTs start ts of the window/slice
+     * @param endTs end ts of the window/slice
+     * @param key key of the value
+     * @param value value
+     */
     template<typename ValueType>
     void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key, ValueType value) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
