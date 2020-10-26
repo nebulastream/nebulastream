@@ -37,11 +37,11 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
     }
 #endif
 #ifdef ENABLE_OPC_BUILD
-    else if (sinkType == "OPC_SINK") {
-        NES_INFO("ConvertPhysicalToLogicalSink: Creating OPC sink");
-        OPCSinkPtr opcSink = std::dynamic_pointer_cast<OPCSink>(dataSink);
-        return OPCSinkDescriptor::create(opcSink->getUrl(), opcSink->getNodeId(), opcSink->getUser(), opcSink->getPassword());
-    }
+        else if (sinkType == "OPC_SINK") {
+            NES_INFO("ConvertPhysicalToLogicalSink: Creating OPC sink");
+            OPCSinkPtr opcSink = std::dynamic_pointer_cast<OPCSink>(dataSink);
+            return OPCSinkDescriptor::create(opcSink->getUrl(), opcSink->getNodeId(), opcSink->getUser(), opcSink->getPassword());
+        }
 #endif
         else if (sinkType == "FILE_SINK") {
             FileSinkPtr fileSink = std::dynamic_pointer_cast<FileSink>(dataSink);

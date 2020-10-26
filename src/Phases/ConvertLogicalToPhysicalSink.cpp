@@ -4,10 +4,10 @@
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
@@ -26,7 +26,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
         return createBinaryZmqSink(schema, querySubPlanId, nodeEngine, zmqSinkDescriptor->getHost(), zmqSinkDescriptor->getPort(), zmqSinkDescriptor->isInternal());
     }
 #ifdef ENABLE_KAFKA_BUILD
-     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
+    else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
         const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
         return createKafkaSinkWithSchema(schema, querySubPlanId, kafkaSinkDescriptor->getBrokers(),
@@ -39,9 +39,9 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
         NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
         const OPCSinkDescriptorPtr opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
         return createOPCSink(schema, querySubPlanId, nodeEngine, opcSinkDescriptor->getUrl(),
-                                       opcSinkDescriptor->getNodeId(),
-                                       opcSinkDescriptor->getUser(),
-                                       opcSinkDescriptor->getPassword());
+                             opcSinkDescriptor->getNodeId(),
+                             opcSinkDescriptor->getUser(),
+                             opcSinkDescriptor->getPassword());
     }
 #endif
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
