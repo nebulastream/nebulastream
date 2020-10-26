@@ -56,9 +56,6 @@ class ExecutableCountAggregation : public  ExecutableWindowAggregation<InputType
     CountType lower(CountType partialAggregateValue) override {
         return partialAggregateValue;
     }
-
-  protected:
-
 };
 
 }

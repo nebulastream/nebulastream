@@ -19,7 +19,7 @@ namespace NES::Windowing {
 class WindowAggregationDescriptor {
   public:
     enum Type{
-        AVG,
+        Avg,
         Count,
         Max,
         Min,
@@ -67,6 +67,9 @@ class WindowAggregationDescriptor {
      */
     virtual void inferStamp(SchemaPtr schema) = 0;
 
+    /**
+    * @brief Creates a deep copy of the window aggregation
+    */
     virtual WindowAggregationPtr copy() = 0;
 
   protected:

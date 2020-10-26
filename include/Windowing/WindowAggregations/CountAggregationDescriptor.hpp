@@ -31,6 +31,7 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
      * @return WindowAggregationDescriptor::Type
      */
     Type getType() override;
+
     /**
      * @brief Infers the stamp of the expression given the current schema.
      * @param SchemaPtr
