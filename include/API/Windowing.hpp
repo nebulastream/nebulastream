@@ -17,21 +17,21 @@ namespace NES::API{
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Sum(ExpressionItem);
+Windowing::WindowAggregationPtr Sum(ExpressionItem ExpressionItem);
 
 /**
  * @brief Defines a Min Aggregation function on a particular field.
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Min(ExpressionItem);
+Windowing::WindowAggregationPtr Min(ExpressionItem ExpressionItem);
 
 /**
  * @brief Defines a Max Aggregation function on a particular field.
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Max(ExpressionItem);
+Windowing::WindowAggregationPtr Max(ExpressionItem ExpressionItem);
 
 /**
  * @brief Defines a Cun Aggregation function on a particular field.
@@ -44,7 +44,7 @@ Windowing::WindowAggregationPtr Count();
  * @param ExpressionItem which defines the field name.
  * @return A descriptor of the time characteristic.
  */
-Windowing::TimeCharacteristicPtr EventTime(ExpressionItem);
+Windowing::TimeCharacteristicPtr EventTime(ExpressionItem ExpressionItem);
 
 /**
  * @brief Defines a processing time as a time characteristic for a window.
@@ -56,31 +56,31 @@ Windowing::TimeCharacteristicPtr ProcessingTime();
  * @brief A time measure in Milliseconds.
  * @return TimeMeasure
  */
-Windowing::TimeMeasure Milliseconds(uint64_t);
+Windowing::TimeMeasure Milliseconds(uint64_t milliseconds);
 
 /**
  * @brief A time measure in Seconds.
  * @return TimeMeasure
  */
-Windowing::TimeMeasure Seconds(uint64_t);
+Windowing::TimeMeasure Seconds(uint64_t seconds);
 
 /**
  * @brief A time measure in Minutes.
  * @return TimeMeasure
  */
-Windowing::TimeMeasure Minutes(uint64_t);
+Windowing::TimeMeasure Minutes(uint64_t minutes);
 
 /**
  * @brief A time measure in Hours.
  * @return TimeMeasure
  */
-Windowing::TimeMeasure Hours(uint64_t);
+Windowing::TimeMeasure Hours(uint64_t hours);
 
 /**
  * @brief A time measure in Days.
  * @return TimeMeasure
  */
-Windowing::TimeMeasure Days(uint64_t);
+Windowing::TimeMeasure Days(uint64_t days);
 
 }
 
