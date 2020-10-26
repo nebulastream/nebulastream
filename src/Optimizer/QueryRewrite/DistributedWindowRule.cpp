@@ -86,7 +86,9 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
     //replace logical window op with window computation operator
     NES_DEBUG("DistributeWindowRule::apply: newNode=" << windowComputationOperator->toString() << " old node=" << logicalWindowOperaotr->toString());
-    logicalWindowOperaotr->replace(windowComputationOperator);
+    if(!logicalWindowOperaotr->replace(windowComputationOperator)){
+        NES_FATAL_ERROR("DistributeWindowRule:: replacement of window operator failed.");
+    };
 
     //add a slicer to each child
     auto windowChildren = windowComputationOperator->getChildren();

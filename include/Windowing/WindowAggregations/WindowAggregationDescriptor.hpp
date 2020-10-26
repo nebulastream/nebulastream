@@ -28,7 +28,7 @@ class WindowAggregationDescriptor {
 
     /**
     * Defines the field to which a aggregate output is assigned.
-   * @param asField
+    * @param asField
     * @return WindowAggregationDescriptor
     */
     WindowAggregationDescriptor& as(FieldAccessExpressionNodePtr asField);
@@ -44,13 +44,13 @@ class WindowAggregationDescriptor {
 
     /**
     * Returns the result field of the aggregation
-    * @return
+    * @return ExpressionNodePtr
     */
     ExpressionNodePtr as();
 
     /**
     * Returns the result field of the aggregation
-    * @return
+    * @return ExpressionNodePtr
     */
     ExpressionNodePtr on();
 

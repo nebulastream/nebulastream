@@ -1,5 +1,7 @@
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -182,6 +184,20 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
                             ->addField("f3", BasicType::UINT32);
 
     ASSERT_TRUE(sink->getOutputSchema()->equals(resultSchema));
+}
+
+/**
+ * @brief In this test we ensure that the source descriptor is correctly replaced, such that the schema can be propagated.
+ */
+TEST_F(TypeInferencePhaseTest, copyExpressionNodeTest) {
+    auto value = AddExpressionNode::create(
+            ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT64, "3")),
+            ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT64, "2"))
+        );
+    auto value3 = value->copy();
+    ASSERT_EQ(value, value3);
+
+
 }
 
 }// namespace NES

@@ -63,7 +63,6 @@ bool SliceCreationOperator::inferSchema() {
         return true;
     }else{
         NES_THROW_RUNTIME_ERROR("SliceCreationOperator: type inference for non keyed streams is not supported");
-        return false;
     }
 
 
