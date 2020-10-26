@@ -13,4 +13,4 @@ uint64_t WindowManager::getAllowedLateness() const {
     return allowedLateness;
 }
 
-}// namespace NES
+}// namespace NES::Windowing

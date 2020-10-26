@@ -73,4 +73,4 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::copy() {
     return create(onKey, windowAggregation->copy(), windowType, distributionType, numberOfInputEdges);
 }
 
-}// namespace NES
+}// namespace NES::Windowing

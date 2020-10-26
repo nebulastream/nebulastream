@@ -21,4 +21,4 @@ DistributionCharacteristic::Type DistributionCharacteristic::getType() {
     return type;
 }
 
-}// namespace NES
+}// namespace NES::Windowing

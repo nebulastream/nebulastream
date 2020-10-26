@@ -25,7 +25,6 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expression_statment, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
 
-
     /**
      * @brief Returns the type of this aggregation.
      * @return WindowAggregationDescriptor::Type
@@ -40,9 +39,9 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
 
     WindowAggregationPtr copy() override;
     MaxAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+
   private:
     MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-
 };
-}// namespace NES
+}// namespace NES::Windowing
 #endif//NES_MAX_HPP

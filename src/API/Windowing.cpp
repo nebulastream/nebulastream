@@ -1,12 +1,12 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Windowing.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowMeasures/TimeMeasure.hpp>
 
 namespace NES::API {
 
@@ -27,13 +27,16 @@ Windowing::WindowAggregationPtr Count() {
 }
 
 Windowing::TimeMeasure Milliseconds(uint64_t milliseconds) {
-    return Windowing::TimeMeasure(milliseconds); }
+    return Windowing::TimeMeasure(milliseconds);
+}
 
 Windowing::TimeMeasure Seconds(uint64_t seconds) {
-    return Milliseconds(seconds * 1000); }
+    return Milliseconds(seconds * 1000);
+}
 
 Windowing::TimeMeasure Minutes(uint64_t minutes) {
-    return Seconds(minutes * 60); }
+    return Seconds(minutes * 60);
+}
 
 Windowing::TimeMeasure Hours(uint64_t hours) {
     return Minutes(hours * 60);
@@ -43,11 +46,11 @@ Windowing::TimeMeasure Days(uint64_t days) {
     return Hours(days);
 }
 
-Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField){
+Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField) {
     return Windowing::TimeCharacteristic::createEventTime(onField);
 }
 
-Windowing::TimeCharacteristicPtr ProcessingTime(){
+Windowing::TimeCharacteristicPtr ProcessingTime() {
     return Windowing::TimeCharacteristic::createProcessingTime();
 }
 

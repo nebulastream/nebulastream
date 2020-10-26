@@ -12,4 +12,4 @@ uint64_t SliceMetaData::getStartTs() {
     return startTs;
 }
 
-}// namespace NES
+}// namespace NES::Windowing

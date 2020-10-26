@@ -5,19 +5,17 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <Windowing/Runtime/WindowHandlerImpl.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::Windowing {
 
-
 class WindowHandlerFactoryDetails {
   public:
-
     /**
     * @brief Factory to create a typed window handler.
     * @tparam KeyType type of the key field
@@ -31,11 +29,11 @@ class WindowHandlerFactoryDetails {
     template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
     static WindowHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition,
                                    std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) {
-        return std::make_shared<WindowHandlerImpl<KeyType, InputType,PartialAggregateType , FinalAggregateType>>(windowDefinition, windowAggregation);
+        return std::make_shared<WindowHandlerImpl<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, windowAggregation);
     }
 
     template<class KeyType, class InputType>
-    static WindowHandlerPtr createWindowHandler(LogicalWindowDefinitionPtr windowDefinition){
+    static WindowHandlerPtr createWindowHandler(LogicalWindowDefinitionPtr windowDefinition) {
         auto onField = windowDefinition->getWindowAggregation()->on();
         auto asField = windowDefinition->getWindowAggregation()->as();
         switch (windowDefinition->getWindowAggregation()->getType()) {
@@ -48,7 +46,8 @@ class WindowHandlerFactoryDetails {
             case WindowAggregationDescriptor::Min:
                 return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMinAggregation<InputType>::create());
             case WindowAggregationDescriptor::Sum:
-                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableSumAggregation<InputType>::create());;
+                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableSumAggregation<InputType>::create());
+                ;
         }
         NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: Avg aggregation currently not supported");
     };
@@ -76,8 +75,7 @@ class WindowHandlerFactoryDetails {
         }
         NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: currently we dont support non basic input types");
     };
-
 };
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_RUNTIME_WINDOWHANDLERFACTORYDETAILS_HPP_

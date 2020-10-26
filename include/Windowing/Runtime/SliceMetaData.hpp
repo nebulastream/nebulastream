@@ -30,5 +30,5 @@ class SliceMetaData {
     uint64_t endTs;
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_SLICEMETADATA_HPP_

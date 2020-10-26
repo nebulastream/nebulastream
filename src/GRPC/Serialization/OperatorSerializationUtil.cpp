@@ -235,7 +235,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->as(), windowAggregation->mutable_asfield());
     ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->on(), windowAggregation->mutable_onfield());
 
-    switch(windowDefinition->getWindowAggregation()->getType()){
+    switch (windowDefinition->getWindowAggregation()->getType()) {
         case Windowing::WindowAggregationDescriptor::Count:
             windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_COUNT);
             break;
@@ -277,18 +277,16 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
 
     Windowing::WindowAggregationPtr aggregation;
     if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM) {
-        aggregation = Windowing::SumAggregationDescriptor::create(onField,asField);
+        aggregation = Windowing::SumAggregationDescriptor::create(onField, asField);
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MAX) {
-        aggregation = Windowing::MaxAggregationDescriptor::create(onField,asField);
+        aggregation = Windowing::MaxAggregationDescriptor::create(onField, asField);
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MIN) {
-        aggregation = Windowing::MinAggregationDescriptor::create(onField,asField);
+        aggregation = Windowing::MinAggregationDescriptor::create(onField, asField);
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_COUNT) {
-        aggregation = Windowing::CountAggregationDescriptor::create(onField,asField);
+        aggregation = Windowing::CountAggregationDescriptor::create(onField, asField);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: " << serializedWindowAggregation.DebugString());
     }
-
-
 
     Windowing::WindowTypePtr window;
     if (serializedWindowType.Is<SerializableOperator_WindowDetails_TumblingWindow>()) {

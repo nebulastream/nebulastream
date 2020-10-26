@@ -37,4 +37,4 @@ TimeMeasure TumblingWindow::getSize() {
     return size;
 }
 
-}// namespace NES
+}// namespace NES::Windowing

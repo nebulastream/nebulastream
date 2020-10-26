@@ -78,6 +78,6 @@ class WindowManager {
     LogicalWindowDefinitionPtr windowDefinition;
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWMANAGER_HPP_

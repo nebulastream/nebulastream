@@ -24,9 +24,9 @@ WindowAggregationPtr SumAggregationDescriptor::on(ExpressionItem onField) {
 }
 
 void SumAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCode,
-                             BinaryOperatorStatement partialRef,
-                             StructDeclaration inputStruct,
-                             BinaryOperatorStatement inputRef) {
+                                                  BinaryOperatorStatement partialRef,
+                                                  StructDeclaration inputStruct,
+                                                  BinaryOperatorStatement inputRef) {
     auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->as<FieldAccessExpressionNode>()->getFieldName());
     auto sum = partialRef + inputRef.accessRef(VarRefStatement(varDeclInput));
     auto updatedPartial = partialRef.assign(sum);
@@ -39,7 +39,7 @@ WindowAggregationDescriptor::Type SumAggregationDescriptor::getType() {
 void SumAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if(!onField->getStamp()->isNumeric()){
+    if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("SumAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
     asField->setStamp(onField->getStamp());
@@ -48,4 +48,4 @@ WindowAggregationDescriptorPtr SumAggregationDescriptor::copy() {
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
 
-}// namespace NES
+}// namespace NES::Windowing

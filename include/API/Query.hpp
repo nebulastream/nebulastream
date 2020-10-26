@@ -1,11 +1,11 @@
 #ifndef API_QUERY_H
 #define API_QUERY_H
 
-#include <API/Windowing.hpp>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Schema.hpp>
+#include <API/Windowing.hpp>
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sources/DataSource.hpp>

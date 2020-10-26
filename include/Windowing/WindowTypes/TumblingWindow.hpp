@@ -55,6 +55,6 @@ class TumblingWindow : public WindowType {
     const TimeMeasure size;
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_TUMBLINGWINDOW_HPP_

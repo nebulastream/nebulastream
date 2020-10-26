@@ -21,7 +21,6 @@ class LogicalUnaryExpressionNode : public UnaryExpressionNode, public LogicalExp
 
   protected:
     explicit LogicalUnaryExpressionNode(LogicalUnaryExpressionNode* other);
-
 };
 }// namespace NES
 

@@ -42,7 +42,6 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
 
   protected:
     explicit FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other);
-
 };
 }// namespace NES
 

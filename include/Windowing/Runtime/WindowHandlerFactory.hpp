@@ -5,15 +5,14 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <Windowing/Runtime/WindowHandlerImpl.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::Windowing {
-
 
 class WindowHandlerFactory {
   public:
@@ -24,6 +23,6 @@ class WindowHandlerFactory {
      */
     static WindowHandlerPtr createWindowHandler(LogicalWindowDefinitionPtr windowDefinition);
 };
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_RUNTIME_WINDOWHANDLERFACTORY_HPP_

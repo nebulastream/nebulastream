@@ -17,5 +17,5 @@ class Watermark {
 };
 
 typedef std::shared_ptr<Watermark> WatermarkPtr;
-}// namespace NES
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_WATERMARK_WATERMARK_HPP_

@@ -43,6 +43,6 @@ class WindowType {
     TimeCharacteristicPtr timeCharacteristic;
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWTYPE_HPP_

@@ -2,16 +2,14 @@
 #define INCLUDE_WINDOWS_WINDOW_HPP_
 
 #include <Util/Logger.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 #include <atomic>
 #include <iostream>
 #include <memory>
 #include <mutex>
 #include <thread>
-#include <iostream>
-#include <memory>
-#include <utility>
 #include <unistd.h>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <utility>
 
 namespace NES::Windowing {
 
@@ -22,14 +20,14 @@ class WindowHandlerImpl;
  * @brief The window handler checks every n seconds if a window should be triggered.
  * It has knowledge about the window definition and performs final aggregation.
  */
-class WindowHandler : public std::enable_shared_from_this<WindowHandler>{
+class WindowHandler : public std::enable_shared_from_this<WindowHandler> {
 
   public:
     explicit WindowHandler(LogicalWindowDefinitionPtr windowDefinition);
 
     template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
-    auto as(){
-         return std::dynamic_pointer_cast<WindowHandlerImpl<KeyType, InputType, FinalAggregateType, PartialAggregateType>>(shared_from_this());
+    auto as() {
+        return std::dynamic_pointer_cast<WindowHandlerImpl<KeyType, InputType, FinalAggregateType, PartialAggregateType>>(shared_from_this());
     }
 
     /**
@@ -101,12 +99,7 @@ class WindowHandler : public std::enable_shared_from_this<WindowHandler>{
 
     MemoryLayoutPtr windowTupleLayout;
     SchemaPtr windowTupleSchema;
-
 };
 
-
-
-
-
-}// namespace NES
+}// namespace NES::Windowing
 #endif /* INCLUDE_WINDOWS_WINDOW_HPP_ */

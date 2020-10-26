@@ -5,12 +5,12 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <memory>
 
-namespace NES::Windowing{
+namespace NES::Windowing {
 
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
-}
+}// namespace NES::Windowing
 
 namespace NES {
 

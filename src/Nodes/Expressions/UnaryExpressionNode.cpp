@@ -4,7 +4,7 @@
 namespace NES {
 UnaryExpressionNode::UnaryExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)) {}
 
-UnaryExpressionNode::UnaryExpressionNode(UnaryExpressionNode* other): ExpressionNode(other) {}
+UnaryExpressionNode::UnaryExpressionNode(UnaryExpressionNode* other) : ExpressionNode(other) {}
 
 void UnaryExpressionNode::setChild(ExpressionNodePtr child) {
     addChildWithEqual(child);

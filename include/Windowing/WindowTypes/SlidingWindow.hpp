@@ -49,6 +49,6 @@ class SlidingWindow : public WindowType {
     const TimeMeasure slide;
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_SLIDINGWINDOW_HPP_

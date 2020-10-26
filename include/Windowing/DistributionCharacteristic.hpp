@@ -49,5 +49,5 @@ class DistributionCharacteristic {
     Type type;
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_API_WINDOW_DistributionCharacteristic_HPP_

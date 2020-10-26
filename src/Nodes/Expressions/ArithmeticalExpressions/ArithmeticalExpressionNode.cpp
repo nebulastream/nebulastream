@@ -4,7 +4,7 @@
 namespace NES {
 
 ArithmeticalExpressionNode::ArithmeticalExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)) {}
-ArithmeticalExpressionNode::ArithmeticalExpressionNode(ArithmeticalExpressionNode* other): BinaryExpressionNode(other) {}
+ArithmeticalExpressionNode::ArithmeticalExpressionNode(ArithmeticalExpressionNode* other) : BinaryExpressionNode(other) {}
 
 /**
  * @brief The current implementation of type inference for arithmetical expressions expects that both
@@ -51,6 +51,5 @@ bool ArithmeticalExpressionNode::equal(NodePtr rhs) const {
 const std::string ArithmeticalExpressionNode::toString() const {
     return "ArithmeticalExpression()";
 }
-
 
 }// namespace NES

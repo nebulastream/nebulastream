@@ -46,6 +46,6 @@ class TimeCharacteristic {
     Type type;
     AttributeFieldPtr field;
 };
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_

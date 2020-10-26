@@ -2,12 +2,12 @@
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
 #include <API/Schema.hpp>
 
-namespace NES::Windowing{
+namespace NES::Windowing {
 
 class WindowHandler;
 typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
 
-}
+}// namespace NES::Windowing
 
 namespace NES {
 

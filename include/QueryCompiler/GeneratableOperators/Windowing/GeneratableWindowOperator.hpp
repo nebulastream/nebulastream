@@ -1,7 +1,6 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_GENERATABLEWINDOWOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_GENERATABLEWINDOWOPERATOR_HPP_
 
-
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 #include <Windowing/Runtime/WindowHandlerFactory.hpp>
@@ -34,7 +33,6 @@ class GeneratableWindowOperator : public WindowLogicalOperatorNode, public Gener
 
   protected:
     explicit GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition);
-
 };
 
 }// namespace NES

@@ -51,7 +51,6 @@ class ConstantValueExpressionNode : public ExpressionNode {
   protected:
     explicit ConstantValueExpressionNode(ConstantValueExpressionNode* other);
 
-
   private:
     explicit ConstantValueExpressionNode(const ValueTypePtr constantValue);
     // Value of this expression

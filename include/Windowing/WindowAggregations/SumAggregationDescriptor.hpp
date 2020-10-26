@@ -28,7 +28,6 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
                             StructDeclaration inputStruct,
                             BinaryOperatorStatement inputRef) override;
 
-
     /**
      * @brief Returns the type of this aggregation.
      * @return WindowAggregationDescriptor::Type
@@ -47,5 +46,5 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
     SumAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     SumAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
-}// namespace NES
+}// namespace NES::Windowing
 #endif//NES_SUM_HPP

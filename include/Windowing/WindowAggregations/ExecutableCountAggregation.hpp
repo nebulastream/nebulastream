@@ -6,9 +6,9 @@
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
-#include <utility>
 #include <Windowing/WindowAggregations/ExecutableWindowAggregation.hpp>
 #include <memory>
+#include <utility>
 namespace NES::Windowing {
 
 typedef uint64_t CountType;
@@ -18,12 +18,11 @@ typedef uint64_t CountType;
  * @tparam InputType input type of the aggregation
  */
 template<typename InputType>
-class ExecutableCountAggregation : public  ExecutableWindowAggregation<InputType, CountType, CountType>{
+class ExecutableCountAggregation : public ExecutableWindowAggregation<InputType, CountType, CountType> {
   public:
-    ExecutableCountAggregation(): ExecutableWindowAggregation<InputType, CountType, CountType>(){
-    };
+    ExecutableCountAggregation() : ExecutableWindowAggregation<InputType, CountType, CountType>(){};
 
-    static std::shared_ptr<ExecutableWindowAggregation<InputType, CountType, CountType>> create(){
+    static std::shared_ptr<ExecutableWindowAggregation<InputType, CountType, CountType>> create() {
         return std::make_shared<ExecutableCountAggregation<InputType>>();
     };
 
@@ -43,7 +42,7 @@ class ExecutableCountAggregation : public  ExecutableWindowAggregation<InputType
      * @return new partial aggregate as combination of partialValue and inputValue
      */
     CountType combine(CountType partialValue, CountType inputValue) override {
-       return partialValue + inputValue;
+        return partialValue + inputValue;
     }
 
     /*
@@ -56,6 +55,6 @@ class ExecutableCountAggregation : public  ExecutableWindowAggregation<InputType
     }
 };
 
-}
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLECOUNTAGGREGATION_HPP_

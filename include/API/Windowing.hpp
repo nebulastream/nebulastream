@@ -6,11 +6,10 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
-
 /**
  * @brief The following declares API functions for windowing.
  */
-namespace NES::API{
+namespace NES::API {
 
 /**
  * @brief Defines a Sum Aggregation function on a particular field.
@@ -82,6 +81,6 @@ Windowing::TimeMeasure Hours(uint64_t hours);
  */
 Windowing::TimeMeasure Days(uint64_t days);
 
-}
+}// namespace NES::API
 
 #endif//NES_INCLUDE_API_WINDOWING_HPP_

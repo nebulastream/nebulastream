@@ -5,4 +5,4 @@ namespace NES::Windowing {
 Watermark::Watermark() {
 }
 
-}// namespace NES
+}// namespace NES::Windowing

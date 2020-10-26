@@ -1,8 +1,8 @@
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
-#include <QueryCompiler/CodeGenerator.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>

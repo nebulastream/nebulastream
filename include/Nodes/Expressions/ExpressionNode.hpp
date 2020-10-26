@@ -63,8 +63,6 @@ class ExpressionNode : public Node {
      * todo replace the direct usage of data types with a stamp abstraction.
      */
     DataTypePtr stamp;
-
-
 };
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 }// namespace NES

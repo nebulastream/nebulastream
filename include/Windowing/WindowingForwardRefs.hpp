@@ -3,11 +3,10 @@
 
 #include "memory"
 
-namespace NES{
+namespace NES {
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
-
 
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
@@ -19,7 +18,6 @@ class FieldAccessExpressionNode;
 typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
 
 class ExpressionItem;
-
 
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
@@ -36,7 +34,7 @@ typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-}
+}// namespace NES
 
 namespace NES::Windowing {
 
@@ -85,7 +83,6 @@ inline uint64_t getTsFromClock() {
 class WindowAggregationDescriptor;
 typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
 
-
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_

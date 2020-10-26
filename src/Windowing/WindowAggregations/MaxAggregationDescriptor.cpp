@@ -49,4 +49,4 @@ void MaxAggregationDescriptor::inferStamp(SchemaPtr schema) {
 WindowAggregationPtr MaxAggregationDescriptor::copy() {
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
-}// namespace NES
+}// namespace NES::Windowing

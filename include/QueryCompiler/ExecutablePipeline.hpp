@@ -4,12 +4,12 @@
 #include <memory>
 #include <string>
 
-namespace NES::Windowing{
+namespace NES::Windowing {
 
 class WindowManager;
 typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 
-}
+}// namespace NES::Windowing
 
 namespace NES {
 

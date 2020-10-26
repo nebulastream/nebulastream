@@ -17,5 +17,5 @@ class ProcessingTimeWatermarkGenerator : public Watermark {
     uint64_t getWatermark();
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_WATERMARK_PROCESSINGTIMEWATERMARK_HPP_

@@ -2,9 +2,9 @@
 #include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/Runtime/WindowHandler.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <atomic>
 #include <utility>
 
@@ -23,7 +23,6 @@ WindowHandler::WindowHandler(LogicalWindowDefinitionPtr windowDefinition)
     windowTupleLayout = createRowLayout(windowTupleSchema);
 }
 
-
 uint64_t WindowHandler::getOriginId() const {
     return originId;
 }
@@ -32,4 +31,4 @@ void WindowHandler::setOriginId(uint64_t originId) {
     this->originId = originId;
 }
 
-}// namespace NES
+}// namespace NES::Windowing

@@ -12,4 +12,4 @@ uint64_t WindowState::getEndTs() const {
     return end;
 }
 
-}// namespace NES
+}// namespace NES::Windowing
