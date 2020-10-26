@@ -59,7 +59,6 @@ bool WindowComputationOperator::inferSchema() {
         return true;
     }else{
         NES_THROW_RUNTIME_ERROR("WindowComputationOperator: type inference for non keyed streams is not supported");
-        return false;
     }
 }
 }// namespace NES
