@@ -12,4 +12,4 @@ uint64_t ProcessingTimeWatermarkGenerator::getWatermark() {
     return ts;
 }
 
-}// namespace NES
+}// namespace NES::Windowing

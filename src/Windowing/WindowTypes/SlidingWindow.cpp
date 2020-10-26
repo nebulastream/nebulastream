@@ -39,4 +39,4 @@ TimeMeasure SlidingWindow::getSlide() {
     return slide;
 }
 
-}// namespace NES
+}// namespace NES::Windowing

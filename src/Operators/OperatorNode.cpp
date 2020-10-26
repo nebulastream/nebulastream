@@ -22,7 +22,7 @@ bool OperatorNode::inferSchema() {
     for (const auto& child : children) {
         child->as<OperatorNode>()->inferSchema();
     }
-    if(children.empty()){
+    if (children.empty()) {
         NES_THROW_RUNTIME_ERROR("OperatorNode: this node should have at least one child operator");
     }
     auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();

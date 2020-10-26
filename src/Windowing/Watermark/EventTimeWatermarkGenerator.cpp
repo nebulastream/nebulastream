@@ -10,4 +10,4 @@ uint64_t EventTimeWatermarkGenerator::getWatermark() {
     return 0;
 }
 
-}// namespace NES
+}// namespace NES::Windowing

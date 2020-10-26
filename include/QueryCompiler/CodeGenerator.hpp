@@ -14,12 +14,12 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 
-namespace NES::Windowing{
+namespace NES::Windowing {
 
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
-}
+}// namespace NES::Windowing
 namespace NES {
 
 class AttributeReference;

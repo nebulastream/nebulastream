@@ -5,7 +5,7 @@ namespace NES {
 
 AddExpressionNode::AddExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(std::move(stamp)){};
 
-AddExpressionNode::AddExpressionNode(AddExpressionNode* other): ArithmeticalExpressionNode(other) {}
+AddExpressionNode::AddExpressionNode(AddExpressionNode* other) : ArithmeticalExpressionNode(other) {}
 
 ExpressionNodePtr AddExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto addNode = std::make_shared<AddExpressionNode>(left->getStamp());
@@ -27,6 +27,5 @@ const std::string AddExpressionNode::toString() const {
 ExpressionNodePtr AddExpressionNode::copy() {
     return std::make_shared<AddExpressionNode>(AddExpressionNode(this));
 }
-
 
 }// namespace NES

@@ -1,11 +1,11 @@
 
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
-namespace NES{
+namespace NES {
 
-WindowOperatorNode::WindowOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition): windowDefinition(windowDefinition) {}
+WindowOperatorNode::WindowOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition) : windowDefinition(windowDefinition) {}
 
 Windowing::LogicalWindowDefinitionPtr WindowOperatorNode::getWindowDefinition() const {
-    return  windowDefinition;
+    return windowDefinition;
 }
 
-}
+}// namespace NES

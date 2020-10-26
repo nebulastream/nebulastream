@@ -26,7 +26,6 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
 
-
     /**
      * @brief Returns the type of this aggregation.
      * @return WindowAggregationDescriptor::Type
@@ -44,5 +43,5 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
     MinAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     MinAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
-}// namespace NES
+}// namespace NES::Windowing
 #endif//NES_MIN_HPP

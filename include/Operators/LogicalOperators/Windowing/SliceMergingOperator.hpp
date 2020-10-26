@@ -19,7 +19,6 @@ class SliceMergingOperator : public WindowOperatorNode {
     bool isIdentical(NodePtr rhs) const override;
 
     virtual bool inferSchema() override;
-
 };
 
 }// namespace NES

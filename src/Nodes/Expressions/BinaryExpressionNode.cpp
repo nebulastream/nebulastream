@@ -4,11 +4,10 @@
 namespace NES {
 BinaryExpressionNode::BinaryExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)) {}
 
-BinaryExpressionNode::BinaryExpressionNode(BinaryExpressionNode* other): ExpressionNode(other) {
+BinaryExpressionNode::BinaryExpressionNode(BinaryExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getLeft()->copy());
     addChildWithEqual(getRight()->copy());
 }
-
 
 void BinaryExpressionNode::setChildren(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     addChildWithEqual(left);
@@ -28,7 +27,5 @@ ExpressionNodePtr BinaryExpressionNode::getRight() const {
     }
     return children[1]->as<ExpressionNode>();
 }
-
-
 
 }// namespace NES

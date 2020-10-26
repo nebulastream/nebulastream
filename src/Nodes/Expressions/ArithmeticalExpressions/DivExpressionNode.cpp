@@ -27,5 +27,4 @@ ExpressionNodePtr DivExpressionNode::copy() {
     return std::make_shared<DivExpressionNode>(DivExpressionNode(this));
 }
 
-
 }// namespace NES

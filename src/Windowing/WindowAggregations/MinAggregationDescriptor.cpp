@@ -50,4 +50,4 @@ WindowAggregationPtr MinAggregationDescriptor::copy() {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
 
-}// namespace NES
+}// namespace NES::Windowing

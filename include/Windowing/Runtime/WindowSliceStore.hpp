@@ -154,6 +154,6 @@ class WindowSliceStore {
     std::map<uint64_t, uint64_t> originIdToMaxTsMap;
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWSLICESTORE_HPP_

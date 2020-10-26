@@ -8,6 +8,4 @@
 
 namespace NES::Windowing {
 
-
-
-}// namespace NES
+}// namespace NES::Windowing

@@ -6,10 +6,10 @@
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
-#include <utility>
 #include <Windowing/WindowAggregations/ExecutableWindowAggregation.hpp>
 #include <memory>
 #include <type_traits>
+#include <utility>
 namespace NES::Windowing {
 
 /**
@@ -17,12 +17,11 @@ namespace NES::Windowing {
  * @tparam InputType input type of the aggregation
  */
 template<typename InputType, std::enable_if_t<std::is_arithmetic<InputType>::value, int> = 0>
-class ExecutableSumAggregation : public  ExecutableWindowAggregation<InputType, InputType, InputType>{
+class ExecutableSumAggregation : public ExecutableWindowAggregation<InputType, InputType, InputType> {
   public:
-    ExecutableSumAggregation(): ExecutableWindowAggregation<InputType, InputType, InputType>(){
-    };
+    ExecutableSumAggregation() : ExecutableWindowAggregation<InputType, InputType, InputType>(){};
 
-    static std::shared_ptr<ExecutableWindowAggregation<InputType, InputType, InputType>> create(){
+    static std::shared_ptr<ExecutableWindowAggregation<InputType, InputType, InputType>> create() {
         return std::make_shared<ExecutableSumAggregation<InputType>>();
     };
 
@@ -42,7 +41,7 @@ class ExecutableSumAggregation : public  ExecutableWindowAggregation<InputType, 
      * @return new partial aggregate as combination of partialValue and inputValue
      */
     InputType combine(InputType partialValue, InputType inputValue) override {
-       return partialValue + inputValue;
+        return partialValue + inputValue;
     }
 
     /*
@@ -55,6 +54,6 @@ class ExecutableSumAggregation : public  ExecutableWindowAggregation<InputType, 
     }
 };
 
-}
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLESUMAGGREGATION_HPP_

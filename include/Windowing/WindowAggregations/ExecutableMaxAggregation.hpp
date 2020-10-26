@@ -6,10 +6,10 @@
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
-#include <utility>
 #include <Windowing/WindowAggregations/ExecutableWindowAggregation.hpp>
 #include <memory>
 #include <type_traits>
+#include <utility>
 namespace NES::Windowing {
 
 /**
@@ -17,16 +17,15 @@ namespace NES::Windowing {
  * @tparam InputType input type of the aggregation
  */
 template<typename InputType, std::enable_if_t<std::is_arithmetic<InputType>::value, int> = 0>
-class ExecutableMaxAggregation : public  ExecutableWindowAggregation<InputType, InputType, InputType>{
+class ExecutableMaxAggregation : public ExecutableWindowAggregation<InputType, InputType, InputType> {
   public:
-    ExecutableMaxAggregation(): ExecutableWindowAggregation<InputType, InputType, InputType>(){
-    };
+    ExecutableMaxAggregation() : ExecutableWindowAggregation<InputType, InputType, InputType>(){};
 
-    static std::shared_ptr<ExecutableWindowAggregation<InputType, InputType, InputType>> create(){
+    static std::shared_ptr<ExecutableWindowAggregation<InputType, InputType, InputType>> create() {
         return std::make_shared<ExecutableMaxAggregation<InputType>>();
     };
 
-     /*
+    /*
      * @brief maps the input element to an element PartialAggregateType
      * @param input value of the element
      * @return the element that mapped to PartialAggregateType
@@ -58,6 +57,6 @@ class ExecutableMaxAggregation : public  ExecutableWindowAggregation<InputType, 
     }
 };
 
-}
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLEMAXAGGREGATION_HPP_

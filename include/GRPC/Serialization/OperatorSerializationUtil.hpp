@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_UTIL_OPERATORSERIALIZATIONUTIL_HPP_
 #define NES_INCLUDE_UTIL_OPERATORSERIALIZATIONUTIL_HPP_
 
-#include <memory>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <memory>
 namespace NES {
 
 class SourceLogicalOperatorNode;

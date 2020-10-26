@@ -2,19 +2,17 @@
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_WINDOWING_WINDOWOPERATORNODE_HPP_
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
-namespace NES::Windowing{
+namespace NES::Windowing {
 
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
-}
+}// namespace NES::Windowing
 
-namespace NES{
-
+namespace NES {
 
 class WindowOperatorNode;
 typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
-
 
 class WindowOperatorNode : public LogicalOperatorNode {
   public:
@@ -30,6 +28,6 @@ class WindowOperatorNode : public LogicalOperatorNode {
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_WINDOWING_WINDOWOPERATORNODE_HPP_

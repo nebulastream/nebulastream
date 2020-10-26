@@ -33,7 +33,6 @@ class BinaryExpressionNode : public ExpressionNode {
   protected:
     explicit BinaryExpressionNode(DataTypePtr stamp);
     explicit BinaryExpressionNode(BinaryExpressionNode* other);
-
 };
 
 }// namespace NES

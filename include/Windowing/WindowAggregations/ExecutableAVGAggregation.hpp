@@ -8,8 +8,8 @@
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableWindowAggregation.hpp>
 #include <memory>
-#include <utility>
 #include <type_traits>
+#include <utility>
 namespace NES::Windowing {
 
 template<typename SumType>
@@ -63,10 +63,10 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
      * @return element mapped to FinalAggregationType
      */
     AVGResultType lower(AVGPartialType<InputType> partialAggregateValue) override {
-        return (AVGResultType)partialAggregateValue.sum / (AVGResultType)partialAggregateValue.count;
+        return (AVGResultType) partialAggregateValue.sum / (AVGResultType) partialAggregateValue.count;
     }
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLEAVGAGGREGATION_HPP_

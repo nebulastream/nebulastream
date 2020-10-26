@@ -3,13 +3,13 @@
 
 #include <Windowing/WindowingForwardRefs.hpp>
 
-namespace NES{
+namespace NES {
 class BinaryOperatorStatement;
 class StructDeclaration;
 class CompoundStatement;
 typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
 
-}
+}// namespace NES
 
 namespace NES::Windowing {
 
@@ -18,7 +18,7 @@ namespace NES::Windowing {
  */
 class WindowAggregationDescriptor {
   public:
-    enum Type{
+    enum Type {
         Avg,
         Count,
         Max,
@@ -54,7 +54,6 @@ class WindowAggregationDescriptor {
     */
     ExpressionNodePtr on();
 
-
     /**
      * @brief Returns the type of this aggregation.
      * @return WindowAggregationDescriptor::Type
@@ -79,6 +78,6 @@ class WindowAggregationDescriptor {
     ExpressionNodePtr onField;
     ExpressionNodePtr asField;
 };
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_

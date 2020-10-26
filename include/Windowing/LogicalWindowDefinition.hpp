@@ -24,10 +24,10 @@ class LogicalWindowDefinition {
      * @param numberOfInputEdges
      */
     LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
-                     WindowAggregationPtr windowAggregation,
-                     WindowTypePtr windowType,
-                     DistributionCharacteristicPtr distChar,
-                     uint64_t numberOfInputEdges);
+                            WindowAggregationPtr windowAggregation,
+                            WindowTypePtr windowType,
+                            DistributionCharacteristicPtr distChar,
+                            uint64_t numberOfInputEdges);
 
     /**
      * @brief Create a new window definition for a global window
@@ -36,8 +36,8 @@ class LogicalWindowDefinition {
      * @return Window Definition
      */
     static LogicalWindowDefinitionPtr create(WindowAggregationPtr windowAggregation,
-                                      WindowTypePtr windowType,
-                                      DistributionCharacteristicPtr distChar);
+                                             WindowTypePtr windowType,
+                                             DistributionCharacteristicPtr distChar);
 
     /**
      * @brief Create a new window definition for a keyed window
@@ -46,10 +46,10 @@ class LogicalWindowDefinition {
      * @return Window Definition
      */
     static LogicalWindowDefinitionPtr create(FieldAccessExpressionNodePtr onKey,
-                                      WindowAggregationPtr windowAggregation,
-                                      WindowTypePtr windowType,
-                                      DistributionCharacteristicPtr distChar,
-                                      uint64_t numberOfInputEdges);
+                                             WindowAggregationPtr windowAggregation,
+                                             WindowTypePtr windowType,
+                                             DistributionCharacteristicPtr distChar,
+                                             uint64_t numberOfInputEdges);
 
     /**
     * @brief Create a new window definition for a keyed window
@@ -62,7 +62,6 @@ class LogicalWindowDefinition {
                                              WindowTypePtr windowType,
                                              DistributionCharacteristicPtr distChar,
                                              uint64_t numberOfInputEdges);
-
 
     /**
      * @brief getter and setter for the distribution type (centralized or distributed)
@@ -110,6 +109,6 @@ class LogicalWindowDefinition {
     uint64_t numberOfInputEdges;
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWDEFINITION_HPP_

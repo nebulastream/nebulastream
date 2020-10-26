@@ -2,12 +2,12 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <algorithm>
 
 namespace NES {
@@ -35,7 +35,6 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     } else {
         NES_DEBUG("DistributeWindowRule::apply: no window operator in query");
     }
-
 
     NES_DEBUG("DistributeWindowRule::apply: plan after replace " << queryPlan->toString());
 
@@ -76,17 +75,17 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     windowComputationAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
 
     auto windowComputationDefinition = Windowing::LogicalWindowDefinition::create(keyField,
-                                                                       windowComputationAggregation,
-                                                                       windowType,
-                                                                       Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                                       logicalWindowOperaotr->getChildren().size());
+                                                                                  windowComputationAggregation,
+                                                                                  windowType,
+                                                                                  Windowing::DistributionCharacteristic::createCombiningWindowType(),
+                                                                                  logicalWindowOperaotr->getChildren().size());
 
     auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowComputationDefinition);
     windowComputationOperator->setId(UtilityFunctions::getNextOperatorId());
 
     //replace logical window op with window computation operator
     NES_DEBUG("DistributeWindowRule::apply: newNode=" << windowComputationOperator->toString() << " old node=" << logicalWindowOperaotr->toString());
-    if(!logicalWindowOperaotr->replace(windowComputationOperator)){
+    if (!logicalWindowOperaotr->replace(windowComputationOperator)) {
         NES_FATAL_ERROR("DistributeWindowRule:: replacement of window operator failed.");
     };
 
@@ -100,9 +99,9 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         sliceCreationWindowAggregation->as()->as<FieldAccessExpressionNode>()->setFieldName("value");
 
         auto sliceCreationWindowDefinition = Windowing::LogicalWindowDefinition::create(keyField,
-                                                                             sliceCreationWindowAggregation,
-                                                                             windowType,
-                                                                             Windowing::DistributionCharacteristic::createSlicingWindowType(), 1);
+                                                                                        sliceCreationWindowAggregation,
+                                                                                        windowType,
+                                                                                        Windowing::DistributionCharacteristic::createSlicingWindowType(), 1);
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(sliceCreationWindowDefinition);
         sliceOp->setId(UtilityFunctions::getNextOperatorId());
         child->insertBetweenThisAndParentNodes(sliceOp);

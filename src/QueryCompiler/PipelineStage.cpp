@@ -1,16 +1,16 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+#include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
-#include <utility>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -21,11 +21,11 @@ PipelineStage::PipelineStage(
     QueryExecutionContextPtr pipelineExecutionContext,
     PipelineStagePtr nextPipelineStage,
     Windowing::WindowHandlerPtr windowHandler) : pipelineStageId(pipelineStageId),
-                                      qepId(qepId),
-                                      executablePipeline(std::move(executablePipeline)),
-                                      windowHandler(std::move(windowHandler)),
-                                      nextStage(std::move(nextPipelineStage)),
-                                      pipelineContext(std::move(pipelineExecutionContext)) {
+                                                 qepId(qepId),
+                                                 executablePipeline(std::move(executablePipeline)),
+                                                 windowHandler(std::move(windowHandler)),
+                                                 nextStage(std::move(nextPipelineStage)),
+                                                 pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
     if (hasWindowHandler()) {
@@ -51,7 +51,7 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
     }
     NES_DEBUG(dbgMsg.str());
     // only get the window manager and state if the pipeline has a window handler.
-    auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;               // TODO Philipp, do we need this check?
+    auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;                          // TODO Philipp, do we need this check?
     auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : Windowing::WindowManagerPtr();// TODO Philipp, do we need this check?
 
     uint64_t maxWaterMark = 0;

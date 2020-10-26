@@ -11,7 +11,6 @@ namespace NES::Windowing {
 class WindowState {
 
   public:
-
     WindowState(uint64_t start, uint64_t end);
 
     /**
@@ -25,12 +24,11 @@ class WindowState {
     */
     uint64_t getEndTs() const;
 
-
   private:
     uint64_t start;
     uint64_t end;
 };
 
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWSTATE_HPP_

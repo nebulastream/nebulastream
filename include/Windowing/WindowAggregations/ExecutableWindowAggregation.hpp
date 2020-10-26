@@ -10,7 +10,7 @@ class StructDeclaration;
 class CompoundStatement;
 typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
 
-}
+}// namespace NES
 
 namespace NES::Windowing {
 
@@ -21,16 +21,15 @@ namespace NES::Windowing {
  * @tparam FinalAggregateType final aggregation type
  */
 template<class InputType, class PartialAggregateType, class FinalAggregateType>
-class ExecutableWindowAggregation{
+class ExecutableWindowAggregation {
 
   public:
-
     /*
      * @brief maps the input element to an element PartialAggregateType
      * @param input value of the element
      * @return the element that mapped to PartialAggregateType
      */
-    virtual PartialAggregateType lift(InputType input)  = 0;
+    virtual PartialAggregateType lift(InputType input) = 0;
 
     /*
     * @brief combines two partial aggregates to a new partial aggregate
@@ -46,9 +45,8 @@ class ExecutableWindowAggregation{
     * @return element mapped to FinalAggregationType
     */
     virtual FinalAggregateType lower(PartialAggregateType partialAggregate) = 0;
-
 };
 
-}
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLEWINDOWAGGREGATION_HPP_

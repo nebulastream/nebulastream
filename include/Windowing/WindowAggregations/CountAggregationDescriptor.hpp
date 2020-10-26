@@ -44,5 +44,5 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
     CountAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     CountAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
-}// namespace NES
+}// namespace NES::Windowing
 #endif//NES_COUNT_HPP

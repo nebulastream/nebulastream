@@ -1,6 +1,6 @@
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -10,7 +10,7 @@
 namespace NES {
 
 WindowLogicalOperatorNode::WindowLogicalOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    :  WindowOperatorNode(windowDefinition) {
+    : WindowOperatorNode(windowDefinition) {
 }
 
 const std::string WindowLogicalOperatorNode::toString() const {
@@ -53,15 +53,14 @@ bool WindowLogicalOperatorNode::inferSchema() {
         // infer the data type of the key field.
         windowDefinition->getOnKey()->inferStamp(inputSchema);
         outputSchema = Schema::create()
-            ->addField(createField("start", UINT64))
-            ->addField(createField("end", UINT64))
-            ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()))
-            ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(), windowAggregation->on()->getStamp()));
+                           ->addField(createField("start", UINT64))
+                           ->addField(createField("end", UINT64))
+                           ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()))
+                           ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(), windowAggregation->on()->getStamp()));
         return true;
-    }else{
+    } else {
         NES_THROW_RUNTIME_ERROR("SliceCreationOperator: type inference for non keyed streams is not supported");
     }
-
 }
 
 }// namespace NES

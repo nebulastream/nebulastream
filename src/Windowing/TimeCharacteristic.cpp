@@ -31,4 +31,4 @@ TimeCharacteristic::Type TimeCharacteristic::getType() {
     return type;
 }
 
-}// namespace NES
+}// namespace NES::Windowing

@@ -15,14 +15,14 @@ WindowAggregationPtr CountAggregationDescriptor::create(FieldAccessExpressionNod
 }
 
 WindowAggregationPtr CountAggregationDescriptor::on() {
-    auto countField =  FieldAccessExpressionNode::create(DataTypeFactory::createInt64(),"count");
+    auto countField = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "count");
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
 }
 
 void CountAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCode,
-                               BinaryOperatorStatement partialRef,
-                               StructDeclaration inputStruct,
-                               BinaryOperatorStatement) {
+                                                    BinaryOperatorStatement partialRef,
+                                                    StructDeclaration inputStruct,
+                                                    BinaryOperatorStatement) {
     auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->as<FieldAccessExpressionNode>()->getFieldName());
     auto increment = ++partialRef;
     auto updatedPartial = partialRef.assign(increment);
@@ -39,4 +39,4 @@ void CountAggregationDescriptor::inferStamp(SchemaPtr) {
 WindowAggregationPtr CountAggregationDescriptor::copy() {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
-}// namespace NES
+}// namespace NES::Windowing

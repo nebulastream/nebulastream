@@ -21,8 +21,6 @@ class TimeMeasure : public WindowMeasure {
     const uint64_t ms;
 };
 
-
-
-}// namespace NES
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWMEASURES_TIMEMEASURE_HPP_

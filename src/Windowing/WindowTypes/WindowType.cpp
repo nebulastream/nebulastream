@@ -19,4 +19,4 @@ bool WindowType::isTumblingWindow() {
     return false;
 }
 
-}// namespace NES
+}// namespace NES::Windowing

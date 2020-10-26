@@ -1,11 +1,11 @@
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::Windowing {
 
 WindowAggregationDescriptor::WindowAggregationDescriptor(const FieldAccessExpressionNodePtr onField) : onField(onField),
-                                                                             asField(onField) {
+                                                                                                       asField(onField) {
 }
 
 WindowAggregationDescriptor::WindowAggregationDescriptor(const ExpressionNodePtr onField, const ExpressionNodePtr asField) : onField(onField), asField(asField) {
@@ -26,4 +26,4 @@ ExpressionNodePtr WindowAggregationDescriptor::as() {
 ExpressionNodePtr WindowAggregationDescriptor::on() {
     return onField;
 }
-}// namespace NES
+}// namespace NES::Windowing
