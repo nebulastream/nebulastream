@@ -67,8 +67,6 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
     AVGResultType lower(AVGPartialType<InputType> partialAggregateValue) override {
         return (AVGResultType)partialAggregateValue.sum / (AVGResultType)partialAggregateValue.count;
     }
-
-  protected:
 };
 
 }// namespace NES

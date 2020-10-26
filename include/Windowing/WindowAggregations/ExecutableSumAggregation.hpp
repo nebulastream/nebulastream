@@ -55,9 +55,6 @@ class ExecutableSumAggregation : public  ExecutableWindowAggregation<InputType, 
     InputType lower(InputType partialAggregateValue) override {
         return partialAggregateValue;
     }
-
-  protected:
-
 };
 
 }
