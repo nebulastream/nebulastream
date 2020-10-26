@@ -16,6 +16,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   librdkafka1 \
   librdkafka++1 \
   librdkafka-dev \
+  libeigen3-dev \
   libzmqpp-dev \
   git \
   wget \

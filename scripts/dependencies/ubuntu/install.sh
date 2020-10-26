@@ -15,6 +15,7 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   librdkafka1 \
   librdkafka++1 \
   librdkafka-dev \
+  libeigen3-dev \
   libzmqpp-dev \
   git \
   wget \
