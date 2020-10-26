@@ -186,18 +186,4 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
     ASSERT_TRUE(sink->getOutputSchema()->equals(resultSchema));
 }
 
-/**
- * @brief In this test we ensure that the source descriptor is correctly replaced, such that the schema can be propagated.
- */
-TEST_F(TypeInferencePhaseTest, copyExpressionNodeTest) {
-    auto value = AddExpressionNode::create(
-            ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT64, "3")),
-            ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT64, "2"))
-        );
-    auto value3 = value->copy();
-    ASSERT_EQ(value, value3);
-
-
-}
-
 }// namespace NES
