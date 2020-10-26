@@ -2,6 +2,6 @@
 #define __VERSION_HPP__
 #define NES_VERSION_MAJOR 0
 #define NES_VERSION_MINOR 0
-#define NES_VERSION_PATCH 152
-constexpr char const* NES_VERSION = "0.0.152";
+#define NES_VERSION_PATCH 153
+constexpr char const* NES_VERSION = "0.0.153";
 #endif
