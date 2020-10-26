@@ -191,6 +191,13 @@ if (NES_USE_OPC)
     add_compile_definitions(ENABLE_OPC_BUILD)
 endif(NES_USE_OPC)
 
+# Eigen 3.3 linear algebra library
+if (NES_USE_ADAPTIVE)
+    find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+    set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
+    message("Adaptive sampling dependencies OK")
+endif(NES_USE_ADAPTIVE)
+
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
