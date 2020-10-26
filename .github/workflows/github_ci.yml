@@ -112,6 +112,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/docs/html
+          destination_dir: private/doc/
+          external_repository: nebulastream/nes-server
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
