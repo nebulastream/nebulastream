@@ -2,8 +2,8 @@
 #define INCLUDE_SOURCESINK_SINKCREATOR_HPP_
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
