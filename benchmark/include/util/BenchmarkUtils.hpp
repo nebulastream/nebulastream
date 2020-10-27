@@ -7,6 +7,7 @@
 #include <random>
 #include <NodeEngine/QueryStatistics.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <API/Query.hpp>
 #include <Version/version.hpp>
 
@@ -83,8 +84,10 @@ NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG
                                                                                                                                            \
         for (auto ingestionRate : allIngestionRates){\
             for (auto experimentDuration : allExperimentsDuration){\
-                for (auto periodLength : allPeriodLengths) {                                                                                   \
-                    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337);                                                                  \
+                for (auto periodLength : allPeriodLengths) {                                                                               \
+                                                                                                                                           \
+                    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();\
+                    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);;                                                                  \
                     \
                     BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;\
                     BenchmarkUtils::periodLengthInSeconds = periodLength;\

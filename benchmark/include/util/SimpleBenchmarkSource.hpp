@@ -1,11 +1,12 @@
 #ifndef NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
 #define NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
 
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <cstdint>
 #include <list>
 #include <memory>
 
-namespace NES {
+namespace NES::Benchmarking {
 /**
  * @brief A benchmark source that will output data (key, value) with a predefined selectivity
  * Key is an uniform distribution from 0 to 999
@@ -146,7 +147,7 @@ class SimpleBenchmarkSource : public DataSource {
     }
 
     SourceType getType() const override {
-        return BENCHMARK_SOURCE;
+        return TEST_SOURCE;
     }
 
     virtual ~SimpleBenchmarkSource() = default;
