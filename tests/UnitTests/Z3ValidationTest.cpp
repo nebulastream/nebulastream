@@ -51,8 +51,7 @@ TEST_F(Z3ValidationTest, deMorganDualityValidation) {
 /**
    @brief Validate for <tt>x > 1 and y > 1 that y + x > 1 </tt>.
 */
-TEST_F(Z3ValidationTest, deorganDualityValidation) {
-    NES_INFO("De-Morgan Example");
+TEST_F(Z3ValidationTest, evaluateValidBinomialEquation) {
 
     // create a context
     context c;
@@ -68,7 +67,46 @@ TEST_F(Z3ValidationTest, deorganDualityValidation) {
     s.add(y > 1);
     s.add(x + y > 1);
 
+    //Assert
     ASSERT_EQ(s.check(), sat);
+}
+
+/**
+   @brief Validate for <tt>x > 1 and y > 1 that y + x < 1 </tt>.
+*/
+TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
+
+    // create a context
+    context c;
+    //Create an instance of the solver
+    solver s(c);
+
+    //Define int constants
+    expr x = c.int_const("x");
+    expr y = c.int_const("y");
+
+    //Add equations
+    s.reset();
+    s.add(x > 1);
+    s.add(y > 1);
+    s.add(x + y < 1);
+    //Assert
+    ASSERT_EQ(s.check(), unsat);
+
+    //Same equation written using api
+    s.reset();
+    auto one = c.int_val(1);
+    auto xLessThanOne = to_expr(c, Z3_mk_gt(c, x, one));
+    auto yLessThanOne = to_expr(c, Z3_mk_gt(c, y, one));
+    Z3_ast args[] = {x, y};
+    auto xPlusY = to_expr(c, Z3_mk_add(c, 2, args));
+    auto xPlusYLessThanOne = to_expr(c, Z3_mk_lt(c, xPlusY, one));
+
+    s.add(xLessThanOne);
+    s.add(yLessThanOne);
+    s.add(xPlusYLessThanOne);
+    //Assert
+    ASSERT_EQ(s.check(), unsat);
 }
 
 }// namespace NES
