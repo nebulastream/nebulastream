@@ -38,8 +38,11 @@ if (NES_BUILD_BENCHMARKS)
 
     include_directories("${source_dir}/include/")
 
+
+
     set(GBENCHMARK_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} libgbenchmark libgbenchmark_main)
 
+    include_directories("include/")
 
     #-------------------------------##################------------------------------
     #-------------------------------# Benchmark Suite#-----------------------------
@@ -49,6 +52,24 @@ if (NES_BUILD_BENCHMARKS)
     target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
 
+    ### Simple Query Benchmark ###
+    add_executable(simple-query-benchmark "BenchmarkSuite/SimpleQueryBenchmark.cpp")
+    target_link_libraries(simple-query-benchmark nes)
+    target_sources(simple-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME simple-query-benchmark COMMAND simple-query-benchmark --benchmark_out=simple-query-benchmark.log --benchmark_out_format=json)
+
+    ### Filter Queries Benchmark ###
+    add_executable(filter-query-benchmark "BenchmarkSuite/FilterQueryBenchmarks.cpp")
+    target_link_libraries(filter-query-benchmark nes)
+    target_sources(filter-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME filter-query-benchmark COMMAND filter-query-benchmark --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
+
+
+    ### Map Queries Benchmark ###
+    add_executable(map-query-benchmark "BenchmarkSuite/MapQueryBenchmarks.cpp")
+    target_link_libraries(map-query-benchmark nes)
+    target_sources(map-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME map-query-benchmark COMMAND map-query-benchmark --benchmark_out=map-query-benchmark.log --benchmark_out_format=json)
 
 
 
