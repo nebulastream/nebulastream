@@ -567,12 +567,23 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingMonitoringTwoWorker) {
         })
         .wait();
 
+    EXPECT_EQ(json_return.size(), 3);
     NES_INFO("RETURN: " << json_return.size());
     NES_INFO("RETURN: " << json_return);
-    EXPECT_EQ(json_return.size(), 3);
-    EXPECT_TRUE(!json_return.at(0).as_string().empty());
-    EXPECT_TRUE(!json_return.at(1).as_string().empty());
-    EXPECT_TRUE(!json_return.at(2).as_string().empty());
+
+    std::string v1S = json_return.at("1").at("schema").as_string();
+    std::string v1T = json_return.at("1").at("tupleBuffer").as_string();
+    std::string v2S = json_return.at("2").at("schema").as_string();
+    std::string v2T = json_return.at("2").at("tupleBuffer").as_string();
+    std::string v3S = json_return.at("3").at("schema").as_string();
+    std::string v3T = json_return.at("3").at("tupleBuffer").as_string();
+
+    EXPECT_TRUE(!v1S.empty());
+    EXPECT_TRUE(!v1T.empty());
+    EXPECT_TRUE(!v2S.empty());
+    EXPECT_TRUE(!v2T.empty());
+    EXPECT_TRUE(!v3S.empty());
+    EXPECT_TRUE(!v3T.empty());
 
     NES_INFO("Killing worker 1 process->PID: " << workerPid1);
     workerProc1.terminate();
