@@ -19,6 +19,7 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   libzmqpp-dev \
   git \
   wget \
+  z3 \
   tar
 
 sudo add-apt-repository ppa:open62541-team/ppa -qq && \

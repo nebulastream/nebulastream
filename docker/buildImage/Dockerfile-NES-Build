@@ -20,6 +20,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libzmqpp-dev \
   git \
   wget \
+  z3 \
   tar \
   software-properties-common \
   && add-apt-repository ppa:open62541-team/ppa && \
