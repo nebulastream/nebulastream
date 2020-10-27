@@ -122,6 +122,14 @@ set(ZMQ_RELEASE "4.3.2")
 find_package(ZMQ ${ZMQ_RELEASE} REQUIRED)
 set(LIBRARIES ${LIBRARIES} libzmq)
 
+# Z3 Solver
+message(STATUS "Z3")
+find_package(Z3 REQUIRED)
+if(NOT ${Z3_FOUND})
+    message(FATAL_ERROR "Unable to find Z3")
+endif()
+set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
+
 # CppZMQ
 message(STATUS "cppzmq")
 set(CPPZMQ_RELEASE "4.6.0")
@@ -139,13 +147,6 @@ else (LOG4CXX_FOUND)
     message(STATUS "On Ubuntu, install the package by the following command!")
     message(STATUS "sudo apt-get install liblog4cxx10-dev")
 endif (LOG4CXX_FOUND)
-
-
-# TRAVIS-CI
-if (TRAVIS_INCLUDE_DIR)
-    include_directories(${TRAVIS_INCLUDE_DIR})
-    message(STATUS "TRAVIS_INCLUDE_DIR:" ${TRAVIS_INCLUDE_DIR})
-endif ()
 
 # Boost Libraries
 set(Boost_USE_MULTITHREADED TRUE)
@@ -189,14 +190,14 @@ if (NES_USE_OPC)
     find_package(open62541 1.1.0 REQUIRED COMPONENTS FullNamespace)
     set(LIBRARIES ${LIBRARIES} open62541::open62541)
     add_compile_definitions(ENABLE_OPC_BUILD)
-endif(NES_USE_OPC)
+endif (NES_USE_OPC)
 
 # Eigen 3.3 linear algebra library
 if (NES_USE_ADAPTIVE)
-    find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+    find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
     message("Adaptive sampling dependencies OK")
-endif(NES_USE_ADAPTIVE)
+endif (NES_USE_ADAPTIVE)
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
