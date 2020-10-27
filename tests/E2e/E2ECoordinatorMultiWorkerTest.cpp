@@ -570,6 +570,9 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingMonitoringTwoWorker) {
     NES_INFO("RETURN: " << json_return.size());
     NES_INFO("RETURN: " << json_return);
     EXPECT_EQ(json_return.size(), 3);
+    EXPECT_TRUE(!json_return.at(0).as_string().empty());
+    EXPECT_TRUE(!json_return.at(1).as_string().empty());
+    EXPECT_TRUE(!json_return.at(2).as_string().empty());
 
     NES_INFO("Killing worker 1 process->PID: " << workerPid1);
     workerProc1.terminate();
