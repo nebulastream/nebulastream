@@ -44,36 +44,21 @@ class LogicalOperatorNodeTest : public testing::Test {
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
         sourceOp = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-        sourceOp->setId(UtilityFunctions::getNextOperatorId());
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp1->setId(UtilityFunctions::getNextOperatorId());
         filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
-        filterOp2->setId(UtilityFunctions::getNextOperatorId());
         filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
-        filterOp3->setId(UtilityFunctions::getNextOperatorId());
         filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
-        filterOp4->setId(UtilityFunctions::getNextOperatorId());
         filterOp5 = LogicalOperatorFactory::createFilterOperator(pred5);
-        filterOp5->setId(UtilityFunctions::getNextOperatorId());
         filterOp6 = LogicalOperatorFactory::createFilterOperator(pred6);
-        filterOp6->setId(UtilityFunctions::getNextOperatorId());
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
-        filterOp7->setId(UtilityFunctions::getNextOperatorId());
 
         filterOp1Copy = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp1Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp2Copy = LogicalOperatorFactory::createFilterOperator(pred2);
-        filterOp2Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp3Copy = LogicalOperatorFactory::createFilterOperator(pred3);
-        filterOp3Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp4Copy = LogicalOperatorFactory::createFilterOperator(pred4);
-        filterOp4Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp5Copy = LogicalOperatorFactory::createFilterOperator(pred5);
-        filterOp5Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp6Copy = LogicalOperatorFactory::createFilterOperator(pred6);
-        filterOp6Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp7Copy = LogicalOperatorFactory::createFilterOperator(pred7);
-        filterOp7Copy->setId(UtilityFunctions::getNextOperatorId());
 
         removed = false;
         replaced = false;

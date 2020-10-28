@@ -88,14 +88,11 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 
     // Prepare
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName));
-    sourceOperator->setId(UtilityFunctions::getNextOperatorId());
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
-    sinkOperator1->setId(UtilityFunctions::getNextOperatorId());
 
     auto sinkOperator2 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
-    sinkOperator2->setId(UtilityFunctions::getNextOperatorId());
 
     sinkOperator1->addChild(sourceOperator);
     sinkOperator2->addChild(sourceOperator);
@@ -125,18 +122,14 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 
     // Prepare
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName));
-    sourceOperator->setId(UtilityFunctions::getNextOperatorId());
 
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
-    filterOperator->setId(UtilityFunctions::getNextOperatorId());
     filterOperator->addChild(sourceOperator);
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
-    sinkOperator1->setId(UtilityFunctions::getNextOperatorId());
 
     auto sinkOperator2 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
-    sinkOperator2->setId(UtilityFunctions::getNextOperatorId());
 
     sinkOperator1->addChild(filterOperator);
     sinkOperator2->addChild(filterOperator);

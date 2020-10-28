@@ -36,8 +36,7 @@ bool MergeLogicalOperatorNode::inferSchema() {
 }
 
 OperatorNodePtr MergeLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createMergeOperator();
-    copy->setId(id);
+    auto copy = LogicalOperatorFactory::createMergeOperator(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;

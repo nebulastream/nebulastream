@@ -46,7 +46,6 @@ void DistributeWindowRule::createCentralWindowOperator(WindowOperatorNodePtr win
     auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
     newWindowOp->setInputSchema(windowOp->getInputSchema());
     newWindowOp->setOutputSchema(windowOp->getOutputSchema());
-    newWindowOp->setId(UtilityFunctions::getNextOperatorId());
     NES_DEBUG("DistributeWindowRule::apply: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
     windowOp->replace(newWindowOp);
 }
@@ -81,7 +80,6 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
                                                                                   logicalWindowOperaotr->getChildren().size());
 
     auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowComputationDefinition);
-    windowComputationOperator->setId(UtilityFunctions::getNextOperatorId());
 
     //replace logical window op with window computation operator
     NES_DEBUG("DistributeWindowRule::apply: newNode=" << windowComputationOperator->toString() << " old node=" << logicalWindowOperaotr->toString());
@@ -103,7 +101,6 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
                                                                                         windowType,
                                                                                         Windowing::DistributionCharacteristic::createSlicingWindowType(), 1);
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(sliceCreationWindowDefinition);
-        sliceOp->setId(UtilityFunctions::getNextOperatorId());
         child->insertBetweenThisAndParentNodes(sliceOp);
     }
 }

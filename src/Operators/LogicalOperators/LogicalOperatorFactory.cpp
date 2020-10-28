@@ -17,12 +17,15 @@ namespace NES {
 LogicalOperatorNodePtr LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr sourceDescriptor, OperatorId id) {
     return std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor, id);
 }
+
 LogicalOperatorNodePtr LogicalOperatorFactory::createSinkOperator(const SinkDescriptorPtr sinkDescriptor, OperatorId id) {
     return std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, id);
 }
+
 LogicalOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr predicate, OperatorId id) {
     return std::make_shared<FilterLogicalOperatorNode>(predicate, id);
 }
+
 LogicalOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id) {
     return std::make_shared<MapLogicalOperatorNode>(mapExpression, id);
 }
@@ -38,12 +41,15 @@ LogicalOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator(OperatorI
 LogicalOperatorNodePtr LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
     return std::make_shared<WindowLogicalOperatorNode>(windowDefinition, id);
 }
+
 LogicalOperatorNodePtr LogicalOperatorFactory::createCentralWindowSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
     return std::make_shared<CentralWindowOperator>(windowDefinition, id);
 }
+
 LogicalOperatorNodePtr LogicalOperatorFactory::createSliceCreationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
     return std::make_shared<SliceCreationOperator>(windowDefinition, id);
 }
+
 LogicalOperatorNodePtr LogicalOperatorFactory::createWindowComputationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
     return std::make_shared<WindowComputationOperator>(windowDefinition, id);
 }

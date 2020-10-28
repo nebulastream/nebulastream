@@ -2,14 +2,11 @@
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
 GeneratableFilterOperatorPtr GeneratableFilterOperator::create(FilterLogicalOperatorNodePtr filterLogicalOperator, OperatorId id) {
-    auto generatableOperator = std::make_shared<GeneratableFilterOperator>(GeneratableFilterOperator(filterLogicalOperator->getPredicate(), id));
-    generatableOperator->setId(UtilityFunctions::getNextOperatorId());
-    return generatableOperator;
+    return std::make_shared<GeneratableFilterOperator>(GeneratableFilterOperator(filterLogicalOperator->getPredicate(), id));
 }
 
 GeneratableFilterOperator::GeneratableFilterOperator(const ExpressionNodePtr filterExpression, OperatorId id)

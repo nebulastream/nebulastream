@@ -382,7 +382,6 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
-        source->setId(UtilityFunctions::getNextOperatorId());
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(source, new SerializableOperator());
         auto sourceOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         ASSERT_TRUE(source->equal(sourceOperator));
@@ -390,7 +389,6 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
-        filter->setId(UtilityFunctions::getNextOperatorId());
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(filter, new SerializableOperator());
         auto filterOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         ASSERT_TRUE(filter->equal(filterOperator));
@@ -398,7 +396,6 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
-        map->setId(UtilityFunctions::getNextOperatorId());
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(map, new SerializableOperator());
         auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         ASSERT_TRUE(map->equal(mapOperator));
@@ -406,7 +403,6 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-        sink->setId(UtilityFunctions::getNextOperatorId());
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(sink, new SerializableOperator());
         auto sinkOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         ASSERT_TRUE(sink->equal(sinkOperator));
@@ -414,7 +410,6 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto merge = LogicalOperatorFactory::createMergeOperator();
-        merge->setId(UtilityFunctions::getNextOperatorId());
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(merge, new SerializableOperator());
         auto mergeOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         ASSERT_TRUE(merge->equal(mergeOperator));
@@ -422,7 +417,6 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto broadcast = LogicalOperatorFactory::createBroadcastOperator();
-        broadcast->setId(UtilityFunctions::getNextOperatorId());
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(broadcast, new SerializableOperator());
         auto broadcastOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         ASSERT_TRUE(broadcast->equal(broadcastOperator));
@@ -432,15 +426,11 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
 
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
-    source->setId(UtilityFunctions::getNextOperatorId());
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
-    filter->setId(UtilityFunctions::getNextOperatorId());
     filter->addChild(source);
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
-    map->setId(UtilityFunctions::getNextOperatorId());
     map->addChild(filter);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-    sink->setId(UtilityFunctions::getNextOperatorId());
     sink->addChild(map);
 
     auto queryPlan = QueryPlan::create(1, 1, {sink});
@@ -460,15 +450,11 @@ TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
     schema->addField("f1", INT32);
     UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
     auto source = LogicalOperatorFactory::createSourceOperator(OPCSourceDescriptor::create(schema, "localhost", nodeId, "", ""));
-    source->setId(UtilityFunctions::getNextOperatorId());
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
-    filter->setId(UtilityFunctions::getNextOperatorId());
     filter->addChild(source);
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
-    map->setId(UtilityFunctions::getNextOperatorId());
     map->addChild(filter);
     auto sink = LogicalOperatorFactory::createSinkOperator(OPCSinkDescriptor::create("localhost", nodeId, "", ""));
-    sink->setId(UtilityFunctions::getNextOperatorId());
     sink->addChild(map);
 
     auto queryPlan = QueryPlan::create(1, 1, {sink});
@@ -485,17 +471,12 @@ TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
 TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
 
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
-    source->setId(UtilityFunctions::getNextOperatorId());
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
-    filter->setId(UtilityFunctions::getNextOperatorId());
     filter->addChild(source);
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
-    map->setId(UtilityFunctions::getNextOperatorId());
     map->addChild(filter);
     auto sink1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-    sink1->setId(UtilityFunctions::getNextOperatorId());
     auto sink2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-    sink2->setId(UtilityFunctions::getNextOperatorId());
     sink1->addChild(map);
     sink2->addChild(map);
 
@@ -522,20 +503,14 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
 
 TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
     auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
-    source1->setId(UtilityFunctions::getNextOperatorId());
     auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
-    source2->setId(UtilityFunctions::getNextOperatorId());
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
-    filter->setId(UtilityFunctions::getNextOperatorId());
     filter->addChild(source1);
     filter->addChild(source2);
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
-    map->setId(UtilityFunctions::getNextOperatorId());
     map->addChild(filter);
     auto sink1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-    sink1->setId(UtilityFunctions::getNextOperatorId());
     auto sink2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-    sink2->setId(UtilityFunctions::getNextOperatorId());
     sink1->addChild(map);
     sink2->addChild(map);
 

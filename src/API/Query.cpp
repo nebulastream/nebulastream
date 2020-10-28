@@ -40,7 +40,6 @@ Query& Query::window(const Windowing::WindowTypePtr, const Windowing::WindowAggr
     NES_DEBUG("Query: add window operator");
     auto windowDefinition = LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType());
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
-    windowOperator->setId(UtilityFunctions::getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;*/
 }

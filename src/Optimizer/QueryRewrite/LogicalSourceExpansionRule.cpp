@@ -70,7 +70,6 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             }
         }
     }
-
     NES_INFO("LogicalSourceExpansionRule: Finished applying LogicalSourceExpansionRule.");
     return queryPlan;
 }
