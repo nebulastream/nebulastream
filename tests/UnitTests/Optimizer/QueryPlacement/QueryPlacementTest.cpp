@@ -97,7 +97,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
                       .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
     QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
@@ -152,7 +152,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
                       .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
     QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
@@ -219,7 +219,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
     QueryPlanPtr queryPlan = QueryPlan::create();
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
     QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
@@ -288,7 +288,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     QueryPlanPtr queryPlan = QueryPlan::create();
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
     QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
@@ -360,7 +360,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     QueryPlanPtr queryPlan = QueryPlan::create();
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
     QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
@@ -428,7 +428,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     QueryPlanPtr queryPlan = QueryPlan::create();
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
     QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);

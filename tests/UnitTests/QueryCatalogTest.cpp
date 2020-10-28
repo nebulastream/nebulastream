@@ -1,12 +1,9 @@
 #include "gtest/gtest.h"
-#include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Exceptions/InvalidArgumentException.hpp>
-#include <GRPC/CoordinatorRPCServer.hpp>
-#include <NodeStats.pb.h>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <API/Query.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -49,7 +46,7 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
     //Prepare
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
@@ -68,7 +65,7 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     //Prepare
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
@@ -98,7 +95,7 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     //Prepare
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
@@ -124,7 +121,7 @@ TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     auto catalogEntry = queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
@@ -142,7 +139,7 @@ TEST_F(QueryCatalogTest, getAllRunningQueries) {
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
