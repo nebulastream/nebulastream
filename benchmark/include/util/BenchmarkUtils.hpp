@@ -12,6 +12,9 @@
 #include <Version/version.hpp>
 
 namespace NES::Benchmarking{
+/**
+ * @brief This class provides several helper functions for creating benchmarks.
+ */
 class BenchmarkUtils {
   public:
     static uint64_t runSingleExperimentSeconds;
@@ -51,8 +54,17 @@ class BenchmarkUtils {
      */
     static void computeDifferenceOfStatistics(std::vector<QueryStatistics*>& statisticsVec);
 
+    /**
+     * @return string with format {dateTime}_v{current NES_VERSION}
+     */
     static std::string getCurDateTimeStringWithNESVersion();
 
+    /**
+     * @brief ProcessedBytes is calculated by ProcessedTuples * SchemaSizeInBytes
+     * @param statistic
+     * @param schema
+     * @return comma seperated string {ProcessedBuffers},{ProcessedTasks},{ProcessedTuples},{ProcessedBytes}
+     */
     static std::string getStatisticsAsCSV(QueryStatistics* statistic, SchemaPtr schema);
 
 
@@ -73,6 +85,11 @@ class BenchmarkUtils {
 
 };
 
+/**
+ * @brief BM_AddBenchmark helps creating a new benchmark by providing a solid building block.
+ * It requires std::vectors of type uint64_t named {allIngestionRates, allExperimentsDuration, allPeriodLengths}
+ * @param workerThreads is currently not supported and should always be set to 1
+ */
 #define BM_AddBenchmark(benchmarkName, benchmarkQuery, workerThreads, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs) { \
 NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);\
 \
