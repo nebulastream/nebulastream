@@ -5,9 +5,8 @@
 
 namespace NES {
 
-FilterLogicalOperatorNode::FilterLogicalOperatorNode(const ExpressionNodePtr predicate)
-    : LogicalOperatorNode(), predicate(predicate) {
-}
+FilterLogicalOperatorNode::FilterLogicalOperatorNode(const ExpressionNodePtr predicate, uint64_t id)
+    : predicate(predicate), LogicalOperatorNode(id) {}
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() {
     return predicate;
@@ -42,8 +41,7 @@ bool FilterLogicalOperatorNode::inferSchema() {
 }
 
 OperatorNodePtr FilterLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createFilterOperator(predicate);
-    copy->setId(id);
+    auto copy = LogicalOperatorFactory::createFilterOperator(predicate, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;

@@ -8,7 +8,9 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode() : id(UtilityFunctions::getNextOperatorId()), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
+OperatorNode::OperatorNode(uint64_t id) : id(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {
+    NES_INFO("Creating Operator " << id);
+}
 
 SchemaPtr OperatorNode::getInputSchema() const {
     return inputSchema;

@@ -8,7 +8,7 @@ namespace NES {
 
 class CentralWindowOperator : public WindowOperatorNode {
   public:
-    CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id);
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;

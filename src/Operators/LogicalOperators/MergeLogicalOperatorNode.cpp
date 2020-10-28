@@ -4,9 +4,7 @@
 
 namespace NES {
 
-MergeLogicalOperatorNode::MergeLogicalOperatorNode()
-    : LogicalOperatorNode() {
-}
+MergeLogicalOperatorNode::MergeLogicalOperatorNode(OperatorId id) : LogicalOperatorNode(id) {}
 
 bool MergeLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<MergeLogicalOperatorNode>()->getId() == id;

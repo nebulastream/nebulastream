@@ -5,7 +5,7 @@
 
 namespace NES {
 
-BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode() {}
+BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id) : LogicalOperatorNode(id) {}
 
 bool BroadcastLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return rhs->as<BroadcastLogicalOperatorNode>()->getId() == id;
@@ -31,8 +31,7 @@ const std::string BroadcastLogicalOperatorNode::toString() const {
 }
 
 OperatorNodePtr BroadcastLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createBroadcastOperator();
-    copy->setId(id);
+    auto copy = LogicalOperatorFactory::createBroadcastOperator(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;

@@ -2,6 +2,6 @@
 
 namespace NES {
 
-LogicalOperatorNode::LogicalOperatorNode() : OperatorNode() {}
+LogicalOperatorNode::LogicalOperatorNode(uint64_t id) : OperatorNode(id) {}
 
 }// namespace NES

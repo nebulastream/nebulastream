@@ -11,7 +11,7 @@ namespace NES {
  */
 class SourceLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    explicit SourceLogicalOperatorNode(SourceDescriptorPtr sourceDescriptor);
+    explicit SourceLogicalOperatorNode(SourceDescriptorPtr sourceDescriptor, OperatorId id);
 
     /**
      * @brief Returns the source descriptor of the source operators.

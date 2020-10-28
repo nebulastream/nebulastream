@@ -11,7 +11,7 @@ namespace NES {
  */
 class MapLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression);
+    MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id);
 
     /**
      * @brief Returns the expression of this map operator

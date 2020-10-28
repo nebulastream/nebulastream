@@ -11,7 +11,7 @@ namespace NES {
  */
 class SliceMergingOperator : public WindowOperatorNode {
   public:
-    SliceMergingOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    SliceMergingOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id);
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;

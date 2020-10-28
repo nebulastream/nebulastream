@@ -18,7 +18,7 @@ typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
  */
 class FilterLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    explicit FilterLogicalOperatorNode(const ExpressionNodePtr);
+    explicit FilterLogicalOperatorNode(const ExpressionNodePtr, OperatorId id);
     ~FilterLogicalOperatorNode() = default;
 
     /**

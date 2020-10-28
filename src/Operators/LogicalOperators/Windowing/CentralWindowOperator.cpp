@@ -8,12 +8,8 @@
 
 namespace NES {
 
-LogicalOperatorNodePtr createCentralWindowSpecializedOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<CentralWindowOperator>(windowDefinition);
-}
-
-CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : WindowOperatorNode(windowDefinition) {
+CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
+    : WindowOperatorNode(windowDefinition, id) {
     windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCompleteWindowType());
 }
 
