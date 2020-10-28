@@ -8,7 +8,13 @@ namespace NES {
 
 class GeneratableCompleteWindowOperator : public GeneratableWindowOperator {
   public:
-    static GeneratableWindowOperatorPtr create(WindowOperatorNodePtr);
+    /**
+     * @brief
+     * @param windowOperatorNode
+     * @param id
+     * @return
+     */
+    static GeneratableWindowOperatorPtr create(WindowOperatorNodePtr windowOperatorNode, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -31,7 +37,7 @@ class GeneratableCompleteWindowOperator : public GeneratableWindowOperator {
     const std::string toString() const override;
 
   private:
-    explicit GeneratableCompleteWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    explicit GeneratableCompleteWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id);
 };
 
 }// namespace NES
