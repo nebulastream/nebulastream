@@ -15,7 +15,7 @@
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 
 using namespace NES;
 
@@ -100,7 +100,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     QueryPlanPtr queryPlan =  QueryPlan::create();
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
     // Execute
@@ -137,7 +137,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     QueryPlanPtr queryPlan =  QueryPlan::create();
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
     // Execute

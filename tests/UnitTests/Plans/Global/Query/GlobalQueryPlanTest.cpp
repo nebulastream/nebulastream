@@ -3,12 +3,12 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/GlobalQueryMetaData.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
+#include <Plans/Global/Query/GlobalQueryMetaData.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;
@@ -172,14 +172,14 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto query1 = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     plan1->setQueryId(queryId1);
     globalQueryPlan->addQueryPlan(plan1);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the global query plan");
     auto query2 = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     plan2->setQueryId(queryId2);
     globalQueryPlan->addQueryPlan(plan2);
 
@@ -216,14 +216,14 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto query1 = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     plan1->setQueryId(queryId1);
     globalQueryPlan->addQueryPlan(plan1);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the global query plan");
     auto query2 = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     plan2->setQueryId(queryId2);
     globalQueryPlan->addQueryPlan(plan2);
 
@@ -260,14 +260,14 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto query1 = Query::from("car").sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     plan1->setQueryId(queryId1);
     globalQueryPlan->addQueryPlan(plan1);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the global query plan");
     auto query2 = Query::from("car").sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     plan2->setQueryId(queryId2);
     globalQueryPlan->addQueryPlan(plan2);
 
@@ -275,7 +275,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     auto lessExpression = Attribute("field_1") <= 10;
     auto query3 = Query::from("car").filter(lessExpression).sink(printSinkDescriptor);
     auto plan3 = query3.getQueryPlan();
-    QueryId queryId3 = UtilityFunctions::getNextQueryId();
+    QueryId queryId3 = PlanIdGenerator::getNextQueryId();
     plan3->setQueryId(queryId3);
     globalQueryPlan->addQueryPlan(plan3);
 
