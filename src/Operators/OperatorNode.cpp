@@ -1,5 +1,6 @@
 #include <API/Schema.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <utility>
 
@@ -7,7 +8,7 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode() : inputSchema(Schema::create()), outputSchema(Schema::create()), id(0) {}
+OperatorNode::OperatorNode() : id(UtilityFunctions::getNextOperatorId()), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
 
 SchemaPtr OperatorNode::getInputSchema() const {
     return inputSchema;
