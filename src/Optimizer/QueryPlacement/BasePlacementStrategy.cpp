@@ -6,7 +6,6 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/UtilityFunctions.hpp>
 //#include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
 //#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
 //#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
@@ -274,7 +273,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                 NES_TRACE("BasePlacementStrategy: Create a new query plan and add pair of network source and network sink operators.");
                 QueryPlanPtr querySubPlan = QueryPlan::create();
                 querySubPlan->setQueryId(queryId);
-                querySubPlan->setQuerySubPlanId(UtilityFunctions::getNextQuerySubPlanId());
+                querySubPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());
 
                 NES_TRACE("BasePlacementStrategy: add network source operator");
                 const OperatorNodePtr networkSource = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId);

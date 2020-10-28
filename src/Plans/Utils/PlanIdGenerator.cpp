@@ -1,19 +1,19 @@
-#include <Plans/utils/IdGenerator.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <atomic>
 
 namespace NES{
 
-QueryId IdGenerator::getNextQueryId() {
+QueryId PlanIdGenerator::getNextQueryId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
 
-GlobalQueryId IdGenerator::getNextGlobalQueryId() {
+GlobalQueryId PlanIdGenerator::getNextGlobalQueryId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
 
-uint64_t IdGenerator::getNextQuerySubPlanId() {
+uint64_t PlanIdGenerator::getNextQuerySubPlanId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }

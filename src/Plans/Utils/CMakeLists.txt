@@ -1,3 +1,4 @@
 add_source_nes(
-        IdGenerator.cpp
+        PlanIdGenerator.cpp
+        PlanJsonGenerator.cpp
 )

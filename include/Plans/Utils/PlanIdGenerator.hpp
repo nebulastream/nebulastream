@@ -1,5 +1,5 @@
-#ifndef NES_IDGENERATOR_HPP
-#define NES_IDGENERATOR_HPP
+#ifndef NES_PLANIDGENERATOR_HPP
+#define NES_PLANIDGENERATOR_HPP
 
 #include <Plans/Global/Query/GlobalQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -10,7 +10,7 @@ namespace NES {
 /**
  * @brief This class is responsible for generating identifiers for query plans
  */
-class IdGenerator {
+class PlanIdGenerator {
 
   public:
     /**
@@ -32,4 +32,4 @@ class IdGenerator {
     static QueryId getNextQueryId();
 };
 }// namespace NES
-#endif//NES_IDGENERATOR_HPP
+#endif//NES_PLANIDGENERATOR_HPP
