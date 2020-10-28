@@ -19,13 +19,14 @@ void GeneratableMergeOperator::produce(CodeGeneratorPtr codegen, PipelineContext
 void GeneratableMergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForEmit(outputSchema, context);
 }
-GeneratableMergeOperatorPtr GeneratableMergeOperator::create(MergeLogicalOperatorNodePtr logicalMergeOperator) {
-    auto generatableOperator = std::make_shared<GeneratableMergeOperator>(GeneratableMergeOperator(logicalMergeOperator->getOutputSchema()));
+
+GeneratableMergeOperatorPtr GeneratableMergeOperator::create(MergeLogicalOperatorNodePtr logicalMergeOperator, OperatorId id) {
+    auto generatableOperator = std::make_shared<GeneratableMergeOperator>(GeneratableMergeOperator(logicalMergeOperator->getOutputSchema(), id));
     generatableOperator->setId(UtilityFunctions::getNextOperatorId());
     return generatableOperator;
 }
 
-GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schemaP) : MergeLogicalOperatorNode() {
+GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schemaP, OperatorId id) : MergeLogicalOperatorNode(id) {
     setInputSchema(schemaP);
     setOutputSchema(schemaP);
 }

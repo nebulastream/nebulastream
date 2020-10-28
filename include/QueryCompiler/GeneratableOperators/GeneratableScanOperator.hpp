@@ -7,7 +7,13 @@ namespace NES {
 
 class GeneratableScanOperator : public OperatorNode, public GeneratableOperator {
   public:
-    static GeneratableScanOperatorPtr create(SchemaPtr schema);
+    /**
+     * @brief
+     * @param schema
+     * @param id
+     * @return
+     */
+    static GeneratableScanOperatorPtr create(SchemaPtr schema, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -36,7 +42,7 @@ class GeneratableScanOperator : public OperatorNode, public GeneratableOperator 
     OperatorNodePtr copy() override;
 
   private:
-    explicit GeneratableScanOperator(SchemaPtr schema);
+    explicit GeneratableScanOperator(SchemaPtr schema, OperatorId id);
     SchemaPtr schema;
 };
 

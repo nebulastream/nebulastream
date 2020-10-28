@@ -8,7 +8,13 @@ namespace NES {
 
 class GeneratableMapOperator : public MapLogicalOperatorNode, public GeneratableOperator {
   public:
-    static GeneratableMapOperatorPtr create(MapLogicalOperatorNodePtr mapLogicalOperatorNode);
+    /**
+     * @brief
+     * @param mapLogicalOperatorNode
+     * @param id
+     * @return
+     */
+    static GeneratableMapOperatorPtr create(MapLogicalOperatorNodePtr mapLogicalOperatorNode, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -31,7 +37,7 @@ class GeneratableMapOperator : public MapLogicalOperatorNode, public Generatable
     const std::string toString() const override;
 
   private:
-    GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression);
+    GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression, OperatorId id);
 };
 
 }// namespace NES

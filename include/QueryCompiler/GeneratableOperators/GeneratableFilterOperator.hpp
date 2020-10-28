@@ -11,7 +11,13 @@ typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 
 class GeneratableFilterOperator : public FilterLogicalOperatorNode, public GeneratableOperator {
   public:
-    static GeneratableFilterOperatorPtr create(FilterLogicalOperatorNodePtr filterLogicalOperator);
+    /**
+     * @brief
+     * @param filterLogicalOperator
+     * @param id
+     * @return
+     */
+    static GeneratableFilterOperatorPtr create(FilterLogicalOperatorNodePtr filterLogicalOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -34,7 +40,7 @@ class GeneratableFilterOperator : public FilterLogicalOperatorNode, public Gener
     const std::string toString() const override;
 
   private:
-    GeneratableFilterOperator(const ExpressionNodePtr filterExpression);
+    GeneratableFilterOperator(const ExpressionNodePtr filterExpression, OperatorId id);
 };
 
 }// namespace NES

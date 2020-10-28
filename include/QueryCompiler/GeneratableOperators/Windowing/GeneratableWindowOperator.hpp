@@ -32,7 +32,7 @@ class GeneratableWindowOperator : public WindowLogicalOperatorNode, public Gener
     Windowing::WindowHandlerPtr createWindowHandler();
 
   protected:
-    explicit GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    explicit GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id);
 };
 
 }// namespace NES

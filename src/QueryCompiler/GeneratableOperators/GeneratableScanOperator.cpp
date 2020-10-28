@@ -19,16 +19,16 @@ void GeneratableScanOperator::consume(CodeGeneratorPtr codegen, PipelineContextP
 }
 
 OperatorNodePtr GeneratableScanOperator::copy() {
-    return GeneratableScanOperator::create(schema);
+    return GeneratableScanOperator::create(schema, id);
 }
 
-GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr schema) {
-    auto generatableOperator = std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(schema));
+GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr schema, OperatorId id) {
+    auto generatableOperator = std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(schema, id));
     generatableOperator->setId(UtilityFunctions::getNextOperatorId());
     return generatableOperator;
 }
 
-GeneratableScanOperator::GeneratableScanOperator(SchemaPtr schema) : schema(schema) {}
+GeneratableScanOperator::GeneratableScanOperator(SchemaPtr schema, OperatorId id) : schema(schema), OperatorNode(id) {}
 
 const std::string GeneratableScanOperator::toString() const {
     std::stringstream ss;

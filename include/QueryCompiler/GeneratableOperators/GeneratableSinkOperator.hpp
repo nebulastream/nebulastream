@@ -8,7 +8,13 @@ namespace NES {
 
 class GeneratableSinkOperator : public SinkLogicalOperatorNode, public GeneratableOperator {
   public:
-    static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr);
+    /**
+     * @brief
+     * @param logicalOperatorNode
+     * @param id
+     * @return
+     */
+    static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr logicalOperatorNode, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -31,7 +37,7 @@ class GeneratableSinkOperator : public SinkLogicalOperatorNode, public Generatab
     const std::string toString() const override;
 
   private:
-    explicit GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor);
+    explicit GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor, OperatorId id);
 };
 
 }// namespace NES

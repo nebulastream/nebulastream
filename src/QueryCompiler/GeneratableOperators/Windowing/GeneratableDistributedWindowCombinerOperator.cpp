@@ -16,11 +16,13 @@ void GeneratableCombiningWindowOperator::consume(CodeGeneratorPtr codegen, Pipel
     context->setWindow(windowHandler);
     codegen->generateCodeForCombiningWindow(getWindowDefinition(), context);
 }
-GeneratableDistributedlWindowCombinerOperatorPtr GeneratableCombiningWindowOperator::create(WindowOperatorNodePtr windowLogicalOperatorNode) {
-    return std::make_shared<GeneratableCombiningWindowOperator>(GeneratableCombiningWindowOperator(windowLogicalOperatorNode->getWindowDefinition()));
+
+GeneratableDistributedlWindowCombinerOperatorPtr GeneratableCombiningWindowOperator::create(WindowOperatorNodePtr windowLogicalOperatorNode, OperatorId id) {
+    return std::make_shared<GeneratableCombiningWindowOperator>(GeneratableCombiningWindowOperator(windowLogicalOperatorNode->getWindowDefinition(), id));
 }
 
-GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition) : GeneratableWindowOperator(windowDefinition) {
+GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
+    : GeneratableWindowOperator(windowDefinition, id) {
 }
 
 const std::string GeneratableCombiningWindowOperator::toString() const {

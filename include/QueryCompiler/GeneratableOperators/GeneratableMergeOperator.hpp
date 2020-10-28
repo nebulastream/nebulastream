@@ -8,7 +8,13 @@ namespace NES {
 
 class GeneratableMergeOperator : public MergeLogicalOperatorNode, public GeneratableOperator {
   public:
-    static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr logicalMergeOperator);
+    /**
+     * @brief
+     * @param logicalMergeOperator
+     * @param id
+     * @return
+     */
+    static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr logicalMergeOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -31,7 +37,7 @@ class GeneratableMergeOperator : public MergeLogicalOperatorNode, public Generat
     const std::string toString() const override;
 
   private:
-    GeneratableMergeOperator(SchemaPtr outputSchema);
+    GeneratableMergeOperator(SchemaPtr outputSchema, OperatorId id);
 };
 
 }// namespace NES
