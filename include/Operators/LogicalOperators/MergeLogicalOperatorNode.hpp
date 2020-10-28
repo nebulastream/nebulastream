@@ -14,7 +14,7 @@ typedef std::shared_ptr<MergeLogicalOperatorNode> MergeLogicalOperatorNodePtr;
  */
 class MergeLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    explicit MergeLogicalOperatorNode();
+    explicit MergeLogicalOperatorNode(OperatorId id);
     ~MergeLogicalOperatorNode() = default;
 
     bool isIdentical(NodePtr rhs) const override;

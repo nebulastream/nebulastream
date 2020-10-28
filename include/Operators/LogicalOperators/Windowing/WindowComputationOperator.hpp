@@ -10,7 +10,7 @@ namespace NES {
  */
 class WindowComputationOperator : public WindowOperatorNode {
   public:
-    WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id);
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;

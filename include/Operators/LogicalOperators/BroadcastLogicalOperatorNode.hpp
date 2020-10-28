@@ -14,7 +14,7 @@ typedef std::shared_ptr<BroadcastLogicalOperatorNode> BroadcastLogicalOperatorNo
  */
 class BroadcastLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    explicit BroadcastLogicalOperatorNode();
+    explicit BroadcastLogicalOperatorNode(OperatorId id);
     ~BroadcastLogicalOperatorNode() = default;
 
     bool inferSchema() override;

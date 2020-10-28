@@ -3,8 +3,8 @@
 #include <utility>
 
 namespace NES {
-SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor) : sinkDescriptor(sinkDescriptor) {
-}
+SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor, OperatorId id)
+    : sinkDescriptor(sinkDescriptor), LogicalOperatorNode(id) {}
 
 SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() {
     return sinkDescriptor;
@@ -38,9 +38,5 @@ OperatorNodePtr SinkLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
-}
-
-LogicalOperatorNodePtr createSinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor) {
-    return std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor);
 }
 }// namespace NES

@@ -14,42 +14,42 @@
 
 namespace NES {
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr sourceDescriptor) {
-    return std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor);
+LogicalOperatorNodePtr LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr sourceDescriptor, OperatorId id) {
+    return std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor, id);
 }
-LogicalOperatorNodePtr LogicalOperatorFactory::createSinkOperator(const SinkDescriptorPtr sinkDescriptor) {
-    return std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor);
+LogicalOperatorNodePtr LogicalOperatorFactory::createSinkOperator(const SinkDescriptorPtr sinkDescriptor, OperatorId id) {
+    return std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, id);
 }
-LogicalOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr predicate) {
-    return std::make_shared<FilterLogicalOperatorNode>(predicate);
+LogicalOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr predicate, OperatorId id) {
+    return std::make_shared<FilterLogicalOperatorNode>(predicate, id);
 }
-LogicalOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression) {
-    return std::make_shared<MapLogicalOperatorNode>(mapExpression);
-}
-
-LogicalOperatorNodePtr LogicalOperatorFactory::createMergeOperator() {
-    return std::make_shared<MergeLogicalOperatorNode>();
+LogicalOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id) {
+    return std::make_shared<MapLogicalOperatorNode>(mapExpression, id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator() {
-    return std::make_shared<BroadcastLogicalOperatorNode>();
+LogicalOperatorNodePtr LogicalOperatorFactory::createMergeOperator(OperatorId id) {
+    return std::make_shared<MergeLogicalOperatorNode>(id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<WindowLogicalOperatorNode>(windowDefinition);
-}
-LogicalOperatorNodePtr LogicalOperatorFactory::createCentralWindowSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<CentralWindowOperator>(windowDefinition);
-}
-LogicalOperatorNodePtr LogicalOperatorFactory::createSliceCreationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<SliceCreationOperator>(windowDefinition);
-}
-LogicalOperatorNodePtr LogicalOperatorFactory::createWindowComputationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<WindowComputationOperator>(windowDefinition);
+LogicalOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator(OperatorId id) {
+    return std::make_shared<BroadcastLogicalOperatorNode>(id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createSliceMergingSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<SliceMergingOperator>(windowDefinition);
+LogicalOperatorNodePtr LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
+    return std::make_shared<WindowLogicalOperatorNode>(windowDefinition, id);
+}
+LogicalOperatorNodePtr LogicalOperatorFactory::createCentralWindowSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
+    return std::make_shared<CentralWindowOperator>(windowDefinition, id);
+}
+LogicalOperatorNodePtr LogicalOperatorFactory::createSliceCreationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
+    return std::make_shared<SliceCreationOperator>(windowDefinition, id);
+}
+LogicalOperatorNodePtr LogicalOperatorFactory::createWindowComputationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
+    return std::make_shared<WindowComputationOperator>(windowDefinition, id);
+}
+
+LogicalOperatorNodePtr LogicalOperatorFactory::createSliceMergingSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
+    return std::make_shared<SliceMergingOperator>(windowDefinition, id);
 }
 
 }// namespace NES

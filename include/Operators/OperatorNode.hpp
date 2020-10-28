@@ -13,7 +13,7 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
 class OperatorNode : public Node {
   public:
-    OperatorNode();
+    OperatorNode(uint64_t id);
 
     /**
     * @brief get the input schema of this operator

@@ -14,8 +14,8 @@ typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
  */
 class SinkLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    SinkLogicalOperatorNode();
-    SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor);
+    SinkLogicalOperatorNode(OperatorId id);
+    SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor, OperatorId id);
     SinkLogicalOperatorNode& operator=(const SinkLogicalOperatorNode& other);
     bool isIdentical(NodePtr rhs) const override;
     bool equal(const NodePtr rhs) const override;

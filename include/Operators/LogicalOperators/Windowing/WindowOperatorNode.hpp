@@ -16,7 +16,7 @@ typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
 
 class WindowOperatorNode : public LogicalOperatorNode {
   public:
-    WindowOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    WindowOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id);
 
     /**
      * @brief Gets the window definition of the window operator.

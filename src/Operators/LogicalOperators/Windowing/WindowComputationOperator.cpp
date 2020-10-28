@@ -6,12 +6,8 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 namespace NES {
 
-LogicalOperatorNodePtr createWindowComputationSpecializedOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<WindowComputationOperator>(windowDefinition);
-}
-
-WindowComputationOperator::WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : WindowOperatorNode(windowDefinition) {
+WindowComputationOperator::WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
+    : WindowOperatorNode(windowDefinition, id) {
     this->windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCombiningWindowType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
 }
