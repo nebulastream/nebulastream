@@ -109,13 +109,10 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
     auto sourceOperator11 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
-    sourceOperator11->setId(UtilityFunctions::getNextOperatorId());
 
     auto sourceOperator21 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
-    sourceOperator21->setId(UtilityFunctions::getNextOperatorId());
 
     auto sinkOperator11 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
-    sinkOperator11->setId(UtilityFunctions::getNextOperatorId());
 
     sinkOperator11->addChild(sourceOperator11);
     sinkOperator11->addChild(sourceOperator21);
@@ -126,13 +123,10 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
     queryPlan1->setQueryId(queryId1);
 
     auto sourceOperator12 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
-    sourceOperator12->setId(UtilityFunctions::getNextOperatorId());
 
     auto sourceOperator22 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
-    sourceOperator22->setId(UtilityFunctions::getNextOperatorId());
 
     auto sinkOperator12 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
-    sinkOperator12->setId(UtilityFunctions::getNextOperatorId());
 
     sinkOperator12->addChild(sourceOperator12);
     sinkOperator12->addChild(sourceOperator22);

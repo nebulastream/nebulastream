@@ -22,8 +22,7 @@ bool SliceMergingOperator::equal(const NodePtr rhs) const {
 }
 
 OperatorNodePtr SliceMergingOperator::copy() {
-    auto copy = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition);
-    copy->setId(id);
+    auto copy = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;

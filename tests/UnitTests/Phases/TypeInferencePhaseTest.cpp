@@ -61,11 +61,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     inputSchema->addField("f2", BasicType::INT8);
 
     auto source = LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
-    source->setId(UtilityFunctions::getNextOperatorId());
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f1") * 42);
-    map->setId(UtilityFunctions::getNextOperatorId());
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
-    sink->setId(UtilityFunctions::getNextOperatorId());
 
     auto plan = QueryPlan::create(source);
     plan->appendOperatorAsNewRoot(map);
@@ -131,11 +128,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     inputSchema->addField("f2", BasicType::INT8);
 
     auto source = LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
-    source->setId(UtilityFunctions::getNextOperatorId());
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f3") * 42);
-    map->setId(UtilityFunctions::getNextOperatorId());
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
-    sink->setId(UtilityFunctions::getNextOperatorId());
 
     auto plan = QueryPlan::create(source);
     plan->appendOperatorAsNewRoot(map);

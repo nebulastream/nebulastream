@@ -39,8 +39,7 @@ void SourceLogicalOperatorNode::setSourceDescriptor(SourceDescriptorPtr sourceDe
 }
 
 OperatorNodePtr SourceLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-    copy->setId(id);
+    auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;

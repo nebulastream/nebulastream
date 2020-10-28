@@ -27,8 +27,7 @@ bool WindowComputationOperator::equal(const NodePtr rhs) const {
 }
 
 OperatorNodePtr WindowComputationOperator::copy() {
-    auto copy = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition);
-    copy->setId(id);
+    auto copy = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;

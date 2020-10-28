@@ -33,8 +33,7 @@ const std::string SinkLogicalOperatorNode::toString() const {
 }
 
 OperatorNodePtr SinkLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
-    copy->setId(id);
+    auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;

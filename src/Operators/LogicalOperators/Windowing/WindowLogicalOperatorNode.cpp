@@ -31,8 +31,7 @@ bool WindowLogicalOperatorNode::equal(const NodePtr rhs) const {
 }
 
 OperatorNodePtr WindowLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition);
-    copy->setId(id);
+    auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;

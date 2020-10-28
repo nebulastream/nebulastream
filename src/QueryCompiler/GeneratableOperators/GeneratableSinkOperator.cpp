@@ -1,8 +1,6 @@
-
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES {
@@ -14,10 +12,9 @@ void GeneratableSinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
 void GeneratableSinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForEmit(context->getResultSchema(), context);
 }
+
 GeneratableSinkOperatorPtr GeneratableSinkOperator::create(SinkLogicalOperatorNodePtr sinkLogicalOperatorNode, OperatorId id) {
-    auto generatableOperator = std::make_shared<GeneratableSinkOperator>(GeneratableSinkOperator(sinkLogicalOperatorNode->getSinkDescriptor(), id));
-    generatableOperator->setId(UtilityFunctions::getNextOperatorId());
-    return generatableOperator;
+    return std::make_shared<GeneratableSinkOperator>(GeneratableSinkOperator(sinkLogicalOperatorNode->getSinkDescriptor(), id));
 }
 
 GeneratableSinkOperator::GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor, OperatorId id)

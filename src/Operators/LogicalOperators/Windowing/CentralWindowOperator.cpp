@@ -28,8 +28,7 @@ bool CentralWindowOperator::equal(const NodePtr rhs) const {
 }
 
 OperatorNodePtr CentralWindowOperator::copy() {
-    auto copy = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
-    copy->setId(id);
+    auto copy = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
