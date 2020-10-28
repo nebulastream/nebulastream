@@ -38,6 +38,22 @@ static std::string getDebugLevelAsString(DebugLevel level) {
     }
 }
 
+static DebugLevel getStringAsDebugLevel(std::string level) {
+    if (level == "LOG_NONE") {
+        return LOG_NONE;
+    } else if (level == "LOG_WARNING") {
+        return LOG_WARNING;
+    } else if (level == "LOG_DEBUG") {
+        return LOG_DEBUG;
+    } else if (level == "LOG_INFO") {
+        return LOG_INFO;
+    } else if (level == "LOG_TRACE") {
+        return LOG_TRACE;
+    } else {
+        throw std::runtime_error("Logger: Debug level unknown: " + level);
+    }
+}
+
 static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 
 // LoggerPtr logger(Logger::getLogger("NES"));
@@ -101,7 +117,7 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 #endif
 
 static void setupLogging(std::string logFileName, DebugLevel level) {
-    std::cout << "SETUP_LOGGING" << std::endl;
+    std::cout << "Logger: SETUP_LOGGING" << std::endl;
     // create PatternLayout
     log4cxx::LayoutPtr layoutPtr(
         new log4cxx::PatternLayout(

@@ -33,8 +33,7 @@ const string logo = "/********************************************************\n
 
 // TODO handle proper configuration properly
 int main(int argc, char** argv) {
-    NES::setupLogging("nesWorkerStarter.log", NES::LOG_DEBUG);
-    NES_INFO(logo);
+    std::cout << logo << std::endl;
 
     namespace po = boost::program_options;
     po::options_description desc("Nes Worker Options");
@@ -43,6 +42,7 @@ int main(int argc, char** argv) {
     std::string dataPort = "3001";
     std::string coordinatorIp = "127.0.0.1";
     std::string localWorkerIp = "127.0.0.1";
+    std::string logLevel = "LOG_DEBUG";
 
     // set the default numberOfSlots to the number of processor
     const auto processorCount = std::thread::hardware_concurrency();
@@ -70,10 +70,11 @@ int main(int argc, char** argv) {
         "parentId", po::value<string>(&parentId)->default_value(parentId), "Set the parentId of this node")(
         "localWorkerIp", po::value<string>(&localWorkerIp)->default_value(localWorkerIp), "Set worker ip (default: 127.0.0.1)")(
         "numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots), "Set the computing capacity (default: number of processor.")(
+        "logLevel", po::value<std::string>(&logLevel)->default_value(logLevel), "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")(
         "help", "Display help message");
 
+    /* Parse parameters. */
     po::variables_map vm;
-
     try {
         po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
         po::notify(vm);
@@ -82,6 +83,7 @@ int main(int argc, char** argv) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     if (vm.count("help")) {
         NES_INFO("Basic Command Line Parameter ");

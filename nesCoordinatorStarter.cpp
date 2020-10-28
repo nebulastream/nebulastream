@@ -29,13 +29,13 @@ const std::string logo = "/*****************************************************
                          " ********************************************************/";
 
 int main(int argc, const char* argv[]) {
-    NES::setupLogging("nesCoordinatorStarter.log", NES::LOG_DEBUG);
-    NES_INFO(logo);
+    std::cout << logo << std::endl;
 
     // Initializing defaults
     uint16_t restPort = 8081;
     uint16_t rpcPort = 4000;
     std::string serverIp = "127.0.0.1";
+    std::string logLevel = "LOG_DEBUG";
 
     // set the default numberOfSlots to the number of processor
     const auto processorCount = std::thread::hardware_concurrency();
@@ -49,6 +49,7 @@ int main(int argc, const char* argv[]) {
         "coordinatorPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort), "Set NES rpc server port (default: 4000).")(
         "numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots), "Set the computing capacity (default: number of processor).")(
         "enableQueryMerging", po::value<bool>(&enableQueryMerging)->default_value(enableQueryMerging), "Enable Query Merging Feature (default: false).")(
+        "logLevel", po::value<std::string>(&logLevel)->default_value(logLevel), "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")(
         "help", "Display help message");
 
     /* Parse parameters. */
@@ -57,10 +58,11 @@ int main(int argc, const char* argv[]) {
         po::store(po::command_line_parser(argc, argv).options(serverOptions).run(), vm);
         po::notify(vm);
     } catch (const std::exception& e) {
-        NES_ERROR("Failure while parsing connection parameters!");
-        NES_ERROR(e.what());
+        std::cerr << "Failure while parsing connection parameters!" << std::endl;
+        std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     if (vm.count("help")) {
         NES_INFO("Basic Command Line Parameter ");
