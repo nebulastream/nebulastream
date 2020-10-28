@@ -4,7 +4,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <algorithm>
 #include <set>
 #include <utility>
 
@@ -25,9 +25,6 @@ QueryPlanPtr QueryPlan::create() {
 QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID) {}
 
 QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID) {
-    if (rootOperator->getId() == 0) {
-        rootOperator->setId(UtilityFunctions::getNextOperatorId());
-    }
     rootOperators.push_back(std::move(rootOperator));
 }
 
