@@ -9,6 +9,11 @@
 
 using namespace NES;
 using namespace NES::Benchmarking;
+
+/**
+ * @brief This file/main shows how a benchmark can be created. The benchmark seen below is a filter query that was implemented by using the BM_AddBenchmark macro from <util/BenchmarkUtils.hpp>.
+ */
+
 int main(){
 
 
