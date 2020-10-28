@@ -2,7 +2,7 @@
 #define NESPLACEMENTOPTIMIZER_HPP
 
 #include <Catalogs/StreamCatalogEntry.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <chrono>
 #include <iostream>
 #include <map>

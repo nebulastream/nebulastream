@@ -4,6 +4,7 @@
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/QueryRequestQueue.hpp>
@@ -27,7 +28,7 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     }
     NES_INFO("QueryService: Parsing and converting user query string");
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    QueryId queryId = UtilityFunctions::getNextQueryId();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     NES_INFO("QueryService: Queuing the query for the execution");

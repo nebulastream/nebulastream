@@ -1,14 +1,14 @@
 #include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <algorithm>
 #include <utility>
 
 namespace NES {
 
 GlobalQueryMetaData::GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes)
-    : globalQueryId(UtilityFunctions::getNextGlobalQueryId()), queryIds(std::move(queryIds)), sinkGlobalQueryNodes(std::move(sinkGlobalQueryNodes)), deployed(false), newMetaData(true) {}
+    : globalQueryId(PlanIdGenerator::getNextGlobalQueryId()), queryIds(std::move(queryIds)), sinkGlobalQueryNodes(std::move(sinkGlobalQueryNodes)), deployed(false), newMetaData(true) {}
 
 GlobalQueryMetaDataPtr GlobalQueryMetaData::create(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
     return std::make_shared<GlobalQueryMetaData>(GlobalQueryMetaData(std::move(queryIds), std::move(sinkGlobalQueryNodes)));

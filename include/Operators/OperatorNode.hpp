@@ -44,6 +44,7 @@ class OperatorNode : public Node {
     u_int64_t getId() const;
 
     /**
+     * NOTE: this method is only called from Logical Plan Expansion Rule
      * @brief gets the operator id.
      * Unique Identifier of the operator within a query.
      * @param operator id

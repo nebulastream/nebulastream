@@ -1,8 +1,7 @@
 #ifndef UTILITY_FUNCTIONS_HPP
 #define UTILITY_FUNCTIONS_HPP
 
-#include <Plans/Global/Query/GlobalQueryId.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Operators/OperatorId.hpp>
 #include <cpprest/json.h>
 #include <string>
 /*
@@ -136,14 +135,6 @@ class UtilityFunctions {
     static web::json::value getTopologyAsJson(TopologyNodePtr root);
 
     /**
-     * @brief function to generate the query plan from of a query.
-     * @param queryCatalog in which the query is stored
-     * @param the id of the query
-     * @return a JSON object representing the query plan
-     */
-    static web::json::value getQueryPlanAsJson(QueryCatalogPtr queryCatalog, QueryId queryId);
-
-    /**
      * @brief function to replace all string occurrences
      * @param data input string will be replaced in-place
      * @param toSearch search string
@@ -159,28 +150,10 @@ class UtilityFunctions {
     static const std::string toCSVString(SchemaPtr schema);
 
     /**
-     * @brief Returns the next free query Id
-     * @return query id
-     */
-    static QueryId getNextQueryId();
-
-    /**
-     * @brief Returns the next free global query Id
-     * @return query id
-     */
-    static GlobalQueryId getNextGlobalQueryId();
-
-    /**
-     * @brief Returns the next free query execution Id
-     * @return query execution id
-     */
-    static uint64_t getNextQuerySubPlanId();
-
-    /**
      * @brief Returns the next free operator id
      * @return operator id
      */
-    static uint64_t getNextOperatorId();
+    static OperatorId getNextOperatorId();
 
     /**
      * @brief Returns the next free node id
@@ -193,30 +166,6 @@ class UtilityFunctions {
      * @return node id
      */
     static uint64_t getNextNodeEngineId();
-
-    /**
-     * @brief get the json representation of execution plan of a query
-     * @param the global execution plan
-     * @param id of the query
-     * @return
-     */
-    static web::json::value getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId = INVALID_QUERY_ID);
-
-  private:
-    /**
-     * @brief function to traverse to queryPlanChildren
-     * @param root root operator of the queryPlan
-     * @param nodes JSON array to store the traversed node
-     * @param edges JSOn array to store the traversed edge
-     */
-    static void getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
-                            std::vector<web::json::value>& edges);
-
-    /**
-     * @param an operator node
-     * @return the type of operator in String
-     */
-    static std::string getOperatorType(OperatorNodePtr operatorNode);
 };
 }// namespace NES
 
