@@ -26,9 +26,9 @@ jobs:
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
-     # - name: Run tests
-     #   run: |
-     #     docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+      - name: Run tests
+        run: |
+          docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
@@ -41,7 +41,7 @@ jobs:
 
   release:
     runs-on: self-hosted
-    #if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
     needs: build-job
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
