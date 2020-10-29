@@ -16,18 +16,18 @@ using namespace NES::Benchmarking;
 int main() {
 
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector(allIngestionRates, 1*1000*1000, 10*1000*1000, 1*1000*1000);
-    BenchmarkUtils::createRangeVector(allIngestionRates, 10*1000*1000, 650*1000*1000, 10*1000*1000);
+    //BenchmarkUtils::createRangeVector(allIngestionRates, 2 * 1000 * 1000, 10 * 1000 * 1000, 2 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector(allIngestionRates, 1 * 1000 * 1000, 10 * 1000 * 1000, 1 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector(allIngestionRates, 10 * 1000 * 1000, 200 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
-    BenchmarkUtils::createRangeVector(allExperimentsDuration, 10, 20, 10);
+    BenchmarkUtils::createRangeVector(allExperimentsDuration, 10, 40, 10);
 
     std::vector<uint64_t> allPeriodLengths;
     BenchmarkUtils::createRangeVector(allPeriodLengths, 1, 2, 1);
 
     std::string benchmarkFolderName = "MapQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
-    if (!std::filesystem::create_directory(benchmarkFolderName))
-        throw RuntimeException("Could not create folder " + benchmarkFolderName);
+    if (!std::filesystem::create_directory(benchmarkFolderName)) throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
     //-----------------------------------------Start of BM_SimpleMapQuery----------------------------------------------------------------------------------------------
     auto benchmarkSchema = Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
