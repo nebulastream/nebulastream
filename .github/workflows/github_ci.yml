@@ -16,7 +16,7 @@ on:
 jobs:
   build-job:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
-    runs-on: self-hosted
+    runs-on: ubuntu-20.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v2
@@ -40,7 +40,7 @@ jobs:
         if: always()
 
   release:
-    runs-on: self-hosted
+    runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/master'
     needs: build-job
     env:
