@@ -16,8 +16,8 @@ void GeneratableSlicingWindowOperator::consume(CodeGeneratorPtr codegen, Pipelin
     context->setWindow(windowHandler);
     codegen->generateCodeForSlicingWindow(getWindowDefinition(), context);
 }
-GeneratableDistributedlWindowSliceCreationOperatorPtr GeneratableSlicingWindowOperator::create(WindowOperatorNodePtr windowLogicalOperatorNode, OperatorId id) {
-    return std::make_shared<GeneratableSlicingWindowOperator>(GeneratableSlicingWindowOperator(windowLogicalOperatorNode->getWindowDefinition(), id));
+GeneratableDistributedlWindowSliceCreationOperatorPtr GeneratableSlicingWindowOperator::create(WindowOperatorNodePtr windowLogicalOperator, OperatorId id) {
+    return std::make_shared<GeneratableSlicingWindowOperator>(GeneratableSlicingWindowOperator(windowLogicalOperator->getWindowDefinition(), id));
 }
 
 GeneratableSlicingWindowOperator::GeneratableSlicingWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)

@@ -18,8 +18,8 @@ void GeneratableMapOperator::consume(CodeGeneratorPtr codegen, PipelineContextPt
     getParents()[0]->as<GeneratableOperator>()->consume(codegen, context);
 }
 
-GeneratableMapOperatorPtr GeneratableMapOperator::create(MapLogicalOperatorNodePtr mapLogicalOperatorNode, OperatorId id) {
-    return std::make_shared<GeneratableMapOperator>(GeneratableMapOperator(mapLogicalOperatorNode->getMapExpression(), id));
+GeneratableMapOperatorPtr GeneratableMapOperator::create(MapLogicalOperatorNodePtr mapLogicalOperator, OperatorId id) {
+    return std::make_shared<GeneratableMapOperator>(GeneratableMapOperator(mapLogicalOperator->getMapExpression(), id));
 }
 
 GeneratableMapOperator::GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression, OperatorId id) : MapLogicalOperatorNode(mapExpression, id) {

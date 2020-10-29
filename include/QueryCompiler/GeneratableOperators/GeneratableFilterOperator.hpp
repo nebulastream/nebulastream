@@ -10,12 +10,14 @@ class FilterLogicalOperatorNode;
 typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 
 class GeneratableFilterOperator : public FilterLogicalOperatorNode, public GeneratableOperator {
+
   public:
+
     /**
-     * @brief
-     * @param filterLogicalOperator
-     * @param id
-     * @return
+     * @brief Create sharable instance of GeneratableFilterOperator
+     * @param filterLogicalOperator: the filter logical operator
+     * @param id: the operator id if not provided then next available operator id is used.
+     * @return instance of GeneratableFilterOperator
      */
     static GeneratableFilterOperatorPtr create(FilterLogicalOperatorNodePtr filterLogicalOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
 

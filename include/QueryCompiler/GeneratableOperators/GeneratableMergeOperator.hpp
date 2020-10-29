@@ -8,11 +8,12 @@ namespace NES {
 
 class GeneratableMergeOperator : public MergeLogicalOperatorNode, public GeneratableOperator {
   public:
+
     /**
-     * @brief
-     * @param logicalMergeOperator
-     * @param id
-     * @return
+     * @brief Create sharable instance of GeneratableMergeOperator
+     * @param logicalMergeOperator: the merge logical operator
+     * @param id: the operator id if not provided then next available operator id is used.
+     * @return instance of GeneratableMergeOperator
      */
     static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr logicalMergeOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
 
