@@ -134,10 +134,11 @@ ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& 
         NES_TRACE("BottomUpStrategy: create new execution node with id: " << candidateTopologyNode->getId());
         candidateExecutionNode = ExecutionNode::createExecutionNode(candidateTopologyNode);
         NES_TRACE("BottomUpStrategy: Adding new execution node with id: " << candidateTopologyNode->getId());
+        // Check if the candidateTopologyNode is a root node of the topology
         if (candidateTopologyNode->getParents().empty()){
             if (!globalExecutionPlan->addExecutionNodeAsRoot(candidateExecutionNode)) {
-                NES_ERROR("BottomUpStrategy: failed to add execution node");
-                throw QueryPlacementException("BottomUpStrategy: failed to add execution node");
+                NES_ERROR("BottomUpStrategy: failed to add execution node as root");
+                throw QueryPlacementException("BottomUpStrategy: failed to add execution node as root");
             }
         } else {
             if (!globalExecutionPlan->addExecutionNode(candidateExecutionNode)) {
@@ -145,7 +146,6 @@ ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& 
                 throw QueryPlacementException("BottomUpStrategy: failed to add execution node");
             }
         }
-
     }
     return candidateExecutionNode;
 }
@@ -296,6 +296,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                 candidateExecutionNode->addNewQuerySubPlan(queryId, querySubPlan);
                 globalExecutionPlan->scheduleExecutionNode(candidateExecutionNode);
             }
+            // Add the parent-child relation
             globalExecutionPlan->addExecutionNodeAsParentTo(executionNode->getId(), parentExecutionNode);
         }
 
