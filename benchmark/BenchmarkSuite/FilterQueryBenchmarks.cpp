@@ -16,7 +16,6 @@ using namespace NES::Benchmarking;
 int main(){
 
     std::vector<uint64_t> allIngestionRates;
-    //BenchmarkUtils::createRangeVector(allIngestionRates, 2 * 1000 * 1000, 10 * 1000 * 1000, 2 * 1000 * 1000);
     BenchmarkUtils::createRangeVector(allIngestionRates, 1 * 1000 * 1000, 10 * 1000 * 1000, 1 * 1000 * 1000);
     BenchmarkUtils::createRangeVector(allIngestionRates, 10 * 1000 * 1000, 200 * 1000 * 1000, 10 * 1000 * 1000);
 
