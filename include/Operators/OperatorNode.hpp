@@ -2,6 +2,7 @@
 #define NES_INCLUDE_NODES_OPERATORS_OPERATORNODE_HPP_
 
 #include <Nodes/Node.hpp>
+#include <Operators/OperatorId.hpp>
 
 namespace NES {
 
@@ -13,7 +14,7 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
 class OperatorNode : public Node {
   public:
-    OperatorNode(uint64_t id);
+    OperatorNode(OperatorId id);
 
     /**
     * @brief get the input schema of this operator

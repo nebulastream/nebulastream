@@ -10,7 +10,7 @@ namespace NES {
 
 class LogicalOperatorNode : public OperatorNode {
   public:
-    LogicalOperatorNode(uint64_t id);
+    LogicalOperatorNode(OperatorId id);
 };
 
 }// namespace NES
