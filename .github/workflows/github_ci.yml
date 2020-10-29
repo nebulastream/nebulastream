@@ -14,35 +14,35 @@ on:
       - '*'
 
 jobs:
-#  build-job:
-#    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
-#    runs-on: self-hosted
-#    timeout-minutes: 30
-#    steps:
-#      - uses: actions/checkout@v2
-#        with:
-#          ssh-key: ${{ secrets.CI_SECRET }}
-#          ssh-strict: 'false'
-#      - name: Fetch git history
-#        run: |
-#          git fetch --prune --unshallow --tags
-#      - name: Run tests
-#        run: |
-#          docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
-#      - name: Notify Slack
-#        uses: 8398a7/action-slack@v2
-#        with:
-#          status: ${{ job.status }}
-#          author_name: ${{ github.actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#        if: always()
+  build-job:
+    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+      - name: Fetch git history
+        run: |
+          git fetch --prune --unshallow --tags
+      - name: Run tests
+        run: |
+          docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
 
   release:
     runs-on: self-hosted
     #if: github.ref == 'refs/heads/master'
-    #needs: build-job
+    needs: build-job
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
