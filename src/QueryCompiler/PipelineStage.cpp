@@ -19,15 +19,17 @@ PipelineStage::PipelineStage(
     QuerySubPlanId qepId,
     ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineExecutionContext,
-    PipelineStagePtr nextPipelineStage,
-    Windowing::AbstractWindowHandlerPtr windowHandler) : pipelineStageId(pipelineStageId),
-                                                         qepId(qepId),
-                                                         executablePipeline(std::move(executablePipeline)),
-                                                         windowHandler(std::move(windowHandler)),
-                                                         nextStage(std::move(nextPipelineStage)),
-                                                         pipelineContext(std::move(pipelineExecutionContext)) {
+    PipelineStagePtr nextPipelineStage) : pipelineStageId(pipelineStageId),
+                                                 qepId(qepId),
+                                                 executablePipeline(std::move(executablePipeline)),
+                                                 nextStage(std::move(nextPipelineStage)),
+                                                 pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
+    if (hasWindowHandler()) {
+        NES_DEBUG("Pipelinestage ctor set origin id=" << qepId);
+        this->pipelineContext->getWindowHandler()->setOriginId(qepId);
+    }
 }
 
 bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
@@ -47,6 +49,7 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
     }
     NES_DEBUG(dbgMsg.str());
     // only get the window manager and state if the pipeline has a window handler.
+    auto windowHandler = pipelineContext->getWindowHandler();
     auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;                          // TODO Philipp, do we need this check?
     auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : Windowing::WindowManagerPtr();// TODO Philipp, do we need this check?
 
@@ -113,7 +116,7 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
 
 bool PipelineStage::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
     if (hasWindowHandler()) {
-        return windowHandler->setup(queryManager, bufferManager, nextStage, pipelineStageId, qepId);
+        return pipelineContext->getWindowHandler()->setup(queryManager, bufferManager, nextStage, pipelineStageId);
     }
     return true;
 }
@@ -121,7 +124,7 @@ bool PipelineStage::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferM
 bool PipelineStage::start() {
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::start: windowhandler start");
-        return windowHandler->start();
+        return pipelineContext->getWindowHandler()->start();
     } else {
         NES_DEBUG("PipelineStage::start: NO windowhandler started");
     }
@@ -131,7 +134,7 @@ bool PipelineStage::start() {
 bool PipelineStage::stop() {
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::stop: windowhandler stop");
-        return windowHandler->stop();
+        return pipelineContext->getWindowHandler()->stop();
     } else {
         NES_DEBUG("PipelineStage::stop: NO windowhandler stopped");
     }
@@ -151,7 +154,7 @@ QuerySubPlanId PipelineStage::getQepParentId() const {
 }
 
 bool PipelineStage::hasWindowHandler() {
-    return windowHandler != nullptr;
+    return pipelineContext->getWindowHandler() != nullptr;
 }
 
 bool PipelineStage::isReconfiguration() const {
@@ -163,10 +166,9 @@ PipelineStagePtr PipelineStage::create(
     const QuerySubPlanId querySubPlanId,
     const ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineContext,
-    const PipelineStagePtr nextPipelineStage,
-    const Windowing::AbstractWindowHandlerPtr& windowHandler) {
+    const PipelineStagePtr nextPipelineStage) {
 
-    return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipeline, pipelineContext, nextPipelineStage, windowHandler);
+    return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipeline, pipelineContext, nextPipelineStage);
 }
 
 }// namespace NES

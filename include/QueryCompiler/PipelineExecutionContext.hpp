@@ -2,6 +2,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Windowing/Runtime/WindowHandlerImpl.hpp>
 #include <functional>
 #include <memory>
 
@@ -38,7 +39,8 @@ class PipelineExecutionContext {
     explicit PipelineExecutionContext(
         QuerySubPlanId queryId,
         BufferManagerPtr bufferManager,
-        std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler);
+        std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
+        Windowing::WindowHandlerPtr windowHandler = Windowing::WindowHandlerPtr());
 
     /**
      * @brief Allocates a new tuple buffer.
@@ -58,6 +60,22 @@ class PipelineExecutionContext {
      */
     Windowing::LogicalWindowDefinitionPtr getWindowDef();
     void setWindowDef(Windowing::LogicalWindowDefinitionPtr windowDef);
+
+
+    /**
+     * @brief
+     */
+    Windowing::WindowHandlerPtr getWindowHandler() {
+        return windowHandler;
+    }
+
+    template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+    auto getWindowHandler() {
+        return static_cast<std::shared_ptr<Windowing::WindowHandlerImpl<KeyType, InputType, PartialAggregateType, FinalAggregateType>>>(windowHandler);
+    }
+
+
+    // TODO remove above
 
     /**
      * @brief getter/setter input schema
@@ -81,9 +99,13 @@ class PipelineExecutionContext {
      */
     std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
 
+    Windowing::WindowHandlerPtr windowHandler;
+
     // TODO remove this stuff from here
     Windowing::LogicalWindowDefinitionPtr windowDef;
     SchemaPtr inputSchema;
+
+
 };
 
 }// namespace NES

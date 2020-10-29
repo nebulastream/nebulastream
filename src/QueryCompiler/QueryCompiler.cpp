@@ -125,7 +125,8 @@ void QueryCompiler::compilePipelineStages(
                     for (auto& childPipeline : childPipelines) {
                         childPipeline->execute(buffer, workerContext);
                     }
-                });
+                },
+                holder.windowHandler);
             if (builder.getWinDef() != nullptr) {
                 executionContext->setWindowDef(builder.getWinDef());
             }
@@ -146,7 +147,8 @@ void QueryCompiler::compilePipelineStages(
                     for (auto& sink : sinks) {
                         sink->writeData(buffer, workerContext);
                     }
-                });
+                },
+                holder.windowHandler);
             if (builder.getWinDef() != nullptr) {
                 executionContext->setWindowDef(builder.getWinDef());
             }
@@ -159,8 +161,7 @@ void QueryCompiler::compilePipelineStages(
             builder.getQuerySubPlanId(),
             holder.executablePipeline,
             executionContext,
-            pipelines[*holder.consumers.begin()],
-            holder.windowHandler);
+            pipelines[*holder.consumers.begin()]);
 
         builder.addPipelineStage(pipelineStage);
         pipelines[stageId] = pipelineStage;
