@@ -13,16 +13,15 @@ using namespace NES::Benchmarking;
 /**
  * @brief This file/main shows how a benchmark can be created. The benchmark seen below is a filter query that was implemented by using the BM_AddBenchmark macro from <util/BenchmarkUtils.hpp>.
  */
-
 int main(){
 
-
     std::vector<uint64_t> allIngestionRates;
+    //BenchmarkUtils::createRangeVector(allIngestionRates, 2 * 1000 * 1000, 10 * 1000 * 1000, 2 * 1000 * 1000);
     BenchmarkUtils::createRangeVector(allIngestionRates, 1 * 1000 * 1000, 10 * 1000 * 1000, 1 * 1000 * 1000);
-    BenchmarkUtils::createRangeVector(allIngestionRates, 10 * 1000 * 1000, 650 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector(allIngestionRates, 10 * 1000 * 1000, 200 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
-    BenchmarkUtils::createRangeVector(allExperimentsDuration, 10, 20, 10);
+    BenchmarkUtils::createRangeVector(allExperimentsDuration, 10, 40, 10);
 
     std::vector<uint64_t> allPeriodLengths;
     BenchmarkUtils::createRangeVector(allPeriodLengths, 1, 2, 1);

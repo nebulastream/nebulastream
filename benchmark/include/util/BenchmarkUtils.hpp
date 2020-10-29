@@ -93,7 +93,7 @@ class BenchmarkUtils {
 #define BM_AddBenchmark(benchmarkName, benchmarkQuery, workerThreads, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs) { \
 NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);\
 \
-    try{\
+    try{                                                                                                                                   \
         std::ofstream benchmarkFile;\
         benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);\
         benchmarkFile << "BM_Name,NES_Version,Ingestionrate,WorkerThreads,RunSingleExperiment,PeriodLength,ProcessedBuffers,ProcessedTasks,ProcessedTuples,ProcessedBytes" << (csvHeaderString) << "\n";\
