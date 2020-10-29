@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
 
+#include <string>
 #include <cstdint>
 #include <memory>
 

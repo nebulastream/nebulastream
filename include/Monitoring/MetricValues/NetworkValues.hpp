@@ -2,6 +2,7 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
 #include <cstdint>
 #include <memory>
+#include <string>
 
 namespace NES {
 class Schema;

@@ -9,7 +9,9 @@
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sources/DataSource.hpp>
+#ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
+#endif
 #include <string>
 
 namespace NES {
