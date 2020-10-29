@@ -7,7 +7,6 @@ namespace NES {
 
 class GeneratableScanOperator : public OperatorNode, public GeneratableOperator {
   public:
-
     /**
      * @brief Create sharable instance of GeneratableScanOperator
      * @param schema: the schema of the input records

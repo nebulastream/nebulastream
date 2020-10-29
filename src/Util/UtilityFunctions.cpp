@@ -398,6 +398,4 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     return topologyJson;
 }
 
-
-
 }// namespace NES

@@ -1,6 +1,6 @@
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
@@ -161,7 +161,7 @@ web::json::value PlanJsonGenerator::getQueryPlanAsJson(QueryPlanPtr queryPlan) {
 }
 
 void PlanJsonGenerator::getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
-                                std::vector<web::json::value>& edges) {
+                                    std::vector<web::json::value>& edges) {
 
     std::vector<web::json::value> childrenNode;
 

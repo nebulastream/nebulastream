@@ -8,7 +8,6 @@ namespace NES {
 
 class GeneratableMapOperator : public MapLogicalOperatorNode, public GeneratableOperator {
   public:
-
     /**
      * @brief Create sharable instance of GeneratableMapOperator
      * @param mapLogicalOperator: the map logical operator

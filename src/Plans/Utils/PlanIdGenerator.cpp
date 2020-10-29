@@ -1,7 +1,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <atomic>
 
-namespace NES{
+namespace NES {
 
 QueryId PlanIdGenerator::getNextQueryId() {
     static std::atomic_uint64_t id = 0;
@@ -18,5 +18,4 @@ uint64_t PlanIdGenerator::getNextQuerySubPlanId() {
     return ++id;
 }
 
-}
-
+}// namespace NES
