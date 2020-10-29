@@ -8,7 +8,6 @@ namespace NES {
 
 class GeneratableMergeOperator : public MergeLogicalOperatorNode, public GeneratableOperator {
   public:
-
     /**
      * @brief Create sharable instance of GeneratableMergeOperator
      * @param logicalMergeOperator: the merge logical operator

@@ -8,7 +8,6 @@ namespace NES {
 
 class GeneratableSlicingWindowOperator : public GeneratableWindowOperator {
   public:
-
     /**
      * @brief Create sharable instance of GeneratableSlicingWindowOperator
      * @param windowLogicalOperator: the window logical operator

@@ -12,7 +12,6 @@ typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 class GeneratableFilterOperator : public FilterLogicalOperatorNode, public GeneratableOperator {
 
   public:
-
     /**
      * @brief Create sharable instance of GeneratableFilterOperator
      * @param filterLogicalOperator: the filter logical operator

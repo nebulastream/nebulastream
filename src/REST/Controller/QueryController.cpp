@@ -5,11 +5,11 @@
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/QueryController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <Util/Logger.hpp>
-#include <Plans/Utils/PlanJsonGenerator.hpp>
 
 using namespace web;
 using namespace http;

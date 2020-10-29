@@ -8,7 +8,6 @@ namespace NES {
 
 class GeneratableSinkOperator : public SinkLogicalOperatorNode, public GeneratableOperator {
   public:
-
     /**
      * @brief Create sharable instance of GeneratableSinkOperator
      * @param sinkLogicalOperator: the sink logical operator
