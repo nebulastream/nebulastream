@@ -7,11 +7,12 @@ namespace NES {
 
 class GeneratableScanOperator : public OperatorNode, public GeneratableOperator {
   public:
+
     /**
-     * @brief
-     * @param schema
-     * @param id
-     * @return
+     * @brief Create sharable instance of GeneratableScanOperator
+     * @param schema: the schema of the input records
+     * @param id: the operator id if not provided then next available operator id is used.
+     * @return instance of GeneratableScanOperator
      */
     static GeneratableScanOperatorPtr create(SchemaPtr schema, OperatorId id = UtilityFunctions::getNextOperatorId());
 

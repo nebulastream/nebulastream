@@ -8,13 +8,14 @@ namespace NES {
 
 class GeneratableSinkOperator : public SinkLogicalOperatorNode, public GeneratableOperator {
   public:
+
     /**
-     * @brief
-     * @param logicalOperatorNode
-     * @param id
-     * @return
+     * @brief Create sharable instance of GeneratableSinkOperator
+     * @param sinkLogicalOperator: the sink logical operator
+     * @param id: the operator id if not provided then next available operator id is used.
+     * @return instance of GeneratableSinkOperator
      */
-    static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr logicalOperatorNode, OperatorId id = UtilityFunctions::getNextOperatorId());
+    static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr sinkLogicalOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.

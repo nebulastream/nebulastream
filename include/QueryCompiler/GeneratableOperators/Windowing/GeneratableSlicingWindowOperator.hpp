@@ -8,13 +8,14 @@ namespace NES {
 
 class GeneratableSlicingWindowOperator : public GeneratableWindowOperator {
   public:
+
     /**
-     * @brief
-     * @param windowOperatorNode
-     * @param id
-     * @return
+     * @brief Create sharable instance of GeneratableSlicingWindowOperator
+     * @param windowLogicalOperator: the window logical operator
+     * @param id: the operator id if not provided then next available operator id is used.
+     * @return instance of GeneratableSlicingWindowOperator
      */
-    static GeneratableDistributedlWindowSliceCreationOperatorPtr create(WindowOperatorNodePtr windowOperatorNode, OperatorId id = UtilityFunctions::getNextOperatorId());
+    static GeneratableDistributedlWindowSliceCreationOperatorPtr create(WindowOperatorNodePtr windowLogicalOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
