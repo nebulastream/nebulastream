@@ -1,8 +1,8 @@
 #ifndef INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
 #define INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
 
-#pragma once
 #include <memory>
+#include <string>
 
 namespace NES {
 

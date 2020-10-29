@@ -10,6 +10,8 @@
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Common/ValueTypes/FixedCharValue.hpp>
+#include <limits>
+
 namespace NES {
 
 DataTypePtr DataTypeFactory::createUndefined() {
