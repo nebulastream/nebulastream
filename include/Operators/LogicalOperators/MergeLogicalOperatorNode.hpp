@@ -18,14 +18,12 @@ class MergeLogicalOperatorNode : public LogicalOperatorNode {
     ~MergeLogicalOperatorNode() = default;
 
     bool isIdentical(NodePtr rhs) const override;
-
     const std::string toString() const override;
-
     //infer schema of two child operators
     bool inferSchema() override;
-
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
+    z3::expr getFOL() override;
 };
 }// namespace NES
 #endif// Merge_LOGICAL_OPERATOR_NODE_HPP

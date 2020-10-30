@@ -1,6 +1,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <utility>
+#include <z3++.h>
 
 namespace NES {
 SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor, OperatorId id)
@@ -37,5 +38,12 @@ OperatorNodePtr SinkLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
+}
+
+z3::expr SinkLogicalOperatorNode::getFOL() {
+    // create a context
+    z3::context c;
+    z3::expr x = c.int_const("x");
+    return x;
 }
 }// namespace NES

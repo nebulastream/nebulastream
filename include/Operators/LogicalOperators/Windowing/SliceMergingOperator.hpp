@@ -17,8 +17,8 @@ class SliceMergingOperator : public WindowOperatorNode {
     const std::string toString() const override;
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
-
     virtual bool inferSchema() override;
+    z3::expr getFOL() override;
 };
 
 }// namespace NES

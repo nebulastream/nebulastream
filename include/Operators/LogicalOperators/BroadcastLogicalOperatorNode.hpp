@@ -26,6 +26,7 @@ class BroadcastLogicalOperatorNode : public LogicalOperatorNode {
     const std::string toString() const override;
 
     OperatorNodePtr copy() override;
+    z3::expr getFOL() override;
 };
 }// namespace NES
 

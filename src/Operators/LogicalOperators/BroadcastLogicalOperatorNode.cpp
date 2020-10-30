@@ -2,6 +2,7 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
+#include <z3++.h>
 
 namespace NES {
 
@@ -35,5 +36,12 @@ OperatorNodePtr BroadcastLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
+}
+
+z3::expr BroadcastLogicalOperatorNode::getFOL() {
+    // create a context
+    z3::context c;
+    z3::expr x = c.int_const("x");
+    return x;
 }
 }// namespace NES

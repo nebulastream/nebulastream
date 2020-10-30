@@ -4,6 +4,8 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <z3++.h>
+
 namespace NES {
 
 WindowComputationOperator::WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
@@ -54,5 +56,12 @@ bool WindowComputationOperator::inferSchema() {
     } else {
         NES_THROW_RUNTIME_ERROR("WindowComputationOperator: type inference for non keyed streams is not supported");
     }
+}
+
+z3::expr WindowComputationOperator::getFOL() {
+    // create a context
+    z3::context c;
+    z3::expr x = c.int_const("x");
+    return x;
 }
 }// namespace NES

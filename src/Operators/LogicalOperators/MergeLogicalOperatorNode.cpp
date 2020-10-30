@@ -1,6 +1,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Util/Logger.hpp>
+#include <z3++.h>
 
 namespace NES {
 
@@ -47,6 +48,13 @@ bool MergeLogicalOperatorNode::equal(const NodePtr rhs) const {
         return true;
     }
     return false;
+}
+
+z3::expr MergeLogicalOperatorNode::getFOL() {
+    // create a context
+    z3::context c;
+    z3::expr x = c.int_const("x");
+    return x;
 }
 
 }// namespace NES

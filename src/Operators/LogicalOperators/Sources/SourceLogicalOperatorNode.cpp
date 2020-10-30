@@ -1,6 +1,7 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <z3++.h>
 
 namespace NES {
 
@@ -43,6 +44,13 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
+}
+
+z3::expr SourceLogicalOperatorNode::getFOL() {
+    // create a context
+    z3::context c;
+    z3::expr x = c.int_const("x");
+    return  x;
 }
 
 }// namespace NES
