@@ -148,7 +148,6 @@ NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG
 }
 
 #define printPIDandParentID (std::cout <<  __FUNCTION__ << " called by process " << ::getpid() << " (parent: " << ::getppid() << ")" << std::endl)
-
 }
 
 #endif //NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
