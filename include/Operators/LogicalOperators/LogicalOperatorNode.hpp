@@ -6,6 +6,10 @@
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorNode.hpp>
 
+namespace z3 {
+class expr;
+}
+
 namespace NES {
 
 class LogicalOperatorNode : public OperatorNode {

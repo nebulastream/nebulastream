@@ -4,10 +4,6 @@
 #include <Nodes/Node.hpp>
 #include <Operators/OperatorId.hpp>
 
-namespace z3 {
-class expr;
-}
-
 namespace NES {
 
 class Schema;
