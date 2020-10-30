@@ -23,6 +23,7 @@ class SinkLogicalOperatorNode : public LogicalOperatorNode {
     SinkDescriptorPtr getSinkDescriptor();
     void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
     OperatorNodePtr copy() override;
+    z3::expr getFOL() override;
 
   private:
     SinkDescriptorPtr sinkDescriptor;

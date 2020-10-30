@@ -15,6 +15,7 @@ class CentralWindowOperator : public WindowOperatorNode {
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
     bool inferSchema() override;
+    z3::expr getFOL() override;
 };
 
 }// namespace NES

@@ -5,6 +5,7 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <z3++.h>
 
 namespace NES {
 
@@ -56,6 +57,13 @@ bool CentralWindowOperator::inferSchema() {
     } else {
         NES_THROW_RUNTIME_ERROR("SliceCreationOperator: type inference for non keyed streams is not supported");
     }
+}
+
+z3::expr CentralWindowOperator::getFOL() {
+    // create a context
+    z3::context c;
+    z3::expr x = c.int_const("x");
+    return x;
 }
 
 }// namespace NES

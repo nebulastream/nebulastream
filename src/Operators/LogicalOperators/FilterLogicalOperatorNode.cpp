@@ -2,6 +2,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Util/Logger.hpp>
 #include <deque>
+#include <z3++.h>
 
 namespace NES {
 
@@ -45,6 +46,13 @@ OperatorNodePtr FilterLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
+}
+
+z3::expr FilterLogicalOperatorNode::getFOL() {
+    // create a context
+    z3::context c;
+    z3::expr x = c.int_const("x");
+    return  x;
 }
 
 }// namespace NES

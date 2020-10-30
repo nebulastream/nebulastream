@@ -1,6 +1,8 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <z3++.h>
+
 namespace NES {
 
 SliceMergingOperator::SliceMergingOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
@@ -34,6 +36,13 @@ bool SliceMergingOperator::inferSchema() {
 
     NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
     return true;
+}
+
+z3::expr SliceMergingOperator::getFOL() {
+    // create a context
+    z3::context c;
+    z3::expr x = c.int_const("x");
+    return x;
 }
 
 }// namespace NES
