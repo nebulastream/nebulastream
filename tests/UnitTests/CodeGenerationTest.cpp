@@ -40,6 +40,8 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <utility>
+#include <Join/LogicalJoinDefinition.hpp>
+
 
 using std::cout;
 using std::endl;
@@ -1200,5 +1202,61 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
         auto mapedValue = outputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 4)->read(resultBuffer);
         EXPECT_EQ(reference, mapedValue);
     }
+}
+
+
+/**
+ * @brief This test generates a window slicer
+ */
+TEST_F(CodeGenerationTest, codeGenerationJoin) {
+    /* prepare objects for test */
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+
+    auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = CCodeGenerator::create();
+    auto context1 = PipelineContext::create();
+
+    auto input_schema = source->getSchema();
+
+    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+
+    Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create();
+
+    joinDef->setWindowType(TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)));
+    joinDef->setOnKey(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>());
+    codeGenerator->generateCodeForJoin(joinDef, context1);
+
+    /* compile code to pipeline stage */
+    auto stage1 = codeGenerator->compile(context1->code);
+
+    auto context2 = PipelineContext::create();
+    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    auto stage2 = codeGenerator->compile(context2->code);
+//    // init window handler
+//    auto windowHandler = WindowHandlerFactoryDetails::create<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
+//
+//    //auto context = PipelineContext::create();
+//    auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
+//      buff.isValid();
+//    });                                                                                          //valid check due to compiler error for unused var
+//    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);
+//    windowHandler->setup( nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0);
+//
+//    /* prepare input tuple buffer */
+//    auto inputBuffer = source->receiveData().value();
+//
+//    /* execute Stage */
+//    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
+//    WorkerContext wctx(NesThread::getId());
+//    stage1->execute(inputBuffer, windowHandler->getWindowState(),
+//                    windowHandler->getWindowManager(), queryContext, wctx);
+//
+//    //check partial aggregates in window  state
+//    auto stateVar =
+//        (StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) windowHandler
+//            ->getWindowState();
+//    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
+//    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
 }// namespace NES

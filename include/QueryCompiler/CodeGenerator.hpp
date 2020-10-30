@@ -13,6 +13,7 @@
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Join/LogicalJoinDefinition.hpp>
 
 namespace NES::Windowing {
 
@@ -115,6 +116,14 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) = 0;
+
+    /**
+    * @brief Code generation for a join operator, which depends on a particular join definition
+    * @param window The join definition, which contains all properties of the join.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    virtual bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) = 0;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

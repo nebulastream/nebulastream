@@ -521,6 +521,123 @@ bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefini
     return generateCodeForCompleteWindow(window, context);
 }
 
+bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) {
+    //    std::cout << joinDef << context << std::endl;
+    auto tf = getTypeFactory();
+    NES_DEBUG("CCodeGenerator: Generate code for join" << joinDef);
+
+    auto code = context->code;
+    /**
+     * within the loop
+     */
+    //        NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<std::vector<InputTuple>>*>* state_variable = (NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<std::vector<InputTuple>>*>*) state_var;
+    auto stateVariableDeclaration = VariableDeclaration::create(
+        tf->createPointer(tf->createAnonymusDataType(
+            "NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<std::vector<InputTuple>>*>")),
+        "state_variable");
+
+    auto stateVarDeclarationStatement = VarDeclStatement(stateVariableDeclaration)
+                                            .assign(TypeCast(VarRef(context->code->varDeclarationState), stateVariableDeclaration.getDataType()));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        stateVarDeclarationStatement));
+
+    // Read key value from record
+    // int64_t key = windowTuples[recordIndex].key;
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getOnKey()->getStamp()), joinDef->getOnKey()->getFieldName());
+
+    auto keyVariableAttributeDeclaration =
+        context->code->structDeclaratonInputTuple.getVariableDeclaration(joinDef->getOnKey()->getFieldName());
+    auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
+              .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                            VarRef(
+                                 keyVariableAttributeDeclaration)));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        keyVariableAttributeStatement));
+
+    // get key handle for current key
+    // auto key_value_handle = state_variable->get(key);
+    auto keyHandlerVariableDeclaration = VariableDeclaration::create(
+        tf->createAnonymusDataType("auto"), "key_value_handle");
+    auto getKeyStateVariable = FunctionCallStatement("get");
+    getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
+    auto keyHandlerVariableStatement = VarDeclStatement(keyHandlerVariableDeclaration)
+                                           .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        keyHandlerVariableStatement));
+
+    // access window slice state from state variable via key
+    // auto windowState = key_value_handle.value();
+    auto windowStateVariableDeclaration = VariableDeclaration::create(
+        tf->createAnonymusDataType("auto"), "windowState");
+    auto getValueFromKeyHandle = FunctionCallStatement("value");
+    auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
+                                            .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        windowStateVariableStatement));
+
+    // get current timestamp
+    // TODO add support for event time
+    auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
+    if (joinDef->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
+//      auto current_ts = NES::Windowing::getTsFromClock();
+        auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
+        auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
+    } else {
+//      auto current_ts = inputTuples[recordIndex].time //the time value of the key
+        auto tsVariableDeclaration =
+            context->code->structDeclaratonInputTuple.getVariableDeclaration(joinDef->getWindowType()->getTimeCharacteristic()->getField()->name);
+        auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration)
+            .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                VarRef(tsVariableDeclaration)));
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
+    }
+
+    // update slices
+    // windowManager->sliceStream(current_ts, windowState);
+    auto sliceStream = FunctionCallStatement("sliceStream");
+    sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
+    sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
+    auto call =
+        std::make_shared<BinaryOperatorStatement>(VarRef(context->code->varDeclarationWindowManager).accessPtr(sliceStream));
+    context->code->currentCodeInsertionPoint->addStatement(call);
+
+    // find the slices for a time stamp
+    // uint64_t current_slice_index = windowState->getSliceIndexByTs(current_ts);
+    auto getSliceIndexByTs = FunctionCallStatement("getSliceIndexByTs");
+    getSliceIndexByTs.addParameter(VarRef(currentTimeVariableDeclaration));
+    auto getSliceIndexByTsCall = VarRef(windowStateVariableDeclaration).accessPtr(getSliceIndexByTs);
+    auto currentSliceIndexVariableDeclaration = VariableDeclaration::create(
+        tf->createDataType(DataTypeFactory::createUInt64()), "current_slice_index");
+    auto current_slice_ref = VarRef(currentSliceIndexVariableDeclaration);
+    auto currentSliceIndexVariableStatement = VarDeclStatement(currentSliceIndexVariableDeclaration)
+        .assign(getSliceIndexByTsCall);
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        currentSliceIndexVariableStatement));
+
+    // get the partial aggregates
+    // auto& partialAggregates = windowState->getPartialAggregates();
+    auto getPartialAggregates = FunctionCallStatement("getPartialAggregates");
+    auto getPartialAggregatesCall = VarRef(windowStateVariableDeclaration).accessPtr(getPartialAggregates);
+    VariableDeclaration partialAggregatesVarDeclaration = VariableDeclaration::create(
+        tf->createAnonymusDataType("auto&"), "partialAggregates");
+    auto assignment = VarDeclStatement(partialAggregatesVarDeclaration)
+        .assign(getPartialAggregatesCall);
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
+
+    // update partial aggregate with join tuple
+    // partialAggregates[current_slice_index].push_back(inputTuples[recordIndex]);
+    const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
+    auto getPartialAggregatesPushback = FunctionCallStatement("push_back");
+    getPartialAggregatesPushback.addParameter(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]);
+    auto statement = partialRef.copy()->accessRef(getPartialAggregatesPushback);
+    context->code->currentCodeInsertionPoint->addStatement(statement.copy());
+
+    NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
+                                                  << " with code=" << context->code);
+    return true;
+}
+
 bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);

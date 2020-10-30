@@ -72,6 +72,14 @@ class CCodeGenerator : public CodeGenerator {
     bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) override;
 
     /**
+    * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
+    * @param window The window definition, which contains all properties of the window.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) override;
+
+    /**
      * @brief Performs the actual compilation the generated code pipeline.
      * @param code generated code.
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
