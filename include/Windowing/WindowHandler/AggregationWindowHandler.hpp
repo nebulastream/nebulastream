@@ -244,13 +244,12 @@ class AggregationWindowHandler : public AbstractWindowHandler , public std::enab
                 NES_DEBUG("Window Handler: write key=" << key << " value=" << value << " window.start()="
                                                        << window.getStartTs() << " window.getEndTs()="
                                                        << window.getEndTs() << " tupleBuffer.getNumberOfTuples())" << tupleBuffer.getNumberOfTuples());
-                assert(0);
-                //            writeResultRecord<FinalAggregateType>(tupleBuffer,
-                //                                                  tupleBuffer.getNumberOfTuples(),
-                //                                                  window.getStartTs(),
-                //                                                  window.getEndTs(),
-                //                                                  key,
-                //                                                  value);
+                writeResultRecord<FinalAggregateType>(tupleBuffer,
+                                                      tupleBuffer.getNumberOfTuples(),
+                                                      window.getStartTs(),
+                                                      window.getEndTs(),
+                                                      key,
+                                                      value);
 
                 //TODO: we have to determine which windwos and keys to delete
                 tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
@@ -266,13 +265,12 @@ class AggregationWindowHandler : public AbstractWindowHandler , public std::enab
                 NES_DEBUG("AggregationWindowHandler SL:  << slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs() << "slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs() << " watermark=" << watermark << " sliceID=" << sliceId);
                 if (slices[sliceId].getEndTs() <= watermark) {
                     NES_DEBUG("AggregationWindowHandler SL: write result");
-                    assert(0);
-                    //                writeResultRecord<PartialAggregateType>(tupleBuffer, tupleBuffer.getNumberOfTuples(),
-                    //                                                        slices[sliceId].getStartTs(),
-                    //                                                        slices[sliceId].getEndTs(),
-                    //                                                        key,
-                    //                                                        partialAggregates[sliceId]);
-                    //                tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
+                                    writeResultRecord<PartialAggregateType>(tupleBuffer, tupleBuffer.getNumberOfTuples(),
+                                                                            slices[sliceId].getStartTs(),
+                                                                            slices[sliceId].getEndTs(),
+                                                                            key,
+                                                                            partialAggregates[sliceId]);
+                                    tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
                     store->removeSlicesUntil(sliceId);
                 } else {
                     NES_DEBUG("AggregationWindowHandler SL: Dont write result");
@@ -305,8 +303,14 @@ class AggregationWindowHandler : public AbstractWindowHandler , public std::enab
      * @param key key of the value
      * @param value value
      */
-    //    template<typename ValueType>
-    //    void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key, ValueType value);
+    template<typename ValueType>
+    void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key, ValueType value)
+    {
+        windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
+        windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
+        windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
+        windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+    }
 
     /**
      * @brief Returns window manager.
