@@ -1221,10 +1221,10 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
 
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
 
-    Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create();
+    Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                                                                                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                                                                                 TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)));
 
-    joinDef->setWindowType(TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)));
-    joinDef->setOnKey(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>());
     codeGenerator->generateCodeForJoin(joinDef, context1);
 
     /* compile code to pipeline stage */
