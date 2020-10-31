@@ -133,7 +133,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleExactPredicates) {
     ASSERT_EQ(result, z3::unsat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates) {
+TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates1) {
 
     z3::context context;
 
@@ -158,6 +158,31 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates) {
     ASSERT_EQ(result, z3::unsat);
 }
 
+TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates2) {
+
+    z3::context context;
+
+    //Define Predicate
+    ExpressionNodePtr predicate1 = Attribute("value") == 40 + 40 && Attribute("id") >= 40;
+    predicate1->inferStamp(schema);
+    ExpressionNodePtr predicate2 = Attribute("id") >= 40 && Attribute("value") == 80;
+    predicate2->inferStamp(schema);
+
+    //Create Filters
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    NES_INFO("Expression 1" << expr1);
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    NES_INFO("Expression 2" << expr2);
+
+    //Assert
+    z3::solver solver(context);
+    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    z3::check_result result = solver.check();
+    ASSERT_EQ(result, z3::unsat);
+}
+
 TEST_F(OperatorToFOLUtilTest, testFiltersWithDifferentPredicates) {
 
     z3::context context;
@@ -165,7 +190,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithDifferentPredicates) {
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40;
     predicate1->inferStamp(schema);
-    ExpressionNodePtr predicate2 = Attribute("id") == 40 ;
+    ExpressionNodePtr predicate2 = Attribute("id") == 40;
     predicate2->inferStamp(schema);
 
     //Create Filters
@@ -179,7 +204,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithDifferentPredicates) {
     //Assert
     z3::solver solver(context);
     z3::expr expr = to_expr(context, Z3_mk_eq(context, expr1, expr2));
-    NES_INFO("Expressions : "<< expr);
+    NES_INFO("Expressions : " << expr);
     solver.add(!expr);
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
@@ -206,7 +231,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleDifferentPredicates) {
     //Assert
     z3::solver solver(context);
     z3::expr expr = to_expr(context, Z3_mk_eq(context, expr1, expr2));
-    NES_INFO("Expressions : "<< expr);
+    NES_INFO("Expressions : " << expr);
     solver.add(!expr);
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
@@ -278,6 +303,53 @@ TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpressionOnSameField) {
     //Assert
     z3::solver solver(context);
     solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    z3::check_result result = solver.check();
+    ASSERT_EQ(result, z3::sat);
+}
+
+TEST_F(OperatorToFOLUtilTest, testSourceWithExactStreamName) {
+
+    z3::context context;
+    //Define Predicate
+    auto sourceDescriptor = LogicalStreamSourceDescriptor::create("Car");
+
+    //Create Filters
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
+    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    NES_INFO("Expression 1" << expr1);
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
+    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    NES_INFO("Expression 2" << expr2);
+
+    //Assert
+    z3::solver solver(context);
+    z3::expr expr = to_expr(context, Z3_mk_eq(context, expr1, expr2));
+    NES_INFO("Expression " << expr);
+    solver.add(!expr);
+    z3::check_result result = solver.check();
+    ASSERT_EQ(result, z3::unsat);
+}
+
+TEST_F(OperatorToFOLUtilTest, testSourceWithDifferentStreamName) {
+
+    z3::context context;
+    //Define Predicate
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck");
+
+    //Create Filters
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    NES_INFO("Expression 1" << expr1);
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    NES_INFO("Expression 2" << expr2);
+
+    //Assert
+    z3::solver solver(context);
+    z3::expr expr = to_expr(context, Z3_mk_eq(context, expr1, expr2));
+    NES_INFO("Expression " << expr);
+    solver.add(!expr);
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
 }

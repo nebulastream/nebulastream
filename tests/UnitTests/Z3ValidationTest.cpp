@@ -110,5 +110,4 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
     //Assert
     ASSERT_EQ(s.check(), unsat);
 }
-
 }// namespace NES
