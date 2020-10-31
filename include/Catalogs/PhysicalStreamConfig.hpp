@@ -24,7 +24,7 @@ struct PhysicalStreamConfig {
   public:
     static PhysicalStreamConfigPtr create(std::string sourceType = "DefaultSource", std::string sourceConfig = "1", uint32_t sourceFrequency = 1,
                                           uint32_t numberOfTuplesToProducePerBuffer = 1, uint32_t numberOfBuffersToProduce = 1,
-                                          std::string physicalStreamName = "default_physical", std::string logicalStreamName = "default_logical");
+                                          std::string physicalStreamName = "default_physical", std::string logicalStreamName = "default_logical", bool endlessRepeat = false);
 
     /**
      * @brief Get the source type
@@ -70,11 +70,17 @@ struct PhysicalStreamConfig {
 
     std::string toString();
 
+    /**
+     * @brief getter/setter endlessRepeat
+     */
+    bool isEndlessRepeat() const;
+    void setEndlessRepeat(bool endlessRepeat);
   private:
     explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
                                   size_t sourceFrequency, size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
                                   std::string physicalStreamName,
-                                  std::string logicalStreamName);
+                                  std::string logicalStreamName,
+                                  bool endlessRepeat);
 
     std::string sourceType;
     std::string sourceConfig;
@@ -83,6 +89,7 @@ struct PhysicalStreamConfig {
     uint32_t numberOfBuffersToProduce;
     std::string physicalStreamName;
     std::string logicalStreamName;
+    bool endlessRepeat;
 };
 
 }// namespace NES

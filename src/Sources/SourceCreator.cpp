@@ -60,9 +60,10 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
                                         const std::string& delimiter,
                                         size_t numberOfTuplesToProducePerBuffer,
                                         size_t numbersOfBufferToProduce,
-                                        size_t frequency) {
+                                        size_t frequency,
+                                        bool endlessRepeat) {
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
-                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency);
+                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, endlessRepeat);
 }
 
 const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,

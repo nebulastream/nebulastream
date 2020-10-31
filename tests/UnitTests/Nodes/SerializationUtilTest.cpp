@@ -180,7 +180,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
-        auto source = CsvSourceDescriptor::create(schema, "localhost", ",", 0, 10, 10);
+        auto source = CsvSourceDescriptor::create(schema, "localhost", ",", 0, 10, 10, true);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));

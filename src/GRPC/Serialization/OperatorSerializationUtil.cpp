@@ -503,6 +503,7 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
         csvSerializedSourceDescriptor.set_delimiter(csvSourceDescriptor->getDelimiter());
         csvSerializedSourceDescriptor.set_numberoftuplestoproduceperbuffer(csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer());
         csvSerializedSourceDescriptor.set_numbufferstoprocess(csvSourceDescriptor->getNumBuffersToProcess());
+        csvSerializedSourceDescriptor.set_endlessrepeat(csvSourceDescriptor->isEndlessRepeat());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(csvSourceDescriptor->getSchema(), csvSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(csvSerializedSourceDescriptor);
@@ -594,7 +595,10 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&csvSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.release_sourceschema());
-        return CsvSourceDescriptor::create(schema, csvSerializedSourceDescriptor.filepath(), csvSerializedSourceDescriptor.delimiter(), csvSerializedSourceDescriptor.numberoftuplestoproduceperbuffer(), csvSerializedSourceDescriptor.numbufferstoprocess(), csvSerializedSourceDescriptor.frequency());
+        return CsvSourceDescriptor::create(schema, csvSerializedSourceDescriptor.filepath(), csvSerializedSourceDescriptor.delimiter(),
+                                           csvSerializedSourceDescriptor.numberoftuplestoproduceperbuffer(),
+                                           csvSerializedSourceDescriptor.numbufferstoprocess(), csvSerializedSourceDescriptor.frequency(),
+                                           csvSerializedSourceDescriptor.endlessrepeat());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
         // de-serialize sense source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as SenseSourceDescriptor");

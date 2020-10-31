@@ -108,8 +108,8 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short.csv",
-                                                                   1, 0, 1,
-                                                                   "test_stream", "QnV");
+                                                                1, 0, 1,
+                                                                "test_stream", "QnV");
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath =
@@ -191,7 +191,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     out.close();
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
 
-   //register physical stream R2000070
+    //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_R2000070.csv",
                                                                   1, 0, 1,
                                                                   "test_stream_R2000070", "QnV");
@@ -209,7 +209,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
 
     //register query
     std::string query = R"(Pattern::from("QnV").filter(Attribute("velocity") > 100).sink(FileSinkDescriptor::create(")"
-                        + outputFilePath + "\")); ";
+        + outputFilePath + "\")); ";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -225,31 +225,28 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     EXPECT_TRUE(ifs.good());
 
     std::string line;
-    int rowNumber = 0;
     bool resultWrk1 = false;
     bool resultWrk2 = false;
+    bool resultWrk3 = false;
 
     while (std::getline(ifs, line)) {
         NES_INFO("print line from content" << line);
-        rowNumber++;
-        if ((rowNumber > 3 && rowNumber < 6) || (rowNumber > 8 && rowNumber < 11) ) {
-            std::vector<string> content = UtilityFunctions::split(line, '|');
-            if (content.at(0) == "R2000073") {
-                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): content=" << content.at(2));
-                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): expContent= 102.629631");
-                EXPECT_EQ(content.at(2), "102.629631");
+        std::vector<string> content = UtilityFunctions::split(line, '|');
+        for (auto keyWord : content) {
+            if (keyWord == "R2000073") {
+                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): found=R2000073");
                 resultWrk1 = true;
-            }
-            else {
-                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): content=" << content.at(2));
-                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): expContent= 108.166664");
-                EXPECT_EQ(content.at(2), "108.166664");
+            } else if (keyWord == "1543625280000") {
+                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): found= 108.166664");
                 resultWrk2 = true;
+            } else if (keyWord == "102.629631") {
+                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): found= 102.629631");
+                resultWrk3 = true;
             }
         }
     }
 
-    EXPECT_TRUE((resultWrk1 && resultWrk2));
+    EXPECT_TRUE((resultWrk1 && resultWrk2 && resultWrk3));
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
@@ -294,7 +291,6 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
     wrk2->registerLogicalStream("QnV1", testSchemaFileName);
 
-
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_R2000070.csv",
                                                                   1, 0, 1,
@@ -318,7 +314,6 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
-
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
@@ -329,31 +324,28 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
     EXPECT_TRUE(ifs.good());
 
     std::string line;
-    int rowNumber = 0;
     bool resultWrk1 = false;
     bool resultWrk2 = false;
+    bool resultWrk3 = false;
 
     while (std::getline(ifs, line)) {
         NES_INFO("print line from content" << line);
-        rowNumber++;
-        if ((rowNumber > 3 && rowNumber < 6) || (rowNumber > 8 && rowNumber < 11) ) {
-            std::vector<string> content = UtilityFunctions::split(line, '|');
-            if (content.at(0) == "R2000073") {
-                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): content=" << content.at(2));
-                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): expContent= 102.629631");
-                EXPECT_EQ(content.at(2), "102.629631");
+        std::vector<string> content = UtilityFunctions::split(line, '|');
+        for (auto keyWord : content) {
+            if (keyWord == "R2000073") {
+                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): found=R2000073");
                 resultWrk1 = true;
-            }
-            else {
-                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): content=" << content.at(2));
-                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): expContent= 108.166664");
-                EXPECT_EQ(content.at(2), "108.166664");
+            } else if (keyWord == "1543625280000") {
+                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): found= 108.166664");
                 resultWrk2 = true;
+            } else if (keyWord == "102.629631") {
+                NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): found= 102.629631");
+                resultWrk3 = true;
             }
         }
     }
 
-    EXPECT_TRUE((resultWrk1 && resultWrk2));
+    EXPECT_TRUE((resultWrk1 && resultWrk2 && resultWrk3));
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
