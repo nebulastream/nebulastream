@@ -8,29 +8,36 @@ CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
                                          std::string delimiter,
                                          size_t numberOfTuplesToProducePerBuffer,
                                          size_t numBuffersToProcess,
-                                         size_t frequency)
+                                         size_t frequency,
+                                         bool endlessRepeat)
     : SourceDescriptor(std::move(schema)),
       filePath(std::move(filePath)),
       delimiter(std::move(delimiter)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
       numBuffersToProcess(numBuffersToProcess),
-      frequency(frequency) {}
+      frequency(frequency),
+    endlessRepeat(endlessRepeat){}
 
-CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency)
+CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
+                                         size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat)
     : SourceDescriptor(std::move(schema), std::move(streamName)),
       filePath(std::move(filePath)),
       delimiter(std::move(delimiter)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
       numBuffersToProcess(numBuffersToProcess),
-      frequency(frequency) {}
+      frequency(frequency),
+      endlessRepeat(endlessRepeat)
+{}
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
                                                 std::string filePath,
                                                 std::string delimiter,
                                                 size_t numberOfTuplesToProducePerBuffer,
                                                 size_t numBuffersToProcess,
-                                                size_t frequency) {
-    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(filePath), std::move(delimiter), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency));
+                                                size_t frequency,
+                                                bool endlessRepeat) {
+    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(filePath), std::move(delimiter),
+                                                                     numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat));
 }
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
@@ -39,8 +46,9 @@ SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
                                                 std::string delimiter,
                                                 size_t numberOfTuplesToProducePerBuffer,
                                                 size_t numBuffersToProcess,
-                                                size_t frequency) {
-    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(streamName), std::move(filePath), std::move(delimiter), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency));
+                                                size_t frequency,
+                                                bool endlessRepeat) {
+    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(streamName), std::move(filePath), std::move(delimiter), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat));
 }
 
 const std::string& CsvSourceDescriptor::getFilePath() const {
@@ -72,6 +80,12 @@ bool CsvSourceDescriptor::equal(SourceDescriptorPtr other) {
 
 std::string CsvSourceDescriptor::toString() {
     return "CsvSourceDescriptor(" + filePath + "," + delimiter + ", " + std::to_string(numBuffersToProcess) + ", " + std::to_string(frequency) + ")";
+}
+bool CsvSourceDescriptor::isEndlessRepeat() const {
+    return endlessRepeat;
+}
+void CsvSourceDescriptor::setEndlessRepeat(bool endlessRepeat) {
+    this->endlessRepeat = endlessRepeat;
 }
 
 }// namespace NES

@@ -45,7 +45,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
         return createCSVFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
                                    csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
                                    csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
-                                   csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency());
+                                   csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(), csvSourceDescriptor->isEndlessRepeat());
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Kafka source");

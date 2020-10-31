@@ -164,7 +164,6 @@ class DataSource : public Reconfigurable {
     size_t generatedBuffers;
     size_t numBuffersToProcess;
     std::atomic<size_t> gatheringInterval;
-    //    size_t lastGatheringTimeStamp;
     std::string sourceId;
     SourceType type;
     BufferManagerPtr bufferManager;

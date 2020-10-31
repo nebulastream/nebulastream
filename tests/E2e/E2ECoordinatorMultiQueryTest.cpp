@@ -362,7 +362,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     NES_INFO("RegisteredStream: " << success);
     EXPECT_TRUE(success);
 
-    string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
+    string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     size_t workerPid = workerProc.id();
@@ -525,7 +525,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     NES_INFO("RegisteredStream: " << success);
     EXPECT_TRUE(success);
 
-    string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
+    string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     size_t workerPid = workerProc.id();
@@ -693,7 +693,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     NES_INFO("RegisteredStream: " << success);
     EXPECT_TRUE(success);
 
-    string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
+    string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     size_t workerPid = workerProc.id();
