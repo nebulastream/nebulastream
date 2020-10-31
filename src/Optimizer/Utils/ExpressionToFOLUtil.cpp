@@ -46,9 +46,9 @@ z3::expr ExpressionToFOLUtil::serializeExpression(ExpressionNodePtr expression, 
         // serialize field access expression node
         NES_TRACE("ExpressionSerializationUtil:: serialize field access expression node.");
         auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
-        //        auto serializedFieldAccessExpression = SerializableExpression_FieldAccessExpression();
-        //        serializedFieldAccessExpression.set_fieldname(fieldAccessExpression->getFieldName());
-        //        serializedExpression->mutable_details()->PackFrom(serializedFieldAccessExpression);
+        std::string fieldName = fieldAccessExpression->getFieldName();
+        DataTypePtr fieldType = fieldAccessExpression->getStamp();
+        return DataTypeToFOL::serializeDataType(fieldName, fieldType, context);
     } else if (expression->instanceOf<FieldAssignmentExpressionNode>()) {
         // serialize field assignment expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize field assignment expression node.");

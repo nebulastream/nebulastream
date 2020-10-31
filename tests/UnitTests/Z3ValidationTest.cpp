@@ -39,6 +39,8 @@ TEST_F(Z3ValidationTest, deMorganDualityValidation) {
     //Define the expression to evaluate
     expr expression = (!(x && y)) == (!x || !y);
 
+    NES_INFO("Expression: " << expression);
+
     // adding the negation of the expression as a constraint.
     // We try to prove that inverse of this expression is valid (which is obviously false).
     s.add(!expression);

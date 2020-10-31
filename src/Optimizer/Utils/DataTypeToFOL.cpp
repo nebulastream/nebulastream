@@ -27,7 +27,7 @@ z3::expr NES::DataTypeToFOL::serializeDataType(std::string fieldName, DataTypePt
         //        serializedDataType->mutable_details()->PackFrom(serializedInteger);
         //        serializedDataType->set_type(SerializableDataType_Type_INTEGER);
     } else if (dataType->isFloat()) {
-        return context.fpa_const<10>(fieldName.c_str());
+        return context.fpa_const<64>(fieldName.c_str());
         auto floatDataType = DataType::as<Float>(dataType);
         //        auto serializableFloat = SerializableDataType_FloatDetails();
         //        serializableFloat.set_bits(floatDataType->getBits());
@@ -67,13 +67,13 @@ z3::expr DataTypeToFOL::serializeDataValue(ValueTypePtr valueType, z3::context& 
     if (valueType->isArrayValue()) {
         // serialize all information for array value types
         // 1. cast to ArrayValueType
-        auto arrayValueType = std::dynamic_pointer_cast<ArrayValue>(valueType);
-        // 2. create array value details
-        //        auto serializedArrayValue = SerializableDataValue_ArrayValue();
-        // 3. copy array values
-        for (const auto& value : arrayValueType->getValues()) {
-            //            serializedArrayValue.add_values(value);
-        }
+//        auto arrayValueType = std::dynamic_pointer_cast<ArrayValue>(valueType);
+//        // 2. create array value details
+//        //        auto serializedArrayValue = SerializableDataValue_ArrayValue();
+//        // 3. copy array values
+//        for (const auto& value : arrayValueType->getValues()) {
+//            //            serializedArrayValue.add_values(value);
+//        }
         // 4. serialize array type
         //        serializeDataType(arrayValueType->getType(), serializedArrayValue.mutable_type());
         //        serializedDataValue->mutable_value()->PackFrom(serializedArrayValue);
