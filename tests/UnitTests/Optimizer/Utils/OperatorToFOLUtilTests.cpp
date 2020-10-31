@@ -158,6 +158,33 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates) {
     ASSERT_EQ(result, z3::unsat);
 }
 
+TEST_F(OperatorToFOLUtilTest, testFiltersWithDifferentPredicates) {
+
+    z3::context context;
+
+    //Define Predicate
+    ExpressionNodePtr predicate1 = Attribute("value") == 40;
+    predicate1->inferStamp(schema);
+    ExpressionNodePtr predicate2 = Attribute("id") == 40 ;
+    predicate2->inferStamp(schema);
+
+    //Create Filters
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    NES_INFO("Expression 1" << expr1);
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    NES_INFO("Expression 2" << expr2);
+
+    //Assert
+    z3::solver solver(context);
+    z3::expr expr = to_expr(context, Z3_mk_eq(context, expr1, expr2));
+    NES_INFO("Expressions : "<< expr);
+    solver.add(!expr);
+    z3::check_result result = solver.check();
+    ASSERT_EQ(result, z3::sat);
+}
+
 TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleDifferentPredicates) {
 
     z3::context context;
@@ -181,6 +208,76 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleDifferentPredicates) {
     z3::expr expr = to_expr(context, Z3_mk_eq(context, expr1, expr2));
     NES_INFO("Expressions : "<< expr);
     solver.add(!expr);
+    z3::check_result result = solver.check();
+    ASSERT_EQ(result, z3::sat);
+}
+
+TEST_F(OperatorToFOLUtilTest, testMapWithExactExpression) {
+
+    z3::context context;
+    //Define expression
+    FieldAssignmentExpressionNodePtr expression = Attribute("value") = 40;
+    expression->inferStamp(schema);
+
+    //Create Filters
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression);
+    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    NES_INFO("Expression 1" << expr1);
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression);
+    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    NES_INFO("Expression 2" << expr2);
+
+    //Assert
+    z3::solver solver(context);
+    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    z3::check_result result = solver.check();
+    ASSERT_EQ(result, z3::unsat);
+}
+
+TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpression) {
+
+    z3::context context;
+    //Define expression
+    FieldAssignmentExpressionNodePtr expression1 = Attribute("value") = 40;
+    expression1->inferStamp(schema);
+    FieldAssignmentExpressionNodePtr expression2 = Attribute("id") = 40;
+    expression2->inferStamp(schema);
+
+    //Create Filters
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
+    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    NES_INFO("Expression 1" << expr1);
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
+    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    NES_INFO("Expression 2" << expr2);
+
+    //Assert
+    z3::solver solver(context);
+    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    z3::check_result result = solver.check();
+    ASSERT_EQ(result, z3::sat);
+}
+
+TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpressionOnSameField) {
+
+    z3::context context;
+    //Define expression
+    FieldAssignmentExpressionNodePtr expression1 = Attribute("value") = 40;
+    expression1->inferStamp(schema);
+    FieldAssignmentExpressionNodePtr expression2 = Attribute("value") = 50;
+    expression2->inferStamp(schema);
+
+    //Create Filters
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
+    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    NES_INFO("Expression 1" << expr1);
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
+    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    NES_INFO("Expression 2" << expr2);
+
+    //Assert
+    z3::solver solver(context);
+    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
 }
