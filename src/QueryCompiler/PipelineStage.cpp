@@ -28,10 +28,12 @@ PipelineStage::PipelineStage(
                                                  pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
-    if (hasWindowHandler()) {
-        NES_DEBUG("Pipelinestage ctor set origin id=" << qepId);
-        this->windowHandler->setOriginId(qepId);
-    }
+//    if (hasWindowHandler()) {
+//        NES_DEBUG("Pipelinestage ctor set origin id=" << qepId);
+//        assert(0);
+//        //TODO: we have to set it via updating
+////        this->windowHandler->setOriginId(qepId);
+//    }
 }
 
 bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
@@ -117,7 +119,7 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
 
 bool PipelineStage::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
     if (hasWindowHandler()) {
-        return windowHandler->setup(queryManager, bufferManager, nextStage, pipelineStageId);
+        return windowHandler->setup(queryManager, bufferManager, nextStage, pipelineStageId, qepId);
     }
     return true;
 }

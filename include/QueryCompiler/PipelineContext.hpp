@@ -4,8 +4,8 @@
 
 namespace NES::Windowing {
 
-class WindowHandler;
-typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
+class AbstractWindowHandler;
+typedef std::shared_ptr<AbstractWindowHandler> WindowHandlerPtr;
 
 }// namespace NES::Windowing
 

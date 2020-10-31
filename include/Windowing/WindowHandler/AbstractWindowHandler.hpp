@@ -13,22 +13,17 @@
 
 namespace NES::Windowing {
 
-template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
-class WindowHandlerImpl;
 
 /**
  * @brief The window handler checks every n seconds if a window should be triggered.
  * It has knowledge about the window definition and performs final aggregation.
  */
-class WindowHandler : public std::enable_shared_from_this<WindowHandler> {
-
+class AbstractWindowHandler {
   public:
-    explicit WindowHandler(LogicalWindowDefinitionPtr windowDefinition);
-
-    template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
-    auto as() {
-        return std::dynamic_pointer_cast<WindowHandlerImpl<KeyType, InputType, FinalAggregateType, PartialAggregateType>>(shared_from_this());
-    }
+//    template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
+//    auto as() {
+//        return std::dynamic_pointer_cast<WindowHandlerImpl<KeyType, InputType, FinalAggregateType, PartialAggregateType>>(shared_from_this());
+//    }
 
     /**
     * @brief Starts thread to check if the window should be triggered.
@@ -58,7 +53,7 @@ class WindowHandler : public std::enable_shared_from_this<WindowHandler> {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId) = 0;
+    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) = 0;
 
     /**
      * @brief Returns the window state, as a untyped pointer to the state variable.
@@ -71,23 +66,10 @@ class WindowHandler : public std::enable_shared_from_this<WindowHandler> {
      * @brief Returns window manager.
      * @return WindowManager.
      */
-    WindowManagerPtr getWindowManager() { return windowManager; };
-
-    /**
-     * @brief Gets the origin ID
-     * @return uint64_t
-     */
-    [[nodiscard]] uint64_t getOriginId() const;
-
-    /**
-     * @brief Sets the originId
-     * @param originId
-     */
-    void setOriginId(uint64_t originId);
+    virtual WindowManagerPtr getWindowManager() = 0;
 
   protected:
     std::atomic_bool running{false};
-    LogicalWindowDefinitionPtr windowDefinition;
     WindowManagerPtr windowManager;
     PipelineStagePtr nextPipeline;
     std::shared_ptr<std::thread> thread;
@@ -97,7 +79,6 @@ class WindowHandler : public std::enable_shared_from_this<WindowHandler> {
     BufferManagerPtr bufferManager;
     uint64_t originId;
 
-    MemoryLayoutPtr windowTupleLayout;
     SchemaPtr windowTupleSchema;
 };
 

@@ -5,6 +5,8 @@
 
 namespace NES {
 
+class TupleBuffer;
+
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
@@ -38,8 +40,8 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 
 namespace NES::Windowing {
 
-class WindowHandler;
-typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
+class AbstractWindowHandler;
+typedef std::shared_ptr<AbstractWindowHandler> WindowHandlerPtr;
 
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
