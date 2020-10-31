@@ -7,15 +7,21 @@ namespace NES::Join {
 
 class LogicalJoinDefinition {
   public:
-    LogicalJoinDefinition();
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr leftJoinKey, FieldAccessExpressionNodePtr rightJoinKey, Windowing::WindowTypePtr windowType);
 
-    static LogicalJoinDefinitionPtr create();
+    LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKey, FieldAccessExpressionNodePtr rightJoinKey, Windowing::WindowTypePtr windowType);
 
     /**
-    * @brief getter/setter for on key
+    * @brief getter/setter for on left join key
     */
-    FieldAccessExpressionNodePtr getOnKey();
-    void setOnKey(FieldAccessExpressionNodePtr onKey);
+    FieldAccessExpressionNodePtr getLeftJoinKey();
+    void setLeftJoinKey(FieldAccessExpressionNodePtr key);
+
+    /**
+     * @brief getter/setter for on right join key
+     */
+    FieldAccessExpressionNodePtr getRightJoinKey();
+    void setRightJoinKey(FieldAccessExpressionNodePtr key);
 
     /**
      * @brief getter/setter for window type
@@ -24,11 +30,11 @@ class LogicalJoinDefinition {
     void setWindowType(Windowing::WindowTypePtr windowType);
 
   private:
-    FieldAccessExpressionNodePtr onKey;
+    FieldAccessExpressionNodePtr leftJoinKey;
+    FieldAccessExpressionNodePtr rightJoinKey;
     Windowing::WindowTypePtr windowType;
-
 };
 
 typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
-}
+}// namespace NES::Join
 #endif//NES_INCLUDE_JOIN_LOGICALJOINDEFINITION_HPP_

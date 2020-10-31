@@ -543,10 +543,11 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
     // Read key value from record
     // int64_t key = windowTuples[recordIndex].key;
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getOnKey()->getStamp()), joinDef->getOnKey()->getFieldName());
+    //TODO we have to change this depending on the pipeline
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinDef->getLeftJoinKey()->getFieldName());
 
     auto keyVariableAttributeDeclaration =
-        context->code->structDeclaratonInputTuple.getVariableDeclaration(joinDef->getOnKey()->getFieldName());
+        context->code->structDeclaratonInputTuple.getVariableDeclaration(joinDef->getLeftJoinKey()->getFieldName());
     auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
               .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                             VarRef(

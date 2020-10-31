@@ -73,7 +73,7 @@ class CCodeGenerator : public CodeGenerator {
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
-    * @param window The window definition, which contains all properties of the window.
+    * @param The join definition, which contains all properties of the join.
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
