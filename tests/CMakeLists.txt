@@ -75,7 +75,7 @@ add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp" UnitTests/
 target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
-### WindowHandler Manager Test ###
+### AbstractWindowHandler Manager Test ###
 add_executable(window-manager-tests "UnitTests/WindowManagerTest.cpp")
 target_link_libraries(window-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME window-manager-tests COMMAND window-manager-tests)

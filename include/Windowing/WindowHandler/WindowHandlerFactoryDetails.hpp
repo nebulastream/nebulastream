@@ -4,13 +4,13 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
-#include <Windowing/Runtime/WindowHandlerImpl.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 
 namespace NES::Windowing {
 
@@ -27,48 +27,47 @@ class WindowHandlerFactoryDetails {
     * @return WindowHandlerPtr
     */
     template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-    static WindowHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition,
+    static WindowHandlerPtr createAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
                                    std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) {
-        return std::make_shared<WindowHandlerImpl<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, windowAggregation);
+        return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, windowAggregation);
     }
 
     template<class KeyType, class InputType>
-    static WindowHandlerPtr createWindowHandler(LogicalWindowDefinitionPtr windowDefinition) {
+    static WindowHandlerPtr createWindowHandlerForAggregationForKeyAndInput(LogicalWindowDefinitionPtr windowDefinition) {
         auto onField = windowDefinition->getWindowAggregation()->on();
         auto asField = windowDefinition->getWindowAggregation()->as();
         switch (windowDefinition->getWindowAggregation()->getType()) {
             case WindowAggregationDescriptor::Avg:
-                return create<KeyType, InputType, AVGPartialType<InputType>, AVGResultType>(windowDefinition, ExecutableAVGAggregation<InputType>::create());
+                return createAggregationWindow<KeyType, InputType, AVGPartialType<InputType>, AVGResultType>(windowDefinition, ExecutableAVGAggregation<InputType>::create());
             case WindowAggregationDescriptor::Count:
-                return create<KeyType, InputType, CountType, CountType>(windowDefinition, ExecutableCountAggregation<InputType>::create());
+                return createAggregationWindow<KeyType, InputType, CountType, CountType>(windowDefinition, ExecutableCountAggregation<InputType>::create());
             case WindowAggregationDescriptor::Max:
-                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMaxAggregation<InputType>::create());
+                return createAggregationWindow<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMaxAggregation<InputType>::create());
             case WindowAggregationDescriptor::Min:
-                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMinAggregation<InputType>::create());
+                return createAggregationWindow<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMinAggregation<InputType>::create());
             case WindowAggregationDescriptor::Sum:
-                return create<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableSumAggregation<InputType>::create());
-                ;
+                return createAggregationWindow<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableSumAggregation<InputType>::create());
         }
         NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: Avg aggregation currently not supported");
     };
 
     template<typename KeyType>
-    static WindowHandlerPtr createWindowHandler(LogicalWindowDefinitionPtr windowDefinition) {
+    static WindowHandlerPtr createWindowHandlerForAggregationKeyType(LogicalWindowDefinitionPtr windowDefinition) {
         auto logicalAggregationInput = windowDefinition->getWindowAggregation()->on();
         auto physicalInputType = DefaultPhysicalTypeFactory().getPhysicalType(logicalAggregationInput->getStamp());
         if (physicalInputType->isBasicType()) {
             auto basicInputType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalInputType);
             switch (basicInputType->getNativeType()) {
-                case BasicPhysicalType::UINT_8: return createWindowHandler<KeyType, uint8_t>(windowDefinition);
-                case BasicPhysicalType::UINT_16: return createWindowHandler<KeyType, uint16_t>(windowDefinition);
-                case BasicPhysicalType::UINT_32: return createWindowHandler<KeyType, uint32_t>(windowDefinition);
-                case BasicPhysicalType::UINT_64: return createWindowHandler<KeyType, uint64_t>(windowDefinition);
-                case BasicPhysicalType::INT_8: return createWindowHandler<KeyType, int8_t>(windowDefinition);
-                case BasicPhysicalType::INT_16: return createWindowHandler<KeyType, int16_t>(windowDefinition);
-                case BasicPhysicalType::INT_32: return createWindowHandler<KeyType, int32_t>(windowDefinition);
-                case BasicPhysicalType::INT_64: return createWindowHandler<KeyType, int64_t>(windowDefinition);
-                case BasicPhysicalType::FLOAT: return createWindowHandler<KeyType, float>(windowDefinition);
-                case BasicPhysicalType::DOUBLE: return createWindowHandler<KeyType, double>(windowDefinition);
+                case BasicPhysicalType::UINT_8: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint8_t>(windowDefinition);
+                case BasicPhysicalType::UINT_16: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint16_t>(windowDefinition);
+                case BasicPhysicalType::UINT_32: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint32_t>(windowDefinition);
+                case BasicPhysicalType::UINT_64: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint64_t>(windowDefinition);
+                case BasicPhysicalType::INT_8: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int8_t>(windowDefinition);
+                case BasicPhysicalType::INT_16: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int16_t>(windowDefinition);
+                case BasicPhysicalType::INT_32: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int32_t>(windowDefinition);
+                case BasicPhysicalType::INT_64: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int64_t>(windowDefinition);
+                case BasicPhysicalType::FLOAT: return createWindowHandlerForAggregationForKeyAndInput<KeyType, float>(windowDefinition);
+                case BasicPhysicalType::DOUBLE: return createWindowHandlerForAggregationForKeyAndInput<KeyType, double>(windowDefinition);
                 case BasicPhysicalType::CHAR:
                 case BasicPhysicalType::BOOLEAN: NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: we dont support aggregation of Chars or Booleans");
             };

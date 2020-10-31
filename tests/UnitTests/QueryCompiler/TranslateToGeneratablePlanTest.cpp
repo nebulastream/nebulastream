@@ -9,7 +9,7 @@
 #include <Nodes/Util/DumpContext.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>//
+#include <gtest/gtest.h>
 
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
@@ -32,6 +32,7 @@
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 
 using namespace std;
 

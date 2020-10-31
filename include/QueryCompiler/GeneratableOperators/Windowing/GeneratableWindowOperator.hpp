@@ -3,7 +3,7 @@
 
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
-#include <Windowing/Runtime/WindowHandlerFactory.hpp>
+#include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
 
 namespace NES {
 

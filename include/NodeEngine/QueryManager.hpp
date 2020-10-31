@@ -21,7 +21,7 @@
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
-#include <Windowing/Runtime/WindowHandler.hpp>
+#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <memory>
 
 namespace NES {
