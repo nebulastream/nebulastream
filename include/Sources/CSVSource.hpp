@@ -75,9 +75,9 @@ class CSVSource : public DataSource {
     std::string delimiter;
     size_t currentPosInFile;
     bool endlessRepeat;
-
-  public:
-
+    std::ifstream input;
+    size_t fileSize;
+    bool fileEnded;
 };
 
 typedef std::shared_ptr<CSVSource> CSVSourcePtr;

@@ -22,14 +22,23 @@ CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryMana
       delimiter(delimiter),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
       currentPosInFile(0),
-      endlessRepeat(endlessRepeat)
-{
+      endlessRepeat(endlessRepeat) {
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = frequency;
     tupleSize = schema->getSchemaSizeInBytes();
     NES_DEBUG(
         "CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer
-        << "endlessRepeat=" << endlessRepeat);
+                                << "endlessRepeat=" << endlessRepeat);
+
+    input.open(filePath.c_str());
+    NES_DEBUG("CSVSource::fillBuffer: read buffer");
+    input.seekg(0, input.end);
+    fileSize = input.tellg();
+    if (fileSize == -1) {
+        NES_FATAL_ERROR("CSVSource::fillBuffer File " << filePath << " is corrupted");
+    }
+
+    fileEnded = false;
 }
 
 std::optional<TupleBuffer> CSVSource::receiveData() {
@@ -51,15 +60,13 @@ const std::string CSVSource::toString() const {
 }
 
 void CSVSource::fillBuffer(TupleBuffer& buf) {
-    std::ifstream input(filePath.c_str());
-    NES_DEBUG("CSVSource::fillBuffer: read buffer");
-    input.seekg(0, input.end);
-    int file_size = input.tellg();
-    if (file_size == -1) {
-        NES_ERROR("CSVSource::fillBuffer File " << filePath << " is corrupted");
-        assert(0);
+    NES_DEBUG("CSVSource::fillBuffer: start at pos=" << currentPosInFile << " fileSize=" << fileSize);
+    if (fileEnded) {
+        NES_WARNING("CSVSource::fillBuffer: but file has already ended");
+        buf.setNumberOfTuples(0);
+        generatedBuffers++;
+        return;
     }
-    NES_DEBUG("CSVSource::fillBuffer: start at pos=" << currentPosInFile << " fileSize=" << file_size);
     input.seekg(currentPosInFile, input.beg);
 
     size_t generated_tuples_this_pass;
@@ -80,13 +87,13 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
         physicalTypes.push_back(physicalField);
     }
     while (tupCnt < generated_tuples_this_pass) {
-        if (input.tellg() >= file_size || input.tellg() == -1) {
-            NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << file_size);
+        if (input.tellg() >= fileSize || input.tellg() == -1) {
+            NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
             input.clear();
             input.seekg(0, input.beg);
-            if(!endlessRepeat)
-            {
+            if (!endlessRepeat) {
                 NES_DEBUG("CSVSource::fillBuffer: break because file ended");
+                fileEnded = true;
                 break;
             }
         }
@@ -168,8 +175,8 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     currentPosInFile = input.tellg();
     buf.setNumberOfTuples(tupCnt);
     NES_DEBUG(
-        "CSVSource::fillBuffer: readin finished read " << tupCnt << " tuples at posInFile="
-                                                       << currentPosInFile);
+        "CSVSource::fillBuffer: reading finished read " << tupCnt << " tuples at posInFile="
+                                                        << currentPosInFile);
     NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
 
     //update statistics
