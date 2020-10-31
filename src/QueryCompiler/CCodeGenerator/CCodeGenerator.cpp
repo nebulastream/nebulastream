@@ -549,9 +549,9 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto keyVariableAttributeDeclaration =
         context->code->structDeclaratonInputTuple.getVariableDeclaration(joinDef->getLeftJoinKey()->getFieldName());
     auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
-              .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                            VarRef(
-                                 keyVariableAttributeDeclaration)));
+                                             .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                                                 VarRef(
+                                                     keyVariableAttributeDeclaration)));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         keyVariableAttributeStatement));
 
@@ -580,17 +580,17 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     // TODO add support for event time
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
     if (joinDef->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
-//      auto current_ts = NES::Windowing::getTsFromClock();
+        //      auto current_ts = NES::Windowing::getTsFromClock();
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
     } else {
-//      auto current_ts = inputTuples[recordIndex].time //the time value of the key
+        //      auto current_ts = inputTuples[recordIndex].time //the time value of the key
         auto tsVariableDeclaration =
             context->code->structDeclaratonInputTuple.getVariableDeclaration(joinDef->getWindowType()->getTimeCharacteristic()->getField()->name);
         auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration)
-            .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                VarRef(tsVariableDeclaration)));
+                                                  .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                                                      VarRef(tsVariableDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
     }
 
@@ -612,7 +612,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         tf->createDataType(DataTypeFactory::createUInt64()), "current_slice_index");
     auto current_slice_ref = VarRef(currentSliceIndexVariableDeclaration);
     auto currentSliceIndexVariableStatement = VarDeclStatement(currentSliceIndexVariableDeclaration)
-        .assign(getSliceIndexByTsCall);
+                                                  .assign(getSliceIndexByTsCall);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         currentSliceIndexVariableStatement));
 
@@ -623,7 +623,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     VariableDeclaration partialAggregatesVarDeclaration = VariableDeclaration::create(
         tf->createAnonymusDataType("auto&"), "partialAggregates");
     auto assignment = VarDeclStatement(partialAggregatesVarDeclaration)
-        .assign(getPartialAggregatesCall);
+                          .assign(getPartialAggregatesCall);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
 
     // update partial aggregate with join tuple

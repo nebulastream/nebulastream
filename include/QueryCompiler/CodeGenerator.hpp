@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <API/Schema.hpp>
+#include <Join/LogicalJoinDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
@@ -13,7 +14,6 @@
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
-#include <Join/LogicalJoinDefinition.hpp>
 
 namespace NES::Windowing {
 
