@@ -19,10 +19,10 @@ AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregat
     : windowDefinition(std::move(windowDefinition)), windowAggregation(std::move(windowAggregation)) {
     this->thread.reset();
     windowTupleSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", this->windowDefinition->getOnKey()->getStamp())
-        ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
+                            ->addField(createField("start", UINT64))
+                            ->addField(createField("end", UINT64))
+                            ->addField("key", this->windowDefinition->getOnKey()->getStamp())
+                            ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
     windowTupleLayout = createRowLayout(windowTupleSchema);
 }
 
@@ -51,8 +51,8 @@ bool AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAgg
     running = true;
     NES_DEBUG("AggregationWindowHandler " << this << ": Spawn thread");
     thread = std::make_shared<std::thread>([this]() {
-      setThreadName("whdlr-%d-%d", pipelineStageId, nextPipeline->getQepParentId());
-      trigger();
+        setThreadName("whdlr-%d-%d", pipelineStageId, nextPipeline->getQepParentId());
+        trigger();
     });
     return true;
 }
@@ -165,13 +165,12 @@ void AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAgg
             NES_DEBUG("Window Handler: write key=" << key << " value=" << value << " window.start()="
                                                    << window.getStartTs() << " window.getEndTs()="
                                                    << window.getEndTs() << " tupleBuffer.getNumberOfTuples())" << tupleBuffer.getNumberOfTuples());
-            assert(0);
-            //            writeResultRecord<FinalAggregateType>(tupleBuffer,
-            //                                                  tupleBuffer.getNumberOfTuples(),
-            //                                                  window.getStartTs(),
-            //                                                  window.getEndTs(),
-            //                                                  key,
-            //                                                  value);
+            writeResultRecord<FinalAggregateType>(tupleBuffer,
+                                                  tupleBuffer.getNumberOfTuples(),
+                                                  window.getStartTs(),
+                                                  window.getEndTs(),
+                                                  key,
+                                                  value);
 
             //TODO: we have to determine which windwos and keys to delete
             tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
@@ -187,13 +186,12 @@ void AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAgg
             NES_DEBUG("AggregationWindowHandler SL:  << slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs() << "slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs() << " watermark=" << watermark << " sliceID=" << sliceId);
             if (slices[sliceId].getEndTs() <= watermark) {
                 NES_DEBUG("AggregationWindowHandler SL: write result");
-                assert(0);
-                //                writeResultRecord<PartialAggregateType>(tupleBuffer, tupleBuffer.getNumberOfTuples(),
-                //                                                        slices[sliceId].getStartTs(),
-                //                                                        slices[sliceId].getEndTs(),
-                //                                                        key,
-                //                                                        partialAggregates[sliceId]);
-                //                tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
+                writeResultRecord<PartialAggregateType>(tupleBuffer, tupleBuffer.getNumberOfTuples(),
+                                                        slices[sliceId].getStartTs(),
+                                                        slices[sliceId].getEndTs(),
+                                                        key,
+                                                        partialAggregates[sliceId]);
+                tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
                 store->removeSlicesUntil(sliceId);
             } else {
                 NES_DEBUG("AggregationWindowHandler SL: Dont write result");
@@ -248,13 +246,13 @@ void AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAgg
     }
 }
 
-//template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-//void AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>::writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key, ValueType value) {
-//    windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
-//    windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
-//    windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
-//    windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
-//}
+template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+void AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>::writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key, ValueType value) {
+    windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
+    windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
+    windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
+    windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+}
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 void* AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>::getWindowState() {
@@ -266,7 +264,6 @@ AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregat
     NES_DEBUG("AggregationWindowHandler: calling destructor");
     stop();
 }
-
 
 void testFunc() {
     //    NES::Windowing::AggregationWindowHandler<signed char, double, unsigned long, unsigned long>::AggregationWindowHandler(nullP, std::shared_ptr<NES::Windowing::ExecutableWindowAggregation<double, unsigned long, unsigned long> >)
