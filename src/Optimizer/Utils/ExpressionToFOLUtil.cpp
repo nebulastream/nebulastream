@@ -16,7 +16,7 @@
 #include <Nodes/Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Optimizer/Utils/DataTypeToFOL.hpp>
+#include <Optimizer/Utils/DataTypeToZ3Expr.hpp>
 #include <Optimizer/Utils/ExpressionToFOLUtil.hpp>
 #include <z3++.h>
 
@@ -37,31 +37,27 @@ z3::expr ExpressionToFOLUtil::serializeExpression(ExpressionNodePtr expression, 
         NES_TRACE("ExpressionSerializationUtil:: serialize constant value expression node.");
         auto constantValueExpression = expression->as<ConstantValueExpressionNode>();
         auto value = constantValueExpression->getConstantValue();
-        // serialize value
-        //        auto serializedConstantValue = SerializableExpression_ConstantValueExpression();
-        //        DataTypeSerializationUtil::serializeDataValue(value, serializedConstantValue.mutable_value());
-        //        serializedExpression->mutable_details()->PackFrom(serializedConstantValue);
-        return DataTypeToFOL::serializeDataValue(value, context);
+        return DataTypeToZ3Expr::createForDataValue(value, context);
     } else if (expression->instanceOf<FieldAccessExpressionNode>()) {
         // serialize field access expression node
         NES_TRACE("ExpressionSerializationUtil:: serialize field access expression node.");
         auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
         std::string fieldName = fieldAccessExpression->getFieldName();
         DataTypePtr fieldType = fieldAccessExpression->getStamp();
-        return DataTypeToFOL::serializeDataType(fieldName, fieldType, context);
+        return DataTypeToZ3Expr::createForField(fieldName, fieldType, context);
     } else if (expression->instanceOf<FieldAssignmentExpressionNode>()) {
         // serialize field assignment expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize field assignment expression node.");
         auto fieldAssignmentExpressionNode = expression->as<FieldAssignmentExpressionNode>();
         std::string fieldName = fieldAssignmentExpressionNode->getField()->getFieldName();
         DataTypePtr fieldType = fieldAssignmentExpressionNode->getField()->getStamp();
-        auto filedExpr = DataTypeToFOL::serializeDataType(fieldName, fieldType, context);
+        auto filedExpr = DataTypeToZ3Expr::createForField(fieldName, fieldType, context);
         auto valueExpr = serializeExpression(fieldAssignmentExpressionNode->getAssignment(), context);
         return to_expr(context, Z3_mk_eq(context, filedExpr, valueExpr));
     }
 
     NES_THROW_RUNTIME_ERROR("ExpressionSerializationUtil: could not serialize this expression: " + expression->toString());
-    //    DataTypeToFOL::serializeDataType(expression->getStamp());
+    //    DataTypeToFOL::createForField(expression->getStamp());
     //    NES_DEBUG("ExpressionSerializationUtil:: serialize expression node to " << serializedExpression->mutable_details()->type_url());
 }
 
