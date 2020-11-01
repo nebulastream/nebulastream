@@ -19,7 +19,7 @@ typedef std::shared_ptr<ValueType> ValueTypePtr;
 /**
  * @brief This class is used for converting a data field or value into Z3 expression.
  */
-class DataTypeToZ3Expr {
+class DataTypeToZ3ExprUtil {
   public:
     /**
      * @brief Create Z3 expression for field of specific datatype

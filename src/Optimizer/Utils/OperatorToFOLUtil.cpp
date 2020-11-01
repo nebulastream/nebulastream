@@ -26,7 +26,7 @@
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/ExpressionToFOLUtil.hpp>
+#include <Optimizer/Utils/ExpressionToZ3ExprUtil.hpp>
 #include <Optimizer/Utils/OperatorToFOLUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -65,7 +65,7 @@ z3::expr OperatorToFOLUtil::serializeOperator(OperatorNodePtr operatorNode, z3::
         // serialize filter operator
         NES_TRACE("OperatorSerializationUtil:: serialize to FilterLogicalOperatorNode");
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
-        return ExpressionToFOLUtil::serializeExpression(filterOperator->getPredicate(), context);
+        return ExpressionToZ3ExprUtil::createForExpression(filterOperator->getPredicate(), context);
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
         // serialize merge operator
         NES_TRACE("OperatorSerializationUtil:: serialize to MergeLogicalOperatorNode");
@@ -79,7 +79,7 @@ z3::expr OperatorToFOLUtil::serializeOperator(OperatorNodePtr operatorNode, z3::
         NES_TRACE("OperatorSerializationUtil:: serialize to MapLogicalOperatorNode");
         auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
         // serialize map expression
-        return ExpressionToFOLUtil::serializeExpression(mapOperator->getMapExpression(), context);
+        return ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context);
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
         // serialize window operator
         NES_TRACE("OperatorSerializationUtil:: serialize to CentralWindowOperator");
@@ -111,7 +111,7 @@ z3::expr OperatorToFOLUtil::serializeOperator(OperatorNodePtr operatorNode, z3::
 //    auto windowDefinition = windowOperator->getWindowDefinition();
 //
 //    if (windowDefinition->isKeyed()) {
-//        ExpressionSerializationUtil::serializeExpression(windowDefinition->getOnKey(), windowDetails.mutable_onkey());
+//        ExpressionSerializationUtil::createForExpression(windowDefinition->getOnKey(), windowDetails.mutable_onkey());
 //        windowDetails.set_numberofinputedges(windowDefinition->getNumberOfInputEdges());
 //    }
 //
@@ -145,8 +145,8 @@ z3::expr OperatorToFOLUtil::serializeOperator(OperatorNodePtr operatorNode, z3::
 //
 //    // serialize aggregation
 //    auto windowAggregation = windowDetails.mutable_windowaggregation();
-//    ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->as(), windowAggregation->mutable_asfield());
-//    ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->on(), windowAggregation->mutable_onfield());
+//    ExpressionSerializationUtil::createForExpression(windowDefinition->getWindowAggregation()->as(), windowAggregation->mutable_asfield());
+//    ExpressionSerializationUtil::createForExpression(windowDefinition->getWindowAggregation()->on(), windowAggregation->mutable_onfield());
 //
 //    switch (windowDefinition->getWindowAggregation()->getType()) {
 //        case Windowing::WindowAggregationDescriptor::Count:

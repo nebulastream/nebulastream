@@ -6,14 +6,14 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Optimizer/Utils/DataTypeToZ3Expr.hpp>
+#include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
 #include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
 
 namespace NES {
 
-z3::expr NES::DataTypeToZ3Expr::createForField(std::string fieldName, DataTypePtr dataType, z3::context& context) {
+z3::expr NES::DataTypeToZ3ExprUtil::createForField(std::string fieldName, DataTypePtr dataType, z3::context& context) {
     if (dataType->isUndefined()) {
         NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data type of undefined type.");
     } else if (dataType->isInteger()) {
@@ -31,7 +31,7 @@ z3::expr NES::DataTypeToZ3Expr::createForField(std::string fieldName, DataTypePt
     NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + dataType->toString());
 }
 
-z3::expr DataTypeToZ3Expr::createForDataValue(ValueTypePtr valueType, z3::context& context) {
+z3::expr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr valueType, z3::context& context) {
     if (valueType->isArrayValue()) {
         NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data value of array type.");
     } else {
