@@ -1,7 +1,7 @@
 // clang-format off
 #include <gtest/gtest.h>
 // clang-format on
-#include <Optimizer/Utils/OperatorToFOLUtil.hpp>
+#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <API/Expressions/Expressions.hpp>
@@ -72,10 +72,10 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithExactPredicates) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -98,10 +98,10 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithEqualPredicates) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -122,10 +122,10 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleExactPredicates) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -148,10 +148,10 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates1) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -174,10 +174,10 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates2) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -200,10 +200,10 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithDifferentPredicates) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -227,10 +227,10 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleDifferentPredicates) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -251,10 +251,10 @@ TEST_F(OperatorToFOLUtilTest, testMapWithExactExpression) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -276,10 +276,10 @@ TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpression) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -301,10 +301,10 @@ TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpressionOnSameField) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -323,10 +323,10 @@ TEST_F(OperatorToFOLUtilTest, testSourceWithExactStreamName) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -347,10 +347,10 @@ TEST_F(OperatorToFOLUtilTest, testSourceWithDifferentStreamName) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
-    z3::expr expr1 = OperatorToFOLUtil::serializeOperator(logicalOperator1, context);
+    z3::expr expr1 = OperatorToZ3ExprUtil::createForOperator(logicalOperator1, context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
-    z3::expr expr2 = OperatorToFOLUtil::serializeOperator(logicalOperator2, context);
+    z3::expr expr2 = OperatorToZ3ExprUtil::createForOperator(logicalOperator2, context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
