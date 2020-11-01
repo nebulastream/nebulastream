@@ -2,6 +2,7 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <z3++.h>
 
 namespace NES {
@@ -59,10 +60,10 @@ OperatorNodePtr MapLogicalOperatorNode::copy() {
     copy->setOutputSchema(outputSchema);
     return copy;
 }
-z3::expr MapLogicalOperatorNode::getFOL() {
+z3::expr MapLogicalOperatorNode::getZ3Expression() {
     // create a context
     z3::context c;
-    z3::expr x = c.int_const("x");
-    return x;
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    return OperatorToZ3ExprUtil::createForOperator(operatorNode, c);
 }
 }// namespace NES

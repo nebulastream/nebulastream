@@ -264,7 +264,7 @@ target_link_libraries(z3-validation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME z3-validation-tests COMMAND z3-validation-tests)
 
 ### Operator To FOL Util Test ###
-add_executable(operator-to-FOL-util-tests "UnitTests/Optimizer/Utils/OperatorToFOLUtilTests.cpp")
+add_executable(operator-to-FOL-util-tests "UnitTests/Optimizer/Utils/OperatorToZ3ExprUtilTests.cpp")
 target_link_libraries(operator-to-FOL-util-tests nes ${GTEST_LIBRARIES})
 add_test(NAME operator-to-FOL-util-tests COMMAND operator-to-FOL-util-tests)
 

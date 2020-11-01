@@ -9,38 +9,15 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <iostream>
-#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <z3++.h>
 
 using namespace NES;
 
-class OperatorToFOLUtilTest : public testing::Test {
+class OperatorToZ3ExprUtilTest : public testing::Test {
 
   public:
     SchemaPtr schema;
@@ -63,7 +40,7 @@ class OperatorToFOLUtilTest : public testing::Test {
     }
 };
 
-TEST_F(OperatorToFOLUtilTest, testFiltersWithExactPredicates) {
+TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithExactPredicates) {
 
     z3::context context;
     //Define Predicate
@@ -86,7 +63,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithExactPredicates) {
     ASSERT_EQ(result, z3::unsat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testFiltersWithEqualPredicates) {
+TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithEqualPredicates) {
 
     z3::context context;
 
@@ -112,7 +89,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithEqualPredicates) {
     ASSERT_EQ(result, z3::unsat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleExactPredicates) {
+TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleExactPredicates) {
 
     z3::context context;
 
@@ -136,7 +113,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleExactPredicates) {
     ASSERT_EQ(result, z3::unsat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates1) {
+TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates1) {
 
     z3::context context;
 
@@ -162,7 +139,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates1) {
     ASSERT_EQ(result, z3::unsat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates2) {
+TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates2) {
 
     z3::context context;
 
@@ -188,7 +165,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates2) {
     ASSERT_EQ(result, z3::unsat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testFiltersWithDifferentPredicates) {
+TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithDifferentPredicates) {
 
     z3::context context;
 
@@ -215,7 +192,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithDifferentPredicates) {
     ASSERT_EQ(result, z3::sat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleDifferentPredicates) {
+TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleDifferentPredicates) {
 
     z3::context context;
 
@@ -242,7 +219,7 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleDifferentPredicates) {
     ASSERT_EQ(result, z3::unsat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testMapWithExactExpression) {
+TEST_F(OperatorToZ3ExprUtilTest, testMapWithExactExpression) {
 
     z3::context context;
     //Define expression
@@ -265,7 +242,7 @@ TEST_F(OperatorToFOLUtilTest, testMapWithExactExpression) {
     ASSERT_EQ(result, z3::unsat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpression) {
+TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpression) {
 
     z3::context context;
     //Define expression
@@ -290,7 +267,7 @@ TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpression) {
     ASSERT_EQ(result, z3::sat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpressionOnSameField) {
+TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpressionOnSameField) {
 
     z3::context context;
     //Define expression
@@ -315,7 +292,7 @@ TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpressionOnSameField) {
     ASSERT_EQ(result, z3::sat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testSourceWithExactStreamName) {
+TEST_F(OperatorToZ3ExprUtilTest, testSourceWithExactStreamName) {
 
     z3::context context;
     //Define Predicate
@@ -338,7 +315,7 @@ TEST_F(OperatorToFOLUtilTest, testSourceWithExactStreamName) {
     ASSERT_EQ(result, z3::unsat);
 }
 
-TEST_F(OperatorToFOLUtilTest, testSourceWithDifferentStreamName) {
+TEST_F(OperatorToZ3ExprUtilTest, testSourceWithDifferentStreamName) {
 
     z3::context context;
     //Define Predicate

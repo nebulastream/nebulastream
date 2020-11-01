@@ -1,5 +1,6 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
 
@@ -50,11 +51,11 @@ bool MergeLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-z3::expr MergeLogicalOperatorNode::getFOL() {
+z3::expr MergeLogicalOperatorNode::getZ3Expression() {
     // create a context
     z3::context c;
-    z3::expr x = c.int_const("x");
-    return x;
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    return OperatorToZ3ExprUtil::createForOperator(operatorNode, c);
 }
 
 }// namespace NES

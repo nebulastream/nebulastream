@@ -47,7 +47,7 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
 
     OperatorNodePtr copy() override;
 
-    z3::expr getFOL() override;
+    z3::expr getZ3Expression() override;
 
   private:
     ExpressionNodePtr predicate;

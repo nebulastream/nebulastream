@@ -1,5 +1,6 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <utility>
 #include <z3++.h>
 
@@ -40,10 +41,10 @@ OperatorNodePtr SinkLogicalOperatorNode::copy() {
     return copy;
 }
 
-z3::expr SinkLogicalOperatorNode::getFOL() {
+z3::expr SinkLogicalOperatorNode::getZ3Expression() {
     // create a context
     z3::context c;
-    z3::expr x = c.int_const("x");
-    return x;
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    return OperatorToZ3ExprUtil::createForOperator(operatorNode, c);
 }
 }// namespace NES

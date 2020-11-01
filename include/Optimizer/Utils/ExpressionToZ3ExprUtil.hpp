@@ -19,24 +19,22 @@ typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 class ExpressionToZ3ExprUtil {
 
   public:
-
     /**
      * @brief Convert input expression into an equivalent Z3 expressions
      * @param expression: the input expression
      * @param context: Z3 context
      * @return returns object representing Z3 expression
      */
-    static z3::expr createForExpression(ExpressionNodePtr expression, z3::context &context);
+    static z3::expr createForExpression(ExpressionNodePtr expression, z3::context& context);
 
   private:
-
     /**
      * @brief Convert input Logical expression into an equivalent Z3 expression
      * @param expression: the input logical expression
      * @param context: the Z3 context
      * @return returns object representing Z3 expression
      */
-    static z3::expr createForLogicalExpressions(ExpressionNodePtr expression, z3::context &context);
+    static z3::expr createForLogicalExpressions(ExpressionNodePtr expression, z3::context& context);
 
     /**
      * @brief Convert input arithmetic expression into an equivalent Z3 expression
@@ -44,7 +42,7 @@ class ExpressionToZ3ExprUtil {
      * @param context: the Z3 context
      * @return returns object representing Z3 expression
      */
-    static z3::expr createForArithmeticalExpressions(ExpressionNodePtr expression, z3::context &context);
+    static z3::expr createForArithmeticalExpressions(ExpressionNodePtr expression, z3::context& context);
 };
 }// namespace NES
 
