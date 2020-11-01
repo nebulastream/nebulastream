@@ -80,7 +80,8 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithExactPredicates) {
 
     //Assert
     z3::solver solver(context);
-    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    Z3_ast arrays[] = {expr1, !expr2};
+    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
@@ -105,7 +106,8 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithEqualPredicates) {
 
     //Assert
     z3::solver solver(context);
-    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    Z3_ast arrays[] = {expr1, !expr2};
+    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
@@ -128,7 +130,8 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleExactPredicates) {
 
     //Assert
     z3::solver solver(context);
-    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    Z3_ast arrays[] = {expr1, !expr2};
+    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
@@ -153,7 +156,8 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates1) {
 
     //Assert
     z3::solver solver(context);
-    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    Z3_ast arrays[] = {expr1, !expr2};
+    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
@@ -178,7 +182,8 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleEqualPredicates2) {
 
     //Assert
     z3::solver solver(context);
-    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    Z3_ast arrays[] = {expr1, !expr2};
+    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
@@ -203,9 +208,9 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithDifferentPredicates) {
 
     //Assert
     z3::solver solver(context);
-    z3::expr expr = to_expr(context, Z3_mk_eq(context, expr1, expr2));
-    NES_INFO("Expressions : " << expr);
-    solver.add(!expr);
+    Z3_ast arrays[] = {expr1, !expr2};
+    z3::expr expr = to_expr(context, Z3_mk_and(context, 2, arrays));
+    solver.add(expr);
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
 }
@@ -230,11 +235,11 @@ TEST_F(OperatorToFOLUtilTest, testFiltersWithMultipleDifferentPredicates) {
 
     //Assert
     z3::solver solver(context);
-    z3::expr expr = to_expr(context, Z3_mk_eq(context, expr1, expr2));
-    NES_INFO("Expressions : " << expr);
-    solver.add(!expr);
+    Z3_ast arrays[] = {expr1, !expr2};
+    z3::expr expr = to_expr(context, Z3_mk_and(context, 2, arrays));
+    solver.add(expr);
     z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::sat);
+    ASSERT_EQ(result, z3::unsat);
 }
 
 TEST_F(OperatorToFOLUtilTest, testMapWithExactExpression) {
@@ -254,7 +259,8 @@ TEST_F(OperatorToFOLUtilTest, testMapWithExactExpression) {
 
     //Assert
     z3::solver solver(context);
-    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    Z3_ast arrays[] = {expr1, !expr2};
+    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
@@ -278,7 +284,8 @@ TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpression) {
 
     //Assert
     z3::solver solver(context);
-    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    Z3_ast arrays[] = {expr1, !expr2};
+    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
 }
@@ -302,7 +309,8 @@ TEST_F(OperatorToFOLUtilTest, testMapWithDifferentExpressionOnSameField) {
 
     //Assert
     z3::solver solver(context);
-    solver.add(!to_expr(context, Z3_mk_eq(context, expr1, expr2)));
+    Z3_ast arrays[] = {expr1, !expr2};
+    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
 }
@@ -323,9 +331,9 @@ TEST_F(OperatorToFOLUtilTest, testSourceWithExactStreamName) {
 
     //Assert
     z3::solver solver(context);
-    z3::expr expr = to_expr(context, Z3_mk_eq(context, expr1, expr2));
-    NES_INFO("Expression " << expr);
-    solver.add(!expr);
+    Z3_ast arrays[] = {expr1, !expr2};
+    z3::expr expr = to_expr(context, Z3_mk_and(context, 2, arrays));
+    solver.add(expr);
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
@@ -347,9 +355,9 @@ TEST_F(OperatorToFOLUtilTest, testSourceWithDifferentStreamName) {
 
     //Assert
     z3::solver solver(context);
-    z3::expr expr = to_expr(context, Z3_mk_eq(context, expr1, expr2));
-    NES_INFO("Expression " << expr);
-    solver.add(!expr);
+    Z3_ast arrays[] = {expr1, !expr2};
+    z3::expr expr = to_expr(context, Z3_mk_and(context, 2, arrays));
+    solver.add(expr);
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
 }

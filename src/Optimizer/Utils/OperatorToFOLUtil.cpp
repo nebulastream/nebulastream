@@ -53,8 +53,10 @@ z3::expr OperatorToFOLUtil::serializeOperator(OperatorNodePtr operatorNode, z3::
         // serialize source operator
         NES_TRACE("OperatorSerializationUtil:: serialize to SourceLogicalOperatorNode");
         SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
+        z3::expr exprVar = context.constant(context.str_symbol("streamName"), context.string_sort());
         std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
-        return context.string_val(streamName);
+        z3::expr exprVal = context.string_val(streamName);
+        return to_expr(context, Z3_mk_eq(context, exprVar, exprVal));
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         // serialize sink operator
         NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperatorNode");
