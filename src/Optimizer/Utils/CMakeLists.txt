@@ -1,5 +1,5 @@
 add_source_nes(
-        ExpressionToFOLUtil.cpp
+        ExpressionToZ3ExprUtil.cpp
         OperatorToFOLUtil.cpp
-        DataTypeToZ3Expr.cpp
+        DataTypeToZ3ExprUtil.cpp
 )
