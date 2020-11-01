@@ -18,15 +18,11 @@ class BroadcastLogicalOperatorNode : public LogicalOperatorNode {
     ~BroadcastLogicalOperatorNode() = default;
 
     bool inferSchema() override;
-
     bool equal(const NodePtr rhs) const override;
-
     bool isIdentical(NodePtr rhs) const override;
-
     const std::string toString() const override;
-
     OperatorNodePtr copy() override;
-    z3::expr getFOL() override;
+    z3::expr getZ3Expression() override;
 };
 }// namespace NES
 

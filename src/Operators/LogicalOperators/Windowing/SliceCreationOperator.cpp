@@ -3,6 +3,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
+#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -58,11 +59,8 @@ bool SliceCreationOperator::inferSchema() {
         NES_THROW_RUNTIME_ERROR("SliceCreationOperator: type inference for non keyed streams is not supported");
     }
 }
-z3::expr SliceCreationOperator::getFOL() {
-    // create a context
-    z3::context c;
-    z3::expr x = c.int_const("x");
-    return x;
+z3::expr SliceCreationOperator::getZ3Expression() {
+    NES_NOT_IMPLEMENTED();
 }
 
 }// namespace NES

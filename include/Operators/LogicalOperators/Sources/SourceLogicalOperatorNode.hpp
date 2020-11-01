@@ -37,7 +37,7 @@ class SourceLogicalOperatorNode : public LogicalOperatorNode {
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-    z3::expr getFOL() override;
+    z3::expr getZ3Expression() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;

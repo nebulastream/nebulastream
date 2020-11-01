@@ -3,6 +3,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <sstream>
@@ -63,11 +64,11 @@ bool WindowLogicalOperatorNode::inferSchema() {
     }
 }
 
-z3::expr WindowLogicalOperatorNode::getFOL() {
+z3::expr WindowLogicalOperatorNode::getZ3Expression() {
     // create a context
     z3::context c;
-    z3::expr x = c.int_const("x");
-    return x;
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    return OperatorToZ3ExprUtil::createForOperator(operatorNode, c);
 }
 
 }// namespace NES

@@ -38,11 +38,8 @@ bool SliceMergingOperator::inferSchema() {
     return true;
 }
 
-z3::expr SliceMergingOperator::getFOL() {
-    // create a context
-    z3::context c;
-    z3::expr x = c.int_const("x");
-    return x;
+z3::expr SliceMergingOperator::getZ3Expression() {
+    NES_NOT_IMPLEMENTED();
 }
 
 }// namespace NES

@@ -14,7 +14,7 @@ class WindowLogicalOperatorNode : public WindowOperatorNode {
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
     virtual bool inferSchema();
-    z3::expr getFOL() override;
+    z3::expr getZ3Expression() override;
 };
 
 }// namespace NES
