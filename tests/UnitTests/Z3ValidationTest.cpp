@@ -74,6 +74,32 @@ TEST_F(Z3ValidationTest, evaluateValidBinomialEquation) {
 }
 
 /**
+   @brief Validate for <tt>x > 1 and y > 1 that y + x > 1 </tt>.
+*/
+TEST_F(Z3ValidationTest, evaluateValidBinssomialEquation) {
+
+    // create a context
+    context c;
+    //Create an instance of the solver
+    solver s(c);
+
+    //Define int constants
+    sort sort = c.string_sort();
+    expr x = c.constant(c.str_symbol("x"), sort);
+
+    expr valX = c.string_val("x");
+    expr valY = c.string_val("x");
+
+    //Add equations to
+    //    s.add(x > 1);
+    //    s.add(y > 1);
+    s.add(x == valX && x == valY);
+
+    //Assert
+    ASSERT_EQ(s.check(), sat);
+}
+
+/**
    @brief Validate for <tt>x > 1 and y > 1 that y + x < 1 </tt>.
 */
 TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
