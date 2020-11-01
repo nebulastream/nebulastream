@@ -33,9 +33,7 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
      * @return bool true if they are the same otherwise false
      */
     bool equal(const NodePtr rhs) const override;
-
     bool isIdentical(NodePtr rhs) const override;
-
     const std::string toString() const override;
 
     /**
@@ -44,9 +42,7 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
     * @return true if schema was correctly inferred
     */
     bool inferSchema() override;
-
     OperatorNodePtr copy() override;
-
     z3::expr getZ3Expression() override;
 
   private:
