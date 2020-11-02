@@ -1,0 +1,19 @@
+#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMAXAGGREGATION_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMAXAGGREGATION_HPP_
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+namespace NES{
+
+class GeneratableMaxAggregation: public GeneratableWindowAggregation{
+  public:
+    GeneratableMaxAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+    static GeneratableWindowAggregationPtr create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+};
+
+
+}
+
+
+
+
+#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMAXAGGREGATION_HPP_

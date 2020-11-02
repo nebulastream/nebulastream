@@ -3,14 +3,6 @@
 
 #include <Windowing/WindowingForwardRefs.hpp>
 
-namespace NES {
-class BinaryOperatorStatement;
-class StructDeclaration;
-class CompoundStatement;
-typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
-
-}// namespace NES
-
 namespace NES::Windowing {
 
 /**
@@ -32,15 +24,6 @@ class WindowAggregationDescriptor {
     * @return WindowAggregationDescriptor
     */
     WindowAggregationDescriptor& as(FieldAccessExpressionNodePtr asField);
-
-    /**
-   * Generates code for the particular window aggregate.
-   * TODO in a later version we will hide this in the corresponding physical operator.
-   */
-    virtual void compileLiftCombine(NES::CompoundStatementPtr currentCode,
-                                    NES::BinaryOperatorStatement expressionStatement,
-                                    NES::StructDeclaration inputStruct,
-                                    NES::BinaryOperatorStatement inputRef) = 0;
 
     /**
     * Returns the result field of the aggregation

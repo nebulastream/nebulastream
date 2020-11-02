@@ -14,6 +14,13 @@
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableSlicingWindowOperator.hpp>
 
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
+
+
+
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMergeOperator.hpp>
@@ -75,6 +82,25 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     }
     NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED();
+}
+
+GeneratableWindowAggregationPtr TranslateToGeneratableOperatorPhase::transformWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) {
+    switch (windowAggregationDescriptor->getType()) {
+        case Windowing::WindowAggregationDescriptor::Count: {
+            return GeneratableCountAggregation::create(windowAggregationDescriptor);
+        };
+        case Windowing::WindowAggregationDescriptor::Max: {
+            return GeneratableMaxAggregation::create(windowAggregationDescriptor);
+        };
+        case Windowing::WindowAggregationDescriptor::Min: {
+            return GeneratableMinAggregation::create(windowAggregationDescriptor);
+        };
+        case Windowing::WindowAggregationDescriptor::Sum:{
+            return GeneratableSumAggregation::create(windowAggregationDescriptor);
+        };
+        default:
+            NES_NOT_IMPLEMENTED();
+    }
 }
 
 OperatorNodePtr TranslateToGeneratableOperatorPhase::transform(OperatorNodePtr operatorNode, OperatorNodePtr legacyParent) {

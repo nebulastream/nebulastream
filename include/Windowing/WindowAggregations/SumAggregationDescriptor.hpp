@@ -16,18 +16,6 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
 
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
-    /*
-     * @brief generate the code for lift and combine of the SumAggregationDescriptor aggregate
-     * @param currentCode
-     * @param expressionStatement
-     * @param inputStruct
-     * @param inputRef
-     */
-    void compileLiftCombine(CompoundStatementPtr currentCode,
-                            BinaryOperatorStatement partialRef,
-                            StructDeclaration inputStruct,
-                            BinaryOperatorStatement inputRef) override;
-
     /**
      * @brief Returns the type of this aggregation.
      * @return WindowAggregationDescriptor::Type

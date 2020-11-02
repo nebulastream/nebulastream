@@ -4,3 +4,5 @@ add_source_nes(
         GeneratableDistributedWindowCombinerOperator.cpp
         GeneratableDistributedWindowSliceCreationOperator.cpp
 )
+
+add_subdirectory(WindowAggregations)
