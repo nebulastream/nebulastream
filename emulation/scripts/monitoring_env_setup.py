@@ -6,6 +6,9 @@ from mininet.cli import CLI
 from mininet.link import TCLink
 from mininet.log import info, setLogLevel
 
+#params for the topology
+number_workers = 10
+
 setLogLevel('info')
 
 net = Containernet(controller=Controller)
@@ -35,33 +38,29 @@ crd = net.addDocker('crd', ip='10.15.16.3',
                        ports=[8081, 12346, 4000, 4001, 4002, 9100],
                        port_bindings={8081: 8081, 12346: 12346, 4000: 4000, 4001: 4001, 4002: 4002, 9100: 9100})
 
-#TODO: build params will be addressed by issue 1045
-w1 = net.addDocker('w1', ip='10.15.16.4',
-                       dimage="nes_prometheus",
-                       build_params={"dockerfile": "Dockerfile-NES-Prometheus",
-                                     "path": nesDir + "emulation/images"},
-                       ports=[3000, 3001, 9100],
-                       port_bindings={3007: 3000, 3008: 3001, 9101: 9100})
-
-#TODO: build params will be addressed by issue 1045
-w2 = net.addDocker('w2', ip='10.15.16.5',
-                   dimage="nes_prometheus",
-                   build_params={"dockerfile": "Dockerfile-NES-Prometheus",
-                                     "path": nesDir + "emulation/images"},
-                   ports=[3000, 3001, 9100],
-                   port_bindings={3005: 3000, 3006: 3001, 9102: 9100})
+workers = []
+for i in range(0, number_workers):
+    ip = '10.15.16.' + str(4+i)
+    w = net.addDocker('w'+str(i), ip=ip,
+                           dimage="nes_prometheus",
+                           build_params={"dockerfile": "Dockerfile-NES-Prometheus",
+                                         "path": nesDir + "emulation/images"},
+                           ports=[3000, 3001, 9100],
+                           port_bindings={3007: 3000, 3008: 3001, 9101: 9100})
+    cmd = '/entrypoint-prom.sh wrk /opt/local/nebula-stream/nesWorker --logLevel=LOG_NONE --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=' + ip + ' --sourceType=CSVSource --sourceConfig=/opt/local/nebula-stream/exdra.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra'
+    workers.append((w, cmd))
 
 info('*** Adding switches\n')
 sw1 = net.addSwitch('sw1')
 
 info('*** Creating links\n')
 net.addLink(crd, sw1, cls=TCLink)
-net.addLink(w1, sw1, cls=TCLink)
-net.addLink(w2, sw1, cls=TCLink)
+for w in workers:
+    net.addLink(w[0], sw1, cls=TCLink)
 
-crd.cmd('/entrypoint-prom.sh crd /opt/local/nebula-stream/nesCoordinator --serverIp=0.0.0.0')
-w1.cmd('/entrypoint-prom.sh wrk /opt/local/nebula-stream/nesWorker --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=10.15.16.4 --sourceType=CSVSource --sourceConfig=/opt/local/nebula-stream/exdra.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra')
-w2.cmd('/entrypoint-prom.sh wrk /opt/local/nebula-stream/nesWorker --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=10.15.16.5 --sourceType=CSVSource --sourceConfig=/opt/local/nebula-stream/exdra.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra')
+crd.cmd('/entrypoint-prom.sh crd /opt/local/nebula-stream/nesCoordinator --serverIp=0.0.0.0 --logLevel=LOG_NONE')
+for w in workers:
+    w[0].cmd(w[1])
 
 info('*** Starting network\n')
 net.start()
