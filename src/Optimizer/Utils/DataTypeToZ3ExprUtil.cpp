@@ -14,9 +14,7 @@
 namespace NES {
 
 z3::expr NES::DataTypeToZ3ExprUtil::createForField(std::string fieldName, DataTypePtr dataType, z3::context& context) {
-    if (dataType->isUndefined()) {
-        NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data type of undefined type.");
-    } else if (dataType->isInteger()) {
+    if (dataType->isInteger()) {
         return context.int_const(fieldName.c_str());
     } else if (dataType->isFloat()) {
         return context.fpa_const<64>(fieldName.c_str());

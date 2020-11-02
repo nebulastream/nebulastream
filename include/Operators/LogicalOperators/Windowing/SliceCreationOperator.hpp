@@ -3,6 +3,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
+#include <z3++.h>
 
 namespace NES {
 
@@ -18,7 +19,7 @@ class SliceCreationOperator : public WindowOperatorNode {
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
     virtual bool inferSchema() override;
-    z3::expr getZ3Expression() override;
+    z3::expr getZ3Expression(z3::context& context) override;
 };
 
 }// namespace NES

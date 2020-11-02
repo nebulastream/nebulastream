@@ -3,6 +3,7 @@
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <memory>
+#include <z3++.h>
 
 namespace NES {
 
@@ -22,7 +23,7 @@ class BroadcastLogicalOperatorNode : public LogicalOperatorNode {
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-    z3::expr getZ3Expression() override;
+    z3::expr getZ3Expression(z3::context& context) override;
 };
 }// namespace NES
 

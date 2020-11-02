@@ -58,7 +58,7 @@ bool WindowComputationOperator::inferSchema() {
     }
 }
 
-z3::expr WindowComputationOperator::getZ3Expression() {
+z3::expr WindowComputationOperator::getZ3Expression(z3::context&) {
     NES_NOT_IMPLEMENTED();
 }
 }// namespace NES

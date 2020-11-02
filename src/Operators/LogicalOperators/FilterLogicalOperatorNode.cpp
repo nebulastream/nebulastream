@@ -49,12 +49,9 @@ OperatorNodePtr FilterLogicalOperatorNode::copy() {
     return copy;
 }
 
-z3::expr FilterLogicalOperatorNode::getZ3Expression() {
-    // create a context
-    // create a context
-    z3::context c;
+z3::expr FilterLogicalOperatorNode::getZ3Expression(z3::context& context) {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    return OperatorToZ3ExprUtil::createForOperator(operatorNode, c);
+    return OperatorToZ3ExprUtil::createForOperator(operatorNode, context);
 }
 
 }// namespace NES

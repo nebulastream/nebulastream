@@ -3,6 +3,7 @@
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <z3++.h>
 
 namespace NES {
 
@@ -23,7 +24,7 @@ class SinkLogicalOperatorNode : public LogicalOperatorNode {
     SinkDescriptorPtr getSinkDescriptor();
     void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
     OperatorNodePtr copy() override;
-    z3::expr getZ3Expression() override;
+    z3::expr getZ3Expression(z3::context& context) override;
 
   private:
     SinkDescriptorPtr sinkDescriptor;
