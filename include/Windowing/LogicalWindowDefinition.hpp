@@ -103,6 +103,7 @@ class LogicalWindowDefinition {
 
   private:
     WindowAggregationPtr windowAggregation;
+
     WindowTypePtr windowType;
     FieldAccessExpressionNodePtr onKey;
     DistributionCharacteristicPtr distributionType;

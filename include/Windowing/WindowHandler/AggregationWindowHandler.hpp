@@ -76,48 +76,51 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return true;
     }
 
+    void triggerEveryNms(size_t ms) {
+        while (running) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+            trigger();
+        }
+    }
     /**
      * @brief triggers all ready windows.
      * @return
      */
     void trigger() {
-        while (running) {
-            sleep(1);
+        NES_DEBUG("AggregationWindowHandler: check widow trigger origin id=" << originId);
 
-            NES_DEBUG("AggregationWindowHandler: check widow trigger origin id=" << originId);
+        std::string triggerType;
+        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
+            triggerType = "Combining";
+        } else {
+            triggerType = "Slicing";
+        }
 
-            std::string triggerType;
-            if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
-                triggerType = "Combining";
-            } else {
-                triggerType = "Slicing";
-            }
+        // create the output tuple buffer
+        // TODO can we make it get the buffer only once?
+        auto tupleBuffer = bufferManager->getBufferBlocking();
+        NES_DEBUG("AggregationWindowHandler: check widow trigger " << triggerType << " origin id=" << originId);
 
-            // create the output tuple buffer
-            // TODO can we make it get the buffer only once?
-            auto tupleBuffer = bufferManager->getBufferBlocking();
-            NES_DEBUG("AggregationWindowHandler: check widow trigger " << triggerType << " origin id=" << originId);
+        tupleBuffer.setOriginId(originId);
 
-            tupleBuffer.setOriginId(originId);
-            // iterate over all keys in the window state
+        // iterate over all keys in the window state
+        for (auto& it : windowStateVariable->rangeAll()) {
+            NES_DEBUG("AggregationWindowHandler: " << triggerType << " check key=" << it.first << "nextEdge=" << it.second->nextEdge);
 
-            for (auto& it : windowStateVariable->rangeAll()) {
-                NES_DEBUG("AggregationWindowHandler: " << triggerType << " check key=" << it.first << "nextEdge=" << it.second->nextEdge);
-
-                // write all window aggregates to the tuple buffer
-                aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
-                // TODO we currently have no handling in the case the tuple buffer is full
-            }
-            // if produced tuple then send the tuple buffer to the next pipeline stage or sink
-            if (tupleBuffer.getNumberOfTuples() > 0) {
-                NES_DEBUG("AggregationWindowHandler: " << triggerType << " Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
-                                                       << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowTupleSchema)
-                                                       << " originId=" << tupleBuffer.getOriginId() << "type=" << triggerType
-                                                       << std::endl);
-                queryManager->addWorkForNextPipeline(
-                    tupleBuffer,
-                    this->nextPipeline);
-            }
+            // write all window aggregates to the tuple buffer
+            aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
+            // TODO we currently have no handling in the case the tuple buffer is full
+        }
+        // if produced tuple then send the tuple buffer to the next pipeline stage or sink
+        if (tupleBuffer.getNumberOfTuples() > 0) {
+            NES_DEBUG("AggregationWindowHandler: " << triggerType << " Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
+                                                   << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowTupleSchema)
+                                                   << " originId=" << tupleBuffer.getOriginId() << "type=" << triggerType
+                                                   << std::endl);
+            //forward buffer to next pipeline stage
+            queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
+        } else {
+            NES_WARNING("AggregationWindowHandler: output buffer size is 0 and therefore now buffer is forwarded");
         }
     }
 
@@ -188,7 +191,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                 NES_DEBUG("AggregationWindowHandler::aggregateWindows(SlidingWindow): getLastWatermark was 0 set to=" << initWatermark);
                 store->setLastWatermark(initWatermark);
             } else {
-                NES_DEBUG("AggregationWindowHandler::aggregateWindows: Unkown WindowType; LastWatermark was 0 and remains 0");
+                NES_DEBUG("AggregationWindowHandler::aggregateWindows: Unknown WindowType; LastWatermark was 0 and remains 0");
             }
         } else {
             NES_DEBUG("AggregationWindowHandler::aggregateWindows: last watermark is=" << store->getLastWatermark());
