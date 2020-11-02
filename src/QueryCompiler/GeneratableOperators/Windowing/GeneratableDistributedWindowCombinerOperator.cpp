@@ -1,6 +1,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -14,15 +15,15 @@ void GeneratableCombiningWindowOperator::produce(CodeGeneratorPtr codegen, Pipel
 void GeneratableCombiningWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowHandler = createWindowHandler();
     context->setWindow(windowHandler);
-    codegen->generateCodeForCombiningWindow(getWindowDefinition(), context);
+    codegen->generateCodeForCombiningWindow(getWindowDefinition(), generatableWindowAggregation, context);
 }
 
-GeneratableDistributedlWindowCombinerOperatorPtr GeneratableCombiningWindowOperator::create(WindowOperatorNodePtr windowLogicalOperator, OperatorId id) {
-    return std::make_shared<GeneratableCombiningWindowOperator>(GeneratableCombiningWindowOperator(windowLogicalOperator->getWindowDefinition(), id));
+GeneratableDistributedlWindowCombinerOperatorPtr GeneratableCombiningWindowOperator::create(WindowOperatorNodePtr windowLogicalOperator,GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id) {
+    return std::make_shared<GeneratableCombiningWindowOperator>(GeneratableCombiningWindowOperator(windowLogicalOperator->getWindowDefinition(), std::move(generatableWindowAggregation), id));
 }
 
-GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
-    : GeneratableWindowOperator(windowDefinition, id) {
+GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id)
+    : GeneratableWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id) {
 }
 
 const std::string GeneratableCombiningWindowOperator::toString() const {

@@ -1,6 +1,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -14,14 +15,14 @@ void GeneratableCompleteWindowOperator::produce(CodeGeneratorPtr codegen, Pipeli
 void GeneratableCompleteWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowHandler = createWindowHandler();
     context->setWindow(windowHandler);
-    codegen->generateCodeForCompleteWindow(getWindowDefinition(), context);
+    codegen->generateCodeForCompleteWindow(getWindowDefinition(), generatableWindowAggregation, context);
 }
-GeneratableWindowOperatorPtr GeneratableCompleteWindowOperator::create(WindowOperatorNodePtr windowLogicalOperator, OperatorId id) {
-    return std::make_shared<GeneratableCompleteWindowOperator>(GeneratableCompleteWindowOperator(windowLogicalOperator->getWindowDefinition(), id));
+GeneratableWindowOperatorPtr GeneratableCompleteWindowOperator::create(WindowOperatorNodePtr windowLogicalOperator, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id) {
+    return std::make_shared<GeneratableCompleteWindowOperator>(GeneratableCompleteWindowOperator(windowLogicalOperator->getWindowDefinition(), std::move(generatableWindowAggregation), id));
 }
 
-GeneratableCompleteWindowOperator::GeneratableCompleteWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
-    : GeneratableWindowOperator(windowDefinition, id) {}
+GeneratableCompleteWindowOperator::GeneratableCompleteWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id)
+    : GeneratableWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id) {}
 
 const std::string GeneratableCompleteWindowOperator::toString() const {
     std::stringstream ss;

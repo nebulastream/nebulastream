@@ -3,9 +3,15 @@
 
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
-#include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
+
+namespace NES::Windowing{
+class AbstractWindowHandler;
+typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
+}
 
 namespace NES {
+class GeneratableWindowAggregation;
+typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregationPtr;
 
 class GeneratableWindowOperator : public WindowLogicalOperatorNode, public GeneratableOperator {
   public:
@@ -32,7 +38,8 @@ class GeneratableWindowOperator : public WindowLogicalOperatorNode, public Gener
     Windowing::AbstractWindowHandlerPtr createWindowHandler();
 
   protected:
-    explicit GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id);
+    explicit GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id);
+    GeneratableWindowAggregationPtr generatableWindowAggregation;
 };
 
 }// namespace NES
