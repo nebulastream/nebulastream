@@ -37,17 +37,29 @@ class TranslateToGeneratableOperatorPhase {
     /**
      * @brief Translates a operator node and all its children to the generatable representation.
      * @param operatorNode
-     * @return Legacy Operator Tree
+     * @return Generatable Operator Tree
      */
     OperatorNodePtr transform(OperatorNodePtr operatorNode, OperatorNodePtr legacyParent = nullptr);
 
     /**
      * @brief Translates an individual operator to its generatable representation.
      * @param operatorNode
-     * @return Legacy Operator
+     * @return Generatable Operator
      */
     OperatorNodePtr transformIndividualOperator(OperatorNodePtr operatorNode, OperatorNodePtr generatableParentOperator);
 
+    /**
+    * @brief Translates an window operator to its generatable representation.
+    * @param windowOperator
+    * @return Generatable Operator
+    */
+    OperatorNodePtr transformWindowOperator(WindowOperatorNodePtr windowOperator, OperatorNodePtr generatableParentOperator);
+
+    /**
+    * @brief Translates an window aggregation to its generatable representation.
+    * @param windowAggregationDescriptor
+    * @return Generatable Operator
+    */
     GeneratableWindowAggregationPtr transformWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
 
     TranslateToGeneratableOperatorPhase();
