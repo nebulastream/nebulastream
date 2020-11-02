@@ -10,7 +10,6 @@
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <memory>
 namespace NES::Windowing {
 
@@ -19,9 +18,9 @@ class WindowHandlerFactory {
     /**
      * @brief Creates a window handler for aggregations only by using the window definition.
      * @param windowDefinition window definition
-     * @return WindowHandlerPtr
+     * @return AbstractWindowHandlerPtr
      */
-    static WindowHandlerPtr createAggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition);
+    static AbstractWindowHandlerPtr createAggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition);
 
 };
 }// namespace NES::Windowing

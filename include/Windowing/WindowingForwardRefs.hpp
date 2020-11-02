@@ -41,7 +41,7 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 namespace NES::Windowing {
 
 class AbstractWindowHandler;
-typedef std::shared_ptr<AbstractWindowHandler> WindowHandlerPtr;
+typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
 
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;

@@ -40,14 +40,14 @@ class PipelineStageHolder {
   public:
     uint32_t currentStageId;
     ExecutablePipelinePtr executablePipeline;
-    Windowing::WindowHandlerPtr windowHandler;
+    Windowing::AbstractWindowHandlerPtr windowHandler;
     std::set<uint32_t> producers;
     std::set<uint32_t> consumers;
 
   public:
     PipelineStageHolder() = default;
 
-    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline, Windowing::WindowHandlerPtr windowHandler = Windowing::WindowHandlerPtr())
+    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline, Windowing::AbstractWindowHandlerPtr windowHandler = Windowing::AbstractWindowHandlerPtr())
         : currentStageId(currentStageId), executablePipeline(std::move(executablePipeline)), windowHandler(std::move(windowHandler)) {
         // nop
     }

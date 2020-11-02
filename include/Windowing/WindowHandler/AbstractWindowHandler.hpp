@@ -13,17 +13,16 @@
 
 namespace NES::Windowing {
 
-
 /**
- * @brief The window handler checks every n seconds if a window should be triggered.
- * It has knowledge about the window definition and performs final aggregation.
+ * @brief The abstract window handler is the base class for all window handlers
  */
-class AbstractWindowHandler {
+class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindowHandler>{
   public:
-//    template<class KeyType, class InputType, class FinalAggregateType, class PartialAggregateType>
-//    auto as() {
-//        return std::dynamic_pointer_cast<WindowHandlerImpl<KeyType, InputType, FinalAggregateType, PartialAggregateType>>(shared_from_this());
-//    }
+
+    template<class Type>
+    auto as() {
+        return std::dynamic_pointer_cast<Type>(shared_from_this());
+    }
 
     /**
     * @brief Starts thread to check if the window should be triggered.

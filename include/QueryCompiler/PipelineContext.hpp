@@ -5,7 +5,7 @@
 namespace NES::Windowing {
 
 class AbstractWindowHandler;
-typedef std::shared_ptr<AbstractWindowHandler> WindowHandlerPtr;
+typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
 
 }// namespace NES::Windowing
 
@@ -33,8 +33,8 @@ class PipelineContext {
 
     SchemaPtr getInputSchema() const;
     SchemaPtr getResultSchema() const;
-    Windowing::WindowHandlerPtr getWindow();
-    void setWindow(Windowing::WindowHandlerPtr window);
+    Windowing::AbstractWindowHandlerPtr getWindow();
+    void setWindow(Windowing::AbstractWindowHandlerPtr window);
     bool hasWindow() const;
 
     SchemaPtr inputSchema;
@@ -49,7 +49,7 @@ class PipelineContext {
 
   private:
     std::vector<PipelineContextPtr> nextPipelines;
-    Windowing::WindowHandlerPtr windowHandler;
+    Windowing::AbstractWindowHandlerPtr windowHandler;
 };
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
