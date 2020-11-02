@@ -68,6 +68,13 @@ class GlobalExecutionPlan {
     bool checkIfExecutionNodeExists(uint64_t id);
 
     /**
+     * Check if the executionNode is a root node.
+     * @param id: id of the execution node.
+     * @return true if execution node with given id is a root node.
+     */
+    bool checkIfExecutionNodeIsARoot(uint64_t id);
+
+    /**
      * Get the execution node
      * @param id: id of the execution node
      * @return true if operation succeeds
