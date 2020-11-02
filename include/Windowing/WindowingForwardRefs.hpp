@@ -40,6 +40,9 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 
 namespace NES::Windowing {
 
+class WindowTriggerPolicyDescriptor;
+typedef std::shared_ptr<WindowTriggerPolicyDescriptor> WindowTriggerPolicyPtr;
+
 class AbstractWindowHandler;
 typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
 
