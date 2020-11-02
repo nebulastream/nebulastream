@@ -21,7 +21,6 @@ class WindowHandlerFactory {
      * @return AbstractWindowHandlerPtr
      */
     static AbstractWindowHandlerPtr createAggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition);
-
 };
 }// namespace NES::Windowing
 

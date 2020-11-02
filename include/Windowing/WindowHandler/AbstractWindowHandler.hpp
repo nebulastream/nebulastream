@@ -16,9 +16,8 @@ namespace NES::Windowing {
 /**
  * @brief The abstract window handler is the base class for all window handlers
  */
-class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindowHandler>{
+class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindowHandler> {
   public:
-
     template<class Type>
     auto as() {
         return std::dynamic_pointer_cast<Type>(shared_from_this());

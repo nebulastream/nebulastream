@@ -28,7 +28,7 @@ class WindowHandlerFactoryDetails {
     */
     template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
     static AbstractWindowHandlerPtr createAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
-                                   std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) {
+                                                            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) {
         auto a = AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>(windowDefinition, windowAggregation);
         return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, windowAggregation);
     }
