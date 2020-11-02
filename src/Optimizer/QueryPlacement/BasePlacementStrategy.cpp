@@ -128,22 +128,27 @@ ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& 
 
     ExecutionNodePtr candidateExecutionNode;
     if (globalExecutionPlan->checkIfExecutionNodeExists(candidateTopologyNode->getId())) {
-        NES_TRACE("BottomUpStrategy: node " << candidateTopologyNode->toString() << " was already used by other deployment");
+        NES_TRACE("BasePlacementStrategy: node " << candidateTopologyNode->toString() << " was already used by other deployment");
         candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateTopologyNode->getId());
     } else {
-        NES_TRACE("BottomUpStrategy: create new execution node with id: " << candidateTopologyNode->getId());
+        NES_TRACE("BasePlacementStrategy: create new execution node with id: " << candidateTopologyNode->getId());
         candidateExecutionNode = ExecutionNode::createExecutionNode(candidateTopologyNode);
-        NES_TRACE("BottomUpStrategy: Adding new execution node with id: " << candidateTopologyNode->getId());
+        NES_TRACE("BasePlacementStrategy: Adding new execution node with id: " << candidateTopologyNode->getId());
         // Check if the candidateTopologyNode is a root node of the topology
         if (candidateTopologyNode->getParents().empty()){
-            if (!globalExecutionPlan->addExecutionNodeAsRoot(candidateExecutionNode)) {
-                NES_ERROR("BottomUpStrategy: failed to add execution node as root");
-                throw QueryPlacementException("BottomUpStrategy: failed to add execution node as root");
+            // Check if the candidateExecutionNode is a root node
+            if (!globalExecutionPlan->checkIfExecutionNodeIsARoot(candidateExecutionNode->getId())) {
+                if (!globalExecutionPlan->addExecutionNodeAsRoot(candidateExecutionNode)) {
+                    NES_ERROR("BasePlacementStrategy: failed to add execution node as root");
+                    throw QueryPlacementException("BasePlacementStrategy: failed to add execution node as root");
+                }
+            } else {
+                NES_TRACE("ExecutionNode with id " << candidateExecutionNode->getId() << " is already added as a root");
             }
         } else {
             if (!globalExecutionPlan->addExecutionNode(candidateExecutionNode)) {
-                NES_ERROR("BottomUpStrategy: failed to add execution node");
-                throw QueryPlacementException("BottomUpStrategy: failed to add execution node");
+                NES_ERROR("BasePlacementStrategy: failed to add execution node");
+                throw QueryPlacementException("BasePlacementStrategy: failed to add execution node");
             }
         }
     }

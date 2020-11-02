@@ -23,6 +23,11 @@ bool GlobalExecutionPlan::checkIfExecutionNodeExists(uint64_t id) {
     return nodeIdIndex.find(id) != nodeIdIndex.end();
 }
 
+bool GlobalExecutionPlan::checkIfExecutionNodeIsARoot(uint64_t id) {
+    NES_DEBUG("GlobalExecutionPlan: Checking if Execution node with id " << id << " is a root node");
+    return std::find(rootNodes.begin(), rootNodes.end(), getExecutionNodeByNodeId(id)) != rootNodes.end();
+}
+
 ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeByNodeId(uint64_t id) {
     if (checkIfExecutionNodeExists(id)) {
         NES_DEBUG("GlobalExecutionPlan: Returning execution node with id " << id);
