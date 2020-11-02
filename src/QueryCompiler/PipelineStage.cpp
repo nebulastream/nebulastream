@@ -21,11 +21,11 @@ PipelineStage::PipelineStage(
     QueryExecutionContextPtr pipelineExecutionContext,
     PipelineStagePtr nextPipelineStage,
     Windowing::AbstractWindowHandlerPtr windowHandler) : pipelineStageId(pipelineStageId),
-                                                 qepId(qepId),
-                                                 executablePipeline(std::move(executablePipeline)),
-                                                 windowHandler(std::move(windowHandler)),
-                                                 nextStage(std::move(nextPipelineStage)),
-                                                 pipelineContext(std::move(pipelineExecutionContext)) {
+                                                         qepId(qepId),
+                                                         executablePipeline(std::move(executablePipeline)),
+                                                         windowHandler(std::move(windowHandler)),
+                                                         nextStage(std::move(nextPipelineStage)),
+                                                         pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
 }
