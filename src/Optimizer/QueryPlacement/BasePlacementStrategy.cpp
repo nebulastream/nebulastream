@@ -296,7 +296,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
 void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNode) {// check if the topology of the execution node is a root node
     NES_TRACE("BasePlacementStrategy: Adding new execution node with id: " << executionNode->getTopologyNode()->getId());
     // Check if the candidateTopologyNode is a root node of the topology
-    if (executionNode->getTopologyNode()->getParents().empty()){
+    if (executionNode->getTopologyNode()->getParents().empty()) {
         // Check if the candidateExecutionNode is a root node
         if (!globalExecutionPlan->checkIfExecutionNodeIsARoot(executionNode->getId())) {
             if (!globalExecutionPlan->addExecutionNodeAsRoot(executionNode)) {
