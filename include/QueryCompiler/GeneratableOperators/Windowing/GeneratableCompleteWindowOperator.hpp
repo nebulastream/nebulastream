@@ -14,7 +14,7 @@ class GeneratableCompleteWindowOperator : public GeneratableWindowOperator {
      * @param id: the operator id if not provided then next available operator id is used.
      * @return instance of GeneratableCompleteWindowOperator
      */
-    static GeneratableWindowOperatorPtr create(WindowOperatorNodePtr windowLogicalOperator, OGeneratableWindowAggregationPtr generatableWindowAggregation, peratorId id = UtilityFunctions::getNextOperatorId());
+    static GeneratableWindowOperatorPtr create(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.

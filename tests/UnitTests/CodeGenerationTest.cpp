@@ -23,6 +23,7 @@
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
@@ -887,8 +888,8 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto windowDefinition = LogicalWindowDefinition::create(
         Attribute("key", BasicType::UINT64), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
-
-    codeGenerator->generateCodeForCompleteWindow(windowDefinition, context1);
+    auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1 );
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
@@ -944,7 +945,8 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
         Attribute("key", BasicType::UINT64), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
 
-    codeGenerator->generateCodeForSlicingWindow(windowDefinition, context1);
+    auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1 );
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
@@ -1000,7 +1002,8 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
         Attribute("key", UINT64), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
 
-    codeGenerator->generateCodeForCombiningWindow(windowDefinition, context1);
+    auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1 );
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);

@@ -18,10 +18,14 @@ typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
 class GeneratableWindowAggregation{
   public:
     /**
-    * Generates code for the particular window aggregate.
-    */
+     * @brief Generates code for window aggregate
+     * @param currentCode current code pointer
+     * @param partialValueRef partial value ref
+     * @param inputStruct input struct
+     * @param inputRef input value reference
+     */
     virtual void compileLiftCombine(CompoundStatementPtr currentCode,
-                                    BinaryOperatorStatement expressionStatement,
+                                    BinaryOperatorStatement partialValueRef,
                                     StructDeclaration inputStruct,
                                     BinaryOperatorStatement inputRef) = 0;
 

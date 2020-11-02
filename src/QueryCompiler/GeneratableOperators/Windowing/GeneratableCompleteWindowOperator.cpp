@@ -17,8 +17,8 @@ void GeneratableCompleteWindowOperator::consume(CodeGeneratorPtr codegen, Pipeli
     context->setWindow(windowHandler);
     codegen->generateCodeForCompleteWindow(getWindowDefinition(), generatableWindowAggregation, context);
 }
-GeneratableWindowOperatorPtr GeneratableCompleteWindowOperator::create(WindowOperatorNodePtr windowLogicalOperator, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id) {
-    return std::make_shared<GeneratableCompleteWindowOperator>(GeneratableCompleteWindowOperator(windowLogicalOperator->getWindowDefinition(), std::move(generatableWindowAggregation), id));
+GeneratableWindowOperatorPtr GeneratableCompleteWindowOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id) {
+    return std::make_shared<GeneratableCompleteWindowOperator>(GeneratableCompleteWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id));
 }
 
 GeneratableCompleteWindowOperator::GeneratableCompleteWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id)
