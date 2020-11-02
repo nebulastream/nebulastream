@@ -12,8 +12,9 @@ class LogicalWindowDefinition {
      * @param windowAggregation
      * @param windowType
      * @param distChar
+     * @param window trigger policy
      */
-    LogicalWindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar);
+    LogicalWindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType, DistributionCharacteristicPtr distChar, WindowTriggerPolicyPtr triggerPolicy);
 
     /**
      * @brief This constructor constructs a key-by window
@@ -22,46 +23,56 @@ class LogicalWindowDefinition {
      * @param windowType
      * @param distChar
      * @param numberOfInputEdges
+     * @param window trigger policy
+
      */
     LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
                             WindowAggregationPtr windowAggregation,
                             WindowTypePtr windowType,
                             DistributionCharacteristicPtr distChar,
-                            uint64_t numberOfInputEdges);
+                            uint64_t numberOfInputEdges,
+                            WindowTriggerPolicyPtr triggerPolicy);
 
     /**
      * @brief Create a new window definition for a global window
      * @param windowAggregation
      * @param windowType
+     * @param window trigger policy
+
      * @return Window Definition
      */
     static LogicalWindowDefinitionPtr create(WindowAggregationPtr windowAggregation,
                                              WindowTypePtr windowType,
-                                             DistributionCharacteristicPtr distChar);
+                                             DistributionCharacteristicPtr distChar,
+                                             WindowTriggerPolicyPtr triggerPolicy);
 
     /**
      * @brief Create a new window definition for a keyed window
      * @param windowAggregation
      * @param windowType
+     * @param window trigger policy
      * @return Window Definition
      */
     static LogicalWindowDefinitionPtr create(FieldAccessExpressionNodePtr onKey,
                                              WindowAggregationPtr windowAggregation,
                                              WindowTypePtr windowType,
                                              DistributionCharacteristicPtr distChar,
-                                             uint64_t numberOfInputEdges);
+                                             uint64_t numberOfInputEdges,
+                                             WindowTriggerPolicyPtr triggerPolicy);
 
     /**
     * @brief Create a new window definition for a keyed window
     * @param windowAggregation
     * @param windowType
+    * @param window trigger policy
     * @return Window Definition
     */
     static LogicalWindowDefinitionPtr create(ExpressionItem onKey,
                                              WindowAggregationPtr windowAggregation,
                                              WindowTypePtr windowType,
                                              DistributionCharacteristicPtr distChar,
-                                             uint64_t numberOfInputEdges);
+                                             uint64_t numberOfInputEdges,
+                                             WindowTriggerPolicyPtr triggerPolicy);
 
     /**
      * @brief getter and setter for the distribution type (centralized or distributed)
@@ -101,9 +112,15 @@ class LogicalWindowDefinition {
 
     LogicalWindowDefinitionPtr copy();
 
+    /**
+     * @brief getter/setter for on trigger policy
+     */
+    WindowTriggerPolicyPtr getTriggerPolicy() const;
+    void setTriggerPolicy(WindowTriggerPolicyPtr triggerPolicy);
+
   private:
     WindowAggregationPtr windowAggregation;
-
+    WindowTriggerPolicyPtr triggerPolicy;
     WindowTypePtr windowType;
     FieldAccessExpressionNodePtr onKey;
     DistributionCharacteristicPtr distributionType;

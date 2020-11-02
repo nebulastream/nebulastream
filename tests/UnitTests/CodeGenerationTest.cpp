@@ -42,6 +42,8 @@
 #include <iostream>
 #include <utility>
 
+#include <Windowing/WindowPolicies/OnTimeTriggerDescription.hpp>
+
 using std::cout;
 using std::endl;
 namespace NES {
@@ -885,11 +887,12 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value"));
     auto windowDefinition = LogicalWindowDefinition::create(
         Attribute("key"), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
 
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, context1);
 
@@ -941,11 +944,12 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value"));
     auto windowDefinition = LogicalWindowDefinition::create(
         Attribute("key"), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
 
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, context1);
 
@@ -997,11 +1001,12 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto context1 = PipelineContext::create();
 
     codeGenerator->generateCodeForScan(schema, context1);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", UINT64));
     auto windowDefinition = LogicalWindowDefinition::create(
         Attribute("key", UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
 
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, context1);
 

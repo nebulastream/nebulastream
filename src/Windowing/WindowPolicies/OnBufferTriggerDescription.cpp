@@ -12,7 +12,7 @@ TriggerType OnBufferTriggerDescription::getPolicyType()
 }
 
 OnBufferTriggerDescription::OnBufferTriggerDescription()
-    : WindowTriggerPolicyDescriptor(triggerEachBuffer){
+    : WindowTriggerPolicyDescriptor(triggerOnBuffer){
 }
 
 }// namespace NES::Windowing
