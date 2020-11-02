@@ -137,6 +137,12 @@ class BasePlacementStrategy {
      * @param operatorNode : the logical operator to which source or sink operator need to be attached
      */
     void placeNetworkOperator(QueryId queryId, const OperatorNodePtr& operatorNode);
+
+    /**
+     * @brief Add an execution node as root
+     * @param executionNode
+     */
+    void addExecutionNodeAsRoot(ExecutionNodePtr& executionNode);
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP

@@ -133,24 +133,6 @@ ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& 
     } else {
         NES_TRACE("BasePlacementStrategy: create new execution node with id: " << candidateTopologyNode->getId());
         candidateExecutionNode = ExecutionNode::createExecutionNode(candidateTopologyNode);
-        NES_TRACE("BasePlacementStrategy: Adding new execution node with id: " << candidateTopologyNode->getId());
-        // Check if the candidateTopologyNode is a root node of the topology
-        if (candidateTopologyNode->getParents().empty()){
-            // Check if the candidateExecutionNode is a root node
-            if (!globalExecutionPlan->checkIfExecutionNodeIsARoot(candidateExecutionNode->getId())) {
-                if (!globalExecutionPlan->addExecutionNodeAsRoot(candidateExecutionNode)) {
-                    NES_ERROR("BasePlacementStrategy: failed to add execution node as root");
-                    throw QueryPlacementException("BasePlacementStrategy: failed to add execution node as root");
-                }
-            } else {
-                NES_TRACE("ExecutionNode with id " << candidateExecutionNode->getId() << " is already added as a root");
-            }
-        } else {
-            if (!globalExecutionPlan->addExecutionNode(candidateExecutionNode)) {
-                NES_ERROR("BasePlacementStrategy: failed to add execution node");
-                throw QueryPlacementException("BasePlacementStrategy: failed to add execution node");
-            }
-        }
     }
     return candidateExecutionNode;
 }
@@ -216,6 +198,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
 
     NES_TRACE("BasePlacementStrategy: Get execution node where operator is placed");
     ExecutionNodePtr executionNode = operatorToExecutionNodeMap[operatorNode->getId()];
+    addExecutionNodeAsRoot(executionNode);
 
     for (auto& parent : operatorNode->getParents()) {
 
@@ -299,7 +282,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
 
                 NES_TRACE("BasePlacementStrategy: add query plan to execution node and update the global execution plan");
                 candidateExecutionNode->addNewQuerySubPlan(queryId, querySubPlan);
-                globalExecutionPlan->scheduleExecutionNode(candidateExecutionNode);
+                globalExecutionPlan->addExecutionNode(candidateExecutionNode);
             }
             // Add the parent-child relation
             globalExecutionPlan->addExecutionNodeAsParentTo(executionNode->getId(), parentExecutionNode);
@@ -307,6 +290,20 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
 
         NES_TRACE("BasePlacementStrategy: add network source and sink operator for the parent operator");
         placeNetworkOperator(queryId, parentOperator);
+    }
+}
+
+void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNode) {// check if the topology of the execution node is a root node
+    NES_TRACE("BasePlacementStrategy: Adding new execution node with id: " << executionNode->getTopologyNode()->getId());
+    // Check if the candidateTopologyNode is a root node of the topology
+    if (executionNode->getTopologyNode()->getParents().empty()){
+        // Check if the candidateExecutionNode is a root node
+        if (!globalExecutionPlan->checkIfExecutionNodeIsARoot(executionNode->getId())) {
+            if (!globalExecutionPlan->addExecutionNodeAsRoot(executionNode)) {
+                NES_ERROR("BasePlacementStrategy: failed to add execution node as root");
+                throw QueryPlacementException("BasePlacementStrategy: failed to add execution node as root");
+            }
+        }
     }
 }
 
