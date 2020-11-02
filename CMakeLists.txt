@@ -187,7 +187,7 @@ endif (NES_USE_KAFKA)
 
 # Library containing OPC client
 if (NES_USE_OPC)
-    find_package(open62541 1.1.0 REQUIRED COMPONENTS FullNamespace)
+    find_package(open62541 REQUIRED COMPONENTS FullNamespace)
     set(LIBRARIES ${LIBRARIES} open62541::open62541)
     add_compile_definitions(ENABLE_OPC_BUILD)
 endif (NES_USE_OPC)
