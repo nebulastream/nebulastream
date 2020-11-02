@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLEWINDOWAGGREGATION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLEWINDOWAGGREGATION_HPP_
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <threads.h>
+//#include <threads.h>
 
 namespace NES {
 
