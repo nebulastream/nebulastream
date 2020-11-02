@@ -9,7 +9,7 @@
 namespace z3 {
 class expr;
 class context;
-}
+}// namespace z3
 
 namespace NES {
 
