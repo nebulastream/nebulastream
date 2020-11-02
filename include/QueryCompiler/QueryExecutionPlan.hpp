@@ -5,7 +5,7 @@
 #include <QueryCompiler/PipelineStage.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
-#include <Windows/WindowHandler.hpp>
+#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <map>
 
 namespace NES {

@@ -3,4 +3,5 @@ add_source_nes(
         DataTypeSerializationUtil.cpp
         SchemaSerializationUtil.cpp
         ExpressionSerializationUtil.cpp
+        QueryPlanSerializationUtil.cpp
 )

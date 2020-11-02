@@ -1,9 +1,10 @@
-#include <GRPC/Serialization/OperatorSerializationUtil.hpp>
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 using namespace NES;
@@ -15,14 +16,11 @@ WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
 
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request,
                                       RegisterQueryReply* reply) {
-    auto queryId = request->queryid();
-    auto querySubPlanId = request->querysubplanid();
-
-    auto queryPlan = OperatorSerializationUtil::deserializeOperator((SerializableOperator*) &request->operatortree());
-    NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryId);
+    auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
+    NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryPlan->getQueryId());
     bool success;
     try {
-        success = nodeEngine->registerQueryInNodeEngine(queryId, querySubPlanId, queryPlan);
+        success = nodeEngine->registerQueryInNodeEngine(queryPlan);
     } catch (std::exception& error) {
         NES_ERROR("Register query crashed: " << error.what());
         success = false;

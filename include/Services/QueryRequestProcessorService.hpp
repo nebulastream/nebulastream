@@ -5,6 +5,9 @@
 
 namespace NES {
 
+class GlobalQueryPlan;
+typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
@@ -13,6 +16,9 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 
 class QueryRewritePhase;
 typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
+
+class QueryMergerPhase;
+typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
 
 class QueryPlacementPhase;
 typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
@@ -30,7 +36,6 @@ class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 class GlobalExecutionPlan;
-
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class Topology;
@@ -47,8 +52,8 @@ typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
  */
 class QueryRequestProcessorService {
   public:
-    explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryCatalogPtr queryCatalog,
-                                          StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue);
+    explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
+                                          StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging);
 
     ~QueryRequestProcessorService();
     /**
@@ -78,6 +83,9 @@ class QueryRequestProcessorService {
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     QueryRequestQueuePtr queryRequestQueue;
+    GlobalQueryPlanPtr globalQueryPlan;
+    QueryMergerPhasePtr queryMergerPhase;
+    bool enableQueryMerging;
 };
 }// namespace NES
 #endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP

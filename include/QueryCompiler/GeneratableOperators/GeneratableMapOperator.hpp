@@ -1,14 +1,20 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEMAPOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEMAPOPERATOR_HPP_
 
-#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {
 
 class GeneratableMapOperator : public MapLogicalOperatorNode, public GeneratableOperator {
   public:
-    static GeneratableMapOperatorPtr create(MapLogicalOperatorNodePtr mapLogicalOperatorNode);
+    /**
+     * @brief Create sharable instance of GeneratableMapOperator
+     * @param mapLogicalOperator: the map logical operator
+     * @param id: the operator id if not provided then next available operator id is used.
+     * @return instance of GeneratableMapOperator
+     */
+    static GeneratableMapOperatorPtr create(MapLogicalOperatorNodePtr mapLogicalOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -31,7 +37,7 @@ class GeneratableMapOperator : public MapLogicalOperatorNode, public Generatable
     const std::string toString() const override;
 
   private:
-    GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression);
+    GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression, OperatorId id);
 };
 
 }// namespace NES

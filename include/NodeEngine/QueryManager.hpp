@@ -21,7 +21,7 @@
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
-#include <Windows/WindowHandler.hpp>
+#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <memory>
 
 namespace NES {
@@ -33,6 +33,12 @@ typedef std::shared_ptr<CompiledExecutablePipeline> CompiledExecutablePipelinePt
 
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
+
+class QueryExecutionPlan;
+typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 /**
  * @brief the query manager is the central class to process queries.
@@ -120,6 +126,13 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
 
   public:
     /**
+     * @brief retrieve the execution status of a given local query sub plan id.
+     * @param id : the query sub plan id
+     * @return status of the query sub plan
+     */
+    QueryExecutionPlan::QueryExecutionPlanStatus getQepStatus(QuerySubPlanId id);
+
+    /**
      * @brief get general statistics of QueryManager and Buffer Manager
      */
     std::string getQueryManagerStatistics();
@@ -164,8 +177,9 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * was scheduled to be executed!
      * @param queryExecutionPlanId: the local QEP to reconfigure
      * @param reconfigurationDescriptor: what to do
+     * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor);
+    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor, bool blocking = false);
 
   private:
     friend class ThreadPool;

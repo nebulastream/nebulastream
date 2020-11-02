@@ -1,8 +1,8 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Util/Logger.hpp>
@@ -44,36 +44,21 @@ class LogicalOperatorNodeTest : public testing::Test {
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
         sourceOp = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-        sourceOp->setId(UtilityFunctions::getNextOperatorId());
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp1->setId(UtilityFunctions::getNextOperatorId());
         filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
-        filterOp2->setId(UtilityFunctions::getNextOperatorId());
         filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
-        filterOp3->setId(UtilityFunctions::getNextOperatorId());
         filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
-        filterOp4->setId(UtilityFunctions::getNextOperatorId());
         filterOp5 = LogicalOperatorFactory::createFilterOperator(pred5);
-        filterOp5->setId(UtilityFunctions::getNextOperatorId());
         filterOp6 = LogicalOperatorFactory::createFilterOperator(pred6);
-        filterOp6->setId(UtilityFunctions::getNextOperatorId());
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
-        filterOp7->setId(UtilityFunctions::getNextOperatorId());
 
         filterOp1Copy = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp1Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp2Copy = LogicalOperatorFactory::createFilterOperator(pred2);
-        filterOp2Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp3Copy = LogicalOperatorFactory::createFilterOperator(pred3);
-        filterOp3Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp4Copy = LogicalOperatorFactory::createFilterOperator(pred4);
-        filterOp4Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp5Copy = LogicalOperatorFactory::createFilterOperator(pred5);
-        filterOp5Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp6Copy = LogicalOperatorFactory::createFilterOperator(pred6);
-        filterOp6Copy->setId(UtilityFunctions::getNextOperatorId());
         filterOp7Copy = LogicalOperatorFactory::createFilterOperator(pred7);
-        filterOp7Copy->setId(UtilityFunctions::getNextOperatorId());
 
         removed = false;
         replaced = false;
@@ -926,7 +911,7 @@ TEST_F(LogicalOperatorNodeTest, asBadCast) {
     try {
         FilterLogicalOperatorNodePtr _filterOp1 = base2->as<FilterLogicalOperatorNode>();
         FAIL();
-    } catch (const std::bad_cast& e) {
+    } catch (const std::runtime_error& e) {
         SUCCEED();
     }
 }

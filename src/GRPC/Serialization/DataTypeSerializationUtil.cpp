@@ -56,7 +56,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
     } else {
         NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: serialization is not possible for " + dataType->toString());
     }
-    NES_DEBUG("DataTypeSerializationUtil:: serialized " << dataType->toString() << " to " << serializedDataType->SerializeAsString());
+    NES_TRACE("DataTypeSerializationUtil:: serialized " << dataType->toString() << " to " << serializedDataType->SerializeAsString());
     return serializedDataType;
 }
 
@@ -121,13 +121,13 @@ SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(ValueTypePt
         // 4. serialize basic type
         serializedDataValue->mutable_value()->PackFrom(serializedBasicValue);
     }
-    NES_DEBUG("DataTypeSerializationUtil:: serialized " << valueType->toString() << " as " << serializedDataValue->DebugString());
+    NES_TRACE("DataTypeSerializationUtil:: serialized " << valueType->toString() << " as " << serializedDataValue->DebugString());
     return serializedDataValue;
 }
 
 ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataValue* serializedDataValue) {
     // de-serialize data value
-    NES_DEBUG("DataTypeSerializationUtil:: de-serialized " << serializedDataValue->DebugString());
+    NES_TRACE("DataTypeSerializationUtil:: de-serialized " << serializedDataValue->DebugString());
     const auto& dataValue = serializedDataValue->value();
     if (dataValue.Is<SerializableDataValue_BasicValue>()) {
         auto serializedBasicValue = SerializableDataValue_BasicValue();

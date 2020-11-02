@@ -1,13 +1,19 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLESOURCOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLESOURCOPERATOR_HPP_
 
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 namespace NES {
 
 class GeneratableScanOperator : public OperatorNode, public GeneratableOperator {
   public:
-    static GeneratableScanOperatorPtr create(SchemaPtr schema);
+    /**
+     * @brief Create sharable instance of GeneratableScanOperator
+     * @param schema: the schema of the input records
+     * @param id: the operator id if not provided then next available operator id is used.
+     * @return instance of GeneratableScanOperator
+     */
+    static GeneratableScanOperatorPtr create(SchemaPtr schema, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -36,7 +42,7 @@ class GeneratableScanOperator : public OperatorNode, public GeneratableOperator 
     OperatorNodePtr copy() override;
 
   private:
-    explicit GeneratableScanOperator(SchemaPtr schema);
+    explicit GeneratableScanOperator(SchemaPtr schema, OperatorId id);
     SchemaPtr schema;
 };
 

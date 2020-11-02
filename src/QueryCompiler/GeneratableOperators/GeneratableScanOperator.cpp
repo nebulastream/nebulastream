@@ -1,8 +1,6 @@
-
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -19,16 +17,14 @@ void GeneratableScanOperator::consume(CodeGeneratorPtr codegen, PipelineContextP
 }
 
 OperatorNodePtr GeneratableScanOperator::copy() {
-    return GeneratableScanOperator::create(schema);
+    return GeneratableScanOperator::create(schema, id);
 }
 
-GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr schema) {
-    auto generatableOperator = std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(schema));
-    generatableOperator->setId(UtilityFunctions::getNextOperatorId());
-    return generatableOperator;
+GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr schema, OperatorId id) {
+    return std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(schema, id));
 }
 
-GeneratableScanOperator::GeneratableScanOperator(SchemaPtr schema) : schema(schema) {}
+GeneratableScanOperator::GeneratableScanOperator(SchemaPtr schema, OperatorId id) : schema(schema), OperatorNode(id) {}
 
 const std::string GeneratableScanOperator::toString() const {
     std::stringstream ss;

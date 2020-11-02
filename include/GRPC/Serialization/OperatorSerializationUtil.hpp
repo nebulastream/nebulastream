@@ -1,8 +1,9 @@
 #ifndef NES_INCLUDE_UTIL_OPERATORSERIALIZATIONUTIL_HPP_
 #define NES_INCLUDE_UTIL_OPERATORSERIALIZATIONUTIL_HPP_
 
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/OperatorId.hpp>
 #include <memory>
-
 namespace NES {
 
 class SourceLogicalOperatorNode;
@@ -22,9 +23,6 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
-
-class WindowLogicalOperatorNode;
-typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
 
 class SerializableOperator;
 class SerializableOperator_SourceDetails;
@@ -46,7 +44,8 @@ class OperatorSerializationUtil {
     static SerializableOperator* serializeOperator(OperatorNodePtr operatorNode, SerializableOperator* serializableOperator);
 
     /**
-     * @brief De-serializes the SerializableOperator and all its children back to a OperatorNodePtr
+     * @brief De-serializes the input SerializableOperator only
+     * Note: This method will not deserialize its children
      * @param serializedOperator the serialized operator.
      * @return OperatorNodePtr
      */
@@ -78,7 +77,7 @@ class OperatorSerializationUtil {
      * @param WindowLogicalOperatorNode The window operator node.
      * @return the serialized SerializableOperator_SinkDetails.
      */
-    static SerializableOperator_WindowDetails serializeWindowOperator(WindowLogicalOperatorNodePtr windowOperator);
+    static SerializableOperator_WindowDetails serializeWindowOperator(WindowOperatorNodePtr windowOperator);
 
     /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
@@ -88,11 +87,12 @@ class OperatorSerializationUtil {
     static OperatorNodePtr deserializeSinkOperator(SerializableOperator_SinkDetails* sinkDetails);
 
     /**
-    * @brief De-serializes the SerializableOperator_WindowDetails and all its properties back to a central window operatorNodePtr
-    * @param sinkDetails The serialized sink operator details.
-    * @return SinkLogicalOperatorNodePtr
-    */
-    static WindowLogicalOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails);
+     * @brief De-serializes the SerializableOperator_WindowDetails and all its properties back to a central window operatorNodePtr
+     * @param sinkDetails The serialized sink operator details.
+     * @param operatorId: id of the operator to be deserialized
+     * @return SinkLogicalOperatorNodePtr
+     */
+    static WindowOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails, OperatorId operatorId);
 
     /**
      * @brief Serializes an source descriptor and all its properties to a SerializableOperator_SourceDetails object.

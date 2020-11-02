@@ -1,14 +1,20 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEMERGEOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEMERGEOPERATOR_HPP_
 
-#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {
 
 class GeneratableMergeOperator : public MergeLogicalOperatorNode, public GeneratableOperator {
   public:
-    static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr logicalMergeOperator);
+    /**
+     * @brief Create sharable instance of GeneratableMergeOperator
+     * @param logicalMergeOperator: the merge logical operator
+     * @param id: the operator id if not provided then next available operator id is used.
+     * @return instance of GeneratableMergeOperator
+     */
+    static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr logicalMergeOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -31,7 +37,7 @@ class GeneratableMergeOperator : public MergeLogicalOperatorNode, public Generat
     const std::string toString() const override;
 
   private:
-    GeneratableMergeOperator(SchemaPtr outputSchema);
+    GeneratableMergeOperator(SchemaPtr outputSchema, OperatorId id);
 };
 
 }// namespace NES

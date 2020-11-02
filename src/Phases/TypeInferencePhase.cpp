@@ -1,9 +1,9 @@
 #include <Catalogs/StreamCatalog.hpp>
-#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
@@ -33,10 +33,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
             auto streamName = sourceDescriptor->getStreamName();
             SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamName);
             sourceDescriptor->setSchema(schema);
-            NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName);
-            //            auto streamDescriptor = sourceDescriptor->as<LogicalStreamSourceDescriptor>();
-            //            auto newSourceDescriptor = createSourceDescriptor(streamName);
-            //            source->setSourceDescriptor(newSourceDescriptor);
+            NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName << " with schema: " << schema->toString());
         }
     }
     // now we have to infer the input and output schemas for the whole query.

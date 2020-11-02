@@ -1,8 +1,6 @@
-
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMergeOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
@@ -19,13 +17,12 @@ void GeneratableMergeOperator::produce(CodeGeneratorPtr codegen, PipelineContext
 void GeneratableMergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForEmit(outputSchema, context);
 }
-GeneratableMergeOperatorPtr GeneratableMergeOperator::create(MergeLogicalOperatorNodePtr logicalMergeOperator) {
-    auto generatableOperator = std::make_shared<GeneratableMergeOperator>(GeneratableMergeOperator(logicalMergeOperator->getOutputSchema()));
-    generatableOperator->setId(UtilityFunctions::getNextOperatorId());
-    return generatableOperator;
+
+GeneratableMergeOperatorPtr GeneratableMergeOperator::create(MergeLogicalOperatorNodePtr logicalMergeOperator, OperatorId id) {
+    return std::make_shared<GeneratableMergeOperator>(GeneratableMergeOperator(logicalMergeOperator->getOutputSchema(), id));
 }
 
-GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schemaP) : MergeLogicalOperatorNode() {
+GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schemaP, OperatorId id) : MergeLogicalOperatorNode(id) {
     setInputSchema(schemaP);
     setOutputSchema(schemaP);
 }

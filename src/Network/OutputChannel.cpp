@@ -22,7 +22,6 @@ std::unique_ptr<OutputChannel> OutputChannel::create(
     ExchangeProtocol& protocol,
     std::chrono::seconds waitTime,
     uint8_t retryTimes) {
-    bool connected = false;
     int linger = -1;
     try {
         ChannelId channelId(nesPartition, NesThread::getId());
@@ -33,7 +32,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(
         zmqSocket.connect(socketAddr);
         int i = 0;
 
-        while ((!connected) && (i <= retryTimes)) {
+        while (i < retryTimes) {
             sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId);
 
             zmq::message_t recvHeaderMsg;
@@ -86,11 +85,9 @@ std::unique_ptr<OutputChannel> OutputChannel::create(
             NES_INFO("OutputChannel: Connection with server failed! Reconnecting attempt " << i);
             i++;
         }
-        if (!connected) {
-            NES_ERROR("OutputChannel: Error establishing a connection with server. Closing socket!");
-            zmqSocket.close();
-            return nullptr;
-        }
+        NES_ERROR("OutputChannel: Error establishing a connection with server: " << channelId << " Closing socket!");
+        zmqSocket.close();
+        return nullptr;
     } catch (zmq::error_t& err) {
         if (err.num() == ETERM) {
             NES_DEBUG("OutputChannel: Zmq context closed!");

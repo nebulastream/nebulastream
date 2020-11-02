@@ -5,6 +5,8 @@ namespace NES {
 
 NegateExpressionNode::NegateExpressionNode() : LogicalUnaryExpressionNode() {}
 
+NegateExpressionNode::NegateExpressionNode(NegateExpressionNode* other) : LogicalUnaryExpressionNode(other) {}
+
 bool NegateExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<NegateExpressionNode>()) {
         auto other = rhs->as<NegateExpressionNode>();
@@ -31,6 +33,9 @@ void NegateExpressionNode::inferStamp(SchemaPtr schema) {
         NES_THROW_RUNTIME_ERROR(
             "Negate Expression Node: the stamp of child must be boolean, but was: " + child()->getStamp()->toString());
     }
+}
+ExpressionNodePtr NegateExpressionNode::copy() {
+    return std::make_shared<NegateExpressionNode>(NegateExpressionNode(this));
 }
 
 }// namespace NES

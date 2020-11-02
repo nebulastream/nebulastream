@@ -5,6 +5,7 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <set>
 #include <utility>
 namespace NES {
@@ -39,14 +40,14 @@ class PipelineStageHolder {
   public:
     uint32_t currentStageId;
     ExecutablePipelinePtr executablePipeline;
-    WindowHandlerPtr windowHandler;
+    Windowing::AbstractWindowHandlerPtr windowHandler;
     std::set<uint32_t> producers;
     std::set<uint32_t> consumers;
 
   public:
     PipelineStageHolder() = default;
 
-    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline, WindowHandlerPtr windowHandler = WindowHandlerPtr())
+    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline, Windowing::AbstractWindowHandlerPtr windowHandler = Windowing::AbstractWindowHandlerPtr())
         : currentStageId(currentStageId), executablePipeline(std::move(executablePipeline)), windowHandler(std::move(windowHandler)) {
         // nop
     }
@@ -56,8 +57,8 @@ void generateExecutablePipelines(
     QueryId queryId,
     QuerySubPlanId querySubPlanId,
     CodeGeneratorPtr codeGenerator,
-    BufferManagerPtr bufferManager,
-    QueryManagerPtr queryManagerPtr,
+    BufferManagerPtr,
+    QueryManagerPtr,
     PipelineContextPtr context,
     std::map<uint32_t, PipelineStageHolder, std::greater<>>& accumulator) {
     // BFS visit to figure out producer-consumer relations among pipelines
@@ -74,11 +75,7 @@ void generateExecutablePipelines(
                 NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");
             }
             if (currContext->hasWindow()) {
-                auto windowHandler = WindowHandler::create(
-                    currContext->getWindow(),
-                    queryManagerPtr,
-                    bufferManager);
-                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, windowHandler);
+                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, currContext->getWindow());
             } else {
                 accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, nullptr);
             }

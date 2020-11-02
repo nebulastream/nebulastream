@@ -28,7 +28,7 @@ class OPCSource : public DataSource {
      * @param password for authentication if needed
      */
     OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string url,
-              UA_NodeId* nodeId, std::string password, std::string user);
+              UA_NodeId nodeId, std::string password, std::string user);
 
     /**
      * @brief destructor of OPC source that disconnects the queue before deconstruction
@@ -52,13 +52,13 @@ class OPCSource : public DataSource {
      * @brief The url of the OPC server
      * @return OPC url
      */
-    const std::string& getUrl() const;
+    const std::string getUrl() const;
 
     /**
      * @brief get desired OPC node id
      * @return OPC node id
      */
-    UA_NodeId* getNodeId() const;
+    UA_NodeId getNodeId() const;
 
     /**
      * @brief get user name for OPC server
@@ -103,8 +103,8 @@ class OPCSource : public DataSource {
      */
     friend class DataSource;
 
-    const std::string& url;
-    UA_NodeId* nodeId;
+    const std::string url;
+    UA_NodeId nodeId;
     const std::string user;
     const std::string password;
     UA_StatusCode retval;

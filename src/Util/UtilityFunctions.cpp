@@ -7,15 +7,15 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -59,43 +59,42 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <API/Query.hpp>" << std::endl;
         code << "#include <API/Pattern.hpp>" << std::endl;
         code << "#include <API/Schema.hpp>" << std::endl;
-        code << "#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
-        code << "#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
         code << "#include <Sources/DataSource.hpp>" << std::endl;
-        code << "#include <API/Window/WindowMeasure.hpp>" << std::endl;
-        code << "#include <API/Window/WindowType.hpp>" << std::endl;
-        code << "#include <API/Window/TimeCharacteristic.hpp>" << std::endl;
-        code << "#include <API/Window/WindowAggregation.hpp>" << std::endl;
+        code << "using namespace NES::API;" << std::endl;
         code << "namespace NES{" << std::endl;
         code << "Query createQuery(){" << std::endl;
 
         std::string streamName = queryCodeSnippet.substr(
             queryCodeSnippet.find("::from("));
         streamName = streamName.substr(7, streamName.find(")") - 7);
-        NES_DEBUG(" stream name = " << streamName);
+        NES_DEBUG(" UtilityFunctions: stream name = " << streamName);
 
         std::string newQuery = queryCodeSnippet;
 
+        if (merge) {//if contains merge
+            auto pos1 = queryCodeSnippet.find("merge(");
+            std::string tmp = queryCodeSnippet.substr(pos1);
+            auto pos2 = tmp.find(")).");//find the end bracket of merge query
+            std::string subquery = tmp.substr(6, pos2 - 5);
+            NES_DEBUG("UtilityFunctions: subquery = " << subquery);
+            code << "auto subQuery = " << subquery << ";" << std::endl;
+            newQuery.replace(pos1, pos2 + 1, "merge(&subQuery");
+            NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
+        }
+
+        // add return statement in front of input query/pattern
         //if pattern
         if (pattern) {
             boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
-        } else if (merge) {//if contains merge
-            auto pos1 = queryCodeSnippet.find("merge(");
-            std::string tmp = queryCodeSnippet.substr(pos1);
-            auto pos2 = tmp.find(").");//find the end bracket of merge query
-            std::string subquery = tmp.substr(6, pos2 - 6);
-            NES_DEBUG("UtilityFunctions: subquery = " << subquery);
-            code << "auto subQuery = " << subquery << ";" << std::endl;
-            newQuery.replace(pos1, pos2, "merge(&subQuery");
-            NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
-            boost::replace_all(newQuery, "Query::from", "return Query::from");
-        } else {
-            // add return statement in front of input query
+        } else {// if Query
             // NOTE: This will not work if you have created object of Input query and do further manipulation
             boost::replace_all(newQuery, "Query::from", "return Query::from");
         }
+
         NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
         code << newQuery << std::endl;
         code << "}" << std::endl;
@@ -245,7 +244,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, Schema
         uint32_t val = offsets[i];
         offsets[i] = prefix_sum;
         prefix_sum += val;
-        NES_DEBUG("CodeGenerator: " + std::string("Prefix Sum: ") + schema->get(i)->toString() + std::string(": ") + std::to_string(offsets[i]));
+        NES_DEBUG("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schema->get(i)->toString() + std::string(": ") + std::to_string(offsets[i]));
     }
 
     str << "+----------------------------------------------------+" << std::endl;
@@ -337,17 +336,7 @@ bool UtilityFunctions::startsWith(const std::string& fullString, const std::stri
     return (fullString.rfind(ending, 0) == 0);
 }
 
-uint64_t UtilityFunctions::getNextQueryId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
-}
-
-uint64_t UtilityFunctions::getNextOperatorId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
-}
-
-uint64_t UtilityFunctions::getNextQuerySubPlanId() {
+OperatorId UtilityFunctions::getNextOperatorId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
@@ -356,6 +345,7 @@ uint64_t UtilityFunctions::getNextNodeId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
+
 uint64_t UtilityFunctions::getNextNodeEngineId() {
     static std::atomic_uint64_t id = time(NULL) ^ getpid();
     return ++id;
@@ -406,204 +396,6 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     topologyJson["nodes"] = web::json::value::array(nodes);
     topologyJson["edges"] = web::json::value::array(edges);
     return topologyJson;
-}
-
-std::string UtilityFunctions::getOperatorType(OperatorNodePtr operatorNode) {
-    NES_INFO("UtilityFunctions: getting the type of the operator");
-
-    std::string operatorType;
-    if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        if (operatorNode->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
-            operatorType = "SOURCE_SYS";
-        } else {
-            operatorType = "SOURCE";
-        }
-    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-        operatorType = "FILTER";
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-        operatorType = "MAP";
-    } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        operatorType = "MERGE";
-    } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
-        operatorType = "WINDOW";
-    } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        if (operatorNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
-            operatorType = "SINK_SYS";
-        } else {
-            operatorType = "SINK";
-        }
-    } else {
-        operatorType = "UNDEFINED";
-    }
-    NES_DEBUG("UtilityFunctions: operatorType = " << operatorType);
-    return operatorType;
-}
-
-web::json::value UtilityFunctions::getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId) {
-
-    NES_INFO("UtilityFunctions: getting execution plan as JSON");
-
-    web::json::value executionPlanJson{};
-    std::vector<web::json::value> nodes = {};
-
-    std::vector<ExecutionNodePtr> executionNodes;
-    if (queryId != INVALID_QUERY_ID) {
-        executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    } else {
-        executionNodes = globalExecutionPlan->getAllExecutionNodes();
-    }
-
-    for (ExecutionNodePtr executionNode : executionNodes) {
-        web::json::value currentExecutionNodeJsonValue{};
-
-        currentExecutionNodeJsonValue["executionNodeId"] = web::json::value::number(executionNode->getId());
-        currentExecutionNodeJsonValue["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
-        currentExecutionNodeJsonValue["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
-
-        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap;
-        const std::vector<QueryPlanPtr> querySubPlans;
-        if (queryId == INVALID_QUERY_ID) {
-            queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();
-        } else {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            if (!querySubPlans.empty()) {
-                queryToQuerySubPlansMap[queryId] = querySubPlans;
-            }
-        }
-
-        std::vector<web::json::value> scheduledQueries = {};
-
-        for (auto& [queryId, querySubPlans] : queryToQuerySubPlansMap) {
-
-            std::vector<web::json::value> scheduledSubQueries;
-            web::json::value queryToQuerySubPlans{};
-            queryToQuerySubPlans["queryId"] = web::json::value::number(queryId);
-
-            // loop over all query sub plans inside the current executionNode
-            for (QueryPlanPtr querySubPlan : querySubPlans) {
-                // prepare json object to hold information on current query sub plan
-                web::json::value currentQuerySubPlan{};
-
-                // id of current query sub plan
-                currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
-
-                // add the string containing operator to the json object of current query sub plan
-                currentQuerySubPlan["operator"] = web::json::value::string(querySubPlan->toString());
-
-                // TODO: Add source and target
-                scheduledSubQueries.push_back(currentQuerySubPlan);
-            }
-            queryToQuerySubPlans["querySubPlans"] = web::json::value::array(scheduledSubQueries);
-            scheduledQueries.push_back(queryToQuerySubPlans);
-        }
-
-        currentExecutionNodeJsonValue["ScheduledQueries"] = web::json::value::array(scheduledQueries);
-        nodes.push_back(currentExecutionNodeJsonValue);
-    }
-
-    // add `executionNodes` JSON array to the final JSON result
-    executionPlanJson["executionNodes"] = web::json::value::array(nodes);
-
-    return executionPlanJson;
-}
-
-web::json::value UtilityFunctions::getQueryPlanAsJson(QueryCatalogPtr queryCatalog, QueryId queryId) {
-
-    NES_DEBUG("UtilityFunctions: Get the registered query");
-    if (!queryCatalog->queryExists(queryId)) {
-        throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
-    }
-    QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
-
-    NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
-
-    web::json::value result{};
-    std::vector<web::json::value> nodes{};
-    std::vector<web::json::value> edges{};
-
-    const OperatorNodePtr root = queryCatalogEntry->getQueryPlan()->getRootOperators()[0];
-
-    if (!root) {
-        NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is empty");
-        auto node = web::json::value::object();
-        node["id"] = web::json::value::string("NONE");
-        node["name"] = web::json::value::string("NONE");
-        nodes.push_back(node);
-    } else {
-        NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is not empty");
-        std::string rootOperatorType = getOperatorType(root);
-
-        // Create a node JSON object for the root operator
-        auto node = web::json::value::object();
-
-        // use the id of the root operator to fill the id field
-        node["id"] = web::json::value::string(std::to_string(root->getId()));
-
-        // use concatenation of <operator type>(OP-<operator id>) to fill name field
-        node["name"] =
-            web::json::value::string(
-                rootOperatorType + +"(OP-" + std::to_string(root->getId()) + ")");
-
-        node["nodeType"] = web::json::value::string(rootOperatorType);
-
-        nodes.push_back(node);
-
-        // traverse to the children of the current operator
-        getChildren(root, nodes, edges);
-    }
-
-    // add `nodes` and `edges` JSON array to the final JSON result
-    result["nodes"] = web::json::value::array(nodes);
-    result["edges"] = web::json::value::array(edges);
-
-    return result;
-}
-
-void UtilityFunctions::getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
-                                   std::vector<web::json::value>& edges) {
-
-    std::vector<web::json::value> childrenNode;
-
-    std::vector<NodePtr> children = root->getChildren();
-    if (children.empty()) {
-        NES_DEBUG("UtilityFunctions::getChildren : children is empty()");
-        return;
-    }
-
-    NES_DEBUG("UtilityFunctions::getChildren : children size = " << children.size());
-    for (NodePtr child : children) {
-        // Create a node JSON object for the current operator
-        auto node = web::json::value::object();
-        auto childLogicalOperatorNode = child->as<LogicalOperatorNode>();
-        std::string childOPeratorType = getOperatorType(childLogicalOperatorNode);
-
-        // use the id of the current operator to fill the id field
-        node["id"] = node["id"] = web::json::value::string(std::to_string(childLogicalOperatorNode->getId()));
-        // use concatenation of <operator type>(OP-<operator id>) to fill name field
-        // e.g. FILTER(OP-1)
-        node["name"] =
-            web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
-
-        node["nodeType"] = web::json::value::string(childOPeratorType);
-
-        // store current node JSON object to the `nodes` JSON array
-        nodes.push_back(node);
-
-        // Create an edge JSON object for current operator
-        auto edge = web::json::value::object();
-        edge["source"] =
-            web::json::value::string(
-                childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
-        edge["target"] =
-            web::json::value::string(
-                getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
-
-        // store current edge JSON object to `edges` JSON array
-        edges.push_back(edge);
-
-        // traverse to the children of current operator
-        getChildren(childLogicalOperatorNode, nodes, edges);
-    }
 }
 
 }// namespace NES

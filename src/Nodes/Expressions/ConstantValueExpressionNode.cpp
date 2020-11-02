@@ -5,6 +5,9 @@ namespace NES {
 ConstantValueExpressionNode::ConstantValueExpressionNode(const ValueTypePtr constantValue) : ExpressionNode(constantValue->getType()),
                                                                                              constantValue(constantValue){};
 
+ConstantValueExpressionNode::ConstantValueExpressionNode(ConstantValueExpressionNode* other) : ExpressionNode(other->constantValue->getType()),
+                                                                                               constantValue(other->constantValue){};
+
 bool ConstantValueExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<ConstantValueExpressionNode>()) {
         auto otherConstantValueNode = rhs->as<ConstantValueExpressionNode>();
@@ -28,6 +31,9 @@ ValueTypePtr ConstantValueExpressionNode::getConstantValue() const {
 void ConstantValueExpressionNode::inferStamp(SchemaPtr) {
     // the stamp of constant value expressions is defined by the constant value type.
     // thus ut is already assigned correctly when the expression node is created.
+}
+ExpressionNodePtr ConstantValueExpressionNode::copy() {
+    return std::make_shared<ConstantValueExpressionNode>(ConstantValueExpressionNode(this));
 }
 
 }// namespace NES

@@ -1,9 +1,10 @@
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
-#include "CodeGenerator.hpp"
 #include <NodeEngine/WorkerContext.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
 #include <vector>
 
@@ -12,19 +13,14 @@ class TupleBuffer;
 class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
-template<class PartialAggregateType>
-class WindowSliceStore;
-
-class WindowHandler;
-typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
-
 class ExecutablePipeline;
 typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
-class WindowManager;
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 class PipelineExecutionContext;
 typedef std::shared_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
@@ -39,7 +35,7 @@ class PipelineStage {
         ExecutablePipelinePtr executablePipeline,
         QueryExecutionContextPtr pipelineContext,
         PipelineStagePtr nextPipelineStage,
-        WindowHandlerPtr windowHandler = WindowHandlerPtr());
+        Windowing::AbstractWindowHandlerPtr windowHandler = Windowing::AbstractWindowHandlerPtr());
 
     /**
      * @brief Execute a pipeline stage
@@ -53,7 +49,7 @@ class PipelineStage {
    * @brief Initialises a pipeline stage
    * @return boolean if successful
    */
-    bool setup();
+    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
 
     /**
      * @brief Starts a pipeline stage
@@ -94,13 +90,13 @@ class PipelineStage {
                                    const ExecutablePipelinePtr compiledCode,
                                    QueryExecutionContextPtr pipelineContext,
                                    const PipelineStagePtr nextPipelineStage,
-                                   const WindowHandlerPtr& windowHandler = WindowHandlerPtr());
+                                   const Windowing::AbstractWindowHandlerPtr& windowHandler = Windowing::AbstractWindowHandlerPtr());
 
   private:
     uint32_t pipelineStageId;
     QuerySubPlanId qepId;
     ExecutablePipelinePtr executablePipeline;
-    WindowHandlerPtr windowHandler;
+    Windowing::AbstractWindowHandlerPtr windowHandler;
     PipelineStagePtr nextStage;
     QueryExecutionContextPtr pipelineContext;
 

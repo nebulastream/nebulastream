@@ -23,10 +23,10 @@ void PipelineExecutionContext::emitBuffer(TupleBuffer& outputBuffer, WorkerConte
     emitFunctionHandler(outputBuffer, workerContext);
 }
 
-WindowDefinitionPtr PipelineExecutionContext::getWindowDef() {
+Windowing::LogicalWindowDefinitionPtr PipelineExecutionContext::getWindowDef() {
     return windowDef;
 }
-void PipelineExecutionContext::setWindowDef(WindowDefinitionPtr windowDef) {
+void PipelineExecutionContext::setWindowDef(Windowing::LogicalWindowDefinitionPtr windowDef) {
     this->windowDef = windowDef;
 }
 SchemaPtr PipelineExecutionContext::getInputSchema() {

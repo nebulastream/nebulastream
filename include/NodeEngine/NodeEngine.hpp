@@ -19,6 +19,9 @@
 
 namespace NES {
 
+class QueryPlan;
+typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+
 class PhysicalStreamConfig;
 typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 
@@ -91,7 +94,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param operatorTree: query sub plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(QueryId queryId, QuerySubPlanId queryExecutionId, OperatorNodePtr operatorTree);
+    bool registerQueryInNodeEngine(QueryPlanPtr queryPlan);
 
     /**
      * @brief ungregisters a query

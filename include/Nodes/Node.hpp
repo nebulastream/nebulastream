@@ -185,8 +185,7 @@ class Node : public std::enable_shared_from_this<Node> {
         if (instanceOf<NodeType>()) {
             return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
         } else {
-            NES_FATAL_ERROR("We performed an invalid cast");
-            throw std::bad_cast();
+            NES_THROW_RUNTIME_ERROR("Node:: we performed an invalid cast of operator " + this->toString() + " to type " + typeid(NodeType).name());
         }
     }
 
@@ -225,13 +224,13 @@ class Node : public std::enable_shared_from_this<Node> {
      * Check if input node is present as parent to this
      * @return true if input node is in parent list
      */
-    bool containAsParent(NodePtr);
+    virtual bool containAsParent(NodePtr node);
 
     /**
      * Check if input node is present as children to this
      * @return true if input node is in children list
      */
-    bool containAsChild(NodePtr);
+    virtual bool containAsChild(NodePtr node);
 
     /**
      * @brief get direct parents.

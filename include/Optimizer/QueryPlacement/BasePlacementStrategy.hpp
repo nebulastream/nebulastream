@@ -2,7 +2,7 @@
 #define NESPLACEMENTOPTIMIZER_HPP
 
 #include <Catalogs/StreamCatalogEntry.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -83,7 +83,7 @@ class BasePlacementStrategy {
      * @param candidateTopologyNode: topology node
      * @return Execution Node pointer
      */
-    ExecutionNodePtr getExecutionNode(TopologyNodePtr candidateTopologyNode);
+    ExecutionNodePtr getExecutionNode(const TopologyNodePtr& candidateTopologyNode);
 
     /**
      * @brief Get the physical node for the logical source
@@ -96,7 +96,7 @@ class BasePlacementStrategy {
      * @brief Add network source and sinks between query sub plans allocated on different execution nodes
      * @param queryPlan: the original query plan
      */
-    void addNetworkSourceAndSinkOperators(QueryPlanPtr queryPlan);
+    void addNetworkSourceAndSinkOperators(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id
@@ -120,7 +120,7 @@ class BasePlacementStrategy {
      * @param sourceTopologyNode : the topology node to which sink operator will send the data
      * @return the instance of network sink operator
      */
-    OperatorNodePtr createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, TopologyNodePtr sourceTopologyNode);
+    OperatorNodePtr createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, const TopologyNodePtr& sourceTopologyNode);
 
     /**
      * @brief create a new network source operator
@@ -136,7 +136,7 @@ class BasePlacementStrategy {
      * @param queryId : the id of the query
      * @param operatorNode : the logical operator to which source or sink operator need to be attached
      */
-    void placeNetworkOperator(QueryId queryId, OperatorNodePtr operatorNode);
+    void placeNetworkOperator(QueryId queryId, const OperatorNodePtr& operatorNode);
 };
 }// namespace NES
 #endif//NESPLACEMENTOPTIMIZER_HPP

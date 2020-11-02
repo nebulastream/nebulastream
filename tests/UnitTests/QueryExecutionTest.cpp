@@ -1,9 +1,10 @@
 #include "gtest/gtest.h"
 
 #include <API/Schema.hpp>
+#include <API/Query.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -18,9 +19,9 @@
 #include "../util/SchemaSourceDescriptor.hpp"
 #include "../util/TestQuery.hpp"
 #include <Catalogs/StreamCatalog.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
@@ -250,7 +251,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
  * WindowSource -> windowOperator -> windowScan -> TestSink
  * The source generates 2. buffers.
  */
-TEST_F(QueryExecutionTest, TumblingWindowQuery) {
+TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
@@ -263,10 +264,9 @@ TEST_F(QueryExecutionTest, TumblingWindowQuery) {
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
-    auto windowType = TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(10));
+    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
 
-    auto aggregation = Sum::on(Attribute("value"));
-    query = query.windowByKey(Attribute("key"), windowType, aggregation);
+    query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
@@ -343,9 +343,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Sliding window of size 10ms and with Slide 2ms and a sum aggregation on the value.
-    auto windowType = SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(10), Milliseconds(5));
+    auto windowType = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(10), Milliseconds(5));
 
-    auto aggregation = Sum::on(Attribute("value"));
+    auto aggregation = Sum(Attribute("value"));
     query = query.windowByKey(Attribute("key"), windowType, aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
@@ -421,9 +421,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Sliding window of size 10ms and with Slide 2ms and a sum aggregation on the value.
-    auto windowType = SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Milliseconds(15), Milliseconds(5));
+    auto windowType = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(15), Milliseconds(5));
 
-    auto aggregation = Sum::on(Attribute("value"));
+    auto aggregation = Sum(Attribute("value"));
     query = query.windowByKey(Attribute("key"), windowType, aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer

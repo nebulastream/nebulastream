@@ -1,16 +1,16 @@
-#include "REST/Controller/QueryCatalogController.hpp"
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <NodeEngine/QueryStatistics.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorWeakPtr coordinator) {
+QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorWeakPtr coordinator, GlobalQueryPlanPtr globalQueryPlan)
+    : queryCatalog(queryCatalog), coordinator(coordinator), globalQueryPlan(globalQueryPlan) {
     NES_DEBUG("QueryCatalogController()");
-    this->queryCatalog = queryCatalog;
-    this->coordinator = coordinator;
 }
 
 void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {
@@ -93,11 +93,13 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     std::string queryId(body.begin(), body.end());
                     NES_DEBUG("getNumberOfProducedBuffers payload=" << queryId);
 
+                    GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(std::stoi(queryId));
+
                     //Prepare the response
                     json::value result{};
                     size_t processedBuffers = 0;
                     if (auto shared_back_reference = coordinator.lock()) {
-                        processedBuffers = shared_back_reference->getQueryStatistics(std::stoi(queryId))[0]->getProcessedBuffers();
+                        processedBuffers = shared_back_reference->getQueryStatistics(globalQueryId)[0]->getProcessedBuffers();
                     }
                     NES_DEBUG("getNumberOfProducedBuffers processedBuffers=" << processedBuffers);
 

@@ -3,7 +3,7 @@
 #include <memory>
 
 #include <API/Schema.hpp>
-#include <API/Window/WindowDefinition.hpp>
+#include <Join/LogicalJoinDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
@@ -13,6 +13,14 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+
+namespace NES::Windowing {
+
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
+
+}// namespace NES::Windowing
 namespace NES {
 
 class AttributeReference;
@@ -33,9 +41,6 @@ typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
 
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
-
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
@@ -44,6 +49,9 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 
 class CompilerTypesFactory;
 typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
+
+class UserAPIExpression;
+typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 
 /**
  * @brief The code generator encapsulates the code generation for different operators.
@@ -91,7 +99,7 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForCompleteWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) = 0;
 
     /**
    * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -99,7 +107,7 @@ class CodeGenerator {
    * @param context The context of the current pipeline.
    * @return flag if the generation was successful.
    */
-    virtual bool generateCodeForSlicingWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -107,7 +115,15 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForCombiningWindow(WindowDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) = 0;
+
+    /**
+    * @brief Code generation for a join operator, which depends on a particular join definition
+    * @param window The join definition, which contains all properties of the join.
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    virtual bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) = 0;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

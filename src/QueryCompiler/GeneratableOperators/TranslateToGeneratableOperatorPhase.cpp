@@ -1,18 +1,18 @@
 
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/SliceMergingOperator.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 
-#include <QueryCompiler/GeneratableOperators/GeneratableCombiningWindowOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableSlicingWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/GeneratableSlicingWindowOperator.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
@@ -54,23 +54,22 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
-    }
-    else if (operatorNode->instanceOf<CentralWindowOperator>()) {
+    } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableCompleteWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        auto windowOperator = GeneratableCompleteWindowOperator::create(operatorNode->as<CentralWindowOperator>());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableSlicingWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        auto windowOperator = GeneratableSlicingWindowOperator::create(operatorNode->as<SliceCreationOperator>());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto windowOperator = GeneratableCombiningWindowOperator::create(operatorNode->as<WindowLogicalOperatorNode>());
+        auto windowOperator = GeneratableCombiningWindowOperator::create(operatorNode->as<WindowComputationOperator>());
         scanOperator->addChild(windowOperator);
         return windowOperator;
     }

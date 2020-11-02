@@ -113,7 +113,7 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQuery
 QuerySubPlanId GeneratedQueryExecutionPlanBuilder::getQuerySubPlanId() const {
     return querySubPlanId;
 }
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setWinDef(const WindowDefinitionPtr& winDef) {
+GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setWinDef(const Windowing::LogicalWindowDefinitionPtr& winDef) {
     this->winDef = winDef;
     return *this;
 }
@@ -122,7 +122,7 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setSchem
     this->schema = schema;
     return *this;
 }
-WindowDefinitionPtr GeneratedQueryExecutionPlanBuilder::getWinDef() {
+Windowing::LogicalWindowDefinitionPtr GeneratedQueryExecutionPlanBuilder::getWinDef() {
     return winDef;
 }
 SchemaPtr GeneratedQueryExecutionPlanBuilder::getSchema() {

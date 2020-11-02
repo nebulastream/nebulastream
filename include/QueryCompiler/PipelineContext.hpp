@@ -1,6 +1,14 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
 #include <API/Schema.hpp>
+
+namespace NES::Windowing {
+
+class AbstractWindowHandler;
+typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
+
+}// namespace NES::Windowing
+
 namespace NES {
 
 class PipelineContext;
@@ -11,9 +19,6 @@ typedef std::shared_ptr<Declaration> DeclarationPtr;
 
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
-
-class WindowDefinition;
-typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
 /**
  * @brief The Pipeline Context represents the context of one pipeline during code generation.
@@ -28,8 +33,8 @@ class PipelineContext {
 
     SchemaPtr getInputSchema() const;
     SchemaPtr getResultSchema() const;
-    WindowDefinitionPtr getWindow();
-    void setWindow(WindowDefinitionPtr window);
+    Windowing::AbstractWindowHandlerPtr getWindow();
+    void setWindow(Windowing::AbstractWindowHandlerPtr window);
     bool hasWindow() const;
 
     SchemaPtr inputSchema;
@@ -44,7 +49,7 @@ class PipelineContext {
 
   private:
     std::vector<PipelineContextPtr> nextPipelines;
-    WindowDefinitionPtr windowDefinition;
+    Windowing::AbstractWindowHandlerPtr windowHandler;
 };
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_

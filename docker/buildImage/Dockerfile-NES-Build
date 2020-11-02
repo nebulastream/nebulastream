@@ -16,14 +16,21 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   librdkafka1 \
   librdkafka++1 \
   librdkafka-dev \
+  libeigen3-dev \
   libzmqpp-dev \
   git \
   wget \
+  z3 \
   tar \
   software-properties-common \
   && add-apt-repository ppa:open62541-team/ppa && \
   apt-get update -qq && \
   apt-get install libopen62541-1-dev -qq \
+  && apt-get clean -qq
+
+RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -qq \
+  doxygen \
+  graphviz \
   && apt-get clean -qq
 
 RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \

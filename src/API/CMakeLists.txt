@@ -5,6 +5,6 @@ add_source_nes(
         Query.cpp
         Pattern.cpp
         AttributeField.cpp
+        Windowing.cpp
 )
-add_subdirectory(Window)
 add_subdirectory(Expressions)

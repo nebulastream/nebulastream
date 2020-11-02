@@ -102,7 +102,8 @@ bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
             removeExecutionNode(executionNodeId);
         }
     }
-    NES_DEBUG("GlobalExecutionPlan: Removed all Execution node with id " << queryId);
+    queryIdIndex.erase(queryId);
+    NES_DEBUG("GlobalExecutionPlan: Removed all Execution nodes for Query with id " << queryId);
     return true;
 }
 

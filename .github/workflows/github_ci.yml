@@ -17,7 +17,7 @@ jobs:
   build-job:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
     runs-on: self-hosted
-    timeout-minutes: 30
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v2
         with:
@@ -107,6 +107,14 @@ jobs:
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
           docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+      - name: Push Docs to pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
+          publish_dir: ./build/docs/html
+          destination_dir: private/doc/
+          external_repository: nebulastream/nes-server
+          publish_branch: master
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:

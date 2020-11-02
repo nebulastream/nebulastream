@@ -48,7 +48,7 @@ bool Node::removeChild(const NodePtr node) {
     // check all children.
     for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
         NES_DEBUG("Node: remove " << (*nodeItr)->toString() << " from " << node->toString() << " this=" << this << " other=" << node.get());
-        if ((*nodeItr)->equal(node)) {
+        if ((*nodeItr).get() == node.get()) {
             // remove this from nodeItr's parents
             for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++) {
                 if ((*it).get() == this) {
@@ -120,17 +120,22 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
 
 void Node::removeAllParent() {
     NES_INFO("Node: Removing all parents for current node");
-    for (NodePtr parent : parents) {
-        this->removeParent(parent);
+    auto nodeItr = parents.begin();
+    while (nodeItr != parents.end()) {
+        if (!this->removeParent(*nodeItr)) {
+            nodeItr++;
+        }
         NES_INFO("Node: Removed node as parent of this node");
     }
 }
 
 void Node::removeChildren() {
     NES_INFO("Node: Removing all children for current node");
-
-    for (NodePtr child : children) {
-        this->removeChild(child);
+    auto nodeItr = children.begin();
+    while (nodeItr != children.end()) {
+        if (!this->removeChild(*nodeItr)) {
+            nodeItr++;
+        }
         NES_INFO("Node: Removed node as child of this node");
     }
 }
@@ -138,7 +143,7 @@ void Node::removeChildren() {
 bool Node::removeParent(const NodePtr node) {
     // check all parents.
     for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr) {
-        if ((*nodeItr)->equal(node)) {
+        if ((*nodeItr).get() == node.get()) {
             for (auto it = (*nodeItr)->children.begin(); it != (*nodeItr)->children.end(); it++) {
                 if ((*it).get() == this) {
                     (*nodeItr)->children.erase(it);

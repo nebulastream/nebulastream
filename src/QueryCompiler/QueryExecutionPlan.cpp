@@ -27,7 +27,7 @@ QuerySubPlanId QueryExecutionPlan::getQuerySubPlanId() const {
 }
 
 QueryExecutionPlan::~QueryExecutionPlan() {
-    NES_DEBUG("destroy qep");
+    NES_DEBUG("destroy qep " << queryId << " " << querySubPlanId);
     NES_ASSERT(qepStatus.load() == Stopped || qepStatus.load() == ErrorState, "QueryPlan is created but not executing " << queryId);
     sources.clear();
     stages.clear();
@@ -35,17 +35,20 @@ QueryExecutionPlan::~QueryExecutionPlan() {
 
 bool QueryExecutionPlan::stop() {
     bool ret = true;
-    NES_ASSERT(qepStatus == Running, "QueryPlan is created but not executing " << queryId);
-    NES_DEBUG("QueryExecutionPlan: stop");
-    for (auto& stage : stages) {
-        if (!stage->stop()) {
-            NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
-            ret = false;
+    //    NES_ASSERT(qepStatus == Running, "QueryPlan is created but not executing " << queryId << " " << querySubPlanId);
+
+    auto expected = Running;
+    if (qepStatus.compare_exchange_strong(expected, Stopped)) {
+        NES_DEBUG("QueryExecutionPlan: stop " << queryId << " " << querySubPlanId);
+        for (auto& stage : stages) {
+            if (!stage->stop()) {
+                NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
+                ret = false;
+            }
         }
     }
-    if (ret) {
-        qepStatus.store(Stopped);
-    } else {
+
+    if (!ret) {
         qepStatus.store(ErrorState);
     }
     return ret;
@@ -56,12 +59,12 @@ QueryExecutionPlan::QueryExecutionPlanStatus QueryExecutionPlan::getStatus() {
 }
 
 bool QueryExecutionPlan::setup() {
-    NES_DEBUG("QueryExecutionPlan: setup");
+    NES_DEBUG("QueryExecutionPlan: setup " << queryId << " " << querySubPlanId);
     auto expected = Created;
     if (qepStatus.compare_exchange_strong(expected, Deployed)) {
         for (auto& stage : stages) {
-            if (!stage->setup()) {
-                NES_ERROR("QueryExecutionPlan: setup failed!");
+            if (!stage->setup(queryManager, bufferManager)) {
+                NES_ERROR("QueryExecutionPlan: setup failed!" << queryId << " " << querySubPlanId);
                 this->stop();
                 return false;
             }
@@ -73,12 +76,12 @@ bool QueryExecutionPlan::setup() {
 }
 
 bool QueryExecutionPlan::start() {
-    NES_DEBUG("QueryExecutionPlan: start");
+    NES_DEBUG("QueryExecutionPlan: start " << queryId << " " << querySubPlanId);
     auto expected = Deployed;
     if (qepStatus.compare_exchange_strong(expected, Running)) {
         for (auto& stage : stages) {
             if (!stage->start()) {
-                NES_ERROR("QueryExecutionPlan: start failed!");
+                NES_ERROR("QueryExecutionPlan: start failed! " << queryId << " " << querySubPlanId);
                 this->stop();
                 return false;
             }

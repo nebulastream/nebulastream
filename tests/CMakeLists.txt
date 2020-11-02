@@ -75,7 +75,7 @@ add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp" UnitTests/
 target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
-### WindowHandler Manager Test ###
+### AbstractWindowHandler Manager Test ###
 add_executable(window-manager-tests "UnitTests/WindowManagerTest.cpp")
 target_link_libraries(window-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME window-manager-tests COMMAND window-manager-tests)
@@ -113,6 +113,9 @@ if(NES_USE_OPC)
     add_executable(opc-source-tests "UnitTests/OPCSourceTest.cpp" UnitTests/OPCSourceTest.cpp)
     target_link_libraries(opc-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-source-tests COMMAND opc-source-tests)
+    add_executable(opc-sink-tests "UnitTests/OPCSinkTest.cpp" UnitTests/OPCSinkTest.cpp)
+    target_link_libraries(opc-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+    add_test(NAME opc-sink-tests COMMAND opc-sink-tests)
 endif(NES_USE_OPC)
 
 ### Memory Layout Tests ###
@@ -121,7 +124,7 @@ target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})
 add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
 
 ### Stream Catalog Tests ###
-add_executable(stream-catalog-test "UnitTests/StreamCatalogTest.cpp")
+add_executable(stream-catalog-test "UnitTests/Catalogs/StreamCatalogTest.cpp")
 target_link_libraries(stream-catalog-test nes ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
 
@@ -185,7 +188,6 @@ add_executable(window-distr-rule-test "UnitTests/Optimizer/QueryRewrite/Distribu
 target_link_libraries(window-distr-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME window-distr-rule-test COMMAND window-distr-rule-test)
 
-
 # SerializationUtilTest
 add_executable(serialize-operator-test "UnitTests/Nodes/SerializationUtilTest.cpp")
 target_link_libraries(serialize-operator-test nes ${GTEST_LIBRARIES})
@@ -241,6 +243,11 @@ add_executable(l0-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/L0Quer
 target_link_libraries(l0-query-merger-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME l0-query-merger-rule-test COMMAND l0-query-merger-rule-test)
 
+### Query Placement Tests ###
+add_executable(query-placement-test "UnitTests/Optimizer/QueryPlacement/QueryPlacementTest.cpp")
+target_link_libraries(query-placement-test nes ${GTEST_LIBRARIES})
+add_test(NAME query-placement-test COMMAND query-placement-test)
+
 ### Thread Naming Test ###
 add_executable(thread-naming-tests "UnitTests/ThreadNamingTest.cpp")
 target_link_libraries(thread-naming-tests nes ${GTEST_LIBRARIES})
@@ -250,6 +257,11 @@ add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
 add_executable(global-execution-plan-tests "UnitTests/Plans/Global/Execution/GlobalExecutionPlanTest.cpp")
 target_link_libraries(global-execution-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-execution-plan-tests COMMAND global-execution-plan-tests)
+
+### Z3 Validation Test ###
+add_executable(z3-validation-tests "UnitTests/Z3ValidationTest.cpp")
+target_link_libraries(z3-validation-tests nes ${GTEST_LIBRARIES})
+add_test(NAME z3-validation-tests COMMAND z3-validation-tests)
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###

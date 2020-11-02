@@ -1,23 +1,30 @@
 #include <API/Query.hpp>
-#include <API/Window/TimeCharacteristic.hpp>
-#include <API/Window/WindowAggregation.hpp>
-#include <API/Window/WindowType.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+
+using namespace NES::API;
+using namespace NES::Windowing;
 
 namespace NES {
 
@@ -54,11 +61,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     inputSchema->addField("f2", BasicType::INT8);
 
     auto source = LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
-    source->setId(UtilityFunctions::getNextOperatorId());
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f1") * 42);
-    map->setId(UtilityFunctions::getNextOperatorId());
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
-    sink->setId(UtilityFunctions::getNextOperatorId());
 
     auto plan = QueryPlan::create(source);
     plan->appendOperatorAsNewRoot(map);
@@ -93,9 +97,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
 TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
 
     auto query = Query::from("default_logical")
-                     .window(
+                     .windowByKey(
+                         Attribute("id"),
                          TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-                         Sum::on(Attribute("value")))
+                         Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
@@ -123,11 +128,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     inputSchema->addField("f2", BasicType::INT8);
 
     auto source = LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
-    source->setId(UtilityFunctions::getNextOperatorId());
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f3") * 42);
-    map->setId(UtilityFunctions::getNextOperatorId());
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
-    sink->setId(UtilityFunctions::getNextOperatorId());
 
     auto plan = QueryPlan::create(source);
     plan->appendOperatorAsNewRoot(map);

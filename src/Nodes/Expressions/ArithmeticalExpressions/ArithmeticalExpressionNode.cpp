@@ -1,8 +1,10 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
+#include <utility>
 namespace NES {
 
-ArithmeticalExpressionNode::ArithmeticalExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(stamp) {}
+ArithmeticalExpressionNode::ArithmeticalExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)) {}
+ArithmeticalExpressionNode::ArithmeticalExpressionNode(ArithmeticalExpressionNode* other) : BinaryExpressionNode(other) {}
 
 /**
  * @brief The current implementation of type inference for arithmetical expressions expects that both

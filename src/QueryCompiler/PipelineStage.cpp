@@ -1,11 +1,15 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+#include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
-#include <Windows/WindowHandler.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 
 namespace NES {
@@ -16,18 +20,14 @@ PipelineStage::PipelineStage(
     ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineExecutionContext,
     PipelineStagePtr nextPipelineStage,
-    WindowHandlerPtr windowHandler) : pipelineStageId(pipelineStageId),
-                                      qepId(qepId),
-                                      executablePipeline(std::move(executablePipeline)),
-                                      windowHandler(std::move(windowHandler)),
-                                      nextStage(std::move(nextPipelineStage)),
-                                      pipelineContext(std::move(pipelineExecutionContext)) {
+    Windowing::AbstractWindowHandlerPtr windowHandler) : pipelineStageId(pipelineStageId),
+                                                         qepId(qepId),
+                                                         executablePipeline(std::move(executablePipeline)),
+                                                         windowHandler(std::move(windowHandler)),
+                                                         nextStage(std::move(nextPipelineStage)),
+                                                         pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
-    if (hasWindowHandler()) {
-        NES_DEBUG("Pipelinestage ctor set origin id=" << qepId);
-        this->windowHandler->setOriginId(qepId);
-    }
 }
 
 bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
@@ -37,7 +37,7 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
     if (hasWindowHandler()) {
         dbgMsg << "  withWindow_";
         auto distType = pipelineContext->getWindowDef()->getDistributionType()->getType();
-        if (distType == DistributionCharacteristic::Combining) {
+        if (distType == Windowing::DistributionCharacteristic::Combining) {
             dbgMsg << "Combining";
         } else {
             dbgMsg << "Slicing";
@@ -47,25 +47,25 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
     }
     NES_DEBUG(dbgMsg.str());
     // only get the window manager and state if the pipeline has a window handler.
-    auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;               // TODO Philipp, do we need this check?
-    auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : WindowManagerPtr();// TODO Philipp, do we need this check?
+    auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;                          // TODO Philipp, do we need this check?
+    auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : Windowing::WindowManagerPtr();// TODO Philipp, do we need this check?
 
     uint64_t maxWaterMark = 0;
     if (hasWindowHandler()) {
-        if (pipelineContext->getWindowDef()->getWindowType()->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+        if (pipelineContext->getWindowDef()->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
             NES_DEBUG("Execute Pipeline Stage set processing time watermark from buffer=" << inputBuffer.getWatermark());
             windowHandler->updateAllMaxTs(inputBuffer.getWatermark(), inputBuffer.getOriginId());
         } else {//Event time
             auto distType = pipelineContext->getWindowDef()->getDistributionType()->getType();
             std::string tsFieldName = "";
-            if (distType == DistributionCharacteristic::Combining) {
+            if (distType == Windowing::DistributionCharacteristic::Combining) {
                 NES_DEBUG("PipelineStage: process combining window");
                 tsFieldName = "end";
                 if (!pipelineContext->getInputSchema()->has(tsFieldName)) {
                     NES_ERROR("PipelineStage::execute: Window Operator: key field " << tsFieldName << " does not exist!");
                     NES_FATAL_ERROR("PipelineStage type error");
                 }
-            } else if (distType == DistributionCharacteristic::Slicing || distType == DistributionCharacteristic::Complete) {
+            } else if (distType == Windowing::DistributionCharacteristic::Slicing || distType == Windowing::DistributionCharacteristic::Complete) {
                 NES_DEBUG("PipelineStage: process slicing window or complete window");
                 tsFieldName = pipelineContext->getWindowDef()->getWindowType()->getTimeCharacteristic()->getField()->name;
                 if (!pipelineContext->getInputSchema()->has(tsFieldName)) {
@@ -111,9 +111,9 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
     return ret;
 }
 
-bool PipelineStage::setup() {
+bool PipelineStage::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
     if (hasWindowHandler()) {
-        return windowHandler->setup(nextStage, pipelineStageId);
+        return windowHandler->setup(queryManager, bufferManager, nextStage, pipelineStageId, qepId);
     }
     return true;
 }
@@ -164,7 +164,7 @@ PipelineStagePtr PipelineStage::create(
     const ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineContext,
     const PipelineStagePtr nextPipelineStage,
-    const WindowHandlerPtr& windowHandler) {
+    const Windowing::AbstractWindowHandlerPtr& windowHandler) {
 
     return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipeline, pipelineContext, nextPipelineStage, windowHandler);
 }

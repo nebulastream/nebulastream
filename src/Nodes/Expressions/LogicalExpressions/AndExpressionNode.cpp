@@ -2,7 +2,11 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 namespace NES {
+
 AndExpressionNode::AndExpressionNode() : LogicalBinaryExpressionNode(){};
+
+AndExpressionNode::AndExpressionNode(AndExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
+
 ExpressionNodePtr AndExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto andNode = std::make_shared<AndExpressionNode>();
     andNode->setChildren(left, right);
@@ -32,6 +36,9 @@ void AndExpressionNode::inferStamp(SchemaPtr schema) {
         NES_THROW_RUNTIME_ERROR("AND Expression Node: the stamp of left child must be boolean, but was: "
                                 + getRight()->getStamp()->toString());
     }
+}
+ExpressionNodePtr AndExpressionNode::copy() {
+    return std::make_shared<AndExpressionNode>(AndExpressionNode(this));
 }
 
 }// namespace NES

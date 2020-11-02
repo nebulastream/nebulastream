@@ -1,7 +1,7 @@
 #ifndef NES_GLOBALQUERYNODE_HPP
 #define NES_GLOBALQUERYNODE_HPP
 
-#include <Nodes/Operators/OperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <memory>
 #include <string>
@@ -115,6 +115,15 @@ class GlobalQueryNode : public Node {
      * @return set of query ids
      */
     const std::vector<QueryId> getQueryIds();
+
+    /**
+     * @brief Check if the Global query node contains the query id
+     * @param queryId : the query id to search
+     * @return true if query id exists in the global query node else false
+     */
+    bool hasQuery(QueryId queryId);
+
+    bool equal(const NodePtr rhs) const override;
 
     const std::string toString() const override;
 

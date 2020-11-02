@@ -33,6 +33,15 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
     ExpressionNodePtr getAssignment() const;
 
     void inferStamp(SchemaPtr schema) override;
+
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
+    ExpressionNodePtr copy() override;
+
+  protected:
+    explicit FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other);
 };
 }// namespace NES
 

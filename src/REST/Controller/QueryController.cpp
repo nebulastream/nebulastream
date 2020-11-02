@@ -5,11 +5,11 @@
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/QueryController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 using namespace web;
 using namespace http;
@@ -34,7 +34,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
 
                     NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
                     // get the execution-plan for given query id
-                    auto executionPlanJson = UtilityFunctions::getExecutionPlanAsJson(globalExecutionPlan, queryId);
+                    auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
                     NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.serialize());
                     //Prepare the response
                     successMessageImpl(message, executionPlanJson);
@@ -56,7 +56,14 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     QueryId queryId = req.at("userQuery").as_integer();
 
                     //Call the service
-                    auto basePlan = UtilityFunctions::getQueryPlanAsJson(queryCatalog, queryId);
+                    NES_DEBUG("UtilityFunctions: Get the registered query");
+                    if (!queryCatalog->queryExists(queryId)) {
+                        throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
+                    }
+                    QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+
+                    NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
+                    auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getQueryPlan());
 
                     //Prepare the response
                     successMessageImpl(message, basePlan);

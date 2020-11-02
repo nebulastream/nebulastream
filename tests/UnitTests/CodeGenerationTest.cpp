@@ -1,7 +1,9 @@
+#include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Join/LogicalJoinDefinition.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
@@ -28,9 +30,12 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <State/StateVariable.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windows/WindowHandler.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowHandler/WindowHandlerFactoryDetails.hpp>
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>
@@ -45,12 +50,12 @@ class CodeGenerationTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
+        NES::setupLogging("CodeGenerationTest.log", NES::LOG_DEBUG);
         std::cout << "Setup CodeGenerationTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
     void SetUp() {
-        NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
     }
 
@@ -629,7 +634,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto varDeclWindow = VariableDeclaration::create(
         tf.createPointer(tf.createAnonymusDataType("void")), "stateVar");
     VariableDeclaration varDeclWindowManager = VariableDeclaration::create(
-        tf.createPointer(tf.createAnonymusDataType("NES::WindowManager")),
+        tf.createPointer(tf.createAnonymusDataType("NES::Windowing::WindowManager")),
         "window_manager");
 
     /* Tuple *tuples; */
@@ -881,9 +886,9 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
 
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
 
-    auto sum = Sum::on(Attribute("value"));
-    auto windowDefinition = WindowDefinition::create(
-        input_schema->get("key"), sum,
+    auto sum = SumAggregationDescriptor::on(Attribute("value"));
+    auto windowDefinition = LogicalWindowDefinition::create(
+        Attribute("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, context1);
@@ -896,15 +901,14 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler =
-        new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
+    auto windowHandler = WindowHandlerFactoryDetails::createAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
         buff.isValid();
     });                                                                                          //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
-    windowHandler->setup(nextPipeline, 0);
+    windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
@@ -938,9 +942,9 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
 
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
 
-    auto sum = Sum::on(Attribute("value"));
-    auto windowDefinition = WindowDefinition::create(
-        input_schema->get("key"), sum,
+    auto sum = SumAggregationDescriptor::on(Attribute("value"));
+    auto windowDefinition = LogicalWindowDefinition::create(
+        Attribute("key"), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, context1);
@@ -953,15 +957,14 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler =
-        new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
+    auto windowHandler = WindowHandlerFactoryDetails::createAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
         buff.isValid();
     });                                                                                          //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
-    windowHandler->setup(nextPipeline, 0);
+    windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
@@ -995,9 +998,9 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
 
     codeGenerator->generateCodeForScan(schema, context1);
 
-    auto sum = Sum::on(Attribute("value"));
-    auto windowDefinition = WindowDefinition::create(
-        schema->get("key"), sum,
+    auto sum = SumAggregationDescriptor::on(Attribute("value", UINT64));
+    auto windowDefinition = LogicalWindowDefinition::create(
+        Attribute("key", UINT64), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1);
 
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, context1);
@@ -1010,15 +1013,14 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler =
-        new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
+    auto windowHandler = WindowHandlerFactoryDetails::createAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
         buff.isValid();
     });                                                                                          //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
-    windowHandler->setup(nextPipeline, 0);
+    windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     auto layout = createRowLayout(schema);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -1060,7 +1062,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
 
     //check partial aggregates in window state
     auto stateVar =
-        (StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) windowHandler
+        (StateVariable<int64_t, NES::Windowing::WindowSliceStore<int64_t>*>*) windowHandler
             ->getWindowState();
 
     std::vector<uint64_t> results;
@@ -1198,5 +1200,60 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
         auto mapedValue = outputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 4)->read(resultBuffer);
         EXPECT_EQ(reference, mapedValue);
     }
+}
+
+/**
+ * @brief This test generates a window slicer
+ */
+TEST_F(CodeGenerationTest, codeGenerationJoin) {
+    /* prepare objects for test */
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+
+    auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = CCodeGenerator::create();
+    auto context1 = PipelineContext::create();
+
+    auto input_schema = source->getSchema();
+
+    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+
+    Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                                                                                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                                                                                 TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)));
+
+    codeGenerator->generateCodeForJoin(joinDef, context1);
+
+    /* compile code to pipeline stage */
+    auto stage1 = codeGenerator->compile(context1->code);
+
+    auto context2 = PipelineContext::create();
+    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    auto stage2 = codeGenerator->compile(context2->code);
+    //    // init window handler
+    //    auto windowHandler = WindowHandlerFactoryDetails::createAggregationWindow<uint64_t,uint64_t,uint64_t,uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
+    //
+    //    //auto context = PipelineContext::create();
+    //    auto executionContext = std::make_shared<PipelineExecutionContext>(0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
+    //      buff.isValid();
+    //    });                                                                                          //valid check due to compiler error for unused var
+    //    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);
+    //    windowHandler->setup( nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0);
+    //
+    //    /* prepare input tuple buffer */
+    //    auto inputBuffer = source->receiveData().value();
+    //
+    //    /* execute Stage */
+    //    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager());
+    //    WorkerContext wctx(NesThread::getId());
+    //    stage1->execute(inputBuffer, windowHandler->getWindowState(),
+    //                    windowHandler->getWindowManager(), queryContext, wctx);
+    //
+    //    //check partial aggregates in window  state
+    //    auto stateVar =
+    //        (StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) windowHandler
+    //            ->getWindowState();
+    //    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
+    //    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
 }// namespace NES

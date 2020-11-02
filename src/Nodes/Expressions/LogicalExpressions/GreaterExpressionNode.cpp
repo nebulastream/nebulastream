@@ -3,6 +3,9 @@
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 namespace NES {
 GreaterExpressionNode::GreaterExpressionNode() : LogicalBinaryExpressionNode(){};
+
+GreaterExpressionNode::GreaterExpressionNode(GreaterExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
+
 ExpressionNodePtr GreaterExpressionNode::create(const ExpressionNodePtr left,
                                                 const ExpressionNodePtr right) {
     auto greater = std::make_shared<GreaterExpressionNode>();
@@ -20,6 +23,9 @@ bool GreaterExpressionNode::equal(const NodePtr rhs) const {
 
 const std::string GreaterExpressionNode::toString() const {
     return "GreaterNode(" + stamp->toString() + ")";
+}
+ExpressionNodePtr GreaterExpressionNode::copy() {
+    return std::make_shared<GreaterExpressionNode>(GreaterExpressionNode(this));
 }
 
 }// namespace NES

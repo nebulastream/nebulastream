@@ -22,6 +22,15 @@ class AndExpressionNode : public LogicalBinaryExpressionNode {
      * @param schema the current schema.
      */
     void inferStamp(SchemaPtr schema) override;
+
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
+    ExpressionNodePtr copy() override;
+
+  protected:
+    explicit AndExpressionNode(AndExpressionNode* other);
 };
 }// namespace NES
 

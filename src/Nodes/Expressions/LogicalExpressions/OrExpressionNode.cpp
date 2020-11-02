@@ -2,6 +2,9 @@
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 namespace NES {
 OrExpressionNode::OrExpressionNode() : LogicalBinaryExpressionNode(){};
+
+OrExpressionNode::OrExpressionNode(OrExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
+
 ExpressionNodePtr OrExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto orNode = std::make_shared<OrExpressionNode>();
     orNode->setChildren(left, right);
@@ -29,6 +32,9 @@ void OrExpressionNode::inferStamp(SchemaPtr schema) {
     if (!getRight()->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("OR Expression Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
     }
+}
+ExpressionNodePtr OrExpressionNode::copy() {
+    return std::make_shared<OrExpressionNode>(OrExpressionNode(this));
 }
 
 }// namespace NES

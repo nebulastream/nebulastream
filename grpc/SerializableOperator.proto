@@ -84,6 +84,16 @@ message SerializableOperator{
       SerializableSchema sourceSchema = 3;
     }
 
+    message SerializableOPCSourceDescriptor {
+      string url = 1;
+      uint32 namespaceIndex = 2;
+      string identifier = 3;
+      uint32 identifierType = 4;
+      string user = 5;
+      string password = 6;
+      SerializableSchema sourceSchema = 7;
+    }
+
     message SerializableNetworkSourceDescriptor {
       SerializableSchema sourceSchema = 1;
       NesPartition nesPartition = 2;
@@ -117,6 +127,15 @@ message SerializableOperator{
       bool isInternal = 3;
     }
 
+    message SerializableOPCSinkDescriptor {
+      string url = 1;
+      uint32 namespaceIndex = 2;
+      string identifier = 3;
+      uint32 identifierType = 4;
+      string user = 5;
+      string password = 6;
+    }
+
     message SerializableNetworkSinkDescriptor {
       NodeLocation nodeLocation = 1;
       NesPartition nesPartition = 2;
@@ -128,20 +147,25 @@ message SerializableOperator{
   }
 
   /**
-  Map Details contains properties for the map operator, such as the field assignment expression
-  */
+   Map Details contains properties for the map operator, such as the field assignment expression
+   */
   message MapDetails {
     SerializableExpression expression = 1;
   }
-  /**
-  Merge Details contains properties for the merge operator, which is empty currently.
-  */
-  message MergeDetails {
 
-  }
+  /**
+   Merge Details contains properties for the merge operator, which is empty currently.
+   */
+  message MergeDetails {}
+
+  /**
+   Broadcast details contains properties for the broadcast operator
+   */
+  message BroadcastDetails{}
+
   /**
    Filter Details contains properties for the filter operator, such as the filter predicate expression
- */
+   */
   message FilterDetails {
     SerializableExpression predicate = 1;
   }
@@ -180,15 +204,18 @@ message SerializableOperator{
     message Aggregation {
       enum Type{
         SUM = 0;
+        MAX = 1;
+        MIN = 2;
+        COUNT = 3;
       }
       Type type = 1;
-      string onField = 2;
-      string asField = 3;
+      SerializableExpression onField = 2;
+      SerializableExpression asField = 3;
     }
     google.protobuf.Any windowType = 1;
     Aggregation windowAggregation = 2;
     DistributionCharacteristic distrChar = 3;
-    string onKey = 4;
+    SerializableExpression onKey = 4;
     uint64 numberOfInputEdges = 5;
 
   }

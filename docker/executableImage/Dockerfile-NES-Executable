@@ -1,11 +1,23 @@
 FROM nebulastream/nes-build-image:latest
 
-ADD ./resources/*.deb *.deb
-RUN dpkg -i *.deb && \
+ADD ./resources/*.deb nes.deb
+RUN dpkg -i nes.deb && \
     apt install iproute2 ifupdown net-tools -y -qq && \
     apt autoclean -y -qq
+RUN rm nes.deb
 ADD ./resources/exdra.csv /opt/local/nebula-stream/exdra.csv
 ADD ./entrypoint-containernet.sh /entrypoint-containernet.sh
 ADD ./entrypoint-nes-executable.sh /entrypoint.sh
+
+ENV serverIp="0.0.0.0"
+ENV restPort="8081"
+ENV coordinatorPort="12346"
+ENV enableQueryMerging=false
+ENV sourceType="CSVSource"
+ENV sourceConfig="/opt/local/nebula-stream/exdra.csv"
+ENV numberOfBuffersToProduce=100
+ENV sourceFrequency=1
+ENV physicalStreamName="exdra_worker_1"
+ENV logicalStreamName="exdra"
 
 ENTRYPOINT ["/entrypoint.sh"]

@@ -2,21 +2,24 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
-#include <API/Window/TimeCharacteristic.hpp>
-#include <API/Window/WindowAggregation.hpp>
-#include <API/Window/WindowType.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/CentralWindowOperator.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/SliceCreationOperator.hpp>
-#include <Nodes/Operators/SpecializedWindowOperators/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 
 using namespace NES;
 
@@ -76,9 +79,9 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .window(
+        .windowByKey(Attribute("id"),
             TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-            Sum::on(Attribute("value")))
+                          Sum(Attribute("value")))
         .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -100,12 +103,12 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
         .filter(Attribute("id") < 45)
-        .window(
+        .windowByKey(Attribute("id"),
             TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-            Sum::on(Attribute("value")))
+                          Sum(Attribute("value")))
         .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
-
+    queryPlan = TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);

@@ -1,14 +1,20 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLESINKOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLESINKOPERATOR_HPP_
 
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {
 
 class GeneratableSinkOperator : public SinkLogicalOperatorNode, public GeneratableOperator {
   public:
-    static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr);
+    /**
+     * @brief Create sharable instance of GeneratableSinkOperator
+     * @param sinkLogicalOperator: the sink logical operator
+     * @param id: the operator id if not provided then next available operator id is used.
+     * @return instance of GeneratableSinkOperator
+     */
+    static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr sinkLogicalOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -31,7 +37,7 @@ class GeneratableSinkOperator : public SinkLogicalOperatorNode, public Generatab
     const std::string toString() const override;
 
   private:
-    explicit GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor);
+    explicit GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor, OperatorId id);
 };
 
 }// namespace NES

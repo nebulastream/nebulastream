@@ -3,11 +3,17 @@
 
 #include <memory>
 #include <string>
+
+namespace NES::Windowing {
+
+class WindowManager;
+typedef std::shared_ptr<WindowManager> WindowManagerPtr;
+
+}// namespace NES::Windowing
+
 namespace NES {
 
 class TupleBuffer;
-class WindowManager;
-typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 
 class ExecutablePipeline;
 typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
@@ -39,7 +45,7 @@ class ExecutablePipeline {
     // TODO use dedicate type for return
     virtual uint32_t execute(TupleBuffer& input_buffers,
                              void* state,
-                             WindowManagerPtr window_manager,
+                             Windowing::WindowManagerPtr window_manager,
                              QueryExecutionContextPtr context,
                              WorkerContextRef wctx) = 0;
 

@@ -20,6 +20,15 @@ class UnaryExpressionNode : public ExpressionNode {
      * @return
      */
     ExpressionNodePtr child() const;
+
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
+    ExpressionNodePtr copy() override = 0;
+
+  protected:
+    explicit UnaryExpressionNode(UnaryExpressionNode* other);
 };
 }// namespace NES
 

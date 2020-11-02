@@ -2,17 +2,17 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/GlobalQueryNode.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
 #include <iostream>
-#include <Util/UtilityFunctions.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 
 using namespace NES;
 
@@ -51,7 +51,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueries) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("car")
@@ -60,7 +60,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueries) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -101,6 +101,87 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueries) {
 }
 
 /**
+ * @brief Test applying L0 merge on Global query plan with same queries with multiple same source
+ */
+TEST_F(L0QueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    auto sourceOperator11 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+
+    auto sourceOperator21 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+
+    auto sinkOperator11 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+
+    sinkOperator11->addChild(sourceOperator11);
+    sinkOperator11->addChild(sourceOperator21);
+
+    QueryPlanPtr queryPlan1 = QueryPlan::create();
+    queryPlan1->addRootOperator(sinkOperator11);
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    auto sourceOperator12 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+
+    auto sourceOperator22 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+
+    auto sinkOperator12 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+
+    sinkOperator12->addChild(sourceOperator12);
+    sinkOperator12->addChild(sourceOperator22);
+
+    QueryPlanPtr queryPlan2 = QueryPlan::create();
+    queryPlan2->addRootOperator(sinkOperator12);
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+
+    ASSERT_EQ(sinkGQNs.size(), 2);
+
+    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+        return sinkGQN->getOperators()[0]->getId() == sinkOperator11->getId();
+    });
+    GlobalQueryNodePtr sinkOperator1GQN = *found;
+
+    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+        return sinkGQN->getOperators()[0]->getId() == sinkOperator12->getId();
+    });
+    GlobalQueryNodePtr sinkOperator2GQN = *found;
+
+    ASSERT_FALSE(sinkOperator1GQN->getChildren().empty());
+    ASSERT_FALSE(sinkOperator2GQN->getChildren().empty());
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+        }
+    }
+
+    sinkOperator2GQN->getChildren();
+
+    //execute
+    auto l0QueryMergerRule = L0QueryMergerRule::create();
+    l0QueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        bool found = false;
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            if (sink1GQNChild->equal(sink2GQNChild)) {
+                found = true;
+            }
+        }
+        ASSERT_TRUE(found);
+    }
+}
+
+/**
  * @brief Test applying L0 merge on Global query plan with two queries with different source
  */
 TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
@@ -112,7 +193,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("truck")
@@ -121,7 +202,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -175,7 +256,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
@@ -186,7 +267,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -234,24 +315,24 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
     Query query1 = Query::from("truck")
-        .merge(&subQuery1)
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45)
-        .sink(printSinkDescriptor);
+                       .merge(&subQuery1)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-        .merge(&subQuery2)
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45)
-        .sink(printSinkDescriptor);
+                       .merge(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -261,12 +342,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) 
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-      return sinkGQN->getOperators()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperators()[0]->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-      return sinkGQN->getOperators()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperators()[0]->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -299,24 +380,24 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentC
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
     Query query1 = Query::from("truck")
-        .merge(&subQuery1)
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45)
-        .sink(printSinkDescriptor);
+                       .merge(&subQuery1)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-        .merge(&subQuery2)
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45)
-        .sink(printSinkDescriptor);
+                       .merge(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -326,12 +407,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentC
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-      return sinkGQN->getOperators()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperators()[0]->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-      return sinkGQN->getOperators()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperators()[0]->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -369,7 +450,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("car")
@@ -378,7 +459,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -430,7 +511,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("car")
@@ -439,7 +520,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -492,7 +573,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("car")
@@ -501,7 +582,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -554,7 +635,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = UtilityFunctions::getNextQueryId();
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("car")
@@ -563,7 +644,7 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = UtilityFunctions::getNextQueryId();
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();

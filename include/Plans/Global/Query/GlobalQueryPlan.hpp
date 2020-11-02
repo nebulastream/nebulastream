@@ -1,6 +1,7 @@
 #ifndef NES_GLOBALQUERYPLAN_HPP
 #define NES_GLOBALQUERYPLAN_HPP
 
+#include <Plans/Global/Query/GlobalQueryId.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
@@ -26,6 +27,9 @@ typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 
 class SinkLogicalOperatorNode;
 typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
+
+class GlobalQueryMetaData;
+typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
 
 /**
  * @brief This class is responsible for storing all currently running and to be deployed QueryPlans in the NES system.
@@ -94,6 +98,25 @@ class GlobalQueryPlan {
         return vector;
     }
 
+    /**
+     * @brief Update the existing Global query meta data by re-grouping the queries
+     * @return true if successful
+     */
+    bool updateGlobalQueryMetaDataMap();
+
+    /**
+     * @brief Get the all the Query Meta Data to be deployed
+     * @return vector of global query meta data to be deployed
+     */
+    std::vector<GlobalQueryMetaDataPtr> getGlobalQueryMetaDataToDeploy();
+
+    /**
+     * @brief Get the global query id for the query
+     * @param queryId: the original query id
+     * @return the corresponding global query id
+     */
+    GlobalQueryId getGlobalQueryIdForQuery(QueryId queryId);
+
   private:
     GlobalQueryPlan();
 
@@ -119,10 +142,17 @@ class GlobalQueryPlan {
      */
     bool addGlobalQueryNodeToQuery(QueryId queryId, GlobalQueryNodePtr globalQueryNode);
 
-    QueryPlanPtr queryPlan;
+    /**
+     * @brief Check if constructed metadata is still valid or not.
+     * @return true if successful
+     */
+    bool checkMetaDataValidity();
+
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;
-    std::map<uint64_t, std::vector<GlobalQueryNodePtr>> queryToGlobalQueryNodeMap;
+    std::map<QueryId, std::vector<GlobalQueryNodePtr>> queryIdToGlobalQueryNodeMap;
+    std::map<GlobalQueryId, GlobalQueryMetaDataPtr> globalQueryIdToMetaDataMap;
+    std::map<QueryId, GlobalQueryId> queryIdToGlobalQueryIdMap;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP

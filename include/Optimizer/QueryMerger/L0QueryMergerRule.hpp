@@ -1,10 +1,14 @@
 #ifndef NES_L0QUERYMERGERRULE_HPP
 #define NES_L0QUERYMERGERRULE_HPP
 
+#include <map>
 #include <memory>
 #include <vector>
 
 namespace NES {
+
+class Node;
+typedef std::shared_ptr<Node> NodePtr;
 
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
@@ -39,7 +43,7 @@ typedef std::shared_ptr<L0QueryMergerRule> L0QueryMergerRulePtr;
  *                                                |                 |
  *                                        GQN2({Map1},{Q1})    GQN6({Map1},{Q2})
  *                                                |                 |
- *                                     GQN3({Filter1},{Q1})    GQN7({Filter1},{Q1})
+ *                                     GQN3({Filter1},{Q1})    GQN7({Filter1},{Q2})
  *                                                |                 |
  *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
@@ -67,8 +71,9 @@ class L0QueryMergerRule {
     /**
      * @brief apply L0QueryMerger rule on the globalQuery plan
      * @param globalQueryPlan: the global query plan
+     * @return true if successful else false
      */
-    void apply(GlobalQueryPlanPtr globalQueryPlan);
+    bool apply(const GlobalQueryPlanPtr& globalQueryPlan);
 
   private:
     explicit L0QueryMergerRule();
@@ -83,7 +88,7 @@ class L0QueryMergerRule {
      * @param targetGQNToHostGQNMap : the map containing list of target and host pairs with eaqual operator sets
      * @return true if the GQN can be merged else false
      */
-    bool checkIfGQNCanMerge(GlobalQueryNodePtr targetGQNode, GlobalQueryNodePtr hostGQNode, std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap);
+    bool checkIfGQNCanMerge(const GlobalQueryNodePtr& targetGQNode, const GlobalQueryNodePtr& hostGQNode, std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap);
 
     /**
      * @brief Check if the two set of GQNs are equal
@@ -91,7 +96,9 @@ class L0QueryMergerRule {
      * @param hostGQNs : the source GQNs
      * @return false if not equal else true
      */
-    bool areGQNodesEqual(std::vector<NodePtr> targetGQNs, std::vector<NodePtr> hostGQNs);
+    bool areGQNodesEqual(const std::vector<NodePtr>& targetGQNs, const std::vector<NodePtr>& hostGQNs);
+
+    std::vector<GlobalQueryNodePtr> processedNodes;
 };
 }// namespace NES
 #endif//NES_L0QUERYMERGERRULE_HPP

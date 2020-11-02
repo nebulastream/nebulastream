@@ -57,10 +57,25 @@ const std::string TopologyNode::getIpAddress() const {
 
 const std::string TopologyNode::toString() const {
     std::stringstream ss;
-    ss << "PhysicalNode[id=" + std::to_string(id) + ", ip = " + ipAddress + ", grpcPort = ,"
-            + std::to_string(grpcPort) + ", dataPort= " + std::to_string(dataPort) + ", resources = " + std::to_string(resources)
+    ss << "PhysicalNode[id=" + std::to_string(id) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(resources)
             + ", usedResource=" + std::to_string(usedResources) + "]";
     return ss.str();
+}
+
+bool TopologyNode::containAsParent(NodePtr node) {
+    std::vector<NodePtr> ancestors = this->getAndFlattenAllAncestors();
+    auto found = std::find_if(ancestors.begin(), ancestors.end(), [node](NodePtr familyMember) {
+        return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
+    });
+    return found != ancestors.end();
+}
+
+bool TopologyNode::containAsChild(NodePtr node) {
+    std::vector<NodePtr> children = this->getAndFlattenAllChildren();
+    auto found = std::find_if(children.begin(), children.end(), [node](NodePtr familyMember) {
+        return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
+    });
+    return found != children.end();
 }
 
 }// namespace NES

@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_PLANS_QUERY_HPP_
 #define NES_INCLUDE_PLANS_QUERY_HPP_
-#include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>
@@ -30,6 +30,15 @@ typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
  */
 class QueryPlan {
   public:
+    /**
+     * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
+     * @param queryId :  the query id
+     * @param querySubPlanId : the query sub-plan id
+     * @param rootOperators : vector of root Operators
+     * @return a pointer to the query plan.
+     */
+    static QueryPlanPtr create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators);
+
     /**
      * @brief Creates a new query plan with a root operator.
      * @param rootOperator The root operator usually a source operator.
@@ -87,7 +96,13 @@ class QueryPlan {
      * Note: improves this when we have to due with multi-root use case.
      * @param root
      */
-    void addRootOperator(std::shared_ptr<OperatorNode> root);
+    void addRootOperator(OperatorNodePtr root);
+
+    /**
+     * remove the an operator from the root operator list.
+     * @param root
+     */
+    void removeAsRootOperator(OperatorNodePtr root);
 
     /**
      * @brief Get all the operators of a specific type
@@ -128,13 +143,13 @@ class QueryPlan {
     std::vector<OperatorNodePtr> getLeafOperators();
 
     /**
-     * Find if the operator with same Id exists in the plan.
+     * Find if the operator with the input Id exists in the plan.
      * Note: This method only check if there exists another operator with same Id or not.
      * Note: The system generated operators are ignored from this check.
-     * @param operatorNode
+     * @param operatorId: Id of the operator
      * @return true if the operator exists else false
      */
-    bool hasOperator(OperatorNodePtr operatorNode);
+    bool hasOperatorWithId(uint64_t operatorId);
 
     /**
      * @brief Get operator node with input id if present
@@ -169,7 +184,15 @@ class QueryPlan {
 
   private:
     /**
-     * @brief initialize query plan and set currentOperatorId to 1
+     * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
+     * @param queryId :  the query id
+     * @param querySubPlanId : the query sub-plan id
+     * @param rootOperators : vector of root Operators
+     */
+    QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators);
+
+    /**
+     * @brief initialize query plan with a root operator
      * @param rootOperator
      */
     QueryPlan(OperatorNodePtr rootOperator);

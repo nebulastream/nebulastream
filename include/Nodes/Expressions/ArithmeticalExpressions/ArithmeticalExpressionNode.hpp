@@ -18,7 +18,8 @@ class ArithmeticalExpressionNode : public BinaryExpressionNode {
     const std::string toString() const override;
 
   protected:
-    ArithmeticalExpressionNode(DataTypePtr stamp);
+    explicit ArithmeticalExpressionNode(DataTypePtr stamp);
+    explicit ArithmeticalExpressionNode(ArithmeticalExpressionNode* other);
     ~ArithmeticalExpressionNode() = default;
 };
 

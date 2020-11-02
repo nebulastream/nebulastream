@@ -14,7 +14,8 @@ enum SinkMediumTypes {
     PRINT_SINK,
     KAFKA_SINK,
     FILE_SINK,
-    NETWORK_SINK
+    NETWORK_SINK,
+    OPC_SINK
 };
 /**
  * @brief Base class for all data sinks in NES

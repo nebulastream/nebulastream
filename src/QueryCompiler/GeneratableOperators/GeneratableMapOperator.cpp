@@ -1,16 +1,14 @@
-
-
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES {
 
 void GeneratableMapOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context);
 }
+
 void GeneratableMapOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto field = getMapExpression()->getField();
     auto assignment = getMapExpression()->getAssignment();
@@ -19,13 +17,12 @@ void GeneratableMapOperator::consume(CodeGeneratorPtr codegen, PipelineContextPt
     codegen->generateCodeForMap(AttributeField::create(field->getFieldName(), field->getStamp()), mapExpression, context);
     getParents()[0]->as<GeneratableOperator>()->consume(codegen, context);
 }
-GeneratableMapOperatorPtr GeneratableMapOperator::create(MapLogicalOperatorNodePtr mapLogicalOperatorNode) {
-    auto generatableOperator = std::make_shared<GeneratableMapOperator>(GeneratableMapOperator(mapLogicalOperatorNode->getMapExpression()));
-    generatableOperator->setId(UtilityFunctions::getNextOperatorId());
-    return generatableOperator;
+
+GeneratableMapOperatorPtr GeneratableMapOperator::create(MapLogicalOperatorNodePtr mapLogicalOperator, OperatorId id) {
+    return std::make_shared<GeneratableMapOperator>(GeneratableMapOperator(mapLogicalOperator->getMapExpression(), id));
 }
 
-GeneratableMapOperator::GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression) : MapLogicalOperatorNode(mapExpression) {
+GeneratableMapOperator::GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression, OperatorId id) : MapLogicalOperatorNode(mapExpression, id) {
 }
 
 const std::string GeneratableMapOperator::toString() const {

@@ -1,7 +1,13 @@
 #include <Nodes/Expressions/BinaryExpressionNode.hpp>
+#include <utility>
 
 namespace NES {
-BinaryExpressionNode::BinaryExpressionNode(DataTypePtr stamp) : ExpressionNode(stamp) {}
+BinaryExpressionNode::BinaryExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)) {}
+
+BinaryExpressionNode::BinaryExpressionNode(BinaryExpressionNode* other) : ExpressionNode(other) {
+    addChildWithEqual(getLeft()->copy());
+    addChildWithEqual(getRight()->copy());
+}
 
 void BinaryExpressionNode::setChildren(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     addChildWithEqual(left);

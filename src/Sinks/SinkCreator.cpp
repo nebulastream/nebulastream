@@ -7,6 +7,7 @@
 #include <Sinks/Formats/TextFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
+#include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
@@ -77,6 +78,13 @@ const DataSinkPtr createNetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanI
 const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
                                             const size_t kafkaProducerTimeout) {
     return std::make_shared<KafkaSink>(schema, brokers, topic, kafkaProducerTimeout);
+}
+#endif
+
+#ifdef ENABLE_OPC_BUILD
+const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::string url, UA_NodeId nodeId, std::string user, std::string password) {
+    SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
+    return std::make_shared<OPCSink>(format, url, nodeId, user, password);
 }
 #endif
 }// namespace NES

@@ -22,7 +22,8 @@ class ReconfigurationTask {
      * @param type what kind of reconfiguration we want
      * @param instance the target of the reconfiguration
      */
-    explicit ReconfigurationTask(const QuerySubPlanId parentPlanId, ReconfigurationType type, Reconfigurable* instance = nullptr) : parentPlanId(parentPlanId), type(type), instance(instance), barrier(nullptr) {
+    explicit ReconfigurationTask(const QuerySubPlanId parentPlanId, ReconfigurationType type, Reconfigurable* instance = nullptr)
+        : parentPlanId(parentPlanId), type(type), instance(instance), syncBarrier(nullptr), postSyncBarrier(nullptr) {
         refCnt.store(0);
     }
 
@@ -31,16 +32,19 @@ class ReconfigurationTask {
      * @param other the task we want to issue (created using the other ctor)
      * @param numThreads number of running threads
      */
-    explicit ReconfigurationTask(const ReconfigurationTask& other, uint32_t numThreads) : ReconfigurationTask(other) {
-        barrier = std::make_unique<ThreadBarrier>(numThreads);
-        refCnt.store(numThreads);
+    explicit ReconfigurationTask(const ReconfigurationTask& other, size_t numThreads, bool blocking = false) : ReconfigurationTask(other) {
+        syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
+        refCnt.store(numThreads + (blocking ? 1 : 0));
+        if (blocking) {
+            postSyncBarrier = std::make_unique<ThreadBarrier>(numThreads + 1);
+        }
     }
 
     /**
      * @brief copy constructor
      * @param that
      */
-    ReconfigurationTask(const ReconfigurationTask& that) : parentPlanId(that.parentPlanId), type(that.type), instance(that.instance), barrier(nullptr) {
+    ReconfigurationTask(const ReconfigurationTask& that) : parentPlanId(that.parentPlanId), type(that.type), instance(that.instance), syncBarrier(nullptr), postSyncBarrier(nullptr) {
         // nop
     }
 
@@ -76,7 +80,7 @@ class ReconfigurationTask {
      * @brief issue a synchronization barrier for all threads
      */
     void wait() {
-        barrier->wait();
+        syncBarrier->wait();
     }
 
     /**
@@ -89,12 +93,22 @@ class ReconfigurationTask {
         }
     }
 
+    /**
+     * @brief issue a synchronization barrier for all threads
+     */
+    void postWait() {
+        if (postSyncBarrier != nullptr) {
+            postSyncBarrier->wait();
+        }
+    }
+
   private:
     /**
      * @brief resouce cleanup method
      */
     void destroy() {
-        barrier.reset();
+        syncBarrier.reset();
+        postSyncBarrier.reset();
     }
 
   private:
@@ -104,8 +118,11 @@ class ReconfigurationTask {
     /// pointer to reconfigurable instance
     Reconfigurable* instance;
 
-    /// pointer to thread barrier
-    ThreadBarrierPtr barrier;
+    /// pointer to initial thread barrier
+    ThreadBarrierPtr syncBarrier;
+
+    /// pointer to last thread barrier
+    ThreadBarrierPtr postSyncBarrier;
 
     /// ref counter
     std::atomic<uint32_t> refCnt;

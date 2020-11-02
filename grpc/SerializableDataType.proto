@@ -57,13 +57,13 @@ message SerializableDataType{
 
 }
 
-/*
-The serializable wrapper definition for data value objects
+/**
+ The serializable wrapper definition for data value objects
  */
 message SerializableDataValue {
 
   /**
-  An basic data type value
+   An basic data type value
    */
   message BasicValue {
     SerializableDataType type = 1;
@@ -71,7 +71,7 @@ message SerializableDataValue {
   }
 
   /**
-  An array value
+   An array value
    */
   message ArrayValue {
     SerializableDataType type = 1;

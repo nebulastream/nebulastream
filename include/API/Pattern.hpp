@@ -7,7 +7,7 @@
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #include <cppkafka/configuration.h>
 #include <string>

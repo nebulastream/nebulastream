@@ -1,16 +1,16 @@
+#include <API/Query.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>//
+#include <gtest/gtest.h>
 
-#include <API/UserAPIExpression.hpp>
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -20,24 +20,25 @@
 #include <memory>
 
 #include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableCompleteWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 
 using namespace std;
+
 namespace NES {
+
+using namespace NES::API;
 
 class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
   public:
@@ -64,36 +65,21 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
         sourceOp = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-        sourceOp->setId(0);
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp1->setId(1);
         filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
-        filterOp2->setId(2);
         filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
-        filterOp3->setId(3);
         filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
-        filterOp4->setId(4);
         filterOp5 = LogicalOperatorFactory::createFilterOperator(pred5);
-        filterOp5->setId(5);
         filterOp6 = LogicalOperatorFactory::createFilterOperator(pred6);
-        filterOp6->setId(6);
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
-        filterOp7->setId(7);
 
         filterOp1Copy = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp1Copy->setId(8);
         filterOp2Copy = LogicalOperatorFactory::createFilterOperator(pred2);
-        filterOp2Copy->setId(9);
         filterOp3Copy = LogicalOperatorFactory::createFilterOperator(pred3);
-        filterOp3Copy->setId(10);
         filterOp4Copy = LogicalOperatorFactory::createFilterOperator(pred4);
-        filterOp4Copy->setId(11);
         filterOp5Copy = LogicalOperatorFactory::createFilterOperator(pred5);
-        filterOp5Copy->setId(12);
         filterOp6Copy = LogicalOperatorFactory::createFilterOperator(pred6);
-        filterOp6Copy->setId(13);
         filterOp7Copy = LogicalOperatorFactory::createFilterOperator(pred7);
-        filterOp7Copy->setId(14);
 
         removed = false;
         replaced = false;
@@ -128,12 +114,10 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
     auto schema = Schema::create();
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(printSinkDescriptorPtr);
-    sinkOperator->setId(UtilityFunctions::getNextOperatorId());
     auto constValue = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
     auto fieldRead = FieldAccessExpressionNode::create(DataTypeFactory::createInt8(), "FieldName");
     auto andNode = EqualsExpressionNode::create(constValue, fieldRead);
     auto filter = LogicalOperatorFactory::createFilterOperator(andNode);
-    filter->setId(UtilityFunctions::getNextOperatorId());
     sinkOperator->addChild(filter);
     filter->addChild(sourceOp);
 
@@ -157,14 +141,13 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     /**
      * Sink -> Window -> Source
      */
-    auto schema = Schema::create();
-    schema->addField(AttributeField::create("f1", DataTypeFactory::createInt64()));
-
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(printSinkDescriptorPtr);
-    sinkOperator->setId(UtilityFunctions::getNextOperatorId());
-    auto windowOperator = LogicalOperatorFactory::createWindowOperator(WindowDefinition::create(Sum::on(Attribute("f1")), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType()));
-    windowOperator->setId(UtilityFunctions::getNextOperatorId());
+    auto windowOperator = LogicalOperatorFactory::createWindowOperator(
+        LogicalWindowDefinition::create(
+            Attribute("id"),
+            Sum(Attribute("value")),
+            TumblingWindow::of(ProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(),0));
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);
 

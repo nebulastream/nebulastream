@@ -2,7 +2,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_
 
 #include <Common/ForwardDeclaration.hpp>
-#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
@@ -138,8 +138,8 @@ class GeneratedQueryExecutionPlanBuilder {
     /**
      * @brief Getter/setter the window definition
      */
-    GeneratedQueryExecutionPlanBuilder& setWinDef(const WindowDefinitionPtr& winDef);
-    WindowDefinitionPtr getWinDef();
+    GeneratedQueryExecutionPlanBuilder& setWinDef(const Windowing::LogicalWindowDefinitionPtr& winDef);
+    Windowing::LogicalWindowDefinitionPtr getWinDef();
 
     /**
      * @brief Getter/setter the input schema
@@ -159,7 +159,7 @@ class GeneratedQueryExecutionPlanBuilder {
     std::vector<DataSinkPtr> sinks;
     std::vector<PipelineStagePtr> stages;
     std::vector<OperatorNodePtr> leaves;
-    WindowDefinitionPtr winDef;
+    Windowing::LogicalWindowDefinitionPtr winDef;
 
   public:
   private:

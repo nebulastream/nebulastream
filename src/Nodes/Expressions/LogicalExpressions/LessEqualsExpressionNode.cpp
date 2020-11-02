@@ -3,6 +3,9 @@
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 namespace NES {
 LessEqualsExpressionNode::LessEqualsExpressionNode() : LogicalBinaryExpressionNode(){};
+
+LessEqualsExpressionNode::LessEqualsExpressionNode(LessEqualsExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
+
 ExpressionNodePtr LessEqualsExpressionNode::create(const ExpressionNodePtr left,
                                                    const ExpressionNodePtr right) {
     auto lessThen = std::make_shared<LessEqualsExpressionNode>();
@@ -20,6 +23,9 @@ bool LessEqualsExpressionNode::equal(const NodePtr rhs) const {
 
 const std::string LessEqualsExpressionNode::toString() const {
     return "LessThenNode(" + stamp->toString() + ")";
+}
+ExpressionNodePtr LessEqualsExpressionNode::copy() {
+    return std::make_shared<LessEqualsExpressionNode>(LessEqualsExpressionNode(this));
 }
 
 }// namespace NES

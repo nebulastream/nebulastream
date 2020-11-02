@@ -244,7 +244,6 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode, std::vector<TopologyNod
 
 std::string Topology::toString() {
     std::unique_lock lock(topologyLock);
-    //FIXME: as part of #954
 
     if (!rootNode) {
         NES_WARNING("Topology: No root node found");
@@ -253,22 +252,33 @@ std::string Topology::toString() {
 
     std::stringstream topologyInfo;
     topologyInfo << std::endl;
-    std::deque<TopologyNodePtr> parentToPrint{rootNode};
-    std::deque<TopologyNodePtr> childToPrint;
 
+    // store pair of TopologyNodePtr and its depth in when printed
+    std::deque<std::pair<TopologyNodePtr, size_t>> parentToPrint{std::make_pair(rootNode, 0)};
+    std::deque<std::pair<TopologyNodePtr, size_t>> childToPrint;
+
+    // indent multiplier
+    int indent = 2;
+
+    // perform dfs traverse
     while (!parentToPrint.empty()) {
-        TopologyNodePtr nodeToPrint = parentToPrint.front();
+        std::pair<TopologyNodePtr, size_t> nodeToPrint = parentToPrint.front();
         parentToPrint.pop_front();
-        topologyInfo << nodeToPrint->getId() << "\t";
-
-        for (auto& child : nodeToPrint->getChildren()) {
-            childToPrint.push_back(child->as<TopologyNode>());
+        for (int i = 0; i < indent * nodeToPrint.second; i++) {
+            if (i % indent == 0) {
+                topologyInfo << '|';
+            } else {
+                if (i >= indent * nodeToPrint.second - 1) {
+                    topologyInfo << std::string(indent, '-');
+                } else {
+                    topologyInfo << std::string(indent, ' ');
+                }
+            }
         }
+        topologyInfo << nodeToPrint.first->toString() << std::endl;
 
-        if (parentToPrint.empty()) {
-            topologyInfo << std::endl;
-            parentToPrint.insert(parentToPrint.end(), childToPrint.begin(), childToPrint.end());
-            childToPrint.clear();
+        for (auto& child : nodeToPrint.first->getChildren()) {
+            parentToPrint.emplace_front(child->as<TopologyNode>(), nodeToPrint.second + 1);
         }
     }
     return topologyInfo.str();

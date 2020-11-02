@@ -30,10 +30,10 @@ class TopDownStrategy : public BasePlacementStrategy {
     /**
      * @brief Try to place input operator on the input topology node
      * @param queryId :  the query id
-     * @param candidateOperator : the input operator to place
+     * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void placeOperator(QueryId queryId, OperatorNodePtr candidateOperator, TopologyNodePtr candidateTopologyNode);
+    void placeOperator(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode);
 
     /**
      * @brief Get topology node where all parent operators of the input operator are placed
@@ -56,7 +56,7 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param executionNode : the execution node where operator is to be placed
      * @return the query plan to which the input operator is to be appended
      */
-    QueryPlanPtr getCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode);
+    QueryPlanPtr addOperatorToCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode);
 };
 
 }// namespace NES

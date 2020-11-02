@@ -48,12 +48,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
 
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12346";
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12346 --numberOfSlots=8";
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
 
-    string cmdWrk = "./nesWorker --coordinatorPort=12346";
+    string cmdWrk = "./nesWorker --coordinatorPort=12346 --numberOfSlots=8";
     bp::child workerProc(cmdWrk.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
 
@@ -533,7 +533,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), Sum::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
@@ -543,7 +543,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
-    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(20)), Sum::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20)), Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
     ss2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss2 << endl;
@@ -604,7 +604,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     string expectedContent1 =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|0|10000|1|307|\n"
         "|10000|20000|1|870|\n"
@@ -620,7 +620,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     string expectedContent2 =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|0|20000|1|1177|\n"
         "|0|20000|4|6|\n"
@@ -701,7 +701,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)), Sum::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)), Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
@@ -711,7 +711,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
-    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)), Sum::on(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)), Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
     ss2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss2 << endl;
@@ -772,7 +772,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     string expectedContent1 =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|10000|20000|1|870|\n"
         "|5000|15000|1|570|\n"
@@ -793,7 +793,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     string expectedContent2 =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:INT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|0|20000|1|1177|\n"
         "|0|20000|4|6|\n"

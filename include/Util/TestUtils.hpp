@@ -5,6 +5,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -133,38 +134,28 @@ class TestUtils {
     }
 
     /**
-     * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
-     * @param ptr to NesWorker
-     * @param queryId
-     * @param queryCatalog
-     * @param expectedResult
-     * @return bool indicating if the expected results are matched
+     * @brief This method is used for waiting till the query gets into running status or a timeout occurs
+     * @param queryId : the query id to check for
+     * @param queryCatalog: the catalog to look into for status change
+     * @return true if query gets into running status else false
      */
-    template<typename Predicate = std::equal_to<size_t>>
-    static bool checkCompleteOrTimeout(NesWorkerPtr ptr, QueryId queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
+    static bool waitForQueryToStart(QueryId queryId, QueryCatalogPtr queryCatalog) {
+        NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        Predicate cmp;
+
+        NES_DEBUG("TestUtils: Keep checking the status of query " << queryId << " untill a fixed time out");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-            NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
-            auto query = queryCatalog->getQueryCatalogEntry(queryId);
-            //FIXME: handle vector of statistics properly in #977
-            auto statistics = ptr->getQueryStatistics(queryId);
-            if (!query || statistics.empty()) {
-                NES_DEBUG("checkCompleteOrTimeout: query=" << query << " stats size=" << statistics.size());
-                sleep(1);
-                continue;
+            auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+            if (!queryCatalogEntry) {
+                NES_ERROR("TestUtils: unable to find the entry for query " << queryId << " in the query catalog.");
+                return false;
             }
-            bool isQueryRunning = query->getQueryStatus() == QueryStatus::Running;
-            if (isQueryRunning && cmp(statistics[0]->getProcessedBuffers(), expectedResult)) {
-                NES_DEBUG("checkCompleteOrTimeout: results are correct isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics[0]->getProcessedBuffers()
-                                                                                        << " procTasks=" << statistics[0]->getProcessedTasks()
-                                                                                        << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
-                return true;
-            } else {
-                NES_DEBUG("checkCompleteOrTimeout: results are incomplete isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics[0]->getProcessedBuffers()
-                                                                                           << " procTasks=" << statistics[0]->getProcessedTasks()
-                                                                                           << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+            NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
+            bool isQueryRunning = queryCatalogEntry->getQueryStatus() == QueryStatus::Running;
+            if (isQueryRunning) {
+                NES_TRACE("TestUtils: Query " << queryId << " is now in running status.");
+                return isQueryRunning;
             }
             sleep(1);
         }
@@ -174,43 +165,94 @@ class TestUtils {
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
-     * @param ptr to NesCoordinator
+     * @param nesWorker to NesWorker
      * @param queryId
      * @param queryCatalog
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<size_t>>
-    static bool checkCompleteOrTimeout(NesCoordinatorPtr ptr, QueryId queryId, QueryCatalogPtr queryCatalog, size_t expectedResult) {
+    static bool checkCompleteOrTimeout(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan, size_t expectedResult) {
+
+        GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+        if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
+            NES_ERROR("Unable to find global query Id for user query id " << queryId);
+            return false;
+        }
+
+        NES_INFO("Found global query id " << globalQueryId << " for user query " << queryId);
+        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        Predicate cmp;
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
+            //FIXME: handle vector of statistics properly in #977
+            auto statistics = nesWorker->getQueryStatistics(globalQueryId);
+            if (statistics.empty()) {
+                NES_DEBUG("checkCompleteOrTimeout: query=" << globalQueryId << " stats size=" << statistics.size());
+                sleep(1);
+                continue;
+            }
+            if (cmp(statistics[0]->getProcessedBuffers(), expectedResult)) {
+                NES_DEBUG("checkCompleteOrTimeout: results are correct procBuffer=" << statistics[0]->getProcessedBuffers()
+                                                                                    << " procTasks=" << statistics[0]->getProcessedTasks()
+                                                                                    << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+                return true;
+            }
+            NES_DEBUG("checkCompleteOrTimeout: results are incomplete procBuffer=" << statistics[0]->getProcessedBuffers()
+                                                                                   << " procTasks=" << statistics[0]->getProcessedTasks()
+                                                                                   << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+            sleep(1);
+        }
+        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout");
+        return false;
+    }
+
+    /**
+     * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
+     * @param nesCoordinator to NesCoordinator
+     * @param queryId
+     * @param queryCatalog
+     * @param expectedResult
+     * @return bool indicating if the expected results are matched
+     */
+    template<typename Predicate = std::equal_to<size_t>>
+    static bool checkCompleteOrTimeout(NesCoordinatorPtr nesCoordinator, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan, size_t expectedResult) {
+        GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
+        if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
+            NES_ERROR("Unable to find global query Id for user query id " << queryId);
+            return false;
+        }
+
+        NES_INFO("Found global query id " << globalQueryId << " for user query " << queryId);
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         Predicate cmp;
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr");
-            auto query = queryCatalog->getQueryCatalogEntry(queryId);
+
             //FIXME: handle vector of statistics properly in #977
-            auto statistics = ptr->getQueryStatistics(queryId);
-            if (!query || statistics.empty()) {
+            auto statistics = nesCoordinator->getQueryStatistics(globalQueryId);
+            if (statistics.empty()) {
                 continue;
             }
-            bool isQueryRunning = query->getQueryStatus() == QueryStatus::Running;
-            if (isQueryRunning && cmp(statistics[0]->getProcessedBuffers(), expectedResult)) {
-                NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct isQueryRunning=" << isQueryRunning << " stats=" << statistics[0]->getProcessedBuffers()
-                                                                                                          << " procTasks=" << statistics[0]->getProcessedTasks()
-                                                                                                          << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+
+            if (cmp(statistics[0]->getProcessedBuffers(), expectedResult)) {
+                NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats=" << statistics[0]->getProcessedBuffers()
+                                                                                                 << " procTasks=" << statistics[0]->getProcessedTasks()
+                                                                                                 << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
                 return true;
-            } else {
-                NES_DEBUG("checkCompleteOrTimeout: results are incomplete isQueryRunning=" << isQueryRunning << " procBuffer=" << statistics[0]->getProcessedBuffers()
-                                                                                           << " procTasks=" << statistics[0]->getProcessedTasks());
             }
+            NES_DEBUG("checkCompleteOrTimeout: results are incomplete procBuffer=" << statistics[0]->getProcessedBuffers()
+                                                                                   << " procTasks=" << statistics[0]->getProcessedTasks());
+
             sleep(1);
         }
         //FIXME: handle vector of statistics properly in #977
         NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout expected result=" << expectedResult
-                                                                                                            << " query status=" << queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatusAsString()
-                                                                                                            << " processedBuffer=" << ptr->getQueryStatistics(queryId)[0]->getProcessedBuffers()
-                                                                                                            << " processedTasks=" << ptr->getQueryStatistics(queryId)[0]->getProcessedTasks()
-                                                                                                            << " procWatermarks=" << ptr->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
+                                                                                                            << " processedBuffer=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers()
+                                                                                                            << " processedTasks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks()
+                                                                                                            << " procWatermarks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
         return false;
     }
 

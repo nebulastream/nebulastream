@@ -5,8 +5,9 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Schema.hpp>
+#include <API/Windowing.hpp>
 
-#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -33,8 +34,11 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class WindowType;
 typedef std::shared_ptr<WindowType> WindowTypePtr;
 
-class WindowAggregation;
-typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;
+class WindowAggregationDescriptor;
+typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationPtr;
+
+using namespace NES::API;
+using namespace NES::Windowing;
 
 /**
  * User interface to create stream processing queries.
@@ -84,8 +88,8 @@ class Query {
      * @return query.
      */
     Query& windowByKey(const ExpressionItem onKey,
-                       const WindowTypePtr windowType,
-                       const WindowAggregationPtr aggregation);
+                       const Windowing::WindowTypePtr windowType,
+                       const Windowing::WindowAggregationPtr aggregation);
 
     /**
      * @brief: Creates a window aggregation.
@@ -93,8 +97,8 @@ class Query {
      * @param aggregation Window aggregation function.
      * @return query.
      */
-    Query& window(const WindowTypePtr windowType,
-                  const WindowAggregationPtr aggregation);
+    Query& window(const Windowing::WindowTypePtr windowType,
+                  const Windowing::WindowAggregationPtr aggregation);
 
     /**
      * @brief: Map records according to a map expression.

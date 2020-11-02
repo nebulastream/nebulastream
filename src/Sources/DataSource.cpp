@@ -13,7 +13,8 @@
 
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <Windows/Watermark/ProcessingTimeWatermarkGenerator.hpp>
+#include <Windowing/Watermark/ProcessingTimeWatermarkGenerator.hpp>
+#include <zconf.h>
 namespace NES {
 
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager)
@@ -23,7 +24,7 @@ DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, 
     NES_ASSERT(this->bufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
 
-    watermark = std::make_shared<ProcessingTimeWatermarkGenerator>();
+    watermark = std::make_shared<Windowing::ProcessingTimeWatermarkGenerator>();
 }
 
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
