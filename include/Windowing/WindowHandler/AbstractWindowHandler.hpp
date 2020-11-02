@@ -66,18 +66,18 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
      */
     virtual WindowManagerPtr getWindowManager() = 0;
 
+    virtual std::string getHandlerName() = 0;
+
   protected:
     std::atomic_bool running{false};
     WindowManagerPtr windowManager;
     PipelineStagePtr nextPipeline;
-    std::shared_ptr<std::thread> thread;
-    std::mutex runningTriggerMutex;
     uint32_t pipelineStageId;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     uint64_t originId;
-
     SchemaPtr windowTupleSchema;
+    std::string handlerName;
 };
 
 }// namespace NES::Windowing

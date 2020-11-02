@@ -50,9 +50,9 @@ void DistributeWindowRule::createCentralWindowOperator(WindowOperatorNodePtr win
     windowOp->replace(newWindowOp);
 }
 
-void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperaotr) {
+void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperator) {
 
-    if (!logicalWindowOperaotr->getWindowDefinition()->isKeyed()) {
+    if (!logicalWindowOperator->getWindowDefinition()->isKeyed()) {
         NES_THROW_RUNTIME_ERROR("DistributeWindowRule: distributed windowing is currently only supported on keyed streams.");
     }
 
@@ -63,8 +63,9 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     // The WindowComputation consumes that schema and outputs data in: {startTs, endTs, keyField, outputAggField}
     // First we prepare the final WindowComputation operator:
 
-    NES_DEBUG("DistributeWindowRule::apply: introduce distributed window operator for window " << logicalWindowOperaotr << " << logicalWindowOperaotr->toString()");
-    auto windowDefinition = logicalWindowOperaotr->getWindowDefinition();
+    NES_DEBUG("DistributeWindowRule::apply: introduce distributed window operator for window " << logicalWindowOperator << " << logicalWindowOperator->toString()");
+    auto windowDefinition = logicalWindowOperator->getWindowDefinition();
+    auto triggerPolicy = windowDefinition->getTriggerPolicy();
     auto windowType = windowDefinition->getWindowType();
     auto windowAggregation = windowDefinition->getWindowAggregation();
     auto keyField = windowDefinition->getOnKey();
@@ -77,13 +78,14 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
                                                                                   windowComputationAggregation,
                                                                                   windowType,
                                                                                   Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                                                  logicalWindowOperaotr->getChildren().size());
+                                                                                  logicalWindowOperator->getChildren().size(),
+                                                                                  triggerPolicy);
 
     auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowComputationDefinition);
 
     //replace logical window op with window computation operator
-    NES_DEBUG("DistributeWindowRule::apply: newNode=" << windowComputationOperator->toString() << " old node=" << logicalWindowOperaotr->toString());
-    if (!logicalWindowOperaotr->replace(windowComputationOperator)) {
+    NES_DEBUG("DistributeWindowRule::apply: newNode=" << windowComputationOperator->toString() << " old node=" << logicalWindowOperator->toString());
+    if (!logicalWindowOperator->replace(windowComputationOperator)) {
         NES_FATAL_ERROR("DistributeWindowRule:: replacement of window operator failed.");
     };
 
@@ -99,7 +101,8 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         auto sliceCreationWindowDefinition = Windowing::LogicalWindowDefinition::create(keyField,
                                                                                         sliceCreationWindowAggregation,
                                                                                         windowType,
-                                                                                        Windowing::DistributionCharacteristic::createSlicingWindowType(), 1);
+                                                                                        Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
+                                                                                        triggerPolicy);
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(sliceCreationWindowDefinition);
         child->insertBetweenThisAndParentNodes(sliceOp);
     }

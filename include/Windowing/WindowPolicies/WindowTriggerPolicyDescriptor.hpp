@@ -5,10 +5,10 @@
 namespace NES::Windowing {
 
 enum TriggerType {
-    triggerEveryNms,
-    triggerEachEvent,
-    triggerEachBuffer,
-    triggerEachWatermarkChange
+    triggerOnTime,
+    triggerOnRecord,
+    triggerOnBuffer,
+    triggerOnWatermarkChange
 };
 
 class WindowTriggerPolicyDescriptor {

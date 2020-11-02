@@ -12,7 +12,7 @@ TriggerType OnWatermarkChangeTriggerDescription::getPolicyType()
 }
 
 OnWatermarkChangeTriggerDescription::OnWatermarkChangeTriggerDescription()
-    : WindowTriggerPolicyDescriptor(triggerEachWatermarkChange){
+    : WindowTriggerPolicyDescriptor(triggerOnWatermarkChange){
 }
 
 }// namespace NES::Windowing

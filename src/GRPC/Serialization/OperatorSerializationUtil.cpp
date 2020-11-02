@@ -35,6 +35,12 @@
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+
+#include <Windowing/WindowPolicies/OnBufferTriggerDescription.hpp>
+#include <Windowing/WindowPolicies/OnRecordTriggerDescription.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerDescription.hpp>
+#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerDescription.hpp>
+
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
@@ -250,6 +256,28 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
             NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
     }
 
+    auto windowTrigger = windowDetails.mutable_triggerpolicy();
+
+    switch (windowDefinition->getTriggerPolicy()->getPolicyType()) {
+        case Windowing::TriggerType::triggerOnTime: {
+            windowTrigger->set_type(SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnTime);
+            Windowing::OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerDescription>(windowDefinition->getTriggerPolicy());
+            windowTrigger->set_timeinms(triggerDesc->getTriggerTimeInMs());
+            break;
+        }
+        case Windowing::TriggerType::triggerOnRecord:
+            windowTrigger->set_type(SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnRecord);
+            break;
+        case Windowing::TriggerType::triggerOnBuffer:
+            windowTrigger->set_type(SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnBuffer);
+            break;
+        case Windowing::TriggerType::triggerOnWatermarkChange:
+            windowTrigger->set_type(SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnWatermarkChange);
+            break;
+        default:
+            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
+    }
+
     auto distributionCharacteristics = SerializableOperator_WindowDetails_DistributionCharacteristic();
     if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Complete) {
         windowDetails.mutable_distrchar()->set_distr(SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete);
@@ -266,6 +294,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
 WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails, OperatorId operatorId) {
 
     auto serializedWindowAggregation = sinkDetails->windowaggregation();
+    auto serializedTriggerPolicy = sinkDetails->triggerpolicy();
     auto serializedWindowType = sinkDetails->windowtype();
 
     auto onField = ExpressionSerializationUtil::deserializeExpression(serializedWindowAggregation.mutable_onfield())
@@ -284,6 +313,19 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         aggregation = Windowing::CountAggregationDescriptor::create(onField, asField);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: " << serializedWindowAggregation.DebugString());
+    }
+
+    Windowing::WindowTriggerPolicyPtr trigger;
+    if (serializedTriggerPolicy.type() == SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnTime) {
+        trigger = Windowing::OnTimeTriggerDescription::create(serializedTriggerPolicy.timeinms());
+    } else if (serializedTriggerPolicy.type() == SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnBuffer) {
+        trigger = Windowing::OnBufferTriggerDescription::create();
+    } else if (serializedTriggerPolicy.type() == SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnRecord) {
+        trigger = Windowing::OnRecordTriggerDescription::create();
+    } else if (serializedTriggerPolicy.type() == SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnWatermarkChange) {
+        trigger = Windowing::OnWatermarkChangeTriggerDescription::create();
+    } else {
+        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize trigger: " << serializedTriggerPolicy.DebugString());
     }
 
     Windowing::WindowTypePtr window;
@@ -334,7 +376,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
 
     LogicalOperatorNodePtr ptr;
     if (!sinkDetails->has_onkey()) {
-        auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar);
+        auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, trigger);
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
             return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
@@ -347,11 +389,11 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     } else {
         auto keyAccessExpression = ExpressionSerializationUtil::deserializeExpression(sinkDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1), operatorId)->as<CentralWindowOperator>();
+            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger), operatorId)->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, sinkDetails->numberofinputedges()), operatorId)->as<WindowComputationOperator>();
+            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, sinkDetails->numberofinputedges(), trigger), operatorId)->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1), operatorId)->as<SliceCreationOperator>();
+            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger), operatorId)->as<SliceCreationOperator>();
         } else {
             NES_NOT_IMPLEMENTED();
         }

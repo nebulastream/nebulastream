@@ -3,7 +3,6 @@
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <State/StateManager.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
@@ -12,23 +11,35 @@
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <memory>
+#include <Windowing/WindowPolicies/ExecutableOnTimeTrigger.hpp>
+#include <Windowing/WindowPolicies/WindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerDescription.hpp>
+
 
 namespace NES::Windowing {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-class AggregationWindowHandler : public AbstractWindowHandler {
+class AggregationWindowHandler : public AbstractWindowHandler , public std::enable_shared_from_this<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>{
   public:
     explicit AggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition,
                                       std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation)
         : windowDefinition(std::move(windowDefinition)), windowAggregation(std::move(windowAggregation)) {
-        this->thread.reset();
         windowTupleSchema = Schema::create()
                                 ->addField(createField("start", UINT64))
                                 ->addField(createField("end", UINT64))
                                 ->addField("key", this->windowDefinition->getOnKey()->getStamp())
                                 ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(windowTupleSchema);
+        auto policy = windowDefinition->getTriggerPolicy();
+        if(policy->getPolicyType() == triggerOnTime)
+        {
+            OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerDescription>(policy);
+            executablePolicyTrigger = ExecutableOnTimeTrigger::create(triggerDesc->getTriggerTimeInMs());
+        }
+        else
+        {
+            NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        }
     }
 
     ~AggregationWindowHandler() {
@@ -41,17 +52,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
    * @return boolean if the window thread is started
    */
     bool start() {
-        std::unique_lock lock(runningTriggerMutex);
-        if (running) {
-            return false;
-        }
-        running = true;
-        NES_DEBUG("AggregationWindowHandler " << this << ": Spawn thread");
-        thread = std::make_shared<std::thread>([this]() {
-            setThreadName("whdlr-%d-%d", pipelineStageId, nextPipeline->getQepParentId());
-            trigger();
-        });
-        return true;
+        return executablePolicyTrigger->start(std::dynamic_pointer_cast<AbstractWindowHandler>(shared_from_this()));
     }
 
     /**
@@ -59,21 +60,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @return
      */
     bool stop() {
-        std::unique_lock lock(runningTriggerMutex);
-        NES_DEBUG("AggregationWindowHandler " << this << ": Stop called");
-        if (!running) {
-            NES_DEBUG("AggregationWindowHandler " << this << ": Stop called but was already not running");
-            return false;
-        }
-        running = false;
-
-        if (thread && thread->joinable()) {
-            thread->join();
-        }
-        thread.reset();
-        NES_DEBUG("AggregationWindowHandler " << this << ": Thread joinded");
-        // TODO what happens to the content of the window that it is still in the state?
-        return true;
+        return executablePolicyTrigger->stop();
     }
 
     void triggerEveryNms(size_t ms) {
@@ -82,6 +69,12 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             trigger();
         }
     }
+
+    std::string getHandlerName()
+    {
+        return handlerName;
+    }
+
     /**
      * @brief triggers all ready windows.
      * @return
@@ -144,13 +137,14 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;
         this->pipelineStageId = pipelineStageId;
-        this->thread.reset();
         this->originId = originId;
         // Initialize AggregationWindowHandler Manager
         this->windowManager = std::make_shared<WindowManager>(this->windowDefinition);
         // Initialize StateVariable
         this->windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
         this->nextPipeline = nextPipeline;
+        this->handlerName = pipelineStageId + "-" + nextPipeline->getQepParentId();
+
         NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
         return true;
     }
@@ -318,13 +312,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     LogicalWindowDefinitionPtr windowDefinition;
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation;
+    ExecutableOnTimeTriggerPtr executablePolicyTrigger;
+
     MemoryLayoutPtr windowTupleLayout;
 };
-
-//template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-//using AggregationWindowHandlerPtr = std::shared_ptr<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
-
-//template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 
 }// namespace NES::Windowing
 

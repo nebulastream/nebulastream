@@ -201,6 +201,7 @@ message SerializableOperator{
       uint32 size = 2;
       uint32 slide = 3;
     }
+
     message Aggregation {
       enum Type{
         SUM = 0;
@@ -212,11 +213,24 @@ message SerializableOperator{
       SerializableExpression onField = 2;
       SerializableExpression asField = 3;
     }
+
+    message TriggerPolicy{
+      enum Type{
+        triggerOnTime = 0;
+        triggerOnRecord = 1;
+        triggerOnBuffer = 2;
+        triggerOnWatermarkChange = 3;
+      }
+      Type type = 1;
+      uint64 timeInMs = 2;
+    }
+
     google.protobuf.Any windowType = 1;
     Aggregation windowAggregation = 2;
     DistributionCharacteristic distrChar = 3;
     SerializableExpression onKey = 4;
     uint64 numberOfInputEdges = 5;
+    TriggerPolicy triggerPolicy = 6;
 
   }
   google.protobuf.Any details = 1;
