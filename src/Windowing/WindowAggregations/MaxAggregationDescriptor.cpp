@@ -1,7 +1,5 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <utility>
@@ -25,16 +23,6 @@ WindowAggregationPtr MaxAggregationDescriptor::on(ExpressionItem onField) {
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));
 }
 
-void MaxAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCode,
-                                                  BinaryOperatorStatement partialRef,
-                                                  StructDeclaration inputStruct,
-                                                  BinaryOperatorStatement inputRef) {
-    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->as<FieldAccessExpressionNode>()->getFieldName());
-    auto ifStatement = IF(
-        partialRef < inputRef.accessRef(VarRefStatement(varDeclInput)),
-        assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
-    currentCode->addStatement(ifStatement.createCopy());
-}
 WindowAggregationDescriptor::Type MaxAggregationDescriptor::getType() {
     return Max;
 }

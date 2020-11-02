@@ -16,14 +16,7 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
     static WindowAggregationPtr on(ExpressionItem onField);
 
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
-    /*
-     * @brief generate the code for lift and combine of the MaxAggregationDescriptor aggregate
-     * @param currentCode
-     * @param expressionStatement
-     * @param inputStruct
-     * @param inputRef
-     */
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expression_statment, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;
     DataTypePtr getFinalAggregateStamp() override;

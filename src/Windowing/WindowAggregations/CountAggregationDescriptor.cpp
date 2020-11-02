@@ -1,7 +1,5 @@
-#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/GeneratedCode.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <utility>
 
@@ -19,15 +17,6 @@ WindowAggregationPtr CountAggregationDescriptor::on() {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
 }
 
-void CountAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCode,
-                                                    BinaryOperatorStatement partialRef,
-                                                    StructDeclaration inputStruct,
-                                                    BinaryOperatorStatement) {
-    auto varDeclInput = inputStruct.getVariableDeclaration(this->onField->as<FieldAccessExpressionNode>()->getFieldName());
-    auto increment = ++partialRef;
-    auto updatedPartial = partialRef.assign(increment);
-    currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
-}
 WindowAggregationDescriptor::Type CountAggregationDescriptor::getType() {
     return Count;
 }

@@ -1,0 +1,19 @@
+#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLESUMAGGREGATION_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLESUMAGGREGATION_HPP_
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+namespace NES{
+
+class GeneratableSumAggregation: public GeneratableWindowAggregation{
+  public:
+    GeneratableSumAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+    static  GeneratableWindowAggregationPtr create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+};
+
+
+}
+
+
+
+
+#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLESUMAGGREGATION_HPP_

@@ -2,6 +2,11 @@
 #define NES_INCLUDE_NODES_PHASES_TRANSLATETOGENERATABLEOPERATORS_HPP_
 
 #include <memory>
+namespace NES::Windowing{
+class WindowAggregationDescriptor;
+typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
+
+}
 
 namespace NES {
 
@@ -13,6 +18,9 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
 class GeneratableOperator;
 typedef std::shared_ptr<GeneratableOperator> GeneratableOperatorPtr;
+
+class GeneratableWindowAggregation;
+typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregationPtr;
 
 class NodeEngine;
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
@@ -39,6 +47,8 @@ class TranslateToGeneratableOperatorPhase {
      * @return Legacy Operator
      */
     OperatorNodePtr transformIndividualOperator(OperatorNodePtr operatorNode, OperatorNodePtr generatableParentOperator);
+
+    GeneratableWindowAggregationPtr transformWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
 
     TranslateToGeneratableOperatorPhase();
 };
