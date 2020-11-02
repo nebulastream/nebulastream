@@ -39,18 +39,6 @@ class Benchmark(object):
 #	<benchmark names> (names of executables that will be run, if this is empty all possible benchmark executables will be run)
 #	<executables folder> (folder in which the executables reside)
 
-#- show all benchmarks that will be executed. Ask if they all should be run
-#	- search in <executables folder> for executables
-#	- deletes nothing if <benchmark names> is empty or deletes everything that is not in <benchmark names> 
-
-#- run plotting of benchmark_results
-#	- print success message for every successfull benchmark plot
-#	- checks if file "<benchmark executable name>.py" lies next to this script
-#		- if yes then read this file and plot it according to that file (so execute that file), but catch if it throws an exception and print this exception onto console and also into log file
-#		- else have a "default plot" function executed
-
-
-
 ########################Start of helper functions########################
 class bcolors:
 	HEADER = '\033[95m'
@@ -85,7 +73,7 @@ def print2Log(message, file=__file__):
 
 def parseArguments():
 	parser = ArgumentParser()
-	parser.add_argument("-b", "--benchmarks", nargs="+", action="store", dest="benchmarkNames", help="Name of benchmark executables that should be run, if none then all benchmark executables are used. Regexes can be used")
+	parser.add_argument("-b", "--benchmarks", nargs="+", action="store", dest="benchmarkNames", help="Name of benchmark executables that should be run, if none then all benchmark executables are used. Regex is supported")
 	parser.add_argument("-f", "--folder", action="store", dest="benchmarkFolder", help="Folder in which all benchmark executables lie", required=True)
 
 	args = parser.parse_args()
