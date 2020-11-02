@@ -16,9 +16,6 @@
 
 #include <NodeEngine/NodeEngine.hpp>
 
-/**
- * The tests require an OPC server running at opc.tcp://localhost:4840
- */
 const std::string& url = "opc.tcp://localhost:4840";
 static const UA_NodeId baseDataVariableType = {0, UA_NODEIDTYPE_NUMERIC, {UA_NS0ID_BASEDATAVARIABLETYPE}};
 static volatile UA_Boolean running = true;
@@ -151,9 +148,6 @@ TEST_F(OPCSinkTest, OPCSourcePrint) {
 
 /**
  * Tests if obtained value is valid.
- * Requires an OPC test server without any security policy,
- * running at opc.tcp://localhost:4840
- * and a node with node id "ns=1;s="the.answer"
  */
 
 TEST_F(OPCSinkTest, OPCSourceValue) {

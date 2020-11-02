@@ -15,13 +15,6 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <thread>
 
-
-/**
- * The tests require an OPC server running at opc.tcp://localhost:4840 with a node storing a uint32_t
- * and the node id: ns=1;s=the.answer
- */
-
-
 const std::string& url = "opc.tcp://localhost:4840";
 static const UA_NodeId baseDataVariableType = {0, UA_NODEIDTYPE_NUMERIC, {UA_NS0ID_BASEDATAVARIABLETYPE}};
 static volatile UA_Boolean running = true;
@@ -171,9 +164,6 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
 
 /**
  * Tests if obtained value is valid.
- * Requires an OPC test server without any security policy,
- * running at opc.tcp://localhost:4840
- * and a node with node id "ns=1;s="the.answer"
  */
 
 TEST_F(OPCSourceTest, OPCSourceValue) {
@@ -190,9 +180,6 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     size_t expected = 43;
     NES_DEBUG("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: " << expected << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
-
 }
-
-
 }
 #endif
