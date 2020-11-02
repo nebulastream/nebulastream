@@ -8,7 +8,7 @@ namespace NES {
 GeneratableWindowOperator::GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
     : WindowLogicalOperatorNode(std::move(windowDefinition), id) {}
 
-Windowing::WindowHandlerPtr GeneratableWindowOperator::createWindowHandler() {
+Windowing::AbstractWindowHandlerPtr GeneratableWindowOperator::createWindowHandler() {
     return Windowing::WindowHandlerFactory::createAggregationWindowHandler(windowDefinition);
 }
 }// namespace NES

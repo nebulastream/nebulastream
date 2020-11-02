@@ -3,7 +3,7 @@
 
 namespace NES::Windowing {
 
-WindowHandlerPtr WindowHandlerFactory::createAggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition) {
+AbstractWindowHandlerPtr WindowHandlerFactory::createAggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition) {
     if (windowDefinition->isKeyed()) {
         auto logicalKeyType = windowDefinition->getOnKey()->getStamp();
         auto physicalKeyType = DefaultPhysicalTypeFactory().getPhysicalType(logicalKeyType);

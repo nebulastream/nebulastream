@@ -35,7 +35,7 @@ class PipelineStage {
         ExecutablePipelinePtr executablePipeline,
         QueryExecutionContextPtr pipelineContext,
         PipelineStagePtr nextPipelineStage,
-        Windowing::WindowHandlerPtr windowHandler = Windowing::WindowHandlerPtr());
+        Windowing::AbstractWindowHandlerPtr windowHandler = Windowing::AbstractWindowHandlerPtr());
 
     /**
      * @brief Execute a pipeline stage
@@ -90,13 +90,13 @@ class PipelineStage {
                                    const ExecutablePipelinePtr compiledCode,
                                    QueryExecutionContextPtr pipelineContext,
                                    const PipelineStagePtr nextPipelineStage,
-                                   const Windowing::WindowHandlerPtr& windowHandler = Windowing::WindowHandlerPtr());
+                                   const Windowing::AbstractWindowHandlerPtr& windowHandler = Windowing::AbstractWindowHandlerPtr());
 
   private:
     uint32_t pipelineStageId;
     QuerySubPlanId qepId;
     ExecutablePipelinePtr executablePipeline;
-    Windowing::WindowHandlerPtr windowHandler;
+    Windowing::AbstractWindowHandlerPtr windowHandler;
     PipelineStagePtr nextStage;
     QueryExecutionContextPtr pipelineContext;
 

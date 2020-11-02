@@ -20,7 +20,7 @@ PipelineStage::PipelineStage(
     ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineExecutionContext,
     PipelineStagePtr nextPipelineStage,
-    Windowing::WindowHandlerPtr windowHandler) : pipelineStageId(pipelineStageId),
+    Windowing::AbstractWindowHandlerPtr windowHandler) : pipelineStageId(pipelineStageId),
                                                  qepId(qepId),
                                                  executablePipeline(std::move(executablePipeline)),
                                                  windowHandler(std::move(windowHandler)),
@@ -28,12 +28,6 @@ PipelineStage::PipelineStage(
                                                  pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
-//    if (hasWindowHandler()) {
-//        NES_DEBUG("Pipelinestage ctor set origin id=" << qepId);
-//        assert(0);
-//        //TODO: we have to set it via updating
-////        this->windowHandler->setOriginId(qepId);
-//    }
 }
 
 bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
@@ -170,7 +164,7 @@ PipelineStagePtr PipelineStage::create(
     const ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineContext,
     const PipelineStagePtr nextPipelineStage,
-    const Windowing::WindowHandlerPtr& windowHandler) {
+    const Windowing::AbstractWindowHandlerPtr& windowHandler) {
 
     return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipeline, pipelineContext, nextPipelineStage, windowHandler);
 }

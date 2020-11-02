@@ -12,20 +12,16 @@
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <memory>
 
 namespace NES::Windowing {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-class AggregationWindowHandler : public AbstractWindowHandler , public std::enable_shared_from_this<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>> {
+class AggregationWindowHandler : public AbstractWindowHandler{
   public:
 
-    auto as() {
-        return std::dynamic_pointer_cast<AggregationWindowHandler<KeyType, InputType, FinalAggregateType, PartialAggregateType>>(this->shared_from_this());
-    }
-
-    explicit AggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition, std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation)
+    explicit AggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition,
+                                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation)
         : windowDefinition(std::move(windowDefinition)), windowAggregation(std::move(windowAggregation)) {
         this->thread.reset();
         windowTupleSchema = Schema::create()
@@ -318,8 +314,6 @@ class AggregationWindowHandler : public AbstractWindowHandler , public std::enab
      */
     WindowManagerPtr getWindowManager() { return this->windowManager; }
 
-//    typedef std::shared_ptr<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>> AggregationWindowHandlerPtr;
-
   private:
     LogicalWindowDefinitionPtr windowDefinition;
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
@@ -327,8 +321,8 @@ class AggregationWindowHandler : public AbstractWindowHandler , public std::enab
     MemoryLayoutPtr windowTupleLayout;
 };
 
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-using AggregationWindowHandlerPtr = std::shared_ptr<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
+//template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+//using AggregationWindowHandlerPtr = std::shared_ptr<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
 //template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 
