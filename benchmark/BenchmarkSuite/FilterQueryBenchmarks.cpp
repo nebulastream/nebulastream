@@ -15,6 +15,7 @@ using namespace NES::Benchmarking;
  */
 int main() {
 
+    // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
     BenchmarkUtils::createRangeVector(allIngestionRates, 90 * 1000 * 1000, 120 * 1000 * 1000, 10 * 1000 * 1000);
 
@@ -29,7 +30,6 @@ int main() {
 
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
-    //BenchmarkUtils::createRangeVector(allSelectivities, 100, 1000, 100);
     BenchmarkUtils::createRangeVector(allSelectivities, 500, 700, 100);
 
     for (auto selectivity : allSelectivities){

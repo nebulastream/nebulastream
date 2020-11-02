@@ -15,6 +15,7 @@ using namespace NES::Benchmarking;
  */
 int main() {
 
+    // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
     BenchmarkUtils::createRangeVector(allIngestionRates, 90 * 1000 * 1000, 120 * 1000 * 1000, 10 * 1000 * 1000);
 
