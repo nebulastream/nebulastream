@@ -3,6 +3,7 @@
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <memory>
+#include <z3++.h>
 
 namespace NES {
 
@@ -23,7 +24,7 @@ class MergeLogicalOperatorNode : public LogicalOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
-    z3::expr getZ3Expression() override;
+    z3::expr getZ3Expression(z3::context& context) override;
 };
 }// namespace NES
 #endif// Merge_LOGICAL_OPERATOR_NODE_HPP

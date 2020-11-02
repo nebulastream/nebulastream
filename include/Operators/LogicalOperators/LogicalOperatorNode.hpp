@@ -8,6 +8,7 @@
 
 namespace z3 {
 class expr;
+class context;
 }
 
 namespace NES {
@@ -20,7 +21,7 @@ class LogicalOperatorNode : public OperatorNode {
      * @brief Get the First Order Logic formula representation for the logical operator
      * @return and object of type Z3::expr.
      */
-    virtual z3::expr getZ3Expression() = 0;
+    virtual z3::expr getZ3Expression(z3::context& context) = 0;
 };
 
 }// namespace NES

@@ -23,7 +23,6 @@
 namespace NES {
 
 z3::expr ExpressionToZ3ExprUtil::createForExpression(ExpressionNodePtr expression, z3::context& context) {
-
     NES_DEBUG("Creating Z3 expression for input expression " << expression->toString());
     if (expression->instanceOf<LogicalExpressionNode>()) {
         return createForLogicalExpressions(expression, context);
@@ -46,7 +45,7 @@ z3::expr ExpressionToZ3ExprUtil::createForExpression(ExpressionNodePtr expressio
         auto valueExpr = createForExpression(fieldAssignmentExpressionNode->getAssignment(), context);
         return to_expr(context, Z3_mk_eq(context, filedExpr, valueExpr));
     }
-    NES_THROW_RUNTIME_ERROR("ExpressionSerializationUtil: could not serialize this expression: " + expression->toString());
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the expression: " + expression->toString());
 }
 
 z3::expr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(ExpressionNodePtr expression, z3::context& context) {

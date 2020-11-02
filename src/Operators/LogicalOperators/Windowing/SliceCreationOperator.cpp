@@ -59,7 +59,7 @@ bool SliceCreationOperator::inferSchema() {
         NES_THROW_RUNTIME_ERROR("SliceCreationOperator: type inference for non keyed streams is not supported");
     }
 }
-z3::expr SliceCreationOperator::getZ3Expression() {
+z3::expr SliceCreationOperator::getZ3Expression(z3::context&) {
     NES_NOT_IMPLEMENTED();
 }
 

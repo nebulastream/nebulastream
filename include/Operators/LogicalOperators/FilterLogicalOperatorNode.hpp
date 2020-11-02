@@ -4,6 +4,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <memory>
+#include <z3++.h>
 
 namespace NES {
 
@@ -43,7 +44,7 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
     */
     bool inferSchema() override;
     OperatorNodePtr copy() override;
-    z3::expr getZ3Expression() override;
+    z3::expr getZ3Expression(z3::context& context) override;
 
   private:
     ExpressionNodePtr predicate;
