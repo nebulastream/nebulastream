@@ -18,10 +18,6 @@ library(ggplot2)
 
 ```{r}
 con <- influx_connection(host = "localhost", port = 8086)
-```
-
-
-```{r}
 show_databases(con = con)
 ```
 
@@ -31,7 +27,7 @@ dfResult <- influx_select(con = con,
                         db = "mydb", 
                         field_keys = "*", 
                         measurement = "monitoringEval",
-                        where = "topology = '1Crd2Wrks' AND version = '1'",
+                        where = "version = '1'",
                         limit = 0, 
                         order_desc = TRUE, 
                         return_xts = FALSE)
@@ -41,22 +37,20 @@ dfResult
 ```
 
 ```{r}
-ggplot(dfResult, aes(x=iteration, y=cpuTotalUsage, color=system)) + geom_point(size=1)
+ggplot(dfResult, aes(x=iteration, y=cpuTotalUsage, color=topology, shape=type, size=system)) + geom_point() +  scale_shape_manual(values=c(1, 3))
 ```
 
 ```{r}
-ggplot(dfResult, aes(x=iteration, y=rxBytes, color=system)) + geom_point(size=1)
+ggplot(dfResult, aes(x=iteration, y=rxBytes, color=topology, shape=type, size=system)) + geom_point() +  scale_shape_manual(values=c(1, 3))
 ```
 ```{r}
-ggplot(dfResult, aes(x=iteration, y=txBytes, color=system)) + geom_point(size=1)
+ggplot(dfResult, aes(x=iteration, y=txBytes, color=topology, shape=type, size=system)) + geom_point() +  scale_shape_manual(values=c(1, 3))
+```
+
+```{r}
+ggplot(dfResult, aes(x=iteration, y=memoryUsage, color=topology, shape=type, size=system)) + geom_point() +  scale_shape_manual(values=c(1, 3))
 ```
 ```{r}
-ggplot(dfResult, aes(x=iteration, y=rxPackets, color=system)) + geom_point(size=1)
-```
-```{r}
-ggplot(dfResult, aes(x=iteration, y=memoryUsage, color=system)) + geom_point(size=1)
-```
-```{r}
-ggplot(dfResult, aes(x=iteration, y=`runtime_ms`, color=system)) + geom_point(size=1)
+ggplot(dfResult, aes(x=iteration, y=`runtime_ms`, color=topology, shape=system)) + geom_point() +  scale_shape_manual(values=c(1, 3))
 ```
 
