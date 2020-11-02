@@ -149,7 +149,6 @@ TEST_F(OPCSinkTest, OPCSourcePrint) {
 /**
  * Tests if obtained value is valid.
  */
-
 TEST_F(OPCSinkTest, OPCSourceValue) {
 
     std::thread t1(startServer);
