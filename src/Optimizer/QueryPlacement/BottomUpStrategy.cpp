@@ -151,7 +151,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
         throw QueryPlacementException("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
     }
     NES_TRACE("BottomUpStrategy: Update the global execution plan with candidate execution node");
-    globalExecutionPlan->scheduleExecutionNode(candidateExecutionNode);
+    globalExecutionPlan->addExecutionNode(candidateExecutionNode);
 
     NES_TRACE("BottomUpStrategy: Place the information about the candidate execution plan and operator id in the map.");
     operatorToExecutionNodeMap[operatorNode->getId()] = candidateExecutionNode;
