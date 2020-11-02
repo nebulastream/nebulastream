@@ -13,25 +13,24 @@ using namespace NES::Benchmarking;
 /**
  * @brief This file/main shows how a benchmark can be created. The benchmark seen below is a filter query that was implemented by using the BM_AddBenchmark macro from <util/BenchmarkUtils.hpp>.
  */
-int main(){
+int main() {
 
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector(allIngestionRates, 1 * 1000 * 1000, 10 * 1000 * 1000, 1 * 1000 * 1000);
-    BenchmarkUtils::createRangeVector(allIngestionRates, 10 * 1000 * 1000, 200 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector(allIngestionRates, 90 * 1000 * 1000, 120 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
-    BenchmarkUtils::createRangeVector(allExperimentsDuration, 10, 40, 10);
+    BenchmarkUtils::createRangeVector(allExperimentsDuration, 10, 20, 10);
 
     std::vector<uint64_t> allPeriodLengths;
     BenchmarkUtils::createRangeVector(allPeriodLengths, 1, 2, 1);
-
 
     std::string benchmarkFolderName = "FilterQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName)) throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
-    BenchmarkUtils::createRangeVector(allSelectivities, 500, 600, 100);
+    //BenchmarkUtils::createRangeVector(allSelectivities, 100, 1000, 100);
+    BenchmarkUtils::createRangeVector(allSelectivities, 500, 700, 100);
 
     for (auto selectivity : allSelectivities){
         auto benchmarkSchema = Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
