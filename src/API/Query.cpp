@@ -53,7 +53,7 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-    auto tiggerPolicy = OnTimeTriggerDescription::create(10000);
+    auto tiggerPolicy = OnTimeTriggerDescription::create(1000);
     auto windowDefinition = Windowing::LogicalWindowDefinition::create(fieldAccess, aggregation, windowType, Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, tiggerPolicy);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
     queryPlan->appendOperatorAsNewRoot(windowOperator);

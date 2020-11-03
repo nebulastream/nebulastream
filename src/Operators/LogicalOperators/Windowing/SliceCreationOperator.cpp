@@ -13,7 +13,12 @@ namespace NES {
 
 SliceCreationOperator::SliceCreationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
     : WindowOperatorNode(windowDefinition, id) {
-    windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createSlicingWindowType());
+    this->windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createSlicingWindowType());
+    this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
+    this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
+    this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
+    this->windowDefinition->setWindowType(windowDefinition->getWindowType());
+    this->windowDefinition->setOnKey(windowDefinition->getOnKey());
 }
 
 const std::string SliceCreationOperator::toString() const {
