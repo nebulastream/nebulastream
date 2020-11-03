@@ -77,15 +77,15 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
     if (windowOperator->instanceOf<CentralWindowOperator>()) {
         auto generatableWindowOperator = GeneratableCompleteWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
-        return windowOperator;
+        return generatableWindowOperator;
     } else if (windowOperator->instanceOf<SliceCreationOperator>()) {
         auto generatableWindowOperator = GeneratableSlicingWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
-        return windowOperator;
+        return generatableWindowOperator;
     } else if (windowOperator->instanceOf<WindowComputationOperator>()) {
         auto generatableWindowOperator = GeneratableCombiningWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
-        return windowOperator;
+        return generatableWindowOperator;
     }
     NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << windowOperator);
     NES_NOT_IMPLEMENTED();
@@ -117,7 +117,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transform(OperatorNodePtr o
     for (const NodePtr& child : operatorNode->getChildren()) {
         auto generatableOperator = transform(child->as<OperatorNode>(), legacyOperator);
     }
-    NES_DEBUG("TranslateToLegacyPhase: got " << legacyOperator);
+    NES_DEBUG("TranslateToGeneratableOperatorPhase: got " << legacyOperator);
     return legacyOperator;
 }
 
