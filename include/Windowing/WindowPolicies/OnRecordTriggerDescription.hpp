@@ -12,5 +12,5 @@ class OnRecordTriggerDescription : public WindowTriggerPolicyDescriptor {
   private:
     OnRecordTriggerDescription();
 };
-}
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONEVENTTRIGGERDESCRIPTION_HPP_

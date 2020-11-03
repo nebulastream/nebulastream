@@ -17,5 +17,5 @@ class ExecutableWindowTriggerPolicy {
      */
     virtual bool start(AbstractWindowHandlerPtr windowHandler) = 0;
 };
-}
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEWINDOWTRIGGERPOLICY_HPP_

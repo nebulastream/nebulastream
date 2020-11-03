@@ -26,5 +26,5 @@ class OnTimeTriggerDescription : public WindowTriggerPolicyDescriptor {
 };
 
 typedef std::shared_ptr<OnTimeTriggerDescription> OnTimeTriggerDescriptionPtr;
-}
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_TIMETRIGGERDESCRIPTION_HPP_

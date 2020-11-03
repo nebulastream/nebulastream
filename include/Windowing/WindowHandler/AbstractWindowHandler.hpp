@@ -69,6 +69,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     virtual std::string toString() = 0;
 
     virtual LogicalWindowDefinitionPtr getWindowDefinition() = 0;
+
   protected:
     std::atomic_bool running{false};
     WindowManagerPtr windowManager;

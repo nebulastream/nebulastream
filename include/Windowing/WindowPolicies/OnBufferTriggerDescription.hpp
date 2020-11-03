@@ -12,5 +12,5 @@ class OnBufferTriggerDescription : public WindowTriggerPolicyDescriptor {
   private:
     OnBufferTriggerDescription();
 };
-}
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONBUFFERTRIGGERDESCRIPTION_HPP_

@@ -6,13 +6,12 @@ WindowTriggerPolicyPtr OnWatermarkChangeTriggerDescription::create() {
     return std::make_shared<OnWatermarkChangeTriggerDescription>(OnWatermarkChangeTriggerDescription());
 }
 
-TriggerType OnWatermarkChangeTriggerDescription::getPolicyType()
-{
+TriggerType OnWatermarkChangeTriggerDescription::getPolicyType() {
     return this->policy;
 }
 
 OnWatermarkChangeTriggerDescription::OnWatermarkChangeTriggerDescription()
-    : WindowTriggerPolicyDescriptor(triggerOnWatermarkChange){
+    : WindowTriggerPolicyDescriptor(triggerOnWatermarkChange) {
 }
 
 }// namespace NES::Windowing

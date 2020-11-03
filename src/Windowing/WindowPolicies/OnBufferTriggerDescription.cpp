@@ -6,13 +6,12 @@ WindowTriggerPolicyPtr OnBufferTriggerDescription::create() {
     return std::make_shared<OnBufferTriggerDescription>(OnBufferTriggerDescription());
 }
 
-TriggerType OnBufferTriggerDescription::getPolicyType()
-{
+TriggerType OnBufferTriggerDescription::getPolicyType() {
     return this->policy;
 }
 
 OnBufferTriggerDescription::OnBufferTriggerDescription()
-    : WindowTriggerPolicyDescriptor(triggerOnBuffer){
+    : WindowTriggerPolicyDescriptor(triggerOnBuffer) {
 }
 
 }// namespace NES::Windowing
