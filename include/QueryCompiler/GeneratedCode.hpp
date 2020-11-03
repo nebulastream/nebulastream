@@ -42,11 +42,9 @@ class GeneratedCode {
     StructDeclaration structDeclaratonInputTuple;
     StructDeclaration structDeclarationResultTuple;
     VariableDeclaration varDeclarationInputBuffer;
-    VariableDeclaration varDeclarationWindowManager;
     VariableDeclaration varDeclarationResultBuffer;
     VariableDeclaration varDeclarationWorkerContext;
     VariableDeclaration varDeclarationExecutionContext;
-    VariableDeclaration varDeclarationState;
     FunctionCallStatement tupleBufferGetNumberOfTupleCall;
     VariableDeclaration varDeclarationInputTuples;
     VariableDeclaration varDeclarationNumberOfResultTuples;

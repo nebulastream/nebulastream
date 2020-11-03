@@ -71,6 +71,12 @@ class WindowAggregationDescriptor {
     */
     virtual WindowAggregationPtr copy() = 0;
 
+    virtual DataTypePtr getInputStamp() = 0;
+
+    virtual DataTypePtr getPartialAggregateStamp() = 0;
+
+    virtual DataTypePtr getFinalAggregateStamp() = 0;
+
   protected:
     explicit WindowAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     WindowAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);

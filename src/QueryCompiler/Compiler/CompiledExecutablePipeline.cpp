@@ -5,7 +5,11 @@
 namespace NES {
 
 // TODO this might change across OS
-static constexpr auto mangledEntryPoint = "_Z14compiled_queryRN3NES11TupleBufferEPvPNS_9Windowing13WindowManagerERNS_24PipelineExecutionContextERNS_13WorkerContextE";
+#if defined(__linux__)
+static constexpr auto mangledEntryPoint = "_Z14compiled_queryRN3NES11TupleBufferERNS_24PipelineExecutionContextERNS_13WorkerContextE";
+#else
+#error "unsupported platform/OS"
+#endif
 
 CompiledExecutablePipeline::CompiledExecutablePipeline(CompiledCodePtr compiled_code)
     : ExecutablePipeline(false), compiledCode(std::move(compiled_code)), pipelineFunc(compiledCode->getFunctionPointer<PipelineFunctionPtr>(mangledEntryPoint)) {
@@ -17,11 +21,9 @@ CompiledExecutablePipeline::CompiledExecutablePipeline(PipelineFunctionPtr func)
 }
 
 uint32_t CompiledExecutablePipeline::execute(TupleBuffer& inputBuffer,
-                                             void* state,
-                                             Windowing::WindowManagerPtr windowManager,
                                              QueryExecutionContextPtr context,
                                              WorkerContextRef wctx) {
-    return (*pipelineFunc)(inputBuffer, state, windowManager.get(), *context.get(), wctx);
+    return (*pipelineFunc)(inputBuffer, *context.get(), wctx);
 }
 
 ExecutablePipelinePtr CompiledExecutablePipeline::create(const CompiledCodePtr compiledCode) {

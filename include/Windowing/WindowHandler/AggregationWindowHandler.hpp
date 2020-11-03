@@ -288,6 +288,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      */
     WindowManagerPtr getWindowManager() { return this->windowManager; }
 
+     auto getTypedWindowState() {
+        return windowStateVariable;
+    }
+
     LogicalWindowDefinitionPtr getWindowDefinition() {
         return windowDefinition;
     }

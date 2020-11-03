@@ -111,6 +111,12 @@ class CCodeGenerator : public CodeGenerator {
 
     StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
 
+    BinaryOperatorStatement getWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
+
+    BinaryOperatorStatement getStateVariable(VariableDeclaration);
+
+    BinaryOperatorStatement getWindowManager(VariableDeclaration);
+
     StructDeclaration getStructDeclarationFromWindow(std::string structName);
     CompilerPtr compiler;
 };

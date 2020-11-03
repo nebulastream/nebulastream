@@ -54,13 +54,6 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) = 0;
 
     /**
-     * @brief Returns the window state, as a untyped pointer to the state variable.
-     * @deprecated todo remove this untyped call.
-     * @return void* to state variable.
-     */
-    virtual void* getWindowState() = 0;
-
-    /**
      * @brief Returns window manager.
      * @return WindowManager.
      */

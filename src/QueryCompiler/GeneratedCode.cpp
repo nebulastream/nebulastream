@@ -16,11 +16,9 @@ GeneratedCode::GeneratedCode()
       structDeclaratonInputTuple(StructDeclaration::create("InputTuple", "")),
       structDeclarationResultTuple(StructDeclaration::create("ResultTuple", "")),
       varDeclarationInputBuffer(VariableDeclaration::create(DataTypeFactory::createInt32(), "input_buffers")),
-      varDeclarationWindowManager(VariableDeclaration::create(DataTypeFactory::createInt32(), "window")),
       varDeclarationResultBuffer(VariableDeclaration::create(DataTypeFactory::createInt32(), "output_buffer")),
       varDeclarationExecutionContext(VariableDeclaration::create(DataTypeFactory::createInt32(), "output_buffer")),
       varDeclarationWorkerContext(VariableDeclaration::create(DataTypeFactory::createInt32(), "worker_context")),
-      varDeclarationState(VariableDeclaration::create(DataTypeFactory::createInt32(), "state")),
       tupleBufferGetNumberOfTupleCall(FunctionCallStatement("getNumberOfTuples")),
       varDeclarationInputTuples(VariableDeclaration::create(DataTypeFactory::createInt32(), "inputTuples")),
       varDeclarationNumberOfResultTuples(VariableDeclaration::create(

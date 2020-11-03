@@ -37,6 +37,15 @@ void MinAggregationDescriptor::compileLiftCombine(CompoundStatementPtr currentCo
 WindowAggregationDescriptor::Type MinAggregationDescriptor::getType() {
     return Min;
 }
+DataTypePtr MinAggregationDescriptor::getInputStamp() {
+    return onField->getStamp();
+}
+DataTypePtr MinAggregationDescriptor::getPartialAggregateStamp() {
+    return onField->getStamp();
+}
+DataTypePtr MinAggregationDescriptor::getFinalAggregateStamp() {
+    return onField->getStamp();
+}
 
 void MinAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
