@@ -60,7 +60,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/exdra.csv",
                                                                 1, 0, 1,
-                                                                "test_stream", "exdra");
+                                                                "test_stream", "exdra", true);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -247,7 +247,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryProces
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/exdra.csv",
                                                                 1, 0, 2,
-                                                                "test_stream", "exdra");
+                                                                "test_stream", "exdra", true);
     wrk1->registerPhysicalStream(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -335,7 +335,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTi
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
                                                                   1, 0, 1,
-                                                                  "test_stream", "window");
+                                                                  "test_stream", "window", true);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -510,7 +510,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedTumblingWindowQueryEv
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
                                                                 1, 3, 3,
-                                                                "test_stream", "window");
+                                                                "test_stream", "window", true);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
 
@@ -612,7 +612,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
                                                                   1, 0, 1,
-                                                                  "test_stream", "window");
+                                                                  "test_stream", "window", true);
 
     wrk1->registerPhysicalStream(conf70);
     wrk2->registerPhysicalStream(conf70);
