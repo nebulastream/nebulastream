@@ -38,6 +38,9 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
  */
     void inferStamp(SchemaPtr schema) override;
     WindowAggregationPtr copy() override;
+    DataTypePtr getInputStamp() override;
+    DataTypePtr getPartialAggregateStamp() override;
+    DataTypePtr getFinalAggregateStamp() override;
 
   private:
     MinAggregationDescriptor(FieldAccessExpressionNodePtr onField);

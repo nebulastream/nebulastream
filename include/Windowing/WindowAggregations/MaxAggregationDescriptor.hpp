@@ -24,6 +24,9 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
      * @param inputRef
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expression_statment, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+    DataTypePtr getInputStamp() override;
+    DataTypePtr getPartialAggregateStamp() override;
+    DataTypePtr getFinalAggregateStamp() override;
 
     /**
      * @brief Returns the type of this aggregation.

@@ -71,7 +71,7 @@ class PipelineExecutionContext {
 
     template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
     auto getWindowHandler() {
-        return static_cast<std::shared_ptr<Windowing::WindowHandlerImpl<KeyType, InputType, PartialAggregateType, FinalAggregateType>>>(windowHandler);
+        return std::dynamic_pointer_cast<Windowing::WindowHandlerImpl<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowHandler);
     }
 
 

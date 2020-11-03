@@ -44,8 +44,6 @@ class ExecutablePipeline {
      */
     // TODO use dedicate type for return
     virtual uint32_t execute(TupleBuffer& input_buffers,
-                             void* state,
-                             Windowing::WindowManagerPtr window_manager,
                              QueryExecutionContextPtr context,
                              WorkerContextRef wctx) = 0;
 

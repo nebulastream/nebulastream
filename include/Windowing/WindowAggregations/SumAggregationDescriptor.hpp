@@ -42,6 +42,10 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
 
     WindowAggregationPtr copy() override;
 
+    DataTypePtr getInputStamp() override;
+    DataTypePtr getPartialAggregateStamp() override;
+    DataTypePtr getFinalAggregateStamp() override;
+
   private:
     SumAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     SumAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);

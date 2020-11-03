@@ -92,7 +92,7 @@ class HandCodedExecutablePipeline : public ExecutablePipeline {
     std::atomic<uint64_t> sum = 0;
     std::promise<bool> completedPromise;
 
-    uint32_t execute(TupleBuffer& inBuf, void*, WindowManagerPtr, QueryExecutionContextPtr context, WorkerContext&) override {
+    uint32_t execute(TupleBuffer& inBuf, QueryExecutionContextPtr context, WorkerContext&) override {
         auto tuples = inBuf.getBufferAs<uint64_t>();
 
         NES_INFO("Test: Start execution");

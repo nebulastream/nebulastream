@@ -132,7 +132,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
-        uint32_t execute(TupleBuffer&, void*, WindowManagerPtr, QueryExecutionContextPtr, WorkerContextRef) override {
+        uint32_t execute(TupleBuffer&, QueryExecutionContextPtr, WorkerContextRef) override {
             return 0;
         }
     };
@@ -147,9 +147,9 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto executable = std::make_shared<MockedExecutablePipeline>();
     auto context = std::make_shared<MockedPipelineExecutionContext>();
     auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr, w);
-    w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
+    w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0);
 
-    auto windowState = (StateVariable<uint64_t, WindowSliceStore<uint64_t>*>*) w->getWindowState();
+    auto windowState = std::dynamic_pointer_cast<WindowHandlerImpl<uint64_t, uint64_t, uint64_t, uint64_t>>(w)->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();
@@ -203,7 +203,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
-        uint32_t execute(TupleBuffer&, void*, WindowManagerPtr, QueryExecutionContextPtr, WorkerContext&) override {
+        uint32_t execute(TupleBuffer&, QueryExecutionContextPtr, WorkerContext&) override {
             return 0;
         }
     };
@@ -221,9 +221,9 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w->getWindowState();
-    auto keyRef = windowState->get(10);
-    keyRef.valueOrDefault(0);
-    auto store = keyRef.value();
+      auto keyRef = windowState->get(10);
+      keyRef.valueOrDefault(0);
+      auto store = keyRef.value();
 
     uint64_t ts = 7;
     w->updateAllMaxTs(ts, 0);
@@ -273,7 +273,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
-        uint32_t execute(TupleBuffer&, void*, WindowManagerPtr, QueryExecutionContextPtr, WorkerContext&) override {
+        uint32_t execute(TupleBuffer&, QueryExecutionContextPtr, WorkerContext&) override {
             return 0;
         }
     };
@@ -290,7 +290,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
     w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
-    auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w->getWindowState();
+    auto windowState = std::dynamic_pointer_cast<WindowHandlerImpl<int64_t, int64_t, int64_t, int64_t>>(w)->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();

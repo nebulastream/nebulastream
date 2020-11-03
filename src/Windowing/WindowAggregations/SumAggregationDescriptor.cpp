@@ -48,4 +48,14 @@ WindowAggregationDescriptorPtr SumAggregationDescriptor::copy() {
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
 
+DataTypePtr SumAggregationDescriptor::getInputStamp() {
+    return onField->getStamp();
+}
+DataTypePtr SumAggregationDescriptor::getPartialAggregateStamp() {
+    return onField->getStamp();
+}
+DataTypePtr SumAggregationDescriptor::getFinalAggregateStamp() {
+    return onField->getStamp();
+}
+
 }// namespace NES::Windowing
