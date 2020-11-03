@@ -6,13 +6,12 @@ WindowTriggerPolicyPtr OnRecordTriggerDescription::create() {
     return std::make_shared<OnRecordTriggerDescription>(OnRecordTriggerDescription());
 }
 
-TriggerType OnRecordTriggerDescription::getPolicyType()
-{
+TriggerType OnRecordTriggerDescription::getPolicyType() {
     return this->policy;
 }
 
 OnRecordTriggerDescription::OnRecordTriggerDescription()
-    : WindowTriggerPolicyDescriptor(triggerOnRecord){
+    : WindowTriggerPolicyDescriptor(triggerOnRecord) {
 }
 
 }// namespace NES::Windowing

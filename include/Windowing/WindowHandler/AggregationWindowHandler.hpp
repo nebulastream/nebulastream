@@ -29,7 +29,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                                 ->addField("key", this->windowDefinition->getOnKey()->getStamp())
                                 ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(windowTupleSchema);
-
     }
 
     ~AggregationWindowHandler() {
@@ -289,7 +288,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      */
     WindowManagerPtr getWindowManager() { return this->windowManager; }
 
-    LogicalWindowDefinitionPtr getWindowDefinition(){
+    LogicalWindowDefinitionPtr getWindowDefinition() {
         return windowDefinition;
     }
 

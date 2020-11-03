@@ -1,16 +1,14 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGER_HPP_
-#include <Windowing/WindowPolicies/ExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
+#include <Windowing/WindowPolicies/ExecutableWindowTriggerPolicy.hpp>
 #include <memory>
 #include <mutex>
 
 namespace NES::Windowing {
 
-
-class ExecutableOnTimeTrigger : public ExecutableWindowTriggerPolicy{
+class ExecutableOnTimeTrigger : public ExecutableWindowTriggerPolicy {
   public:
-
     ExecutableOnTimeTrigger(size_t triggerTimeInMs);
 
     static ExecutableOnTimeTriggerPtr create(size_t triggerTimeInMs);
@@ -26,7 +24,6 @@ class ExecutableOnTimeTrigger : public ExecutableWindowTriggerPolicy{
      * @return bool indicating success
      */
     bool stop() override;
-
 
   private:
     bool running;

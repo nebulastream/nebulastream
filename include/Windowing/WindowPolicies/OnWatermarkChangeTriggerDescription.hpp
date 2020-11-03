@@ -13,5 +13,5 @@ class OnWatermarkChangeTriggerDescription : public WindowTriggerPolicyDescriptor
   private:
     OnWatermarkChangeTriggerDescription();
 };
-}
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONWATERMARKCHANGETRIGGERDESCRIPTION_HPP_
