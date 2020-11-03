@@ -75,6 +75,7 @@ struct PhysicalStreamConfig {
      */
     bool isEndlessRepeat() const;
     void setEndlessRepeat(bool endlessRepeat);
+
   private:
     explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
                                   size_t sourceFrequency, size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,

@@ -34,7 +34,7 @@ std::string PhysicalStreamConfig::toString() {
        << numberOfTuplesToProducePerBuffer << " numberOfBuffersToProduce="
        << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
        << " logicalStreamName=" << logicalStreamName
-        << " endlessRepeat=" << endlessRepeat;
+       << " endlessRepeat=" << endlessRepeat;
     return ss.str();
 }
 
