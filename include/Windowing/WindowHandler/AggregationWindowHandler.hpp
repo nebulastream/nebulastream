@@ -21,21 +21,15 @@ template<class KeyType, class InputType, class PartialAggregateType, class Final
 class AggregationWindowHandler : public AbstractWindowHandler {
   public:
     explicit AggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition,
-                                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation)
-        : windowDefinition(std::move(windowDefinition)), windowAggregation(std::move(windowAggregation)) {
+                                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation, ExecutableOnTimeTriggerPtr executablePolicyTrigger)
+        : windowDefinition(std::move(windowDefinition)), windowAggregation(std::move(windowAggregation)), executablePolicyTrigger(std::move(executablePolicyTrigger)) {
         windowTupleSchema = Schema::create()
                                 ->addField(createField("start", UINT64))
                                 ->addField(createField("end", UINT64))
                                 ->addField("key", this->windowDefinition->getOnKey()->getStamp())
                                 ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(windowTupleSchema);
-        auto policy = this->windowDefinition->getTriggerPolicy();
-        if (policy->getPolicyType() == triggerOnTime) {
-            OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerDescription>(policy);
-            executablePolicyTrigger = ExecutableOnTimeTrigger::create(triggerDesc->getTriggerTimeInMs());
-        } else {
-            NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
-        }
+
     }
 
     ~AggregationWindowHandler() {
@@ -59,14 +53,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return executablePolicyTrigger->stop();
     }
 
-    void triggerEveryNms(size_t ms) {
-        while (running) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-            trigger();
-        }
-    }
-
-    std::string getHandlerName() override {
+    std::string toString() override {
         std::stringstream ss;
         ss << pipelineStageId << +"-" << nextPipeline->getQepParentId();
         return ss.str();

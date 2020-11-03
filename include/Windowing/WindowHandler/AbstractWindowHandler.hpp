@@ -66,7 +66,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
      */
     virtual WindowManagerPtr getWindowManager() = 0;
 
-    virtual std::string getHandlerName() = 0;
+    virtual std::string toString() = 0;
 
     virtual LogicalWindowDefinitionPtr getWindowDefinition() = 0;
   protected:

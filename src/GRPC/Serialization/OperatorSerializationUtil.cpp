@@ -265,17 +265,21 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
             windowTrigger->set_timeinms(triggerDesc->getTriggerTimeInMs());
             break;
         }
-        case Windowing::TriggerType::triggerOnRecord:
+        case Windowing::TriggerType::triggerOnRecord: {
             windowTrigger->set_type(SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnRecord);
             break;
-        case Windowing::TriggerType::triggerOnBuffer:
+        }
+        case Windowing::TriggerType::triggerOnBuffer: {
             windowTrigger->set_type(SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnBuffer);
             break;
-        case Windowing::TriggerType::triggerOnWatermarkChange:
+        }
+        case Windowing::TriggerType::triggerOnWatermarkChange: {
             windowTrigger->set_type(SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnWatermarkChange);
             break;
-        default:
+        }
+        default: {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
+        }
     }
 
     auto distributionCharacteristics = SerializableOperator_WindowDetails_DistributionCharacteristic();

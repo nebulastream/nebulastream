@@ -21,7 +21,7 @@ bool ExecutableOnTimeTrigger::start(AbstractWindowHandlerPtr windowHandler) {
     }
 
     NES_DEBUG("ExecutableOnTimeTrigger started thread " << this << " handler=" << windowHandler << " type=" << triggerType << " with ms=" << triggerTimeInMs);
-    std::string handlerName = windowHandler->getHandlerName();
+    std::string handlerName = windowHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, windowHandler, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
         while (running) {
