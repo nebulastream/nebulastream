@@ -29,8 +29,16 @@ class WindowHandlerFactoryDetails {
     template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
     static AbstractWindowHandlerPtr createAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
                                                             std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) {
-        auto a = AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>(windowDefinition, windowAggregation);
-        return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, windowAggregation);
+
+        auto policy = windowDefinition->getTriggerPolicy();
+        ExecutableOnTimeTriggerPtr executablePolicyTrigger;
+        if (policy->getPolicyType() == triggerOnTime) {
+            OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerDescription>(policy);
+            executablePolicyTrigger = ExecutableOnTimeTrigger::create(triggerDesc->getTriggerTimeInMs());
+        } else {
+            NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        }
+        return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, windowAggregation, executablePolicyTrigger);
     }
 
     template<class KeyType, class InputType>
