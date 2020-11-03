@@ -12,14 +12,13 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnTimeTrigger.hpp>
-#include <Windowing/WindowPolicies/WindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerDescription.hpp>
-
+#include <Windowing/WindowPolicies/WindowTriggerPolicyDescriptor.hpp>
 
 namespace NES::Windowing {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-class AggregationWindowHandler : public AbstractWindowHandler{
+class AggregationWindowHandler : public AbstractWindowHandler {
   public:
     explicit AggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition,
                                       std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation)
@@ -31,13 +30,10 @@ class AggregationWindowHandler : public AbstractWindowHandler{
                                 ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(windowTupleSchema);
         auto policy = this->windowDefinition->getTriggerPolicy();
-        if(policy->getPolicyType() == triggerOnTime)
-        {
+        if (policy->getPolicyType() == triggerOnTime) {
             OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerDescription>(policy);
             executablePolicyTrigger = ExecutableOnTimeTrigger::create(triggerDesc->getTriggerTimeInMs());
-        }
-        else
-        {
+        } else {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
         }
     }
@@ -70,10 +66,9 @@ class AggregationWindowHandler : public AbstractWindowHandler{
         }
     }
 
-    std::string getHandlerName() override
-    {
+    std::string getHandlerName() override {
         std::stringstream ss;
-        ss << pipelineStageId << + "-" << nextPipeline->getQepParentId();
+        ss << pipelineStageId << +"-" << nextPipeline->getQepParentId();
         return ss.str();
     }
 
@@ -82,8 +77,6 @@ class AggregationWindowHandler : public AbstractWindowHandler{
      * @return
      */
     void trigger() {
-        NES_DEBUG("AggregationWindowHandler: check widow trigger origin id=" << originId);
-
         std::string triggerType;
         if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
             triggerType = "Combining";
@@ -309,12 +302,17 @@ class AggregationWindowHandler : public AbstractWindowHandler{
      */
     WindowManagerPtr getWindowManager() { return this->windowManager; }
 
+    LogicalWindowDefinitionPtr getWindowDefinition(){
+        return windowDefinition;
+    }
+
   private:
     LogicalWindowDefinitionPtr windowDefinition;
+
+  private:
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation;
     ExecutableOnTimeTriggerPtr executablePolicyTrigger;
-
     MemoryLayoutPtr windowTupleLayout;
 };
 

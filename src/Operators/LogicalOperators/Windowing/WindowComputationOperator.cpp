@@ -12,6 +12,10 @@ WindowComputationOperator::WindowComputationOperator(const Windowing::LogicalWin
     : WindowOperatorNode(windowDefinition, id) {
     this->windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCombiningWindowType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
+    this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
+    this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
+    this->windowDefinition->setWindowType(windowDefinition->getWindowType());
+    this->windowDefinition->setOnKey(windowDefinition->getOnKey());
 }
 
 const std::string WindowComputationOperator::toString() const {

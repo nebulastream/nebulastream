@@ -68,6 +68,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
 
     virtual std::string getHandlerName() = 0;
 
+    virtual LogicalWindowDefinitionPtr getWindowDefinition() = 0;
   protected:
     std::atomic_bool running{false};
     WindowManagerPtr windowManager;
@@ -77,7 +78,6 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     BufferManagerPtr bufferManager;
     uint64_t originId;
     SchemaPtr windowTupleSchema;
-    std::string handlerName;
 };
 
 }// namespace NES::Windowing
