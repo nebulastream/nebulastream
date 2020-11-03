@@ -12,11 +12,11 @@ bool ExecutableOnTimeTrigger::start(AbstractWindowHandlerPtr windowHandler) {
     }
     running = true;
     NES_DEBUG("AggregationWindowHandler " << this << " handler=" << windowHandler << ": Spawn thread");
-    thread = std::make_shared<std::thread>([&]() {
-      setThreadName("whdlr-%d", windowHandler->getHandlerName());
+    std::string handlerName = windowHandler->getHandlerName();
+    thread = std::make_shared<std::thread>([handlerName, windowHandler, this]() {
+      setThreadName("whdlr-%d", handlerName.c_str());
       std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
       windowHandler->trigger();
-
     });
     return true;
 }
@@ -39,7 +39,7 @@ bool ExecutableOnTimeTrigger::stop() {
     return true;
 }
 
-ExecutableOnTimeTrigger::ExecutableOnTimeTrigger(size_t triggerTimeInMs): triggerTimeInMs(triggerTimeInMs)
+ExecutableOnTimeTrigger::ExecutableOnTimeTrigger(size_t triggerTimeInMs): triggerTimeInMs(triggerTimeInMs), running(false), runningTriggerMutex()
 {
 }
 

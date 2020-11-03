@@ -19,7 +19,7 @@
 namespace NES::Windowing {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-class AggregationWindowHandler : public AbstractWindowHandler , public std::enable_shared_from_this<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>{
+class AggregationWindowHandler : public AbstractWindowHandler{
   public:
     explicit AggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition,
                                       std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation)
@@ -30,7 +30,7 @@ class AggregationWindowHandler : public AbstractWindowHandler , public std::enab
                                 ->addField("key", this->windowDefinition->getOnKey()->getStamp())
                                 ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(windowTupleSchema);
-        auto policy = windowDefinition->getTriggerPolicy();
+        auto policy = this->windowDefinition->getTriggerPolicy();
         if(policy->getPolicyType() == triggerOnTime)
         {
             OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerDescription>(policy);
@@ -52,7 +52,7 @@ class AggregationWindowHandler : public AbstractWindowHandler , public std::enab
    * @return boolean if the window thread is started
    */
     bool start() {
-        return executablePolicyTrigger->start(std::dynamic_pointer_cast<AbstractWindowHandler>(shared_from_this()));
+        return executablePolicyTrigger->start(this->shared_from_this());
     }
 
     /**
@@ -70,9 +70,11 @@ class AggregationWindowHandler : public AbstractWindowHandler , public std::enab
         }
     }
 
-    std::string getHandlerName()
+    std::string getHandlerName() override
     {
-        return handlerName;
+        std::stringstream ss;
+        ss << pipelineStageId << + "-" << nextPipeline->getQepParentId();
+        return ss.str();
     }
 
     /**
@@ -143,7 +145,6 @@ class AggregationWindowHandler : public AbstractWindowHandler , public std::enab
         // Initialize StateVariable
         this->windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
         this->nextPipeline = nextPipeline;
-        this->handlerName = pipelineStageId + "-" + nextPipeline->getQepParentId();
 
         NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
         return true;
