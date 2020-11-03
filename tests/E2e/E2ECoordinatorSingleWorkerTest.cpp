@@ -361,7 +361,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     sleep(1);
 
     string path2 =
-        "./nesWorker --coordinatorPort=12346 --sourceType=CSVSource --sourceConfig=tests/test_data/exdra.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra --";
+        "./nesWorker --coordinatorPort=12346 --sourceType=CSVSource --sourceConfig=tests/test_data/exdra.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra";
 
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());

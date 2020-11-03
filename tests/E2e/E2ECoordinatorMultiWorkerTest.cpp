@@ -187,9 +187,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
     NES_INFO("RegisteredStream: " << success);
     EXPECT_TRUE(success);
 
-    string path2 = "./nesWorker --coordinatorPort=12346 --rpcPort=12351 --dataPort=12352 --logicalStreamName=QnV --physicalStreamName=test_stream1 --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on"
-                   ""
-                   "";
+    string path2 = "./nesWorker --coordinatorPort=12346 --rpcPort=12351 --dataPort=12352 --logicalStreamName=QnV --physicalStreamName=test_stream1 --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc1(path2.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
     size_t workerPid1 = workerProc1.id();
