@@ -212,7 +212,7 @@ TEST_F(SourceTest, testCSVSourceEndless) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true, true);
+                                                     frequency, true, false);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();

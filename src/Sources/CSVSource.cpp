@@ -31,7 +31,10 @@ CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryMana
         "CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer
                                 << "endlessRepeat=" << endlessRepeat);
 
-    input.open(filePath.c_str());
+    char* path = realpath(filePath.c_str(), NULL);
+    NES_DEBUG("CSVSource: Opening path " << path);
+    input.open(path);
+
     NES_DEBUG("CSVSource::fillBuffer: read buffer");
     input.seekg(0, input.end);
     fileSize = input.tellg();
@@ -87,6 +90,12 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
         physicalTypes.push_back(physicalField);
     }
 
+    if (skipHeader) {
+        NES_DEBUG("CSVSource: Skipping header");
+        std::getline(input, line);
+        currentPosInFile = input.tellg();
+    }
+
     while (tupCnt < generated_tuples_this_pass) {
         if (input.tellg() >= fileSize || input.tellg() == -1) {
             NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
@@ -96,6 +105,11 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
                 NES_DEBUG("CSVSource::fillBuffer: break because file ended");
                 fileEnded = true;
                 break;
+            }
+            if (skipHeader) {
+                NES_DEBUG("CSVSource: Skipping header");
+                std::getline(input, line);
+                currentPosInFile = input.tellg();
             }
         }
 
