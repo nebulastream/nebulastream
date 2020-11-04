@@ -18,7 +18,7 @@ CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
       numBuffersToProcess(numBuffersToProcess),
       frequency(frequency),
       endlessRepeat(endlessRepeat),
-      skipHeader(skipHeader){}
+      skipHeader(skipHeader) {}
 
 CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                          size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, bool skipHeader)
@@ -29,7 +29,7 @@ CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string streamNam
       numBuffersToProcess(numBuffersToProcess),
       frequency(frequency),
       endlessRepeat(endlessRepeat),
-      skipHeader(skipHeader){}
+      skipHeader(skipHeader) {}
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
                                                 std::string filePath,
