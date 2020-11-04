@@ -22,7 +22,7 @@ template<class KeyType, class InputType, class PartialAggregateType, class Final
 class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAction<KeyType, InputType, PartialAggregateType, FinalAggregateType> {
   public:
     static ExecutableCompleteAggregationTriggerActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> create(LogicalWindowDefinitionPtr windowDefinition,
-                                                                                                                              std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
+                                                                                                              std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
         return std::make_shared<ExecutableCompleteAggregationTriggerAction>(windowDefinition, executableWindowAggregation);
     }
 
@@ -56,6 +56,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
     }
 
     uint64_t updateWaterMark(WindowSliceStore<PartialAggregateType>* store) {
+        //TODO:: check if we can factor this out
         auto windowType = windowDefinition->getWindowType();
         auto windowTimeType = windowType->getTimeCharacteristic();
         auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMinWatermark();
@@ -113,79 +114,55 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         NES_DEBUG("AggregationWindowHandler: trigger " << windows.size() << " windows, on " << slices.size() << " slices");
 
         //trigger a central window operator
-        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
-            for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-                NES_DEBUG("AggregationWindowHandler: trigger sliceid=" << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
-            }
-            //generates a list of windows that have to be outputted
-
-            NES_DEBUG("AggregationWindowHandler: trigger test if mappings=" << store->getNumberOfMappings() << " < inputEdges=" << windowDefinition->getNumberOfInputEdges());
-            if (store->getNumberOfMappings() < windowDefinition->getNumberOfInputEdges()) {
-                NES_DEBUG("AggregationWindowHandler: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermark to last=" << store->getLastWatermark());
-                watermark = store->getLastWatermark();
-            }
-            windowDefinition->getWindowType()->triggerWindows(windows, store->getLastWatermark(), watermark);//watermark
-            NES_DEBUG("AggregationWindowHandler: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
-
-            // allocate partial final aggregates for each window
-            //because we trigger each second, there could be multiple windows ready
-            auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size());
-            for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-                for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
-                    auto window = windows[windowId];
-                    // A slice is contained in a window if the window starts before the slice and ends after the slice
-                    NES_DEBUG("AggregationWindowHandler CC: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
-                                                                                  << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
-                    if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
-                        NES_DEBUG("AggregationWindowHandler CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
-                        partialFinalAggregates[windowId] = executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
-                    } else {
-                        NES_DEBUG("AggregationWindowHandler CC: condition not true");
-                    }
-                }
-            }
-            // calculate the final aggregate
-            for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
-                auto window = windows[i];
-                auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
-                NES_DEBUG("Window Handler: write key=" << key << " value=" << value << " window.start()="
-                                                       << window.getStartTs() << " window.getEndTs()="
-                                                       << window.getEndTs() << " tupleBuffer.getNumberOfTuples())" << tupleBuffer.getNumberOfTuples());
-                writeResultRecord<FinalAggregateType>(tupleBuffer,
-                                                      tupleBuffer.getNumberOfTuples(),
-                                                      window.getStartTs(),
-                                                      window.getEndTs(),
-                                                      key,
-                                                      value);
-
-                //TODO: we have to determine which windows and keys to delete
-                tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
-            }
-            //TODO: remove content from state
-        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
-            //if slice creator, find slices which can be send but did not send already
-            NES_DEBUG("AggregationWindowHandler SL: trigger Slicing for " << slices.size() << " slices");
-
-            for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-                //test if latest tuple in window is after slice end
-                NES_DEBUG("AggregationWindowHandler SL:  << slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs() << "slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs() << " watermark=" << watermark << " sliceID=" << sliceId);
-                if (slices[sliceId].getEndTs() <= watermark) {
-                    NES_DEBUG("AggregationWindowHandler SL: write result");
-                    writeResultRecord<PartialAggregateType>(tupleBuffer, tupleBuffer.getNumberOfTuples(),
-                                                            slices[sliceId].getStartTs(),
-                                                            slices[sliceId].getEndTs(),
-                                                            key,
-                                                            partialAggregates[sliceId]);
-                    tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
-                    store->removeSlicesUntil(sliceId);
-                } else {
-                    NES_DEBUG("AggregationWindowHandler SL: Dont write result");
-                }
-            }
-        } else {
-            NES_ERROR("Window combiner not implemented yet");
-            NES_NOT_IMPLEMENTED();
+        for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
+            NES_DEBUG("AggregationWindowHandler: trigger sliceid=" << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
         }
+        //generates a list of windows that have to be outputted
+
+        NES_DEBUG("AggregationWindowHandler: trigger test if mappings=" << store->getNumberOfMappings() << " < inputEdges=" << windowDefinition->getNumberOfInputEdges());
+        if (store->getNumberOfMappings() < windowDefinition->getNumberOfInputEdges()) {
+            NES_DEBUG("AggregationWindowHandler: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermark to last=" << store->getLastWatermark());
+            watermark = store->getLastWatermark();
+        }
+        windowDefinition->getWindowType()->triggerWindows(windows, store->getLastWatermark(), watermark);//watermark
+        NES_DEBUG("AggregationWindowHandler: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
+
+        // allocate partial final aggregates for each window
+        //because we trigger each second, there could be multiple windows ready
+        auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size());
+        for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
+            for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
+                auto window = windows[windowId];
+                // A slice is contained in a window if the window starts before the slice and ends after the slice
+                NES_DEBUG("AggregationWindowHandler CC: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
+                                                                              << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
+                if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
+                    NES_DEBUG("AggregationWindowHandler CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
+                    partialFinalAggregates[windowId] = executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
+                } else {
+                    NES_DEBUG("AggregationWindowHandler CC: condition not true");
+                }
+            }
+        }
+        // calculate the final aggregate
+        for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
+            auto window = windows[i];
+            auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
+            NES_DEBUG("Window Handler: write key=" << key << " value=" << value << " window.start()="
+                                                   << window.getStartTs() << " window.getEndTs()="
+                                                   << window.getEndTs() << " tupleBuffer.getNumberOfTuples())" << tupleBuffer.getNumberOfTuples());
+            writeResultRecord<FinalAggregateType>(tupleBuffer,
+                                                  tupleBuffer.getNumberOfTuples(),
+                                                  window.getStartTs(),
+                                                  window.getEndTs(),
+                                                  key,
+                                                  value);
+
+            //TODO: we have to determine which windows and keys to delete
+            tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
+        }
+        //TODO: remove content from state
+
         store->setLastWatermark(watermark);
     }
 

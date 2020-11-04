@@ -34,6 +34,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 
 using namespace std;
 
@@ -145,12 +146,13 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(printSinkDescriptorPtr);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(
         LogicalWindowDefinition::create(
             Attribute("id"),
             Sum(Attribute("value")),
-            TumblingWindow::of(ProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(),0, trigger));
+            TumblingWindow::of(ProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(),0, trigger, triggerAction));
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);
 

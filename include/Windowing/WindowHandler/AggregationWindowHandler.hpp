@@ -25,9 +25,10 @@ template<class KeyType, class InputType, class PartialAggregateType, class Final
 class AggregationWindowHandler : public AbstractWindowHandler {
   public:
     explicit AggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition,
-                                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation, ExecutableOnTimeTriggerPtr executablePolicyTrigger)
-        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)), executablePolicyTrigger(std::move(executablePolicyTrigger)) {
-
+                                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
+                                      ExecutableOnTimeTriggerPtr executablePolicyTrigger,
+                                      BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction)
+        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)), executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)){
     }
 
     ~AggregationWindowHandler() {
@@ -62,59 +63,24 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @return
      */
     void trigger() override {
-//        NES_DEBUG("AggregationWindowHandler: run window action " << windowAction->toString()
-//                                                                 << " distribution type=" << windowDefinition->getDistributionType()->getTypeAsString()
-//                                                                 << " origin id=" << originId);
+        NES_DEBUG("AggregationWindowHandler: run window action " << executableWindowAction->toString()
+                                                                 << " distribution type=" << windowDefinition->getDistributionType()->getTypeAsString()
+                                                                 << " origin id=" << originId);
         auto tupleBuffer = bufferManager->getBufferBlocking();
         tupleBuffer.setOriginId(originId);
-        auto windowAction = ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
-        windowAction->doAction(getTypedWindowState(), tupleBuffer);
+//        auto windowAction = ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
+        executableWindowAction->doAction(getTypedWindowState(), tupleBuffer);
 
         if (tupleBuffer.getNumberOfTuples() > 0) {
-            NES_DEBUG("AggregationWindowHandler: " << windowAction->toString() << " Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
+            NES_DEBUG("AggregationWindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
 //                                                   << windowAction->getActionResultAsString(tupleBuffer)
-                                                   << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << windowAction->toString()
+                                                   << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << executableWindowAction->toString()
                                                    << std::endl);
             //forward buffer to next pipeline stage
             queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
         } else {
             NES_WARNING("AggregationWindowHandler: output buffer size is 0 and therefore now buffer is forwarded");
         }
-//
-//        std::string triggerType;
-//        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
-//            triggerType = "Combining";
-//        } else {
-//            triggerType = "Slicing";
-//        }
-//
-//        // create the output tuple buffer
-//        // TODO can we make it get the buffer only once?
-//        auto tupleBuffer = bufferManager->getBufferBlocking();
-//        NES_DEBUG("AggregationWindowHandler: check widow trigger " << triggerType << " origin id=" << originId);
-//
-//        tupleBuffer.setOriginId(originId);
-//
-//
-//        // iterate over all keys in the window state
-//        for (auto& it : windowStateVariable->rangeAll()) {
-//            NES_DEBUG("AggregationWindowHandler: " << triggerType << " check key=" << it.first << "nextEdge=" << it.second->nextEdge);
-//
-//            // write all window aggregates to the tuple buffer
-//            aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
-//            // TODO we currently have no handling in the case the tuple buffer is full
-//        }
-//        // if produced tuple then send the tuple buffer to the next pipeline stage or sink
-//        if (tupleBuffer.getNumberOfTuples() > 0) {
-//            NES_DEBUG("AggregationWindowHandler: " << triggerType << " Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
-//                                                   << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowTupleSchema)
-//                                                   << " originId=" << tupleBuffer.getOriginId() << "type=" << triggerType
-//                                                   << std::endl);
-//            //forward buffer to next pipeline stage
-//            queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
-//        } else {
-//            NES_WARNING("AggregationWindowHandler: output buffer size is 0 and therefore now buffer is forwarded");
-//        }
     }
 
     /**
@@ -139,6 +105,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         this->bufferManager = bufferManager;
         this->pipelineStageId = pipelineStageId;
         this->originId = originId;
+
         // Initialize AggregationWindowHandler Manager
         this->windowManager = std::make_shared<WindowManager>(this->windowDefinition);
         // Initialize StateVariable
@@ -312,6 +279,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     ExecutableOnTimeTriggerPtr executablePolicyTrigger;
+    BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
 };
 
 }// namespace NES::Windowing

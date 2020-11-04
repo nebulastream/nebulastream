@@ -31,6 +31,10 @@
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowHandler/WindowHandlerFactoryDetails.hpp>
+
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
+
 using namespace NES::Windowing;
 namespace NES {
 class WindowManagerTest : public testing::Test {
@@ -96,8 +100,9 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     auto store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = Sum(Attribute("value"));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType(), trigger);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation,TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType(), trigger, triggerAction);
 
     auto windowManager = new WindowManager(windowDef);
     uint64_t ts = 10;
@@ -121,10 +126,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(Attribute("key", UINT64), aggregation,
                                                                 TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                                DistributionCharacteristic::createCompleteWindowType(), 0, trigger);
+                                                                DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
     auto exec = ExecutableSumAggregation<uint64_t>::create();
@@ -175,6 +181,9 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
     auto windowAction = ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDef, exec);
+//    std::shared_ptr<ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>> windActionDetail =
+//        std::dynamic_pointer_cast<ExecutableCompleteAggregationTriggerActionPtr<uint64_t, uint64_t, uint64_t, uint64_t>>(windowAction);
+
     windowAction->aggregateWindows(10, store, windowDef, buf);
     windowAction->aggregateWindows(10, store, windowDef, buf);
 
@@ -197,8 +206,9 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef = Windowing::LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType(), 0, trigger);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType(), 0, trigger, triggerAction);
 
     auto exec = ExecutableSumAggregation<int64_t>::create();
     auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec);
@@ -247,7 +257,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef,exec);
+    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec);
     windowAction->aggregateWindows(10, store, windowDef, buf);
     windowAction->aggregateWindows(11, store, windowDef, buf);//this call should not change anything
 
@@ -268,8 +278,9 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType(), 0, trigger);
+    auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType(), 0, trigger, triggerAction);
     auto exec = ExecutableSumAggregation<int64_t>::create();
     auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec);
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);

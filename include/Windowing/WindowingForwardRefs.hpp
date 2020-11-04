@@ -47,15 +47,26 @@ class BaseWindowTriggerPolicyDescriptor;
 typedef std::shared_ptr<BaseWindowTriggerPolicyDescriptor> WindowTriggerPolicyPtr;
 
 class BaseWindowActionDescriptor;
-typedef std::shared_ptr<BaseWindowActionDescriptor> BaseWindowActionDescriptorPtr;
+typedef std::shared_ptr<BaseWindowActionDescriptor> WindowActionDescriptorPtr;
 
 class AbstractWindowHandler;
 typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+class BaseExecutableWindowAction;
+template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+using BaseExecutableWindowActionPtr = std::shared_ptr<BaseExecutableWindowAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
+
+template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 class ExecutableCompleteAggregationTriggerAction;
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 using ExecutableCompleteAggregationTriggerActionPtr = std::shared_ptr<ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
+
+template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+class ExecutableSliceAggregationTriggerAction;
+template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+using ExecutableSliceAggregationTriggerActionPtr = std::shared_ptr<ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
+
 
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;

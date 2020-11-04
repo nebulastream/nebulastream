@@ -44,6 +44,7 @@
 #include <utility>
 
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 
 using std::cout;
 using std::endl;
@@ -885,9 +886,10 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = LogicalWindowDefinition::create(
         Attribute("key", BasicType::UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
     auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1 );
 
@@ -939,11 +941,12 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
 
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto windowDefinition = LogicalWindowDefinition::create(
         Attribute("key", BasicType::UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
     auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1 );
@@ -998,9 +1001,11 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", UINT64));
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+
     auto windowDefinition = LogicalWindowDefinition::create(
         Attribute("key", UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
     auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1 );

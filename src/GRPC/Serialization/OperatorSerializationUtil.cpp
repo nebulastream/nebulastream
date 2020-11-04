@@ -44,6 +44,9 @@
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -282,6 +285,21 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
         }
     }
 
+    auto windowAction = windowDetails.mutable_action();
+    switch (windowDefinition->getTriggerAction()->getActionType()) {
+        case Windowing::ActionType::WindowAggregationTriggerAction: {
+            windowAction->set_type(SerializableOperator_WindowDetails_Action_Type_Complete);
+            break;
+        }
+        case Windowing::ActionType::SliceAggregationTriggerAction: {
+            windowAction->set_type(SerializableOperator_WindowDetails_Action_Type_Slicing);
+            break;
+        }
+        default: {
+            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast action type");
+        }
+    }
+
     auto distributionCharacteristics = SerializableOperator_WindowDetails_DistributionCharacteristic();
     if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Complete) {
         windowDetails.mutable_distrchar()->set_distr(SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete);
@@ -299,6 +317,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
 
     auto serializedWindowAggregation = sinkDetails->windowaggregation();
     auto serializedTriggerPolicy = sinkDetails->triggerpolicy();
+    auto serializedAction = sinkDetails->action();
+
     auto serializedWindowType = sinkDetails->windowtype();
 
     auto onField = ExpressionSerializationUtil::deserializeExpression(serializedWindowAggregation.mutable_onfield())
@@ -330,6 +350,15 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         trigger = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize trigger: " << serializedTriggerPolicy.DebugString());
+    }
+
+    Windowing::WindowActionDescriptorPtr action;
+    if (serializedAction.type() == SerializableOperator_WindowDetails_Action_Type_Complete) {
+        action = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    } else  if (serializedAction.type() == SerializableOperator_WindowDetails_Action_Type_Slicing) {
+        action = Windowing::SliceAggregationTriggerActionDescriptor::create();
+    } else {
+        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize action: " << serializedAction.DebugString());
     }
 
     Windowing::WindowTypePtr window;
@@ -380,7 +409,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
 
     LogicalOperatorNodePtr ptr;
     if (!sinkDetails->has_onkey()) {
-        auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, trigger);
+        auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, trigger, action);
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
             return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
@@ -393,11 +422,11 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     } else {
         auto keyAccessExpression = ExpressionSerializationUtil::deserializeExpression(sinkDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger), operatorId)->as<CentralWindowOperator>();
+            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger, action), operatorId)->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, sinkDetails->numberofinputedges(), trigger), operatorId)->as<WindowComputationOperator>();
+            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, sinkDetails->numberofinputedges(), trigger, action), operatorId)->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger), operatorId)->as<SliceCreationOperator>();
+            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger, action), operatorId)->as<SliceCreationOperator>();
         } else {
             NES_NOT_IMPLEMENTED();
         }

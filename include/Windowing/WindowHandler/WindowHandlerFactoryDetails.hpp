@@ -4,6 +4,9 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
+#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
@@ -11,7 +14,6 @@
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
-
 namespace NES::Windowing {
 
 class WindowHandlerFactoryDetails {
@@ -28,8 +30,7 @@ class WindowHandlerFactoryDetails {
     */
     template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
     static AbstractWindowHandlerPtr createAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
-                                                            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation) {
-
+                                                            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
         auto policy = windowDefinition->getTriggerPolicy();
         ExecutableOnTimeTriggerPtr executablePolicyTrigger;
         if (policy->getPolicyType() == triggerOnTime) {
@@ -39,8 +40,16 @@ class WindowHandlerFactoryDetails {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
         }
 
+        auto action = windowDefinition->getTriggerAction();
+        BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
+        if (action->getActionType() == WindowAggregationTriggerAction) {
+            executableWindowAction = ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
+        } else if (action->getActionType() == WindowAggregationTriggerAction) {
+            executableWindowAction = ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
+        }
+
         //create the action typed
-        return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, windowAggregation, executablePolicyTrigger);
+        return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
     }
 
     template<class KeyType, class InputType>
