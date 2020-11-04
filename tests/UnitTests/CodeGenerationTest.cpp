@@ -43,7 +43,7 @@
 #include <iostream>
 #include <utility>
 
-#include <Windowing/WindowPolicies/OnTimeTriggerDescription.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 using std::cout;
 using std::endl;
@@ -882,7 +882,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto windowDefinition = LogicalWindowDefinition::create(
@@ -938,7 +938,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto windowDefinition = LogicalWindowDefinition::create(
@@ -995,7 +995,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto context1 = PipelineContext::create();
 
     codeGenerator->generateCodeForScan(schema, context1);
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", UINT64));
     auto windowDefinition = LogicalWindowDefinition::create(

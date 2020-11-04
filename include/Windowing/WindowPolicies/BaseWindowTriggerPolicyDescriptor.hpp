@@ -11,7 +11,7 @@ enum TriggerType {
     triggerOnWatermarkChange
 };
 
-class WindowTriggerPolicyDescriptor {
+class BaseWindowTriggerPolicyDescriptor {
   public:
     /**
      * @brief this function will return the type of the policy
@@ -20,7 +20,7 @@ class WindowTriggerPolicyDescriptor {
     virtual TriggerType getPolicyType() = 0;
 
   protected:
-    WindowTriggerPolicyDescriptor(TriggerType policy);
+    BaseWindowTriggerPolicyDescriptor(TriggerType policy);
     TriggerType policy;
 };
 

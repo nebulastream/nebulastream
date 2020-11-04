@@ -1,9 +1,9 @@
-#ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEWINDOWTRIGGERPOLICY_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEWINDOWTRIGGERPOLICY_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEEXECUTABLEWINDOWTRIGGERPOLICY_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEEXECUTABLEWINDOWTRIGGERPOLICY_HPP_
 #include <Windowing/WindowingForwardRefs.hpp>
 namespace NES::Windowing {
 
-class ExecutableWindowTriggerPolicy {
+class BaseExecutableWindowTriggerPolicy {
   public:
     /**
      * @brief This function stop the trigger policy
@@ -18,4 +18,4 @@ class ExecutableWindowTriggerPolicy {
     virtual bool start(AbstractWindowHandlerPtr windowHandler) = 0;
 };
 }// namespace NES::Windowing
-#endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEWINDOWTRIGGERPOLICY_HPP_
+#endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEEXECUTABLEWINDOWTRIGGERPOLICY_HPP_

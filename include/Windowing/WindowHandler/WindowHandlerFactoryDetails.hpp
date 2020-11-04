@@ -33,8 +33,8 @@ class WindowHandlerFactoryDetails {
         auto policy = windowDefinition->getTriggerPolicy();
         ExecutableOnTimeTriggerPtr executablePolicyTrigger;
         if (policy->getPolicyType() == triggerOnTime) {
-            OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerDescription>(policy);
-            executablePolicyTrigger = ExecutableOnTimeTrigger::create(triggerDesc->getTriggerTimeInMs());
+            OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerPolicyDescription>(policy);
+            executablePolicyTrigger = ExecutableOnTimeTriggerPolicy::create(triggerDesc->getTriggerTimeInMs());
         } else {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
         }

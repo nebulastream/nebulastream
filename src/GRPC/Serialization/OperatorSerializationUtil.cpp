@@ -36,10 +36,10 @@
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 
-#include <Windowing/WindowPolicies/OnBufferTriggerDescription.hpp>
-#include <Windowing/WindowPolicies/OnRecordTriggerDescription.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerDescription.hpp>
-#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerDescription.hpp>
+#include <Windowing/WindowPolicies/OnBufferTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
@@ -261,7 +261,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     switch (windowDefinition->getTriggerPolicy()->getPolicyType()) {
         case Windowing::TriggerType::triggerOnTime: {
             windowTrigger->set_type(SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnTime);
-            Windowing::OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerDescription>(windowDefinition->getTriggerPolicy());
+            Windowing::OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(windowDefinition->getTriggerPolicy());
             windowTrigger->set_timeinms(triggerDesc->getTriggerTimeInMs());
             break;
         }
@@ -321,13 +321,13 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
 
     Windowing::WindowTriggerPolicyPtr trigger;
     if (serializedTriggerPolicy.type() == SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnTime) {
-        trigger = Windowing::OnTimeTriggerDescription::create(serializedTriggerPolicy.timeinms());
+        trigger = Windowing::OnTimeTriggerPolicyDescription::create(serializedTriggerPolicy.timeinms());
     } else if (serializedTriggerPolicy.type() == SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnBuffer) {
-        trigger = Windowing::OnBufferTriggerDescription::create();
+        trigger = Windowing::OnBufferTriggerPolicyDescription::create();
     } else if (serializedTriggerPolicy.type() == SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnRecord) {
-        trigger = Windowing::OnRecordTriggerDescription::create();
+        trigger = Windowing::OnRecordTriggerPolicyDescription::create();
     } else if (serializedTriggerPolicy.type() == SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnWatermarkChange) {
-        trigger = Windowing::OnWatermarkChangeTriggerDescription::create();
+        trigger = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize trigger: " << serializedTriggerPolicy.DebugString());
     }

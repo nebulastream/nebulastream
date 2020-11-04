@@ -1,16 +1,16 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONEVENTTRIGGERDESCRIPTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONEVENTTRIGGERDESCRIPTION_HPP_
-#include <Windowing/WindowPolicies/WindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 
 namespace NES::Windowing {
 
-class OnRecordTriggerDescription : public WindowTriggerPolicyDescriptor {
+class OnRecordTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor {
   public:
     static WindowTriggerPolicyPtr create();
     TriggerType getPolicyType() override;
 
   private:
-    OnRecordTriggerDescription();
+    OnRecordTriggerPolicyDescription();
 };
 }// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONEVENTTRIGGERDESCRIPTION_HPP_
