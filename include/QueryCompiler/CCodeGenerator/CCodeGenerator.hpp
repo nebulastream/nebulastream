@@ -12,8 +12,8 @@ namespace NES {
 class CCodeGenerator : public CodeGenerator {
 
     enum WindowCodegenType {
-        aggregation,
-        join
+        Aggregation,
+        Join
     };
 
   public:

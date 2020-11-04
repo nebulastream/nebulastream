@@ -1,7 +1,6 @@
 #ifndef NES_INCLUDE_DATATYPES_BASICVALUETYPE_HPP_
 #define NES_INCLUDE_DATATYPES_BASICVALUETYPE_HPP_
 
-
 #include "ValueType.hpp"
 
 namespace NES {
