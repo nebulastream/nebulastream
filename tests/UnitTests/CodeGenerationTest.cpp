@@ -946,7 +946,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
 
     auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
-    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1 );
+    codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1 );
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
@@ -1003,7 +1003,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger);
 
     auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
-    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1 );
+    codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1 );
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);

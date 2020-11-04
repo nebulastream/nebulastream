@@ -5,7 +5,7 @@ namespace NES{
 
 class GeneratableMaxAggregation: public GeneratableWindowAggregation{
   public:
-    GeneratableMaxAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+    explicit GeneratableMaxAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
     /**
      * @brief Factory Method to create a new GeneratableWindowAggregation
      * @param aggregationDescriptor Window aggregation descriptor
@@ -21,11 +21,5 @@ class GeneratableMaxAggregation: public GeneratableWindowAggregation{
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
 };
-
-
 }
-
-
-
-
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMAXAGGREGATION_HPP_
