@@ -187,6 +187,41 @@ TEST_F(SourceTest, testCSVSourceEndlessSkipHeader) {
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
 }
 
+TEST_F(SourceTest, testCSVSourceNotEndlessSkipHeader) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    std::string path_to_file =
+        "../tests/test_data/ysb-tuples-100-campaign-100-head.csv";
+
+    const std::string& del = ",";
+    size_t num = 1;
+    size_t frequency = 1;
+    SchemaPtr schema =
+        Schema::create()
+            ->addField("user_id", DataTypeFactory::createFixedChar(16))
+            ->addField("page_id", DataTypeFactory::createFixedChar(16))
+            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+            ->addField("event_type", DataTypeFactory::createFixedChar(9))
+            ->addField("current_ms", UINT64)
+            ->addField("ip", INT32);
+
+    size_t num_of_buffers = 5;
+
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
+                                                     frequency, false, true);
+
+    for(size_t i = 0; i < num_of_buffers; i++)
+    {
+        auto optBuf = source->receiveData();
+        std::cout << "receive buffer with " << optBuf->getNumberOfTuples() << " tuples" << std::endl;
+    }
+
+
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), 100);
+    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
+}
+
 TEST_F(SourceTest, testCSVSourceEndless) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);

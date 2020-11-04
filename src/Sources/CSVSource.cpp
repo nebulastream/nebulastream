@@ -90,7 +90,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
         physicalTypes.push_back(physicalField);
     }
 
-    if (skipHeader) {
+    if (skipHeader && currentPosInFile==0) {
         NES_DEBUG("CSVSource: Skipping header");
         std::getline(input, line);
         currentPosInFile = input.tellg();
