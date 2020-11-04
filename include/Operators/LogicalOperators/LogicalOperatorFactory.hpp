@@ -99,6 +99,12 @@ class LogicalOperatorFactory {
      * @return LogicalOperatorNodePtr
      */
     static LogicalOperatorNodePtr createBroadcastOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
+    * @brief Create a specialized watermark assigner operator.
+    * @return LogicalOperatorNodePtr
+    */
+    static LogicalOperatorNodePtr createWatermarkAssignerOperator(const Windowing::WatermarkStrategyPtr watermarkStrategy, OperatorId id = UtilityFunctions::getNextOperatorId());
 };
 
 }// namespace NES

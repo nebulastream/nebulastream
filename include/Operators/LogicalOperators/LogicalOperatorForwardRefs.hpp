@@ -10,6 +10,8 @@ namespace NES::Windowing {
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
+class WatermarkStrategy;
+typedef std::shared_ptr<WatermarkStrategy> WatermarkStrategyPtr;
 }// namespace NES::Windowing
 
 namespace NES {

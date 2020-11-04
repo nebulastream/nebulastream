@@ -6,6 +6,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
@@ -56,6 +57,10 @@ LogicalOperatorNodePtr LogicalOperatorFactory::createWindowComputationSpecialize
 
 LogicalOperatorNodePtr LogicalOperatorFactory::createSliceMergingSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
     return std::make_shared<SliceMergingOperator>(windowDefinition, id);
+}
+
+LogicalOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOperator(const Windowing::WatermarkStrategyPtr watermarkStrategy, OperatorId id) {
+    return std::make_shared<WatermarkAssignerLogicalOperatorNode>(watermarkStrategy, id);
 }
 
 }// namespace NES

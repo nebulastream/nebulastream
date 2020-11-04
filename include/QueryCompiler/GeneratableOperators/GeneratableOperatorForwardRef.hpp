@@ -31,6 +31,9 @@ typedef std::shared_ptr<GeneratableSourceOperator> GeneratableSourceOperatorPtr;
 class GeneratableScanOperator;
 typedef std::shared_ptr<GeneratableScanOperator> GeneratableScanOperatorPtr;
 
+class GeneratableWatermarkAssignerOperator;
+typedef std::shared_ptr<GeneratableWatermarkAssignerOperator> GeneratableWatermarkAssignerOperatorPtr;
+
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEOPERATORFORWARDREF_HPP_

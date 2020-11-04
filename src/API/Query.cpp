@@ -11,6 +11,7 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Windowing/Watermark/WatermarkStrategy.hpp>
 #include <iostream>
 
 namespace NES {
@@ -85,6 +86,20 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
 
 QueryPlanPtr Query::getQueryPlan() {
     return queryPlan;
+}
+Query& Query::assignWatermark(ExpressionItem onField, TimeMeasure delay) {
+    NES_DEBUG("Query: add assignWatermark operator to query");
+
+    auto keyExpression = onField.getExpressionNode();
+    if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: watermark field has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+    }
+    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+
+    auto watermarkStrategy = Windowing::WatermarkStrategy::create(fieldAccess, delay.getTime());
+    OperatorNodePtr  op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategy);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
 }
 
 }// namespace NES

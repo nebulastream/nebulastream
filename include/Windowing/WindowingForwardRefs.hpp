@@ -111,6 +111,9 @@ typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptor
 
 class WindowState;
 
+class WatermarkStrategy;
+typedef std::shared_ptr<WatermarkStrategy> WatermarkStrategyPtr;
+
 }// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_

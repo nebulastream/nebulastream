@@ -85,6 +85,13 @@ class CCodeGenerator : public CodeGenerator {
     bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) override;
 #endif
     /**
+    * @brief Code generation for watermark assigner operator
+    * @param context The context of the current pipeline.
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy, PipelineContextPtr context) override;
+
+    /**
      * @brief Performs the actual compilation the generated code pipeline.
      * @param code generated code.
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
