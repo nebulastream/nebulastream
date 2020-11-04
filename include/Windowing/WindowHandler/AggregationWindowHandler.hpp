@@ -2,12 +2,13 @@
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
-#include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -15,7 +16,6 @@
 #include <Windowing/WindowPolicies/ExecutableOnTimeTrigger.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerDescription.hpp>
 #include <Windowing/WindowPolicies/WindowTriggerPolicyDescriptor.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::Windowing {
 

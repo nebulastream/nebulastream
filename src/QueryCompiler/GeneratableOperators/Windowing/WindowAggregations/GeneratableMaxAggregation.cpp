@@ -1,14 +1,14 @@
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/GeneratedCode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
+#include <QueryCompiler/GeneratedCode.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 
-namespace NES{
+namespace NES {
 
-GeneratableMaxAggregation::GeneratableMaxAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor): GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
+GeneratableMaxAggregation::GeneratableMaxAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
 GeneratableWindowAggregationPtr GeneratableMaxAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
     return std::make_shared<GeneratableMaxAggregation>(aggregationDescriptor);
@@ -24,4 +24,4 @@ void GeneratableMaxAggregation::compileLiftCombine(CompoundStatementPtr currentC
         assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
     currentCode->addStatement(ifStatement.createCopy());
 }
-}
+}// namespace NES

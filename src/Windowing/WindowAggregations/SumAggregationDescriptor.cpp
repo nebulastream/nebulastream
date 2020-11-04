@@ -1,5 +1,5 @@
-#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <API/Expressions/Expressions.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <utility>

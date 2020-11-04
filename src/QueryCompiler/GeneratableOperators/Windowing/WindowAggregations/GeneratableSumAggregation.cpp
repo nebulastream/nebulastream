@@ -1,13 +1,13 @@
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/GeneratedCode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
+#include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 
-namespace NES{
+namespace NES {
 
-GeneratableSumAggregation::GeneratableSumAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor): GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
+GeneratableSumAggregation::GeneratableSumAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
 GeneratableWindowAggregationPtr GeneratableSumAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
     return std::make_shared<GeneratableSumAggregation>(aggregationDescriptor);
@@ -22,4 +22,4 @@ void GeneratableSumAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto updatedPartial = partialRef.assign(sum);
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
 }
-}
+}// namespace NES
