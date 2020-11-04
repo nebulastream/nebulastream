@@ -39,7 +39,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, "csv.log", ",", 0, 10, 10, true);
+    SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, "csv.log", ",", 0, 10, 10, true, false);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, engine);
     EXPECT_EQ(csvFileSource->getType(),  CSV_SOURCE);
 }
