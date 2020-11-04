@@ -113,9 +113,9 @@ class CCodeGenerator : public CodeGenerator {
 
     StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
 
-    BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable,DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
+    BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
 
-    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable,DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
+    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
 
     BinaryOperatorStatement getStateVariable(VariableDeclaration);
 

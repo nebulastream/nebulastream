@@ -20,10 +20,10 @@ PipelineStage::PipelineStage(
     ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineExecutionContext,
     PipelineStagePtr nextPipelineStage) : pipelineStageId(pipelineStageId),
-                                                 qepId(qepId),
-                                                 executablePipeline(std::move(executablePipeline)),
-                                                 nextStage(std::move(nextPipelineStage)),
-                                                 pipelineContext(std::move(pipelineExecutionContext)) {
+                                          qepId(qepId),
+                                          executablePipeline(std::move(executablePipeline)),
+                                          nextStage(std::move(nextPipelineStage)),
+                                          pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
 }

@@ -68,7 +68,7 @@ class PipelineExecutionContext {
         return windowHandler;
     }
 
-    template <template <class, class, class, class> class WindowHandlerType, class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+    template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
     auto getWindowHandler() {
         return std::dynamic_pointer_cast<WindowHandlerType<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowHandler);
     }
