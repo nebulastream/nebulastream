@@ -13,6 +13,7 @@
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableSlicingWindowOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
 
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
@@ -64,6 +65,10 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
     } else if(operatorNode->instanceOf<WindowOperatorNode>()){
         return TranslateToGeneratableOperatorPhase::transformWindowOperator(operatorNode->as<WindowOperatorNode>(), generatableParentOperator);
+    } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+        auto watermarkAssignerOperator = GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
+        generatableParentOperator->addChild(watermarkAssignerOperator);
+        return watermarkAssignerOperator;
     }
     NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED();

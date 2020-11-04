@@ -5,6 +5,7 @@ add_source_nes(
         GeneratableMergeOperator.cpp
         GeneratableSinkOperator.cpp
         GeneratableScanOperator.cpp
+        GeneratableWatermarkAssignerOperator.cpp
         TranslateToGeneratableOperatorPhase
 )
 

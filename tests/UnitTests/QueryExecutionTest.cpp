@@ -266,7 +266,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
     auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
 
-    query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
+    query = query.assignWatermark(Attribute("ts"), Seconds(0)).windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);

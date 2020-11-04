@@ -840,6 +840,37 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     return true;
 }
 
+bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy, PipelineContextPtr context) {
+    auto watermarkFieldName = watermarkStrategy->getField()->getFieldName();
+    AttributeFieldPtr attribute = AttributeField::create(watermarkFieldName,DataTypeFactory::createInt64());
+
+    // get the watermark from attribute field
+    auto tf = getTypeFactory();
+    auto watermarkTsVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "watermark_ts");
+    auto tsVariableDeclaration =
+        context->code->structDeclaratonInputTuple.getVariableDeclaration(attribute->name);
+    auto watermarkTsVariableDeclarationStatement = VarDeclStatement(watermarkTsVariableDeclaration)
+        .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+            VarRef(tsVariableDeclaration)));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(watermarkTsVariableDeclarationStatement));
+
+    auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
+    setWatermarkFunctionCall.addParameter(VarRef(watermarkTsVariableDeclaration));
+    auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
+
+    auto ifStatement = IF(
+        VarRef(watermarkTsVariableDeclaration) > getWatermark(context->code->varDeclarationInputBuffer),
+        setWatermarkStatement);
+    context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
+    return true;
+}
+
+ExecutablePipelinePtr CCodeGenerator::compile(GeneratedCodePtr code) {
+
+    /* function signature:
+     * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
+     */
+
 std::string CCodeGenerator::generateCode(GeneratedCodePtr code) {
     // FunctionDeclaration main_function =
     auto tf = getTypeFactory();

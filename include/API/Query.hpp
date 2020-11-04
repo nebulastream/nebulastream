@@ -91,6 +91,9 @@ class Query {
                        const Windowing::WindowTypePtr windowType,
                        const Windowing::WindowAggregationPtr aggregation);
 
+
+    Query& assignWatermark(ExpressionItem onField, TimeMeasure delay);
+
     /**
      * @brief: Creates a window aggregation.
      * @param windowType Window definition.
