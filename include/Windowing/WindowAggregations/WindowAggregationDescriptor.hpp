@@ -71,10 +71,19 @@ class WindowAggregationDescriptor {
     */
     virtual WindowAggregationPtr copy() = 0;
 
+    /**
+     * @return the input type
+     */
     virtual DataTypePtr getInputStamp() = 0;
 
+    /**
+     * @return the partial aggregation type
+     */
     virtual DataTypePtr getPartialAggregateStamp() = 0;
 
+    /**
+     * @return the final aggregation type
+     */
     virtual DataTypePtr getFinalAggregateStamp() = 0;
 
   protected:

@@ -398,8 +398,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     NES_ASSERT(!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined(), "window partial type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
 
-    auto getWindowHandlerStatement = getWindowHandler(
-        context->code->varDeclarationExecutionContext, Aggregation, window->getOnKey()->getStamp(),
+    auto getWindowHandlerStatement = getAggregationWindowHandler(
+        context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
         window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
         window->getWindowAggregation()->getFinalAggregateStamp());
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
@@ -688,8 +688,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     NES_ASSERT(!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined(), "window partial type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
 
-    auto getWindowHandlerStatement = getWindowHandler(
-        context->code->varDeclarationExecutionContext, Aggregation, window->getOnKey()->getStamp(),
+    auto getWindowHandlerStatement = getAggregationWindowHandler(
+        context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
         window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
         window->getWindowAggregation()->getFinalAggregateStamp());
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
@@ -921,22 +921,15 @@ BinaryOperatorStatement CCodeGenerator::getOriginId(VariableDeclaration tupleBuf
 
 #define TO_CODE(type) tf->createDataType(type)->getCode()->code_
 
-BinaryOperatorStatement CCodeGenerator::getWindowHandler(VariableDeclaration pipelineContextVariable, WindowCodegenType type, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType) {
+BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(
+    VariableDeclaration pipelineContextVariable, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType) {
     auto tf = getTypeFactory();
-    std::string windowHandlerType = "";
-    switch (type) {
-        case Aggregation: {
-            windowHandlerType = "NES::Windowing::AggregationWindowHandler";
-            break;
-        }
-        case Join: {
-            NES_THROW_RUNTIME_ERROR("invalid window handler type");
-            break;
-        }
-        default: NES_THROW_RUNTIME_ERROR("invalid window handler type");
-    }
-    auto call = FunctionCallStatement(std::string("getWindowHandler< ") + windowHandlerType + ", " + TO_CODE(keyType) + ", " + TO_CODE(inputType) + "," + TO_CODE(partialAggregateType) + "," + TO_CODE(finalAggregateType) + " >");
+    auto call = FunctionCallStatement(std::string("getWindowHandler<NES::Windowing::AggregationWindowHandler, ") + TO_CODE(keyType) + ", " + TO_CODE(inputType) + "," + TO_CODE(partialAggregateType) + "," + TO_CODE(finalAggregateType) + " >");
     return VarRef(pipelineContextVariable).accessRef(call);
+}
+
+BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration, DataTypePtr, DataTypePtr, DataTypePtr, DataTypePtr) {
+    NES_THROW_RUNTIME_ERROR("join handler not implemented yet");
 }
 
 BinaryOperatorStatement CCodeGenerator::getStateVariable(VariableDeclaration windowHandlerVariable) {
