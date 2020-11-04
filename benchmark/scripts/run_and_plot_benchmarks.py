@@ -75,6 +75,7 @@ def parseArguments():
 	parser = ArgumentParser()
 	parser.add_argument("-b", "--benchmarks", nargs="+", action="store", dest="benchmarkNames", help="Name of benchmark executables that should be run, if none then all benchmark executables are used. Regex is supported")
 	parser.add_argument("-f", "--folder", action="store", dest="benchmarkFolder", help="Folder in which all benchmark executables lie", required=True)
+	parser.add_argument("-nc", "--no-confirmation", action="store_false", dest="noConfirmation", help="If this flag is set then the script will ask if it should run the found benchmarks")
 
 	args = parser.parse_args()
 	return (args)
@@ -299,16 +300,16 @@ if __name__ == '__main__':
 	validBenchmarkNames = options.benchmarkNames if options.benchmarkNames else "."
 	validBenchmarks = findAllValidBenchmarks(benchmarkFolder, validBenchmarkNames, fileDirectory)
 	
-	printAllBenchmarks(validBenchmarks)
-	if not validBenchmarks:
-		print("Could not find any benchmarks. Please adjust -b param!")
-		exit(1)
+	#printAllBenchmarks(validBenchmarks)
+	#if not validBenchmarks:
+	#	print("Could not find any benchmarks. Please adjust -b param!")
+	#	exit(1)
 
-
-	confirmation = confirmInput("Do you want to execute above benchmarks? [Y/n]: ")
-	if not confirmation:
-		print("Exiting script now...")
-		exit(1)
+	if options.noConfirmation:
+		confirmation = confirmInput("Do you want to execute above benchmarks? [Y/n]: ")
+		if not confirmation:
+			print("Exiting script now...")
+			exit(1)
 
 	startTimeStamp = datetime.now()
 	errRunBenchmarks = runAllBenchmarks(validBenchmarks, benchmarkFolder)
