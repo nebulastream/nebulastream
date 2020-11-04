@@ -464,6 +464,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     size_t frequency = config->getSourceFrequency();
     size_t numBuffers = config->getNumberOfBuffersToProduce();
     bool endlessRepeat = config->isEndlessRepeat();
+    bool skipHeader = config->getSkipHeader();
 
     size_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
 
@@ -473,7 +474,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     } else if (type == "CSVSource") {
         NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
-                                           numBuffers, frequency, endlessRepeat);
+                                           numBuffers, frequency, endlessRepeat, skipHeader);
     } else if (type == "SenseSource") {
         NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);

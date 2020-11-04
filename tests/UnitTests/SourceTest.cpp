@@ -139,6 +139,54 @@ TEST_F(SourceTest, testBinarySource) {
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
 }
 
+TEST_F(SourceTest, testCSVSourceEndlessSkipHeader) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    std::string path_to_file =
+        "../tests/test_data/ysb-tuples-100-campaign-100-head.csv";
+
+    const std::string& del = ",";
+    size_t num = 1;
+    size_t frequency = 1;
+    SchemaPtr schema =
+        Schema::create()
+            ->addField("user_id", DataTypeFactory::createFixedChar(16))
+            ->addField("page_id", DataTypeFactory::createFixedChar(16))
+            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+            ->addField("event_type", DataTypeFactory::createFixedChar(9))
+            ->addField("current_ms", UINT64)
+            ->addField("ip", INT32);
+
+    uint64_t tuple_size = schema->getSchemaSizeInBytes();
+    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
+    size_t num_of_buffers = 10;
+    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
+
+    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
+                                                     frequency, true, true);
+
+    while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
+        auto optBuf = source->receiveData();
+        size_t i = 0;
+        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
+            ysbRecord record(
+                *((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: "
+                      << record.event_type << std::endl;
+            EXPECT_STREQ(record.ad_type, "banner78");
+            EXPECT_TRUE(
+                (!strcmp(record.event_type, "view")
+                    || !strcmp(record.event_type, "click")
+                    || !strcmp(record.event_type, "purchase")));
+            i++;
+        }
+    }
+
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
+    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
+}
+
 TEST_F(SourceTest, testCSVSourceEndless) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
@@ -164,7 +212,7 @@ TEST_F(SourceTest, testCSVSourceEndless) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true);
+                                                     frequency, true, true);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -209,7 +257,7 @@ TEST_F(SourceTest, testCSVSourceNotEndless) {
     size_t num_of_buffers = 5;
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, false);
+                                                     frequency, false, false);
 
     for(size_t i = 0; i < num_of_buffers; i++)
     {
@@ -247,7 +295,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true);
+                                                     frequency, true, false);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -297,7 +345,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true);
+                                                     frequency, true, false);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -380,7 +428,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true);
+                                                     frequency, true, false);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -431,7 +479,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true);
+                                                     frequency, true, false);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();

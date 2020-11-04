@@ -16,13 +16,14 @@ namespace NES {
 
 CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
                      const std::string delimiter, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess,
-                     size_t frequency, bool endlessRepeat)
+                     size_t frequency, bool endlessRepeat, bool skipHeader)
     : DataSource(schema, bufferManager, queryManager),
       filePath(filePath),
       delimiter(delimiter),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
+      endlessRepeat(endlessRepeat),
       currentPosInFile(0),
-      endlessRepeat(endlessRepeat) {
+      skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = frequency;
     tupleSize = schema->getSchemaSizeInBytes();
@@ -35,9 +36,8 @@ CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryMana
     input.seekg(0, input.end);
     fileSize = input.tellg();
     if (fileSize == -1) {
-        NES_FATAL_ERROR("CSVSource::fillBuffer File " << filePath << " is corrupted");
+        NES_THROW_RUNTIME_ERROR("CSVSource::fillBuffer File " + filePath + " is corrupted");
     }
-
     fileEnded = false;
 }
 
@@ -86,6 +86,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
     }
+
     while (tupCnt < generated_tuples_this_pass) {
         if (input.tellg() >= fileSize || input.tellg() == -1) {
             NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
@@ -204,5 +205,9 @@ bool CSVSource::isEndlessRepeat() const {
 }
 void CSVSource::setEndlessRepeat(bool endlessRepeat) {
     this->endlessRepeat = endlessRepeat;
+}
+
+bool CSVSource::getSkipHeader() const {
+    return skipHeader;
 }
 }// namespace NES

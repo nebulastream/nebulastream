@@ -52,6 +52,7 @@ message SerializableOperator{
       uint64 frequency = 5;
       bool endlessRepeat = 6;
       SerializableSchema sourceSchema = 7;
+      bool skipHeader = 8;
     }
 
     message SerializableDefaultSourceDescriptor {

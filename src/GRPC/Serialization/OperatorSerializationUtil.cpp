@@ -598,7 +598,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         return CsvSourceDescriptor::create(schema, csvSerializedSourceDescriptor.filepath(), csvSerializedSourceDescriptor.delimiter(),
                                            csvSerializedSourceDescriptor.numberoftuplestoproduceperbuffer(),
                                            csvSerializedSourceDescriptor.numbufferstoprocess(), csvSerializedSourceDescriptor.frequency(),
-                                           csvSerializedSourceDescriptor.endlessrepeat());
+                                           csvSerializedSourceDescriptor.endlessrepeat(), csvSerializedSourceDescriptor.skipheader());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
         // de-serialize sense source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as SenseSourceDescriptor");

@@ -70,7 +70,7 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
  */
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                         const std::string& path_to_file, const std::string& delimiter,
-                                        size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat);
+                                        size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, bool skipHeader);
 
 /**
  * @brief function to create a network source

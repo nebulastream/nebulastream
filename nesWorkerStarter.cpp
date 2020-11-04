@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
     std::string logicalStreamName;
     std::string parentId = "-1";
     std::string endlessRepeat = "";
+    std::string skipHeader = "false";
     size_t numberOfTuplesToProducePerBuffer = 0;
 
     desc.add_options()(
@@ -67,6 +68,7 @@ int main(int argc, char** argv) {
         "sourceConfig", po::value<string>(&sourceConfig)->default_value(sourceConfig), "Set the config for the source e.g. the file name")(
         "sourceFrequency", po::value<size_t>(&sourceFrequency)->default_value(sourceFrequency), "Set the sampling frequency")(
         "endlessRepeat", po::value<string>(&endlessRepeat)->default_value("off"), "Looping endless over the file")(
+        "skipHeader", po::value<string>(&skipHeader)->default_value("false"), "Skip first line of the file (default=false)")(
         "physicalStreamName", po::value<string>(&physicalStreamName)->default_value(physicalStreamName), "Set the physical name of the stream")(
         "numberOfBuffersToProduce", po::value<size_t>(&numberOfBuffersToProduce)->default_value(numberOfBuffersToProduce), "Set the number of buffers to produce")(
         "numberOfTuplesToProducePerBuffer", po::value<size_t>(&numberOfTuplesToProducePerBuffer)->default_value(0), "Set the number of buffers to produce")(
@@ -119,10 +121,11 @@ int main(int argc, char** argv) {
 
     //register phy stream if nessesary
     if (sourceType != "") {
-        bool endless = endlessRepeat == "on" ? true : false;
+        bool endless = endlessRepeat == "on";
+        bool skip = skipHeader == "true";
         cout << "start with dedicated source=" << sourceType << " endlessRepeat=" << endlessRepeat << " end=" << endless << endl;
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
-                                                                    numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endless);
+                                                                    numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endless, skip);
 
         wrk->setWithRegister(conf);
     } else if (parentId != "-1") {
