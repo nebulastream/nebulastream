@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Windowing/Runtime/WindowHandlerImpl.hpp>
 #include <functional>
 #include <memory>
 
@@ -40,7 +40,7 @@ class PipelineExecutionContext {
         QuerySubPlanId queryId,
         BufferManagerPtr bufferManager,
         std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
-        Windowing::WindowHandlerPtr windowHandler = Windowing::WindowHandlerPtr());
+        Windowing::AbstractWindowHandlerPtr windowHandler = Windowing::AbstractWindowHandlerPtr());
 
     /**
      * @brief Allocates a new tuple buffer.
@@ -61,19 +61,17 @@ class PipelineExecutionContext {
     Windowing::LogicalWindowDefinitionPtr getWindowDef();
     void setWindowDef(Windowing::LogicalWindowDefinitionPtr windowDef);
 
-
     /**
      * @brief
      */
-    Windowing::WindowHandlerPtr getWindowHandler() {
+    Windowing::AbstractWindowHandlerPtr getWindowHandler() {
         return windowHandler;
     }
 
-    template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+    template <template <class, class, class, class> class WindowHandlerType, class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
     auto getWindowHandler() {
-        return std::dynamic_pointer_cast<Windowing::WindowHandlerImpl<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowHandler);
+        return std::dynamic_pointer_cast<WindowHandlerType<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowHandler);
     }
-
 
     // TODO remove above
 
@@ -99,13 +97,11 @@ class PipelineExecutionContext {
      */
     std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
 
-    Windowing::WindowHandlerPtr windowHandler;
+    Windowing::AbstractWindowHandlerPtr windowHandler;
 
     // TODO remove this stuff from here
     Windowing::LogicalWindowDefinitionPtr windowDef;
     SchemaPtr inputSchema;
-
-
 };
 
 }// namespace NES

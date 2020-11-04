@@ -10,6 +10,12 @@ namespace NES {
  * @brief A code generator that generates C++ code optimized for X86 architectures.
  */
 class CCodeGenerator : public CodeGenerator {
+
+    enum WindowCodegenType {
+        aggregation,
+        join
+    };
+
   public:
     CCodeGenerator();
     static CodeGeneratorPtr create();
@@ -71,6 +77,7 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) override;
 
+#if 0
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
     * @param The join definition, which contains all properties of the join.
@@ -78,7 +85,7 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) override;
-
+#endif
     /**
      * @brief Performs the actual compilation the generated code pipeline.
      * @param code generated code.
@@ -111,7 +118,7 @@ class CCodeGenerator : public CodeGenerator {
 
     StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
 
-    BinaryOperatorStatement getWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
+    BinaryOperatorStatement getWindowHandler(VariableDeclaration pipelineContextVariable, WindowCodegenType type, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
 
     BinaryOperatorStatement getStateVariable(VariableDeclaration);
 

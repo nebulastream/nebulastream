@@ -40,7 +40,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
    * @brief Starts thread to check if the window should be triggered.
    * @return boolean if the window thread is started
    */
-    bool start() {
+    bool start() override {
         return executablePolicyTrigger->start(this->shared_from_this());
     }
 
@@ -48,7 +48,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @brief Stops the window thread.
      * @return
      */
-    bool stop() {
+    bool stop() override {
         return executablePolicyTrigger->stop();
     }
 
@@ -62,7 +62,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @brief triggers all ready windows.
      * @return
      */
-    void trigger() {
+    void trigger() override {
         std::string triggerType;
         if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
             triggerType = "Combining";
@@ -103,7 +103,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @param ts
      * @param originId
      */
-    void updateAllMaxTs(uint64_t ts, uint64_t originId) {
+    void updateAllMaxTs(uint64_t ts, uint64_t originId) override {
         NES_DEBUG("AggregationWindowHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
         for (auto& it : windowStateVariable->rangeAll()) {
             NES_DEBUG("AggregationWindowHandler: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
@@ -114,7 +114,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) {
+    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) override {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;
         this->pipelineStageId = pipelineStageId;
@@ -255,15 +255,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
     /**
-     * @brief Returns the window state, as a untyped pointer to the state variable.
-     * @deprecated todo remove this untyped call.
-     * @return void* to state variable.
-     */
-    void* getWindowState() {
-        return windowStateVariable;
-    }
-
-    /**
      * @brief Writes a value to the output buffer with the following schema
      * -- start_ts, end_ts, key, value --
      * @tparam ValueType Type of the particular value
@@ -286,13 +277,13 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @brief Returns window manager.
      * @return WindowManager.
      */
-    WindowManagerPtr getWindowManager() { return this->windowManager; }
+    WindowManagerPtr getWindowManager() override { return this->windowManager; }
 
      auto getTypedWindowState() {
         return windowStateVariable;
     }
 
-    LogicalWindowDefinitionPtr getWindowDefinition() {
+    LogicalWindowDefinitionPtr getWindowDefinition() override {
         return windowDefinition;
     }
 
