@@ -11,11 +11,6 @@ namespace NES {
  */
 class CCodeGenerator : public CodeGenerator {
 
-    enum WindowCodegenType {
-        Aggregation,
-        Join
-    };
-
   public:
     CCodeGenerator();
     static CodeGeneratorPtr create();
@@ -118,7 +113,9 @@ class CCodeGenerator : public CodeGenerator {
 
     StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
 
-    BinaryOperatorStatement getWindowHandler(VariableDeclaration pipelineContextVariable, WindowCodegenType type, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
+    BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable,DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
+
+    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable,DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
 
     BinaryOperatorStatement getStateVariable(VariableDeclaration);
 
