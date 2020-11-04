@@ -95,7 +95,7 @@ TEST_F(WindowManagerTest, testCountAggregation) {
 TEST_F(WindowManagerTest, testCheckSlice) {
     auto store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = Sum(Attribute("value"));
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType(), trigger);
 
@@ -120,7 +120,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(Attribute("key", UINT64), aggregation,
                                                                 TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
@@ -194,7 +194,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType(), 0, trigger);
 
@@ -263,7 +263,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType(), 0, trigger);
 

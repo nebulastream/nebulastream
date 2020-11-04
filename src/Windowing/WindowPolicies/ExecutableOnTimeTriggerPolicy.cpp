@@ -2,12 +2,12 @@
 #include <Util/ThreadNaming.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowPolicies/ExecutableOnTimeTrigger.hpp>
+#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <memory>
 
 namespace NES::Windowing {
 
-bool ExecutableOnTimeTrigger::start(AbstractWindowHandlerPtr windowHandler) {
+bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler) {
     std::unique_lock lock(runningTriggerMutex);
     if (running) {
         return false;
@@ -20,7 +20,7 @@ bool ExecutableOnTimeTrigger::start(AbstractWindowHandlerPtr windowHandler) {
         triggerType = "Slicing";
     }
 
-    NES_DEBUG("ExecutableOnTimeTrigger started thread " << this << " handler=" << windowHandler << " type=" << triggerType << " with ms=" << triggerTimeInMs);
+    NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << windowHandler << " type=" << triggerType << " with ms=" << triggerTimeInMs);
     std::string handlerName = windowHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, windowHandler, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
@@ -32,11 +32,11 @@ bool ExecutableOnTimeTrigger::start(AbstractWindowHandlerPtr windowHandler) {
     return true;
 }
 
-bool ExecutableOnTimeTrigger::stop() {
+bool ExecutableOnTimeTriggerPolicy::stop() {
     std::unique_lock lock(runningTriggerMutex);
-    NES_DEBUG("ExecutableOnTimeTrigger " << this << ": Stop called");
+    NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Stop called");
     if (!running) {
-        NES_DEBUG("ExecutableOnTimeTrigger " << this << ": Stop called but was already not running");
+        NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Stop called but was already not running");
         return false;
     }
     running = false;
@@ -45,16 +45,16 @@ bool ExecutableOnTimeTrigger::stop() {
         thread->join();
     }
     thread.reset();
-    NES_DEBUG("ExecutableOnTimeTrigger " << this << ": Thread joinded");
+    NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Thread joinded");
     // TODO what happens to the content of the window that it is still in the state?
     return true;
 }
 
-ExecutableOnTimeTrigger::ExecutableOnTimeTrigger(size_t triggerTimeInMs) : triggerTimeInMs(triggerTimeInMs), running(false), runningTriggerMutex() {
+ExecutableOnTimeTriggerPolicy::ExecutableOnTimeTriggerPolicy(size_t triggerTimeInMs) : triggerTimeInMs(triggerTimeInMs), running(false), runningTriggerMutex() {
 }
 
-ExecutableOnTimeTriggerPtr ExecutableOnTimeTrigger::create(size_t triggerTimeInMs) {
-    return std::make_shared<ExecutableOnTimeTrigger>(triggerTimeInMs);
+ExecutableOnTimeTriggerPtr ExecutableOnTimeTriggerPolicy::create(size_t triggerTimeInMs) {
+    return std::make_shared<ExecutableOnTimeTriggerPolicy>(triggerTimeInMs);
 }
 
 }// namespace NES::Windowing

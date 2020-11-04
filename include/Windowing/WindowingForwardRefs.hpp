@@ -40,11 +40,17 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 
 namespace NES::Windowing {
 
-class ExecutableOnTimeTrigger;
-typedef std::shared_ptr<ExecutableOnTimeTrigger> ExecutableOnTimeTriggerPtr;
+class ExecutableOnTimeTriggerPolicy;
+typedef std::shared_ptr<ExecutableOnTimeTriggerPolicy> ExecutableOnTimeTriggerPtr;
 
-class WindowTriggerPolicyDescriptor;
-typedef std::shared_ptr<WindowTriggerPolicyDescriptor> WindowTriggerPolicyPtr;
+class BaseWindowTriggerPolicyDescriptor;
+typedef std::shared_ptr<BaseWindowTriggerPolicyDescriptor> WindowTriggerPolicyPtr;
+
+class BaseWindowActionDescriptor;
+typedef std::shared_ptr<BaseWindowActionDescriptor> BaseWindowActionDescriptorPtr;
+
+class BaseExecutableWindowAction;
+typedef std::shared_ptr<BaseExecutableWindowAction> BaseExecutableWindowActionPtr;
 
 class AbstractWindowHandler;
 typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;

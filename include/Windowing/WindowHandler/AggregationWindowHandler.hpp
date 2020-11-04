@@ -13,9 +13,9 @@
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <Windowing/WindowPolicies/ExecutableOnTimeTrigger.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerDescription.hpp>
-#include <Windowing/WindowPolicies/WindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 namespace NES::Windowing {
 

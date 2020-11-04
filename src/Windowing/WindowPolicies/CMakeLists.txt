@@ -1,8 +1,8 @@
 add_source_nes(
-        OnTimeTriggerDescription.cpp
-        WindowTriggerPolicyDescriptor.cpp
-        OnWatermarkChangeTriggerDescription.cpp
-        OnBufferTriggerDescription.cpp
-        OnRecordTriggerDescription.cpp
-        ExecutableOnTimeTrigger.cpp
+        OnTimeTriggerPolicyDescription.cpp
+        BaseWindowTriggerPolicyDescriptor.cpp
+        OnWatermarkChangeTriggerPolicyDescription.cpp
+        OnBufferTriggerPolicyDescription.cpp
+        OnRecordTriggerPolicyDescription.cpp
+        ExecutableOnTimeTriggerPolicy.cpp
 )

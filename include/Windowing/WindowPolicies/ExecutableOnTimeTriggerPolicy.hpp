@@ -1,15 +1,15 @@
-#ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGER_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGER_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGERPOLICY_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGERPOLICY_HPP_
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <Windowing/WindowPolicies/ExecutableWindowTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <memory>
 #include <mutex>
 
 namespace NES::Windowing {
 
-class ExecutableOnTimeTrigger : public ExecutableWindowTriggerPolicy {
+class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
   public:
-    ExecutableOnTimeTrigger(size_t triggerTimeInMs);
+    ExecutableOnTimeTriggerPolicy(size_t triggerTimeInMs);
 
     static ExecutableOnTimeTriggerPtr create(size_t triggerTimeInMs);
 
@@ -30,9 +30,7 @@ class ExecutableOnTimeTrigger : public ExecutableWindowTriggerPolicy {
     std::shared_ptr<std::thread> thread;
     std::mutex runningTriggerMutex;
     size_t triggerTimeInMs;
-
-  public:
 };
 
 }// namespace NES::Windowing
-#endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGER_HPP_
+#endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGERPOLICY_HPP_

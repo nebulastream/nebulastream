@@ -1,10 +1,10 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_TIMETRIGGERDESCRIPTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_TIMETRIGGERDESCRIPTION_HPP_
-#include <Windowing/WindowPolicies/WindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 
 namespace NES::Windowing {
 
-class OnTimeTriggerDescription : public WindowTriggerPolicyDescriptor {
+class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor {
   public:
     static WindowTriggerPolicyPtr create(size_t triggerTimeInMs);
 
@@ -21,10 +21,10 @@ class OnTimeTriggerDescription : public WindowTriggerPolicyDescriptor {
     size_t getTriggerTimeInMs() const;
 
   protected:
-    OnTimeTriggerDescription(size_t triggerTimeInMs);
+    OnTimeTriggerPolicyDescription(size_t triggerTimeInMs);
     size_t triggerTimeInMs;
 };
 
-typedef std::shared_ptr<OnTimeTriggerDescription> OnTimeTriggerDescriptionPtr;
+typedef std::shared_ptr<OnTimeTriggerPolicyDescription> OnTimeTriggerDescriptionPtr;
 }// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_TIMETRIGGERDESCRIPTION_HPP_

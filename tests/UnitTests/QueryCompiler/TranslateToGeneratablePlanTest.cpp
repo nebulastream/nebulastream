@@ -33,7 +33,7 @@
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerDescription.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 using namespace std;
 
@@ -144,7 +144,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
      */
     auto printSinkDescriptorPtr = PrintSinkDescriptor::create();
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(printSinkDescriptorPtr);
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerDescription::create(1000);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(
         LogicalWindowDefinition::create(
