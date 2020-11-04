@@ -51,6 +51,7 @@ class CCodeGenerator : public CodeGenerator {
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
+    * @param generatableWindowAggregation window aggregation.
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
@@ -59,6 +60,7 @@ class CCodeGenerator : public CodeGenerator {
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
+    * @param generatableWindowAggregation window aggregation.
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
@@ -67,6 +69,7 @@ class CCodeGenerator : public CodeGenerator {
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
+    * @param generatableWindowAggregation window aggregation.
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
