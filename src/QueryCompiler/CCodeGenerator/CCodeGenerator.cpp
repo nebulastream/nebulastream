@@ -399,7 +399,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
 
     auto getWindowHandlerStatement = getWindowHandler(
-        context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
+        context->code->varDeclarationExecutionContext, aggregation, window->getOnKey()->getStamp(),
         window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
         window->getWindowAggregation()->getFinalAggregateStamp());
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
@@ -526,7 +526,7 @@ bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefini
     context->pipelineName = "SlicingWindowType";
     return generateCodeForCompleteWindow(window, context);
 }
-
+#if 0
 bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) {
     //    std::cout << joinDef << context << std::endl;
     auto tf = getTypeFactory();
@@ -537,15 +537,31 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
      * within the loop
      */
     //        NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<std::vector<InputTuple>>*>* state_variable = (NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<std::vector<InputTuple>>*>*) state_var;
-    auto stateVariableDeclaration = VariableDeclaration::create(
-        tf->createPointer(tf->createAnonymusDataType(
-            "NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<std::vector<InputTuple>>*>")),
-        "state_variable");
+    auto windowManagerVarDeclaration = VariableDeclaration::create(
+        tf->createAnonymusDataType("auto"), "windowManager");
 
-    auto stateVarDeclarationStatement = VarDeclStatement(stateVariableDeclaration)
-                                            .assign(TypeCast(VarRef(context->code->varDeclarationState), stateVariableDeclaration.getDataType()));
-    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
-        stateVarDeclarationStatement));
+    auto windowStateVarDeclaration = VariableDeclaration::create(
+        tf->createAnonymusDataType("auto"), "windowStateVar");
+
+    auto windowHandlerVariableDeclration = VariableDeclaration::create(
+        tf->createAnonymusDataType("auto"), "windowHandler");
+//
+//    NES_ASSERT(!window->getOnKey()->getStamp()->isUndefined(), "window on key is undefined");
+//    NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");
+//    NES_ASSERT(!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined(), "window partial type is undefined");
+//    NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
+//
+//    auto getWindowHandlerStatement = getWindowHandler(
+//        context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
+//        window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
+//        window->getWindowAggregation()->getFinalAggregateStamp());
+//    context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
+
+    auto getWindowManagerStatement = getWindowManager(windowHandlerVariableDeclration);
+    context->code->variableInitStmts.emplace_back(VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
+
+    auto getWindowStateStatement = getStateVariable(windowHandlerVariableDeclration);
+    context->code->variableInitStmts.emplace_back(VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
 
     // Read key value from record
     // int64_t key = windowTuples[recordIndex].key;
@@ -568,7 +584,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto getKeyStateVariable = FunctionCallStatement("get");
     getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
     auto keyHandlerVariableStatement = VarDeclStatement(keyHandlerVariableDeclaration)
-                                           .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
+                                           .assign(VarRef(windowStateVarDeclaration).accessPtr(getKeyStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         keyHandlerVariableStatement));
 
@@ -606,7 +622,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
     sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
     auto call =
-        std::make_shared<BinaryOperatorStatement>(VarRef(context->code->varDeclarationWindowManager).accessPtr(sliceStream));
+        std::make_shared<BinaryOperatorStatement>(VarRef(windowManagerVarDeclaration).accessPtr(sliceStream));
     context->code->currentCodeInsertionPoint->addStatement(call);
 
     // find the slices for a time stamp
@@ -644,7 +660,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                                                   << " with code=" << context->code);
     return true;
 }
-
+#endif
 bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context) {
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
@@ -670,7 +686,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
 
     auto getWindowHandlerStatement = getWindowHandler(
-        context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
+        context->code->varDeclarationExecutionContext, aggregation, window->getOnKey()->getStamp(),
         window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
         window->getWindowAggregation()->getFinalAggregateStamp());
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
@@ -902,9 +918,21 @@ BinaryOperatorStatement CCodeGenerator::getOriginId(VariableDeclaration tupleBuf
 
 #define TO_CODE(type) tf->createDataType(type)->getCode()->code_
 
-BinaryOperatorStatement CCodeGenerator::getWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType) {
+BinaryOperatorStatement CCodeGenerator::getWindowHandler(VariableDeclaration pipelineContextVariable, WindowCodegenType type, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType) {
     auto tf = getTypeFactory();
-    auto call = FunctionCallStatement(std::string("getWindowHandler< ") + TO_CODE(keyType) + ", " + TO_CODE(inputType) + "," + TO_CODE(partialAggregateType) + "," + TO_CODE(finalAggregateType) + " >");
+    std::string windowHandlerType = "";
+    switch (type) {
+        case aggregation: {
+            windowHandlerType = "NES::Windowing::AggregationWindowHandler";
+            break;
+        }
+        case join: {
+            NES_THROW_RUNTIME_ERROR("invalid window handler type");
+            break;
+        }
+        default: NES_THROW_RUNTIME_ERROR("invalid window handler type");
+    }
+    auto call = FunctionCallStatement(std::string("getWindowHandler< ") + windowHandlerType + ", " + TO_CODE(keyType) + ", " + TO_CODE(inputType) + "," + TO_CODE(partialAggregateType) + "," + TO_CODE(finalAggregateType) + " >");
     return VarRef(pipelineContextVariable).accessRef(call);
 }
 

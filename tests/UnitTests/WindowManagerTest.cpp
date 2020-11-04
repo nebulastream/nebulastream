@@ -146,10 +146,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     };
     auto executable = std::make_shared<MockedExecutablePipeline>();
     auto context = std::make_shared<MockedPipelineExecutionContext>();
-    auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr, w);
-    w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0);
+    auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
+    w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
-    auto windowState = std::dynamic_pointer_cast<WindowHandlerImpl<uint64_t, uint64_t, uint64_t, uint64_t>>(w)->getTypedWindowState();
+    auto windowState = std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(w)->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();
@@ -220,10 +220,10 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
     w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
-    auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w->getWindowState();
-      auto keyRef = windowState->get(10);
-      keyRef.valueOrDefault(0);
-      auto store = keyRef.value();
+    auto windowState = w->getTypedWindowState();
+    auto keyRef = windowState->get(10);
+    keyRef.valueOrDefault(0);
+    auto store = keyRef.value();
 
     uint64_t ts = 7;
     w->updateAllMaxTs(ts, 0);
@@ -270,7 +270,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
-
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
         uint32_t execute(TupleBuffer&, QueryExecutionContextPtr, WorkerContext&) override {
@@ -290,7 +289,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
     w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
-    auto windowState = std::dynamic_pointer_cast<WindowHandlerImpl<int64_t, int64_t, int64_t, int64_t>>(w)->getTypedWindowState();
+    auto windowState = std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(w)->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();
@@ -315,7 +314,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
-//    auto typedWindowHandler = w->as<int64_t, int64_t, int64_t, int64_t>();
+    //    auto typedWindowHandler = w->as<int64_t, int64_t, int64_t, int64_t>();
     w->aggregateWindows(10, store, windowDef, buf);
     w->aggregateWindows(11, store, windowDef, buf);
 
