@@ -91,6 +91,8 @@ inline uint64_t getTsFromClock() {
 class WindowAggregationDescriptor;
 typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
 
+class WindowState;
+
 }// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_

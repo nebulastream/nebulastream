@@ -1,6 +1,6 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWTYPE_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWTYPE_HPP_
-#include <Windowing/Runtime/WindowState.hpp>
+
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <vector>
 namespace NES::Windowing {

@@ -6,6 +6,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
+#include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
@@ -14,6 +15,7 @@
 #include <Windowing/WindowPolicies/ExecutableOnTimeTrigger.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerDescription.hpp>
 #include <Windowing/WindowPolicies/WindowTriggerPolicyDescriptor.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::Windowing {
 
