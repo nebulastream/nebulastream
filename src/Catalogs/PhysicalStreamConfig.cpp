@@ -5,9 +5,9 @@ namespace NES {
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::create(std::string sourceType, std::string sourceConfig, uint32_t sourceFrequency, uint32_t numberOfTuplesToProducePerBuffer,
                                                      uint32_t numberOfBuffersToProduce, std::string physicalStreamName, std::string logicalStreamName,
-                                                     bool endlessRepeat) {
+                                                     bool endlessRepeat, bool skipHeader) {
     return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
-                                                                       numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endlessRepeat));
+                                                                       numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endlessRepeat, skipHeader));
 }
 
 PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
@@ -17,7 +17,8 @@ PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
                                            size_t numberOfBuffersToProduce,
                                            std::string physicalStreamName,
                                            std::string logicalStreamName,
-                                           bool endlessRepeat)
+                                           bool endlessRepeat,
+                                           bool skipHeader)
     : sourceType(sourceType),
       sourceConfig(sourceConfig),
       sourceFrequency(sourceFrequency),
@@ -25,7 +26,8 @@ PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
       numberOfBuffersToProduce(numberOfBuffersToProduce),
       physicalStreamName(physicalStreamName),
       logicalStreamName(logicalStreamName),
-      endlessRepeat(endlessRepeat){};
+      endlessRepeat(endlessRepeat),
+      skipHeader(skipHeader){};
 
 std::string PhysicalStreamConfig::toString() {
     std::stringstream ss;
@@ -70,5 +72,9 @@ bool PhysicalStreamConfig::isEndlessRepeat() const {
 }
 void PhysicalStreamConfig::setEndlessRepeat(bool endlessRepeat) {
     this->endlessRepeat = endlessRepeat;
+}
+
+bool PhysicalStreamConfig::getSkipHeader() const {
+    return skipHeader;
 }
 }// namespace NES

@@ -17,7 +17,8 @@ class CsvSourceDescriptor : public SourceDescriptor {
                                       size_t numBuffersToProcess,
                                       size_t numberOfTuplesToProducePerBuffer,
                                       size_t frequency,
-                                      bool endlessRepeat);
+                                      bool endlessRepeat,
+                                      bool skipHeader);
 
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string streamName,
@@ -26,7 +27,8 @@ class CsvSourceDescriptor : public SourceDescriptor {
                                       size_t numberOfTuplesToProducePerBuffer,
                                       size_t numBuffersToProcess,
                                       size_t frequency,
-                                      bool endlessRepeat);
+                                      bool endlessRepeat,
+                                      bool skipHeader);
 
     /**
      * @brief get file path for reading the csv file
@@ -52,6 +54,12 @@ class CsvSourceDescriptor : public SourceDescriptor {
      * @brief get the frequency of reading the csv file
      */
     size_t getFrequency() const;
+
+    /**
+     * @brief get the value of the skipHeader
+     */
+    bool getSkipHeader() const;
+
     bool equal(SourceDescriptorPtr other) override;
     std::string toString() override;
 
@@ -69,7 +77,8 @@ class CsvSourceDescriptor : public SourceDescriptor {
                                  size_t numberOfTuplesToProducePerBuffer,
                                  size_t numBuffersToProcess,
                                  size_t frequency,
-                                 bool endlessRepeat);
+                                 bool endlessRepeat,
+                                 bool skipHeader);
 
     explicit CsvSourceDescriptor(SchemaPtr schema,
                                  std::string streamName,
@@ -78,13 +87,16 @@ class CsvSourceDescriptor : public SourceDescriptor {
                                  size_t numberOfTuplesToProducePerBuffer,
                                  size_t numBuffersToProcess,
                                  size_t frequency,
-                                 bool endlessRepeat);
+                                 bool endlessRepeat,
+                                 bool skipHeader);
+
     std::string filePath;
     std::string delimiter;
     size_t numBuffersToProcess;
     size_t numberOfTuplesToProducePerBuffer;
     size_t frequency;
     bool endlessRepeat;
+    bool skipHeader;
 };
 
 typedef std::shared_ptr<CsvSourceDescriptor> CsvSourceDescriptorPtr;

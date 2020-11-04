@@ -58,7 +58,8 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
                                             csvSourcePtr->getNumberOfTuplesToProducePerBuffer(),
                                             csvSourcePtr->getNumBuffersToProcess(),
                                             csvSourcePtr->getGatheringInterval(),
-                                            csvSourcePtr->isEndlessRepeat());
+                                            csvSourcePtr->isEndlessRepeat(),
+                                            csvSourcePtr->getSkipHeader());
             return csvSourceDescriptor;
         }
 #ifdef ENABLE_KAFKA_BUILD
