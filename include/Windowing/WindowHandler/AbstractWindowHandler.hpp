@@ -71,7 +71,6 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     uint64_t originId;
-    SchemaPtr windowTupleSchema;
 };
 
 }// namespace NES::Windowing

@@ -4,13 +4,13 @@
 
 namespace NES::Windowing {
 
-class WindowAggregationTriggerActionDescriptor : public BaseWindowActionDescriptor {
+class CompleteAggregationTriggerActionDescriptor : public BaseWindowActionDescriptor {
   public:
     static BaseWindowActionDescriptorPtr create();
     ActionType getActionType() override;
 
   private:
-    WindowAggregationTriggerActionDescriptor();
+    CompleteAggregationTriggerActionDescriptor();
 };
 }// namespace NES::Windowing
 

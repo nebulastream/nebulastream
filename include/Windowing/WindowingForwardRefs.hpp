@@ -49,11 +49,13 @@ typedef std::shared_ptr<BaseWindowTriggerPolicyDescriptor> WindowTriggerPolicyPt
 class BaseWindowActionDescriptor;
 typedef std::shared_ptr<BaseWindowActionDescriptor> BaseWindowActionDescriptorPtr;
 
-class BaseExecutableWindowAction;
-typedef std::shared_ptr<BaseExecutableWindowAction> BaseExecutableWindowActionPtr;
-
 class AbstractWindowHandler;
 typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
+
+template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+class ExecutableCompleteAggregationTriggerAction;
+template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+using ExecutableCompleteAggregationTriggerActionPtr = std::shared_ptr<ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
