@@ -1,6 +1,6 @@
+#include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <utility>
 

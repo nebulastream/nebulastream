@@ -1,5 +1,6 @@
 #include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
 #include <Windowing/WindowHandler/WindowHandlerFactoryDetails.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::Windowing {
 
