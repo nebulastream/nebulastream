@@ -22,7 +22,7 @@ GeneratableDistributedlWindowCombinerOperatorPtr GeneratableCombiningWindowOpera
     return std::make_shared<GeneratableCombiningWindowOperator>(GeneratableCombiningWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id));
 }
 
-GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id)
+GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id)
     : GeneratableWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id) {
 }
 

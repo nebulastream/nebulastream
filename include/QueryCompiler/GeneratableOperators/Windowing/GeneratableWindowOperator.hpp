@@ -4,10 +4,10 @@
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 
-namespace NES::Windowing{
+namespace NES::Windowing {
 class AbstractWindowHandler;
 typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
-}
+}// namespace NES::Windowing
 
 namespace NES {
 class GeneratableWindowAggregation;

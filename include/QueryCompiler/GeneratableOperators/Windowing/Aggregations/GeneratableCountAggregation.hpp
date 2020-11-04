@@ -12,7 +12,7 @@ class GeneratableCountAggregation : public GeneratableWindowAggregation {
      * @return GeneratableWindowAggregationPtr
      */
     static GeneratableWindowAggregationPtr create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
-     
+
     /**
      * @brief Generates code for window aggregate
      * @param currentCode current code pointer

@@ -2,11 +2,11 @@
 #define NES_INCLUDE_NODES_PHASES_TRANSLATETOGENERATABLEOPERATORS_HPP_
 
 #include <memory>
-namespace NES::Windowing{
+namespace NES::Windowing {
 class WindowAggregationDescriptor;
 typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
 
-}
+}// namespace NES::Windowing
 
 namespace NES {
 
