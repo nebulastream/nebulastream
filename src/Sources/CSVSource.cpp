@@ -39,7 +39,7 @@ CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryMana
     input.seekg(0, input.end);
     fileSize = input.tellg();
     if (fileSize == -1) {
-        NES_THROW_RUNTIME_ERROR("CSVSource::fillBuffer File " + filePath + " is corrupted");
+        NES_ERROR("CSVSource::fillBuffer File " + filePath + " is corrupted");
     }
     fileEnded = false;
 }
