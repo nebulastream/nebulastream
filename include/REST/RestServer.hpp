@@ -1,8 +1,8 @@
 #ifndef IMPL_REST_RESTSERVER_H_
 #define IMPL_REST_RESTSERVER_H_
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace NES {
 

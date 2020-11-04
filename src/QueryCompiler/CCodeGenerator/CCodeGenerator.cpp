@@ -918,7 +918,6 @@ BinaryOperatorStatement CCodeGenerator::getOriginId(VariableDeclaration tupleBuf
     return VarRef(tupleBufferVariable).accessRef(getWatermarkFunctionCall);
 }
 
-
 #define TO_CODE(type) tf->createDataType(type)->getCode()->code_
 
 BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(

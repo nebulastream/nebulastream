@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_DATATYPES_VALUETYPE_HPP_
 #define NES_INCLUDE_DATATYPES_VALUETYPE_HPP_
-#include <string>
 #include <memory>
+#include <string>
 
 namespace NES {
 
