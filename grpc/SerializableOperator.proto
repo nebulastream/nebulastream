@@ -227,12 +227,23 @@ message SerializableOperator{
       uint64 timeInMs = 2;
     }
 
+    message Action
+    {
+      enum Type{
+          Complete = 0;
+          Slicing = 1;
+      }
+      Type type = 1;
+    }
+
+
     google.protobuf.Any windowType = 1;
     Aggregation windowAggregation = 2;
     DistributionCharacteristic distrChar = 3;
     SerializableExpression onKey = 4;
     uint64 numberOfInputEdges = 5;
     TriggerPolicy triggerPolicy = 6;
+    Action action = 7;
 
   }
   google.protobuf.Any details = 1;

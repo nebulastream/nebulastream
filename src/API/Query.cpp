@@ -10,7 +10,7 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <iostream>
 
 namespace NES {
@@ -54,7 +54,9 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     auto tiggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
-    auto windowDefinition = Windowing::LogicalWindowDefinition::create(fieldAccess, aggregation, windowType, Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, tiggerPolicy);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto windowDefinition = Windowing::LogicalWindowDefinition::create(fieldAccess, aggregation, windowType,
+                                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, tiggerPolicy, triggerAction);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
     queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;

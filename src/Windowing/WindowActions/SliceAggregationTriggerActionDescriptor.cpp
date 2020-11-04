@@ -2,7 +2,7 @@
 
 namespace NES::Windowing {
 
-BaseWindowActionDescriptorPtr SliceAggregationTriggerActionDescriptor::create() {
+WindowActionDescriptorPtr SliceAggregationTriggerActionDescriptor::create() {
     return std::make_shared<SliceAggregationTriggerActionDescriptor>(SliceAggregationTriggerActionDescriptor());
 }
 

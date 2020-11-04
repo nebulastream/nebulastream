@@ -10,6 +10,9 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <algorithm>
 
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
+
 namespace NES {
 
 DistributeWindowRule::DistributeWindowRule() {}
@@ -66,6 +69,7 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     NES_DEBUG("DistributeWindowRule::apply: introduce distributed window operator for window " << logicalWindowOperator << " << logicalWindowOperator->toString()");
     auto windowDefinition = logicalWindowOperator->getWindowDefinition();
     auto triggerPolicy = windowDefinition->getTriggerPolicy();
+    auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowType = windowDefinition->getWindowType();
     auto windowAggregation = windowDefinition->getWindowAggregation();
     auto keyField = windowDefinition->getOnKey();
@@ -79,7 +83,8 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
                                                                                   windowType,
                                                                                   Windowing::DistributionCharacteristic::createCombiningWindowType(),
                                                                                   logicalWindowOperator->getChildren().size(),
-                                                                                  triggerPolicy);
+                                                                                  triggerPolicy,
+                                                                                  triggerActionComplete);
 
     auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowComputationDefinition);
 
@@ -97,12 +102,14 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         // For the SliceCreation operator we have to change copy aggregation function and manipulate the fields we want to aggregate.
         auto sliceCreationWindowAggregation = windowAggregation->copy();
         sliceCreationWindowAggregation->as()->as<FieldAccessExpressionNode>()->setFieldName("value");
+        auto triggerActionSlicing = Windowing::SliceAggregationTriggerActionDescriptor::create();
 
         auto sliceCreationWindowDefinition = Windowing::LogicalWindowDefinition::create(keyField,
                                                                                         sliceCreationWindowAggregation,
                                                                                         windowType,
                                                                                         Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
-                                                                                        triggerPolicy);
+                                                                                        triggerPolicy,
+                                                                                        triggerActionSlicing);
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(sliceCreationWindowDefinition);
         child->insertBetweenThisAndParentNodes(sliceOp);
     }
