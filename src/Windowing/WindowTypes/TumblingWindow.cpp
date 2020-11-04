@@ -1,4 +1,3 @@
-
 #include <Util/Logger.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>

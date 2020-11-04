@@ -21,4 +21,24 @@ DistributionCharacteristic::Type DistributionCharacteristic::getType() {
     return type;
 }
 
+std::string DistributionCharacteristic::getTypeAsString()
+{
+    if(type == Complete)
+    {
+        return "Complete";
+    }
+    else if(type == Slicing)
+    {
+        return "Slicing";
+    }
+    else if(type == Combining)
+    {
+        return "Combining";
+    }
+    else
+    {
+        return "";
+    }
+}
+
 }// namespace NES::Windowing

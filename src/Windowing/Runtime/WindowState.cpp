@@ -1,4 +1,3 @@
-
 #include <Windowing/Runtime/WindowState.hpp>
 
 namespace NES::Windowing {

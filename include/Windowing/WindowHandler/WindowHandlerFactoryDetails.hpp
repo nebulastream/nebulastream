@@ -38,6 +38,8 @@ class WindowHandlerFactoryDetails {
         } else {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
         }
+
+        //create the action typed
         return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, windowAggregation, executablePolicyTrigger);
     }
 

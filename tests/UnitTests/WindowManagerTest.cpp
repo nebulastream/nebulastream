@@ -127,7 +127,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
                                                                 DistributionCharacteristic::createCompleteWindowType(), 0, trigger);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
-    auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, ExecutableSumAggregation<uint64_t>::create());
+    auto exec = ExecutableSumAggregation<uint64_t>::create();
+    auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, exec);
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(wAbstr);
 
     class MockedExecutablePipeline : public ExecutablePipeline {
@@ -173,8 +174,9 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    w->aggregateWindows(10, store, windowDef, buf);
-    w->aggregateWindows(10, store, windowDef, buf);
+    auto windowAction = ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDef, exec);
+    windowAction->aggregateWindows(10, store, windowDef, buf);
+    windowAction->aggregateWindows(10, store, windowDef, buf);
 
     size_t tupleCnt = buf.getNumberOfTuples();
 
@@ -198,7 +200,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType(), 0, trigger);
 
-    auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
+    auto exec = ExecutableSumAggregation<int64_t>::create();
+    auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec);
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
     class MockedExecutablePipeline : public ExecutablePipeline {
@@ -244,8 +247,9 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    w->aggregateWindows(10, store, windowDef, buf);
-    w->aggregateWindows(11, store, windowDef, buf);//this call should not change anything
+    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef,exec);
+    windowAction->aggregateWindows(10, store, windowDef, buf);
+    windowAction->aggregateWindows(11, store, windowDef, buf);//this call should not change anything
 
     ASSERT_NE(buf.getBuffer(), nullptr);
 
@@ -266,8 +270,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType(), 0, trigger);
-
-    auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, ExecutableSumAggregation<int64_t>::create());
+    auto exec = ExecutableSumAggregation<int64_t>::create();
+    auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec);
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
     class MockedExecutablePipeline : public ExecutablePipeline {
@@ -315,8 +319,9 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
     //    auto typedWindowHandler = w->as<int64_t, int64_t, int64_t, int64_t>();
-    w->aggregateWindows(10, store, windowDef, buf);
-    w->aggregateWindows(11, store, windowDef, buf);
+    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec);
+    windowAction->aggregateWindows(10, store, windowDef, buf);
+    windowAction->aggregateWindows(11, store, windowDef, buf);
 
     size_t tupleCnt = buf.getNumberOfTuples();
 

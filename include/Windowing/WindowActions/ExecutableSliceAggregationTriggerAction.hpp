@@ -8,11 +8,13 @@ namespace NES::Windowing {
 class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowAction {
   public:
     static BaseExecutableWindowActionPtr create();
-
-    bool doAction();
-
-  private:
     ExecutableSliceAggregationTriggerAction();
+
+    bool doAction(TupleBuffer& tupleBuffer);
+
+    std::string toString();
+    std::string getActionResultAsString(TupleBuffer& buffer);
+  private:
 };
 }// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_

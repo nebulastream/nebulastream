@@ -45,6 +45,11 @@ class DistributionCharacteristic {
      */
     Type getType();
 
+    /**
+   * @return The DistributionCharacteristic type.
+   */
+    std::string getTypeAsString();
+
   private:
     Type type;
 };
