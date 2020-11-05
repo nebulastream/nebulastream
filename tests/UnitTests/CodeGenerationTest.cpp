@@ -22,8 +22,8 @@
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
@@ -43,8 +43,9 @@
 #include <iostream>
 #include <utility>
 
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 using std::cout;
 using std::endl;
@@ -891,7 +892,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
         Attribute("key", BasicType::UINT64), sum,
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
     auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
-    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1 );
+    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1);
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
@@ -949,7 +950,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
     auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
-    codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1 );
+    codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1);
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
@@ -1008,7 +1009,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
     auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
-    codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1 );
+    codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1);
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
@@ -1099,6 +1100,36 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     EXPECT_EQ(results[9], 210);
     EXPECT_EQ(results[10], 5);
     EXPECT_EQ(results[11], 12);
+}
+
+TEST_F(CodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
+    /* prepare objects for test */
+    WorkerContext wctx(NesThread::getId());
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    SchemaPtr schema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
+
+    auto codeGenerator = CCodeGenerator::create();
+    auto context1 = PipelineContext::create();
+
+    codeGenerator->generateCodeForScan(schema, context1);
+    WindowTriggerPolicyPtr trigger = OnRecordTriggerPolicyDescription::create();
+
+    auto sum = SumAggregationDescriptor::on(Attribute("value", UINT64));
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+
+    auto windowDefinition = LogicalWindowDefinition::create(
+        Attribute("key", UINT64), sum,
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
+
+    auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1);
+    std::string codeString = codeGenerator->getSourceCode(context1->code);
+
+    auto found = codeString.find("windowHandler->trigger();");
+    cout << "code=" << codeString << std::endl;
+    EXPECT_NE(
+        found, std::string::npos);
 }
 
 /**

@@ -29,6 +29,7 @@
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 
 namespace NES {
 
@@ -515,8 +516,19 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
 
-    NES_DEBUG("CCodeGenerator: Generate code for pipetype" << context->pipelineName << ": "
-                                                           << " with code=" << context->code);
+    if(window) {
+        NES_DEBUG("CCodeGenerator: Generate code for pipetype" << context->pipelineName << ": "
+                                                               << " with code=" << context->code);
+
+        if (window->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnRecord) {
+            NES_DEBUG("CCodeGenerator: add trigger triggerOnRecord");
+            auto trigger = FunctionCallStatement("trigger");
+            auto call =
+                std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
+            context->code->currentCodeInsertionPoint->addStatement(call);
+        }
+    }
+
 
     return true;
 }
@@ -811,10 +823,63 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
 
+    if(window) {
+        NES_DEBUG("CCodeGenerator: Generate code for pipetype" << context->pipelineName << ": "
+                                                               << " with code=" << context->code);
+
+        if (window->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnRecord) {
+            NES_DEBUG("CCodeGenerator: add trigger triggerOnRecord");
+            auto trigger = FunctionCallStatement("trigger");
+            auto call =
+                std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
+            context->code->currentCodeInsertionPoint->addStatement(call);
+        }
+    }
+
     NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
                                                   << " with code=" << context->code);
     return true;
 }
+
+std::string CCodeGenerator::getSourceCode(GeneratedCodePtr code)
+{
+    // FunctionDeclaration main_function =
+    auto tf = getTypeFactory();
+    FunctionBuilder functionBuilder = FunctionBuilder::create("compiled_query")
+        .returns(tf->createDataType(DataTypeFactory::createUInt32()))
+        .addParameter(code->varDeclarationInputBuffer)
+        .addParameter(code->varDeclarationExecutionContext)
+        .addParameter(code->varDeclarationWorkerContext);
+    code->variableDeclarations.push_back(code->varDeclarationNumberOfResultTuples);
+    for (auto& variableDeclaration : code->variableDeclarations) {
+        functionBuilder.addVariableDeclaration(variableDeclaration);
+    }
+    for (auto& variableStatement : code->variableInitStmts) {
+        functionBuilder.addStatement(variableStatement);
+    }
+
+    /* here comes the code for the processing loop */
+    functionBuilder.addStatement(code->forLoopStmt);
+
+    /* add statements executed after the for loop, for example cleanup code */
+    for (auto& stmt : code->cleanupStmts) {
+        functionBuilder.addStatement(stmt);
+    }
+
+    /* add return statement */
+    functionBuilder.addStatement(code->returnStmt);
+
+    FileBuilder fileBuilder = FileBuilder::create("query.cpp");
+    /* add core declarations */
+    fileBuilder.addDeclaration(code->structDeclaratonInputTuple);
+    /* add generic declarations by operators*/
+    for (auto& typeDeclaration : code->typeDeclarations) {
+        fileBuilder.addDeclaration(typeDeclaration);
+    }
+    CodeFile file = fileBuilder.addDeclaration(functionBuilder.build()).build();
+    return file.code;
+}
+
 
 ExecutablePipelinePtr CCodeGenerator::compile(GeneratedCodePtr code) {
 

@@ -90,6 +90,9 @@ class CCodeGenerator : public CodeGenerator {
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
     ExecutablePipelinePtr compile(GeneratedCodePtr code) override;
+
+    std::string getSourceCode(GeneratedCodePtr code) override;
+
     ~CCodeGenerator() override;
 
   private:

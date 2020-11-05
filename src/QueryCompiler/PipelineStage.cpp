@@ -29,7 +29,6 @@ PipelineStage::PipelineStage(
 }
 
 bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
-
     std::stringstream dbgMsg;
     dbgMsg << "Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId() << " stage=" << pipelineStageId;
     if (hasWindowHandler()) {
@@ -99,10 +98,20 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
 
     uint32_t ret = !executablePipeline->execute(inputBuffer, pipelineContext, workerContext);
 
-    if (maxWaterMark != 0) {
+    if (hasWindowHandler() && maxWaterMark != 0) {
         NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());
         pipelineContext->getWindowHandler()->updateAllMaxTs(maxWaterMark, inputBuffer.getOriginId());
+        if (pipelineContext->getWindowDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
+            NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnWatermarkChange");
+            pipelineContext->getWindowHandler()->trigger();
+        }
     }
+
+    if (hasWindowHandler() && pipelineContext->getWindowDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnBuffer) {
+        NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnBuffer");
+        pipelineContext->getWindowHandler()->trigger();
+    }
+
     return ret;
 }
 
