@@ -317,7 +317,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(
         nodeEngine->getBufferManager(),
-        nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1, true);
+        nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
