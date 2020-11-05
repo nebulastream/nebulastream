@@ -11,11 +11,11 @@
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::Windowing {
 

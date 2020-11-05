@@ -28,8 +28,8 @@
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 
 namespace NES {
 
@@ -516,7 +516,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
 
-    if(window) {
+    if (window) {
         NES_DEBUG("CCodeGenerator: Generate code for pipetype" << context->pipelineName << ": "
                                                                << " with code=" << context->code);
 
@@ -528,7 +528,6 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
             context->code->currentCodeInsertionPoint->addStatement(call);
         }
     }
-
 
     return true;
 }
@@ -823,7 +822,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
 
-    if(window) {
+    if (window) {
         NES_DEBUG("CCodeGenerator: Generate code for pipetype" << context->pipelineName << ": "
                                                                << " with code=" << context->code);
 
@@ -841,15 +840,14 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     return true;
 }
 
-std::string CCodeGenerator::generateCode(GeneratedCodePtr code)
-{
+std::string CCodeGenerator::generateCode(GeneratedCodePtr code) {
     // FunctionDeclaration main_function =
     auto tf = getTypeFactory();
     FunctionBuilder functionBuilder = FunctionBuilder::create("compiled_query")
-        .returns(tf->createDataType(DataTypeFactory::createUInt32()))
-        .addParameter(code->varDeclarationInputBuffer)
-        .addParameter(code->varDeclarationExecutionContext)
-        .addParameter(code->varDeclarationWorkerContext);
+                                          .returns(tf->createDataType(DataTypeFactory::createUInt32()))
+                                          .addParameter(code->varDeclarationInputBuffer)
+                                          .addParameter(code->varDeclarationExecutionContext)
+                                          .addParameter(code->varDeclarationWorkerContext);
     code->variableDeclarations.push_back(code->varDeclarationNumberOfResultTuples);
     for (auto& variableDeclaration : code->variableDeclarations) {
         functionBuilder.addVariableDeclaration(variableDeclaration);
@@ -879,7 +877,6 @@ std::string CCodeGenerator::generateCode(GeneratedCodePtr code)
     CodeFile file = fileBuilder.addDeclaration(functionBuilder.build()).build();
     return file.code;
 }
-
 
 ExecutablePipelinePtr CCodeGenerator::compile(GeneratedCodePtr code) {
 
