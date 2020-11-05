@@ -14,5 +14,8 @@ FieldAccessExpressionNodePtr WatermarkStrategy::getField() {
 uint64_t WatermarkStrategy::getDelay() {
     return delay;
 }
+bool WatermarkStrategy::equal(WatermarkStrategyPtr other) {
+    return (delay == other->getDelay() && onField == other->getField());
+}
 
 } // namespace NES::Windowing
