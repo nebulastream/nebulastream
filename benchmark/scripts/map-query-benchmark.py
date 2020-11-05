@@ -13,6 +13,10 @@ import math
 folder = os.path.dirname(resultCsvFile)
 mapQueryFileDF = pd.read_csv(resultCsvFile)
 
+# Adding bytesPerSecond and tuplesPerSecond columns
+mapQueryFileDF["TuplesPerSecond"] = mapQueryFileDF["ProcessedTuples"] / mapQueryFileDF["PeriodLength"]
+mapQueryFileDF["BytesPerSecond"] = mapQueryFileDF["ProcessedBytes"] / mapQueryFileDF["PeriodLength"]
+
 
 # Calculate avg throughput for one ingestionrate
 mapQueryFileDF.drop(mapQueryFileDF.loc[mapQueryFileDF['Ingestionrate'] < 1e6].index, inplace=True)
@@ -22,19 +26,19 @@ yData = []
 yErr = []
 
 for i, (ingestionRate, gbf) in enumerate(groups):
-	print("Ingestionrate {:e} has throughput of {:e} tup/s".format(float(ingestionRate), gbf["ProcessedTuples"].mean()))
+	print("Ingestionrate {:e} has throughput of {:e} tup/s".format(float(ingestionRate), gbf["TuplesPerSecond"].mean()))
 	xData.append(ingestionRate)
-	yData.append(gbf["ProcessedTuples"].mean())
-	yErr.append(gbf["ProcessedTuples"].std())
+	yData.append(gbf["TuplesPerSecond"].mean())
+	yErr.append(gbf["TuplesPerSecond"].std())
 	
 
-highestTuplesPerSecondIngestrate = groups["ProcessedTuples"].mean().keys().to_list()[groups["ProcessedTuples"].mean().argmax()]
+highestTuplesPerSecondIngestrate = groups["TuplesPerSecond"].mean().keys().to_list()[groups["TuplesPerSecond"].mean().argmax()]
 
-print2Log("Highest avg throughput of {:e} tup/s was achieved with ingestionrate of {:e}".format(groups["ProcessedTuples"].mean().max(), highestTuplesPerSecondIngestrate), __file__)
+print2Log("Highest avg throughput of {:e} tup/s was achieved with ingestionrate of {:e}".format(groups["TuplesPerSecond"].mean().max(), highestTuplesPerSecondIngestrate), __file__)
 
 # Get maximum throughput
-overallHighestThroughput = mapQueryFileDF["ProcessedTuples"].max()
-overallHighestThroughputRow = str(mapQueryFileDF.iloc[mapQueryFileDF["ProcessedTuples"].argmax()].drop("BM_Name").to_dict())
+overallHighestThroughput = mapQueryFileDF["TuplesPerSecond"].max()
+overallHighestThroughputRow = str(mapQueryFileDF.iloc[mapQueryFileDF["TuplesPerSecond"].argmax()].drop("BM_Name").to_dict())
 print2Log("Overall highest throughput of {:e} tup/s was achieved with {}".format(overallHighestThroughput, overallHighestThroughputRow), __file__)
 
 
@@ -45,6 +49,6 @@ plt.savefig(os.path.join(folder, "avg_througput_over_same_ingestrate_map_query.p
 
 
 plt.figure(figsize=(8, 16))
-plt.barh(np.arange(0, len(mapQueryFileDF)), mapQueryFileDF["ProcessedTuples"])
-plt.yticks(np.arange(0, len(mapQueryFileDF)), [millify(x) for x in mapQueryFileDF["ProcessedTuples"]])
+plt.barh(np.arange(0, len(mapQueryFileDF)), mapQueryFileDF["TuplesPerSecond"])
+plt.yticks(np.arange(0, len(mapQueryFileDF)), [millify(x) for x in mapQueryFileDF["TuplesPerSecond"]])
 plt.savefig(os.path.join(folder, "throughput_overall_map_query.pdf"))
