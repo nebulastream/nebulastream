@@ -26,6 +26,8 @@ class WatermarkAssignerLogicalOperatorNode : public LogicalOperatorNode {
 
     OperatorNodePtr copy() override;
 
+    z3::expr getZ3Expression(z3::context& context) override;
+
   private:
     Windowing::WatermarkStrategyPtr watermarkStrategy;
 };
