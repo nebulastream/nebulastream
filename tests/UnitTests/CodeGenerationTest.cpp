@@ -1124,7 +1124,7 @@ TEST_F(CodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
 
     auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1);
-    std::string codeString = codeGenerator->getSourceCode(context1->code);
+    std::string codeString = codeGenerator->generateCode(context1->code);
 
     auto found = codeString.find("windowHandler->trigger();");
     cout << "code=" << codeString << std::endl;
