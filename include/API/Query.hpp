@@ -91,7 +91,12 @@ class Query {
                        const Windowing::WindowTypePtr windowType,
                        const Windowing::WindowAggregationPtr aggregation);
 
-
+    /**
+     * @brief: Create watermark assginer operator.
+     * @param onField filed to retrieve the timestamp for watermark.
+     * @param delay timestamp delay of the watermark.
+     * @return query.
+     */
     Query& assignWatermark(ExpressionItem onField, TimeMeasure delay);
 
     /**

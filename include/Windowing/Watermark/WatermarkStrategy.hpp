@@ -13,7 +13,10 @@ class WatermarkStrategy {
     FieldAccessExpressionNodePtr getField();
     uint64_t getDelay();
   private:
+    // Field where the watermark should be retrieved
     FieldAccessExpressionNodePtr onField;
+
+    // Watermark dela
     uint64_t delay;
 };
 }
