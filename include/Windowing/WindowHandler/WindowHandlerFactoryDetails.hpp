@@ -44,8 +44,12 @@ class WindowHandlerFactoryDetails {
         BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
         if (action->getActionType() == WindowAggregationTriggerAction) {
             executableWindowAction = ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
-        } else if (action->getActionType() == WindowAggregationTriggerAction) {
+        } else if (action->getActionType() == SliceAggregationTriggerAction) {
             executableWindowAction = ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
+        }
+        else
+        {
+            NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
         }
 
         //create the action typed

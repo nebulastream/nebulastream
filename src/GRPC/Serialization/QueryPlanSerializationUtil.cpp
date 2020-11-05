@@ -24,7 +24,7 @@ SerializableQueryPlan* QueryPlanSerializationUtil::serializeQueryPlan(QueryPlanP
 }
 
 QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan) {
-    NES_INFO("QueryPlanSerializationUtil: Deserializing query plan " << serializedQueryPlan->DebugString());
+    NES_TRACE("QueryPlanSerializationUtil: Deserializing query plan " << serializedQueryPlan->DebugString());
     //We deserialize operator and its children together and prepare a map of operator id to operator.
     //We push the children operators to the queue of operators to be deserialized.
     //Every time we encounter an operator to be deserialized, we check in the map if the deserialized operator already exists.
