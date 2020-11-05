@@ -15,7 +15,7 @@ class LogicalWindowDefinition {
      * @param window trigger policy
      * @param window action
      */
-    LogicalWindowDefinition(WindowAggregationPtr windowAggregation,
+    explicit LogicalWindowDefinition(WindowAggregationPtr windowAggregation,
                             WindowTypePtr windowType,
                             DistributionCharacteristicPtr distChar,
                             WindowTriggerPolicyPtr triggerPolicy,
@@ -31,7 +31,7 @@ class LogicalWindowDefinition {
      * @param window trigger policy
      * @param window action
      */
-    LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
+    explicit LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
                             WindowAggregationPtr windowAggregation,
                             WindowTypePtr windowType,
                             DistributionCharacteristicPtr distChar,
@@ -130,10 +130,10 @@ class LogicalWindowDefinition {
     void setTriggerPolicy(WindowTriggerPolicyPtr triggerPolicy);
 
     /**
-    * @brief getter/setter for on trigger action
+    * @brief getter for on trigger action
+     * @return trigger action
     */
     WindowActionDescriptorPtr getTriggerAction() const;
-    void setTriggerAction(WindowActionDescriptorPtr action);
 
   private:
     WindowAggregationPtr windowAggregation;

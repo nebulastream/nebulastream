@@ -288,11 +288,11 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     auto windowAction = windowDetails.mutable_action();
     switch (windowDefinition->getTriggerAction()->getActionType()) {
         case Windowing::ActionType::WindowAggregationTriggerAction: {
-            windowAction->set_type(SerializableOperator_WindowDetails_Action_Type_Complete);
+            windowAction->set_type(SerializableOperator_WindowDetails_TriggerAction_Type_Complete);
             break;
         }
         case Windowing::ActionType::SliceAggregationTriggerAction: {
-            windowAction->set_type(SerializableOperator_WindowDetails_Action_Type_Slicing);
+            windowAction->set_type(SerializableOperator_WindowDetails_TriggerAction_Type_Slicing);
             break;
         }
         default: {
@@ -353,9 +353,9 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     }
 
     Windowing::WindowActionDescriptorPtr action;
-    if (serializedAction.type() == SerializableOperator_WindowDetails_Action_Type_Complete) {
+    if (serializedAction.type() == SerializableOperator_WindowDetails_TriggerAction_Type_Complete) {
         action = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    } else  if (serializedAction.type() == SerializableOperator_WindowDetails_Action_Type_Slicing) {
+    } else  if (serializedAction.type() == SerializableOperator_WindowDetails_TriggerAction_Type_Slicing) {
         action = Windowing::SliceAggregationTriggerActionDescriptor::create();
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize action: " << serializedAction.DebugString());

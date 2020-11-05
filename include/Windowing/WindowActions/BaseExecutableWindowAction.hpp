@@ -15,7 +15,8 @@ class BaseExecutableWindowAction {
 
     virtual std::string toString() = 0;
 
-    virtual std::string getActionResultAsString(TupleBuffer& buffer) = 0;
+    virtual SchemaPtr getWindowSchema() = 0;
+
 };
 }// namespace NES::Windowing
 

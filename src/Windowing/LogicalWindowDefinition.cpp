@@ -84,8 +84,5 @@ void LogicalWindowDefinition::setTriggerPolicy(WindowTriggerPolicyPtr triggerPol
 WindowActionDescriptorPtr LogicalWindowDefinition::getTriggerAction() const {
     return triggerAction;
 }
-void LogicalWindowDefinition::setTriggerAction(WindowActionDescriptorPtr action) {
-    this->triggerAction = action;
-}
 
 }// namespace NES::Windowing

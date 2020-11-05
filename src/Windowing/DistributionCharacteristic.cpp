@@ -21,7 +21,7 @@ DistributionCharacteristic::Type DistributionCharacteristic::getType() {
     return type;
 }
 
-std::string DistributionCharacteristic::getTypeAsString()
+std::string DistributionCharacteristic::toString()
 {
     if(type == Complete)
     {

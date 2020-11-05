@@ -28,12 +28,12 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
     ExecutableSliceAggregationTriggerAction(LogicalWindowDefinitionPtr windowDefinition,
                                             std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) : windowDefinition(windowDefinition),
                                                                                                                                                                              executableWindowAggregation(executableWindowAggregation) {
-        windowTupleSchema = Schema::create()
+        windowSchema = Schema::create()
                                 ->addField(createField("start", UINT64))
                                 ->addField(createField("end", UINT64))
                                 ->addField("key", this->windowDefinition->getOnKey()->getStamp())
                                 ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
-        windowTupleLayout = createRowLayout(windowTupleSchema);
+        windowTupleLayout = createRowLayout(windowSchema);
 
         windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
     }
@@ -101,13 +101,12 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
         NES_DEBUG("AggregationWindowHandler::aggregateWindows: current watermark is=" << watermark << " minWatermark=" << store->getMinWatermark());
 
         // create result vector of windows
-        auto windows = std::vector<WindowState>();
 
         //TODO this will be replaced by the the watermark operator
         // iterate over all slices and update the partial final aggregates
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
-        NES_DEBUG("AggregationWindowHandler: trigger " << windows.size() << " windows, on " << slices.size() << " slices");
+        NES_DEBUG("AggregationWindowHandler: trigger "  << slices.size() << " slices");
 
         //if slice creator, find slices which can be send but did not send already
         NES_DEBUG("AggregationWindowHandler SL: trigger Slicing for " << slices.size() << " slices");
@@ -152,14 +151,19 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
     }
 
     std::string getActionResultAsString(TupleBuffer& buffer) {
-        return UtilityFunctions::prettyPrintTupleBuffer(buffer, windowTupleSchema);
+        return UtilityFunctions::prettyPrintTupleBuffer(buffer, windowSchema);
+    }
+
+    SchemaPtr getWindowSchema()
+    {
+        return windowSchema;
     }
 
   private:
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    SchemaPtr windowTupleSchema;
+    SchemaPtr windowSchema;
     MemoryLayoutPtr windowTupleLayout;
 };
 }// namespace NES::Windowing

@@ -29,12 +29,12 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
     ExecutableCompleteAggregationTriggerAction(LogicalWindowDefinitionPtr windowDefinition,
                                                std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) : windowDefinition(windowDefinition),
                                                                                                                                                                                 executableWindowAggregation(executableWindowAggregation) {
-        windowTupleSchema = Schema::create()
+        windowSchema = Schema::create()
                                 ->addField(createField("start", UINT64))
                                 ->addField(createField("end", UINT64))
                                 ->addField("key", windowDefinition->getOnKey()->getStamp())
                                 ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
-        windowTupleLayout = createRowLayout(windowTupleSchema);
+        windowTupleLayout = createRowLayout(windowSchema);
 
         windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
     }
@@ -186,14 +186,19 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
     }
 
     std::string getActionResultAsString(TupleBuffer& buffer) {
-        return UtilityFunctions::prettyPrintTupleBuffer(buffer, windowTupleSchema);
+        return UtilityFunctions::prettyPrintTupleBuffer(buffer, windowSchema);
+    }
+
+    SchemaPtr getWindowSchema()
+    {
+        return windowSchema;
     }
 
   private:
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    SchemaPtr windowTupleSchema;
+    SchemaPtr windowSchema;
     MemoryLayoutPtr windowTupleLayout;
 };
 }// namespace NES::Windowing
