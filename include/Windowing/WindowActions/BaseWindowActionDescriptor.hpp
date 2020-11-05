@@ -22,5 +22,5 @@ class BaseWindowActionDescriptor {
     ActionType action;
 };
 
-}
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_WINDOWACTIONDESCRIPTOR_HPP_

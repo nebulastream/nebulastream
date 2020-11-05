@@ -16,10 +16,10 @@ class LogicalWindowDefinition {
      * @param window action
      */
     explicit LogicalWindowDefinition(WindowAggregationPtr windowAggregation,
-                            WindowTypePtr windowType,
-                            DistributionCharacteristicPtr distChar,
-                            WindowTriggerPolicyPtr triggerPolicy,
-                            WindowActionDescriptorPtr windowAction);
+                                     WindowTypePtr windowType,
+                                     DistributionCharacteristicPtr distChar,
+                                     WindowTriggerPolicyPtr triggerPolicy,
+                                     WindowActionDescriptorPtr windowAction);
 
     /**
      * @brief This constructor constructs a key-by window
@@ -32,12 +32,12 @@ class LogicalWindowDefinition {
      * @param window action
      */
     explicit LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
-                            WindowAggregationPtr windowAggregation,
-                            WindowTypePtr windowType,
-                            DistributionCharacteristicPtr distChar,
-                            uint64_t numberOfInputEdges,
-                            WindowTriggerPolicyPtr triggerPolicy,
-                            WindowActionDescriptorPtr windowAction);
+                                     WindowAggregationPtr windowAggregation,
+                                     WindowTypePtr windowType,
+                                     DistributionCharacteristicPtr distChar,
+                                     uint64_t numberOfInputEdges,
+                                     WindowTriggerPolicyPtr triggerPolicy,
+                                     WindowActionDescriptorPtr windowAction);
 
     /**
      * @brief Create a new window definition for a global window

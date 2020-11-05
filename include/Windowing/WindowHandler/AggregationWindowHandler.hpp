@@ -10,14 +10,14 @@
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
+#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
-#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
 
 namespace NES::Windowing {
 
@@ -28,7 +28,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                                       std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
                                       ExecutableOnTimeTriggerPtr executablePolicyTrigger,
                                       BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction)
-        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)), executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)){
+        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)), executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)) {
     }
 
     ~AggregationWindowHandler() {
@@ -72,9 +72,9 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         if (tupleBuffer.getNumberOfTuples() > 0) {
             NES_DEBUG("AggregationWindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
-                                                   << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, executableWindowAction->getWindowSchema())
-                                                   << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << executableWindowAction->toString()
-                                                   << std::endl);
+                                                                               << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, executableWindowAction->getWindowSchema())
+                                                                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << executableWindowAction->toString()
+                                                                               << std::endl);
             //forward buffer to next pipeline stage
             queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
         } else {

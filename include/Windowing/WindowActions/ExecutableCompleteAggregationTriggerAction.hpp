@@ -22,7 +22,7 @@ template<class KeyType, class InputType, class PartialAggregateType, class Final
 class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAction<KeyType, InputType, PartialAggregateType, FinalAggregateType> {
   public:
     static ExecutableCompleteAggregationTriggerActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> create(LogicalWindowDefinitionPtr windowDefinition,
-                                                                                                              std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
+                                                                                                                              std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
         return std::make_shared<ExecutableCompleteAggregationTriggerAction>(windowDefinition, executableWindowAggregation);
     }
 
@@ -30,10 +30,10 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                                                std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) : windowDefinition(windowDefinition),
                                                                                                                                                                                 executableWindowAggregation(executableWindowAggregation) {
         windowSchema = Schema::create()
-                                ->addField(createField("start", UINT64))
-                                ->addField(createField("end", UINT64))
-                                ->addField("key", windowDefinition->getOnKey()->getStamp())
-                                ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+                           ->addField(createField("start", UINT64))
+                           ->addField(createField("end", UINT64))
+                           ->addField("key", windowDefinition->getOnKey()->getStamp())
+                           ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(windowSchema);
 
         windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
@@ -189,8 +189,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         return UtilityFunctions::prettyPrintTupleBuffer(buffer, windowSchema);
     }
 
-    SchemaPtr getWindowSchema()
-    {
+    SchemaPtr getWindowSchema() {
         return windowSchema;
     }
 

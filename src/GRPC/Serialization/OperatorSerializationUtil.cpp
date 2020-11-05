@@ -41,12 +41,12 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 
+#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
-#include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
-#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -355,7 +355,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     Windowing::WindowActionDescriptorPtr action;
     if (serializedAction.type() == SerializableOperator_WindowDetails_TriggerAction_Type_Complete) {
         action = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    } else  if (serializedAction.type() == SerializableOperator_WindowDetails_TriggerAction_Type_Slicing) {
+    } else if (serializedAction.type() == SerializableOperator_WindowDetails_TriggerAction_Type_Slicing) {
         action = Windowing::SliceAggregationTriggerActionDescriptor::create();
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize action: " << serializedAction.DebugString());

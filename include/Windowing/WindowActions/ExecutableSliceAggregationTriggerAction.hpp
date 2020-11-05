@@ -29,10 +29,10 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
                                             std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) : windowDefinition(windowDefinition),
                                                                                                                                                                              executableWindowAggregation(executableWindowAggregation) {
         windowSchema = Schema::create()
-                                ->addField(createField("start", UINT64))
-                                ->addField(createField("end", UINT64))
-                                ->addField("key", this->windowDefinition->getOnKey()->getStamp())
-                                ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
+                           ->addField(createField("start", UINT64))
+                           ->addField(createField("end", UINT64))
+                           ->addField("key", this->windowDefinition->getOnKey()->getStamp())
+                           ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(windowSchema);
 
         windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
@@ -106,7 +106,7 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
         // iterate over all slices and update the partial final aggregates
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
-        NES_DEBUG("AggregationWindowHandler: trigger "  << slices.size() << " slices");
+        NES_DEBUG("AggregationWindowHandler: trigger " << slices.size() << " slices");
 
         //if slice creator, find slices which can be send but did not send already
         NES_DEBUG("AggregationWindowHandler SL: trigger Slicing for " << slices.size() << " slices");
@@ -154,8 +154,7 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
         return UtilityFunctions::prettyPrintTupleBuffer(buffer, windowSchema);
     }
 
-    SchemaPtr getWindowSchema()
-    {
+    SchemaPtr getWindowSchema() {
         return windowSchema;
     }
 
