@@ -5,8 +5,8 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
-#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
+#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
@@ -46,9 +46,7 @@ class WindowHandlerFactoryDetails {
             executableWindowAction = ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
         } else if (action->getActionType() == SliceAggregationTriggerAction) {
             executableWindowAction = ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
-        }
-        else
-        {
+        } else {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
         }
 

@@ -67,7 +67,6 @@ class ExecutableSliceAggregationTriggerAction;
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 using ExecutableSliceAggregationTriggerActionPtr = std::shared_ptr<ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
-
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 

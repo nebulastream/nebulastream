@@ -16,9 +16,7 @@ class BaseExecutableWindowAction {
     virtual std::string toString() = 0;
 
     virtual SchemaPtr getWindowSchema() = 0;
-
 };
 }// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
-

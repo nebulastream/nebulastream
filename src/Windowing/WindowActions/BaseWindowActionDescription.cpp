@@ -2,6 +2,6 @@
 
 namespace NES::Windowing {
 
-BaseWindowActionDescriptor::BaseWindowActionDescriptor(ActionType action) : action(action){}
+BaseWindowActionDescriptor::BaseWindowActionDescriptor(ActionType action) : action(action) {}
 
 }// namespace NES::Windowing
