@@ -852,7 +852,9 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
     auto watermarkTsVariableDeclarationStatement = VarDeclStatement(watermarkTsVariableDeclaration)
         .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
             VarRef(tsVariableDeclaration)));
-    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(watermarkTsVariableDeclarationStatement));
+    auto calculateMaxTupleStatement =
+        watermarkTsVariableDeclarationStatement - Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(watermarkStrategy->getDelay()))));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(calculateMaxTupleStatement));
 
     auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
     setWatermarkFunctionCall.addParameter(VarRef(watermarkTsVariableDeclaration));

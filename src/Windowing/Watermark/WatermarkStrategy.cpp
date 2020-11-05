@@ -12,7 +12,7 @@ FieldAccessExpressionNodePtr WatermarkStrategy::getField() {
     return onField;
 }
 uint64_t WatermarkStrategy::getDelay() {
-    return getDelay();
+    return delay;
 }
 
 } // namespace NES::Windowing

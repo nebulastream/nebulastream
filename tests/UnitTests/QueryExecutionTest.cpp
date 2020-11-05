@@ -67,11 +67,13 @@ class QueryExecutionTest : public testing::Test {
 class WindowSource : public NES::DefaultSource {
   public:
     int64_t timestamp = 5;
+    bool varyWatermark;
     WindowSource(SchemaPtr schema,
                  BufferManagerPtr bufferManager,
                  QueryManagerPtr queryManager,
                  const uint64_t numbersOfBufferToProduce,
-                 size_t frequency) : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency) {}
+                 size_t frequency,
+                 const bool varyWatermark = false) : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency), varyWatermark(varyWatermark) {}
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
@@ -79,7 +81,11 @@ class WindowSource : public NES::DefaultSource {
         for (int i = 0; i < 10; i++) {
             rowLayout->getValueField<int64_t>(i, 0)->write(buffer, 1);
             rowLayout->getValueField<int64_t>(i, 1)->write(buffer, 1);
-            rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp);
+            if(varyWatermark){
+                rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp++);
+            } else {
+                rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp);
+            }
         }
         buffer.setNumberOfTuples(10);
         timestamp = timestamp + 10;
@@ -91,13 +97,14 @@ class WindowSource : public NES::DefaultSource {
     static DataSourcePtr create(BufferManagerPtr bufferManager,
                                 QueryManagerPtr queryManager,
                                 const uint64_t numbersOfBufferToProduce,
-                                size_t frequency) {
+                                size_t frequency,
+                                const bool varyWatermark=false) {
         //        auto windowSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
         auto windowSchema = Schema::create()
                                 ->addField("key", BasicType::INT64)
                                 ->addField("value", BasicType::INT64)
                                 ->addField("ts", BasicType::UINT64);
-        return std::make_shared<WindowSource>(windowSchema, bufferManager, queryManager, numbersOfBufferToProduce, frequency);
+        return std::make_shared<WindowSource>(windowSchema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, varyWatermark);
     }
 };
 
@@ -247,6 +254,57 @@ TEST_F(QueryExecutionTest, filterQuery) {
 }
 
 /**
+ * @brief This test verify that the watermark assigned correctly.
+ * WindowSource -> WatermarkAssignerOperator -> TestSink
+ */
+TEST_F(QueryExecutionTest, watermarkAssignerTest) {
+    uint64_t millisecondOfDelay = 1; /*second of delay*/
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
+    // create a window source
+    auto windowSource = WindowSource::create(
+        nodeEngine->getBufferManager(),
+        nodeEngine->getQueryManager(), /*bufferCnt*/ 1, /*frequency*/ 1, /*varyWatermark*/ true);
+
+    auto query = TestQuery::from(windowSource->getSchema());
+
+    // add a watermark assigner operator with delay of 1 millisecond
+    query.assignWatermark(Attribute("ts"), Milliseconds(millisecondOfDelay));
+
+    // add a sink operator
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowSource->getSchema(), nodeEngine->getBufferManager());
+    query.sink(DummySink::create());
+
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+    auto plan = GeneratedQueryExecutionPlanBuilder::create()
+        .addSink(testSink)
+        .addSource(windowSource)
+        .addOperatorQueryPlan(generatableOperators)
+        .setCompiler(nodeEngine->getCompiler())
+        .setBufferManager(nodeEngine->getBufferManager())
+        .setQueryManager(nodeEngine->getQueryManager())
+        .setQueryId(1)
+        .setQuerySubPlanId(1)
+        .build();
+
+    nodeEngine->registerQueryInNodeEngine(plan);
+    nodeEngine->startQuery(1);
+
+    // wait till all buffers have been produced
+    testSink->completed.get_future().get();
+
+    auto& resultBuffer = testSink->get(0);
+
+    // 14 because we start at 5 (inclusive) and create 10 records
+    EXPECT_EQ(resultBuffer.getWatermark(), 14-millisecondOfDelay);
+}
+
+
+/**
  * @brief This tests creates a windowed query.
  * WindowSource -> windowOperator -> windowScan -> TestSink
  * The source generates 2. buffers.
@@ -259,14 +317,14 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(
         nodeEngine->getBufferManager(),
-        nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+        nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1, true);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
     auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
 
-    query = query.assignWatermark(Attribute("ts"), Seconds(0)).windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
+    query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
