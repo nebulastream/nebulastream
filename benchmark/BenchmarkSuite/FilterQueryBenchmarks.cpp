@@ -17,13 +17,15 @@ int main() {
 
     // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector(allIngestionRates, 90 * 1000 * 1000, 120 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector(allIngestionRates, 1 * 1000 * 1000, 10 * 1000 * 1000, 1 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector(allIngestionRates, 10 * 1000 * 1000, 120 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
     BenchmarkUtils::createRangeVector(allExperimentsDuration, 10, 20, 10);
 
     std::vector<uint64_t> allPeriodLengths;
     BenchmarkUtils::createRangeVector(allPeriodLengths, 1, 2, 1);
+    BenchmarkUtils::createRangeVector(allPeriodLengths, 2, 3, 1);
 
     std::string benchmarkFolderName = "FilterQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName)) throw RuntimeException("Could not create folder " + benchmarkFolderName);

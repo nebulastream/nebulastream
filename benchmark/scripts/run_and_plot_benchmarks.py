@@ -223,7 +223,7 @@ def plotDataAllBenchmarks(allBenchmarks):
 	return cntErr
 
 def defaultPlotBenchmark(benchmark):
-	print(f"Default plotting {benchmark.name}...")
+	print(f"Default plotting {benchmark}...")
 	for i, csvFile in enumerate(benchmark.resultCsvFiles):
 
 		# Load data into data frame 
@@ -240,8 +240,13 @@ def defaultPlotBenchmark(benchmark):
 		print(duplicateHeaderIndexes)
 		fileDataFrame = fileDataFrame.drop(index=duplicateHeaderIndexes)
 		fileDataFrame.to_csv(csvFile, index=False)
-
-
+		fileDataFrame = pd.read_csv(csvFile)
+		
+		# Adding bytesPerSecond and tuplesPerSecond columns
+		fileDataFrame["TuplesPerSecond"] = fileDataFrame["ProcessedTuples"] / fileDataFrame["PeriodLength"]
+		fileDataFrame["BytesPerSecond"] = fileDataFrame["ProcessedBytes"] / fileDataFrame["PeriodLength"]
+		
+		fileDataFrame.to_csv(csvFile, index=False)
 		fileDataFrame = pd.read_csv(csvFile)
 
 		# Calculate avg throughput for one ingestionrate
@@ -251,20 +256,20 @@ def defaultPlotBenchmark(benchmark):
 		yErr = []
 
 		for i, (ingestionRate, gbf) in enumerate(groups):
-			print("Ingestionrate {:e} has throughput of {:e} tup/s".format(float(ingestionRate), gbf["ProcessedTuples"].mean()))
+			print("Ingestionrate {:e} has throughput of {:e} tup/s".format(float(ingestionRate), gbf["TuplesPerSecond"].mean()))
 			xData.append(ingestionRate)
-			yData.append(gbf["ProcessedTuples"].mean())
-			yErr.append(gbf["ProcessedTuples"].std())
+			yData.append((gbf["TuplesPerSecond"]).mean())
+			yErr.append(gbf["TuplesPerSecond"].std())
 			
 
-		highestTuplesPerSecondIngestrate = groups["ProcessedTuples"].mean().keys().to_list()[groups["ProcessedTuples"].mean().argmax()]
-		avgHighestThroughputStr = "Highest avg throughput of {:e} tup/s was achieved with ingestionrate of {:e}".format(groups["ProcessedTuples"].mean().max(), highestTuplesPerSecondIngestrate)
+		highestTuplesPerSecondIngestrate = groups["TuplesPerSecond"].mean().keys().to_list()[groups["TuplesPerSecond"].mean().argmax()]
+		avgHighestThroughputStr = "Highest avg throughput of {:e} tup/s was achieved with ingestionrate of {:e}".format(groups["TuplesPerSecond"].mean().max(), highestTuplesPerSecondIngestrate)
 		printHighlight(avgHighestThroughputStr)
 		print2Log(avgHighestThroughputStr)
 
 		# Get maximum throughput
-		overallHighestThroughput = fileDataFrame["ProcessedTuples"].max()
-		overallHighestThroughputRow = str(fileDataFrame.iloc[fileDataFrame["ProcessedTuples"].argmax()].drop("BM_Name").to_dict())
+		overallHighestThroughput = fileDataFrame["TuplesPerSecond"].max()
+		overallHighestThroughputRow = str(fileDataFrame.iloc[fileDataFrame["TuplesPerSecond"].argmax()].drop("BM_Name").to_dict())
 		overallHighestThroughputStr = "Overall highest throughput of {:e} tup/s was achieved with {}".format(overallHighestThroughput, overallHighestThroughputRow)
 		printHighlight(overallHighestThroughputStr)
 		print2Log(overallHighestThroughputStr)
@@ -276,8 +281,8 @@ def defaultPlotBenchmark(benchmark):
 		plt.savefig(os.path.join(folder, f"avg_througput_over_same_ingestrate_{benchmark.name}_{i}.pdf"))
 
 		plt.figure(figsize=(8, 16))
-		plt.barh(np.arange(0, len(fileDataFrame)), fileDataFrame["ProcessedTuples"])
-		plt.yticks(np.arange(0, len(fileDataFrame)), [millify(x) for x in fileDataFrame["ProcessedTuples"]])
+		plt.barh(np.arange(0, len(fileDataFrame)), fileDataFrame["TuplesPerSecond"])
+		plt.yticks(np.arange(0, len(fileDataFrame)), [millify(x) for x in fileDataFrame["TuplesPerSecond"]])
 		plt.savefig(os.path.join(folder, f"throughput_overall_{benchmark.name}_{i}.pdf"))
 
 
@@ -300,10 +305,10 @@ if __name__ == '__main__':
 	validBenchmarkNames = options.benchmarkNames if options.benchmarkNames else "."
 	validBenchmarks = findAllValidBenchmarks(benchmarkFolder, validBenchmarkNames, fileDirectory)
 	
-	#printAllBenchmarks(validBenchmarks)
-	#if not validBenchmarks:
-	#	print("Could not find any benchmarks. Please adjust -b param!")
-	#	exit(1)
+	printAllBenchmarks(validBenchmarks)
+	if not validBenchmarks:
+		print("Could not find any benchmarks. Please adjust -b param!")
+		exit(1)
 
 	if options.noConfirmation:
 		confirmation = confirmInput("Do you want to execute above benchmarks? [Y/n]: ")
@@ -313,6 +318,7 @@ if __name__ == '__main__':
 
 	startTimeStamp = datetime.now()
 	errRunBenchmarks = runAllBenchmarks(validBenchmarks, benchmarkFolder)
+	
 	changeWorkingDirectory(oldCWD)
 
 	errPlotting = plotDataAllBenchmarks(validBenchmarks)
@@ -332,6 +338,7 @@ if __name__ == '__main__':
 	else:
 		printFail(message)
 
+	print("---------------------------------------------------")
 
 	delta = endTimeStamp - startTimeStamp
 	
