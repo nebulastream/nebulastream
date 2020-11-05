@@ -65,7 +65,7 @@ def printHighlight(message):
 	printWithColor(message, bcolors.OKCYAN)
 
 def print2Log(message, file=__file__):
-	with open(LOG_FILE, 'a') as f:
+	with open(LOG_FILE, 'a+') as f:
 		f.write(f"\n----------------------{file}----------------------\n")
 		f.write(f"{message}")
 		f.write(f"\n----------------------{file}----------------------\n")
@@ -76,6 +76,7 @@ def parseArguments():
 	parser.add_argument("-b", "--benchmarks", nargs="+", action="store", dest="benchmarkNames", help="Name of benchmark executables that should be run, if none then all benchmark executables are used. Regex is supported")
 	parser.add_argument("-f", "--folder", action="store", dest="benchmarkFolder", help="Folder in which all benchmark executables lie", required=True)
 	parser.add_argument("-nc", "--no-confirmation", action="store_false", dest="noConfirmation", help="If this flag is set then the script will ask if it should run the found benchmarks")
+	parser.add_argument("-m", "--message", action="store", dest="runMessage", help="If a message is present, then this will be written into the log file. This may help if one executes different benchmarks")
 
 	args = parser.parse_args()
 	return (args)
@@ -224,7 +225,7 @@ def plotDataAllBenchmarks(allBenchmarks):
 
 def defaultPlotBenchmark(benchmark):
 	print(f"Default plotting {benchmark}...")
-	for i, csvFile in enumerate(benchmark.resultCsvFiles):
+	for counterCsvFile, csvFile in enumerate(benchmark.resultCsvFiles):
 
 		# Load data into data frame 
 		folder = os.path.dirname(csvFile)
@@ -283,7 +284,7 @@ def defaultPlotBenchmark(benchmark):
 		plt.figure(figsize=(8, 16))
 		plt.barh(np.arange(0, len(fileDataFrame)), fileDataFrame["TuplesPerSecond"])
 		plt.yticks(np.arange(0, len(fileDataFrame)), [millify(x) for x in fileDataFrame["TuplesPerSecond"]])
-		plt.savefig(os.path.join(folder, f"throughput_overall_{benchmark.name}_{i}.pdf"))
+		plt.savefig(os.path.join(folder, f"throughput_overall_{benchmark.name}_{counterCsvFile}.pdf"))
 
 
 if __name__ == '__main__':
@@ -297,8 +298,9 @@ if __name__ == '__main__':
 	fileDirectory = os.path.dirname(os.path.realpath(__file__))
 	oldCWD = os.getcwd()
 	todayString = datetime.now().strftime('%Y%m%d_%H%M%S')
-	LOG_FILE = os.path.join(todayString, LOG_FILE)
+	LOG_FILE = os.path.abspath(os.path.join(todayString, LOG_FILE))
 	createFolder(todayString)
+	
 	changeWorkingDirectory(todayString)
 
 	benchmarkFolder = os.path.join(oldCWD, options.benchmarkFolder)
@@ -316,6 +318,10 @@ if __name__ == '__main__':
 			print("Exiting script now...")
 			exit(1)
 
+
+	if options.runMessage:
+		print2Log(options.runMessage)
+	
 	startTimeStamp = datetime.now()
 	errRunBenchmarks = runAllBenchmarks(validBenchmarks, benchmarkFolder)
 	
