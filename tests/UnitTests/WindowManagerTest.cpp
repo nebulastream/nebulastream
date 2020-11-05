@@ -181,8 +181,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
     auto windowAction = ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDef, exec);
-//    std::shared_ptr<ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>> windActionDetail =
-//        std::dynamic_pointer_cast<ExecutableCompleteAggregationTriggerActionPtr<uint64_t, uint64_t, uint64_t, uint64_t>>(windowAction);
 
     windowAction->aggregateWindows(10, store, windowDef, buf);
     windowAction->aggregateWindows(10, store, windowDef, buf);

@@ -48,7 +48,7 @@ class DistributionCharacteristic {
     /**
    * @return The DistributionCharacteristic type.
    */
-    std::string getTypeAsString();
+    std::string toString();
 
   private:
     Type type;
