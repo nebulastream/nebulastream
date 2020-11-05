@@ -102,6 +102,8 @@ class LogicalOperatorFactory {
 
     /**
     * @brief Create a specialized watermark assigner operator.
+    * @param watermarkStrategy strategy to be used to assign the watermark
+    * @param id: the id of the operator if not defined then next free operator id is used.
     * @return LogicalOperatorNodePtr
     */
     static LogicalOperatorNodePtr createWatermarkAssignerOperator(const Windowing::WatermarkStrategyPtr watermarkStrategy, OperatorId id = UtilityFunctions::getNextOperatorId());

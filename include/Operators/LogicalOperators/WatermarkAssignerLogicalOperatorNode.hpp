@@ -9,14 +9,7 @@ class WatermarkAssignerLogicalOperatorNode : public LogicalOperatorNode {
   public:
     WatermarkAssignerLogicalOperatorNode(const Windowing::WatermarkStrategyPtr watermarkStrategy, OperatorId id);
 
-    Windowing::WatermarkStrategyPtr getWatermarkStrategy();
-
-    /**
-     * @brief infers the input and out schema of this operator depending on its child.
-     * @throws Exception the predicate expression has to return a boolean.
-     * @return true if schema was correctly inferred
-     */
-    bool inferSchema() override;
+    Windowing::WatermarkStrategyPtr getWatermarkStrategy() const;
 
     bool equal(const NodePtr rhs) const override;
 
