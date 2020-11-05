@@ -135,6 +135,8 @@ class CodeGenerator {
      */
     virtual ExecutablePipelinePtr compile(GeneratedCodePtr code) = 0;
 
+    virtual std::string getSourceCode(GeneratedCodePtr code) = 0;
+
     virtual ~CodeGenerator();
 
     CompilerTypesFactoryPtr getTypeFactory();
