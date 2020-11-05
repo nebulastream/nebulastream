@@ -841,7 +841,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     return true;
 }
 
-std::string CCodeGenerator::getSourceCode(GeneratedCodePtr code)
+std::string CCodeGenerator::generateCode(GeneratedCodePtr code)
 {
     // FunctionDeclaration main_function =
     auto tf = getTypeFactory();
@@ -883,46 +883,8 @@ std::string CCodeGenerator::getSourceCode(GeneratedCodePtr code)
 
 ExecutablePipelinePtr CCodeGenerator::compile(GeneratedCodePtr code) {
 
-    /* function signature:
-     * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
-     */
-
-    // FunctionDeclaration main_function =
-    auto tf = getTypeFactory();
-    FunctionBuilder functionBuilder = FunctionBuilder::create("compiled_query")
-                                          .returns(tf->createDataType(DataTypeFactory::createUInt32()))
-                                          .addParameter(code->varDeclarationInputBuffer)
-                                          .addParameter(code->varDeclarationExecutionContext)
-                                          .addParameter(code->varDeclarationWorkerContext);
-    code->variableDeclarations.push_back(code->varDeclarationNumberOfResultTuples);
-    for (auto& variableDeclaration : code->variableDeclarations) {
-        functionBuilder.addVariableDeclaration(variableDeclaration);
-    }
-    for (auto& variableStatement : code->variableInitStmts) {
-        functionBuilder.addStatement(variableStatement);
-    }
-
-    /* here comes the code for the processing loop */
-    functionBuilder.addStatement(code->forLoopStmt);
-
-    /* add statements executed after the for loop, for example cleanup code */
-    for (auto& stmt : code->cleanupStmts) {
-        functionBuilder.addStatement(stmt);
-    }
-
-    /* add return statement */
-    functionBuilder.addStatement(code->returnStmt);
-
-    FileBuilder fileBuilder = FileBuilder::create("query.cpp");
-    /* add core declarations */
-    fileBuilder.addDeclaration(code->structDeclaratonInputTuple);
-    /* add generic declarations by operators*/
-    for (auto& typeDeclaration : code->typeDeclarations) {
-        fileBuilder.addDeclaration(typeDeclaration);
-    }
-
-    CodeFile file = fileBuilder.addDeclaration(functionBuilder.build()).build();
-    CompiledCodePtr compiledCode = compiler->compile(file.code, true /*debugging flag replace later*/);
+    std::string src = generateCode(code);
+    CompiledCodePtr compiledCode = compiler->compile(src, true /*debugging flag replace later*/);
     return CompiledExecutablePipeline::create(compiledCode);
 }
 

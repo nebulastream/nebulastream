@@ -91,7 +91,7 @@ class CCodeGenerator : public CodeGenerator {
      */
     ExecutablePipelinePtr compile(GeneratedCodePtr code) override;
 
-    std::string getSourceCode(GeneratedCodePtr code) override;
+    std::string generateCode(GeneratedCodePtr code) override;
 
     ~CCodeGenerator() override;
 
