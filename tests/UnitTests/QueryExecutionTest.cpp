@@ -30,6 +30,8 @@
 
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+
 using namespace NES;
 
 class QueryExecutionTest : public testing::Test {
@@ -270,7 +272,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     auto query = TestQuery::from(windowSource->getSchema());
 
     // add a watermark assigner operator with delay of 1 millisecond
-    query.assignWatermark(Attribute("ts"), Milliseconds(millisecondOfDelay));
+    query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"), Milliseconds(millisecondOfDelay)));
 
     // add a sink operator
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowSource->getSchema(), nodeEngine->getBufferManager());

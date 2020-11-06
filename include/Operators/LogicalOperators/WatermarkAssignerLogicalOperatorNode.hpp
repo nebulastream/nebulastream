@@ -1,15 +1,17 @@
 #ifndef NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
 #define NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
 
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES {
 
 class WatermarkAssignerLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    WatermarkAssignerLogicalOperatorNode(const Windowing::WatermarkStrategyPtr watermarkStrategy, OperatorId id);
+    WatermarkAssignerLogicalOperatorNode(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id);
 
-    Windowing::WatermarkStrategyPtr getWatermarkStrategy() const;
+    Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
 
     bool equal(const NodePtr rhs) const override;
 
@@ -22,7 +24,7 @@ class WatermarkAssignerLogicalOperatorNode : public LogicalOperatorNode {
     z3::expr getZ3Expression(z3::context& context) override;
 
   private:
-    Windowing::WatermarkStrategyPtr watermarkStrategy;
+    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
 
 typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;

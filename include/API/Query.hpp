@@ -14,6 +14,11 @@
 #endif// KAFKASINK_HPP
 #include <string>
 
+//namespace NES::Windowing {
+//class WatermarkStrategyDescriptor;
+//typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptorPtr;
+//}
+
 namespace NES {
 
 class OperatorNode;
@@ -97,7 +102,7 @@ class Query {
      * @param delay timestamp delay of the watermark.
      * @return query.
      */
-    Query& assignWatermark(ExpressionItem onField, TimeMeasure delay);
+    Query& assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
 
     /**
      * @brief: Creates a window aggregation.

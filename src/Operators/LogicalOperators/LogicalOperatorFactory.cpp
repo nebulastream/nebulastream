@@ -59,8 +59,8 @@ LogicalOperatorNodePtr LogicalOperatorFactory::createSliceMergingSpecializedOper
     return std::make_shared<SliceMergingOperator>(windowDefinition, id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOperator(const Windowing::WatermarkStrategyPtr watermarkStrategy, OperatorId id) {
-    return std::make_shared<WatermarkAssignerLogicalOperatorNode>(watermarkStrategy, id);
+LogicalOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOperator(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id) {
+    return std::make_shared<WatermarkAssignerLogicalOperatorNode>(watermarkStrategyDescriptor, id);
 }
 
 }// namespace NES

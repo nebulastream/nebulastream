@@ -3,6 +3,7 @@
 
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
+#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 
 namespace NES {
 
@@ -30,7 +31,7 @@ class GeneratableWatermarkAssignerOperator: public WatermarkAssignerLogicalOpera
     */
     const std::string toString() const override;
   private:
-    GeneratableWatermarkAssignerOperator(const Windowing::WatermarkStrategyPtr watermarkStrategy, OperatorId id);
+    GeneratableWatermarkAssignerOperator(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id);
 };
 }// namespace NES
 
