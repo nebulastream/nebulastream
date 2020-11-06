@@ -36,5 +36,6 @@ jobs:
           publish_dir: ./benchmark/scripts
           destination_dir: private/benchmark/
           exclude_assets: '*.py'
+          keep_files: true
           external_repository: nebulastream/nes-server
           publish_branch: master
