@@ -842,6 +842,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 
 bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy, PipelineContextPtr context) {
     auto watermarkFieldName = watermarkStrategy->getField()->getFieldName();
+    NES_ASSERT(context->getInputSchema()->has(watermarkFieldName),"CCOdeGenerator: watermark assigner could not get field \"" << watermarkFieldName << "\" from struct");
+
     AttributeFieldPtr attribute = AttributeField::create(watermarkFieldName,DataTypeFactory::createInt64());
 
     // get the watermark from attribute field
