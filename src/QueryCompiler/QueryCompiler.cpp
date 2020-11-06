@@ -57,6 +57,7 @@ class PipelineStageHolder {
     uint32_t currentStageId;
     ExecutablePipelinePtr executablePipeline;
     Windowing::AbstractWindowHandlerPtr windowHandler;
+    Windowing::AbstractWindowHandlerPtr joinHandler;
     std::set<uint32_t> producers;
     std::set<uint32_t> consumers;
 
@@ -64,7 +65,7 @@ class PipelineStageHolder {
     PipelineStageHolder() = default;
 
     PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline, Windowing::AbstractWindowHandlerPtr windowHandler = Windowing::AbstractWindowHandlerPtr())
-        : currentStageId(currentStageId), executablePipeline(std::move(executablePipeline)), windowHandler(std::move(windowHandler)) {
+        : currentStageId(currentStageId), executablePipeline(std::move(executablePipeline)), windowHandler(std::move(windowHandler)), joinHandler(std::move(joinHandler)) {
         // nop
     }
 };
@@ -117,7 +118,8 @@ void QueryCompiler::compilePipelineStages(
     PipelineContextPtr context) {
 
     std::map<uint32_t, detail::PipelineStageHolder, std::greater<>> executableStages;
-    detail::generateExecutablePipelines(builder.getQueryId(), builder.getQuerySubPlanId(), std::move(codeGenerator), builder.getBufferManager(), builder.getQueryManager(), std::move(context), executableStages);
+    detail::generateExecutablePipelines(builder.getQueryId(), builder.getQuerySubPlanId(),
+                                        std::move(codeGenerator), builder.getBufferManager(), builder.getQueryManager(), std::move(context), executableStages);
 
     if (executableStages.empty()) {
         NES_ERROR("compilePipelineStages failure: no pipelines to generate");
@@ -142,7 +144,8 @@ void QueryCompiler::compilePipelineStages(
                         childPipeline->execute(buffer, workerContext);
                     }
                 },
-                holder.windowHandler);
+                holder.windowHandler,
+                holder.joinHandler);
             if (builder.getWinDef() != nullptr) {
                 executionContext->setWindowDef(builder.getWinDef());
             }
@@ -164,7 +167,8 @@ void QueryCompiler::compilePipelineStages(
                         sink->writeData(buffer, workerContext);
                     }
                 },
-                holder.windowHandler);
+                holder.windowHandler,
+                holder.joinHandler);
             if (builder.getWinDef() != nullptr) {
                 executionContext->setWindowDef(builder.getWinDef());
             }

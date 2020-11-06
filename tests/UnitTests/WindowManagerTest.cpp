@@ -120,7 +120,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation,TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType(), trigger, triggerAction);
 
-    auto windowManager = new WindowManager(windowDef);
+    auto windowManager = new WindowManager(windowDef->getWindowType());
     uint64_t ts = 10;
 
     windowManager->sliceStream(ts, store);
@@ -163,7 +163,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
         MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {
-                                           }) {
+                                           }, nullptr, nullptr) {
             // nop
         }
     };
@@ -238,7 +238,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
         MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContext&) {
-                                           }) {
+                                           }, nullptr, nullptr) {
             // nop
         }
     };
@@ -309,7 +309,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
         MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {
-                                           }) {
+                                           }, nullptr, nullptr) {
             // nop
         }
     };

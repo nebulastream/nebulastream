@@ -641,15 +641,13 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto windowJoinVariableDeclration = VariableDeclaration::create(
         tf->createAnonymusDataType("auto"), "joinHandler");
 
-    NES_ASSERT(!joinDef->getLeftJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
-    NES_ASSERT(!joinDef->getRightJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
+    NES_ASSERT(!joinDef->getJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
     NES_ASSERT(!joinDef->getLeftJoinValue()->getStamp()->isUndefined(), "left join value is undefined");
     NES_ASSERT(!joinDef->getRightJoinValue()->getStamp()->isUndefined(), "right join value is undefined");
 
     auto getJoinHandlerStatement = getJoinWindowHandler(
         context->code->varDeclarationExecutionContext,
-        joinDef->getLeftJoinKey()->getStamp(),
-        joinDef->getRightJoinKey()->getStamp(),
+        joinDef->getJoinKey()->getStamp(),
         joinDef->getLeftJoinValue()->getStamp(),
         joinDef->getRightJoinValue()->getStamp());
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
@@ -663,10 +661,10 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     // Read key value from record
     // int64_t key = windowTuples[recordIndex].key;
     //TODO we have to change this depending on the pipeline
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinDef->getLeftJoinKey()->getFieldName());
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getJoinKey()->getStamp()), joinDef->getJoinKey()->getFieldName());
 
     auto keyVariableAttributeDeclaration =
-        context->code->structDeclaratonInputTuple.getVariableDeclaration(joinDef->getLeftJoinKey()->getFieldName());
+        context->code->structDeclaratonInputTuple.getVariableDeclaration(joinDef->getJoinKey()->getFieldName());
     auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
                                              .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                                                  VarRef(
@@ -722,7 +720,6 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         std::make_shared<BinaryOperatorStatement>(VarRef(windowManagerVarDeclaration).accessPtr(sliceStream));
     context->code->currentCodeInsertionPoint->addStatement(call);
 
-#if 0
     // find the slices for a time stamp
     // uint64_t current_slice_index = windowState->getSliceIndexByTs(current_ts);
     auto getSliceIndexByTs = FunctionCallStatement("getSliceIndexByTs");
@@ -746,14 +743,25 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                           .assign(getPartialAggregatesCall);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
 
+    //    get value of the tuple
+    auto valueVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinValue()->getStamp()), "joinValue");
+    auto valueVariableAttributeDeclaration =
+        context->code->structDeclaratonInputTuple.getVariableDeclaration(joinDef->getLeftJoinValue()->getFieldName());
+    auto valueVariableAttributeStatement = VarDeclStatement(valueVariableDeclaration)
+                                               .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                                                   VarRef(
+                                                       valueVariableAttributeDeclaration)));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        valueVariableAttributeStatement));
+
     // update partial aggregate with join tuple
     // partialAggregates[current_slice_index].push_back(inputTuples[recordIndex]);
     const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
     auto getPartialAggregatesPushback = FunctionCallStatement("push_back");
-    getPartialAggregatesPushback.addParameter(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]);
+    getPartialAggregatesPushback.addParameter(
+        VarRef(valueVariableDeclaration));
     auto statement = partialRef.copy()->accessRef(getPartialAggregatesPushback);
     context->code->currentCodeInsertionPoint->addStatement(statement.copy());
-#endif
     NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
                                                   << " with code=" << context->code);
     return true;
@@ -1067,12 +1075,12 @@ BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(
     return VarRef(pipelineContextVariable).accessRef(call);
 }
 
-BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyTypeLeft, DataTypePtr keyTypeRight, DataTypePtr valueTypeLeft, DataTypePtr valueTypeRight) {
+BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType, DataTypePtr valueTypeLeft, DataTypePtr valueTypeRight) {
     auto tf = getTypeFactory();
-    auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(keyTypeLeft) + ", " + TO_CODE(keyTypeRight) + ","  + TO_CODE(valueTypeLeft)
-                                       + ", " + TO_CODE(valueTypeRight) + " >");
+    auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(KeyType) + "," + TO_CODE(valueTypeLeft)
+                                      + ", " + TO_CODE(valueTypeRight) + " >");
     return VarRef(pipelineContextVariable).accessRef(call);
-//    NES_THROW_RUNTIME_ERROR("join handler not implemented yet");
+    //    NES_THROW_RUNTIME_ERROR("join handler not implemented yet");
 }
 
 BinaryOperatorStatement CCodeGenerator::getStateVariable(VariableDeclaration windowHandlerVariable) {
@@ -1089,7 +1097,6 @@ BinaryOperatorStatement CCodeGenerator::getRightJoinState(VariableDeclaration wi
     auto call = FunctionCallStatement("getLeftJoinState");
     return VarRef(windowHandlerVariable).accessPtr(call);
 }
-
 
 BinaryOperatorStatement CCodeGenerator::getWindowManager(VariableDeclaration windowHandlerVariable) {
     auto call = FunctionCallStatement("getWindowManager");

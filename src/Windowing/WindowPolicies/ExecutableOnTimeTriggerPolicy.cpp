@@ -28,9 +28,11 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
     if (running) {
         return false;
     }
+
     running = true;
     std::string triggerType;
-    if (windowHandler->getWindowDefinition()->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowHandler->getWindowDefinition()->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
+    if (windowHandler->getWindowDefinition()->getDistributionType()->getType() == DistributionCharacteristic::Complete ||
+        windowHandler->getWindowDefinition()->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
         triggerType = "Combining";
     } else {
         triggerType = "Slicing";

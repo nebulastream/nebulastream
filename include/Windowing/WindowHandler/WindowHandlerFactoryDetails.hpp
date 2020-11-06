@@ -31,6 +31,7 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowHandler/JoinHandler.hpp>
+#include <Windowing/WindowHandler/JoinForwardRefs.hpp>
 
 namespace NES::Windowing {
 
@@ -71,6 +72,33 @@ class WindowHandlerFactoryDetails {
         //add compile method return handler
         //create the action
         return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
+    }
+
+    template<class KeyType, class ValueTypeLeft, class ValueTypeRight>
+    static AbstractWindowHandlerPtr createJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition
+                                                      ) {
+        auto policy = joinDefinition->getTriggerPolicy();
+        BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
+        if (policy->getPolicyType() == triggerOnTime) {
+            OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerPolicyDescription>(policy);
+            executablePolicyTrigger = ExecutableOnTimeTriggerPolicy::create(triggerDesc->getTriggerTimeInMs());
+        } else {
+            NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        }
+
+//        auto action = joinDefinition->getTriggerAction();
+//        BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
+//        if (action->getActionType() == WindowAggregationTriggerAction) {
+//            executableWindowAction = ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
+//        } else if (action->getActionType() == SliceAggregationTriggerAction) {
+//            executableWindowAction = ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
+//        } else {
+//            NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
+//        }
+
+        //add compile method return handler
+        //create the action
+        return std::make_shared<Join::JoinHandler<KeyType, ValueTypeLeft, ValueTypeRight>>(joinDefinition, executablePolicyTrigger);
     }
 
     template<class KeyType, class InputType>

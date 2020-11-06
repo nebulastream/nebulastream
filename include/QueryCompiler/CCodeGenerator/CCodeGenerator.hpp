@@ -143,7 +143,7 @@ class CCodeGenerator : public CodeGenerator {
 
     BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
 
-    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyTypeLeft, DataTypePtr keyTypeRight, DataTypePtr valueTypeLeft, DataTypePtr valueTypeRight);
+    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType, DataTypePtr valueTypeLeft, DataTypePtr valueTypeRight);
 
     BinaryOperatorStatement getStateVariable(VariableDeclaration);
 

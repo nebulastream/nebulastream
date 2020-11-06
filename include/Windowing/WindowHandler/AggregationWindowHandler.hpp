@@ -121,7 +121,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         this->originId = originId;
 
         // Initialize AggregationWindowHandler Manager
-        this->windowManager = std::make_shared<WindowManager>(this->windowDefinition);
+        this->windowManager = std::make_shared<WindowManager>(windowDefinition->getWindowType());
         // Initialize StateVariable
         this->windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
         this->nextPipeline = nextPipeline;
@@ -140,10 +140,9 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return windowStateVariable;
     }
 
-    LogicalWindowDefinitionPtr getWindowDefinition() override {
+    LogicalWindowDefinitionPtr getWindowDefinition() {
         return windowDefinition;
     }
-
 
   private:
     LogicalWindowDefinitionPtr windowDefinition;

@@ -56,8 +56,15 @@ class PipelineExecutionContext {
         QuerySubPlanId queryId,
         BufferManagerPtr bufferManager,
         std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
-        Windowing::AbstractWindowHandlerPtr windowHandler = Windowing::AbstractWindowHandlerPtr());
+        Windowing::AbstractWindowHandlerPtr windowHandler,
+        Windowing::AbstractWindowHandlerPtr joinHandler
+        );
 
+//    explicit PipelineExecutionContext(
+//        QuerySubPlanId queryId,
+//        BufferManagerPtr bufferManager,
+//        std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
+//        Windowing::AbstractWindowHandlerPtr windowHandler = Windowing::AbstractWindowHandlerPtr());
     /**
      * @brief Allocates a new tuple buffer.
      * @return TupleBuffer
@@ -97,9 +104,9 @@ class PipelineExecutionContext {
      * @param id
      * @return
      */
-    template<template<class, class, class, class> class WindowHandlerType, class KeyTypeLeft, class KeyTypeRight, class ValueTypeLeft, class ValueTypeRight>
+    template<template<class, class, class> class WindowHandlerType, class KeyType, class ValueTypeLeft, class ValueTypeRight>
     auto getJoinHandler() {
-        return std::dynamic_pointer_cast<WindowHandlerType<KeyTypeLeft, KeyTypeRight, ValueTypeLeft, ValueTypeRight>>(joinHandler);
+        return std::dynamic_pointer_cast<WindowHandlerType<KeyType, ValueTypeLeft, ValueTypeRight>>(joinHandler);
     }
 
     template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
