@@ -1,36 +1,27 @@
 #include <Windowing/LogicalJoinDefinition.hpp>
 namespace NES::Join {
 
-LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKey, FieldAccessExpressionNodePtr rightJoinKey,
+LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey,
                                              FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue,
                                              Windowing::WindowTypePtr windowType)
-    : leftJoinKey(leftJoinKey),
-      rightJoinKey(rightJoinKey),
+    : joinKey(joinKey),
       leftJoinValue(leftJoinValue),
       rightJoinValue(rightJoinValue),
       windowType(windowType) {
 }
 
-LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr leftJoinKey, FieldAccessExpressionNodePtr rightJoinKey,
+LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr joinKey,
                                                        FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue,
                                                        Windowing::WindowTypePtr windowType) {
-    return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKey, rightJoinKey, leftJoinValue, rightJoinValue, windowType);
+    return std::make_shared<Join::LogicalJoinDefinition>(joinKey, leftJoinValue, rightJoinValue, windowType);
 }
 
-FieldAccessExpressionNodePtr LogicalJoinDefinition::getLeftJoinKey() {
-    return leftJoinKey;
+FieldAccessExpressionNodePtr LogicalJoinDefinition::getJoinKey() {
+    return joinKey;
 }
 
-void LogicalJoinDefinition::setLeftJoinKey(FieldAccessExpressionNodePtr key) {
-    this->leftJoinKey = std::move(key);
-}
-
-FieldAccessExpressionNodePtr LogicalJoinDefinition::getRightJoinKey() {
-    return rightJoinKey;
-}
-
-void LogicalJoinDefinition::setRightJoinKey(FieldAccessExpressionNodePtr key) {
-    this->rightJoinKey = std::move(key);
+void LogicalJoinDefinition::setJoinKey(FieldAccessExpressionNodePtr key){
+    this->joinKey = std::move(key);
 }
 
 FieldAccessExpressionNodePtr LogicalJoinDefinition::getLeftJoinValue() {
@@ -57,4 +48,14 @@ void LogicalJoinDefinition::setWindowType(Windowing::WindowTypePtr windowType) {
     this->windowType = std::move(windowType);
 }
 
+Windowing::WindowTriggerPolicyPtr LogicalJoinDefinition::getTriggerPolicy() const {
+    return triggerPolicy;
+}
+void LogicalJoinDefinition::setTriggerPolicy(Windowing::WindowTriggerPolicyPtr triggerPolicy) {
+    this->triggerPolicy = triggerPolicy;
+}
+
+Windowing::WindowActionDescriptorPtr LogicalJoinDefinition::getTriggerAction() const {
+    return triggerAction;
+}
 };// namespace NES::Join

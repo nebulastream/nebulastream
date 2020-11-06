@@ -18,11 +18,11 @@
 
 namespace NES::Windowing {
 
-WindowManager::WindowManager(LogicalWindowDefinitionPtr windowDefinition)
-    : windowDefinition(std::move(windowDefinition)), allowedLateness(0) {}
+WindowManager::WindowManager(Windowing::WindowTypePtr windowType)
+    : windowType(std::move(windowType)), allowedLateness(0) {}
 
-LogicalWindowDefinitionPtr WindowManager::getWindowDefinition() {
-    return windowDefinition;
+Windowing::WindowTypePtr WindowManager::getWindowType() {
+    return windowType;
 }
 
 uint64_t WindowManager::getAllowedLateness() const {

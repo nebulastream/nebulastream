@@ -29,13 +29,13 @@ namespace NES::Windowing {
 class WindowManager {
 
   public:
-    explicit WindowManager(LogicalWindowDefinitionPtr windowDefinition);
+    explicit WindowManager(Windowing::WindowTypePtr windowType);
 
     /**
-     * @brief Get the window definition for the window manager
-     * @return LogicalWindowDefinition
+     * @brief Get the window type for the window manager
+     * @return WindowTypePtr
      */
-    LogicalWindowDefinitionPtr getWindowDefinition();
+    Windowing::WindowTypePtr getWindowType();
 
     /**
      * @brief Get the allowed lateness
@@ -58,8 +58,7 @@ class WindowManager {
         if (store->empty()) {
             // set last watermark to current ts for processing time
             store->setLastWatermark(ts - allowedLateness);
-            auto windowType = windowDefinition->getWindowType();
-            store->nextEdge = windowDefinition->getWindowType()->calculateNextWindowEnd(ts - allowedLateness);
+            store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
             if (windowType->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
@@ -82,7 +81,7 @@ class WindowManager {
             auto& sliceMetaData = store->getSliceMetadata();
             auto newStart = sliceMetaData[currentSlice].getEndTs();
             NES_TRACE("WindowManager: sliceStream newStart=" << newStart);
-            auto nextEdge = windowDefinition->getWindowType()->calculateNextWindowEnd(store->nextEdge);
+            auto nextEdge = windowType->calculateNextWindowEnd(store->nextEdge);
             NES_TRACE("WindowManager: sliceStream nextEdge=" << nextEdge);
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
@@ -91,7 +90,7 @@ class WindowManager {
 
   private:
     const uint64_t allowedLateness;
-    LogicalWindowDefinitionPtr windowDefinition;
+    Windowing::WindowTypePtr windowType;
 };
 
 }// namespace NES::Windowing

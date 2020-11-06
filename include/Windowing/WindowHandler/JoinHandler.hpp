@@ -11,7 +11,7 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
-template<class KeyTypeLeft, class KeyTypeRight, class ValueTypeLeft, class ValueTypeRight>
+template<class KeyType, class ValueTypeLeft, class ValueTypeRight>
 class JoinHandler : public Windowing::AbstractWindowHandler {
   public:
     explicit JoinHandler(LogicalJoinDefinitionPtr joinDefinition,
@@ -93,10 +93,10 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
         this->originId = originId;
 
         // Initialize AggregationWindowHandler Manager
-        this->windowManager = std::make_shared<Windowing::WindowManager>(this->windowDefinition);
+        this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
         // Initialize StateVariable
-        this->leftJoinState = &StateManager::instance().registerState<KeyTypeLeft, Windowing::WindowSliceStore<ValueTypeLeft>*>("leftSide");
-        this->rightJoinState = &StateManager::instance().registerState<KeyTypeRight, Windowing::WindowSliceStore<ValueTypeRight>*>("rightSide");
+        this->leftJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*>("leftSide");
+        this->rightJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeRight>>*>("rightSide");
         this->nextPipeline = nextPipeline;
 
         NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
@@ -122,9 +122,14 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
         return joinDefinition;
     }
 
+    LogicalWindowDefinitionPtr getWindowDefinition() {
+        return nullptr;
+    }
+
+
   private:
-    StateVariable<KeyTypeLeft, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*> leftJoinState;
-    StateVariable<KeyTypeRight, Windowing::WindowSliceStore<std::vector<ValueTypeRight>>*> rightJoinState;
+    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*>* leftJoinState;
+    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeRight>>*>* rightJoinState;
 
     LogicalJoinDefinitionPtr joinDefinition;
     Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;

@@ -20,24 +20,19 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
+using namespace Windowing;
 
 class LogicalJoinDefinition {
   public:
-    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr leftJoinKey, FieldAccessExpressionNodePtr rightJoinKey, FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue, Windowing::WindowTypePtr windowType);
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue, Windowing::WindowTypePtr windowType);
 
-    LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKey, FieldAccessExpressionNodePtr rightJoinKey, FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue, Windowing::WindowTypePtr windowType);
+    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue, Windowing::WindowTypePtr windowType);
 
     /**
     * @brief getter/setter for on left join key
     */
-    FieldAccessExpressionNodePtr getLeftJoinKey();
-    void setLeftJoinKey(FieldAccessExpressionNodePtr key);
-
-    /**
-     * @brief getter/setter for on right join key
-     */
-    FieldAccessExpressionNodePtr getRightJoinKey();
-    void setRightJoinKey(FieldAccessExpressionNodePtr key);
+    FieldAccessExpressionNodePtr getJoinKey();
+    void setJoinKey(FieldAccessExpressionNodePtr key);
 
     /**
     * @brief getter/setter for on left join value
@@ -57,12 +52,23 @@ class LogicalJoinDefinition {
     Windowing::WindowTypePtr getWindowType();
     void setWindowType(Windowing::WindowTypePtr windowType);
 
+    /**
+     * @brief getter/setter for on trigger policy
+     */
+    WindowTriggerPolicyPtr getTriggerPolicy() const;
+    void setTriggerPolicy(WindowTriggerPolicyPtr triggerPolicy);
+
+    /**
+    * @brief getter for on trigger action
+     * @return trigger action
+    */
+    WindowActionDescriptorPtr getTriggerAction() const;
   private:
-    FieldAccessExpressionNodePtr leftJoinKey;
-    FieldAccessExpressionNodePtr rightJoinKey;
+    FieldAccessExpressionNodePtr joinKey;
     FieldAccessExpressionNodePtr leftJoinValue;
     FieldAccessExpressionNodePtr rightJoinValue;
-
+    WindowTriggerPolicyPtr triggerPolicy;
+    WindowActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;
 };
 

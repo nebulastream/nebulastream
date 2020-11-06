@@ -26,8 +26,10 @@ PipelineExecutionContext::PipelineExecutionContext(
     QuerySubPlanId queryId,
     BufferManagerPtr bufferManager,
     std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
-    Windowing::AbstractWindowHandlerPtr windowHandler)
-    : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)), windowHandler(windowHandler) {
+    Windowing::AbstractWindowHandlerPtr windowHandler,
+    Windowing::AbstractWindowHandlerPtr joinHandler
+    )
+    : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)), windowHandler(windowHandler), joinHandler(joinHandler) {
     // nop
 }
 

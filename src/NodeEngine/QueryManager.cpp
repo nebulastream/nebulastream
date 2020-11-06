@@ -217,7 +217,7 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     auto buffer = optBuffer.value();
     auto task = new (buffer.getBuffer()) ReconfigurationTask(descriptor, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
     auto pipelineContext = std::make_shared<PipelineExecutionContext>(queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&) {
-    });
+    }, nullptr, nullptr);
     auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     {
         std::unique_lock lock(workMutex);
