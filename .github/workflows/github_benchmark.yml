@@ -2,6 +2,7 @@ name: NES Benchmark
 
 on:
   schedule:
+    # executes every day at 1:15 am
     - cron: '15 1 * * *'
 
 jobs:  
@@ -26,7 +27,7 @@ jobs:
           personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
           publish_dir: ./benchmark/scripts
           destination_dir: private/benchmark/
-          exclude_assets: '*.py'
+          exclude_assets: '*.py,*.so'
           keep_files: true
           external_repository: nebulastream/nes-server
           publish_branch: master
