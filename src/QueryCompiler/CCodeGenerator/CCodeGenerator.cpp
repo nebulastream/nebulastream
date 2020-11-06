@@ -656,8 +656,16 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto getWindowManagerStatement = getWindowManager(windowJoinVariableDeclration);
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
 
-    auto getWindowStateStatement = getLeftJoinState(windowJoinVariableDeclration);
-    context->code->variableInitStmts.emplace_back(VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
+    if(context->isLeftSide)
+    {
+        auto getWindowStateStatement = getLeftJoinState(windowJoinVariableDeclration);
+        context->code->variableInitStmts.emplace_back(VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
+    }
+    else
+    {
+        auto getWindowStateStatement = getRightJoinState(windowJoinVariableDeclration);
+        context->code->variableInitStmts.emplace_back(VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
+    }
 
     // Read key value from record
     // int64_t key = windowTuples[recordIndex].key;
