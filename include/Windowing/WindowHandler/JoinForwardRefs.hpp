@@ -18,10 +18,8 @@
 #define NES_INCLUDE_JOIN_JOINFORWARDREFS_HPP_
 #include <memory>
 
-namespace NES {
-namespace Join {
+namespace NES::Join {
 class LogicalJoinDefinition;
 typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
-}// namespace Join
-}// namespace NES
+}// namespace NES::Join
 #endif//NES_INCLUDE_JOIN_JOINFORWARDREFS_HPP_

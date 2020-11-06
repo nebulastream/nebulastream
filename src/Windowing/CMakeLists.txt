@@ -13,10 +13,10 @@
 # limitations under the License.
 
 add_source_nes(
-    DistributionCharacteristic.cpp
-    TimeCharacteristic.cpp
+        DistributionCharacteristic.cpp
+        TimeCharacteristic.cpp
         LogicalWindowDefinition.cpp
-
+        LogicalJoinDefinition.cpp
 )
 add_subdirectory(Watermark)
 add_subdirectory(Runtime)

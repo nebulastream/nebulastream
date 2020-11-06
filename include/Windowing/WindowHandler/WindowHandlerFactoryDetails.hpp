@@ -30,6 +30,8 @@
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
+#include <Windowing/WindowHandler/JoinHandler.hpp>
+
 namespace NES::Windowing {
 
 class WindowHandlerFactoryDetails {
@@ -48,7 +50,7 @@ class WindowHandlerFactoryDetails {
     static AbstractWindowHandlerPtr createAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
                                                             std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
         auto policy = windowDefinition->getTriggerPolicy();
-        ExecutableOnTimeTriggerPtr executablePolicyTrigger;
+        BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
         if (policy->getPolicyType() == triggerOnTime) {
             OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerPolicyDescription>(policy);
             executablePolicyTrigger = ExecutableOnTimeTriggerPolicy::create(triggerDesc->getTriggerTimeInMs());
@@ -66,7 +68,8 @@ class WindowHandlerFactoryDetails {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
         }
 
-        //create the action typed
+        //add compile method return handler
+        //create the action
         return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
     }
 
