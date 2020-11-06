@@ -1,17 +1,8 @@
 name: NES Benchmark
 
 on:
-  push:
-    branches:
-      - '*'
-    tags-ignore:
-      - '*'
-    paths-ignore:
-      - include/Version/version.hpp
-      - README.md
-  pull_request:
-    branches:
-      - '*'
+  schedule:
+    - cron: '15 1 * * *'
 
 jobs:  
   benchmark-job:
