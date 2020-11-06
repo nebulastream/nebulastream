@@ -26,4 +26,5 @@ add_source_nes(
         QueryMergerPhase.cpp
         QueryPlacementRefinementPhase.cpp
         GlobalQueryPlanUpdatePhase.cpp
+        Z3ExpressionInferencePhase.cpp
 )
