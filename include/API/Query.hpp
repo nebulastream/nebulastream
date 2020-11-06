@@ -87,6 +87,13 @@ class Query {
     Query& merge(Query* subQuery);
 
     /**
+     * This looks ugly, but we can't reference to QueryPtr at this line.
+     * @param subQuery is the query to be merged
+     * @return
+     */
+    Query& join(Query* subQuery, ExpressionItem onKey, const Windowing::WindowTypePtr windowType);
+
+    /**
      * @brief Create Query using queryPlan
      * @param sourceStreamName source stream name
      * @param queryPlan the input query plan

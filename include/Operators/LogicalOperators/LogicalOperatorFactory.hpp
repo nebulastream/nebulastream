@@ -110,6 +110,13 @@ class LogicalOperatorFactory {
     static LogicalOperatorNodePtr createMergeOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
+    * @brief Create a specialized join operator.
+    * @param id: the id of the operator if not defined then next free operator id is used.
+    * @return LogicalOperatorNodePtr
+    */
+    static LogicalOperatorNodePtr createJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
      * @brief Create a broadcast operator.
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return LogicalOperatorNodePtr

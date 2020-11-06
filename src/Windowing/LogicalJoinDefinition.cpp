@@ -1,3 +1,4 @@
+#include <Util/Logger.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 namespace NES::Join {
 
@@ -12,10 +13,24 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKe
       triggerPolicy(triggerPolicy) {
 }
 
+LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey,
+                                             Windowing::WindowTypePtr windowType,
+                                             WindowTriggerPolicyPtr triggerPolicy)
+    : joinKey(joinKey),
+      windowType(windowType),
+      triggerPolicy(triggerPolicy) {
+}
+LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr joinKey,
+                                                       Windowing::WindowTypePtr windowType,
+                                                       WindowTriggerPolicyPtr triggerPolicy) {
+    return std::make_shared<Join::LogicalJoinDefinition>(joinKey, windowType, triggerPolicy);
+}
+
 LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr joinKey,
                                                        FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue,
                                                        Windowing::WindowTypePtr windowType,
                                                        WindowTriggerPolicyPtr triggerPolicy) {
+    NES_NOT_IMPLEMENTED();
     return std::make_shared<Join::LogicalJoinDefinition>(joinKey, leftJoinValue, rightJoinValue, windowType, triggerPolicy);
 }
 
