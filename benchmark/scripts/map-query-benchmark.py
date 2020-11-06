@@ -45,10 +45,10 @@ print2Log("Overall highest throughput of {:e} tup/s was achieved with {}".format
 plt.figure(figsize=(8, 16))
 plt.barh(np.arange(0, len(xData)), yData, xerr=yErr)
 plt.yticks(np.arange(0, len(xData)), [f"{millify(x)}\n{millify(y)}" for x,y in zip(xData, yData)])
-plt.savefig(os.path.join(folder, "avg_througput_over_same_ingestrate_map_query.pdf"))
+plt.savefig(os.path.join(folder, "avg_througput_over_same_ingestrate_map_query.png"))
 
 
 plt.figure(figsize=(8, 16))
 plt.barh(np.arange(0, len(mapQueryFileDF)), mapQueryFileDF["TuplesPerSecond"])
 plt.yticks(np.arange(0, len(mapQueryFileDF)), [millify(x) for x in mapQueryFileDF["TuplesPerSecond"]])
-plt.savefig(os.path.join(folder, "throughput_overall_map_query.pdf"))
+plt.savefig(os.path.join(folder, "throughput_overall_map_query.png"))
