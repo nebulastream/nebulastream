@@ -17,8 +17,9 @@ int main() {
 
     // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector(allIngestionRates, 50 * 1000 * 1000, 180 * 1000 * 1000, 10 * 1000 * 1000);
-
+    BenchmarkUtils::createRangeVector(allIngestionRates, 50 * 1000 * 1000, 70 * 1000 * 1000, 10 * 1000 * 1000);
+    //BenchmarkUtils::createRangeVector(allIngestionRates, 50 * 1000 * 1000, 180 * 1000 * 1000, 10 * 1000 * 1000);
+    
     std::vector<uint64_t> allExperimentsDuration;
     BenchmarkUtils::createRangeVector(allExperimentsDuration, 10, 20, 10);
 
