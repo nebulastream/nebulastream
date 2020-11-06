@@ -1,18 +1,3 @@
-/*
-    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        https://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-*/
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
@@ -25,10 +10,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/WatermarkStrategy.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <iostream>
@@ -51,6 +33,24 @@ Query Query::from(const std::string sourceStreamName) {
 Query& Query::merge(Query* subQuery) {
     NES_DEBUG("Query: merge the subQuery to current query");
     OperatorNodePtr op = LogicalOperatorFactory::createMergeOperator();
+    queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+}
+
+Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::WindowTypePtr windowType) {
+    NES_DEBUG("Query: join the subQuery to current query");
+
+    auto keyExpression = onKey.getExpressionNode();
+    if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+    }
+    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+    auto tiggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto joinDefinition = Join::LogicalJoinDefinition::create(fieldAccess, windowType, tiggerPolicy);
+
+    OperatorNodePtr op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;

@@ -26,7 +26,11 @@ class LogicalJoinDefinition {
   public:
     static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue, Windowing::WindowTypePtr windowType, WindowTriggerPolicyPtr triggerPolicy);
 
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, WindowTriggerPolicyPtr triggerPolicy);
+
     LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue, Windowing::WindowTypePtr windowType, WindowTriggerPolicyPtr triggerPolicy);
+
+    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, WindowTriggerPolicyPtr triggerPolicy);
 
     /**
     * @brief getter/setter for on left join key
@@ -63,6 +67,7 @@ class LogicalJoinDefinition {
      * @return trigger action
     */
     WindowActionDescriptorPtr getTriggerAction() const;
+
   private:
     FieldAccessExpressionNodePtr joinKey;
     FieldAccessExpressionNodePtr leftJoinValue;
