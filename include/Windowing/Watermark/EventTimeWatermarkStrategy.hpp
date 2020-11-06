@@ -23,7 +23,7 @@ class EventTimeWatermarkStrategy : public WatermarkStrategy {
     // Field where the watermark should be retrieved
     FieldAccessExpressionNodePtr onField;
 
-    // Watermark dela
+    // Watermark delay
     uint64_t delay;
 
 };

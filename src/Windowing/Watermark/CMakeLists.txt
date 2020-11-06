@@ -6,4 +6,6 @@ add_source_nes(
         EventTimeWatermarkStrategy.cpp
         WatermarkStrategyDescriptor.cpp
         EventTimeWatermarkStrategyDescriptor.cpp
+        ProcessingTimeWatermarkStrategyDescriptor.cpp
+        ProcessingTimeWatermarkStrategy.cpp
 )

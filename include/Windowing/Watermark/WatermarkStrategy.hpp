@@ -11,6 +11,7 @@ class WatermarkStrategy : public std::enable_shared_from_this<WatermarkStrategy>
 
     enum Type {
         EventTimeWatermark,
+        ProcessingTimeWatermark,
     };
 
     virtual Type getType() = 0;

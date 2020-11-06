@@ -873,8 +873,24 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
             VarRef(watermarkTsVariableDeclaration) > getWatermark(context->code->varDeclarationInputBuffer),
             setWatermarkStatement);
         context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
-    } else {
+    } else if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::ProcessingTimeWatermark) {
+        // get the watermark from attribute field
+        // auto watermark_ts = NES::Windowing::getTsFromClock()
+        auto tf = getTypeFactory();
+        auto watermarkTsVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "watermark_ts");
+        auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
+        auto getCurrentTsStatement = VarDeclStatement(watermarkTsVariableDeclaration).assign(getCurrentTs);
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
 
+        // set the watermark
+        // inputTupleBuffer.setWatermark(watermark_ts);
+        auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
+        setWatermarkFunctionCall.addParameter(VarRef(watermarkTsVariableDeclaration));
+        auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
+
+        context->code->currentCodeInsertionPoint->addStatement(setWatermarkStatement.createCopy());
+    } else {
+        NES_ERROR("GeneratableWatermarkAssignerOperator: cannot generate code for watermark strategy " << watermarkStrategy);
     }
 
 
