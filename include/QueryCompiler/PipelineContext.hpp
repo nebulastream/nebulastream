@@ -62,6 +62,7 @@ class PipelineContext {
     bool hasNextPipeline() const;
 
     std::string pipelineName;
+    bool isLeftSide;
 
   private:
     std::vector<PipelineContextPtr> nextPipelines;

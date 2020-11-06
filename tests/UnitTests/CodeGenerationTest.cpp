@@ -98,8 +98,7 @@ class TestPipelineExecutionContext : public PipelineExecutionContext {
             0, std::move(bufferManager), [this](TupleBuffer& buffer, WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            std::move(windowHandler),
-            std::move(joinHandler)){
+            std::move(windowHandler), std::move(joinHandler)){
             // nop
         };
 
@@ -862,7 +861,6 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
-    ;
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
 
     /* execute Stage */
@@ -940,7 +938,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
             buff.isValid();
         },
         windowHandler,
-        nullptr);                                                                          //valid check due to compiler error for unused var
+        nullptr);                                                                                //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
@@ -1059,7 +1057,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
             buff.isValid();
         },
         windowHandler,
-        nullptr);                                                                          //valid check due to compiler error for unused var
+        nullptr);                                                                                //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
@@ -1302,20 +1300,22 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     codeGenerator->generateCodeForScan(source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
     // init window handler
-    auto joinHandler = WindowHandlerFactoryDetails::createJoinHandler<int64_t , int64_t, int64_t>(joinDef);
+    auto joinHandler = WindowHandlerFactoryDetails::createJoinHandler<int64_t, int64_t, int64_t>(joinDef);
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
-          buff.isValid();
+            buff.isValid();
         },
         nullptr,
-        joinHandler);                                                                          //valid check due to compiler error for unused var
+        joinHandler);                                                                            //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     joinHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
+    NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
+    cout << "buffer content=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer,input_schema);
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, joinHandler);
@@ -1323,9 +1323,24 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     stage1->execute(inputBuffer, queryContext, wctx);
 
     //check partial aggregates in window state
-//    auto stateVar = queryContext->getJoinHandler<Join::JoinHandler, uint64_t, uint64_t, uint64_t>()->getLeftJoinState();
-//    cout << " value=" << stateVar->get(0).value()->getPartialAggregates()[0] << endl;
-//    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
-//    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
+    auto stateVar = queryContext->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()->getLeftJoinState();
+    for (auto& it : stateVar->rangeAll()) {
+        cout << "key=" << it.first << " value=" << it.second << endl;
+    }
+    std::vector<int64_t> results;
+    for (auto& [key, val] : stateVar->rangeAll()) {
+        NES_DEBUG("Key: " << key << " Value: " << val);
+        for (auto& slice : val->getSliceMetadata()) {
+            std::cout << "start=" << slice.getStartTs() << " end=" << slice.getEndTs() << std::endl;
+        }
+        for (auto& agg : val->getPartialAggregates()) {
+            std::cout << "key=" << key << std::endl;
+            std::cout << "value=" << agg << std::endl;
+            results.push_back(agg);
+        }
+    }
+
+    EXPECT_EQ(results[0], 5);
+    EXPECT_EQ(results[1], 5);
 }
 }// namespace NES
