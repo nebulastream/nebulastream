@@ -111,7 +111,7 @@ def getAllFiles(directory):
 
 
 def changeWorkingDirectory(newDirectory):
-	print(f"Changing directory into {newDirectory}...")
+	print(f"Changing directory into {os.path.abspath(newDirectory)}...")
 	os.chdir(newDirectory)
 
 def millify(n):
