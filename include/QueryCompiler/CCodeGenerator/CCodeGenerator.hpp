@@ -49,6 +49,13 @@ class CCodeGenerator : public CodeGenerator {
     bool generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPtr context) override;
 
     /**
+     * @brief Code generation for a watermark assigner operator.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    bool generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy, PipelineContextPtr context) override;
+
+    /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
     * @param generatableWindowAggregation window aggregation.
@@ -84,13 +91,6 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) override;
 #endif
-    /**
-    * @brief Code generation for watermark assigner operator
-    * @param context The context of the current pipeline.
-    * @return flag if the generation was successful.
-    */
-    bool generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy, PipelineContextPtr context) override;
-
     /**
      * @brief Performs the actual compilation the generated code pipeline.
      * @param code generated code.

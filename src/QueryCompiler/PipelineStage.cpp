@@ -43,18 +43,10 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
         dbgMsg << "NoWindow";
     }
     NES_DEBUG(dbgMsg.str());
-    // only get the window manager and state if the pipeline has a window handler.
-    uint64_t maxWaterMark = 0;
-    if (hasWindowHandler()) {
-        auto windowHandler = pipelineContext->getWindowHandler();
-        if (pipelineContext->getWindowDef()->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
-            NES_DEBUG("Execute Pipeline Stage set processing time watermark from buffer=" << inputBuffer.getWatermark());
-            windowHandler->updateAllMaxTs(inputBuffer.getWatermark(), inputBuffer.getOriginId());
-        }
-    }
 
     uint32_t ret = !executablePipeline->execute(inputBuffer, pipelineContext, workerContext);
-    maxWaterMark = inputBuffer.getWatermark();
+
+    uint64_t maxWaterMark = inputBuffer.getWatermark();
     if (hasWindowHandler() && maxWaterMark != 0) {
         NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());
         pipelineContext->getWindowHandler()->updateAllMaxTs(maxWaterMark, inputBuffer.getOriginId());
