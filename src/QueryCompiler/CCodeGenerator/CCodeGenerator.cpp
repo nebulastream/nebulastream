@@ -47,6 +47,7 @@
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
 
 namespace NES {
 
@@ -687,7 +688,9 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     // auto windowState = key_value_handle.value();
     auto windowStateVariableDeclaration = VariableDeclaration::create(
         tf->createAnonymusDataType("auto"), "windowState");
-    auto getValueFromKeyHandle = FunctionCallStatement("value");
+    auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
+    getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(joinDef->getLeftJoinValue()->getStamp(), "0"))));
+
     auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
                                             .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
@@ -756,12 +759,26 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
     // update partial aggregate with join tuple
     // partialAggregates[current_slice_index].push_back(inputTuples[recordIndex]);
+    //TODO: activate for vector implementation
+    //    const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
+    //    auto getPartialAggregatesPushback = FunctionCallStatement("push_back");
+    //    getPartialAggregatesPushback.addParameter(
+    //        VarRef(valueVariableDeclaration));
+    //    auto statement = partialRef.copy()->accessRef(getPartialAggregatesPushback);
+    //    context->code->currentCodeInsertionPoint->addStatement(statement.copy());
+
+    // update partial aggregate
     const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
-    auto getPartialAggregatesPushback = FunctionCallStatement("push_back");
-    getPartialAggregatesPushback.addParameter(
-        VarRef(valueVariableDeclaration));
-    auto statement = partialRef.copy()->accessRef(getPartialAggregatesPushback);
-    context->code->currentCodeInsertionPoint->addStatement(statement.copy());
+    auto sum = Windowing::SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
+    GeneratableWindowAggregationPtr agg = GeneratableCountAggregation::create(sum);
+
+    agg->compileLiftCombine(
+        context->code->currentCodeInsertionPoint,
+        partialRef,
+        context->code->structDeclaratonInputTuple,
+        VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
+
+
     NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
                                                   << " with code=" << context->code);
     return true;

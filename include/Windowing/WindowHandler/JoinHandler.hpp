@@ -95,8 +95,8 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
         // Initialize AggregationWindowHandler Manager
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
         // Initialize StateVariable
-        this->leftJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*>("leftSide");
-        this->rightJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeRight>>*>("rightSide");
+        this->leftJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<ValueTypeLeft>*>("leftSide");
+        this->rightJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<ValueTypeRight>*>("rightSide");
         this->nextPipeline = nextPipeline;
 
         NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
@@ -122,14 +122,17 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
         return joinDefinition;
     }
 
-    LogicalWindowDefinitionPtr getWindowDefinition() {
+    LogicalWindowDefinitionPtr getWindowDefinition() override{
         return nullptr;
     }
 
-
   private:
-    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*>* leftJoinState;
-    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeRight>>*>* rightJoinState;
+    StateVariable<KeyType, Windowing::WindowSliceStore<ValueTypeRight>*>* leftJoinState;
+    StateVariable<KeyType, Windowing::WindowSliceStore<ValueTypeLeft>*>* rightJoinState;
+
+    //TODO: this will activated once we have a slice store that is capable of handling vectors
+//    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*>* leftJoinState;
+//    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeRight>>*>* rightJoinState;
 
     LogicalJoinDefinitionPtr joinDefinition;
     Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;

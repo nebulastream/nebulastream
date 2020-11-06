@@ -3,24 +3,27 @@ namespace NES::Join {
 
 LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey,
                                              FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue,
-                                             Windowing::WindowTypePtr windowType)
+                                             Windowing::WindowTypePtr windowType,
+                                             WindowTriggerPolicyPtr triggerPolicy)
     : joinKey(joinKey),
       leftJoinValue(leftJoinValue),
       rightJoinValue(rightJoinValue),
-      windowType(windowType) {
+      windowType(windowType),
+      triggerPolicy(triggerPolicy) {
 }
 
 LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr joinKey,
                                                        FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue,
-                                                       Windowing::WindowTypePtr windowType) {
-    return std::make_shared<Join::LogicalJoinDefinition>(joinKey, leftJoinValue, rightJoinValue, windowType);
+                                                       Windowing::WindowTypePtr windowType,
+                                                       WindowTriggerPolicyPtr triggerPolicy) {
+    return std::make_shared<Join::LogicalJoinDefinition>(joinKey, leftJoinValue, rightJoinValue, windowType, triggerPolicy);
 }
 
 FieldAccessExpressionNodePtr LogicalJoinDefinition::getJoinKey() {
     return joinKey;
 }
 
-void LogicalJoinDefinition::setJoinKey(FieldAccessExpressionNodePtr key){
+void LogicalJoinDefinition::setJoinKey(FieldAccessExpressionNodePtr key) {
     this->joinKey = std::move(key);
 }
 
