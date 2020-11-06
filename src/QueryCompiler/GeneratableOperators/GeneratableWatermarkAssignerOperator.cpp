@@ -1,6 +1,8 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
+#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/ProcessingTimeWatermarkStrategy.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -21,14 +23,17 @@ void GeneratableWatermarkAssignerOperator::produce(CodeGeneratorPtr codegen, Pip
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context);
 }
 void GeneratableWatermarkAssignerOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    if (auto eventTimeWatermarkDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(getWatermarkStrategyDescriptor())) {
-        auto keyExpression = eventTimeWatermarkDescriptor->getOnField().getExpressionNode();
+    auto watermarkStrategyDescriptor = getWatermarkStrategyDescriptor();
+    if (auto eventTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(getWatermarkStrategyDescriptor())) {
+        auto keyExpression = eventTimeWatermarkStrategyDescriptor->getOnField().getExpressionNode();
         if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
             NES_ERROR("GeneratableWatermarkAssignerOperator: watermark field has to be an FieldAccessExpression but it was a " + keyExpression->toString());
         }
         auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-        auto watermarkStrategy = Windowing::EventTimeWatermarkStrategy::create(fieldAccess, eventTimeWatermarkDescriptor->getDelay().getTime());
-
+        auto watermarkStrategy = Windowing::EventTimeWatermarkStrategy::create(fieldAccess, eventTimeWatermarkStrategyDescriptor->getDelay().getTime());
+        codegen->generateCodeForWatermarkAssigner(watermarkStrategy, context);
+    } else if (auto processingTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::ProcessingTimeWatermarkStrategyDescriptor>(getWatermarkStrategyDescriptor())) {
+        auto watermarkStrategy = Windowing::ProcessingTimeWatermarkStrategy::create();
         codegen->generateCodeForWatermarkAssigner(watermarkStrategy, context);
     } else {
         NES_ERROR("GeneratableWatermarkAssignerOperator: cannot create watermark strategy from descriptor");

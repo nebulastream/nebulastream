@@ -20,7 +20,10 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
     TimeMeasure getDelay();
 
   private:
+    // Field where the watermark should be retrieved
     ExpressionItem onField;
+
+    // watermark delay
     TimeMeasure delay;
 
     explicit EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure delay);
