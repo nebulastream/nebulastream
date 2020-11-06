@@ -33,7 +33,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
-          publish_dir: ./build/benchmarks/scripts
+          publish_dir: /nebulastream/benchmark/scripts/
           destination_dir: private/benchmark/
           external_repository: nebulastream/nes-server
           publish_branch: master
