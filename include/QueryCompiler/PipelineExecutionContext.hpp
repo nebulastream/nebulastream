@@ -18,6 +18,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
+#include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <functional>
 #include <memory>
@@ -104,9 +105,10 @@ class PipelineExecutionContext {
      * @param id
      * @return
      */
+//    template<template<class, class, class> class WindowHandlerType, class KeyType, class ValueTypeLeft, class ValueTypeRight>
     template<template<class, class, class> class WindowHandlerType, class KeyType, class ValueTypeLeft, class ValueTypeRight>
     auto getJoinHandler() {
-        return std::dynamic_pointer_cast<WindowHandlerType<KeyType, ValueTypeLeft, ValueTypeRight>>(joinHandler);
+        return std::dynamic_pointer_cast<NES::Join::JoinHandler<KeyType, ValueTypeLeft, ValueTypeRight>>(joinHandler);
     }
 
     template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>

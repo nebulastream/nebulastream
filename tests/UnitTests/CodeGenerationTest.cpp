@@ -1285,11 +1285,13 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                                                                                  FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                                                                                  FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "value")->as<FieldAccessExpressionNode>(),
-                                                                                 TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)));
+                                                                                 TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)),
+                                                                                 trigger);
 
     codeGenerator->generateCodeForJoin(joinDef, context1);
 
@@ -1300,7 +1302,7 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     codeGenerator->generateCodeForScan(source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
     // init window handler
-    auto joinHandler = WindowHandlerFactoryDetails::createJoinHandler<uint64_t, uint64_t, uint64_t>(joinDef);
+    auto joinHandler = WindowHandlerFactoryDetails::createJoinHandler<int64_t , int64_t, int64_t>(joinDef);
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(

@@ -24,9 +24,9 @@ using namespace Windowing;
 
 class LogicalJoinDefinition {
   public:
-    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue, Windowing::WindowTypePtr windowType);
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue, Windowing::WindowTypePtr windowType, WindowTriggerPolicyPtr triggerPolicy);
 
-    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue, Windowing::WindowTypePtr windowType);
+    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, FieldAccessExpressionNodePtr leftJoinValue, FieldAccessExpressionNodePtr rightJoinValue, Windowing::WindowTypePtr windowType, WindowTriggerPolicyPtr triggerPolicy);
 
     /**
     * @brief getter/setter for on left join key
