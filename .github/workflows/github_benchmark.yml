@@ -1,0 +1,39 @@
+name: NES Benchmark
+
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+    paths-ignore:
+      - include/Version/version.hpp
+      - README.md
+  pull_request:
+    branches:
+      - '*'
+
+jobs:  
+  benchmark-job:
+    runs-on: self-hosted
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+      - name: Fetch git history
+        run: |
+          git fetch --prune --unshallow --tags
+      - name: Run benchmarks
+        run: |
+          docker run -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:latest
+          
+      - name: Push Benchmarks to pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
+          publish_dir: ./build/benchmarks/html
+          destination_dir: private/benchmark/
+          external_repository: nebulastream/nes-server
+          publish_branch: master
