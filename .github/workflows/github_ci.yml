@@ -14,10 +14,10 @@ on:
       - '*'
 
 jobs:
-	benchmark-job:
-		runs-on: self-hosted
-		timeout-minutes: 300
-		- uses: actions/checkout@v2
+  benchmark-job:
+    runs-on: self-hosted
+    timeout-minutes: 300
+    - uses: actions/checkout@v2
       with:
         ssh-key: ${{ secrets.CI_SECRET }}
         ssh-strict: 'false'
