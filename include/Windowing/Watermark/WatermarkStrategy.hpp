@@ -5,21 +5,20 @@
 
 namespace NES::Windowing {
 
-class WatermarkStrategy {
+class WatermarkStrategy : public std::enable_shared_from_this<WatermarkStrategy>{
   public:
-    WatermarkStrategy(FieldAccessExpressionNodePtr onField, uint64_t delay);
-    static WatermarkStrategyPtr create(FieldAccessExpressionNodePtr onField, uint64_t delay);
+    WatermarkStrategy();
 
-    FieldAccessExpressionNodePtr getField();
-    uint64_t getDelay();
+    enum Type {
+        EventTimeWatermark,
+    };
 
-    bool equal(WatermarkStrategyPtr other);
-  private:
-    // Field where the watermark should be retrieved
-    FieldAccessExpressionNodePtr onField;
+    virtual Type getType() = 0;
 
-    // Watermark dela
-    uint64_t delay;
+    template<class Type>
+    auto as() {
+        return std::dynamic_pointer_cast<Type>(shared_from_this());
+    }
 };
 }
 #endif//NES_WATERMARKSTRATEGY_HPP

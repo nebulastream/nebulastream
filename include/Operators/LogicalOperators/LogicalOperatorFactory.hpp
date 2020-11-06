@@ -106,7 +106,7 @@ class LogicalOperatorFactory {
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return LogicalOperatorNodePtr
     */
-    static LogicalOperatorNodePtr createWatermarkAssignerOperator(const Windowing::WatermarkStrategyPtr watermarkStrategy, OperatorId id = UtilityFunctions::getNextOperatorId());
+    static LogicalOperatorNodePtr createWatermarkAssignerOperator(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id = UtilityFunctions::getNextOperatorId());
 };
 
 }// namespace NES

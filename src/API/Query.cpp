@@ -87,17 +87,10 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
 QueryPlanPtr Query::getQueryPlan() {
     return queryPlan;
 }
-Query& Query::assignWatermark(ExpressionItem onField, TimeMeasure delay) {
+Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     NES_DEBUG("Query: add assignWatermark operator to query");
 
-    auto keyExpression = onField.getExpressionNode();
-    if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: watermark field has to be an FieldAccessExpression but it was a " + keyExpression->toString());
-    }
-    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-
-    auto watermarkStrategy = Windowing::WatermarkStrategy::create(fieldAccess, delay.getTime());
-    OperatorNodePtr  op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategy);
+    OperatorNodePtr  op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }

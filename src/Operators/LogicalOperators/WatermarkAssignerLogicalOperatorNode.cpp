@@ -5,8 +5,8 @@
 
 namespace NES {
 
-WatermarkAssignerLogicalOperatorNode::WatermarkAssignerLogicalOperatorNode(const Windowing::WatermarkStrategyPtr watermarkStrategy, OperatorId id)
-    : watermarkStrategy(watermarkStrategy), LogicalOperatorNode(id) {}
+WatermarkAssignerLogicalOperatorNode::WatermarkAssignerLogicalOperatorNode(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id)
+    : watermarkStrategyDescriptor(watermarkStrategyDescriptor), LogicalOperatorNode(id) {}
 
 
 const std::string WatermarkAssignerLogicalOperatorNode::toString() const {
@@ -20,14 +20,10 @@ bool WatermarkAssignerLogicalOperatorNode::isIdentical(NodePtr rhs) const {
 
 }
 bool WatermarkAssignerLogicalOperatorNode::equal(const NodePtr rhs) const {
-    if (rhs->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-        auto watermarkAssignerOperator = rhs->as<WatermarkAssignerLogicalOperatorNode>();
-        return watermarkStrategy->equal(watermarkAssignerOperator->getWatermarkStrategy());
-    }
     return Node::equal(rhs);
 }
 OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategy, id);
+    auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
@@ -37,9 +33,8 @@ z3::expr WatermarkAssignerLogicalOperatorNode::getZ3Expression(z3::context& cont
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
     return OperatorToZ3ExprUtil::createForOperator(operatorNode, context);
 }
-
-Windowing::WatermarkStrategyPtr WatermarkAssignerLogicalOperatorNode::getWatermarkStrategy() const {
-    return watermarkStrategy;
+Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperatorNode::getWatermarkStrategyDescriptor() const {
+    return watermarkStrategyDescriptor;
 }
 
 }

@@ -3,6 +3,7 @@
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <memory>
 
 namespace NES::Windowing {
@@ -10,8 +11,9 @@ namespace NES::Windowing {
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
-class WatermarkStrategy;
-typedef std::shared_ptr<WatermarkStrategy> WatermarkStrategyPtr;
+//class WatermarkStrategyDescriptor;
+//typedef std::shared_ptr<WatermarkStrategy> WatermarkStrategyDescriptorPtr;
+
 }// namespace NES::Windowing
 
 namespace NES {

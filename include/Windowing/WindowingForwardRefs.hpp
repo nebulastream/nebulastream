@@ -114,6 +114,12 @@ class WindowState;
 class WatermarkStrategy;
 typedef std::shared_ptr<WatermarkStrategy> WatermarkStrategyPtr;
 
+class EventTimeWatermarkStrategy;
+typedef std::shared_ptr<EventTimeWatermarkStrategy> EventTimeWatermarkStrategyPtr;
+
+class WatermarkStrategyDescriptor;
+typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptorPtr;
+
 }// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_
