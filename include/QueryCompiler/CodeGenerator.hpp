@@ -19,7 +19,6 @@
 #include <memory>
 
 #include <API/Schema.hpp>
-#include <Join/LogicalJoinDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
@@ -29,6 +28,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 
 namespace NES::Windowing {
@@ -142,7 +142,7 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context) = 0;
-#if 0
+
     /**
     * @brief Code generation for a join operator, which depends on a particular join definition
     * @param window The join definition, which contains all properties of the join.
@@ -150,12 +150,13 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) = 0;
-#endif
+
     /**
      * @brief Performs the actual compilation the generated code pipeline.
      * @param code generated code.
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
+
     virtual ExecutablePipelinePtr compile(GeneratedCodePtr code) = 0;
 
     virtual std::string generateCode(GeneratedCodePtr code) = 0;

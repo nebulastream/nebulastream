@@ -42,7 +42,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
   public:
     explicit AggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition,
                                       std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
-                                      ExecutableOnTimeTriggerPtr executablePolicyTrigger,
+                                      BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
                                       BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction)
         : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)), executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)) {
     }
@@ -70,13 +70,12 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     std::string toString() override {
         std::stringstream ss;
-        ss << pipelineStageId << +"-" << nextPipeline->getQepParentId();
+        ss << "AG:" << pipelineStageId << +"-" << nextPipeline->getQepParentId();
         return ss.str();
     }
 
     /**
      * @brief triggers all ready windows.
-     * @return
      */
     void trigger() override {
         NES_DEBUG("AggregationWindowHandler: run window action " << executableWindowAction->toString()
@@ -145,12 +144,12 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return windowDefinition;
     }
 
-    LogicalWindowDefinitionPtr windowDefinition;
 
   private:
+    LogicalWindowDefinitionPtr windowDefinition;
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
-    ExecutableOnTimeTriggerPtr executablePolicyTrigger;
+    BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
 };
 

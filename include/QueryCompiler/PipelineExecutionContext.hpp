@@ -84,6 +84,24 @@ class PipelineExecutionContext {
         return windowHandler;
     }
 
+    Windowing::AbstractWindowHandlerPtr getJoinHandler() {
+        return joinHandler;
+    }
+
+    /**
+     * @brief this method is called from the compiled code to get the join handler
+     * @tparam KeyTypeLeft
+     * @tparam KeyTypeRight
+     * @tparam ValueTypeLeft
+     * @tparam ValueTypeRight
+     * @param id
+     * @return
+     */
+    template<template<class, class, class, class> class WindowHandlerType, class KeyTypeLeft, class KeyTypeRight, class ValueTypeLeft, class ValueTypeRight>
+    auto getJoinHandler() {
+        return std::dynamic_pointer_cast<WindowHandlerType<KeyTypeLeft, KeyTypeRight, ValueTypeLeft, ValueTypeRight>>(joinHandler);
+    }
+
     template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
     auto getWindowHandler() {
         return std::dynamic_pointer_cast<WindowHandlerType<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowHandler);
@@ -114,6 +132,7 @@ class PipelineExecutionContext {
     std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
 
     Windowing::AbstractWindowHandlerPtr windowHandler;
+    Windowing::AbstractWindowHandlerPtr joinHandler;
 
     // TODO remove this stuff from here
     Windowing::LogicalWindowDefinitionPtr windowDef;

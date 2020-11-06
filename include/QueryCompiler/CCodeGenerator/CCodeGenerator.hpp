@@ -98,7 +98,6 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context) override;
 
-#if 0
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
     * @param The join definition, which contains all properties of the join.
@@ -106,7 +105,7 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) override;
-#endif
+
     /**
      * @brief Performs the actual compilation the generated code pipeline.
      * @param code generated code.
@@ -144,9 +143,12 @@ class CCodeGenerator : public CodeGenerator {
 
     BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
 
-    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
+    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyTypeLeft, DataTypePtr keyTypeRight, DataTypePtr valueTypeLeft, DataTypePtr valueTypeRight);
 
     BinaryOperatorStatement getStateVariable(VariableDeclaration);
+
+    BinaryOperatorStatement getLeftJoinState(VariableDeclaration windowHandlerVariable);
+    BinaryOperatorStatement getRightJoinState(VariableDeclaration windowHandlerVariable);
 
     BinaryOperatorStatement getWindowManager(VariableDeclaration);
 

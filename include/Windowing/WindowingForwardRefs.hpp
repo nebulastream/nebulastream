@@ -55,6 +55,8 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 }// namespace NES
 
 namespace NES::Windowing {
+class BaseExecutableWindowTriggerPolicy;
+typedef std::shared_ptr<BaseExecutableWindowTriggerPolicy> BaseExecutableWindowTriggerPolicyPtr;
 
 class ExecutableOnTimeTriggerPolicy;
 typedef std::shared_ptr<ExecutableOnTimeTriggerPolicy> ExecutableOnTimeTriggerPtr;

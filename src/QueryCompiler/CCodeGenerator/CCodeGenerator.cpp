@@ -621,7 +621,7 @@ bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefini
     context->pipelineName = "SlicingWindowType";
     return generateCodeForCompleteWindow(window, generatableWindowAggregation, context);
 }
-#if 0
+
 bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) {
     //    std::cout << joinDef << context << std::endl;
     auto tf = getTypeFactory();
@@ -638,27 +638,26 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto windowStateVarDeclaration = VariableDeclaration::create(
         tf->createAnonymusDataType("auto"), "windowStateVar");
 
-    auto windowHandlerVariableDeclration = VariableDeclaration::create(
-        tf->createAnonymusDataType("auto"), "windowHandler");
+    auto windowJoinVariableDeclration = VariableDeclaration::create(
+        tf->createAnonymusDataType("auto"), "joinHandler");
 
-// adapt the code below to work with join descriptor
+    NES_ASSERT(!joinDef->getLeftJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
+    NES_ASSERT(!joinDef->getRightJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
+    NES_ASSERT(!joinDef->getLeftJoinValue()->getStamp()->isUndefined(), "left join value is undefined");
+    NES_ASSERT(!joinDef->getRightJoinValue()->getStamp()->isUndefined(), "right join value is undefined");
 
-//
-//    NES_ASSERT(!window->getOnKey()->getStamp()->isUndefined(), "window on key is undefined");
-//    NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");
-//    NES_ASSERT(!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined(), "window partial type is undefined");
-//    NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
-//
-//    auto getWindowHandlerStatement = getWindowHandler(
-//        context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
-//        window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
-//        window->getWindowAggregation()->getFinalAggregateStamp());
-//    context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
+    auto getJoinHandlerStatement = getJoinWindowHandler(
+        context->code->varDeclarationExecutionContext,
+        joinDef->getLeftJoinKey()->getStamp(),
+        joinDef->getRightJoinKey()->getStamp(),
+        joinDef->getLeftJoinValue()->getStamp(),
+        joinDef->getRightJoinValue()->getStamp());
+    context->code->variableInitStmts.emplace_back(VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
 
-    auto getWindowManagerStatement = getWindowManager(windowHandlerVariableDeclration);
+    auto getWindowManagerStatement = getWindowManager(windowJoinVariableDeclration);
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
 
-    auto getWindowStateStatement = getStateVariable(windowHandlerVariableDeclration);
+    auto getWindowStateStatement = getLeftJoinState(windowJoinVariableDeclration);
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
 
     // Read key value from record
@@ -723,6 +722,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         std::make_shared<BinaryOperatorStatement>(VarRef(windowManagerVarDeclaration).accessPtr(sliceStream));
     context->code->currentCodeInsertionPoint->addStatement(call);
 
+#if 0
     // find the slices for a time stamp
     // uint64_t current_slice_index = windowState->getSliceIndexByTs(current_ts);
     auto getSliceIndexByTs = FunctionCallStatement("getSliceIndexByTs");
@@ -753,12 +753,11 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     getPartialAggregatesPushback.addParameter(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]);
     auto statement = partialRef.copy()->accessRef(getPartialAggregatesPushback);
     context->code->currentCodeInsertionPoint->addStatement(statement.copy());
-
+#endif
     NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
                                                   << " with code=" << context->code);
     return true;
 }
-#endif
 bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context) {
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
@@ -1068,14 +1067,29 @@ BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(
     return VarRef(pipelineContextVariable).accessRef(call);
 }
 
-BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration, DataTypePtr, DataTypePtr, DataTypePtr, DataTypePtr) {
-    NES_THROW_RUNTIME_ERROR("join handler not implemented yet");
+BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyTypeLeft, DataTypePtr keyTypeRight, DataTypePtr valueTypeLeft, DataTypePtr valueTypeRight) {
+    auto tf = getTypeFactory();
+    auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(keyTypeLeft) + ", " + TO_CODE(keyTypeRight) + ","  + TO_CODE(valueTypeLeft)
+                                       + ", " + TO_CODE(valueTypeRight) + " >");
+    return VarRef(pipelineContextVariable).accessRef(call);
+//    NES_THROW_RUNTIME_ERROR("join handler not implemented yet");
 }
 
 BinaryOperatorStatement CCodeGenerator::getStateVariable(VariableDeclaration windowHandlerVariable) {
     auto call = FunctionCallStatement("getTypedWindowState");
     return VarRef(windowHandlerVariable).accessPtr(call);
 }
+
+BinaryOperatorStatement CCodeGenerator::getLeftJoinState(VariableDeclaration windowHandlerVariable) {
+    auto call = FunctionCallStatement("getLeftJoinState");
+    return VarRef(windowHandlerVariable).accessPtr(call);
+}
+
+BinaryOperatorStatement CCodeGenerator::getRightJoinState(VariableDeclaration windowHandlerVariable) {
+    auto call = FunctionCallStatement("getLeftJoinState");
+    return VarRef(windowHandlerVariable).accessPtr(call);
+}
+
 
 BinaryOperatorStatement CCodeGenerator::getWindowManager(VariableDeclaration windowHandlerVariable) {
     auto call = FunctionCallStatement("getWindowManager");

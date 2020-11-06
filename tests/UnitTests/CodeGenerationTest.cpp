@@ -19,7 +19,6 @@
 #include <API/UserAPIExpression.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Join/LogicalJoinDefinition.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
@@ -50,6 +49,7 @@
 #include <State/StateVariable.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowHandlerFactoryDetails.hpp>
@@ -892,7 +892,6 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     WorkerContext wctx(NesThread::getId());
-
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
@@ -1256,7 +1255,6 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 /**
  * @brief This test generates a window slicer
  */
-#if 0
 TEST_F(CodeGenerationTest, codeGenerationJoin) {
     /* prepare objects for test */
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
@@ -1271,6 +1269,8 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
 
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                                                                                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                                                                                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                                                                                  FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                                                                                  TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)));
 
@@ -1308,5 +1308,4 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     //    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     //    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
-#endif
 }// namespace NES
