@@ -35,5 +35,6 @@ jobs:
           personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
           publish_dir: ./benchmark/scripts
           destination_dir: private/benchmark/
+          exclude_assets: '*.py'
           external_repository: nebulastream/nes-server
           publish_branch: master
