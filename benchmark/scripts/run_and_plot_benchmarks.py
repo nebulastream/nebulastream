@@ -279,12 +279,12 @@ def defaultPlotBenchmark(benchmark):
 		plt.figure(figsize=(8, 16))
 		plt.barh(np.arange(0, len(xData)), yData, xerr=yErr)
 		plt.yticks(np.arange(0, len(xData)), [f"{millify(x)}\n{millify(y)}" for x,y in zip(xData, yData)])
-		plt.savefig(os.path.join(folder, f"avg_througput_over_same_ingestrate_{benchmark.name}_{i}.pdf"))
+		plt.savefig(os.path.join(folder, f"avg_througput_over_same_ingestrate_{benchmark.name}_{i}.png"))
 
 		plt.figure(figsize=(8, 16))
 		plt.barh(np.arange(0, len(fileDataFrame)), fileDataFrame["TuplesPerSecond"])
 		plt.yticks(np.arange(0, len(fileDataFrame)), [millify(x) for x in fileDataFrame["TuplesPerSecond"]])
-		plt.savefig(os.path.join(folder, f"throughput_overall_{benchmark.name}_{counterCsvFile}.pdf"))
+		plt.savefig(os.path.join(folder, f"throughput_overall_{benchmark.name}_{counterCsvFile}.png"))
 
 
 if __name__ == '__main__':
