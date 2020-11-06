@@ -14,7 +14,6 @@
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/Watermark/WatermarkStrategy.hpp>
 
 namespace NES::Windowing {
 
@@ -98,6 +97,13 @@ class CodeGenerator {
     virtual bool generateCodeForEmit(SchemaPtr schema, PipelineContextPtr context) = 0;
 
     /**
+     * @brief Code generation for a watermark assigner operator.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    virtual bool generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy, PipelineContextPtr context) = 0;
+
+    /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
     * @param context The context of the current pipeline.
@@ -135,13 +141,6 @@ class CodeGenerator {
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
     virtual ExecutablePipelinePtr compile(GeneratedCodePtr code) = 0;
-
-    /**
-     * @brief Code generation for a watermark assigner operator.
-     * @param context The context of the current pipeline.
-     * @return flag if the generation was successful.
-     */
-    virtual bool generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy, PipelineContextPtr context) = 0;
 
     virtual std::string generateCode(GeneratedCodePtr code) = 0;
 
