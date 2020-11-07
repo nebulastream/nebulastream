@@ -53,6 +53,9 @@ typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 class WindowOperatorNode;
 typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
 
+class JoinLogicalOperatorNode;
+typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
+
 class FieldAssignmentExpressionNode;
 typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
 

@@ -99,16 +99,12 @@ class PipelineExecutionContext {
     /**
      * @brief this method is called from the compiled code to get the join handler
      * @tparam KeyTypeLeft
-     * @tparam KeyTypeRight
-     * @tparam ValueTypeLeft
-     * @tparam ValueTypeRight
      * @param id
      * @return
      */
-//    template<template<class, class, class> class WindowHandlerType, class KeyType, class ValueTypeLeft, class ValueTypeRight>
-    template<template<class, class, class> class WindowHandlerType, class KeyType, class ValueTypeLeft, class ValueTypeRight>
+    template<template<class> class WindowHandlerType, class KeyType>
     auto getJoinHandler() {
-        return std::dynamic_pointer_cast<NES::Join::JoinHandler<KeyType, ValueTypeLeft, ValueTypeRight>>(joinHandler);
+        return std::dynamic_pointer_cast<NES::Join::JoinHandler<KeyType>>(joinHandler);
     }
 
     template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>

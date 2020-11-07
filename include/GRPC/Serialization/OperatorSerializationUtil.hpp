@@ -47,6 +47,7 @@ class SerializableOperator;
 class SerializableOperator_SourceDetails;
 class SerializableOperator_SinkDetails;
 class SerializableOperator_WindowDetails;
+class SerializableOperator_JoinDetails;
 class SerializableOperator_WatermarkStrategyDetails;
 
 /**
@@ -95,9 +96,16 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes an all window operator and all its properties to a SerializableOperator_WindowDetails object.
      * @param WindowLogicalOperatorNode The window operator node.
-     * @return the serialized SerializableOperator_SinkDetails.
+     * @return the serialized SerializableOperator_WindowDetails.
      */
     static SerializableOperator_WindowDetails serializeWindowOperator(WindowOperatorNodePtr windowOperator);
+
+    /**
+     * @brief Serializes an all join operator and all its properties to a SerializableOperator_JoinDetails object.
+     * @param JoinLogicalOperatorNodePtr The window operator node.
+     * @return the serialized SerializableOperator_SinkDetails.
+     */
+    static SerializableOperator_JoinDetails serializeJoinOperator(JoinLogicalOperatorNodePtr joinOperator);
 
     /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
@@ -108,11 +116,19 @@ class OperatorSerializationUtil {
 
     /**
      * @brief De-serializes the SerializableOperator_WindowDetails and all its properties back to a central window operatorNodePtr
+     * @param windowDetails The serialized sink operator details.
+     * @param operatorId: id of the operator to be deserialized
+     * @return WindowOperatorNodePtr
+     */
+    static WindowOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* windowDetails, OperatorId operatorId);
+
+    /**
+     * @brief De-serializes the SerializableOperator_JoinDetails and all its properties back to a join operatorNodePtr
      * @param sinkDetails The serialized sink operator details.
      * @param operatorId: id of the operator to be deserialized
-     * @return SinkLogicalOperatorNodePtr
+     * @return JoinLogicalOperatorNode
      */
-    static WindowOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* sinkDetails, OperatorId operatorId);
+    static JoinLogicalOperatorNodePtr deserializeJoinOperator(SerializableOperator_JoinDetails* joinDetails, OperatorId operatorId);
 
     /**
      * @brief Serializes an source descriptor and all its properties to a SerializableOperator_SourceDetails object.

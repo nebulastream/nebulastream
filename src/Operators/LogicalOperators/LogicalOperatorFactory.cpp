@@ -31,6 +31,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 
+
 namespace NES {
 
 LogicalOperatorNodePtr LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr sourceDescriptor, OperatorId id) {

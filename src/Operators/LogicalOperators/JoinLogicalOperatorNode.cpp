@@ -1,5 +1,5 @@
-#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <API/Schema.hpp>
 #include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
@@ -17,6 +17,11 @@ const std::string JoinLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "Join(" << id << ")";
     return ss.str();
+}
+
+Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition()
+{
+    return joinDefinition;
 }
 
 bool JoinLogicalOperatorNode::inferSchema() {
