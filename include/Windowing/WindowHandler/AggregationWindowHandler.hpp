@@ -140,7 +140,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return windowStateVariable;
     }
 
-    LogicalWindowDefinitionPtr getWindowDefinition() {
+    LogicalWindowDefinitionPtr getWindowDefinition() override{
         return windowDefinition;
     }
 

@@ -261,8 +261,8 @@ message SerializableOperator{
     message TriggerAction
     {
       enum Type{
-          Complete = 0;
-          Slicing = 1;
+        Complete = 0;
+        Slicing = 1;
       }
       Type type = 1;
     }
@@ -275,6 +275,66 @@ message SerializableOperator{
     uint64 numberOfInputEdges = 5;
     TriggerPolicy triggerPolicy = 6;
     TriggerAction action = 7;
+
+  }
+
+  /**
+    Window Details contains properties for the window operator
+  */
+  message JoinDetails {
+
+    message DistributionCharacteristic {
+      enum Distribution{
+        Complete = 0;
+        Slicing = 1;
+        Combining = 3;
+      }
+      Distribution distr = 1;
+    }
+
+    message TimeCharacteristic {
+      enum Type{
+        EventTime = 0;
+        ProcessingTime = 1;
+      }
+      Type type = 1;
+      string field = 2;
+    }
+    message TumblingWindow {
+      TimeCharacteristic timeCharacteristic = 1;
+      uint32 size = 2;
+    }
+    message SlidingWindow {
+      TimeCharacteristic timeCharacteristic = 1;
+      uint32 size = 2;
+      uint32 slide = 3;
+    }
+
+    message TriggerPolicy{
+      enum Type{
+        triggerOnTime = 0;
+        triggerOnRecord = 1;
+        triggerOnBuffer = 2;
+        triggerOnWatermarkChange = 3;
+      }
+      Type type = 1;
+      uint64 timeInMs = 2;
+    }
+
+    message TriggerAction
+    {
+      enum Type{
+        Complete = 0;
+        Slicing = 1;
+      }
+      Type type = 1;
+    }
+
+    google.protobuf.Any windowType = 2;
+    DistributionCharacteristic distrChar = 3;
+    SerializableExpression onKey = 4;
+    TriggerPolicy triggerPolicy = 5;
+    TriggerAction action = 6;
 
   }
   google.protobuf.Any details = 1;

@@ -20,11 +20,11 @@
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
@@ -32,16 +32,19 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
 
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableJoinOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMergeOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
@@ -79,8 +82,18 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
-    } else if(operatorNode->instanceOf<WindowOperatorNode>()){
+    } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
         return TranslateToGeneratableOperatorPhase::transformWindowOperator(operatorNode->as<WindowOperatorNode>(), generatableParentOperator);
+    } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
+        auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
+        generatableParentOperator->addChild(scanOperator);
+        auto childOperator = GeneratableJoinOperator::create(operatorNode->as<JoinLogicalOperatorNode>());
+        scanOperator->addChild(childOperator);
+        return childOperator;
+    } else {
+        NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
+        NES_NOT_IMPLEMENTED();
+    }
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         auto watermarkAssignerOperator = GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
         generatableParentOperator->addChild(watermarkAssignerOperator);
@@ -112,6 +125,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
     NES_NOT_IMPLEMENTED();
 }
 
+
 GeneratableWindowAggregationPtr TranslateToGeneratableOperatorPhase::transformWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) {
     switch (windowAggregationDescriptor->getType()) {
         case Windowing::WindowAggregationDescriptor::Count: {
@@ -123,7 +137,7 @@ GeneratableWindowAggregationPtr TranslateToGeneratableOperatorPhase::transformWi
         case Windowing::WindowAggregationDescriptor::Min: {
             return GeneratableMinAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Sum:{
+        case Windowing::WindowAggregationDescriptor::Sum: {
             return GeneratableSumAggregation::create(windowAggregationDescriptor);
         };
         default:

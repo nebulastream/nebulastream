@@ -29,6 +29,10 @@ typedef std::shared_ptr<GeneratableMapOperator> GeneratableMapOperatorPtr;
 class GeneratableMergeOperator;
 typedef std::shared_ptr<GeneratableMergeOperator> GeneratableMergeOperatorPtr;
 
+class GeneratableJoinOperator;
+typedef std::shared_ptr<GeneratableJoinOperator> GeneratableJoinOperatorPtr;
+
+
 class GeneratableCompleteWindowOperator;
 typedef std::shared_ptr<GeneratableCompleteWindowOperator> GeneratableWindowOperatorPtr;
 

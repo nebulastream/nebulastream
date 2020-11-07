@@ -643,14 +643,10 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         tf->createAnonymusDataType("auto"), "joinHandler");
 
     NES_ASSERT(!joinDef->getJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
-    NES_ASSERT(!joinDef->getLeftJoinValue()->getStamp()->isUndefined(), "left join value is undefined");
-    NES_ASSERT(!joinDef->getRightJoinValue()->getStamp()->isUndefined(), "right join value is undefined");
 
     auto getJoinHandlerStatement = getJoinWindowHandler(
         context->code->varDeclarationExecutionContext,
-        joinDef->getJoinKey()->getStamp(),
-        joinDef->getLeftJoinValue()->getStamp(),
-        joinDef->getRightJoinValue()->getStamp());
+        joinDef->getJoinKey()->getStamp());
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
 
     auto getWindowManagerStatement = getWindowManager(windowJoinVariableDeclration);
@@ -697,7 +693,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto windowStateVariableDeclaration = VariableDeclaration::create(
         tf->createAnonymusDataType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
-    getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(joinDef->getLeftJoinValue()->getStamp(), "0"))));
+    getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(joinDef->getJoinKey()->getStamp(), "0"))));
 
     auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
                                             .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
@@ -1100,10 +1096,9 @@ BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(
     return VarRef(pipelineContextVariable).accessRef(call);
 }
 
-BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType, DataTypePtr valueTypeLeft, DataTypePtr valueTypeRight) {
+BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType) {
     auto tf = getTypeFactory();
-    auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(KeyType) + "," + TO_CODE(valueTypeLeft)
-                                      + ", " + TO_CODE(valueTypeRight) + " >");
+    auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(KeyType) + " >");
     return VarRef(pipelineContextVariable).accessRef(call);
     //    NES_THROW_RUNTIME_ERROR("join handler not implemented yet");
 }

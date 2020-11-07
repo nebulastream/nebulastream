@@ -11,7 +11,7 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
-template<class KeyType, class ValueTypeLeft, class ValueTypeRight>
+template<class KeyType>
 class JoinHandler : public Windowing::AbstractWindowHandler {
   public:
     explicit JoinHandler(LogicalJoinDefinitionPtr joinDefinition,
@@ -95,8 +95,8 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
         // Initialize AggregationWindowHandler Manager
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
         // Initialize StateVariable
-        this->leftJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<ValueTypeLeft>*>("leftSide");
-        this->rightJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<ValueTypeRight>*>("rightSide");
+        this->leftJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<KeyType>*>("leftSide");
+        this->rightJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<KeyType>*>("rightSide");
         this->nextPipeline = nextPipeline;
 
         NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
@@ -127,8 +127,8 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
     }
 
   private:
-    StateVariable<KeyType, Windowing::WindowSliceStore<ValueTypeRight>*>* leftJoinState;
-    StateVariable<KeyType, Windowing::WindowSliceStore<ValueTypeLeft>*>* rightJoinState;
+    StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState;
+    StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinState;
 
     //TODO: this will activated once we have a slice store that is capable of handling vectors
 //    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*>* leftJoinState;

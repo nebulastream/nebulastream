@@ -46,9 +46,10 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-    auto tiggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    auto joinDefinition = Join::LogicalJoinDefinition::create(fieldAccess, windowType, tiggerPolicy);
+    auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
+    auto joinDefinition = Join::LogicalJoinDefinition::create(fieldAccess, windowType, distrType, triggerPolicy, triggerAction);
 
     OperatorNodePtr op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);

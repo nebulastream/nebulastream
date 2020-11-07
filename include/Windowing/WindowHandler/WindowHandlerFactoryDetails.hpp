@@ -74,7 +74,7 @@ class WindowHandlerFactoryDetails {
         return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
     }
 
-    template<class KeyType, class ValueTypeLeft, class ValueTypeRight>
+    template<class KeyType>
     static AbstractWindowHandlerPtr createJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition
                                                       ) {
         auto policy = joinDefinition->getTriggerPolicy();
@@ -98,7 +98,7 @@ class WindowHandlerFactoryDetails {
 
         //add compile method return handler
         //create the action
-        return std::make_shared<Join::JoinHandler<KeyType, ValueTypeLeft, ValueTypeRight>>(joinDefinition, executablePolicyTrigger);
+        return std::make_shared<Join::JoinHandler<KeyType>>(joinDefinition, executablePolicyTrigger);
     }
 
     template<class KeyType, class InputType>

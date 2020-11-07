@@ -21,6 +21,7 @@ add_source_nes(
         GeneratableScanOperator.cpp
         GeneratableWatermarkAssignerOperator.cpp
         TranslateToGeneratableOperatorPhase
+        GeneratableJoinOperator.cpp
 )
 
 add_subdirectory(Windowing)
