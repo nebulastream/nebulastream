@@ -30,8 +30,8 @@
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
-#include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinForwardRefs.hpp>
+#include <Windowing/WindowHandler/JoinHandler.hpp>
 
 namespace NES::Windowing {
 
@@ -75,8 +75,7 @@ class WindowHandlerFactoryDetails {
     }
 
     template<class KeyType>
-    static AbstractWindowHandlerPtr createJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition
-                                                      ) {
+    static AbstractWindowHandlerPtr createJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition) {
         auto policy = joinDefinition->getTriggerPolicy();
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
         if (policy->getPolicyType() == triggerOnTime) {
@@ -86,15 +85,15 @@ class WindowHandlerFactoryDetails {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
         }
 
-//        auto action = joinDefinition->getTriggerAction();
-//        BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
-//        if (action->getActionType() == WindowAggregationTriggerAction) {
-//            executableWindowAction = ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
-//        } else if (action->getActionType() == SliceAggregationTriggerAction) {
-//            executableWindowAction = ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
-//        } else {
-//            NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
-//        }
+        //        auto action = joinDefinition->getTriggerAction();
+        //        BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
+        //        if (action->getActionType() == WindowAggregationTriggerAction) {
+        //            executableWindowAction = ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
+        //        } else if (action->getActionType() == SliceAggregationTriggerAction) {
+        //            executableWindowAction = ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
+        //        } else {
+        //            NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
+        //        }
 
         //add compile method return handler
         //create the action

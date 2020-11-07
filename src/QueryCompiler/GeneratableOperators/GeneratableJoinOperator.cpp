@@ -17,10 +17,9 @@ void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
 }
 
 void GeneratableJoinOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto joinHandler = Windowing::WindowHandlerFactory::createAggregationWindowHandler(joinDefinition);
-    context->setWindow(joinHandler);
-    codegen->generateCodeForSlicingWindow(getWindowDefinition(), generatableWindowAggregation, context);
-
+    auto joinHandler = Windowing::WindowHandlerFactory::createJoinWindowHandler(joinDefinition);
+    context->setJoin(joinHandler);
+    codegen->generateCodeForJoin(joinDefinition, context);
 }
 
 GeneratableJoinOperatorPtr GeneratableJoinOperator::create(JoinLogicalOperatorNodePtr logicalJoinOperator, OperatorId id) {

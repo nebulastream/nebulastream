@@ -31,14 +31,26 @@ void PipelineContext::setWindow(Windowing::AbstractWindowHandlerPtr window) {
     this->windowHandler = std::move(window);
 }
 
+void PipelineContext::setJoin(Windowing::AbstractWindowHandlerPtr join) {
+    this->joinHandler = std::move(join);
+}
+
 Windowing::AbstractWindowHandlerPtr PipelineContext::getWindow() {
     return this->windowHandler;
 }
+
+Windowing::AbstractWindowHandlerPtr PipelineContext::getJoin() {
+    return this->joinHandler;
+}
+
 
 bool PipelineContext::hasWindow() const {
     return this->windowHandler != nullptr;
 }
 
+bool PipelineContext::hasJoin() const {
+    return this->joinHandler != nullptr;
+}
 bool PipelineContext::hasNextPipeline() const {
     return this->nextPipelines.size() != 0;
 }

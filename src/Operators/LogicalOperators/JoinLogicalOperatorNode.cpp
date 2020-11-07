@@ -1,8 +1,10 @@
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <API/Schema.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <z3++.h>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES {
 
@@ -19,8 +21,7 @@ const std::string JoinLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition()
-{
+Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() {
     return joinDefinition;
 }
 
@@ -40,6 +41,9 @@ bool JoinLogicalOperatorNode::inferSchema() {
         NES_THROW_RUNTIME_ERROR("JoinLogicalOperator: the two input streams have different schema.");
         return false;
     }
+    // infer the data type of the key field.
+    joinDefinition->getJoinKey()->inferStamp(inputSchema);
+
     return true;
 }
 

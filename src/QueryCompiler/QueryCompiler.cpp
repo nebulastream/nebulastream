@@ -64,7 +64,7 @@ class PipelineStageHolder {
   public:
     PipelineStageHolder() = default;
 
-    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline, Windowing::AbstractWindowHandlerPtr windowHandler = Windowing::AbstractWindowHandlerPtr())
+    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline, Windowing::AbstractWindowHandlerPtr windowHandler, Windowing::AbstractWindowHandlerPtr joinHandler)
         : currentStageId(currentStageId), executablePipeline(std::move(executablePipeline)), windowHandler(std::move(windowHandler)), joinHandler(std::move(joinHandler)) {
         // nop
     }
@@ -91,11 +91,25 @@ void generateExecutablePipelines(
                 NES_ERROR("Cannot compile pipeline:" << currContext->code);
                 NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");
             }
-            if (currContext->hasWindow()) {
-                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, currContext->getWindow());
-            } else {
-                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, nullptr);
+            Windowing::AbstractWindowHandlerPtr windowHandlerPtr = nullptr;
+            Windowing::AbstractWindowHandlerPtr joinHandlerPtr = nullptr;
+            if(currContext->hasWindow())
+            {
+                NES_DEBUG("generateExecutablePipelines add window handler");
+                windowHandlerPtr = currContext->getWindow();
             }
+            if(currContext->hasJoin())
+            {
+                NES_DEBUG("generateExecutablePipelines add join handler");
+                joinHandlerPtr = currContext->getJoin();
+            }
+
+            accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, windowHandlerPtr, joinHandlerPtr);
+//            if (currContext->hasWindow()) {
+//                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, currContext->getWindow());
+//            } else {
+//                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, nullptr);
+//            }
             if (consumerPipelineStateId >= 0) {
                 accumulator[currentPipelineStateId].consumers.emplace(consumerPipelineStateId);
             }

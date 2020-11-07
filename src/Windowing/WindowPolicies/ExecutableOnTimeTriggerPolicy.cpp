@@ -30,15 +30,7 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
     }
 
     running = true;
-    std::string triggerType;
-    if (windowHandler->getWindowDefinition()->getDistributionType()->getType() == DistributionCharacteristic::Complete ||
-        windowHandler->getWindowDefinition()->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
-        triggerType = "Combining";
-    } else {
-        triggerType = "Slicing";
-    }
-
-    NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << windowHandler << " type=" << triggerType << " with ms=" << triggerTimeInMs);
+    NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << windowHandler->toString() << " with ms=" << triggerTimeInMs);
     std::string handlerName = windowHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, windowHandler, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());

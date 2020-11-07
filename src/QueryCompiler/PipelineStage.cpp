@@ -82,7 +82,12 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
 
 bool PipelineStage::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
     if (hasWindowHandler()) {
+        NES_DEBUG("PipelineStage::setup windowHandler");
         return pipelineContext->getWindowHandler()->setup(queryManager, bufferManager, nextStage, pipelineStageId, qepId);
+    }
+    if (hasJoinHandler()) {
+        NES_DEBUG("PipelineStage::setup joinHandler");
+        return pipelineContext->getJoinHandler()->setup(queryManager, bufferManager, nextStage, pipelineStageId, qepId);
     }
     return true;
 }
@@ -92,8 +97,16 @@ bool PipelineStage::start() {
         NES_DEBUG("PipelineStage::start: windowhandler start");
         return pipelineContext->getWindowHandler()->start();
     } else {
-        NES_DEBUG("PipelineStage::start: NO windowhandler started");
+        NES_DEBUG("PipelineStage::start: no windowhandler to start");
     }
+
+    if (hasJoinHandler()) {
+        NES_DEBUG("PipelineStage::start: joinHandler start");
+        return pipelineContext->getJoinHandler()->start();
+    } else {
+        NES_DEBUG("PipelineStage::start: no join to start");
+    }
+
     return true;
 }
 
@@ -102,7 +115,14 @@ bool PipelineStage::stop() {
         NES_DEBUG("PipelineStage::stop: windowhandler stop");
         return pipelineContext->getWindowHandler()->stop();
     } else {
-        NES_DEBUG("PipelineStage::stop: NO windowhandler stopped");
+        NES_DEBUG("PipelineStage::stop: no windowhandler to stop");
+    }
+
+    if (hasJoinHandler()) {
+        NES_DEBUG("PipelineStage::stop: joinHandler stop");
+        return pipelineContext->getJoinHandler()->stop();
+    } else {
+        NES_DEBUG("PipelineStage::stop: no joinHandler to stop");
     }
     return true;
 }
@@ -123,6 +143,10 @@ bool PipelineStage::hasWindowHandler() {
     return pipelineContext->getWindowHandler() != nullptr;
 }
 
+bool PipelineStage::hasJoinHandler() {
+    return pipelineContext->getJoinHandler() != nullptr;
+}
+
 bool PipelineStage::isReconfiguration() const {
     return executablePipeline->isReconfiguration();
 }
@@ -133,7 +157,6 @@ PipelineStagePtr PipelineStage::create(
     const ExecutablePipelinePtr executablePipeline,
     QueryExecutionContextPtr pipelineContext,
     const PipelineStagePtr nextPipelineStage) {
-
     return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipeline, pipelineContext, nextPipelineStage);
 }
 
