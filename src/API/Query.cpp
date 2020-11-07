@@ -5,6 +5,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -12,6 +13,9 @@
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <iostream>
 
 namespace NES {
@@ -59,6 +63,16 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
     auto windowDefinition = Windowing::LogicalWindowDefinition::create(fieldAccess, aggregation, windowType,
                                                                        Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, tiggerPolicy, triggerAction);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
+
+    // check if query contain watermark assigner, and add if missing (as default behaviour)
+    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
+        } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
+            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0))));
+        }
+    }
+
     queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;
 }
