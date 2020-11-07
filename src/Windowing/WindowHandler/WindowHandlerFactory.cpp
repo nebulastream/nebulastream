@@ -15,6 +15,7 @@
 */
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Windowing/WindowHandler/JoinForwardRefs.hpp>
 #include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
 #include <Windowing/WindowHandler/WindowHandlerFactoryDetails.hpp>
 
@@ -42,6 +43,29 @@ AbstractWindowHandlerPtr WindowHandlerFactory::createAggregationWindowHandler(Lo
             }
         } else {
             NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: currently we dont support non basic key types");
+        }
+    }
+    NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: currently we dont support non keyed aggregations");
+}
+
+AbstractWindowHandlerPtr WindowHandlerFactory::createJoinWindowHandler(Join::LogicalJoinDefinitionPtr joinDefinition) {
+    auto logicalKeyType = joinDefinition->getJoinKey()->getStamp();
+    auto physicalKeyType = DefaultPhysicalTypeFactory().getPhysicalType(logicalKeyType);
+    if (physicalKeyType->isBasicType()) {
+        auto basicKeyType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalKeyType);
+        switch (basicKeyType->getNativeType()) {
+            case BasicPhysicalType::UINT_8: return WindowHandlerFactoryDetails::createJoinHandler<uint8_t>(joinDefinition);
+            case BasicPhysicalType::UINT_16: return WindowHandlerFactoryDetails::createJoinHandler<uint16_t>(joinDefinition);
+            case BasicPhysicalType::UINT_32: return WindowHandlerFactoryDetails::createJoinHandler<uint32_t>(joinDefinition);
+            case BasicPhysicalType::UINT_64: return WindowHandlerFactoryDetails::createJoinHandler<uint64_t>(joinDefinition);
+            case BasicPhysicalType::INT_8: return WindowHandlerFactoryDetails::createJoinHandler<int8_t>(joinDefinition);
+            case BasicPhysicalType::INT_16: return WindowHandlerFactoryDetails::createJoinHandler<int16_t>(joinDefinition);
+            case BasicPhysicalType::INT_32: return WindowHandlerFactoryDetails::createJoinHandler<int32_t>(joinDefinition);
+            case BasicPhysicalType::INT_64: return WindowHandlerFactoryDetails::createJoinHandler<int64_t>(joinDefinition);
+            case BasicPhysicalType::FLOAT: return WindowHandlerFactoryDetails::createJoinHandler<float>(joinDefinition);
+            case BasicPhysicalType::DOUBLE: return WindowHandlerFactoryDetails::createJoinHandler<double>(joinDefinition);
+            case BasicPhysicalType::CHAR: return WindowHandlerFactoryDetails::createJoinHandler<char>(joinDefinition);
+            case BasicPhysicalType::BOOLEAN: return WindowHandlerFactoryDetails::createJoinHandler<bool>(joinDefinition);
         }
     }
     NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: currently we dont support non keyed aggregations");

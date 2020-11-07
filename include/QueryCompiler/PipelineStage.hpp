@@ -115,6 +115,7 @@ class PipelineStage {
 
   public:
     bool hasWindowHandler();
+    bool hasJoinHandler();
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
