@@ -2,6 +2,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableJoinOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
 
 namespace NES {
 
@@ -16,16 +17,20 @@ void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
 }
 
 void GeneratableJoinOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateCodeForEmit(outputSchema, context);
+    auto joinHandler = Windowing::WindowHandlerFactory::createAggregationWindowHandler(joinDefinition);
+    context->setWindow(joinHandler);
+    codegen->generateCodeForSlicingWindow(getWindowDefinition(), generatableWindowAggregation, context);
+
 }
 
 GeneratableJoinOperatorPtr GeneratableJoinOperator::create(JoinLogicalOperatorNodePtr logicalJoinOperator, OperatorId id) {
     return std::make_shared<GeneratableJoinOperator>(GeneratableJoinOperator(logicalJoinOperator->getOutputSchema(), logicalJoinOperator->getJoinDefinition(), id));
 }
 
-GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr schemaP, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id) : JoinLogicalOperatorNode(joinDefinition, id) {
+GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr schemaP, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id) : JoinLogicalOperatorNode(joinDefinition, id), joinDefinition(joinDefinition) {
     setInputSchema(schemaP);
     setOutputSchema(schemaP);
+
 }
 
 const std::string GeneratableJoinOperator::toString() const {

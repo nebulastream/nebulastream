@@ -39,6 +39,7 @@ class GeneratableJoinOperator : public JoinLogicalOperatorNode, public Generatab
 
   private:
     GeneratableJoinOperator(SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id);
+    Join::LogicalJoinDefinitionPtr joinDefinition;
 };
 
 }// namespace NES
