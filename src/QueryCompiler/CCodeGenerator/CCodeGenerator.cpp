@@ -654,11 +654,13 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
     if(context->isLeftSide)
     {
+        NES_DEBUG("CCodeGenerator::generateCodeForJoin generate code for side left");
         auto getWindowStateStatement = getLeftJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
     }
     else
     {
+        NES_DEBUG("CCodeGenerator::generateCodeForJoin generate code for side right");
         auto getWindowStateStatement = getRightJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
     }

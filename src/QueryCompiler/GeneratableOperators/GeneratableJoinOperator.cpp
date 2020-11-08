@@ -8,8 +8,10 @@ namespace NES {
 
 void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto newPipelineContext1 = PipelineContext::create();
+    newPipelineContext1->isLeftSide = true;
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext1);
     auto newPipelineContext2 = PipelineContext::create();
+    newPipelineContext2->isLeftSide = false;
     getChildren()[1]->as<GeneratableOperator>()->produce(codegen, newPipelineContext2);
 
     context->addNextPipeline(newPipelineContext1);
