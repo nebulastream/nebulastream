@@ -67,6 +67,8 @@
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -417,12 +419,8 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
 
     auto windowAction = joinDetails.mutable_action();
     switch (joinDefinition->getTriggerAction()->getActionType()) {
-        case Windowing::ActionType::WindowAggregationTriggerAction: {
-            windowAction->set_type(SerializableOperator_JoinDetails_TriggerAction_Type_Complete);
-            break;
-        }
-        case Windowing::ActionType::SliceAggregationTriggerAction: {
-            windowAction->set_type(SerializableOperator_JoinDetails_TriggerAction_Type_Slicing);
+        case Join::JoinActionType::LazyNestedLoopJoin: {
+            windowAction->set_type(SerializableOperator_JoinDetails_TriggerAction_Type_LazyNestedLoop);
             break;
         }
         default: {
@@ -581,11 +579,9 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize trigger: " << serializedTriggerPolicy.DebugString());
     }
 
-    Windowing::WindowActionDescriptorPtr action;
-    if (serializedAction.type() == SerializableOperator_JoinDetails_TriggerAction_Type_Complete) {
-        action = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    } else if (serializedAction.type() == SerializableOperator_JoinDetails_TriggerAction_Type_Slicing) {
-        action = Windowing::SliceAggregationTriggerActionDescriptor::create();
+    Join::BaseJoinActionDescriptorPtr action;
+    if (serializedAction.type() == SerializableOperator_JoinDetails_TriggerAction_Type_LazyNestedLoop) {
+        action = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize action: " << serializedAction.DebugString());
     }

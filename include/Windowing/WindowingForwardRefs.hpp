@@ -67,6 +67,7 @@ typedef std::shared_ptr<BaseWindowTriggerPolicyDescriptor> WindowTriggerPolicyPt
 class BaseWindowActionDescriptor;
 typedef std::shared_ptr<BaseWindowActionDescriptor> WindowActionDescriptorPtr;
 
+
 class AbstractWindowHandler;
 typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
 

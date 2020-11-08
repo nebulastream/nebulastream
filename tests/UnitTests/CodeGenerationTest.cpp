@@ -62,6 +62,7 @@
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 
 using std::cout;
 using std::endl;
@@ -1271,7 +1272,7 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
 
     codeGenerator->generateCodeForScan(source->getSchema(), context1);
     WindowTriggerPolicyPtr triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
-    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     auto distrType = DistributionCharacteristic::createCompleteWindowType();
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                                                                                  TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)),

@@ -1,12 +1,12 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
 #include <State/StateManager.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <Windowing/WindowHandler/JoinForwardRefs.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
@@ -15,8 +15,10 @@ template<class KeyType>
 class JoinHandler : public Windowing::AbstractWindowHandler {
   public:
     explicit JoinHandler(LogicalJoinDefinitionPtr joinDefinition,
-                         Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger) : joinDefinition(joinDefinition),
-                                                                                                    executablePolicyTrigger(executablePolicyTrigger) {
+                         Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
+                         BaseExecutableJoinActionPtr<KeyType> executableJoinAction) : joinDefinition(joinDefinition),
+                                                                                   executablePolicyTrigger(executablePolicyTrigger),
+                                                                                   executableJoinAction(executableJoinAction) {
     }
 
     ~JoinHandler() {
@@ -50,23 +52,22 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
     * @brief triggers all ready windows.
     */
     void trigger() override {
-        //        NES_DEBUG("AggregationWindowHandler: run window action " << executableWindowAction->toString()
-        //                                                                 << " distribution type=" << windowDefinition->getDistributionType()->toString()
-        //                                                                 << " origin id=" << originId);
-        //        auto tupleBuffer = bufferManager->getBufferBlocking();
-        //        tupleBuffer.setOriginId(originId);
-        //        executableWindowAction->doAction(getTypedWindowState(), tupleBuffer);
-        //
-        //        if (tupleBuffer.getNumberOfTuples() > 0) {
-        //            NES_DEBUG("AggregationWindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
-        //                                                                               << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, executableWindowAction->getWindowSchema())
-        //                                                                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << executableWindowAction->toString()
-        //                                                                               << std::endl);
-        //            //forward buffer to next pipeline stage
-        //            queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
-        //        } else {
-        //            NES_WARNING("AggregationWindowHandler: output buffer size is 0 and therefore now buffer is forwarded");
-        //        }
+        NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString()
+                                                    << " origin id=" << originId);
+        auto tupleBuffer = bufferManager->getBufferBlocking();
+        tupleBuffer.setOriginId(originId);
+        executableJoinAction->doAction(leftJoinState, rightJoinState, tupleBuffer);
+
+        if (tupleBuffer.getNumberOfTuples() > 0) {
+            NES_DEBUG("JoinHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
+                                                                  << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, executableJoinAction->getJoinSchema())
+                                                                  << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << executableJoinAction->toString()
+                                                                  << std::endl);
+            //forward buffer to next pipeline stage
+            queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
+        } else {
+            NES_WARNING("JoinHandler: output buffer size is 0 and therefore now buffer is forwarded");
+        }
     }
 
     /**
@@ -76,9 +77,9 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
      */
     void updateAllMaxTs(uint64_t ts, uint64_t originId) override {
         //        //TODO: check if we still need this
-        NES_DEBUG("AggregationWindowHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
+        NES_DEBUG("JoinHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
         //        for (auto& it : windowStateVariable->rangeAll()) {
-        //            NES_DEBUG("AggregationWindowHandler: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
+        //            NES_DEBUG("JoinHandler: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
         //            it.second->updateMaxTs(ts, originId);
         //        }
     }
@@ -92,7 +93,7 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
         this->pipelineStageId = pipelineStageId;
         this->originId = originId;
 
-        // Initialize AggregationWindowHandler Manager
+        // Initialize JoinHandler Manager
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
         // Initialize StateVariable
         this->leftJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<KeyType>*>("leftSide");
@@ -122,7 +123,7 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
         return joinDefinition;
     }
 
-    LogicalWindowDefinitionPtr getWindowDefinition() override{
+    LogicalWindowDefinitionPtr getWindowDefinition() override {
         return nullptr;
     }
 
@@ -131,12 +132,12 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
     StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinState;
 
     //TODO: this will activated once we have a slice store that is capable of handling vectors
-//    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*>* leftJoinState;
-//    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeRight>>*>* rightJoinState;
+    //    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*>* leftJoinState;
+    //    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeRight>>*>* rightJoinState;
 
     LogicalJoinDefinitionPtr joinDefinition;
     Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
-    //    BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
+    Join::BaseExecutableJoinActionPtr<KeyType> executableJoinAction;
 };
 }// namespace NES::Join
 #endif//NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_

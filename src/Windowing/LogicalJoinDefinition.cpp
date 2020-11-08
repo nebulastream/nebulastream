@@ -6,18 +6,18 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKe
                                              Windowing::WindowTypePtr windowType,
                                              DistributionCharacteristicPtr distributionType,
                                              WindowTriggerPolicyPtr triggerPolicy,
-                                             WindowActionDescriptorPtr triggerAction)
+                                             BaseJoinActionDescriptorPtr triggerAction)
     : joinKey(joinKey),
       windowType(windowType),
       distributionType(distributionType),
       triggerPolicy(triggerPolicy),
-      triggerAction(triggerAction){
+      triggerAction(triggerAction) {
 }
 LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr joinKey,
                                                        Windowing::WindowTypePtr windowType,
                                                        DistributionCharacteristicPtr distributionType,
                                                        WindowTriggerPolicyPtr triggerPolicy,
-                                                       WindowActionDescriptorPtr triggerAction) {
+                                                       BaseJoinActionDescriptorPtr triggerAction) {
     return std::make_shared<Join::LogicalJoinDefinition>(joinKey, windowType, distributionType, triggerPolicy, triggerAction);
 }
 
@@ -33,7 +33,7 @@ Windowing::WindowTriggerPolicyPtr LogicalJoinDefinition::getTriggerPolicy() cons
     return triggerPolicy;
 }
 
-Windowing::WindowActionDescriptorPtr LogicalJoinDefinition::getTriggerAction() const {
+Join::BaseJoinActionDescriptorPtr LogicalJoinDefinition::getTriggerAction() const {
     return triggerAction;
 }
 
