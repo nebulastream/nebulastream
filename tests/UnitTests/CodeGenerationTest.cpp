@@ -60,9 +60,9 @@
 #include <utility>
 
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 
 using std::cout;
 using std::endl;
@@ -105,7 +105,6 @@ class TestPipelineExecutionContext : public PipelineExecutionContext {
 
     std::vector<TupleBuffer> buffers;
 };
-
 
 const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
     return std::make_shared<DefaultSource>(
@@ -1295,14 +1294,14 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
             buff.isValid();
         },
         nullptr,
-        joinHandler);                                                                            //valid check due to compiler error for unused var
+        joinHandler); //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     joinHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
-    cout << "buffer content=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer,input_schema);
+    cout << "buffer content=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, input_schema);
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, joinHandler);
