@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_JOIN_LOGICALJOINDEFINITION_HPP_
 #define NES_INCLUDE_JOIN_LOGICALJOINDEFINITION_HPP_
-#include <Windowing/WindowHandler/JoinForwardRefs.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
@@ -24,9 +24,9 @@ using namespace Windowing;
 
 class LogicalJoinDefinition {
   public:
-    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, DistributionCharacteristicPtr distributionType, WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr triggerAction);
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, DistributionCharacteristicPtr distributionType, WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction);
 
-    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, DistributionCharacteristicPtr distributionType, WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr triggerAction);
+    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, DistributionCharacteristicPtr distributionType, WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction);
 
     /**
     * @brief getter/setter for on left join key
@@ -47,7 +47,7 @@ class LogicalJoinDefinition {
      * @brief getter for on trigger action
      * @return trigger action
     */
-    WindowActionDescriptorPtr getTriggerAction() const;
+    BaseJoinActionDescriptorPtr getTriggerAction() const;
 
     /**
      * @brief getter for on distribution type
@@ -58,7 +58,7 @@ class LogicalJoinDefinition {
   private:
     FieldAccessExpressionNodePtr joinKey;
     WindowTriggerPolicyPtr triggerPolicy;
-    WindowActionDescriptorPtr triggerAction;
+    BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;
     DistributionCharacteristicPtr distributionType;
 };

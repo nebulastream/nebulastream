@@ -20,9 +20,12 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
+#include <Windowing/WindowActions/ExecutableNestedLoopJoinTriggerAction.hpp>
 #include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
@@ -30,9 +33,7 @@
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
-#include <Windowing/WindowHandler/JoinForwardRefs.hpp>
 #include <Windowing/WindowHandler/JoinHandler.hpp>
-
 namespace NES::Windowing {
 
 class WindowHandlerFactoryDetails {
@@ -85,6 +86,17 @@ class WindowHandlerFactoryDetails {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
         }
 
+        auto action = joinDefinition->getTriggerAction();
+//        Join::BaseExecutableJoinActionPtr<KeyType> executableActionTrigger;
+        Join::ExecutableNestedLoopJoinTriggerActionPtr<KeyType> executableActionTrigger;
+        if (action->getActionType() == Join::LazyNestedLoopJoin) {
+//            Join::ExecutableNestedLoopJoinTriggerActionPtr<KeyType> ptr = Join::ExecutableNestedLoopJoinTriggerAction<KeyType>::create(joinDefinition);
+            executableActionTrigger = Join::ExecutableNestedLoopJoinTriggerAction<KeyType>::create(joinDefinition);
+
+        } else {
+            NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        }
+
         //        auto action = joinDefinition->getTriggerAction();
         //        BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
         //        if (action->getActionType() == WindowAggregationTriggerAction) {
@@ -97,7 +109,7 @@ class WindowHandlerFactoryDetails {
 
         //add compile method return handler
         //create the action
-        return std::make_shared<Join::JoinHandler<KeyType>>(joinDefinition, executablePolicyTrigger);
+        return std::make_shared<Join::JoinHandler<KeyType>>(joinDefinition, executablePolicyTrigger, executableActionTrigger);
     }
 
     template<class KeyType, class InputType>

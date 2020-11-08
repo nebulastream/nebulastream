@@ -14,6 +14,7 @@
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <iostream>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 
 namespace NES {
 
@@ -47,7 +48,7 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
-    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
     auto joinDefinition = Join::LogicalJoinDefinition::create(fieldAccess, windowType, distrType, triggerPolicy, triggerAction);
 

@@ -14,6 +14,8 @@
 
 add_source_nes(
         BaseWindowActionDescription.cpp
+        BaseJoinActionDescription.cpp
         SliceAggregationTriggerActionDescriptor.cpp
         CompleteAggregationTriggerActionDescriptor.cpp
+        LazyNestLoopJoinTriggerActionDescriptor.cpp
 )

@@ -324,8 +324,7 @@ message SerializableOperator{
     message TriggerAction
     {
       enum Type{
-        Complete = 0;
-        Slicing = 1;
+        LazyNestedLoop = 0;
       }
       Type type = 1;
     }

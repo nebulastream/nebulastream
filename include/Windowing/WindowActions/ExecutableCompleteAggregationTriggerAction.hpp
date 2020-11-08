@@ -53,13 +53,13 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                            ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(windowSchema);
 
-        windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
+//        windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, TupleBuffer& tupleBuffer) {
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
-            NES_DEBUG("AggregationWindowHandler: " << toString() << " check key=" << it.first << "nextEdge=" << it.second->nextEdge);
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: " << toString() << " check key=" << it.first << "nextEdge=" << it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
             aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
@@ -82,21 +82,21 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         if (store->getLastWatermark() == 0) {
             if (windowType->isTumblingWindow()) {
                 TumblingWindow* tumbWindow = dynamic_cast<TumblingWindow*>(windowType.get());
-                NES_DEBUG("AggregationWindowHandler::aggregateWindows: successful cast to TumblingWindow");
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: successful cast to TumblingWindow");
                 auto initWatermark = watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
-                NES_DEBUG("AggregationWindowHandler::aggregateWindows(TumblingWindow): getLastWatermark was 0 set to=" << initWatermark);
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows(TumblingWindow): getLastWatermark was 0 set to=" << initWatermark);
                 store->setLastWatermark(initWatermark);
             } else if (windowType->isSlidingWindow()) {
                 SlidingWindow* slidWindow = dynamic_cast<SlidingWindow*>(windowType.get());
-                NES_DEBUG("AggregationWindowHandler::aggregateWindows: successful cast to SlidingWindow");
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: successful cast to SlidingWindow");
                 auto initWatermark = watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
-                NES_DEBUG("AggregationWindowHandler::aggregateWindows(SlidingWindow): getLastWatermark was 0 set to=" << initWatermark);
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows(SlidingWindow): getLastWatermark was 0 set to=" << initWatermark);
                 store->setLastWatermark(initWatermark);
             } else {
-                NES_DEBUG("AggregationWindowHandler::aggregateWindows: Unknown WindowType; LastWatermark was 0 and remains 0");
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: Unknown WindowType; LastWatermark was 0 and remains 0");
             }
         } else {
-            NES_DEBUG("AggregationWindowHandler::aggregateWindows: last watermark is=" << store->getLastWatermark());
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: last watermark is=" << store->getLastWatermark());
         }
 
         return watermark;
@@ -119,7 +119,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         // TODO we should add a allowed lateness to support out of order events
         auto watermark = updateWaterMark(store);
 
-        NES_DEBUG("AggregationWindowHandler::aggregateWindows: current watermark is=" << watermark << " minWatermark=" << store->getMinWatermark());
+        NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: current watermark is=" << watermark << " minWatermark=" << store->getMinWatermark());
 
         // create result vector of windows
         auto windows = std::vector<WindowState>();
@@ -128,21 +128,21 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         // iterate over all slices and update the partial final aggregates
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
-        NES_DEBUG("AggregationWindowHandler: trigger " << windows.size() << " windows, on " << slices.size() << " slices");
+        NES_DEBUG("ExecutableCompleteAggregationTriggerAction: trigger " << windows.size() << " windows, on " << slices.size() << " slices");
 
         //trigger a central window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-            NES_DEBUG("AggregationWindowHandler: trigger sliceid=" << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: trigger sliceid=" << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
         }
         //generates a list of windows that have to be outputted
 
-        NES_DEBUG("AggregationWindowHandler: trigger test if mappings=" << store->getNumberOfMappings() << " < inputEdges=" << windowDefinition->getNumberOfInputEdges());
+        NES_DEBUG("ExecutableCompleteAggregationTriggerAction: trigger test if mappings=" << store->getNumberOfMappings() << " < inputEdges=" << windowDefinition->getNumberOfInputEdges());
         if (store->getNumberOfMappings() < windowDefinition->getNumberOfInputEdges()) {
-            NES_DEBUG("AggregationWindowHandler: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermark to last=" << store->getLastWatermark());
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermark to last=" << store->getLastWatermark());
             watermark = store->getLastWatermark();
         }
         windowDefinition->getWindowType()->triggerWindows(windows, store->getLastWatermark(), watermark);//watermark
-        NES_DEBUG("AggregationWindowHandler: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
+        NES_DEBUG("ExecutableCompleteAggregationTriggerAction: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
 
         // allocate partial final aggregates for each window
         //because we trigger each second, there could be multiple windows ready
@@ -151,13 +151,13 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_DEBUG("AggregationWindowHandler CC: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
                                                                               << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
-                    NES_DEBUG("AggregationWindowHandler CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
+                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
                     partialFinalAggregates[windowId] = executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
                 } else {
-                    NES_DEBUG("AggregationWindowHandler CC: condition not true");
+                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: condition not true");
                 }
             }
         }
@@ -211,7 +211,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
     }
 
   private:
-    StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
+//    StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
     SchemaPtr windowSchema;
