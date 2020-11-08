@@ -424,14 +424,14 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     wrk1->registerLogicalStream("car", testSchemaFileName);
     //register physical stream
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                   1, 0, 3,
+                                                                   1, 0, 1,
                                                                    "physical_car", "car");
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
     //register physical stream
     PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                     1, 0, 3,
+                                                                     1, 0, 1,
                                                                      "physical_truck", "truck");
     wrk2->registerPhysicalStream(confTruck);
 
@@ -439,9 +439,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("car").join(Query::from("truck"), Attribute("id"), TumblingWindow::of(ProcessingTime(),
+    string query = R"(Query::from("car").join(Query::from("truck"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("id")),
         Seconds(1))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
+
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

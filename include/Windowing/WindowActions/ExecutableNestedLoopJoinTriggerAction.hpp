@@ -29,7 +29,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                            ->addField(createField("start", UINT64))
                            ->addField(createField("end", UINT64))
                            ->addField("key", this->joinDefinition->getJoinKey()->getStamp())
-                            ->addField("value", this->joinDefinition->getJoinKey()->getStamp());
+                           ->addField("value", this->joinDefinition->getJoinKey()->getStamp());
         windowTupleLayout = createRowLayout(windowSchema);
     }
 
@@ -38,6 +38,31 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                   TupleBuffer& tupleBuffer) {
         // iterate over all keys in the window state
         NES_DEBUG("tupleBuffer=" << tupleBuffer);
+
+        NES_DEBUG("leftJoinState content=");
+        for (auto& [key, val] : leftJoinState->rangeAll()) {
+            NES_DEBUG("Key: " << key << " Value: " << val);
+            for (auto& slice : val->getSliceMetadata()) {
+                NES_DEBUG("start=" << slice.getStartTs() << " end=" << slice.getEndTs());
+            }
+            for (auto agg : val->getPartialAggregates()) {
+                NES_DEBUG("key=" << key);
+                NES_DEBUG("value=" << agg);
+            }
+        }
+
+        NES_DEBUG("rightJoinSate content=");
+        for (auto& [key, val] : rightJoinSate->rangeAll()) {
+            NES_DEBUG("Key: " << key << " Value: " << val);
+            for (auto& slice : val->getSliceMetadata()) {
+                NES_DEBUG("start=" << slice.getStartTs() << " end=" << slice.getEndTs());
+            }
+            for (auto agg : val->getPartialAggregates()) {
+                NES_DEBUG("key=" << key);
+                NES_DEBUG("value=" << agg);
+            }
+        }
+
         for (auto& leftHashTable : leftJoinState->rangeAll()) {
             NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: leftHashTable" << toString() << " check key=" << leftHashTable.first << "nextEdge=" << leftHashTable.second->nextEdge);
             for (auto& rightHashTable : rightJoinSate->rangeAll()) {
@@ -99,7 +124,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                           WindowSliceStore<KeyType>* store,
                           TupleBuffer& tupleBuffer) {
 
-        NES_DEBUG("tupleBuffer=" << key << " "<< store << " " << tupleBuffer);
+        NES_DEBUG("tupleBuffer=" << key << " " << store << " " << tupleBuffer);
         //        // For event time we use the maximal records ts as watermark.
         //        // For processing time we use the current wall clock as watermark.
         //        // TODO we should add a allowed lateness to support out of order events
