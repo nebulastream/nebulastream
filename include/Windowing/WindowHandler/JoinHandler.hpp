@@ -19,6 +19,7 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
                          BaseExecutableJoinActionPtr<KeyType> executableJoinAction) : joinDefinition(joinDefinition),
                                                                                    executablePolicyTrigger(executablePolicyTrigger),
                                                                                    executableJoinAction(executableJoinAction) {
+        NES_DEBUG("Construct JoinHandler");
     }
 
     ~JoinHandler() {
@@ -31,6 +32,7 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
    * @return boolean if the window thread is started
    */
     bool start() override {
+        NES_DEBUG("JoinHandler start");
         return executablePolicyTrigger->start(this->shared_from_this());
     }
 
@@ -39,6 +41,7 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
      * @return
      */
     bool stop() override {
+        NES_DEBUG("JoinHandler stop");
         return executablePolicyTrigger->stop();
     }
 

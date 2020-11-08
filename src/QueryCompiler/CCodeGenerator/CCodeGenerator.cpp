@@ -1116,7 +1116,7 @@ BinaryOperatorStatement CCodeGenerator::getLeftJoinState(VariableDeclaration win
 }
 
 BinaryOperatorStatement CCodeGenerator::getRightJoinState(VariableDeclaration windowHandlerVariable) {
-    auto call = FunctionCallStatement("getLeftJoinState");
+    auto call = FunctionCallStatement("getRightJoinState");
     return VarRef(windowHandlerVariable).accessPtr(call);
 }
 
