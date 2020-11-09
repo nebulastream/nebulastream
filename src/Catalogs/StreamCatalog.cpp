@@ -17,6 +17,7 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Sources/YSBSource.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -31,6 +32,12 @@ void StreamCatalog::addDefaultStreams() {
     bool success = addLogicalStream("default_logical", schema);
     if (!success) {
         NES_ERROR("StreamCatalog::addDefaultStreams: error while add default_logical");
+        throw Exception("Error while addDefaultStreams StreamCatalog");
+    }
+
+    bool successYsb = addLogicalStream("ysb", YSB_SCHEMA);
+    if (!successYsb) {
+        NES_ERROR("StreamCatalog::addDefaultStreams: error while add ysb");
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 

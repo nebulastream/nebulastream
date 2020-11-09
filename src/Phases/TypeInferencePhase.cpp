@@ -40,6 +40,11 @@ TypeInferencePhasePtr TypeInferencePhase::create(StreamCatalogPtr streamCatalog)
 QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     // first we have to check if all source operators have a correct source descriptors
     auto sources = queryPlan->getSourceOperators();
+
+    if (!sources.empty() && !streamCatalog) {
+        NES_ERROR("TypeInferencePhase: No StreamCatalog specified!");
+    }
+
     for (auto source : sources) {
         auto sourceDescriptor = source->getSourceDescriptor();
 
@@ -47,7 +52,13 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         // source descriptor form the catalog.
         if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
             auto streamName = sourceDescriptor->getStreamName();
-            SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamName);
+            SchemaPtr schema;
+            try {
+               schema = streamCatalog->getSchemaForLogicalStream(streamName);
+            }
+            catch (std::exception& e) {
+                NES_THROW_RUNTIME_ERROR("TypeInferencePhase: The logical stream " + streamName + " could not be found in the StreamCatalog");
+            }
             sourceDescriptor->setSchema(schema);
             NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName << " with schema: " << schema->toString());
         }

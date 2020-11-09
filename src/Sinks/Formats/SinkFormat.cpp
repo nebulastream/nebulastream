@@ -33,4 +33,12 @@ void SinkFormat::setSchemaPtr(SchemaPtr schema) {
     this->schema = schema;
 }
 
+BufferManagerPtr SinkFormat::getBufferManager() {
+    return bufferManager;
+}
+
+void SinkFormat::setBufferManager(BufferManagerPtr bufferManager) {
+    this->bufferManager = bufferManager;
+}
+
 }// namespace NES

@@ -65,6 +65,9 @@ class SinkFormat {
     SchemaPtr getSchemaPtr();
     void setSchemaPtr(SchemaPtr schema);
 
+    BufferManagerPtr getBufferManager();
+    void setBufferManager(BufferManagerPtr schema);
+
   protected:
     SchemaPtr schema;
     BufferManagerPtr bufferManager;
