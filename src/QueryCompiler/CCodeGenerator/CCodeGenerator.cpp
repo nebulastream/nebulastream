@@ -315,30 +315,40 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
 
         AttributeFieldPtr attribute = AttributeField::create(watermarkFieldName,DataTypeFactory::createInt64());
 
-        // get the watermark from attribute field
-        // auto watermark_ts = inputTuples[recordIndex].ts - 1;  // assuming delay = 1
         auto tf = getTypeFactory();
-        auto watermarkTsVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "watermark_ts");
-        auto tsVariableDeclaration =
-            context->code->structDeclaratonInputTuple.getVariableDeclaration(attribute->name);
-        auto watermarkTsVariableDeclarationStatement = VarDeclStatement(watermarkTsVariableDeclaration)
-            .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                VarRef(tsVariableDeclaration)));
-        auto calculateMaxTupleStatement =
-            watermarkTsVariableDeclarationStatement - Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getDelay()))));
-        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(calculateMaxTupleStatement));
 
-        // set the maximum watermark among records in the inputTuples
-        // if (watermark_ts > inputTupleBuffer.getWatermark()) {
-        //     inputTupleBuffer.setWatermark(watermark_ts);
+        // initiate maxWatermark variable
+        // auto maxWatermark = 0;
+        auto maxWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "maxWatermark");
+        auto maxWatermarkInitStatement = VarDeclStatement(maxWatermarkVariableDeclaration).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))));
+        context->code->variableInitStmts.push_back(std::make_shared<BinaryOperatorStatement>(maxWatermarkInitStatement));
+
+        // get the value for current watermark
+        // auto currentWatermark = record[index].ts;
+        auto currentWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "currentWatermark");
+        auto tsVariableDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(attribute->name);
+        auto calculateMaxTupleStatement =
+            VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                VarRef(tsVariableDeclaration)) - Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getDelay()))));
+        auto currentWatermarkStatement = VarDeclStatement(currentWatermarkVariableDeclaration).assign(calculateMaxTupleStatement);
+        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(currentWatermarkStatement));
+
+        // Check and update max watermark if current watermark is greater than maximum watermark
+        // if (currentWatermark > maxWatermark) {
+        //     maxWatermark = currentWatermark;
         // };
-        auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
-        setWatermarkFunctionCall.addParameter(VarRef(watermarkTsVariableDeclaration));
-        auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
+        auto updateMaxWatermarkStatement = VarRef(maxWatermarkVariableDeclaration).assign(VarRef(currentWatermarkVariableDeclaration));
         auto ifStatement = IF(
-            VarRef(watermarkTsVariableDeclaration) > getWatermark(context->code->varDeclarationInputBuffer),
-            setWatermarkStatement);
+            VarRef(currentWatermarkVariableDeclaration) > VarRef(maxWatermarkVariableDeclaration),
+            updateMaxWatermarkStatement);
         context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
+
+        // set the watermark of input buffer based on maximum watermark
+        // inputTupleBuffer.setWatermark(maxWatermark);
+        auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
+        setWatermarkFunctionCall.addParameter(VarRef(maxWatermarkVariableDeclaration));
+        auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
+        context->code->cleanupStmts.push_back(setWatermarkStatement.createCopy());
     } else if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::ProcessingTimeWatermark) {
         // get the watermark from attribute field
         // auto watermark_ts = NES::Windowing::getTsFromClock()

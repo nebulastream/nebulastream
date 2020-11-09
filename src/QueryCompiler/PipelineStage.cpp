@@ -46,7 +46,7 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
 
     uint32_t ret = !executablePipeline->execute(inputBuffer, pipelineContext, workerContext);
 
-    uint64_t maxWaterMark = inputBuffer.getWatermark();
+    auto maxWaterMark = inputBuffer.getWatermark();
     if (hasWindowHandler() && maxWaterMark != 0) {
         NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());
         pipelineContext->getWindowHandler()->updateAllMaxTs(maxWaterMark, inputBuffer.getOriginId());
