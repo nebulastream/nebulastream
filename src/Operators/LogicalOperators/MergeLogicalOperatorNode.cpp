@@ -67,9 +67,9 @@ bool MergeLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-z3::expr MergeLogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
+void MergeLogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    return OperatorToZ3ExprUtil::createForOperator(operatorNode, *context);
+    expr = std::make_shared<z3::expr>(OperatorToZ3ExprUtil::createForOperator(operatorNode, *context));
 }
 
 }// namespace NES

@@ -40,7 +40,7 @@ class MergeLogicalOperatorNode : public LogicalOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
-    z3::expr inferZ3Expression(z3::ContextPtr context) override;
+    void inferZ3Expression(z3::ContextPtr context) override;
 };
 }// namespace NES
 #endif// Merge_LOGICAL_OPERATOR_NODE_HPP

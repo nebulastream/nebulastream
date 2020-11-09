@@ -57,8 +57,8 @@ OperatorNodePtr SinkLogicalOperatorNode::copy() {
     return copy;
 }
 
-z3::expr SinkLogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
+void SinkLogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    return OperatorToZ3ExprUtil::createForOperator(operatorNode, *context);
+    expr = std::make_shared<z3::expr>(OperatorToZ3ExprUtil::createForOperator(operatorNode, *context));
 }
 }// namespace NES
