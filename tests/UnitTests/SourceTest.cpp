@@ -28,6 +28,8 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 
+#include <Sources/YSBSource.hpp>
+
 namespace NES {
 
 struct __attribute__((packed)) ysbRecord {
@@ -584,6 +586,41 @@ TEST_F(SourceTest, testSenseSource) {
 
     //TODO: please add here to code to test the setup
     std::cout << "Success" << std::endl;
+}
+
+TEST_F(SourceTest, testYSBSource) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
+    SchemaPtr schema =
+        Schema::create()
+            ->addField("user_id", DataTypeFactory::createFixedChar(16))
+            ->addField("page_id", DataTypeFactory::createFixedChar(16))
+            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+            ->addField("event_type", DataTypeFactory::createFixedChar(9))
+            ->addField("current_ms", UINT64)
+            ->addField("ip", INT32);
+
+    size_t numBuffers = 1;
+    size_t numTuples = 30;
+
+    auto source = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, 0, numTuples);
+
+    while (source->getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = source->receiveData();
+        auto ysbRecords = optBuf->getBufferAs<ysbRecord>();
+
+        for (int i=0; i<numTuples; i++) {
+            auto record = ysbRecords[i];
+            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
+            EXPECT_STREQ(record.ad_type, "banner78");
+            EXPECT_TRUE((!strcmp(record.event_type, "view") || !strcmp(record.event_type, "click") || !strcmp(record.event_type, "purchase")));
+        }
+    }
+
+    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), numBuffers*numTuples);
 }
 
 }// namespace NES

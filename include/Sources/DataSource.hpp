@@ -44,7 +44,8 @@ enum SourceType {
     SENSE_SOURCE,
     DEFAULT_SOURCE,
     NETWORK_SOURCE,
-    ADAPTIVE_SOURCE
+    ADAPTIVE_SOURCE,
+    YSB_SOURCE
 };
 
 /**

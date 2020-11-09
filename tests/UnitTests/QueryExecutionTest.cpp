@@ -42,15 +42,45 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Topology/TopologyNode.hpp>
+
 #include <Sinks/Mediums/SinkMedium.hpp>
 
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Sources/YSBSource.hpp>
 
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
 
 
 using namespace NES;
+
+struct __attribute__((packed)) ysbRecord {
+    char user_id[16];
+    char page_id[16];
+    char campaign_id[16];
+    char ad_type[9];
+    char event_type[9];
+    int64_t current_ms;
+    uint32_t ip;
+
+    ysbRecord() {
+        event_type[0] = '-';// invalid record
+        current_ms = 0;
+        ip = 0;
+    }
+
+    ysbRecord(const ysbRecord& rhs) {
+        memcpy(&user_id, &rhs.user_id, 16);
+        memcpy(&page_id, &rhs.page_id, 16);
+        memcpy(&campaign_id, &rhs.campaign_id, 16);
+        memcpy(&ad_type, &rhs.ad_type, 9);
+        memcpy(&event_type, &rhs.event_type, 9);
+        current_ms = rhs.current_ms;
+        ip = rhs.ip;
+    }
+};
 
 class QueryExecutionTest : public testing::Test {
   public:
@@ -143,9 +173,12 @@ class TestSink : public SinkMedium {
         std::unique_lock lock(m);
         NES_DEBUG("QueryExecutionTest: TestSink: got buffer " << input_buffer);
         NES_DEBUG("QueryExecutionTest: PrettyPrintTupleBuffer" << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
+
         resultBuffers.emplace_back(std::move(input_buffer));
         if (resultBuffers.size() == expectedBuffer) {
             completed.set_value(true);
+        } else if (resultBuffers.size() > expectedBuffer) {
+            EXPECT_TRUE(false);
         }
         return true;
     }
@@ -197,12 +230,13 @@ class TestSink : public SinkMedium {
         }
         resultBuffers.clear();
     }
-    std::vector<TupleBuffer> resultBuffers;
+
     std::mutex m;
     uint64_t expectedBuffer;
 
   public:
     std::promise<bool> completed;
+    std::vector<TupleBuffer> resultBuffers;
 };
 
 void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
@@ -653,4 +687,59 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     testSink->shutdown();
     testSource1->stop();
     testSource2->stop();
+}
+
+TEST_F(QueryExecutionTest, ysbQueryTest) {
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, PhysicalStreamConfig::create());
+    int numBuf = 3;
+    int numTup = 50;
+
+    auto ysbSource = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, 1, numTup);
+    auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, 1);
+
+    auto query = TestQuery::from(ysbSource->getSchema()).sink(DummySink::create());
+    auto testSink = TestSink::create(/*expected result buffer*/ numBuf, YSB_SCHEMA, nodeEngine->getBufferManager());
+
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+
+    auto builder = GeneratedQueryExecutionPlanBuilder::create()
+                       .setQueryManager(nodeEngine->getQueryManager())
+                       .setBufferManager(nodeEngine->getBufferManager())
+                       .setCompiler(nodeEngine->getCompiler())
+                       .setQueryId(1)
+                       .setQuerySubPlanId(1)
+                       .addSource(ysbSource)
+                       .addSink(testSink)
+                       .addOperatorQueryPlan(generatableOperators);
+
+    auto plan = builder.build();
+    nodeEngine->registerQueryInNodeEngine(plan);
+    nodeEngine->startQuery(1);
+
+    // wait till all buffers have been produced
+    bool completed = testSink->completed.get_future().get();
+    EXPECT_TRUE(completed);
+
+    // get result buffer, which should contain two results.
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), numBuf);
+
+    EXPECT_TRUE(!testSink->resultBuffers.empty());
+    size_t noBufs = 0;
+    for (auto buf : testSink->resultBuffers) {
+        noBufs++;
+        auto ysbRecords = buf.getBufferAs<ysbRecord>();
+        std::cout << "---------------------------------------------" << std::endl;
+        for (int i = 0; i < numTup; i++) {
+            auto record = ysbRecords[i];
+            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
+            EXPECT_STREQ(record.ad_type, "banner78");
+            EXPECT_TRUE((!strcmp(record.event_type, "view") || !strcmp(record.event_type, "click") || !strcmp(record.event_type, "purchase")));
+        }
+    }
+    EXPECT_EQ(noBufs, numBuf);
+
+    nodeEngine->stopQuery(1);
 }

@@ -507,9 +507,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
         NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, sourceDescriptor->getOperatorId());
     } else {
-        NES_ERROR("TypeInferencePhase:: source type " << type << " not supported");
-        NES_FATAL_ERROR("type not supported");
-        return nullptr;
+        NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
     }
 }
 

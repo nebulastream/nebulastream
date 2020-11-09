@@ -22,6 +22,7 @@ add_source_nes(
         DefaultSource.cpp
         SenseSource.cpp
         AdaptiveSource.cpp
+        YSBSource.cpp
 )
 
 if(NES_USE_KAFKA)
