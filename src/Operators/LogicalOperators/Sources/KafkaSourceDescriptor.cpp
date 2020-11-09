@@ -25,8 +25,8 @@ KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
                                              std::string topic,
                                              std::string groupId,
                                              bool autoCommit,
-                                             uint64_t kafkaConnectTimeout)
-    : SourceDescriptor(std::move(schema)),
+                                             uint64_t kafkaConnectTimeout, size_t sourceId)
+    : SourceDescriptor(std::move(schema), sourceId),
       brokers(std::move(brokers)),
       topic(std::move(topic)),
       groupId(std::move(groupId)),
@@ -39,8 +39,8 @@ KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
                                              std::string topic,
                                              std::string groupId,
                                              bool autoCommit,
-                                             uint64_t kafkaConnectTimeout)
-    : SourceDescriptor(std::move(schema), std::move(streamName)),
+                                             uint64_t kafkaConnectTimeout, size_t sourceId)
+    : SourceDescriptor(std::move(schema), std::move(streamName), sourceId),
       brokers(std::move(brokers)),
       topic(std::move(topic)),
       groupId(std::move(groupId)),
@@ -53,14 +53,14 @@ SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
                                                   std::string topic,
                                                   std::string groupId,
                                                   bool autoCommit,
-                                                  uint64_t kafkaConnectTimeout) {
+                                                  uint64_t kafkaConnectTimeout, size_t sourceId) {
     return std::make_shared<KafkaSourceDescriptor>(KafkaSourceDescriptor(std::move(schema),
                                                                          std::move(streamName),
                                                                          std::move(brokers),
                                                                          std::move(topic),
                                                                          std::move(groupId),
                                                                          autoCommit,
-                                                                         kafkaConnectTimeout));
+                                                                         kafkaConnectTimeout, sourceId));
 }
 
 SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
@@ -68,13 +68,13 @@ SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
                                                   std::string topic,
                                                   std::string groupId,
                                                   bool autoCommit,
-                                                  uint64_t kafkaConnectTimeout) {
+                                                  uint64_t kafkaConnectTimeout, size_t sourceId) {
     return std::make_shared<KafkaSourceDescriptor>(KafkaSourceDescriptor(std::move(schema),
                                                                          std::move(brokers),
                                                                          std::move(topic),
                                                                          std::move(groupId),
                                                                          autoCommit,
-                                                                         kafkaConnectTimeout));
+                                                                         kafkaConnectTimeout, sourceId));
 }
 
 const std::string& KafkaSourceDescriptor::getBrokers() const {

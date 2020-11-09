@@ -91,6 +91,9 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << source->getSourceId());
                 sourceIdToQueryMap[source->getSourceId()].insert(qep);
                 queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
+                //get pipelinestage from source
+//                qep->getStage()
+//                sourceIdToPipelineStage[source->getSourceId()].insert();
             } else {
                 NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.");
                 return false;
@@ -302,7 +305,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr 
     cv.notify_all();
 }
 
-void QueryManager::addWork(const std::string& sourceId, TupleBuffer& buf) {
+void QueryManager::addWork(const size_t sourceId, TupleBuffer& buf) {
     std::shared_lock queryLock(queryMutex);// we need this lock because sourceIdToQueryMap can be concurrently modified
     std::unique_lock workQueueLock(workMutex);
     for (const auto& qep : sourceIdToQueryMap[sourceId]) {
@@ -311,15 +314,12 @@ void QueryManager::addWork(const std::string& sourceId, TupleBuffer& buf) {
         size_t stageId = 0;
         if(qep->getStageSize() > 2)
         {
-            NES_DEBUG("QueryManager: use origin Id as index = " << atoi(sourceId.c_str()) % 2);
+            NES_DEBUG("QueryManager: use origin Id as index = " << sourceId % 2);
             stageId = buf.getOriginId() % 2;
         }
-        taskQueue.emplace_back(qep->getStage(stageId), buf);
-        if(qep->getStageSize() <= 2)
-        {
-            NES_DEBUG("QueryManager::addWorkForNextPipeline set orgID=" << taskQueue.back().getPipelineStage()->getQepParentId());
-            buf.setOriginId(taskQueue.back().getPipelineStage()->getQepParentId());
-        }
+        taskQueue.emplace_back(qep->getStage(0), buf);
+
+
         NES_DEBUG("QueryManager: added Task " << taskQueue.back().toString() << " for query " << sourceId << " for QEP " << qep
                                               << " inputBuffer " << buf << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
     }

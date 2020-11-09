@@ -27,8 +27,8 @@ namespace NES {
 class DefaultSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce, uint32_t frequency);
+    static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency, size_t sourceId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce, uint32_t frequency, size_t sourceId);
 
     /**
      * @brief Get number of buffers to be produced
@@ -44,8 +44,8 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
-    explicit DefaultSourceDescriptor(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce, uint32_t frequency);
+    explicit DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency, size_t sourceId);
+    explicit DefaultSourceDescriptor(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce, uint32_t frequency, size_t sourceId);
     const uint64_t numbersOfBufferToProduce;
     const uint32_t frequency;
 };

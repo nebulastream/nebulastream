@@ -55,7 +55,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, "csv.log", ",", 0, 10, 10, true, false);
+    SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, "csv.log", ",", 0, 10, 10, true, false, 1);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, engine);
     EXPECT_EQ(csvFileSource->getType(),  CSV_SOURCE);
 }
@@ -64,14 +64,14 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingBinaryFileLogicalToPhys
     std::string filePath =
         "../tests/test_data/ysb-tuples-100-campaign-100.bin";
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = BinarySourceDescriptor::create(schema, filePath);
+    SourceDescriptorPtr sourceDescriptor = BinarySourceDescriptor::create(schema, filePath, 1);
     DataSourcePtr binaryFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, engine);
     EXPECT_EQ(binaryFileSource->getType(), BINARY_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingZMQLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = ZmqSourceDescriptor::create(schema, "127.0.0.1", 10000);
+    SourceDescriptorPtr sourceDescriptor = ZmqSourceDescriptor::create(schema, "127.0.0.1", 10000, 1);
     DataSourcePtr zqmSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, engine);
     EXPECT_EQ(zqmSource->getType(), ZMQ_SOURCE);
 }
@@ -86,14 +86,14 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingKafkaLogiclaToPhysicalS
 #endif
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = SenseSourceDescriptor::create(schema, "some_udf");
+    SourceDescriptorPtr sourceDescriptor = SenseSourceDescriptor::create(schema, "some_udf", 1);
     DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, engine);
     EXPECT_EQ(senseSource->getType(), SENSE_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingDefaultLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/1);
+    SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/1, 1);
     DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, engine);
     EXPECT_EQ(senseSource->getType(), DEFAULT_SOURCE);
 }

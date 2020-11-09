@@ -26,8 +26,9 @@ CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
                                          size_t numBuffersToProcess,
                                          size_t frequency,
                                          bool endlessRepeat,
-                                         bool skipHeader)
-    : SourceDescriptor(std::move(schema)),
+                                         bool skipHeader,
+                                         size_t sourceId)
+    : SourceDescriptor(std::move(schema), sourceId),
       filePath(std::move(filePath)),
       delimiter(std::move(delimiter)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
@@ -37,8 +38,8 @@ CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
       skipHeader(skipHeader) {}
 
 CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
-                                         size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, bool skipHeader)
-    : SourceDescriptor(std::move(schema), std::move(streamName)),
+                                         size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, bool skipHeader, size_t sourceId)
+    : SourceDescriptor(std::move(schema), std::move(streamName), sourceId),
       filePath(std::move(filePath)),
       delimiter(std::move(delimiter)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
@@ -54,9 +55,9 @@ SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
                                                 size_t numBuffersToProcess,
                                                 size_t frequency,
                                                 bool endlessRepeat,
-                                                bool skipHeader) {
+                                                bool skipHeader, size_t sourceId) {
     return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(filePath), std::move(delimiter),
-                                                                     numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat, skipHeader));
+                                                                     numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat, skipHeader, sourceId));
 }
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
@@ -67,8 +68,8 @@ SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
                                                 size_t numBuffersToProcess,
                                                 size_t frequency,
                                                 bool endlessRepeat,
-                                                bool skipHeader) {
-    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(streamName), std::move(filePath), std::move(delimiter), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat, skipHeader));
+                                                bool skipHeader, size_t sourceId) {
+    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(streamName), std::move(filePath), std::move(delimiter), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat, skipHeader, sourceId));
 }
 
 const std::string& CsvSourceDescriptor::getFilePath() const {

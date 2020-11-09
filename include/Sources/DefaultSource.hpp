@@ -24,7 +24,7 @@ namespace NES {
 class DefaultSource : public GeneratorSource {
   public:
     DefaultSource() = default;
-    DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, size_t frequency);
+    DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, size_t frequency, size_t sourceId);
 
     SourceType getType() const override;
 

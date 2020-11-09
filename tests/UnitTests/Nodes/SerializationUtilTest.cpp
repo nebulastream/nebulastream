@@ -172,7 +172,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     schema->addField("f1", INT32);
 
     {
-        auto source = ZmqSourceDescriptor::create(schema, "localhost", 42);
+        auto source = ZmqSourceDescriptor::create(schema, "localhost", 42, 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
@@ -189,14 +189,14 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
 #endif
 
     {
-        auto source = BinarySourceDescriptor::create(schema, "localhost");
+        auto source = BinarySourceDescriptor::create(schema, "localhost", 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
     {
-        auto source = CsvSourceDescriptor::create(schema, "localhost", ",", 0, 10, 10, true, false);
+        auto source = CsvSourceDescriptor::create(schema, "localhost", ",", 0, 10, 10, true, false, 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
@@ -208,7 +208,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
-        auto source = DefaultSourceDescriptor::create(schema, 55, 42);
+        auto source = DefaultSourceDescriptor::create(schema, 55, 42, 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
@@ -222,7 +222,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
-        auto source = SenseSourceDescriptor::create(schema, "senseusf");
+        auto source = SenseSourceDescriptor::create(schema, "senseusf", 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));

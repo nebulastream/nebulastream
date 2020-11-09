@@ -880,7 +880,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager());
+                                                                    nodeEngine->getQueryManager(), 1);
     auto networkSink = std::make_shared<NetworkSink>(schema, 2, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
 
     auto query2 = TestQuery::from(schema)

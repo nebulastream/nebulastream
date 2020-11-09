@@ -25,8 +25,8 @@
 
 namespace NES {
 
-AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t initialGatheringInterval)
-    : DataSource(schema, bufferManager, queryManager) {
+AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t initialGatheringInterval, size_t sourceId)
+    : DataSource(schema, bufferManager, queryManager, sourceId) {
     NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval);
     this->gatheringInterval = initialGatheringInterval;
 }
@@ -45,7 +45,7 @@ std::optional<TupleBuffer> AdaptiveSource::receiveData() {
 }
 
 void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
-    setThreadName("AdaptSrc-%d", getSourceId().c_str());
+    setThreadName("AdaptSrc-%d", getSourceId());
     std::string thName = "AdaptSrc-" + getSourceId();
 
     if (!bufferManager) {
@@ -58,7 +58,7 @@ void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManager
         throw std::logic_error("AdaptiveSource: QueryManager not set");
     }
 
-    if (this->sourceId.empty()) {
+    if (this->sourceId == 0) {
         NES_FATAL_ERROR("AdaptiveSource: No ID assigned. Running_routine is not possible!");
         throw std::logic_error("AdaptiveSource: No ID assigned. Running_routine is not possible!");
     }

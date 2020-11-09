@@ -37,8 +37,8 @@ class GeneratorSource : public DataSource {
    * @param number of buffer that should be processed
    * @param via template, the functor that determines what to do
    */
-    GeneratorSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce)
-        : DataSource(schema, bufferManager, queryManager) {
+    GeneratorSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, size_t sourceId)
+        : DataSource(schema, bufferManager, queryManager, sourceId) {
         this->numBuffersToProcess = numbersOfBufferToProduce;
     }
     /**

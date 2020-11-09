@@ -26,7 +26,7 @@ class SchemaSourceDescriptor: public SourceDescriptor{
     static SourceDescriptorPtr create(SchemaPtr schema){
         return std::make_shared<SchemaSourceDescriptor>(schema);
     }
-    explicit SchemaSourceDescriptor(SchemaPtr schema): SourceDescriptor(schema){
+    explicit SchemaSourceDescriptor(SchemaPtr schema): SourceDescriptor(schema, 1){
 
     }
     std::string toString() override {

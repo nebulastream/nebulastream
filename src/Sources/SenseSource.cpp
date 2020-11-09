@@ -28,8 +28,8 @@ using namespace std;
 
 namespace NES {
 
-SenseSource::SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udsf)
-    : DataSource(schema, bufferManager, queryManager),
+SenseSource::SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udsf, size_t sourceId)
+    : DataSource(schema, bufferManager, queryManager, sourceId),
       udsf(udsf) {
 }
 

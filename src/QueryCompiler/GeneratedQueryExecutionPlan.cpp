@@ -34,6 +34,7 @@ GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(
     for (auto& stage : this->stages) {
         NES_ASSERT(!!stage, "Invalid stage");
     }
+
 }
 
 }// namespace NES

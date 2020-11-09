@@ -20,7 +20,8 @@
 namespace NES {
 namespace Network {
 
-NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition) : SourceDescriptor(std::move(schema)), nesPartition(nesPartition) {
+NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition)
+    : SourceDescriptor(std::move(schema), nesPartition.getOperatorId()), nesPartition(nesPartition) {
 }
 
 SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema, NesPartition nesPartition) {
