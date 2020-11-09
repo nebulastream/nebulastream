@@ -319,13 +319,13 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
 
         // initiate maxWatermark variable
         // auto maxWatermark = 0;
-        auto maxWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "maxWatermark");
+        auto maxWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), "maxWatermark");
         auto maxWatermarkInitStatement = VarDeclStatement(maxWatermarkVariableDeclaration).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))));
         context->code->variableInitStmts.push_back(std::make_shared<BinaryOperatorStatement>(maxWatermarkInitStatement));
 
         // get the value for current watermark
         // auto currentWatermark = record[index].ts;
-        auto currentWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "currentWatermark");
+        auto currentWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), "currentWatermark");
         auto tsVariableDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(attribute->name);
         auto calculateMaxTupleStatement =
             VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(

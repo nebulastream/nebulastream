@@ -847,7 +847,7 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
 
         auto onField = ExpressionSerializationUtil::deserializeExpression(serializedEventTimeWatermarkStrategyDescriptor.mutable_onfield())
             ->as<FieldAccessExpressionNode>();
-
+        NES_DEBUG("OperatorSerializationUtil:: deserialized field name " << onField->getFieldName());
         auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute(onField->getFieldName()), Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.delay()));
         return eventTimeWatermarkStrategyDescriptor;
     } else if (deserializedWatermarkStrategyDescriptor.Is<SerializableOperator_WatermarkStrategyDetails_SerializableProcessingTimeWatermarkStrategyDescriptor>()) {
