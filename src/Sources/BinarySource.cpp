@@ -24,8 +24,8 @@
 
 namespace NES {
 
-BinarySource::BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& _file_path)
-    : DataSource(schema, bufferManager, queryManager),
+BinarySource::BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& _file_path, size_t sourceId)
+    : DataSource(schema, bufferManager, queryManager, sourceId),
       input(std::ifstream(_file_path.c_str())),
       file_path(_file_path) {
     input.seekg(0, input.end);

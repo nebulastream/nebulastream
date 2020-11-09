@@ -33,24 +33,17 @@
 #include <zconf.h>
 namespace NES {
 
-DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager)
-    : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
-      generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), sourceId(UtilityFunctions::generateIdString()) {
-    NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source with schema");
-    NES_ASSERT(this->bufferManager, "Invalid buffer manager");
-    NES_ASSERT(this->queryManager, "Invalid query manager");
-
-    watermark = std::make_shared<Windowing::ProcessingTimeWatermarkGenerator>();
-}
-
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                       std::string sourceId)
+                       size_t sourceId)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0),
       sourceId(sourceId) {
     NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source with schema");
     NES_ASSERT(this->bufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
+
+    watermark = std::make_shared<Windowing::ProcessingTimeWatermarkGenerator>();
+
 }
 
 SchemaPtr DataSource::getSchema() const { return schema; }
@@ -144,7 +137,7 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
     }
     auto lastTimeStamp = std::chrono::system_clock::now();
 
-    if (!this->sourceId.empty()) {
+    if (this->sourceId != 0) {
         NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source of type=" << getType());
         size_t cnt = 0;
         while (running) {
@@ -214,7 +207,7 @@ size_t DataSource::getNumberOfGeneratedBuffers() { return generatedBuffers; };
 
 std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
 
-const std::string& DataSource::getSourceId() const { return this->sourceId; }
+const size_t DataSource::getSourceId() const { return sourceId; }
 
 size_t DataSource::getNumBuffersToProcess() const {
     return numBuffersToProcess;
@@ -224,4 +217,9 @@ size_t DataSource::getGatheringInterval() const {
     return gatheringInterval;
 }
 
+
+
+
+
 }// namespace NES
+

@@ -413,7 +413,7 @@ void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& b
         // create a string for logging of the identity which corresponds to the
         // queryId::operatorId::partitionId::subpartitionId
         //TODO: dont use strings for lookups
-        queryManager->addWork(std::to_string(nesPartition.getOperatorId()), buffer);
+        queryManager->addWork(nesPartition.getOperatorId(), buffer);
     } else {
         // partition is not registered, discard the buffer
         buffer.release();
@@ -486,14 +486,14 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 
     if (type == "DefaultSource") {
         NES_DEBUG("TypeInferencePhase: create default source for one buffer");
-        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency);
+        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency, UtilityFunctions::getNextOperatorId());
     } else if (type == "CSVSource") {
         NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
-                                           numBuffers, frequency, endlessRepeat, skipHeader);
+                                           numBuffers, frequency, endlessRepeat, skipHeader, UtilityFunctions::getNextOperatorId());
     } else if (type == "SenseSource") {
         NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
-        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
+        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, UtilityFunctions::getNextOperatorId());
     } else {
         NES_ERROR("TypeInferencePhase:: source type " << type << " not supported");
         NES_FATAL_ERROR("type not supported");

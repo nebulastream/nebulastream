@@ -45,7 +45,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             NES_INFO("ConvertPhysicalToLogicalSource: Creating ZMQ source");
             const ZmqSourcePtr zmqSourcePtr = std::dynamic_pointer_cast<ZmqSource>(dataSource);
             SourceDescriptorPtr zmqSourceDescriptor =
-                ZmqSourceDescriptor::create(dataSource->getSchema(), zmqSourcePtr->getHost(), zmqSourcePtr->getPort());
+                ZmqSourceDescriptor::create(dataSource->getSchema(), zmqSourcePtr->getHost(), zmqSourcePtr->getPort(), dataSource->getSourceId());
             return zmqSourceDescriptor;
         }
         case DEFAULT_SOURCE: {
@@ -54,14 +54,14 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const SourceDescriptorPtr defaultSourceDescriptor =
                 DefaultSourceDescriptor::create(defaultSourcePtr->getSchema(),
                                                 defaultSourcePtr->getNumBuffersToProcess(),
-                                                defaultSourcePtr->getGatheringInterval());
+                                                defaultSourcePtr->getGatheringInterval(), dataSource->getSourceId());
             return defaultSourceDescriptor;
         }
         case BINARY_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Binary File source");
             const BinarySourcePtr binarySourcePtr = std::dynamic_pointer_cast<BinarySource>(dataSource);
             const SourceDescriptorPtr binarySourceDescriptor =
-                BinarySourceDescriptor::create(binarySourcePtr->getSchema(), binarySourcePtr->getFilePath());
+                BinarySourceDescriptor::create(binarySourcePtr->getSchema(), binarySourcePtr->getFilePath(), dataSource->getSourceId());
             return binarySourceDescriptor;
         }
         case CSV_SOURCE: {
@@ -75,7 +75,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
                                             csvSourcePtr->getNumBuffersToProcess(),
                                             csvSourcePtr->getGatheringInterval(),
                                             csvSourcePtr->isEndlessRepeat(),
-                                            csvSourcePtr->getSkipHeader());
+                                            csvSourcePtr->getSkipHeader(), dataSource->getSourceId());
             return csvSourceDescriptor;
         }
 #ifdef ENABLE_KAFKA_BUILD
@@ -106,7 +106,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             NES_INFO("ConvertPhysicalToLogicalSource: Creating sense source");
             const SenseSourcePtr senseSourcePtr = std::dynamic_pointer_cast<SenseSource>(dataSource);
             const SourceDescriptorPtr senseSourceDescriptor =
-                SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdsf());
+                SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdsf(), dataSource->getSourceId());
             return senseSourceDescriptor;
         }
         default: {

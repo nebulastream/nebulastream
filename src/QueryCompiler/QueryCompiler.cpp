@@ -104,6 +104,10 @@ void generateExecutablePipelines(
                 joinHandlerPtr = currContext->getJoin();
             }
 
+            //context->getWindow()
+            //yes it is a source
+
+
             accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, windowHandlerPtr, joinHandlerPtr);
 //            if (currContext->hasWindow()) {
 //                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, currContext->getWindow());
@@ -113,6 +117,7 @@ void generateExecutablePipelines(
             if (consumerPipelineStateId >= 0) {
                 accumulator[currentPipelineStateId].consumers.emplace(consumerPipelineStateId);
             }
+
         } catch (std::exception& err) {
             NES_ERROR("Error while compiling pipeline: " << err.what());
             NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");

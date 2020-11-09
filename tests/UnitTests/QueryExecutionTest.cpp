@@ -16,8 +16,8 @@
 
 #include "gtest/gtest.h"
 
-#include <API/Schema.hpp>
 #include <API/Query.hpp>
+#include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/OperatorNode.hpp>
@@ -93,7 +93,7 @@ class WindowSource : public NES::DefaultSource {
                  QueryManagerPtr queryManager,
                  const uint64_t numbersOfBufferToProduce,
                  size_t frequency,
-                 const bool varyWatermark = false) : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency), varyWatermark(varyWatermark) {}
+                 const bool varyWatermark = false) : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency, 1), varyWatermark(varyWatermark) {}
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
@@ -221,7 +221,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
                                                                     nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager());
+                                                                    nodeEngine->getQueryManager(), 1);
 
     auto query = TestQuery::from(testSource->getSchema())
                      .filter(Attribute("id") < 5)
@@ -575,7 +575,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager());
+                                                                     nodeEngine->getQueryManager(), 1);
 
     auto query1 = TestQuery::from(testSource1->getSchema());
 
@@ -583,7 +583,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
 
     // creating P2
     auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager());
+                                                                     nodeEngine->getQueryManager(), 1);
     auto query2 = TestQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5);
 
     // creating P3

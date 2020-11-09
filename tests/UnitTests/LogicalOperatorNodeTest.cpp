@@ -49,7 +49,7 @@ class LogicalOperatorNodeTest : public testing::Test {
         StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
         sPtr = streamCatalog->getStreamForLogicalStreamOrThrowException("default_logical");
         SchemaPtr schema = sPtr->getSchema();
-        auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0u);
+        auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0u, 1);
 
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));

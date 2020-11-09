@@ -108,7 +108,7 @@ class TestPipelineExecutionContext : public PipelineExecutionContext {
 
 const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
     return std::make_shared<DefaultSource>(
-        Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()), bPtr, dPtr, 1, 1);
+        Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()), bPtr, dPtr, 1, 1, 1);
 }
 
 class SelectionDataGenSource : public GeneratorSource {
@@ -116,7 +116,7 @@ class SelectionDataGenSource : public GeneratorSource {
     SelectionDataGenSource(SchemaPtr schema,
                            BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                            const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {
     }
 
     ~SelectionDataGenSource() = default;
@@ -167,7 +167,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
   public:
     PredicateTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {
     }
 
     ~PredicateTestingDataGeneratorSource() = default;
@@ -228,7 +228,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
   public:
     WindowTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {
     }
 
     ~WindowTestingDataGeneratorSource() = default;
@@ -262,7 +262,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
   public:
     WindowTestingWindowGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                                        const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {
     }
 
     ~WindowTestingWindowGeneratorSource() = default;

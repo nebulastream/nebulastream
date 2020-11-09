@@ -35,7 +35,7 @@ class SenseSource : public DataSource {
     explicit SenseSource(SchemaPtr schema,
                          BufferManagerPtr bufferManager,
                          QueryManagerPtr queryManager,
-                         const std::string& udfs);
+                         const std::string& udfs, size_t sourceId);
 
     /**
    * @brief override the receiveData method for the source

@@ -37,7 +37,7 @@ namespace NES {
  * @param schema of the data source
  * @return a const data source pointer
  */
-const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
+const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t sourceId);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one in N buffers of based on a schema
@@ -48,20 +48,20 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr sche
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                                                    size_t numbersOfBufferToProduce,
-                                                                   size_t frequency);
+                                                                   size_t frequency, size_t sourceId);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one without a schema
  * @return a const data source pointer
  */
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t sourceId);
 
 /**
  * @brief function to create an empty zmq source
  * @param schema of data source
  * @return a const data source pointer
  */
-const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& host, const uint16_t port);
+const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& host, const uint16_t port, size_t sourceId);
 
 /**
  * @brief function to create a binary file source
@@ -69,7 +69,7 @@ const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferMan
  * @param path to the file to reading
  * @return a const data source pointer
  */
-const DataSourcePtr createBinaryFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& pathToFile);
+const DataSourcePtr createBinaryFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& pathToFile, size_t sourceId);
 
 /**
  * @brief function to create a sense source
@@ -77,7 +77,7 @@ const DataSourcePtr createBinaryFileSource(SchemaPtr schema, BufferManagerPtr bu
  * @param udfs of the file
  * @return a const data source pointer
  */
-const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udfs);
+const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udfs, size_t sourceId);
 
 /**
  * @brief function to create a csvfile source
@@ -86,7 +86,7 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
  */
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                         const std::string& path_to_file, const std::string& delimiter,
-                                        size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, bool skipHeader);
+                                        size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, bool skipHeader, size_t sourceId);
 
 /**
  * @brief function to create a network source

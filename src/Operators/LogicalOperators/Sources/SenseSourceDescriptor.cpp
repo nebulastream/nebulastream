@@ -19,22 +19,22 @@
 #include <utility>
 namespace NES {
 
-SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string udfs)
-    : SourceDescriptor(std::move(schema)), udfs(std::move(udfs)) {}
+SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string udfs, size_t sourceId)
+    : SourceDescriptor(std::move(schema), sourceId), udfs(std::move(udfs)) {}
 
-SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string streamName, std::string udfs)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), udfs(std::move(udfs)) {}
+SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string streamName, std::string udfs, size_t sourceId)
+    : SourceDescriptor(std::move(schema), std::move(streamName), sourceId), udfs(std::move(udfs)) {}
 
 const std::string& SenseSourceDescriptor::getUdfs() const {
     return udfs;
 }
 
-SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string udfs) {
-    return std::make_shared<SenseSourceDescriptor>(SenseSourceDescriptor(std::move(schema), std::move(streamName), std::move(udfs)));
+SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string udfs, size_t sourceId) {
+    return std::make_shared<SenseSourceDescriptor>(SenseSourceDescriptor(std::move(schema), std::move(streamName), std::move(udfs), sourceId));
 }
 
-SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string udfs) {
-    return std::make_shared<SenseSourceDescriptor>(SenseSourceDescriptor(std::move(schema), std::move(udfs)));
+SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string udfs, size_t sourceId) {
+    return std::make_shared<SenseSourceDescriptor>(SenseSourceDescriptor(std::move(schema), std::move(udfs), sourceId));
 }
 
 bool SenseSourceDescriptor::equal(SourceDescriptorPtr other) {

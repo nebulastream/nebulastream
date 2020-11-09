@@ -55,7 +55,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
   public:
     MockCSVAdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                           size_t initialGatheringInterval, std::string filePath)
-        : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval),
+        : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval, 1 ),
           filePath(filePath) {};
 
     ~MockCSVAdaptiveSource() = default;

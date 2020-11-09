@@ -58,15 +58,7 @@ class DataSource : public Reconfigurable {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
-
-    /**
-     * @brief public constructor for data source
-     * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
-     * by some test to produce a deterministic behavior
-     * @param schema of the data that this source produces
-     */
-    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string sourceId);
+    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t sourceId);
 
     DataSource() = delete;
 
@@ -162,7 +154,11 @@ class DataSource : public Reconfigurable {
      */
     virtual ~DataSource();
 
-    const std::string& getSourceId() const;
+    /**
+   * @brief Get source id
+   */
+
+    const size_t getSourceId() const;
 
     /**
      * @brief Get number of buffers to be processed
@@ -174,13 +170,14 @@ class DataSource : public Reconfigurable {
      */
     size_t getGatheringInterval() const;
 
+
   protected:
     SchemaPtr schema;
     size_t generatedTuples;
     size_t generatedBuffers;
     size_t numBuffersToProcess;
     std::atomic<size_t> gatheringInterval;
-    std::string sourceId;
+    size_t sourceId;
     SourceType type;
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;

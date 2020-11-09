@@ -86,7 +86,7 @@ typedef const DataSourcePtr (*createFileSourceFuncPtr)(SchemaPtr,
 
 typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr,
                                                         BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                                        const std::string&);
+                                                        const std::string&, size_t);
 
 typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr,
                                                       BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
@@ -132,7 +132,7 @@ TEST_F(SourceTest, testBinarySource) {
     size_t num_of_buffers = 1;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createBinaryFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file);
+    const DataSourcePtr source = createBinaryFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, 1);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -180,7 +180,7 @@ TEST_F(SourceTest, testCSVSourceEndlessSkipHeader) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true, true);
+                                                     frequency, true, true, 1);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -225,7 +225,7 @@ TEST_F(SourceTest, testCSVSourceNotEndlessSkipHeader) {
     size_t num_of_buffers = 5;
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, false, true);
+                                                     frequency, false, true, 1);
 
     for(size_t i = 0; i < num_of_buffers; i++)
     {
@@ -263,7 +263,7 @@ TEST_F(SourceTest, testCSVSourceEndless) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true, false);
+                                                     frequency, true, false, 1);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -308,7 +308,7 @@ TEST_F(SourceTest, testCSVSourceNotEndless) {
     size_t num_of_buffers = 5;
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, false, false);
+                                                     frequency, false, false, 1);
 
     for(size_t i = 0; i < num_of_buffers; i++)
     {
@@ -346,7 +346,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true, false);
+                                                     frequency, true, false, 1);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -396,7 +396,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true, false);
+                                                     frequency, true, false, 1);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -479,7 +479,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true, false);
+                                                     frequency, true, false, 1);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -530,7 +530,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, 0, num,
-                                                     frequency, true, false);
+                                                     frequency, true, false, 1);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -580,7 +580,7 @@ TEST_F(SourceTest, testSenseSource) {
     uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
     ASSERT_GT(buffer_size, 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS);
+    const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS, 1);
 
     //TODO: please add here to code to test the setup
     std::cout << "Success" << std::endl;
