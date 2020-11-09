@@ -26,7 +26,8 @@ namespace NES::Windowing {
 bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler) {
     std::unique_lock lock(runningTriggerMutex);
     if (running) {
-        return false;
+        NES_WARNING("ExecutableOnTimeTriggerPolicy::start already started");
+        return true;
     }
 
     running = true;
@@ -47,7 +48,8 @@ bool ExecutableOnTimeTriggerPolicy::stop() {
     NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Stop called");
     if (!running) {
         NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Stop called but was already not running");
-        return false;
+        return true;
+//        return false;
     }
     running = false;
 

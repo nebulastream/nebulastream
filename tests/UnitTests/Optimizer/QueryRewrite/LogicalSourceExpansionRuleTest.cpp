@@ -103,7 +103,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     const std::string logicalStreamName = "default_logical";
 
     // Prepare
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName,1));
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
@@ -137,7 +137,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     const std::string logicalStreamName = "default_logical";
 
     // Prepare
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName,1));
 
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
     filterOperator->addChild(sourceOperator);

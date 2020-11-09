@@ -19,7 +19,7 @@ void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
     newPipelineContext2->isLeftSide = false;
     getChildren()[1]->as<GeneratableOperator>()->produce(codegen, newPipelineContext2);
 
-    context->setJoin(joinHandler);
+//    context->setJoin(joinHandler);
     context->addNextPipeline(newPipelineContext1);
     context->addNextPipeline(newPipelineContext2);
 //

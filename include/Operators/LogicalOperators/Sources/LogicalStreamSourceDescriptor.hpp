@@ -32,7 +32,7 @@ class LogicalStreamSourceDescriptor : public SourceDescriptor {
      * @param streamName Name of this stream
      * @return SourceDescriptorPtr
      */
-    static SourceDescriptorPtr create(std::string streamName);
+    static SourceDescriptorPtr create(std::string streamName, size_t sourceId);
 
     bool equal(SourceDescriptorPtr other) override;
 

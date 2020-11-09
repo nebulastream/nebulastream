@@ -38,6 +38,11 @@ QueryId QueryExecutionPlan::getQueryId() {
     return queryId;
 }
 
+std::vector<PipelineStagePtr>& QueryExecutionPlan::getStages()
+{
+        return stages;
+}
+
 QuerySubPlanId QueryExecutionPlan::getQuerySubPlanId() const {
     return querySubPlanId;
 }

@@ -94,6 +94,8 @@ class QueryExecutionPlan {
 
     size_t getStageSize() const;
 
+    std::vector<PipelineStagePtr>& getStages();
+
     /**
      * @brief Gets number of pipeline stages.
      */

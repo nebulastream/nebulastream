@@ -215,7 +215,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
-        auto source = LogicalStreamSourceDescriptor::create("localhost");
+        auto source = LogicalStreamSourceDescriptor::create("localhost", 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
@@ -397,7 +397,7 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
 TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
-        auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+        auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream", 1));
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(source, new SerializableOperator());
         auto sourceOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         ASSERT_TRUE(source->equal(sourceOperator));
@@ -441,7 +441,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
 TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
 
-    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream", 1));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source);
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
@@ -486,7 +486,7 @@ TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
 
 TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
 
-    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream",1));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source);
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
@@ -518,8 +518,8 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
 }
 
 TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
-    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
-    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream",1));
+    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream",2));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source1);
     filter->addChild(source2);

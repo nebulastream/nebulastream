@@ -486,14 +486,14 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 
     if (type == "DefaultSource") {
         NES_DEBUG("TypeInferencePhase: create default source for one buffer");
-        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency, UtilityFunctions::getNextOperatorId());
+        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency, sourceDescriptor->getSourceId());
     } else if (type == "CSVSource") {
         NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
-                                           numBuffers, frequency, endlessRepeat, skipHeader, UtilityFunctions::getNextOperatorId());
+                                           numBuffers, frequency, endlessRepeat, skipHeader, sourceDescriptor->getSourceId());
     } else if (type == "SenseSource") {
         NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
-        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, UtilityFunctions::getNextOperatorId());
+        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, sourceDescriptor->getSourceId());
     } else {
         NES_ERROR("TypeInferencePhase:: source type " << type << " not supported");
         NES_FATAL_ERROR("type not supported");
