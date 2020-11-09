@@ -84,7 +84,7 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
     }
     buf.setNumberOfTuples(tupleCnt);
     // TODO move this to trace
-    NES_DEBUG("Source: Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes()
+    NES_DEBUG("Source: id=" << sourceId << " Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes()
                                                << "\n"
                                                << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
     buf.setWatermark(this->watermark->getWatermark());
