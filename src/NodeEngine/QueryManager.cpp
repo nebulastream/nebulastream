@@ -296,11 +296,9 @@ QueryManager::ExecutionResult QueryManager::terminateLoop(WorkerContext& workerC
 
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr nextPipeline) {
     std::unique_lock lock(workMutex);
-
     // dispatch buffer as task
     taskQueue.emplace_back(std::move(nextPipeline), buffer);
     NES_TRACE("QueryManager: added Task " << taskQueue.back().toString() << " for nextPipeline " << nextPipeline << " inputBuffer " << buffer);
-
     cv.notify_all();
 }
 
@@ -310,9 +308,20 @@ void QueryManager::addWork(const std::string& sourceId, TupleBuffer& buf) {
     for (const auto& qep : sourceIdToQueryMap[sourceId]) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
-        taskQueue.emplace_back(qep->getStage(0), buf);
+        size_t stageId = 0;
+        if(qep->getStageSize() > 2)
+        {
+            NES_DEBUG("QueryManager: use origin Id as index = " << atoi(sourceId.c_str()) % 2);
+            stageId = buf.getOriginId() % 2;
+        }
+        taskQueue.emplace_back(qep->getStage(stageId), buf);
+        if(qep->getStageSize() <= 2)
+        {
+            NES_DEBUG("QueryManager::addWorkForNextPipeline set orgID=" << taskQueue.back().getPipelineStage()->getQepParentId());
+            buf.setOriginId(taskQueue.back().getPipelineStage()->getQepParentId());
+        }
         NES_DEBUG("QueryManager: added Task " << taskQueue.back().toString() << " for query " << sourceId << " for QEP " << qep
-                                              << " inputBuffer " << buf);
+                                              << " inputBuffer " << buf << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
     }
     cv.notify_all();
 }

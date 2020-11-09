@@ -64,9 +64,9 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         }
 
         for (auto& leftHashTable : leftJoinState->rangeAll()) {
-            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: leftHashTable" << toString() << " check key=" << leftHashTable.first << "nextEdge=" << leftHashTable.second->nextEdge);
+            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: leftHashTable" << toString() << " check key=" << leftHashTable.first << " nextEdge=" << leftHashTable.second->nextEdge);
             for (auto& rightHashTable : rightJoinSate->rangeAll()) {
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: rightHashTable" << toString() << " check key=" << rightHashTable.first << "nextEdge=" << rightHashTable.second->nextEdge);
+                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: rightHashTable" << toString() << " check key=" << rightHashTable.first << " nextEdge=" << rightHashTable.second->nextEdge);
                 {
                     if (leftHashTable.first == rightHashTable.first) {
                         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: found join pair");
