@@ -60,7 +60,7 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
     */
     bool inferSchema() override;
     OperatorNodePtr copy() override;
-    z3::expr getZ3Expression(z3::context& context) override;
+    z3::expr inferZ3Expression(z3::ContextPtr context) override;
 
   private:
     ExpressionNodePtr predicate;

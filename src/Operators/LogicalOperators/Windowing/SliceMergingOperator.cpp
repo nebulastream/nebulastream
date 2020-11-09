@@ -54,7 +54,7 @@ bool SliceMergingOperator::inferSchema() {
     return true;
 }
 
-z3::expr SliceMergingOperator::getZ3Expression(z3::context&) {
+z3::expr SliceMergingOperator::inferZ3Expression(z3::ContextPtr) {
     NES_NOT_IMPLEMENTED();
 }
 

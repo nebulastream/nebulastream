@@ -3,10 +3,15 @@
 
 #include <memory>
 
-namespace NES{
+namespace z3{
+class context;
+typedef std::shared_ptr<context> ContextPtr;
+}
+
+namespace NES {
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
-}
+}// namespace NES
 
 namespace NES::Optimizer {
 
@@ -19,7 +24,6 @@ typedef std::shared_ptr<Z3ExpressionInferencePhase> Z3ExpressionInferencePhasePt
 class Z3ExpressionInferencePhase {
 
   public:
-
     /**
      * @brief Create instance of Z3ExpressionInferencePhase class
      * @return shared instance of the Z3ExpressionInferencePhase
@@ -32,12 +36,11 @@ class Z3ExpressionInferencePhase {
      */
     void execute(QueryPlanPtr queryPlan);
 
-  private:
-
-    explicit Z3ExpressionInferencePhase();
-
     ~Z3ExpressionInferencePhase();
 
+  private:
+    explicit Z3ExpressionInferencePhase();
+    z3::ContextPtr context;
 };
 }// namespace NES::Optimizer
 

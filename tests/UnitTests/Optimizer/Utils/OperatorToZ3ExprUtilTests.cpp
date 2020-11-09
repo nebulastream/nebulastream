@@ -65,10 +65,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithExactPredicates) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate);
-    z3::expr expr2 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -91,10 +91,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithEqualPredicates) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -115,10 +115,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleExactPredicates) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -141,10 +141,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates1) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -167,10 +167,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates2) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -193,10 +193,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithDifferentPredicates) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -220,10 +220,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleDifferentPredicates) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -244,10 +244,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithExactExpression) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -269,10 +269,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpression) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -294,10 +294,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpressionOnSameField) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -316,10 +316,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testSourceWithExactStreamName) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert
@@ -340,10 +340,10 @@ TEST_F(OperatorToZ3ExprUtilTest, testSourceWithDifferentStreamName) {
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
-    z3::expr expr1 = logicalOperator1->getZ3Expression(context);
+    z3::expr expr1 = logicalOperator1->inferZ3Expression(context);
     NES_INFO("Expression 1" << expr1);
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
-    z3::expr expr2 = logicalOperator2->getZ3Expression(context);
+    z3::expr expr2 = logicalOperator2->inferZ3Expression(context);
     NES_INFO("Expression 2" << expr2);
 
     //Assert

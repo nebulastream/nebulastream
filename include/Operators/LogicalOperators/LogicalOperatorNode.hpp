@@ -24,7 +24,9 @@
 
 namespace z3 {
 class expr;
+typedef std::shared_ptr<expr> ExprPtr;
 class context;
+typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
 
 namespace NES {
@@ -37,7 +39,12 @@ class LogicalOperatorNode : public OperatorNode {
      * @brief Get the First Order Logic formula representation for the logical operator
      * @return and object of type Z3::expr.
      */
-    virtual z3::expr getZ3Expression(z3::context& context) = 0;
+    virtual z3::expr inferZ3Expression(z3::ContextPtr context) = 0;
+
+    z3::expr getZ3Expression();
+
+  private:
+    z3::ExprPtr expr;
 };
 
 }// namespace NES

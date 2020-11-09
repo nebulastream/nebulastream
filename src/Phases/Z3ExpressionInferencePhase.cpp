@@ -4,14 +4,10 @@
 #include <Util/Logger.hpp>
 #include <z3++.h>
 
-namespace z3 {
-class context;
-class expr;
-}// namespace z3
-
 namespace NES::Optimizer {
 
 Z3ExpressionInferencePhase::Z3ExpressionInferencePhase() {
+    context = std::make_shared<z3::context>();
     NES_DEBUG("Z3ExpressionInferencePhase()");
 }
 
@@ -24,10 +20,9 @@ Z3ExpressionInferencePhasePtr Z3ExpressionInferencePhase::create() {
 }
 
 void Z3ExpressionInferencePhase::execute(QueryPlanPtr queryPlan) {
-    z3::context context;
     auto sinkOperators = queryPlan->getRootOperators();
     for (auto sinkOperator : sinkOperators) {
-        sinkOperator->as<LogicalOperatorNode>()->getZ3Expression(context);
+        sinkOperator->as<LogicalOperatorNode>()->inferZ3Expression(context);
     }
 }
 

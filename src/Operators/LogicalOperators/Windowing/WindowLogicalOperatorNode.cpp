@@ -80,9 +80,10 @@ bool WindowLogicalOperatorNode::inferSchema() {
     }
 }
 
-z3::expr WindowLogicalOperatorNode::getZ3Expression(z3::context& context) {
+z3::expr WindowLogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    return OperatorToZ3ExprUtil::createForOperator(operatorNode, context);
+//    return OperatorToZ3ExprUtil::createForOperator(operatorNode, context);
+    return context->bool_val(true);
 }
 
 }// namespace NES
