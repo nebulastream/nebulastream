@@ -14,4 +14,8 @@ ExpressionItem EventTimeWatermarkStrategyDescriptor::getOnField() {
 TimeMeasure EventTimeWatermarkStrategyDescriptor::getDelay() {
     return delay;
 }
+bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other) {
+    auto eventTimeWatermarkStrategyDescriptor = other->as<EventTimeWatermarkStrategyDescriptor>();
+    return eventTimeWatermarkStrategyDescriptor->onField.getExpressionNode() == onField.getExpressionNode() && eventTimeWatermarkStrategyDescriptor->delay.getTime() == delay.getTime();
+}
 } // namespace NES::Windowing

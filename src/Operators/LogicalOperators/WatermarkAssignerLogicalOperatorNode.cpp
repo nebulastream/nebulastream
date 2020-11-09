@@ -20,7 +20,10 @@ bool WatermarkAssignerLogicalOperatorNode::isIdentical(NodePtr rhs) const {
 
 }
 bool WatermarkAssignerLogicalOperatorNode::equal(const NodePtr rhs) const {
-    return Node::equal(rhs);
+    if (rhs->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+        auto watermarkAssignerOperator = rhs->as<WatermarkAssignerLogicalOperatorNode>();
+        return watermarkStrategyDescriptor->equal(watermarkAssignerOperator->getWatermarkStrategyDescriptor());
+    }
 }
 OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);

@@ -12,6 +12,7 @@ class ProcessingTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescri
   public:
     static WatermarkStrategyDescriptorPtr create();
 
+    bool equal(WatermarkStrategyDescriptorPtr other) override;
   private:
     explicit ProcessingTimeWatermarkStrategyDescriptor();
 };

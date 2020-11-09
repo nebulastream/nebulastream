@@ -19,6 +19,8 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
 
     TimeMeasure getDelay();
 
+    bool equal(WatermarkStrategyDescriptorPtr other) override;
+
   private:
     // Field where the watermark should be retrieved
     ExpressionItem onField;
