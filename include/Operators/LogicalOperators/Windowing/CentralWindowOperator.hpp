@@ -32,7 +32,7 @@ class CentralWindowOperator : public WindowOperatorNode {
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
     bool inferSchema() override;
-    z3::expr getZ3Expression(z3::context& context) override;
+    z3::expr inferZ3Expression(z3::ContextPtr context) override;
 };
 
 }// namespace NES

@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 #include <Util/Logger.hpp>
+#include <memory>
 #include <z3++.h>
 
 using namespace z3;
@@ -72,13 +73,15 @@ TEST_F(Z3ValidationTest, deMorganDualityValidation) {
 TEST_F(Z3ValidationTest, evaluateValidBinomialEquation) {
 
     // create a context
-    context c;
+    std::shared_ptr<context> c = std::make_shared<context>();
     //Create an instance of the solver
-    solver s(c);
+    context* pContext = c.get();
+    pContext->
+    solver s(reinterpret_cast<context&>(pContext));
 
     //Define int constants
-    expr x = c.int_const("x");
-    expr y = c.int_const("y");
+    expr x = c->int_const("x");
+    expr y = c->int_const("y");
 
     //Add equations to
     s.add(x > 1);

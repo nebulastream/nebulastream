@@ -76,7 +76,7 @@ bool CentralWindowOperator::inferSchema() {
     }
 }
 
-z3::expr CentralWindowOperator::getZ3Expression(z3::context&) {
+z3::expr CentralWindowOperator::inferZ3Expression(z3::ContextPtr) {
     NES_NOT_IMPLEMENTED();
 }
 

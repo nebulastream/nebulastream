@@ -48,7 +48,7 @@ class MapLogicalOperatorNode : public LogicalOperatorNode {
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-    z3::expr getZ3Expression(z3::context& context) override;
+    z3::expr inferZ3Expression(z3::ContextPtr context) override;
 
   private:
     FieldAssignmentExpressionNodePtr mapExpression;
