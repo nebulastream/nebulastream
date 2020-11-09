@@ -12,6 +12,9 @@ typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 class SinkLogicalOperatorNode;
 typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 
+class WatermarkAssignerLogicalOperatorNode;
+typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;
+
 class CentralWindowOperator;
 typedef std::shared_ptr<CentralWindowOperator> CentralWindowOperatorPtr;
 
@@ -28,6 +31,7 @@ class SerializableOperator;
 class SerializableOperator_SourceDetails;
 class SerializableOperator_SinkDetails;
 class SerializableOperator_WindowDetails;
+class SerializableOperator_WatermarkStrategyDetails;
 
 /**
  * @brief The OperatorSerializationUtil offers functionality to serialize and de-serialize logical operator trees to a
@@ -123,6 +127,28 @@ class OperatorSerializationUtil {
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr deserializeSinkDescriptor(SerializableOperator_SinkDetails* sinkDetails);
+
+    /*
+     * @brief Serializes the watermarkAssigner operator
+     * @param watermark assigner logical operator node
+     * @return serialized watermark operator
+     */
+    static SerializableOperator_WatermarkStrategyDetails serializeWatermarkAssignerOperator(WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator);
+
+    /*
+     * @brief Serializes a watermark strategy descriptor
+     * @brief watermarkStrategyDescriptor The watermark strategy descriptor
+     * @param watermarkDetails The watermark strategy details object
+     * @return  the serialized watermark strategy
+     */
+    static SerializableOperator_WatermarkStrategyDetails* serializeWatermarkStrategyDescriptor(Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails);
+
+    /*
+     * @brief de-serialize to WatermarkStrategyDescriptor
+     * @param watermarkStrategyDetails details of serializable watermarkstrategy
+     * @return WatermarkStrategyDescriptor
+     */
+    static Windowing::WatermarkStrategyDescriptorPtr deserializeWatermarkStrategyDescriptor(SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails);
 };
 
 }// namespace NES
