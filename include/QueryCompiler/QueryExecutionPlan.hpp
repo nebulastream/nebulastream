@@ -92,6 +92,8 @@ class QueryExecutionPlan {
      */
     PipelineStagePtr getStage(size_t index) const;
 
+    size_t getStageSize() const;
+
     /**
      * @brief Gets number of pipeline stages.
      */

@@ -190,8 +190,8 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                     NES_DEBUG("DataSource " << this->getSourceId() << " type=" << getType()
                                             << " string=" << toString()
                                             << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
-                                            << " iteration=" << cnt);
-
+                                            << " iteration=" << cnt
+                              << " sourceid=" << this->sourceId << " orgID=" <<this->sourceId );
                     queryManager->addWork(this->sourceId, buf);
                     cnt++;
                 }

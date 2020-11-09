@@ -124,6 +124,11 @@ PipelineStagePtr QueryExecutionPlan::getStage(size_t index) const {
     return stages[index];
 }
 
+size_t QueryExecutionPlan::getStageSize() const
+{
+    return stages.size();
+}
+
 void QueryExecutionPlan::print() {
     for (auto source : sources) {
         NES_INFO("Source:" << source);

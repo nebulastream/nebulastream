@@ -65,7 +65,7 @@ std::string Task::toString() {
     std::stringstream ss;
     ss << "Task: id=" << id;
     ss << " execute pipelineId=" << pipeline->getPipeStageId() << " qepParentId=" << pipeline->getQepParentId() << " nextPipelineId=" << pipeline->getNextStage();
-    ss << " inputBuffer=" << buf.getBuffer() << " inputTuples=" << buf.getNumberOfTuples() << " bufferSize=" << buf.getBufferSize() << " watermark=" << buf.getWatermark();
+    ss << " inputBuffer=" << buf.getBuffer() << " inputTuples=" << buf.getNumberOfTuples() << " bufferSize=" << buf.getBufferSize() << " watermark=" << buf.getWatermark() << " originID=" << buf.getOriginId();
     return ss.str();
 }
 
