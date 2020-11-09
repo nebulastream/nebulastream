@@ -14,11 +14,7 @@
 # limitations under the License.
 
 import os
-from __future__ import print_function
 import sys
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
 
 license_text_cpp = """/*
     Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
@@ -45,7 +41,7 @@ if __name__ == "__main__":
                 with open(filename, "r") as fp:
                     content = fp.read()
                     if not content.startswith(license_text_cpp):
-                        eprint("File", filename, " lacks the license preamble")
+                        print("File", filename, " lacks the license preamble")
                         sys.exit(1)
 
 sys.exit(0)
