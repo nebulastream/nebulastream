@@ -20,7 +20,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libzmqpp-dev \
   git \
   wget \
-  python \
+  python3.8 \
   z3 \
   tar \
   software-properties-common \
