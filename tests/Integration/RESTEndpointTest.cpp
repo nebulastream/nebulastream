@@ -104,8 +104,9 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
 
     NES_INFO("get execution-plan: try to acc return");
     NES_DEBUG("getExecutionPlan response: " << getExecutionPlanJsonReturn.serialize());
-
-    ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), "{\"executionNodes\":[{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(4)\\n  SOURCE(1)\\n\",\"querySubPlanId\":1}]}],\"executionNodeId\":2,\"topologyNodeId\":2,\"topologyNodeIpAddress\":\"127.0.0.1\"},{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(2)\\n  SOURCE(3)\\n\",\"querySubPlanId\":2}]}],\"executionNodeId\":1,\"topologyNodeId\":1,\"topologyNodeIpAddress\":\"127.0.0.1\"}]}");
+    auto expected = "{\"executionNodes\":[{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(5)\\n  SOURCE(1)\\n\",\"querySubPlanId\":1}]}],\"executionNodeId\":2,\"topologyNodeId\":2,\"topologyNodeIpAddress\":\"127.0.0.1\"},{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(3)\\n  SOURCE(4)\\n\",\"querySubPlanId\":2}]}],\"executionNodeId\":1,\"topologyNodeId\":1,\"topologyNodeIpAddress\":\"127.0.0.1\"}]}";
+    NES_DEBUG("getExecutionPlan response: expected = " << expected);
+    ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), expected);
 
     NES_INFO("RESTEndpointTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);

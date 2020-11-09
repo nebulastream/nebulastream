@@ -319,7 +319,6 @@ void QueryManager::addWork(const size_t sourceId, TupleBuffer& buf) {
         }
         taskQueue.emplace_back(qep->getStage(0), buf);
 
-
         NES_DEBUG("QueryManager: added Task " << taskQueue.back().toString() << " for query " << sourceId << " for QEP " << qep
                                               << " inputBuffer " << buf << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
     }
