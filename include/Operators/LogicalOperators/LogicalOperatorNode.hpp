@@ -44,7 +44,7 @@ class LogicalOperatorNode : public OperatorNode {
      * @param context: the shared pointer to the z3::context
      * @return object of type Z3:expr
      */
-    virtual z3::expr inferZ3Expression(z3::ContextPtr context) = 0;
+    virtual void inferZ3Expression(z3::ContextPtr context) = 0;
 
     /**
      * @brief Get the Z3 expression for the logical operator
@@ -52,7 +52,7 @@ class LogicalOperatorNode : public OperatorNode {
      */
     z3::expr& getZ3Expression();
 
-  private:
+  protected:
     z3::ExprPtr expr;
 };
 
