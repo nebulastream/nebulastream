@@ -58,7 +58,7 @@ class OperatorToZ3ExprUtilTest : public testing::Test {
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithExactPredicates) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
     ExpressionNodePtr predicate = Attribute("value") == 40;
     predicate->inferStamp(schema);
@@ -72,16 +72,16 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithExactPredicates) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
+    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithEqualPredicates) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40;
@@ -98,16 +98,16 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithEqualPredicates) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
+    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleExactPredicates) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 && Attribute("id") >= 40;
@@ -122,16 +122,16 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleExactPredicates) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
+    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates1) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 && Attribute("id") >= 40;
@@ -148,16 +148,16 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates1) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
+    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates2) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 + 40 && Attribute("id") >= 40;
@@ -174,16 +174,16 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates2) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
+    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithDifferentPredicates) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40;
@@ -200,9 +200,9 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithDifferentPredicates) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    z3::expr expr = to_expr(context, Z3_mk_and(context, 2, arrays));
+    z3::expr expr = to_expr(*context, Z3_mk_and(*context, 2, arrays));
     solver.add(expr);
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
@@ -210,7 +210,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithDifferentPredicates) {
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleDifferentPredicates) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 && Attribute("id") >= 40;
@@ -227,9 +227,9 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleDifferentPredicates) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    z3::expr expr = to_expr(context, Z3_mk_and(context, 2, arrays));
+    z3::expr expr = to_expr(*context, Z3_mk_and(*context, 2, arrays));
     solver.add(expr);
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
@@ -237,7 +237,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleDifferentPredicates) {
 
 TEST_F(OperatorToZ3ExprUtilTest, testMapWithExactExpression) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
     FieldAssignmentExpressionNodePtr expression = Attribute("value") = 40;
     expression->inferStamp(schema);
@@ -251,16 +251,16 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithExactExpression) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
+    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpression) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("value") = 40;
     expression1->inferStamp(schema);
@@ -276,16 +276,16 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpression) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
+    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpressionOnSameField) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("value") = 40;
     expression1->inferStamp(schema);
@@ -301,16 +301,16 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpressionOnSameField) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(context, Z3_mk_and(context, 2, arrays)));
+    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testSourceWithExactStreamName) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
     auto sourceDescriptor = LogicalStreamSourceDescriptor::create("Car");
 
@@ -323,9 +323,9 @@ TEST_F(OperatorToZ3ExprUtilTest, testSourceWithExactStreamName) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    z3::expr expr = to_expr(context, Z3_mk_and(context, 2, arrays));
+    z3::expr expr = to_expr(*context, Z3_mk_and(*context, 2, arrays));
     solver.add(expr);
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
@@ -333,7 +333,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testSourceWithExactStreamName) {
 
 TEST_F(OperatorToZ3ExprUtilTest, testSourceWithDifferentStreamName) {
 
-    z3::context context;
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
     auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck");
@@ -347,9 +347,9 @@ TEST_F(OperatorToZ3ExprUtilTest, testSourceWithDifferentStreamName) {
     NES_INFO("Expression 2" << expr2);
 
     //Assert
-    z3::solver solver(context);
+    z3::solver solver(*context);
     Z3_ast arrays[] = {expr1, !expr2};
-    z3::expr expr = to_expr(context, Z3_mk_and(context, 2, arrays));
+    z3::expr expr = to_expr(*context, Z3_mk_and(*context, 2, arrays));
     solver.add(expr);
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::sat);
