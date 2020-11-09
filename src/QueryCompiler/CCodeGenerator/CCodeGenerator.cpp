@@ -780,9 +780,34 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     // set result schema to context
     // generate result tuple struct
 
+    // initiate maxWatermark variable
+    // auto maxWatermark = 0;
+    auto maxWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), "maxWatermark");
+    auto maxWatermarkInitStatement = VarDeclStatement(maxWatermarkVariableDeclaration).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))));
+    context->code->variableInitStmts.push_back(std::make_shared<BinaryOperatorStatement>(maxWatermarkInitStatement));
+
+    // get the value for current watermark
+    // auto currentWatermark = record[index].ts;
+    auto currentWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), "currentWatermark");
+    auto tsVariableDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration("end");
+    auto calculateMaxTupleStatement =
+        VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+            VarRef(tsVariableDeclaration)) - Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0))));
+    auto currentWatermarkStatement = VarDeclStatement(currentWatermarkVariableDeclaration).assign(calculateMaxTupleStatement);
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(currentWatermarkStatement));
+
     /**
      * within the loop
      */
+    // Check and update max watermark if current watermark is greater than maximum watermark
+    // if (currentWatermark > maxWatermark) {
+    //     maxWatermark = currentWatermark;
+    // };
+    auto updateMaxWatermarkStatement = VarRef(maxWatermarkVariableDeclaration).assign(VarRef(currentWatermarkVariableDeclaration));
+    auto ifStatement = IF(
+        VarRef(currentWatermarkVariableDeclaration) > VarRef(maxWatermarkVariableDeclaration),
+        updateMaxWatermarkStatement);
+    context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
 
     //        NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>* state_variable = (NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) state_var;
     auto stateVariableDeclaration = VariableDeclaration::create(
@@ -900,6 +925,13 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
             context->code->currentCodeInsertionPoint->addStatement(call);
         }
     }
+
+    // set the watermark of input buffer based on maximum watermark
+    // inputTupleBuffer.setWatermark(maxWatermark);
+    auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
+    setWatermarkFunctionCall.addParameter(VarRef(maxWatermarkVariableDeclaration));
+    auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
+    context->code->cleanupStmts.push_back(setWatermarkStatement.createCopy());
 
     NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
                                                   << " with code=" << context->code);
