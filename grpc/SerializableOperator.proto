@@ -149,6 +149,21 @@ message SerializableOperator{
   }
 
   /**
+    WatermarkAssignerDetail contains properties for the watermark assigner, such as watermark field and delay for
+    event time watermark
+   */
+  message WatermarkStrategyDetails {
+    message SerializableEventTimeWatermarkStrategyDescriptor {
+        SerializableExpression onField = 1;
+        uint64 delay = 2;
+    }
+
+    message SerializableProcessingTimeWatermarkStrategyDescriptor {
+    }
+    google.protobuf.Any strategy = 1;
+  }
+
+  /**
    Map Details contains properties for the map operator, such as the field assignment expression
    */
   message MapDetails {
