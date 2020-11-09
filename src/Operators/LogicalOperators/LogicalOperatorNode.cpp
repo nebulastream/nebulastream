@@ -18,6 +18,10 @@
 
 namespace NES {
 
-LogicalOperatorNode::LogicalOperatorNode(uint64_t id) : OperatorNode(id) {}
+LogicalOperatorNode::LogicalOperatorNode(uint64_t id) : expr(nullptr), OperatorNode(id) {}
+
+z3::expr& LogicalOperatorNode::getZ3Expression() {
+    return *expr;
+}
 
 }// namespace NES

@@ -23,8 +23,10 @@
 #include <Operators/OperatorNode.hpp>
 
 namespace z3 {
+
 class expr;
 typedef std::shared_ptr<expr> ExprPtr;
+
 class context;
 typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
@@ -32,16 +34,23 @@ typedef std::shared_ptr<context> ContextPtr;
 namespace NES {
 
 class LogicalOperatorNode : public OperatorNode {
+
   public:
+
     LogicalOperatorNode(OperatorId id);
 
     /**
-     * @brief Get the First Order Logic formula representation for the logical operator
-     * @return and object of type Z3::expr.
+     * @brief Get the First Order Logic formula representation by the Z3 expression
+     * @param context: the shared pointer to the z3::context
+     * @return object of type Z3:expr
      */
     virtual z3::expr inferZ3Expression(z3::ContextPtr context) = 0;
 
-    z3::expr getZ3Expression();
+    /**
+     * @brief Get the Z3 expression for the logical operator
+     * @return reference to the Z3 expression
+     */
+    z3::expr& getZ3Expression();
 
   private:
     z3::ExprPtr expr;

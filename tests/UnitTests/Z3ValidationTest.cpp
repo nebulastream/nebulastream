@@ -75,9 +75,7 @@ TEST_F(Z3ValidationTest, evaluateValidBinomialEquation) {
     // create a context
     std::shared_ptr<context> c = std::make_shared<context>();
     //Create an instance of the solver
-    context* pContext = c.get();
-    pContext->
-    solver s(reinterpret_cast<context&>(pContext));
+    solver s(*c);
 
     //Define int constants
     expr x = c->int_const("x");
