@@ -95,7 +95,7 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
 //                qep->getStage()
 //                sourceIdToPipelineStage[source->getSourceId()].insert();
             } else {
-                NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.");
+                    NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.");
                 return false;
             }
         } else {

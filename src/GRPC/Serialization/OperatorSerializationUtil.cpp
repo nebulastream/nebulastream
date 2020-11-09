@@ -175,7 +175,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedSourceDescriptor);
         // de-serialize source descriptor
         auto sourceDescriptor = deserializeSourceDescriptor(&serializedSourceDescriptor);
-        operatorNode = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, sourceDescriptor->getSourceId());
     } else if (details.Is<SerializableOperator_SinkDetails>()) {
         // de-serialize sink operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to SinkLogicalOperator");
@@ -639,6 +639,7 @@ SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOpe
     auto sourceDetails = SerializableOperator_SourceDetails();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     serializeSourceSourceDescriptor(sourceDescriptor, &sourceDetails);
+    NES_DEBUG("OperatorSerializationUtil::serializeSourceOperator sourceid=" << sourceDetails.sourceid());
     return sourceDetails;
 }
 
@@ -661,8 +662,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeSinkOperator(SerializableO
 
 SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor, SerializableOperator_SourceDetails* sourceDetails) {
     // serialize a source descriptor and all its properties depending of its type
-    NES_TRACE("OperatorSerializationUtil:: serialize to SourceDescriptor" << sourceDescriptor->toString());
-    sourceDetails->set_sourceid(sourceDescriptor->getSourceId());
+    NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with id=" << sourceDescriptor->getSourceId() << " string=" << sourceDescriptor->toString());
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
         // serialize zmq source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor");
@@ -761,13 +761,15 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
+    sourceDetails->set_sourceid(sourceDescriptor->getSourceId());
     return sourceDetails;
 }
 
 SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails) {
     // de-serialize source details and all its properties to a SourceDescriptor
-    NES_TRACE("OperatorSerializationUtil:: de-serialized SourceDescriptor " << serializedSourceDetails->DebugString());
+    NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor id = " << serializedSourceDetails->sourceid()<< " string=" << serializedSourceDetails->DebugString());
     const auto& serializedSourceDescriptor = serializedSourceDetails->sourcedescriptor();
+
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor>()) {
         // de-serialize zmq source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as ZmqSourceDescriptor");
@@ -846,7 +848,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&logicalStreamSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(logicalStreamSerializedSourceDescriptor.release_sourceschema());
-        SourceDescriptorPtr logicalStreamSourceDescriptor = LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname());
+        SourceDescriptorPtr logicalStreamSourceDescriptor = LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname(), serializedSourceDetails->sourceid());
         logicalStreamSourceDescriptor->setSchema(schema);
         return logicalStreamSourceDescriptor;
     } else {

@@ -161,6 +161,7 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                         auto buffer = bufferManager->getBufferBlocking();
                         buffer.setWatermark(watermark->getWatermark());
                         buffer.setNumberOfTuples(0);
+                        buffer.setOriginId(sourceId);
                         queryManager->addWork(this->sourceId, buffer);
                     }
                 }
@@ -185,7 +186,9 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                                             << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                             << " iteration=" << cnt
                               << " sourceid=" << this->sourceId << " orgID=" <<this->sourceId );
-                    queryManager->addWork(this->sourceId, buf);
+                    buf.setOriginId(sourceId);
+                    buf.setWatermark(watermark->getWatermark());
+                    queryManager->addWork(sourceId, buf);
                     cnt++;
                 }
             } else {

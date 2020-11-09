@@ -219,7 +219,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     auto placementStrategy = PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
 
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
     filterOperator->addChild(sourceOperator);
@@ -291,7 +291,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     auto placementStrategy = PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
@@ -360,7 +360,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     auto placementStrategy = PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
 
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
     filterOperator->addChild(sourceOperator);
@@ -431,7 +431,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     auto placementStrategy = PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
@@ -466,7 +466,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
                 OperatorNodePtr actualRootOperator = actualRootOperators[0];
                 auto expectedRootOperators = queryPlan->getRootOperators();
                 auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(), [&](OperatorNodePtr expectedRootOperator) {
-                  return expectedRootOperator->getId() == actualRootOperator->getId();
+                    return expectedRootOperator->getId() == actualRootOperator->getId();
                 });
                 ASSERT_TRUE(found != expectedRootOperators.end());
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 2);

@@ -332,7 +332,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testSourceWithExactStreamName) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
-    auto sourceDescriptor = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor = LogicalStreamSourceDescriptor::create("Car", 1);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
@@ -357,8 +357,8 @@ TEST_F(OperatorToZ3ExprUtilTest, testSourceWithDifferentStreamName) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck");
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car", 1);
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck", 2);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
