@@ -24,6 +24,7 @@ bool WatermarkAssignerLogicalOperatorNode::equal(const NodePtr rhs) const {
         auto watermarkAssignerOperator = rhs->as<WatermarkAssignerLogicalOperatorNode>();
         return watermarkStrategyDescriptor->equal(watermarkAssignerOperator->getWatermarkStrategyDescriptor());
     }
+    return false;
 }
 OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);
