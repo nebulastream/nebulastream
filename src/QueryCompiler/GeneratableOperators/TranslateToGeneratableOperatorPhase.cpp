@@ -121,7 +121,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
         scanOperator->addChild(generatableWindowOperator);
         return generatableWindowOperator;
     }
-    NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << windowOperator);
+    NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << windowOperator->toString());
     NES_NOT_IMPLEMENTED();
 }
 
