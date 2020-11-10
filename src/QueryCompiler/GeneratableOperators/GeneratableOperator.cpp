@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {

@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-
-
 #include <QueryCompiler/Compiler/CompilerFlags.hpp>
 
 namespace NES {

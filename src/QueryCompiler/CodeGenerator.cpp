@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <NodeEngine/TupleBuffer.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>

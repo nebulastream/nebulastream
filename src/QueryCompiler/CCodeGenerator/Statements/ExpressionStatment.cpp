@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 
 namespace NES {

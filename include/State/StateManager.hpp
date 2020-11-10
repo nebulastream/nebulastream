@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #ifndef STATEMANAGER_HPP
 #define STATEMANAGER_HPP
 

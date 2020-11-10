@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
 namespace NES {
 

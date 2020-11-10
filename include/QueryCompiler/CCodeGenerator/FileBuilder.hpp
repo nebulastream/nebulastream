@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #pragma once
 
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>

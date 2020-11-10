@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <sstream>
 namespace NES {

@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 
 namespace NES {

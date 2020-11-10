@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
 namespace NES {
 

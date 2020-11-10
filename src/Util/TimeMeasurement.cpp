@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Util/TimeMeasurement.hpp>
 
 #include <chrono>

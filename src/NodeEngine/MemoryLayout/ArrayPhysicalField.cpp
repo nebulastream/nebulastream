@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/MemoryLayout/ArrayPhysicalField.hpp>

@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #ifndef QUERYSERVICE_HPP
 #define QUERYSERVICE_HPP
 

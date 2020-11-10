@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #ifndef STATEVARIABLE_HPP
 #define STATEVARIABLE_HPP
 

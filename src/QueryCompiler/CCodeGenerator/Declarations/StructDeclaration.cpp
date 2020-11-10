@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
