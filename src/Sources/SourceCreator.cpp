@@ -29,6 +29,7 @@
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Sources/YSBSource.hpp>
 #include <Sources/ZmqSource.hpp>
 
 #ifdef ENABLE_OPC_BUILD
@@ -81,6 +82,11 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
                                         bool skipHeader, OperatorId operatorId) {
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
                                        numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, endlessRepeat, skipHeader, operatorId);
+}
+
+const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+    size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat) {
+    return std::make_shared<YSBSource>(bufferManager, queryManager, numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat);
 }
 
 const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,

@@ -29,6 +29,7 @@
 #include <Util/Logger.hpp>
 
 #include <NodeEngine/NodeEngine.hpp>
+#include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
 
 namespace NES {
 
@@ -88,6 +89,11 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
         const Network::networkSourceDescriptorPtr networkSourceDescriptor = sourceDescriptor->as<Network::NetworkSourceDescriptor>();
         return createNetworkSource(networkSourceDescriptor->getSchema(), bufferManager, queryManager, networkManager,
                                    networkSourceDescriptor->getNesPartition());
+    } else if (sourceDescriptor->instanceOf<YSBSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating ysb source");
+        const YSBSourceDescriptorPtr ysbSourceDescriptor = sourceDescriptor->as<YSBSourceDescriptor>();
+        return createYSBSource(bufferManager, queryManager, ysbSourceDescriptor->getNumberOfTuplesToProducePerBuffer(), ysbSourceDescriptor->getNumBuffersToProcess(),
+                               ysbSourceDescriptor->getFrequency(), ysbSourceDescriptor->isEndlessRepeat());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
