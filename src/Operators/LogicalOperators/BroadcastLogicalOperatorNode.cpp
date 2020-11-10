@@ -19,7 +19,6 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
-#include <z3++.h>
 
 namespace NES {
 
@@ -53,10 +52,5 @@ OperatorNodePtr BroadcastLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
-}
-
-void BroadcastLogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
-    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    expr = std::make_shared<z3::expr>(OperatorToZ3ExprUtil::createForOperator(operatorNode, *context));
 }
 }// namespace NES

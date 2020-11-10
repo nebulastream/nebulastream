@@ -23,7 +23,6 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <z3++.h>
 
 namespace NES {
 
@@ -80,8 +79,4 @@ bool SliceCreationOperator::inferSchema() {
         NES_THROW_RUNTIME_ERROR("SliceCreationOperator: type inference for non keyed streams is not supported");
     }
 }
-void SliceCreationOperator::inferZ3Expression(z3::ContextPtr) {
-    NES_NOT_IMPLEMENTED();
-}
-
 }// namespace NES

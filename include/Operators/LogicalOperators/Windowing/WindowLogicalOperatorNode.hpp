@@ -30,7 +30,6 @@ class WindowLogicalOperatorNode : public WindowOperatorNode {
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
     virtual bool inferSchema();
-    void inferZ3Expression(z3::ContextPtr context) override;
 };
 
 }// namespace NES

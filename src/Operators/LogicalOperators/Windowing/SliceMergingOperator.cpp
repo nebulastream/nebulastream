@@ -17,7 +17,6 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
-#include <z3++.h>
 
 namespace NES {
 

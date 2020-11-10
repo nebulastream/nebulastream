@@ -18,8 +18,6 @@
 #define Merge_LOGICAL_OPERATOR_NODE_HPP
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <memory>
-#include <z3++.h>
 
 namespace NES {
 
@@ -40,7 +38,6 @@ class MergeLogicalOperatorNode : public LogicalOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
-    void inferZ3Expression(z3::ContextPtr context) override;
 };
 }// namespace NES
 #endif// Merge_LOGICAL_OPERATOR_NODE_HPP

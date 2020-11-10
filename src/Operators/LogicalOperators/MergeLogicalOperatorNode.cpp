@@ -18,7 +18,6 @@
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Util/Logger.hpp>
-#include <z3++.h>
 
 namespace NES {
 
@@ -48,7 +47,6 @@ bool MergeLogicalOperatorNode::inferSchema() {
 
     if (!schema1->equals(schema2)) {
         NES_THROW_RUNTIME_ERROR("MergeLogicalOperator: the two input streams have different schema.");
-        return false;
     }
     return true;
 }
@@ -65,11 +63,6 @@ bool MergeLogicalOperatorNode::equal(const NodePtr rhs) const {
         return true;
     }
     return false;
-}
-
-void MergeLogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
-    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    expr = std::make_shared<z3::expr>(OperatorToZ3ExprUtil::createForOperator(operatorNode, *context));
 }
 
 }// namespace NES
