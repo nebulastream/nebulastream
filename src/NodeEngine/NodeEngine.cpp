@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
@@ -506,6 +507,10 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     } else if (type == "SenseSource") {
         NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, sourceDescriptor->getOperatorId());
+    } else if (type == "YSBSource") {
+        NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
+        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency,
+                                           endlessRepeat, sourceDescriptor->getOperatorId());
     } else {
         NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
     }

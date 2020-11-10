@@ -89,6 +89,14 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
                                         size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId);
 
 /**
+ * @brief function to create a ysb source
+ * @param schema of data source
+ * @return a const data source pointer
+ */
+const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                    size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat);
+
+/**
  * @brief function to create a network source
  * @param schema
  * @param bufferManager

@@ -34,7 +34,7 @@ static const auto YSB_SCHEMA = Schema::create()
 
 class YSBSource : public DefaultSource {
   public:
-    explicit YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, size_t frequency, size_t numberOfTuplesPerBuffer);
+    explicit YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, size_t numberOfTuplesPerBuffer, size_t frequency, bool endlessRepeat);
 
     SourceType getType() const override;
 
@@ -48,6 +48,7 @@ class YSBSource : public DefaultSource {
 
   private:
     size_t numberOfTuplesPerBuffer;
+    bool endlessRepeat;
 };
 
 typedef std::shared_ptr<YSBSource> YSBSourcePtr;
