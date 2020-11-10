@@ -20,5 +20,4 @@ EventTimeWatermarkStrategyPtr EventTimeWatermarkStrategy::create(FieldAccessExpr
     return std::make_shared<Windowing::EventTimeWatermarkStrategy>(onField, delay);
 }
 
-} // namespace NES::Windowing
-
+}// namespace NES::Windowing

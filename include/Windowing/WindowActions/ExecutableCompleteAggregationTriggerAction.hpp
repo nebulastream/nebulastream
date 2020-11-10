@@ -16,7 +16,6 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::Windowing {
 

@@ -12,4 +12,4 @@ bool ProcessingTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescripto
     return other->instanceOf<ProcessingTimeWatermarkStrategyDescriptor>();
 }
 
-} // namespace NES::Windowing
+}// namespace NES::Windowing

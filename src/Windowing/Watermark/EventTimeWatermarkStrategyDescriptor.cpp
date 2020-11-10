@@ -2,7 +2,7 @@
 
 namespace NES::Windowing {
 
-EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure delay) : onField(onField), delay(delay){
+EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure delay) : onField(onField), delay(delay) {
 }
 
 WatermarkStrategyDescriptorPtr EventTimeWatermarkStrategyDescriptor::create(ExpressionItem onField, TimeMeasure delay) {
@@ -18,4 +18,4 @@ bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr 
     auto eventTimeWatermarkStrategyDescriptor = other->as<EventTimeWatermarkStrategyDescriptor>();
     return eventTimeWatermarkStrategyDescriptor->onField.getExpressionNode() == onField.getExpressionNode() && eventTimeWatermarkStrategyDescriptor->delay.getTime() == delay.getTime();
 }
-} // namespace NES::Windowing
+}// namespace NES::Windowing

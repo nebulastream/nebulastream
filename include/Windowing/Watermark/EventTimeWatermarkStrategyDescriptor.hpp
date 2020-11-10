@@ -12,7 +12,6 @@ typedef std::shared_ptr<EventTimeWatermarkStrategyDescriptor> EventTimeWatermark
 
 class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor {
   public:
-
     static WatermarkStrategyDescriptorPtr create(ExpressionItem onField, TimeMeasure delay);
 
     ExpressionItem getOnField();
@@ -29,9 +28,8 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
     TimeMeasure delay;
 
     explicit EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure delay);
-
 };
 
-}
+}// namespace NES::Windowing
 
 #endif//NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP

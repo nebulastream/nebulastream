@@ -196,7 +196,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedWindowOperator = SerializableOperator_WindowDetails();
         details.UnpackTo(&serializedWindowOperator);
         operatorNode = deserializeWindowOperator(&serializedWindowOperator, serializedOperator->operatorid());
-    } else if (details.Is<SerializableOperator_WatermarkStrategyDetails>()){
+    } else if (details.Is<SerializableOperator_WatermarkStrategyDetails>()) {
         // de-serialize watermark assigner operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to watermarkassigner operator");
         auto serializedWatermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();
@@ -846,7 +846,7 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
         deserializedWatermarkStrategyDescriptor.UnpackTo(&serializedEventTimeWatermarkStrategyDescriptor);
 
         auto onField = ExpressionSerializationUtil::deserializeExpression(serializedEventTimeWatermarkStrategyDescriptor.mutable_onfield())
-            ->as<FieldAccessExpressionNode>();
+                           ->as<FieldAccessExpressionNode>();
         NES_DEBUG("OperatorSerializationUtil:: deserialized field name " << onField->getFieldName());
         auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute(onField->getFieldName()), Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.delay()));
         return eventTimeWatermarkStrategyDescriptor;
@@ -858,7 +858,3 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
     }
 }
 }// namespace NES
-
-
-
-

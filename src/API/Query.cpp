@@ -10,12 +10,12 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Windowing/Watermark/WatermarkStrategy.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/Watermark/WatermarkStrategy.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <iostream>
 
 namespace NES {
@@ -104,7 +104,7 @@ QueryPlanPtr Query::getQueryPlan() {
 Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     NES_DEBUG("Query: add assignWatermark operator to query");
 
-    OperatorNodePtr  op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
+    OperatorNodePtr op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
