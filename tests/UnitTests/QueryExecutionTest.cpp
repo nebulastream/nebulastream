@@ -700,11 +700,23 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     auto ysbSource = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, 1, numTup);
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, 1);
 
-    auto query = TestQuery::from(ysbSource->getSchema()).sink(DummySink::create());
+    //TODO: make query work
+    auto query = TestQuery::from(ysbSource->getSchema())
+        //.filter(Attribute("event_type")=="purchase")
+        //             .windowByKey(
+        //                 Attribute("campaign_id"),
+        //                 TumblingWindow::of(
+        //                     EventTime(Attribute("current_ms")), Seconds(10)),
+        //                 Count())
+                     .sink(DummySink::create());
+
+    //TODO: change schema to match the appropriate output schema
     auto testSink = TestSink::create(/*expected result buffer*/ numBuf, YSB_SCHEMA, nodeEngine->getBufferManager());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    queryPlan = distributeWindowRule->apply(queryPlan);
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 

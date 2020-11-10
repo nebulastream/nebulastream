@@ -42,7 +42,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     auto sources = queryPlan->getSourceOperators();
 
     if (!sources.empty() && !streamCatalog) {
-        NES_ERROR("TypeInferencePhase: No StreamCatalog specified!");
+        NES_WARNING("TypeInferencePhase: No StreamCatalog specified!");
     }
 
     for (auto source : sources) {
