@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>

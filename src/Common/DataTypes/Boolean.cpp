@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 

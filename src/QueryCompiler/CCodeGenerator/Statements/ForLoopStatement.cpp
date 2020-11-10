@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/CCodeGenerator/Statements/ForLoopStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>

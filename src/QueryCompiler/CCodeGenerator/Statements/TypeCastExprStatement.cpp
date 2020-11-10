@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/CCodeGenerator/Statements/TypeCastExprStatement.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 

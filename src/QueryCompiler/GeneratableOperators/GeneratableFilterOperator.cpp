@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>

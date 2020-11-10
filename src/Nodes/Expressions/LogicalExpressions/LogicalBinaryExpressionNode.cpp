@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>

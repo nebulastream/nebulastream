@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>

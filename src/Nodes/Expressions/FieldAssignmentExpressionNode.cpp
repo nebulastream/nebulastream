@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <memory>

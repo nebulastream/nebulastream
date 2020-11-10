@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
 #include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
 #include <utility>

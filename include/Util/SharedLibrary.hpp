@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #ifndef SHARED_LIBRARY_HPP
 #define SHARED_LIBRARY_HPP
 

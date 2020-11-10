@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Common/DataTypes/Array.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>

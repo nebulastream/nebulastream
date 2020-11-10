@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Common/ValueTypes/ValueType.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 namespace NES {

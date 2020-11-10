@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
 namespace NES {

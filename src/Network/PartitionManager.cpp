@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Network/PartitionManager.hpp>
 #include <Util/Logger.hpp>
 

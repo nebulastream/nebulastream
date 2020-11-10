@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/BasicGeneratableType.hpp>

@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <QueryCompiler/CodeExpression.hpp>
 
 namespace NES {

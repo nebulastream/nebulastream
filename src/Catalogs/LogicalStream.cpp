@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <API/ParameterTypes.hpp>
 #include <API/Schema.hpp>
 #include <API/UserAPIExpression.hpp>

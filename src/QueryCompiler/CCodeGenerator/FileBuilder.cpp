@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <string>
 
 #include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>

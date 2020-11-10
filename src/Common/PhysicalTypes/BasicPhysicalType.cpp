@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <API/Expressions/Expressions.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <sstream>

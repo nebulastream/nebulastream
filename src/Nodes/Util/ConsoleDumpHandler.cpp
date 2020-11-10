@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <iostream>
