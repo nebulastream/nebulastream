@@ -20,12 +20,11 @@ Z3ExpressionInferencePhasePtr Z3ExpressionInferencePhase::create() {
 }
 
 void Z3ExpressionInferencePhase::execute(QueryPlanPtr queryPlan) {
+    NES_INFO("Z3ExpressionInferencePhase: computing Z3 expressions for the query " << queryPlan->getQueryId());
     auto sinkOperators = queryPlan->getRootOperators();
     for (auto sinkOperator : sinkOperators) {
         sinkOperator->as<LogicalOperatorNode>()->inferZ3Expression(context);
     }
 }
-
-
 
 }// namespace NES::Optimizer

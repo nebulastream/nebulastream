@@ -36,7 +36,6 @@ namespace NES {
 class LogicalOperatorNode : public OperatorNode {
 
   public:
-
     LogicalOperatorNode(OperatorId id);
 
     /**

@@ -3,10 +3,10 @@
 
 #include <memory>
 
-namespace z3{
+namespace z3 {
 class context;
 typedef std::shared_ptr<context> ContextPtr;
-}
+}// namespace z3
 
 namespace NES {
 class QueryPlan;
