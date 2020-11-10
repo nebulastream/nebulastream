@@ -697,7 +697,7 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     int numBuf = 3;
     int numTup = 50;
 
-    auto ysbSource = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, 1, numTup);
+    auto ysbSource = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, 1, numTup, false);
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, 1);
 
     //TODO: make query work
