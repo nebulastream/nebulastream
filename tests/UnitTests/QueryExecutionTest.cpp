@@ -602,6 +602,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
 // P3 = [P1|P2] -> merge -> SINK
 // So, merge is a blocking window_scan with two children.
 TEST_F(QueryExecutionTest, mergeQuery) {
+    // created buffer per source * number of sources
+    size_t expectedBuf = 20;
+
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
@@ -622,7 +625,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     SchemaPtr ptr = std::make_shared<Schema>(testSchema);
     auto mergedQuery = query2.merge(&query1).sink(DummySink::create());
 
-    auto testSink = std::make_shared<TestSink>(10, testSchema, nodeEngine->getBufferManager());
+    auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine->getBufferManager());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
