@@ -213,7 +213,9 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     ThreadPoolPtr threadPool;
 
     std::map<size_t, std::unordered_set<QueryExecutionPlanPtr>> sourceIdToQueryMap;
-    std::map<size_t, std::unordered_set<PipelineStagePtr>> sourceIdToPipelineStage;
+    std::map<size_t, std::vector<size_t>> queryMapToSourceId;
+
+    std::map<size_t, size_t> sourceIdToPipelineStage;
 
     std::unordered_map<QuerySubPlanId, QueryExecutionPlanPtr> runningQEPs;
 

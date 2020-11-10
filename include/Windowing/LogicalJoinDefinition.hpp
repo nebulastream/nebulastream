@@ -55,12 +55,14 @@ class LogicalJoinDefinition {
     */
     DistributionCharacteristicPtr getDistributionType() const;
 
+    size_t getNumberOfInputEdges();
   private:
     FieldAccessExpressionNodePtr joinKey;
     WindowTriggerPolicyPtr triggerPolicy;
     BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;
     DistributionCharacteristicPtr distributionType;
+    size_t numberOfInputEdges;
 };
 
 typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;

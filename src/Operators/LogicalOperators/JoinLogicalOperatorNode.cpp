@@ -44,6 +44,12 @@ bool JoinLogicalOperatorNode::inferSchema() {
     // infer the data type of the key field.
     joinDefinition->getJoinKey()->inferStamp(inputSchema);
 
+    outputSchema = Schema::create()
+        ->addField(createField("start", UINT64))
+        ->addField(createField("end", UINT64))
+        ->addField(AttributeField::create("key", joinDefinition->getJoinKey()->getStamp()))
+        ->addField(AttributeField::create("value", joinDefinition->getJoinKey()->getStamp()));
+
     return true;
 }
 

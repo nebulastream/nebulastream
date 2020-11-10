@@ -19,6 +19,8 @@
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <utility>
+#include <Windowing/LogicalJoinDefinition.hpp>
+
 
 namespace NES {
 
@@ -45,6 +47,16 @@ void PipelineExecutionContext::emitBuffer(TupleBuffer& outputBuffer, WorkerConte
 Windowing::LogicalWindowDefinitionPtr PipelineExecutionContext::getWindowDef() {
     return windowDef;
 }
+
+Join::LogicalJoinDefinitionPtr PipelineExecutionContext::getJoinDef() {
+    return joinDef;
+}
+
+void PipelineExecutionContext::setJoinDef(Join::LogicalJoinDefinitionPtr joinDef)
+{
+    this->joinDef = joinDef;
+}
+
 void PipelineExecutionContext::setWindowDef(Windowing::LogicalWindowDefinitionPtr windowDef) {
     this->windowDef = windowDef;
 }

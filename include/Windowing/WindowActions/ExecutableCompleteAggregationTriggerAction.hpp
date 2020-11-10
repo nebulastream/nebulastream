@@ -52,8 +52,6 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                            ->addField("key", windowDefinition->getOnKey()->getStamp())
                            ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(windowSchema);
-
-//        windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, TupleBuffer& tupleBuffer) {

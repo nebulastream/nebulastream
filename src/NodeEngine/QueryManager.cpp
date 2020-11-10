@@ -81,33 +81,105 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep);
     std::scoped_lock lock(queryMutex, statisticsMutex);
 
+    bool isBinaryOperator = false;
+    for (auto& pipe : qep->getStages()) {
+        if (pipe->hasJoinHandler()) {
+            isBinaryOperator = true;
+        }
+    }
+
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
     for (const auto& source : qep->getSources()) {
+        // source already exists, add qep to source set if not there
         if (sourceIdToQueryMap.find(source->getSourceId()) != sourceIdToQueryMap.end()) {
-            // source already exists, add qep to source set if not there
             if (sourceIdToQueryMap[source->getSourceId()].find(qep) == sourceIdToQueryMap[source->getSourceId()].end()) {
                 // qep not found in list, add it
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << source->getSourceId());
                 sourceIdToQueryMap[source->getSourceId()].insert(qep);
                 queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
-                //get pipelinestage from source
-//                qep->getStage()
-//                sourceIdToPipelineStage[source->getSourceId()].insert();
+                assert(0);
+                NES_DEBUG("QueryManager: Join QEP already found " << qep << " to Source" << source->getSourceId() << " add pipeline stage 1");
+                sourceIdToPipelineStage[source->getSourceId()] = 1;
             } else {
-                    NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.");
+                NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.");
                 return false;
             }
-        } else {
             // source does not exist, add source and unordered_set containing the qep
+        } else {
             NES_DEBUG("QueryManager: Source " << source->getSourceId()
                                               << " not found. Creating new element with with qep " << qep);
             std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
             sourceIdToQueryMap[source->getSourceId()] = qepSet;
             queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
+            queryMapToSourceId[qep->getQueryId()].push_back(source->getSourceId());
+            if(isBinaryOperator)
+            {
+                if(queryMapToSourceId[qep->getQueryId()].size() == 1)
+                {
+                    NES_DEBUG("QueryManager: mm.size() == 1 " << qep << " to Source" << source->getSourceId());
+                    sourceIdToPipelineStage[source->getSourceId()] = 0;
+                }
+                else
+                {
+                    sourceIdToPipelineStage[source->getSourceId()] = 1;
+                }
+            }
+            NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << source->getSourceId());
+
+
         }
     }
+
     return true;
+}
+
+void QueryManager::addWork(const size_t sourceId, TupleBuffer& buf) {
+    std::shared_lock queryLock(queryMutex);// we need this lock because sourceIdToQueryMap can be concurrently modified
+    std::unique_lock workQueueLock(workMutex);
+    std::stringstream ss;
+    ss << " sourceid=" << sourceId << "map at sourceIdToQueryMap ";
+    for (std::map<size_t, std::unordered_set<QueryExecutionPlanPtr>>::const_iterator it = sourceIdToQueryMap.begin();
+         it != sourceIdToQueryMap.end(); ++it) {
+        ss << " sourceId=" << it->first;
+        for (auto& a : it->second) {
+            ss << " \t qepID=" << a->getQueryId() << " subqep=" << a->getQuerySubPlanId() << " stages=" << a->getStageSize();
+        }
+    }
+
+    std::stringstream ss2;
+    ss2 << " sourceid=" << sourceId << "map at sourceIdToPipelineStage ";
+    for (std::map<size_t, size_t>::const_iterator it = sourceIdToPipelineStage.begin();
+         it != sourceIdToPipelineStage.end(); ++it) {
+        ss2 << " sourceId=" << it->first << " pipeStage=" << it->second;
+    }
+
+    std::stringstream ss3;
+    ss3 << " sourceid=" << sourceId << "map at queryMapToSourceId ";
+    for (std::map<size_t, std::vector<size_t>>::const_iterator it = queryMapToSourceId.begin();
+         it != queryMapToSourceId.end(); ++it) {
+        ss3 << " queryID=" << it->first;
+        for (auto& a : it->second) {
+            ss3 << "sourceId=" << a;
+        }
+    }
+
+    NES_TRACE(ss.str());
+    NES_TRACE(ss2.str());
+    NES_TRACE(ss3.str());
+
+    for (const auto& qep : sourceIdToQueryMap[sourceId]) {
+        // for each respective source, create new task and put it into queue
+        // TODO: change that in the future that stageId is used properly
+        size_t stageId = sourceIdToPipelineStage[sourceId];
+        NES_DEBUG("QueryManager: added Task for stage " << stageId << " sourceID=" << sourceId);
+
+        taskQueue.emplace_back(qep->getStage(sourceIdToPipelineStage[sourceId]), buf);
+
+        NES_DEBUG("QueryManager: added Task " << taskQueue.back().toString() << " for query " << sourceId << " for QEP " << qep
+                                              << " inputBuffer " << buf << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
+    }
+    cv.notify_all();
 }
 
 bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
@@ -219,8 +291,10 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
     auto task = new (buffer.getBuffer()) ReconfigurationTask(descriptor, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
-    auto pipelineContext = std::make_shared<PipelineExecutionContext>(queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&) {
-    }, nullptr, nullptr);
+    auto pipelineContext = std::make_shared<PipelineExecutionContext>(
+        queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&) {
+        },
+        nullptr, nullptr);
     auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     {
         std::unique_lock lock(workMutex);
@@ -302,26 +376,6 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr 
     // dispatch buffer as task
     taskQueue.emplace_back(std::move(nextPipeline), buffer);
     NES_TRACE("QueryManager: added Task " << taskQueue.back().toString() << " for nextPipeline " << nextPipeline << " inputBuffer " << buffer);
-    cv.notify_all();
-}
-
-void QueryManager::addWork(const size_t sourceId, TupleBuffer& buf) {
-    std::shared_lock queryLock(queryMutex);// we need this lock because sourceIdToQueryMap can be concurrently modified
-    std::unique_lock workQueueLock(workMutex);
-    for (const auto& qep : sourceIdToQueryMap[sourceId]) {
-        // for each respective source, create new task and put it into queue
-        // TODO: change that in the future that stageId is used properly
-        size_t stageId = 0;
-        if(qep->getStageSize() > 2)
-        {
-            NES_DEBUG("QueryManager: use origin Id as index = " << sourceId % 2);
-            stageId = buf.getOriginId() % 2;
-        }
-        taskQueue.emplace_back(qep->getStage(0), buf);
-
-        NES_DEBUG("QueryManager: added Task " << taskQueue.back().toString() << " for query " << sourceId << " for QEP " << qep
-                                              << " inputBuffer " << buf << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
-    }
     cv.notify_all();
 }
 

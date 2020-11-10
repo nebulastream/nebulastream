@@ -134,6 +134,14 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setWinDe
     return *this;
 }
 
+GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setJoinDef(const Join::LogicalJoinDefinitionPtr joinDef) {
+    this->joinDef = joinDef;
+    return *this;
+}
+Join::LogicalJoinDefinitionPtr GeneratedQueryExecutionPlanBuilder::getJoinDef() {
+    return joinDef;
+}
+
 GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setSchema(const SchemaPtr& schema) {
     this->schema = schema;
     return *this;

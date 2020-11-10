@@ -36,7 +36,7 @@ void TumblingWindow::triggerWindows(std::vector<WindowState>& windows,
                                     uint64_t currentWatermark) const {
     NES_DEBUG("TumblingWindow::triggerWindows windows before=" << windows.size());
     long lastStart = lastWatermark - ((lastWatermark + size.getTime()) % size.getTime());
-    NES_DEBUG("TumblingWindow::triggerWindows= lastStart=" << lastStart << " size.getTime()=" << size.getTime() << " lastWatermark=" << lastWatermark);
+    NES_DEBUG("TumblingWindow::triggerWindows= lastStart=" << lastStart << " size.getTime()=" << size.getTime() << " lastWatermark=" << lastWatermark << " currentWatermark=" << currentWatermark);
     for (long windowStart = lastStart; windowStart + size.getTime() <= currentWatermark; windowStart += size.getTime()) {
         NES_DEBUG("TumblingWindow::triggerWindows add window to be triggered = windowStart=" << windowStart);
         windows.emplace_back(windowStart, windowStart + size.getTime());
