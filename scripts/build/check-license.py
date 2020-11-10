@@ -34,7 +34,9 @@ license_text_cpp = """/*
 """
 
 if __name__ == "__main__":
+    exclude = set(['cmake-build-debug', 'cmake-build-release', 'build'])
     for subdir, dirs, files in os.walk(sys.argv[1]):
+        dirs[:] = [d for d in dirs if d not in exclude]
         for file in files:
             filename = os.path.join(subdir, file)
             if filename.endswith(".cpp") or filename.endswith(".hpp") or filename.endswith(".proto"):
