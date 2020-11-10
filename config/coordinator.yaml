@@ -1,0 +1,24 @@
+# ~~~ Configurations for the NES Coordinator ~~~
+
+
+# ~~ IPs and Ports ~~
+# Set IP address of NES Coordinator
+serverIp: 127.0.0.1
+
+# Set RPC Server port of NES Coordinator
+coordinatorPort: 4000
+
+# Set port exposed for REST endpoints
+restPort: 8081
+
+
+# ~~ Processing Configurations ~~
+# Set the number of computing slots in NES Coordinator
+# 0 is a place holder, default is number of processors installed in host machine
+numberOfSlots: 0
+
+# Enable Query Merging Feature
+enableQueryMerging: false
+
+# The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
+logLevel: "LOG_DEBUG"
