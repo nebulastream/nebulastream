@@ -1,0 +1,47 @@
+# ~~~ Configurations for the NES Worker ~~~
+
+
+# ~~ IPs and Ports ~~
+# Set IP address of NES Coordinator to which the NES Worker should connect
+coordinatorIp: "127.0.0.1"
+
+# Set RPC Server port of NES Coordinator to which the NES Worker should connect
+coordinatorPort: "4000"
+
+# Set RPC server port of NES Worker
+rpcPort: 3000
+
+# Set the data port of the NES Worker
+dataPort: 3001
+
+# Set worker IP
+localWorkerIp: "127.0.0.1"
+
+
+# ~~ Source Handling ~~
+# Set the source type (must be either CSVSource or DefaultSource)
+sourceType: ""
+
+# Set source configuration (e.g. path to a CSV file)
+sourceConfig: ""
+
+# Set sampling frequency of source
+sourceFrequency: 1
+
+
+# ~~ Processing Configurations ~~
+# Set physical stream name
+physicalStreamName: "default_physical"
+
+# Set number of buffers to produce
+numberOfBuffersToProduce: 1
+
+# Set logical stream name where this stream is added to
+logicalStreamName: "default_logical"
+
+# Set parentId of NES Worker node
+parentId: "-1"
+
+# Set number of computing slots in NES Worker
+# 0 is a place holder, default is number of processors installed in host machine
+numberOfSlots: 0
