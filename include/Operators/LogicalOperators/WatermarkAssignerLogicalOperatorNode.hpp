@@ -32,4 +32,3 @@ typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerL
 }// namespace NES
 
 #endif//NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
-

@@ -3,6 +3,5 @@
 namespace NES::Windowing {
 
 WatermarkStrategy::WatermarkStrategy() {
-
 }
-} // namespace NES::Windowing
+}// namespace NES::Windowing

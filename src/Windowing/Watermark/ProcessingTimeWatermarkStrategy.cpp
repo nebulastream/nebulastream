@@ -11,4 +11,4 @@ ProcessingTimeWatermarkStrategyPtr ProcessingTimeWatermarkStrategy::create() {
 WatermarkStrategy::Type ProcessingTimeWatermarkStrategy::getType() {
     return WatermarkStrategy::ProcessingTimeWatermark;
 }
-} //namespace NES::Windowing
+}//namespace NES::Windowing

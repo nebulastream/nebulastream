@@ -17,6 +17,6 @@ class ProcessingTimeWatermarkStrategy : public WatermarkStrategy {
     Type getType() override;
 };
 
-} // namespace namespace NES::Windowing
+}// namespace NES::Windowing
 
 #endif//NES_PROCESSINGTIMEWATERMARKSTRATEGY_HPP

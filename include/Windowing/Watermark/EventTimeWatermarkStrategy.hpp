@@ -19,17 +19,15 @@ class EventTimeWatermarkStrategy : public WatermarkStrategy {
     Type getType() override;
 
     static EventTimeWatermarkStrategyPtr create(FieldAccessExpressionNodePtr onField, uint64_t delay);
+
   private:
     // Field where the watermark should be retrieved
     FieldAccessExpressionNodePtr onField;
 
     // Watermark delay
     uint64_t delay;
-
 };
 
-
-} // namespace namespace NES::Windowing
-
+}// namespace NES::Windowing
 
 #endif//NES_EVENTTIMEWATERMARKSTRATEGY_HPP

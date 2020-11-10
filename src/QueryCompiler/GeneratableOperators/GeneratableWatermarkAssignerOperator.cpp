@@ -1,11 +1,11 @@
-#include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
-#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/ProcessingTimeWatermarkStrategy.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/ProcessingTimeWatermarkStrategy.hpp>
+#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
 
 namespace NES {
 
@@ -15,8 +15,7 @@ GeneratableWatermarkAssignerOperatorPtr GeneratableWatermarkAssignerOperator::cr
 }
 
 GeneratableWatermarkAssignerOperator::GeneratableWatermarkAssignerOperator(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id)
-    : WatermarkAssignerLogicalOperatorNode(watermarkStrategyDescriptor, id){
-
+    : WatermarkAssignerLogicalOperatorNode(watermarkStrategyDescriptor, id) {
 }
 
 void GeneratableWatermarkAssignerOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
@@ -44,5 +43,6 @@ void GeneratableWatermarkAssignerOperator::consume(CodeGeneratorPtr codegen, Pip
 const std::string GeneratableWatermarkAssignerOperator::toString() const {
     std::stringstream ss;
     ss << "GENERATABLE_WATERMARKASSIGNER(" << outputSchema->toString() << ")";
-    return ss.str();}
+    return ss.str();
 }
+}// namespace NES

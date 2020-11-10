@@ -13,12 +13,11 @@ class ProcessingTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescri
     static WatermarkStrategyDescriptorPtr create();
 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
+
   private:
     explicit ProcessingTimeWatermarkStrategyDescriptor();
 };
 
-} // namespace NES::Windowing
-
-
+}// namespace NES::Windowing
 
 #endif//NES_PROCESSINGTIMEWATERMARKDESCRIPTOR_HPP

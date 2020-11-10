@@ -5,7 +5,7 @@
 
 namespace NES::Windowing {
 
-class WatermarkStrategy : public std::enable_shared_from_this<WatermarkStrategy>{
+class WatermarkStrategy : public std::enable_shared_from_this<WatermarkStrategy> {
   public:
     WatermarkStrategy();
 
@@ -21,5 +21,5 @@ class WatermarkStrategy : public std::enable_shared_from_this<WatermarkStrategy>
         return std::dynamic_pointer_cast<Type>(shared_from_this());
     }
 };
-}
+}// namespace NES::Windowing
 #endif//NES_WATERMARKSTRATEGY_HPP

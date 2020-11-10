@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_WATERMARK_EVENTTIMEWATERMARK_HPP_
 #define NES_INCLUDE_WATERMARK_EVENTTIMEWATERMARK_HPP_
-#include <Windowing/Watermark/WatermarkStrategy.hpp>
 #include <Windowing/Watermark/Watermark.hpp>
+#include <Windowing/Watermark/WatermarkStrategy.hpp>
 #include <cstdint>
 #include <memory>
 

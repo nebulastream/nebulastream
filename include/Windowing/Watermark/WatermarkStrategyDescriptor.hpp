@@ -1,8 +1,8 @@
 #ifndef NES_WATERMARKSTRATEGYDESCRIPTOR_HPP
 #define NES_WATERMARKSTRATEGYDESCRIPTOR_HPP
 
-#include <memory>
 #include <Util/Logger.hpp>
+#include <memory>
 
 namespace NES::Windowing {
 
@@ -43,6 +43,6 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
         }
     }
 };
-}
+}// namespace NES::Windowing
 
 #endif//NES_WATERMARKSTRATEGYDESCRIPTOR_HPP

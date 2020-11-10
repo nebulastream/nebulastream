@@ -7,7 +7,7 @@
 
 namespace NES {
 
-class GeneratableWatermarkAssignerOperator: public WatermarkAssignerLogicalOperatorNode, public GeneratableOperator {
+class GeneratableWatermarkAssignerOperator : public WatermarkAssignerLogicalOperatorNode, public GeneratableOperator {
   public:
     static GeneratableWatermarkAssignerOperatorPtr create(WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerLogicalOperatorNode, OperatorId id = UtilityFunctions::getNextOperatorId());
 
@@ -30,6 +30,7 @@ class GeneratableWatermarkAssignerOperator: public WatermarkAssignerLogicalOpera
     * @return string
     */
     const std::string toString() const override;
+
   private:
     GeneratableWatermarkAssignerOperator(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id);
 };
