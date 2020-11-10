@@ -27,4 +27,8 @@ void Z3ExpressionInferencePhase::execute(QueryPlanPtr queryPlan) {
     }
 }
 
+z3::ContextPtr Z3ExpressionInferencePhase::getContext() const {
+    return context;
+}
+
 }// namespace NES::Optimizer
